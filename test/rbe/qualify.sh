@@ -24,7 +24,7 @@ usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] build
-       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] test
+       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] test
        test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
@@ -104,6 +104,7 @@ syscall_bucket=
 benchmark_target=
 build_targets=()
 test_targets=()
+test_filter=
 header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
@@ -116,6 +117,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
     --build-target=*) build_targets+=("${1#--build-target=}") ;;
     --test-target=*) test_targets+=("${1#--test-target=}") ;;
+    --test-filter=*) test_filter=${1#--test-filter=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -177,6 +179,10 @@ if [[ -n $syscall_bucket ]]; then
 fi
 if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $# != 1 || ${1:-} != benchmarks ) ]]; then
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
+  exit 2
+fi
+if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1 ) ) ]]; then
+  printf 'A test filter requires the explicit test or container-v1 lane.\n' >&2
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
@@ -286,17 +292,12 @@ fi
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
 run_license_check() (
-  local qualification_rc
-  qualification_rc=$(mktemp)
-  trap 'rm -f "$qualification_rc"' EXIT
-  export qualification_rc
+  local license_rc
+  license_rc=$(mktemp)
+  trap 'rm -f "$license_rc"' EXIT
   printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
-    'build --keep_going' > "$qualification_rc"
-  bazel() {
-    command bazel --bazelrc="$qualification_rc" "$@"
-  }
-  export -f bazel
-  make license-check DOCKER_BUILD=false
+    'build --keep_going' > "$license_rc"
+  make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc"
 )
 
 # Set the caller's targets array from the same owning suites for standalone and
@@ -746,6 +747,9 @@ run_platform_matrix() (
   set -e
   local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false include_public_profiles=false explicit_unit=false
   local -a options=() targets=() verification_options=() unit_selection_options=()
+  if [[ -n $test_filter ]]; then
+    options+=("--test_filter=$test_filter")
+  fi
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   : > "$selection_dir/targets"
@@ -1045,6 +1049,9 @@ run_lane() (
     test)
       targets=("${test_targets[@]}")
       options=(--test_env=GO_TEST_WRAP_TESTV=1)
+      if [[ -n $test_filter ]]; then
+        options+=("--test_filter=$test_filter")
+      fi
       if [[ $test_execution == local ]]; then
         # Architecture frontends retain the existing root/nobody test identity;
         # only TestRunners are local. Compilation remains on the RBE platform.

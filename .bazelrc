@@ -124,3 +124,11 @@ common --incompatible_enable_proto_toolchain_resolution=true
 # override; test.* properties continue to select isolated runtime fixtures.
 build:rbe-matrix --config=rbe-common
 build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+
+# Diagnostic state qualification: exact native results and stable release sizes.
+build --nostamp
+test --nocache_test_results
+test --runs_per_test=1
+test --flaky_test_attempts=1
+test --nozip_undeclared_test_outputs
+test --test_env=GO_TEST_WRAP_TESTV=1

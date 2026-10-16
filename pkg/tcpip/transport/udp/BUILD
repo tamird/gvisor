@@ -86,3 +86,33 @@ go_test(
         "//pkg/tcpip/stack",
     ],
 )
+
+# Composition-only fresh 1x observation; the original benchmark body is unchanged.
+go_test(
+    name = "slice_diagnostic_udp_save",
+    size = "small",
+    srcs = ["codec_queue_benchmark_test.go"],
+    architectures = [],
+    args = [
+        "-test.run=^$",
+        "-test.bench=^BenchmarkUDPReceiveQueueSave$/^32$",
+        "-test.benchtime=1x",
+        "-test.benchmem",
+        "-test.count=1",
+        "-test.cpu=1",
+    ],
+    embed = [":udp"],
+    env = {
+        "GODEBUG": "inittrace=1",
+        "GOMAXPROCS": "1",
+    },
+    nogo = False,
+    tags = ["manual"],
+    deps = [
+        "//pkg/buffer",
+        "//pkg/state",
+        "//pkg/tcpip",
+        "//pkg/tcpip/header",
+        "//pkg/tcpip/stack",
+    ],
+)
