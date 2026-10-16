@@ -31,6 +31,7 @@ py_test(
         "unit_matrix.py",
     ],
     data = glob(["testdata/qualification_report/**"]),
+    imports = ["."],
     main = "qualification_report_test.py",
     tags = ["manual"],
 )
