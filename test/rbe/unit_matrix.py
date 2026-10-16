@@ -180,10 +180,18 @@ class ConfiguredTarget:
     configuration: str
 
 
-def configured_targets(events_path: str, *, tests: bool) -> dict[str, ConfiguredTarget]:
-    """Read this successful analysis invocation's top-level targets."""
+def configured_targets(
+    events_path: str, *, tests: bool | None, allow_test_no_build: bool = False,
+    expected_exit: int | None = None,
+) -> dict[str, ConfiguredTarget]:
+    """Read successful analysis roots; tests=None includes both target kinds."""
     targets: dict[str, ConfiguredTarget] = {}
     skipped: set[tuple[str, str]] = set()
+    no_build: set[tuple[str, str]] = set()
+    all_configured: set[tuple[str, str]] = set()
+    invalid_abort = False
+    executed = False
+    finish: dict[str, object] | None = None
     succeeded = False
     for line_number, line in enumerate(Path(events_path).read_text().splitlines(), start=1):
         event = json.loads(line)
@@ -191,7 +199,24 @@ def configured_targets(events_path: str, *, tests: bool) -> dict[str, Configured
             raise ValueError(f"Invalid build event at {events_path}:{line_number}")
         if "buildFinished" in event_id:
             finished = event.get("finished")
+            if not isinstance(finished, dict) or finish is not None:
+                raise ValueError(f"Invalid or duplicate analysis finish: {event}")
+            finish = finished
             succeeded = isinstance(finished, dict) and finished.get("overallSuccess") is True
+        if "testResult" in event or "testSummary" in event:
+            executed = True
+        if isinstance(aborted := event.get("aborted"), dict):
+            if aborted.get("reason") == "NO_BUILD":
+                if not (
+                    isinstance(completed := event_id.get("targetCompleted"), dict)
+                    and isinstance(label := completed.get("label"), str)
+                    and isinstance(configuration := completed.get("configuration"), dict)
+                    and isinstance(checksum := configuration.get("id"), str)
+                ):
+                    raise ValueError(f"Invalid no-build identity: {event}")
+                no_build.add((label, checksum))
+            elif aborted.get("reason") != "SKIPPED":
+                invalid_abort = True
         if isinstance(aborted := event.get("aborted"), dict) and aborted.get("reason") == "SKIPPED":
             if not (
                 isinstance(completed := event_id.get("targetCompleted"), dict)
@@ -215,7 +240,7 @@ def configured_targets(events_path: str, *, tests: bool) -> dict[str, Configured
             or not isinstance(children, list)
         ):
             raise ValueError(f"Invalid configured target: {event}")
-        if ("testSize" in configured) != tests or configured.get("targetKind") == "test_suite rule":
+        if configured.get("targetKind") == "test_suite rule":
             continue
         configurations = []
         for child in children:
@@ -229,11 +254,32 @@ def configured_targets(events_path: str, *, tests: bool) -> dict[str, Configured
                 configurations.append(checksum)
         if len(configurations) != 1 or label in targets:
             raise ValueError(f"Ambiguous top-level test identity: {event}")
+        all_configured.add((label, configurations[0]))
+        if tests is not None and ("testSize" in configured) != tests:
+            continue
         targets[label] = ConfiguredTarget(tags, configurations[0])
     for label, checksum in sorted(skipped):
         if (target := targets.get(label)) is not None and target.configuration == checksum:
             del targets[label]
             print(f"Bazel skipped {label} in configuration {checksum}", file=sys.stderr)
+    # Bazel 8's test --nobuild finishes with BUILD_FAILURE/1 even after
+    # successful analysis. Accept only its complete NO_BUILD event pattern,
+    # never a generic nonzero exit or a target-pattern/analysis failure.
+    finish_exit = finish.get("exitCode", {}) if finish is not None else {}
+    if not isinstance(finish_exit, dict):
+        raise ValueError(f"Invalid analysis exit: {events_path}")
+    if expected_exit is not None and finish_exit.get("code", 0) != expected_exit:
+        raise ValueError(f"Native exit differs from analysis finish: {events_path}")
+    if expected_exit is not None and (invalid_abort or executed):
+        raise ValueError(f"Preflight contains a failure or test execution: {events_path}")
+    if allow_test_no_build and tests is True and not succeeded:
+        succeeded = (
+            finish_exit == {"name": "BUILD_FAILURE", "code": 1}
+            and bool(all_configured - skipped)
+            and all_configured - skipped == no_build
+            and not invalid_abort
+            and not executed
+        )
     if not succeeded or not targets:
         raise ValueError(f"Expected successful, nonempty target analysis: {events_path}")
     return targets
