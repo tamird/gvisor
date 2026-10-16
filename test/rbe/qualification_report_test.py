@@ -491,6 +491,7 @@ signal.pause()
                 environment = {
                     **os.environ,
                     "PATH": str(binary) + os.pathsep + os.environ["PATH"],
+                    "PYTHONPATH": str(scripts),
                     "RUNNER_TEMP": str(runner_temp),
                     "BUILDBUDDY_ARTIFACTS_DIRECTORY": str(runner_temp),
                     "QUALIFICATION_COMMIT": source,
