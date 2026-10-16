@@ -324,6 +324,9 @@ func BenchmarkControlMessageDecoding(b *testing.B) {
 // timed operation includes first-use restoration metadata. Repeated iterations
 // are valid operations but do not have that first-use interpretation.
 func BenchmarkFirstRestore(b *testing.B) {
+	b.Run("empty", func(b *testing.B) {
+		firstRestore(b, struct{}{}, func(*struct{}) {})
+	})
 	b.Run("ordinary", func(b *testing.B) {
 		firstRestore(b, benchAdopted{Value: 17}, func(restored *benchAdopted) {
 			if got, want := restored.Value, int64(17); got != want {
