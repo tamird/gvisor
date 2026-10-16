@@ -394,6 +394,10 @@ func Init() {
 					nvgpu.NVB0CC_CTRL_CMD_RESERVE_HES:                                      ctrlHandler(rmControlSimple, nvconf.CapProfiling),
 					nvgpu.NVB0CC_CTRL_CMD_POWER_REQUEST_FEATURES:                           ctrlHandler(rmControlSimple, nvconf.CapProfiling),
 					nvgpu.NVB0CC_CTRL_CMD_POWER_RELEASE_FEATURES:                           ctrlHandler(rmControlSimple, nvconf.CapProfiling),
+					nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_SUBSCRIBE:                    ctrlHandler(rmControlSimple, nvconf.CapProfiling),
+					nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_UNSUBSCRIBE:                  ctrlHandler(rmControlSimple, nvconf.CapProfiling),
+					nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_SET_STREAM_STATE:             ctrlHandler(rmControlSimple, nvconf.CapProfiling),
+					nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_GET_STREAM_STATE:             ctrlHandler(rmControlSimple, nvconf.CapProfiling),
 					nvgpu.NV90E6_CTRL_CMD_MASTER_GET_VIRTUAL_FUNCTION_ERROR_CONT_INTR_MASK: ctrlHandler(rmControlSimple, compUtil),
 					nvgpu.NVC36F_CTRL_GET_CLASS_ENGINEID:                                   ctrlHandler(rmControlSimple, compUtil),
 					nvgpu.NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN:                     ctrlHandler(rmControlSimple, compUtil),
@@ -727,6 +731,10 @@ func Init() {
 							nvgpu.NVB0CC_CTRL_CMD_RESERVE_HES:                                      simpleIoctlInfo("NVB0CC_CTRL_CMD_RESERVE_HES", "NVB0CC_CTRL_RESERVE_HES_PARAMS"),
 							nvgpu.NVB0CC_CTRL_CMD_POWER_REQUEST_FEATURES:                           simpleIoctlInfo("NVB0CC_CTRL_CMD_POWER_REQUEST_FEATURES", "NVB0CC_CTRL_POWER_REQUEST_FEATURES_PARAMS"),
 							nvgpu.NVB0CC_CTRL_CMD_POWER_RELEASE_FEATURES:                           simpleIoctlInfo("NVB0CC_CTRL_CMD_POWER_RELEASE_FEATURES", "NVB0CC_CTRL_POWER_RELEASE_FEATURES_PARAMS"),
+							nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_SUBSCRIBE:                    simpleIoctlInfo("NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_SUBSCRIBE", "NV_COUNTER_COLLECTION_UNIT_SUBSCRIBE_PARAMS"),
+							nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_UNSUBSCRIBE:                  simpleIoctlInfo("NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_UNSUBSCRIBE"), // No params.
+							nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_SET_STREAM_STATE:             simpleIoctlInfo("NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_SET_STREAM_STATE", "NV_COUNTER_COLLECTION_UNIT_STREAM_STATE_PARAMS"),
+							nvgpu.NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_GET_STREAM_STATE:             simpleIoctlInfo("NV_COUNTER_COLLECTION_UNIT_CTRL_CMD_GET_STREAM_STATE", "NV_COUNTER_COLLECTION_UNIT_STREAM_STATE_PARAMS"),
 							nvgpu.NV90E6_CTRL_CMD_MASTER_GET_VIRTUAL_FUNCTION_ERROR_CONT_INTR_MASK: simpleIoctlInfo("NV90E6_CTRL_CMD_MASTER_GET_VIRTUAL_FUNCTION_ERROR_CONT_INTR_MASK", "NV90E6_CTRL_MASTER_GET_VIRTUAL_FUNCTION_ERROR_CONT_INTR_MASK_PARAMS"),
 							nvgpu.NVC36F_CTRL_GET_CLASS_ENGINEID:                                   simpleIoctlInfo("NVC36F_CTRL_GET_CLASS_ENGINEID", "NVC36F_CTRL_GET_CLASS_ENGINEID_PARAMS"),
 							nvgpu.NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN:                     simpleIoctlInfo("NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN", "NVC36F_CTRL_CMD_GPFIFO_GET_WORK_SUBMIT_TOKEN_PARAMS"),
@@ -1374,11 +1382,23 @@ func Init() {
 			ARM64:                  "866b5775ee3bb95c07b90252fa238b538aeabda038a0566590c16b13e16193cc",
 			NoPublicARM64Installer: true,
 		}, v620_32_00)
-		_ = addDriverABIWithChecksums(620, 51, 0, Checksums{
+		v620_51_00 := addDriverABIWithChecksums(620, 51, 0, Checksums{
 			X86_64:                 ChecksumNoDriver,
 			ARM64:                  "cf761f39bffc561f6529171e342b5ecfdb4fabcc8dff4159f9400432bf7dc2e8",
 			NoPublicARM64Installer: true,
-		}, v620_47_00)
+		}, func() *driverABI {
+			abi := v620_47_00()
+			abi.allocationClass[nvgpu.NV_MNCC_SESSION] = allocHandler(rmAllocMNCCSession, nvconf.CapFabricIMEXManagement)
+
+			prevGetInfo := abi.getInfo
+			abi.getInfo = func() *DriverABIInfo {
+				info := prevGetInfo()
+				info.AllocationInfos[nvgpu.NV_MNCC_SESSION] = ioctlInfo("NV_MNCC_SESSION", nvgpu.NV77CC_ALLOC_PARAMETERS{})
+				return info
+			}
+			return abi
+		})
+		_ = addDriverABI(620, 51, 03, ChecksumNoDriver, "7c7f4e71ec27a6c050ed3d074eda4bd3c10a0c2d3f330cd1bf9485e5265a569e", v620_51_00)
 	})
 }
 

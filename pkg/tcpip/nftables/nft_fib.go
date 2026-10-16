@@ -87,9 +87,9 @@ func fibGetAddrRouteType(netProto tcpip.NetworkProtocolNumber, st *stack.Stack, 
 
 // Ref: net/netfilter/nft_fib.c:nft_fib_store_result()
 func (op *fib) storeResult(regs *registerSet, nicID tcpip.NICID, st *stack.Stack) {
+	// Just set the boolean result if the flag is set.
 	if op.flags&linux.NFTA_FIB_F_PRESENT != 0 {
-		// Linux nft_reg_store8 clears the containing 32-bit register.
-		clear(regs.data[op.dregIdx : op.dregIdx+linux.NFT_REG32_SIZE])
+		binary.NativeEndian.PutUint32(regs.data[op.dregIdx:], 0)
 		if nicID != 0 {
 			regs.data[op.dregIdx] = uint8(1)
 		}
@@ -100,10 +100,11 @@ func (op *fib) storeResult(regs *registerSet, nicID tcpip.NICID, st *stack.Stack
 	case linux.NFT_FIB_RESULT_OIF:
 		binary.NativeEndian.PutUint32(regs.data[op.dregIdx:], uint32(nicID))
 	case linux.NFT_FIB_RESULT_OIFNAME:
-		name := st.FindNICNameFromID(nicID)
 		startIdx, endIdx := op.dregIdx, op.dregIdx+linux.IFNAMSIZ
-		n := copy(regs.data[startIdx:endIdx], name)
-		clear(regs.data[startIdx+n : endIdx])
+		clear(regs.data[startIdx:endIdx])
+		if nicID != 0 {
+			copy(regs.data[startIdx:endIdx], st.FindNICNameFromID(nicID))
+		}
 	}
 }
 
@@ -228,28 +229,26 @@ func (op *fib) evaluateOIF(regs *registerSet, evalCtx opEvalCtx) {
 	}
 	addr := dstAddr
 
-	// Initialize the complete result before a lookup that may fail.
-	op.storeResult(regs, 0, st)
-
 	rt, release, err := fibGetOrFindRoute(evalCtx, srcAddr, dstAddr, netProto, nicID, dAddr)
 	defer release()
 	if err != nil {
+		op.storeResult(regs, 0, st)
 		return
 	}
 
 	addrType := fibGetAddrRouteType(netProto, st, addr, nicID, rt)
 	if addrType == linux.RTN_LOCAL {
+		op.storeResult(regs, 0, st)
 		return
 	}
 
-	// Just need to set the result to NICID if it is not 0.
-	if nicID == 0 {
+	switch nicID {
+	case 0:
 		op.storeResult(regs, rt.NICID(), st)
-		return
-	}
-	if rt.OutgoingNIC() == nicID {
+	case rt.OutgoingNIC():
 		op.storeResult(regs, nicID, st)
-		return
+	default:
+		op.storeResult(regs, 0, st)
 	}
 }
 
@@ -434,12 +433,16 @@ func newFIB(result int, flags uint32, dreg uint8) (*fib, *syserr.AnnotatedError)
 
 	if flags&linux.NFTA_FIB_F_PRESENT != 0 {
 		if result != linux.NFT_FIB_RESULT_OIF {
-			return nil, syserr.NewAnnotatedError(syserr.ErrInvalidArgument, "fib presence requires result OIF")
+			return nil, syserr.NewAnnotatedError(
+				syserr.ErrInvalidArgument,
+				"fib PRESENT flag can only be used with OIF result",
+			)
 		}
-		resLen = 1
+		resLen = 1 // size of uint8
 	}
 
-	dregIdx, err := regNumToIdx(dreg, resLen)
+	dataLen := resLen
+	dregIdx, err := regNumToIdx(dreg, dataLen)
 	if err != nil {
 		return nil, err
 	}

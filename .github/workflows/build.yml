@@ -68,13 +68,13 @@ jobs:
     - name: build
       run: |
           mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
+          make copy TARGETS=//:release DESTINATION=bin/
 
     - name: Upload runsc
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
           name: runsc
-          path: bin/runsc
+          path: bin/
 
   remote-qualification:
     if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))

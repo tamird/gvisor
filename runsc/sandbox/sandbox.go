@@ -515,7 +515,7 @@ func (s *Sandbox) StartSubcontainer(spec *specs.Spec, conf *config.Config, cid s
 	var rootfsUpperTarFile *os.File
 	if path := specutils.RootfsTarUpperPath(spec); path != "" {
 		var err error
-		rootfsUpperTarFile, err = os.OpenFile(path, os.O_RDONLY, 0644)
+		rootfsUpperTarFile, err = os.OpenFile(path, rootfsUpperTarFlags(path), 0644)
 		if err != nil {
 			return fmt.Errorf("opening rootfs upper tar file: %v", err)
 		}
@@ -645,33 +645,86 @@ func (s *Sandbox) setRestoreOpts(conf *config.Config, imagePath string, direct b
 	return nil
 }
 
-func (s *Sandbox) setRestoreOptsForLocalCheckpointFiles(conf *config.Config, imagePath string, direct bool, opt *boot.RestoreOpts) error {
-	stateFileName := path.Join(imagePath, checkpointfiles.StateFileName)
-	sf, err := os.Open(stateFileName)
+// openReadOnlyTree returns an FD for a detached, read-only copy of the mount
+// of dir, rooted at dir. Files opened through it refer to a read-only mount,
+// so they can not be opened for writing again, by anyone, through any path.
+// The copy stays alive as long as any file opened through it does.
+func openReadOnlyTree(dir string) (int, error) {
+	treeFD, err := unix.OpenTree(unix.AT_FDCWD, dir, unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC)
 	if err != nil {
-		return fmt.Errorf("opening state file %q failed: %w", stateFileName, err)
+		return -1, err
+	}
+	attr := unix.MountAttr{Attr_set: unix.MOUNT_ATTR_RDONLY}
+	if err := unix.MountSetattr(treeFD, "", unix.AT_EMPTY_PATH, &attr); err != nil {
+		unix.Close(treeFD)
+		return -1, err
+	}
+	return treeFD, nil
+}
+
+// openRestoreDir returns an FD for the checkpoint directory dir through which
+// the files handed to the sandbox for a restore are opened. The sandbox only
+// reads them and must not be able to modify them, which file permissions do
+// not guarantee since it may run as root with CAP_DAC_OVERRIDE. So this is a
+// detached, read-only copy of dir's mount (see openReadOnlyTree) when the
+// kernel and runsc's privileges allow it, and dir itself otherwise.
+func openRestoreDir(dir string) (int, error) {
+	dirFD, err := openReadOnlyTree(dir)
+	if err == nil {
+		return dirFD, nil
+	}
+	log.Warningf("Checkpoint files in %q are not protected from modification by the sandbox: %v", dir, err)
+	return unix.Open(dir, unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+}
+
+// openCheckpointFile opens the checkpoint file name in dir, relative to dirFD,
+// an FD for dir. The path can not lead out of dir, so the file is on dirFD's
+// mount.
+func openCheckpointFile(dirFD int, dir, name string, flags int) (*os.File, error) {
+	how := unix.OpenHow{
+		Flags:   uint64(flags | unix.O_CLOEXEC),
+		Resolve: unix.RESOLVE_BENEATH,
+	}
+	if flags&unix.O_CREAT != 0 {
+		how.Mode = 0644
+	}
+	fd, err := unix.Openat2(dirFD, name, &how)
+	if err != nil {
+		return nil, err
+	}
+	return os.NewFile(uintptr(fd), filepath.Join(dir, name)), nil
+}
+
+func (s *Sandbox) setRestoreOptsForLocalCheckpointFiles(conf *config.Config, imagePath string, direct bool, opt *boot.RestoreOpts) error {
+	dirFD, err := openRestoreDir(imagePath)
+	if err != nil {
+		return fmt.Errorf("opening checkpoint directory %q failed: %w", imagePath, err)
+	}
+	defer unix.Close(dirFD)
+
+	sf, err := openCheckpointFile(dirFD, imagePath, checkpointfiles.StateFileName, unix.O_RDONLY)
+	if err != nil {
+		return fmt.Errorf("opening state file %q failed: %w", path.Join(imagePath, checkpointfiles.StateFileName), err)
 	}
 	opt.FilePayload.Files = append(opt.FilePayload.Files, sf)
 
 	// If either the pages metadata file or pages file exist, both must exist,
 	// and we must pass them in.
-	pagesMetadataFileName := path.Join(imagePath, checkpointfiles.PagesMetadataFileName)
-	if pmf, err := os.Open(pagesMetadataFileName); err == nil {
+	if pmf, err := openCheckpointFile(dirFD, imagePath, checkpointfiles.PagesMetadataFileName, unix.O_RDONLY); err == nil {
 		opt.FilePayload.Files = append(opt.FilePayload.Files, pmf)
-		pagesFileName := path.Join(imagePath, checkpointfiles.PagesFileName)
-		pagesReadFlags := os.O_RDONLY
+		pagesReadFlags := unix.O_RDONLY
 		if direct {
 			// The contents are page-aligned, so it can be opened with O_DIRECT.
-			pagesReadFlags |= syscall.O_DIRECT
+			pagesReadFlags |= unix.O_DIRECT
 		}
-		pf, err := os.OpenFile(pagesFileName, pagesReadFlags, 0)
+		pf, err := openCheckpointFile(dirFD, imagePath, checkpointfiles.PagesFileName, pagesReadFlags)
 		if err != nil {
-			return fmt.Errorf("opening pages file %q failed: %w", pagesFileName, err)
+			return fmt.Errorf("opening pages file %q failed: %w", path.Join(imagePath, checkpointfiles.PagesFileName), err)
 		}
 		opt.FilePayload.Files = append(opt.FilePayload.Files, pf)
 		opt.HavePagesFile = true
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("opening pages metadata file %q failed: %w", pagesMetadataFileName, err)
+	} else if !errors.Is(err, unix.ENOENT) {
+		return fmt.Errorf("opening pages metadata file %q failed: %w", path.Join(imagePath, checkpointfiles.PagesMetadataFileName), err)
 	} else {
 		log.Infof("Using single checkpoint file for sandbox %q", s.ID)
 	}
@@ -962,7 +1015,7 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 	// a time. Try to make RLIMIT_MEMLOCK unlimited so that it can do so. runsc
 	// expects to run in a memory cgroup that limits its memory usage as
 	// required.
-	// This needs to be done before exec'ing `runsc boot`, as that subcommand
+	// This needs to be done before exec'ing the Sentry, as the Sentry
 	// runs as an unprivileged user that will not be able to call `setrlimit`
 	// by itself. Calling `setrlimit` here will have the side-effect of setting
 	// the limit on the currently-running `runsc` process as well, but that
@@ -1015,7 +1068,7 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 	}
 	lfOpts.Command = "boot" // Revert command to "boot".
 
-	sentryBin := &gvisorbinaries.GvisorSentry
+	sentryBin := sentryBinary(conf)
 	// runsc cannot tell whether the Sentry sidecar uses cgo, so assume it
 	// does if runsc does: race builds pair a race runsc with a race Sentry.
 	// Caveats: a cgo runsc booting a pure Sentry (e.g. a cgo test binary)
@@ -1024,7 +1077,6 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 	// so that Sentry's stubs would crash; no build pairs them today.
 	sentryUsesCgo := config.CgoEnabled
 	if conf.Network == config.NetworkPlugin {
-		sentryBin = &gvisorbinaries.GvisorSentryPluginStack
 		sentryUsesCgo = true
 	}
 	bootBinPath, err := sentryBin.Path()
@@ -1101,7 +1153,8 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 	if err := donations.DonateLogFile("final-metrics-log-fd", conf.FinalMetricsLog, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, lfOpts); err != nil {
 		return fmt.Errorf("donating final metrics log file: %w", err)
 	}
-	if err := donations.DonateLogFile("rootfs-upper-tar-fd", specutils.RootfsTarUpperPath(args.Spec), os.O_RDONLY, lfOpts); err != nil {
+	rootfsTarPath := specutils.RootfsTarUpperPath(args.Spec)
+	if err := donations.DonateLogFile("rootfs-upper-tar-fd", rootfsTarPath, rootfsUpperTarFlags(rootfsTarPath), lfOpts); err != nil {
 		return fmt.Errorf("donating rootfs tar file: %w", err)
 	}
 
@@ -1164,15 +1217,20 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 		donations.DonateAndClose("device-fd", deviceFile.ReleaseToFile("device file"))
 	}
 
+	// The Go runtime keeps its cgroup's CPU limit file open for the lifetime
+	// of the process to keep GOMAXPROCS in sync with the limit. The sentry
+	// sets GOMAXPROCS itself, so do not hold a host FD that it does not need.
+	godebug := []string{"containermaxprocs=0"}
 	// TODO(b/151157106): syscall tests fail by timeout if asyncpreemptoff
 	// isn't set.
 	if conf.Platform == "kvm" || conf.Platform == "slimvm" {
-		cmd.Env = append(cmd.Env, "GODEBUG=asyncpreemptoff=1")
+		godebug = append(godebug, "asyncpreemptoff=1")
 	}
-
 	if conf.Network == config.NetworkPlugin {
-		cmd.Env = append(cmd.Env, "GODEBUG=cgocheck=0")
+		godebug = append(godebug, "cgocheck=0")
 	}
+	// Go only reads the first GODEBUG variable in the environment.
+	cmd.Env = append(cmd.Env, "GODEBUG="+strings.Join(godebug, ","))
 
 	// nss is the set of namespaces to join or create before starting the sandbox
 	// process. Mount, IPC and UTS namespaces from the host are not used as they
@@ -1265,6 +1323,9 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 		} else if specutils.HasCapabilities(capability.CAP_SYS_ADMIN) || rootlessEUID {
 			log.Infof("Sandbox will be started in minimal chroot")
 			cmd.Args = append(cmd.Args, "--setup-root")
+			if err := donateProcUmounter(conf, &donations); err != nil {
+				return err
+			}
 		} else {
 			return fmt.Errorf("can't run sandbox process in minimal chroot since we don't have CAP_SYS_ADMIN")
 		}
@@ -1278,6 +1339,9 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 			log.Infof("Sandbox will be started in new user namespace")
 			nss = append(nss, specs.LinuxNamespace{Type: specs.UserNamespace})
 			cmd.Args = append(cmd.Args, "--setup-root")
+			if err := donateProcUmounter(conf, &donations); err != nil {
+				return err
+			}
 
 			const nobody = 65534
 			if rootlessEUID || conf.Rootless {
@@ -1484,6 +1548,25 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 			log.Warningf("Cannot spawn sidecar %q: %v. This slows down gVisor sandbox teardown.", gvisorbinaries.FDParking.Name, err)
 		}
 	}
+	return nil
+}
+
+// donateProcUmounter donates the /proc unmounter sidecar binary to a sandbox
+// process that sets up its own root, which spawns it unless it runs rootless.
+func donateProcUmounter(conf *config.Config, donations *donation.Agency) error {
+	if conf.Rootless {
+		return nil
+	}
+	b := &gvisorbinaries.ProcUmounter
+	p, err := b.Path()
+	if err != nil {
+		return fmt.Errorf("sidecar %q not usable: %w", b.Name, err)
+	}
+	f, err := os.OpenFile(p, unix.O_PATH, 0)
+	if err != nil {
+		return fmt.Errorf("cannot open %q: %w", p, err)
+	}
+	donations.DonateAndClose("proc-umounter-fd", f)
 	return nil
 }
 
@@ -1881,7 +1964,7 @@ func setCheckpointOptsFilesForLocalCheckpoint(conf *config.Config, imagePath str
 		})
 		defer cleanLocalFiles.Clean()
 
-		fsFiles, err := openFSCheckpointLocalFiles(imagePath, bundles[0].Prefix, os.O_CREATE|os.O_EXCL|os.O_RDWR, opts.Direct)
+		fsFiles, err := createFSCheckpointLocalFiles(imagePath, bundles[0].Prefix, opts.Direct)
 		if err != nil {
 			return fmt.Errorf("creating fs checkpoint files: %w", err)
 		}
@@ -2027,7 +2110,7 @@ func openFSRestoreFilesForLocalCheckpoint(imagePath string, direct bool) ([]*os.
 		if len(prefixes) == 1 {
 			prefix = prefixes[0]
 		}
-		return openFSCheckpointLocalFiles(imagePath, prefix, os.O_RDONLY, direct)
+		return openFSRestoreBundleFiles(imagePath, prefix, direct)
 	}
 	if !errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("stat fs restore image path %q: %w", imagePath, err)
@@ -2035,7 +2118,18 @@ func openFSRestoreFilesForLocalCheckpoint(imagePath string, direct bool) ([]*os.
 	if strings.HasSuffix(imagePath, "/") {
 		return nil, fmt.Errorf("fs restore image directory %q does not exist: %w", imagePath, err)
 	}
-	return openFSCheckpointLocalFiles(filepath.Dir(imagePath), filepath.Base(imagePath), os.O_RDONLY, direct)
+	return openFSRestoreBundleFiles(filepath.Dir(imagePath), filepath.Base(imagePath), direct)
+}
+
+// openFSRestoreBundleFiles opens the files of the filesystem checkpoint with
+// the given prefix in imagePath for a restore, through openRestoreDir.
+func openFSRestoreBundleFiles(imagePath, prefix string, direct bool) ([]*os.File, error) {
+	dirFD, err := openRestoreDir(imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("opening fs checkpoint directory %q failed: %w", imagePath, err)
+	}
+	defer unix.Close(dirFD)
+	return openFSCheckpointLocalFiles(dirFD, imagePath, prefix, unix.O_RDONLY, direct)
 }
 
 // FSSaveOpts holds options to FSSave.
@@ -2106,7 +2200,7 @@ func (s *Sandbox) setFSSaveArgs(conf *config.Config, imagePath string, direct bo
 }
 
 func setFSSaveArgsForLocalCheckpointFiles(conf *config.Config, imagePath string, direct bool, prefix string, args *boot.FSSaveArgs) error {
-	files, err := openFSCheckpointLocalFiles(imagePath, prefix, os.O_CREATE|os.O_EXCL|os.O_RDWR, direct)
+	files, err := createFSCheckpointLocalFiles(imagePath, prefix, direct)
 	if err != nil {
 		return err
 	}
@@ -2114,13 +2208,32 @@ func setFSSaveArgsForLocalCheckpointFiles(conf *config.Config, imagePath string,
 	return nil
 }
 
-func openFSCheckpointLocalFiles(imagePath, prefix string, openFlags int, direct bool) ([]*os.File, error) {
+// createFSCheckpointLocalFiles creates the files of the filesystem checkpoint
+// with the given prefix in imagePath.
+func createFSCheckpointLocalFiles(imagePath, prefix string, direct bool) ([]*os.File, error) {
+	if strings.HasSuffix(prefix, "/") {
+		subDir := filepath.Join(imagePath, prefix)
+		if err := os.MkdirAll(subDir, 0755); err != nil {
+			return nil, fmt.Errorf("creating fs checkpoint directory %q: %w", subDir, err)
+		}
+	}
+	dirFD, err := unix.Open(imagePath, unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, fmt.Errorf("opening fs checkpoint directory %q failed: %w", imagePath, err)
+	}
+	defer unix.Close(dirFD)
+	return openFSCheckpointLocalFiles(dirFD, imagePath, prefix, unix.O_CREAT|unix.O_EXCL|unix.O_RDWR, direct)
+}
+
+// openFSCheckpointLocalFiles opens the files of the filesystem checkpoint
+// with the given prefix in imagePath, relative to dirFD, an FD for imagePath.
+func openFSCheckpointLocalFiles(dirFD int, imagePath, prefix string, openFlags int, direct bool) ([]*os.File, error) {
 	var files [4]*os.File
 	closeCleanup := cleanup.Make(func() {
 		for _, f := range files {
 			if f != nil {
 				_ = f.Close()
-				if openFlags&os.O_CREATE != 0 {
+				if openFlags&unix.O_CREAT != 0 {
 					_ = os.Remove(f.Name())
 				}
 			}
@@ -2153,40 +2266,33 @@ func openFSCheckpointLocalFiles(imagePath, prefix string, openFlags int, direct 
 		maybeODirect = unix.O_DIRECT
 	}
 
-	if openFlags&os.O_CREATE != 0 && strings.HasSuffix(prefix, "/") {
-		subDir := filepath.Join(imagePath, prefix)
-		if err := os.MkdirAll(subDir, 0755); err != nil {
-			return nil, fmt.Errorf("creating fs checkpoint directory %q: %w", subDir, err)
-		}
-	}
-
-	manifestFilePath := filepath.Join(imagePath, checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointManifestFileName))
-	manifestFile, err := os.OpenFile(manifestFilePath, openFlags, 0644)
+	manifestFileName := checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointManifestFileName)
+	manifestFile, err := openCheckpointFile(dirFD, imagePath, manifestFileName, openFlags)
 	if err != nil {
-		return nil, fmt.Errorf("opening manifest file %q: %w", manifestFilePath, err)
+		return nil, fmt.Errorf("opening manifest file %q: %w", filepath.Join(imagePath, manifestFileName), err)
 	}
 	files[0] = manifestFile
 
-	multiTarFilePath := filepath.Join(imagePath, checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointMultiTarFileName))
-	multiTarFile, err := os.OpenFile(multiTarFilePath, openFlags, 0644)
+	multiTarFileName := checkpointfiles.PrefixFileName(prefix, checkpointfiles.FSCheckpointMultiTarFileName)
+	multiTarFile, err := openCheckpointFile(dirFD, imagePath, multiTarFileName, openFlags)
 	if err != nil {
-		return nil, fmt.Errorf("opening multi-tar file %q: %w", multiTarFilePath, err)
+		return nil, fmt.Errorf("opening multi-tar file %q: %w", filepath.Join(imagePath, multiTarFileName), err)
 	}
 	files[1] = multiTarFile
 
-	pagesMetadataFilePath := filepath.Join(imagePath, checkpointfiles.PrefixFileName(prefix, checkpointfiles.PagesMetadataFileName))
-	pagesMetadataFile, err := os.OpenFile(pagesMetadataFilePath, openFlags, 0644)
+	pagesMetadataFileName := checkpointfiles.PrefixFileName(prefix, checkpointfiles.PagesMetadataFileName)
+	pagesMetadataFile, err := openCheckpointFile(dirFD, imagePath, pagesMetadataFileName, openFlags)
 	if err != nil {
-		return nil, fmt.Errorf("opening pages metadata file %q: %w", pagesMetadataFilePath, err)
+		return nil, fmt.Errorf("opening pages metadata file %q: %w", filepath.Join(imagePath, pagesMetadataFileName), err)
 	}
 	files[2] = pagesMetadataFile
 
-	pagesFilePath := filepath.Join(imagePath, checkpointfiles.PrefixFileName(prefix, checkpointfiles.PagesFileName))
-	pagesFileFD, err := unix.Open(pagesFilePath, openFlags|maybeODirect, 0644)
+	pagesFileName := checkpointfiles.PrefixFileName(prefix, checkpointfiles.PagesFileName)
+	pagesFile, err := openCheckpointFile(dirFD, imagePath, pagesFileName, openFlags|maybeODirect)
 	if err != nil {
-		return nil, fmt.Errorf("opening pages file %q: %w", pagesFilePath, err)
+		return nil, fmt.Errorf("opening pages file %q: %w", filepath.Join(imagePath, pagesFileName), err)
 	}
-	files[3] = os.NewFile(uintptr(pagesFileFD), pagesFilePath)
+	files[3] = pagesFile
 
 	closeCleanup.Release()
 	return files[:], nil
@@ -2363,7 +2469,7 @@ func (s *Sandbox) maybeConfigureSandboxProcessForWorkloadTriggerFSSave(conf *con
 		cmd.Args = append(cmd.Args, "-fs-save-checkpoint-gofer")
 		log.Infof("Enabling workload-trigger filesystem checkpoint saving to GCS via checkpoint gofer")
 	} else {
-		files, err := openFSCheckpointLocalFiles(path, bundles[0].Prefix, os.O_CREATE|os.O_EXCL|os.O_RDWR, boot.GetAnnotationFSCheckpointDirect(args.Spec))
+		files, err := createFSCheckpointLocalFiles(path, bundles[0].Prefix, boot.GetAnnotationFSCheckpointDirect(args.Spec))
 		if err != nil {
 			return fmt.Errorf("failed to create auto fs save files: %w", err)
 		}
@@ -2674,8 +2780,16 @@ func getNvproxyDriverVersion(conf *config.Config) (string, error) {
 	}
 }
 
+// sentryBinary returns the Sentry sidecar binary that boots the sandbox.
+func sentryBinary(conf *config.Config) *gvisorbinaries.Binary {
+	if conf.Network == config.NetworkPlugin {
+		return &gvisorbinaries.GvisorSentryPluginStack
+	}
+	return &gvisorbinaries.GvisorSentry
+}
+
 // checkBinaryPermissions verifies that the required binary bits are set on
-// the runsc executable.
+// the Sentry executable, which re-executes itself as an unprivileged user.
 func checkBinaryPermissions(conf *config.Config) error {
 	// All platforms need the other exe bit
 	neededBits := os.FileMode(0001)
@@ -2684,12 +2798,12 @@ func checkBinaryPermissions(conf *config.Config) error {
 		neededBits |= os.FileMode(0004)
 	}
 
-	exePath, err := os.Executable()
+	exePath, err := sentryBinary(conf).Path()
 	if err != nil {
-		return fmt.Errorf("getting exe path: %v", err)
+		return fmt.Errorf("getting Sentry path: %v", err)
 	}
 
-	// Check the permissions of the runsc binary and print an error if it
+	// Check the permissions of the Sentry binary and print an error if it
 	// doesn't match expectations.
 	info, err := os.Stat(exePath)
 	if err != nil {
@@ -3030,4 +3144,12 @@ func (s *Sandbox) GetNetworkConfig() (*boot.CreateLinksAndRoutesArgs, error) {
 		return nil, fmt.Errorf("error getting network config (CID: %q): %w", s.ID, err)
 	}
 	return &networkArgs, nil
+}
+
+func rootfsUpperTarFlags(p string) int {
+	flags := os.O_RDONLY
+	if !specutils.IsProcFDPath(p) {
+		flags |= unix.O_NOFOLLOW
+	}
+	return flags
 }

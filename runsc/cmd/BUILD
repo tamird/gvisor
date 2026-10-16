@@ -118,6 +118,7 @@ go_test(
         "read_test.go",
         "sandboxexec_test.go",
         "spec_test.go",
+        "tar_test.go",
     ],
     data = [
         "//:release",  # keep
@@ -140,6 +141,7 @@ go_test(
         "//runsc/config",
         "//runsc/container",
         "//runsc/flag",
+        "//runsc/gvisorbinaries",
         "//runsc/mitigate",
         "//runsc/sandbox",
         "//runsc/specutils",

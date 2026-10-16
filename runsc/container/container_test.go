@@ -1328,10 +1328,14 @@ func TestSignalProcessGroup(t *testing.T) {
 // respond to the Sandbox.Wait RPC, in which case we fall back to the sandbox
 // process's own exit status, which reports the signal as `128+SIGKILL`.
 func killedBySIGKILL(ws unix.WaitStatus) bool {
+	return killedBySignal(ws, unix.SIGKILL)
+}
+
+func killedBySignal(ws unix.WaitStatus, sig unix.Signal) bool {
 	if ws.Signaled() {
-		return ws.Signal() == unix.SIGKILL
+		return ws.Signal() == sig
 	}
-	return ws.ExitStatus() == 128+int(unix.SIGKILL)
+	return ws.ExitStatus() == 128+int(sig)
 }
 
 // TestSignalUnkillablePolicy verifies Linux SIGNAL_UNKILLABLE semantics for PID 1:
@@ -1719,6 +1723,64 @@ func TestNoRootContainerRejectsRootArgs(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), tc.wantErr) {
 				t.Errorf("New() error = %v, want it to contain %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+// TestSignalUnkillablePolicyFaultKillsInit verifies that a fault in PID 1
+// terminates it under SignalUnkillableLinux. The sentry forces the SIGSEGV,
+// which ends the protection of the init process, analogous to Linux's
+// kernel/signal.c:force_sig_info_to_task().
+func TestSignalUnkillablePolicyFaultKillsInit(t *testing.T) {
+	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	if err != nil {
+		t.Fatal("error finding test_app:", err)
+	}
+	for name, conf := range configs(t, true /* noOverlay */) {
+		t.Run(name, func(t *testing.T) {
+			testConf := *conf
+			testConf.SignalUnkillablePolicy = config.SignalUnkillableLinux
+
+			spec := testutil.NewSpecWithArgs(app, "segfault")
+			_, bundleDir, cleanup, err := testutil.SetupContainer(spec, &testConf)
+			if err != nil {
+				t.Fatalf("error setting up container: %v", err)
+			}
+			defer cleanup()
+
+			cont, err := New(&testConf, Args{
+				ID:        testutil.RandomContainerID(),
+				Spec:      spec,
+				BundleDir: bundleDir,
+			})
+			if err != nil {
+				t.Fatalf("error creating container: %v", err)
+			}
+			defer cont.Destroy()
+			if err := cont.Start(&testConf); err != nil {
+				t.Fatalf("error starting container: %v", err)
+			}
+
+			type waitResult struct {
+				ws  unix.WaitStatus
+				err error
+			}
+			done := make(chan waitResult, 1)
+			go func() {
+				ws, err := cont.Wait()
+				done <- waitResult{ws, err}
+			}()
+			select {
+			case res := <-done:
+				if res.err != nil {
+					t.Fatalf("cont.Wait: %v", res.err)
+				}
+				if !killedBySignal(res.ws, unix.SIGSEGV) {
+					t.Fatalf("expected container killed by SIGSEGV, got %v (status=%d)", res.ws, res.ws.ExitStatus())
+				}
+			case <-time.After(pollTimeout):
+				t.Fatalf("PID 1 is still running %v after faulting", pollTimeout)
 			}
 		})
 	}
@@ -4867,7 +4929,7 @@ func createImageEROFS(image, source string, options ...string) error {
 // erofsImageInfo contains information about a created EROFS image.
 type erofsImageInfo struct {
 	name    string
-	options string
+	options []string
 	path    string
 }
 
@@ -4962,6 +5024,8 @@ find $dir -type l -o -type f | sort | xargs cat | md5sum`), 0755); err != nil {
 			name:    "image4",
 			options: []string{"-E", "force-inode-compact", "-E", "noinline_data"},
 		},
+		{name: "chunk-blockmap", options: []string{"--chunksize=8192", "-E", "force-inode-blockmap,force-inode-compact"}},
+		{name: "chunk-indexes", options: []string{"--chunksize=8192", "-E", "force-chunk-indexes,force-inode-extended"}},
 	}
 
 	var resultImages []erofsImageInfo
@@ -5110,8 +5174,8 @@ func TestMountEROFSConfig(t *testing.T) {
 }
 
 // createRootfsEROFS creates a rootfs directory and an EROFS rootfs image in
-// the directory dir.
-func createRootfsEROFS(dir string) (string, string, error) {
+// the directory dir, passing options to mkfs.erofs.
+func createRootfsEROFS(dir string, options ...string) (string, string, error) {
 	// Create a rootfs directory with busybox in root.
 	rootfsDir := filepath.Join(dir, "rootfs")
 	if err := os.Mkdir(rootfsDir, 0755); err != nil {
@@ -5136,7 +5200,7 @@ func createRootfsEROFS(dir string) (string, string, error) {
 
 	// Build the EROFS rootfs image.
 	rootfsImage := filepath.Join(dir, "rootfs.img")
-	if err := createImageEROFS(rootfsImage, rootfsDir, "-E", "noinline_data"); err != nil {
+	if err := createImageEROFS(rootfsImage, rootfsDir, append([]string{"-E", "noinline_data"}, options...)...); err != nil {
 		return "", "", fmt.Errorf("error creating EROFS image: %v", err)
 	}
 
@@ -6213,12 +6277,17 @@ func TestSaveRestoreExecReconfigure(t *testing.T) {
 		return path
 	}
 	wantHookLog := func(want string) {
-		got, err := os.ReadFile(hookLog)
-		if err != nil {
-			t.Fatalf("error reading hook log: %v", err)
-		}
-		if string(got) != want {
-			t.Errorf("save/restore binary invocations: got %q, want %q", got, want)
+		if err := testutil.Poll(func() error {
+			got, err := os.ReadFile(hookLog)
+			if err != nil {
+				return err
+			}
+			if string(got) != want {
+				return fmt.Errorf("save/restore binary invocations: got %q, want %q", got, want)
+			}
+			return nil
+		}, 30*time.Second); err != nil {
+			t.Fatal(err)
 		}
 	}
 
@@ -6250,8 +6319,10 @@ func TestSaveRestoreExecReconfigure(t *testing.T) {
 		if err := cont.Checkpoint(conf, lastImage, checkpointOpts); err != nil {
 			t.Fatalf("checkpoint %d failed: %v", i+1, err)
 		}
+		// Wait for the resume hook before starting another checkpoint so that
+		// the save and resume hooks cannot run concurrently.
+		wantHookLog(strings.Repeat("save\nresume\n", i+1))
 	}
-	wantHookLog("save\nresume\nsave\nresume\n")
 	cont.Destroy()
 
 	// Restore the last checkpoint and checkpoint it once more. The restored

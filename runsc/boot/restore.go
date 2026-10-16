@@ -584,6 +584,10 @@ func (r *restorer) restore(l *Loader) error {
 	}
 
 	// Rebuild `processes` map with containers' root process from the restored kernel.
+	specsByCID := make(map[string]*specs.Spec, len(l.containerIDs))
+	for name, cid := range l.containerIDs {
+		specsByCID[cid] = l.containerSpecs[name]
+	}
 	for _, tg := range l.k.RootPIDNamespace().ThreadGroups() {
 		// Find all processes with no parent (root of execution), that were not started
 		// via a call to `exec`.
@@ -594,6 +598,7 @@ func (r *restorer) restore(l *Loader) error {
 				return fmt.Errorf("unable to find container root process with CID %q, processes: %v", cid, l.processes)
 			}
 			proc.tg = tg
+			l.restoreNamespacePathsLocked(proc, specsByCID[cid], cid == l.root.cid)
 		}
 	}
 
@@ -635,6 +640,21 @@ func (r *restorer) restore(l *Loader) error {
 	r.timer = nil
 
 	return nil
+}
+
+// restoreNamespacePathsLocked lets containers started after restore join the
+// namespaces of the restored container proc by path.
+//
+// +checklocks:l.mu
+func (l *Loader) restoreNamespacePathsLocked(proc *execProcess, spec *specs.Spec, isRoot bool) {
+	if ns, ok := specutils.GetNS(specs.PIDNamespace, spec); ok && !isRoot && proc.pidns == nil {
+		proc.pidnsPath = ns.Path
+		proc.pidns = proc.tg.PIDNamespace()
+		proc.pidns.IncRef()
+	}
+	if ns, ok := specutils.GetNS(specs.CgroupNamespace, spec); ok {
+		proc.cgroupnsPath = ns.Path
+	}
 }
 
 func (r *restorer) postRestore(k *kernel.Kernel, timeline *timing.Timeline, timer *timing.Timer) {
@@ -741,7 +761,11 @@ func (l *Loader) saveWithOpts(saveOpts *state.SaveOpts, execOpts *control.SaveRe
 	hasFSSave := saveOpts.FSSaveOpts != nil
 	defer func() {
 		// This closure is required to capture the final value of err.
-		l.k.OnCheckpointAttempt(err)
+		if err == nil && saveOpts.Resume {
+			go l.postResume()
+		} else {
+			l.k.OnCheckpointAttempt(err)
+		}
 		if hasFSSave {
 			l.k.SignalAllFSSaveWaiters(err)
 		}
@@ -779,6 +803,16 @@ func (l *Loader) saveWithOpts(saveOpts *state.SaveOpts, execOpts *control.SaveRe
 		Watchdog: l.watchdog,
 	}
 	return state.SaveWithOpts(saveOpts, execOpts)
+}
+
+// postResume runs post-resume work and then completes the checkpoint attempt.
+func (l *Loader) postResume() {
+	err := control.PostResume(l.k, nil)
+	l.k.OnCheckpointAttempt(err)
+	if err != nil {
+		log.Warningf("Killing the sandbox after post resume work failed: %v", err)
+		l.k.Kill(linux.WaitStatusTerminationSignal(linux.SIGKILL))
+	}
 }
 
 func procFiles(conf *config.Config) []string {
