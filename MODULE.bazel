@@ -235,7 +235,27 @@ release_apt.install(
         "jammy-security",
     ],
 )
-release_apt.install(
+# Resolve the EROFS writer, loader and libraries together, without changing
+# virtual package providers in the existing Jammy dependency sets.
+container_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt", isolate = True)
+container_apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = [
+        "main",
+        "universe",
+    ],
+    suites = [
+        "noble",
+        "noble-updates",
+        "noble-security",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
+)
+container_apt.install(
     dependency_set = "container_test_tools",
     packages = [
         # Package copyright files refer to /usr/share/common-licenses.
@@ -244,11 +264,12 @@ release_apt.install(
         "erofs-utils",
     ],
     suites = [
-        "jammy",
-        "jammy-updates",
-        "jammy-security",
+        "noble",
+        "noble-updates",
+        "noble-security",
     ],
 )
+use_repo(container_apt, "container_test_tools")
 
 # Build the ARM emulator against the same immutable Jammy library closure
 # used by the host launcher. Python tooling is supplied by declared wheels.
@@ -387,7 +408,7 @@ release_apt.install(
         "jammy-security",
     ],
 )
-use_repo(release_apt, "container_test_tools", "kvm_amd64_cgroup_v1_guest", "kvm_amd64_guest", "kvm_host_tools", "qemu_build_deps", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
+use_repo(release_apt, "kvm_amd64_cgroup_v1_guest", "kvm_amd64_guest", "kvm_host_tools", "qemu_build_deps", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
 
 # Ubuntu's mainline test packages pin the historical RC release, not the
 # mutable Buildkite worker image. Keep the image and modules from one build.

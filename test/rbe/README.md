@@ -99,6 +99,13 @@ Select their `_amd64` or `_arm64` frontends so the existing declared root or
 nonroot identity reaches the matching Actions runner. Compilation remains on
 RBE, while the ordinary local-test bound and report retention apply.
 
+The `test` and `container-v1` lanes accept an optional `test_filter`, forwarded
+as one Bazel `--test_filter` argument. Direct callers use `--test-filter=REGEX`.
+Use `container-v1` for its existing root coordinator and KVM guest; the explicit
+test lane does not grant that guest device access. Record the selected cases
+when reporting a filtered result. Other named profiles reject this option,
+and omitting it preserves the complete lane selection.
+
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested
 commit before qualification. For `cos-metadata` or the full `amd64` profile,
@@ -181,6 +188,11 @@ execution, including Firecracker tests whose requirements the workers satisfy.
 The test invocation's build events and execution log record configured tests,
 shards and actual placement. Syscall selection reports also retain the reason
 for each local route.
+The local `syscalls`, `syscalls-kvm` and `syscalls-resume` Actions lanes retain
+each invocation's original test logs and XML in the qualification artifact.
+Their command and source records are under `<lane>-full-profile`. Report
+capture failures fail otherwise successful work without replacing a native
+test or build failure.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
 

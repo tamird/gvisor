@@ -417,25 +417,8 @@ func enumerate(p Paths) ([]dep, error) {
 	for _, m := range graph.Dependencies {
 		refs = append(refs, repoRef{m.Key, m.Name})
 	}
-	for _, u := range graph.ExtensionUsages {
-		switch {
-		case strings.HasPrefix(u.Key, "@@//:MODULE.bazel%") &&
-			(strings.HasSuffix(u.Key, " http_archive") || strings.HasSuffix(u.Key, " http_file") || strings.HasSuffix(u.Key, " module_proxy")):
-			// Repository rules declared directly in MODULE.bazel.
-		case strings.HasSuffix(u.Key, "%go_deps"):
-			// Go repos imported from the gazelle go_deps extension.
-		case strings.HasSuffix(u.Key, "%pip"):
-			// Imported pip hubs own the wheel selection, including variants.
-		case strings.HasSuffix(u.Key, "%apt"):
-			// Imported apt hubs own the selected package closures.
-		default:
-			// Toolchain extensions (crosstool, llvm_zlib, python, go_sdk,
-			// ...) are not audited.
-			continue
-		}
-		for _, r := range u.UsedRepos {
-			refs = append(refs, repoRef{"@" + r, r})
-		}
+	for _, r := range graph.auditedRepos() {
+		refs = append(refs, repoRef{"@" + r, r})
 	}
 	refNames := make([]string, 0, len(refs)+1)
 	refNames = append(refNames, "show_repo")
@@ -555,6 +538,33 @@ type modGraph struct {
 		Key       string   `json:"key"`
 		UsedRepos []string `json:"used_repos"`
 	} `json:"extensionUsages"`
+}
+
+// auditedRepos selects imported dependency owners, independently of whether
+// their extension usage is shared or isolated. Bazel appends isolation to the
+// extension identity as a third percent-delimited component.
+func (g *modGraph) auditedRepos() []string {
+	var repos []string
+	for _, u := range g.ExtensionUsages {
+		label, extension, _ := strings.Cut(u.Key, "%")
+		extension, _, _ = strings.Cut(extension, "%")
+		switch {
+		case label == "@@//:MODULE.bazel" &&
+			(strings.HasSuffix(extension, " http_archive") || strings.HasSuffix(extension, " http_file") || strings.HasSuffix(extension, " module_proxy")):
+			// Repository rules declared directly in MODULE.bazel.
+		case extension == "go_deps":
+			// Go repos imported from the gazelle go_deps extension.
+		case extension == "pip":
+			// Imported pip hubs own the wheel selection, including variants.
+		case extension == "apt":
+			// Imported apt hubs own the selected package closures.
+		default:
+			// Toolchain extensions remain outside this audit.
+			continue
+		}
+		repos = append(repos, u.UsedRepos...)
+	}
+	return repos
 }
 
 // parseModGraph parses `bazel mod graph --output json` output, skipping any
