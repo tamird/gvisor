@@ -15,12 +15,24 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
-load("//tools:defs.bzl", "go_test")
+load("//tools:defs.bzl", "go_test", "py_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+py_test(
+    name = "qualification_report_test",
+    srcs = [
+        "qualification_report.py",
+        "qualification_report_test.py",
+        "unit_matrix.py",
+    ],
+    data = glob(["testdata/qualification_report/**"]),
+    main = "qualification_report_test.py",
+    tags = ["manual"],
 )
 
 # Fork-only observation of the guest used by each qualification test.
