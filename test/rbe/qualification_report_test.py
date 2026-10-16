@@ -29,6 +29,7 @@ import tempfile
 import time
 import unittest
 from unittest import mock
+import zipfile
 
 import qualification_report as report
 
@@ -438,6 +439,55 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 37))
         combined = report.bundle(self.evidence, 37, 1, self.root / "evidence.tar.gz")
         self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 37))
+
+    def test_bundle_retains_undeclared_outputs_only_for_failed_attempts(self) -> None:
+        for status in ("PASSED", "TIMEOUT"):
+            with self.subTest(status=status):
+                invocation = self.fixture()
+                outputs = invocation / "outputs.zip"
+                with zipfile.ZipFile(outputs, "w") as archive:
+                    archive.writestr("guest.log", "payload completed before wrapper timeout\n")
+                original = outputs.read_bytes()
+                events = self.events(invocation)
+                result = next(event["testResult"] for event in events if "testResult" in event)
+                result["status"] = status
+                result["testActionOutput"].append({"name": "test.outputs__outputs.zip", "uri": outputs.as_uri()})
+                self.write_events(invocation, events)
+                native_exit = 0 if status == "PASSED" else 3
+                (invocation / "native-exit").write_text(f"{native_exit}\n")
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                # Resume must retain verified diagnostics even after the
+                # original worker outputs have disappeared.
+                outputs.unlink()
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                self.assertEqual(self.verdict(invocation)["status"], "PASS" if status == "PASSED" else "FAIL")
+                bundle = self.root / "evidence.tar.gz"
+                report.bundle(self.evidence, native_exit, 0, bundle)
+                with tarfile.open(bundle) as archive:
+                    path = "invocation-pass/reports/outputs.zip"
+                    if status == "PASSED":
+                        self.assertNotIn(path, archive.getnames())
+                    else:
+                        with archive.extractfile(path) as stream:
+                            self.assertEqual(stream.read(), original)
+                shutil.rmtree(invocation)
+
+    def test_missing_diagnostics_preserve_test_failure_and_other_reports(self) -> None:
+        invocation = self.fixture()
+        events = self.events(invocation)
+        result = next(event["testResult"] for event in events if "testResult" in event)
+        result["status"] = "TIMEOUT"
+        result["testActionOutput"].append({"name": "test.outputs__outputs.zip", "uri": (invocation / "missing.zip").as_uri()})
+        self.write_events(invocation, events)
+        (invocation / "native-exit").write_text("3\n")
+        (invocation / "capture-exit").write_text("1\n")
+        captured = self.capture(invocation)
+        self.assertEqual(len(captured["errors"]), 1)
+        self.assertEqual([row["name"] for row in captured["reports"]], ["test.log", "test.xml"])
+        value = self.verdict(invocation)
+        self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 3))
+        combined = report.bundle(self.evidence, 3, 1, self.root / "evidence.tar.gz")
+        self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 3))
 
     @unittest.skipUnless(sys.platform == "linux", "The Actions entry point requires Linux")
     def test_work_deadline_reaches_capture_and_bundle(self) -> None:
