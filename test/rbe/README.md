@@ -566,7 +566,13 @@ The `license-check` lane calls `make license-check DOCKER_BUILD=false`
 to compare the checked-in license catalog with the current dependency graph and
 license policy. This lane requires the hosted AMD64 coordinator. Its scoped
 Bazel configuration preserves the caller's rc files and does not introduce a
-cache or output base.
+cache or output base. The `license-fetch` lane uses the same configuration and
+canonical checker with `--mode=fetch`. It seeds the coordinator's
+`qualification/dependencies.yaml` from the checked-in catalog to preserve
+unchanged manual audits, then writes the generated catalog there using `--yaml`.
+The common evidence bundle retains that output for review and later import;
+source and lockfile checks remain strict. Fetch requires the coordinator's
+existing evidence directory and refuses to overwrite an earlier output.
 
 The `license-headers` lane resolves `--header-base` and HEAD to immutable commit
 IDs, then checks newly added files as the declared `//tools:license_headers_test`.
