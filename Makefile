@@ -515,7 +515,7 @@ endif
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)
 	@$(call install_runtime_variant,plugin-network,plugin_network,$(RUNTIME)-dpdk)
-	@$(call test_runtime_cached,$(RUNTIME)-dpdk, --test_arg=-test.run=ConnectToSelf $(INTEGRATION_TARGETS))
+	@$(call test_runtime_cached,$(RUNTIME)-dpdk, --test_arg=-test.run=ConnectToSelf //test/e2e:integration_test)
 
 plugin-network-tests: RUNSC_TARGET=//runsc:runsc-plugin-stack
 plugin-network-tests: EXTRA_SIDECAR_TARGETS=//runsc/cmd/sentry:gvisor_sentry_plugin_stack

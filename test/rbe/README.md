@@ -878,8 +878,7 @@ test/rbe/qualify.sh plugin-network
 ```
 
 It uses the plugin runtime and sentry sidecar with `--network=plugin`, and
-retains the `ConnectToSelf` filter on the image and integration suites. Only
-the integration suite currently contains a matching test. As in Make, this
+runs `ConnectToSelf` in its owning integration package. As in Make, this
 lane leaves the runtime platform at its default; its public agent's KVM
 capability requirement does not set `--platform=kvm`.
 
@@ -889,10 +888,9 @@ and `/dev/net/tun`; their presence alone does not establish plugin support.
 The existing privileged Docker fixture gives each test a private daemon,
 network namespace and disk-backed scratch, while compilation stays on RBE.
 The declared images are preloaded and `ConnectToSelf` needs no outbound network,
-so this lane does not attach the job bridge. Both maintained owners retain their
-original 900-second timeout and filter; an owner with no matching case does not
-provide runtime coverage. The local job retains two test slots and a 45-minute
-work limit within the 50-minute Actions job.
+so this lane does not attach the job bridge. The integration owner retains its
+original 900-second timeout and filter. The local job retains two test slots
+and a 45-minute Actions step cap within the 50-minute job.
 
 Both plugin lanes also accept `--arch=all` alongside other lanes. They retain
 AMD64 targets; this adds no ARM64 plugin or vhost-net worker capability. The

@@ -399,9 +399,16 @@ test_suite(
         tags = ["manual"],
         tests = [target + "_" + variant.name + "_owned" for target in INTEGRATION_TESTS],
     )
-    for variant in INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT]
+    for variant in INTEGRATION_VARIANTS
     if variant.name
 ]
+
+# ConnectToSelf belongs to the integration package, not the image suite.
+test_suite(
+    name = PLUGIN_NETWORK_VARIANT.name + "_tests",
+    tags = ["manual"],
+    tests = ["//test/e2e:integration_test_" + PLUGIN_NETWORK_VARIANT.name + "_owned"],
+)
 
 # Build PHP once and share its declared archive among the runtime owners.
 source_image_archive(
