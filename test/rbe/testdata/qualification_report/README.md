@@ -28,6 +28,12 @@ capture owner uses each `testResult`'s original reports.
   `32bit_test_runsc_systrap_directfs_save`. Both remain in the actual BEP.
   Expected analysis is projected to the selected owner for this regression;
   it is not evidence of running the corrected `--build_tests_only` preflight.
+* `benchmark`: the original `slice_diagnostic_empty` result at ce3880486 has
+  native/BEP success, one numeric row and two synthetic XML errors from verbose
+  benchmark RUN markers. Its original XML and log suffix remain unchanged.
+  Tests explicitly project nonverbose output, empty XML and future arguments
+  to exercise benchmark reporting; this projection is not another measurement
+  or proof of the real wrapper behavior.
 
 Other tests deliberately mutate these inputs to exercise source/configuration
 mismatches, missing results, report corruption, resumable capture, wrapper errors,

@@ -15,8 +15,12 @@
 package tests
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 // +stateify savable
@@ -116,3 +120,148 @@ type multiName struct {
 	x, y    int64
 	z       int32
 }
+
+// snapshotEmbedded requires the parent's saver to include its extra field.
+// +stateify savable
+type snapshotEmbedded struct {
+	inner
+	parent int64
+}
+
+// +stateify savable
+type snapshotPointerEmbedded struct {
+	*inner
+}
+
+// snapshotNilEmbedded tests a promoted method through a nil embedding chain.
+// +stateify savable
+type snapshotNilEmbedded struct {
+	*snapshotPointerEmbedded
+	parent int64
+}
+
+// +stateify savable
+type countedSave struct {
+	value  int64
+	parent *countedSaveParent
+	calls  *int `state:"nosave"`
+}
+
+// The receiver shadows a scalar name in the generated methods, which must
+// select the checked field width without emitting a bare builtin type name.
+func (int64 *countedSave) beforeSave() {
+	*int64.calls++
+}
+
+// +stateify savable
+type countedSaveParent struct {
+	child countedSave
+	value int64
+}
+
+// manualForwardedParent captures an external receiver into matching slots.
+// Its child may already have a resolver node even though the receiver does not.
+// +stateify type
+type manualForwardedParent struct {
+	child  countedSave
+	value  int64
+	source *countedSaveParent `state:"nosave"`
+}
+
+func (m *manualForwardedParent) StateSave(s state.Sink) {
+	m.source.StateSave(s)
+}
+
+func (m *manualForwardedParent) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &m.child)
+	s.Load(1, &m.value)
+}
+
+// +stateify savable
+type countedSaveGrandparent struct {
+	parent countedSaveParent
+}
+
+// manualInlineSave saves an external object inline, before or after another
+// saver reaches that same object through a pointer.
+// +stateify type
+type manualInlineSave struct {
+	value *countedSave
+}
+
+func (m *manualInlineSave) StateSave(s state.Sink) {
+	s.Save(0, m.value)
+}
+
+func (m *manualInlineSave) StateLoad(_ context.Context, s state.Source) {
+	m.value = new(countedSave)
+	s.Load(0, m.value)
+}
+
+type zeroSaveCountKey struct{}
+
+// +stateify type
+type countedZeroSave struct{}
+
+func (*countedZeroSave) StateSave(s state.Sink) {
+	*s.Context().Value(zeroSaveCountKey{}).(*int)++
+}
+
+func (*countedZeroSave) StateLoad(context.Context, state.Source) {}
+
+// earlyFieldChild is used before its generated registration init runs. Blank,
+// omitted and custom fields make physical indices differ from wire slots.
+// +stateify savable
+type earlyFieldChild struct {
+	_       uint64
+	omitted chan int    `state:"nosave"`
+	values  map[int]int `state:"wait"`
+	custom  int         `state:".(int)"`
+	slice   []int
+}
+
+func (e *earlyFieldChild) saveCustom() int                         { return e.custom }
+func (e *earlyFieldChild) loadCustom(_ context.Context, value int) { e.custom = value }
+
+// This manual owner forwards to a different receiver and supplies the schema
+// before the generated child's registration has run.
+type earlyFieldOwner struct {
+	prefix uint64
+	child  earlyFieldChild
+}
+
+func (*earlyFieldOwner) StateTypeName() string                           { return "state.tests.earlyFieldOwner" }
+func (*earlyFieldOwner) StateFields() []string                           { return []string{"values", "custom", "slice"} }
+func (e *earlyFieldOwner) StateSave(s state.Sink)                        { e.child.StateSave(s) }
+func (e *earlyFieldOwner) StateLoad(ctx context.Context, s state.Source) { e.child.StateLoad(ctx, s) }
+
+// Save reaches the generated method through interface dispatch from a package
+// variable initializer. Both directions must work before the generated child's
+// registration, using the forwarding owner's already-registered wire schema.
+var earlyFieldWire, earlyFieldLoaded, earlyFieldError = func() ([]byte, *earlyFieldOwner, error) {
+	state.Register((*earlyFieldOwner)(nil))
+	// A nil slot can be checkpointed before its element's registration. Its
+	// later non-nil use must retain valid operation metadata after init.
+	var child *earlyFieldChild
+	var buf bytes.Buffer
+	if _, err := state.Save(context.Background(), &buf, &child); err != nil {
+		return nil, nil, err
+	}
+	if _, err := state.Load(context.Background(), &buf, &child); err != nil {
+		return nil, nil, err
+	}
+	if got, want := child, (*earlyFieldChild)(nil); got != want {
+		return nil, nil, fmt.Errorf("early nil child = %v, want %v", got, want)
+	}
+	buf.Reset()
+	backing := []int{1, 2, 99, 99}
+	owner := earlyFieldOwner{prefix: 123, child: earlyFieldChild{
+		omitted: make(chan int), values: map[int]int{7: 9}, custom: 11, slice: backing[:2:4],
+	}}
+	if _, err := state.Save(context.Background(), &buf, &owner); err != nil {
+		return nil, nil, err
+	}
+	var restored earlyFieldOwner
+	_, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), &restored)
+	return buf.Bytes(), &restored, err
+}()

@@ -51,10 +51,10 @@ class QualificationReportTest(unittest.TestCase):
         return report.capture(invocation / "events.jsonl", invocation / "captured.jsonl",
                               invocation, invocation / "reports")
 
-    def verdict(self, invocation: Path, *, analysis: Path | None = None) -> dict[str, object]:
+    def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None) -> dict[str, object]:
         events = invocation / "captured.jsonl"
         value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
-                               invocation / "expected.txt", (analysis,) if analysis else ())
+                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks)
         report.write_json(invocation / "verdict.json", value)
         return value
 
@@ -93,6 +93,122 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": 4})
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
+
+    def benchmark_fixture(self) -> Path:
+        invocation = self.fixture("benchmark")
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "benchmark"
+        report.write_json(invocation / "context.json", context)
+        arguments, _ = report.benchmark_manifest(invocation / "benchmarks.json")
+        with (invocation / "arguments.txt").open("a") as stream:
+            stream.writelines("--test_arg=" + argument + "\n" for argument in arguments)
+        # Model the future nonverbose invocation explicitly. Preserve the
+        # original fixture XML and log so their false XML errors are testable.
+        original = (invocation / "test.log").read_text()
+        (invocation / "test.log").write_text("".join(line.replace("\x16", "") + "\n"
+                                                     for line in original.splitlines() if not line.startswith("\x16===")))
+        (invocation / "test.xml").write_text("<testsuites/>\n")
+        return invocation
+
+    def benchmark_verdict(self, invocation: Path) -> dict[str, object]:
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        return self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl",
+                            benchmarks=invocation / "benchmarks.json")
+
+    def test_benchmark_observations_are_not_named_tests(self) -> None:
+        invocation = self.benchmark_fixture()
+        value = self.benchmark_verdict(invocation)
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["case_counts"], {"passed": 0, "failed": 0, "skipped": 0})
+        self.assertEqual(value["executed"][0]["benchmarks"][0]["iterations"], 1)
+        self.assertEqual(value["executed"][0]["benchmarks"][0]["metrics"]["wire-B/op"], 15)
+        self.assertEqual(report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")["status"], "PASS")
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "test"
+        report.write_json(invocation / "context.json", context)
+        value = self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl")
+        self.assertEqual(value["status"], "INCOMPLETE", value)
+
+    def test_benchmark_missing_extra_zero_and_invalid_rows(self) -> None:
+        changes = {
+            "missing": lambda row: "",
+            "extra": lambda row: row + row,
+            "unexpected-leaf": lambda row: row.replace("/empty", "/unexpected"),
+            "zero-iterations": lambda row: row.replace("\t       1\t", "\t       0\t"),
+            "wrong-iterations": lambda row: row.replace("\t       1\t", "\t       2\t"),
+            "missing-metric": lambda row: row.replace("allocs/op", "other/op"),
+            "nonfinite-metric": lambda row: row.replace("7090", "NaN"),
+        }
+        for name, change in changes.items():
+            with self.subTest(name=name):
+                invocation = self.benchmark_fixture()
+                path = invocation / "test.log"
+                lines = path.read_text().splitlines(keepends=True)
+                row = next(line for line in lines if "ns/op" in line)
+                updated = change(row)
+                self.assertNotEqual(updated, row, name)
+                path.write_text("".join(updated if line == row else line for line in lines))
+                self.assertEqual(self.benchmark_verdict(invocation)["status"], "INCOMPLETE")
+                shutil.rmtree(invocation)
+
+    def test_benchmark_failure_remains_primary(self) -> None:
+        invocation = self.benchmark_fixture()
+        (invocation / "native-exit.txt").write_text("3\n")
+        (invocation / "test.log").write_text("--- FAIL: BenchmarkFirstRestore/empty\nFAIL\n")
+        value = self.benchmark_verdict(invocation)
+        self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 3))
+
+    def test_benchmark_preserves_original_xml_errors(self) -> None:
+        invocation = self.benchmark_fixture()
+        shutil.copyfile(FIXTURES / "benchmark/test.xml", invocation / "test.xml")
+        value = self.benchmark_verdict(invocation)
+        self.assertEqual(value["status"], "FAIL", value)
+        self.assertEqual(value["case_counts"]["failed"], 2)
+
+    def test_benchmark_requires_bep_success(self) -> None:
+        invocation = self.benchmark_fixture()
+        events = self.events(invocation)
+        for event in events:
+            if "testResult" in event:
+                event["testResult"]["status"] = "FAILED"
+        self.write_events(invocation, events)
+        self.assertEqual(self.benchmark_verdict(invocation)["status"], "FAIL")
+
+    def test_benchmark_does_not_hide_named_tests(self) -> None:
+        invocation = self.benchmark_fixture()
+        (invocation / "test.xml").write_text('<testsuite><testcase name="TestUnexpected"/></testsuite>')
+        self.assertEqual(self.benchmark_verdict(invocation)["status"], "INCOMPLETE")
+
+    def test_benchmark_manifest_and_package_completion_required(self) -> None:
+        for change in ("missing-manifest", "wrong-owner", "missing-pass", "different-arguments"):
+            with self.subTest(change=change):
+                invocation = self.benchmark_fixture()
+                manifest = invocation / "benchmarks.json"
+                if change == "missing-manifest":
+                    manifest.unlink()
+                elif change == "wrong-owner":
+                    value = report.read_json(manifest)
+                    value["owners"] = {"//other:benchmark": next(iter(value["owners"].values()))}
+                    report.write_json(manifest, value)
+                elif change == "missing-pass":
+                    path = invocation / "test.log"
+                    path.write_text(path.read_text().replace("PASS\n", ""))
+                else:
+                    path = invocation / "arguments.txt"
+                    path.write_text(path.read_text().replace("-test.v=false", "-test.v=true"))
+                self.assertEqual(self.benchmark_verdict(invocation)["status"], "INCOMPLETE")
+                shutil.rmtree(invocation)
+
+    def test_benchmark_manifest_rejects_ordinary_test_arguments(self) -> None:
+        invocation = self.benchmark_fixture()
+        path = invocation / "benchmarks.json"
+        original = report.read_json(path)
+        for argument in ("-test.run=Test", "-test.v=true", "--config=local"):
+            with self.subTest(argument=argument):
+                value = dict(original, arguments=original["arguments"] + [argument])
+                report.write_json(path, value)
+                with self.assertRaises(ValueError):
+                    report.benchmark_manifest(path)
 
     def test_rfc3339_timestamp_precision(self) -> None:
         expected = datetime.datetime(2026, 10, 16, 17, 39, 9, 185849, datetime.timezone.utc)

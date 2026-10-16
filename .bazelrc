@@ -127,3 +127,8 @@ common --incompatible_enable_proto_toolchain_resolution=true
 # override; test.* properties continue to select isolated runtime fixtures.
 build:rbe-matrix --config=rbe-common
 build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+
+# Bounded current-state integration: existing tests, one fresh process each.
+test --nocache_test_results
+test --test_sharding_strategy=disabled
+test --test_timeout=600

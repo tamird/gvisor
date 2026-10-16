@@ -137,6 +137,26 @@ printf '%s\n' \
   'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
   > "$qualification_rc"
 
+# Benchmark observations have a different coverage contract from named tests.
+# Validate and retain the opt-in before any Bazel command can start.
+qualification_benchmark_manifest=
+qualification_benchmark_arguments=
+if [[ -n ${QUALIFICATION_BENCHMARK_MANIFEST:-} ]]; then
+  [[ ${lanes[*]} == test && -n ${QUALIFICATION_TARGETS:-} ]]
+  qualification_benchmark_manifest=$qualification_artifacts/benchmark-manifest.json
+  qualification_benchmark_arguments=$qualification_artifacts/benchmark-arguments.txt
+  cp -- "$QUALIFICATION_BENCHMARK_MANIFEST" "$qualification_benchmark_manifest"
+  sha256sum "$qualification_benchmark_manifest" > "$qualification_artifacts/benchmark-manifest.sha256"
+  benchmark_target_options=()
+  for target in "${selected_targets[@]}"; do
+    benchmark_target_options+=("--target=$target")
+  done
+  python3 test/rbe/qualification_report.py benchmark-arguments \
+    --manifest "$qualification_benchmark_manifest" --output "$qualification_benchmark_arguments" \
+    "${benchmark_target_options[@]}"
+fi
+export qualification_benchmark_manifest qualification_benchmark_arguments
+
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) qualification_bazel_binary=$(type -P bazel) ;;
   local|remote-actions)
@@ -381,6 +401,12 @@ bazel() {
       break
     fi
   done
+  if [[ $command_kind == test && -n $qualification_benchmark_manifest ]]; then
+    command_args+=(--nocache_test_results)
+    while IFS= read -r argument; do
+      command_args+=("--test_arg=$argument")
+    done < "$qualification_benchmark_arguments"
+  fi
   if [[ $qualification_root_bazel == true ]]; then capture_prefix=(sudo -n -H); fi
   # Some callers inspect Bazel's exit status with ||, which disables errexit
   # throughout this function. A failed evidence precondition must still stop
@@ -388,7 +414,7 @@ bazel() {
   if ! {
     directory=$(mktemp -d "$qualification_artifacts/invocation-XXXXXX") &&
       raw_events=$(mktemp "$qualification_private/events-XXXXXX.json") &&
-      printf '%s\n' "$@" > "$directory/arguments.txt" &&
+      printf '%s\n' "${command_args[@]}" "${target_args[@]}" > "$directory/arguments.txt" &&
       git cat-file -p HEAD > "$directory/commit.txt" &&
       git status --porcelain --untracked-files=no > "$directory/source-before.txt" &&
       [[ ! -s "$directory/source-before.txt" ]]
@@ -440,8 +466,16 @@ bazel() {
     python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
     --events "$raw_events" --output "$directory/events.jsonl" \
     --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" || capture_status=$?
+  if [[ -n $qualification_benchmark_manifest ]]; then
+    sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" || capture_status=1
+  fi
   printf '%s\n' "$capture_status" > "$directory/capture-exit.txt" || capture_status=1
-  if [[ $analysis_only == true ]]; then command_kind=analysis; fi
+  if [[ $analysis_only == true ]]; then
+    command_kind=analysis
+  elif [[ $command_kind == test && -n $qualification_benchmark_manifest ]]; then
+    command_kind=benchmark
+    verdict_options+=(--expected-benchmarks "$qualification_benchmark_manifest")
+  fi
   python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" <<'CONTEXT' || capture_status=$?
 import json
 from pathlib import Path

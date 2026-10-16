@@ -20,7 +20,7 @@ reads those original records; it does not query services or rerun workloads.
 Context paths are relative to the context JSON, or absolute. The context names
 expected_source, commit_file, source_before, source_after, final_head,
 executed_arguments, native_exit, capture_exit, execution_finished_at (UTC), and
-command_kind (test, build or analysis). Optional lock_before/lock_after must be
+command_kind (test, benchmark, build or analysis). Optional lock_before/lock_after must be
 supplied together. Exit values are read from files, not inferred from reports.
 """
 
@@ -32,6 +32,7 @@ from dataclasses import asdict, dataclass
 import datetime
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import shutil
@@ -255,6 +256,88 @@ def xml_cases(path: Path) -> dict[str, object]:
     return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"], "failures": failures, "skips": skips}
 
 
+@dataclass(frozen=True)
+class Benchmark:
+    name: str
+    count: int
+    units: tuple[str, ...]
+    iterations: int | None
+
+
+def benchmark_manifest(path: Path) -> tuple[list[str], dict[str, list[Benchmark]]]:
+    """Read the explicit benchmark-only Go invocation contract, before Bazel."""
+    value = read_json(path)
+    if set(value) != {"arguments", "owners"}:
+        raise ValueError("Benchmark manifest requires exactly arguments and owners")
+    arguments = [string(item) for item in sequence(value.get("arguments"))]
+    flags: dict[str, str] = {}
+    for argument in arguments:
+        match = re.fullmatch(r"-test\.(run|bench|v|benchtime|count|cpu|benchmem)(?:=([^\r\n]+))?", argument)
+        if match is None:
+            raise ValueError(f"Unsupported benchmark argument: {argument}")
+        name, setting = match.groups()
+        if name in flags or setting is None and name != "benchmem":
+            raise ValueError(f"Duplicate or missing benchmark flag value: {argument}")
+        flags[name] = "true" if setting is None else setting
+    if flags.get("run") != "^$" or flags.get("v") != "false" or not flags.get("bench"):
+        raise ValueError("Benchmark arguments require -test.run=^$, -test.v=false and -test.bench=PATTERN")
+    owners: dict[str, list[Benchmark]] = {}
+    for label, rows in mapping(value.get("owners")).items():
+        if not label.startswith(("//", "@")):
+            raise ValueError(f"Invalid benchmark owner: {label}")
+        leaves = []
+        for raw in sequence(rows):
+            row = mapping(raw)
+            if set(row) - {"name", "count", "units", "iterations"}:
+                raise ValueError(f"Unknown benchmark expectation fields: {row}")
+            name = string(row.get("name"))
+            count = number(row.get("count"))
+            units = tuple(string(unit) for unit in sequence(row.get("units")))
+            iterations = number(row["iterations"]) if "iterations" in row else None
+            if (not name.startswith("Benchmark") or any(char.isspace() for char in name) or count < 1
+                    or not units or len(set(units)) != len(units) or any(not unit or any(c.isspace() for c in unit) for unit in units)
+                    or iterations is not None and iterations < 1):
+                raise ValueError(f"Invalid benchmark expectation for {label}: {row}")
+            leaves.append(Benchmark(name, count, units, iterations))
+        if not leaves or len({leaf.name for leaf in leaves}) != len(leaves):
+            raise ValueError(f"Expected unique nonempty benchmark leaves for {label}")
+        owners[label] = leaves
+    if not owners:
+        raise ValueError("No expected benchmark owners")
+    return arguments, owners
+
+
+def benchmark_rows(path: Path) -> list[dict[str, object]]:
+    """Read Go's benchmark name/iteration/(value unit)+ output, not test events.
+
+    Accept finite numeric metrics; neither aggregate nor compare values.
+    https://pkg.go.dev/golang.org/x/perf/benchfmt#Reader
+    """
+    rows = []
+    last = ""
+    with path.open() as stream:
+        for line in stream:
+            text = line.strip()
+            if text:
+                last = text
+            fields = text.split()
+            if not fields or not fields[0].startswith("Benchmark") or len(fields) == 1:
+                continue
+            name, iterations, *measurements = fields
+            if not iterations.isdecimal() or int(iterations) < 1 or not measurements or len(measurements) % 2:
+                raise ValueError(f"Malformed benchmark row: {text}")
+            metrics: dict[str, float] = {}
+            for raw, unit in zip(measurements[::2], measurements[1::2]):
+                value = float(raw)
+                if not math.isfinite(value) or unit in metrics:
+                    raise ValueError(f"Invalid or duplicate benchmark metric: {text}")
+                metrics[unit] = value
+            rows.append({"name": name, "iterations": int(iterations), "metrics": metrics})
+    if last != "PASS":
+        raise ValueError("Benchmark log does not end with the Go package PASS marker")
+    return rows
+
+
 def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     context = read_json(path)
     errors: list[str] = []
@@ -287,11 +370,13 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     kind = context.get("command_kind")
     arguments = bodies.get("executed_arguments", b"").decode().splitlines()
     analysis = any(arg in ("--nobuild", "--nobuild=true", "--build=false") for arg in arguments)
-    if kind not in ("test", "build", "analysis") or (kind == "analysis") != analysis:
+    if kind not in ("test", "benchmark", "build", "analysis") or (kind == "analysis") != analysis:
         errors.append("Command kind does not match original analysis/execution arguments")
     command = next((arg for arg in arguments if not arg.startswith("-")), None)
     if command not in ("test", "build") or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
+    if kind == "benchmark" and command != "test":
+        errors.append("Benchmark evidence requires a Bazel test command")
     exits = {}
     for key in ("native_exit", "capture_exit"):
         try:
@@ -325,12 +410,28 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
 
 
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
-            expected_analysis: tuple[Path, ...] = ()) -> dict[str, object]:
+            expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
     started = time.monotonic()
     errors: list[str] = []
     info, source_errors = source_context(context)
     errors.extend(source_errors)
+    benchmark_mode = info["command_kind"] == "benchmark"
+    testing = info["command_kind"] in ("test", "benchmark")
+    benchmark_expected: dict[str, list[Benchmark]] = {}
+    benchmark_evidence: dict[str, object] = {}
+    if benchmark_mode != (expected_benchmarks is not None):
+        errors.append("Benchmark mode requires its explicit manifest; ordinary commands cannot use one")
+    if expected_benchmarks is not None:
+        try:
+            arguments, benchmark_expected = benchmark_manifest(expected_benchmarks)
+            benchmark_evidence = {"path": str(expected_benchmarks), **file_record(expected_benchmarks),
+                                  "owners": {label: [asdict(leaf) for leaf in leaves] for label, leaves in benchmark_expected.items()}}
+            original = [arg[len("--test_arg="):] for arg in info["arguments"] if arg.startswith("--test_arg=")]
+            if original != arguments:
+                errors.append("Original benchmark arguments differ from the manifest")
+        except (OSError, ValueError) as error:
+            errors.append(f"Benchmark manifest: {error}")
     retained = read_json(manifest)
     errors.extend(string(item) for item in sequence(retained.get("errors")))
     if retained.get("events") != file_record(events):
@@ -362,7 +463,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 children = [mapping(child) for child in sequence(event.get("children", []))]
                 if "configured" in event:
                     details = mapping(event["configured"])
-                    if details.get("targetKind") != "test_suite rule" and (info["command_kind"] != "test" or "testSize" in details):
+                    if details.get("targetKind") != "test_suite rule" and (not testing or "testSize" in details):
                         configured.update(Owner.parse(child["targetCompleted"]) for child in children if "targetCompleted" in child)
                 if "aborted" in event and mapping(event["aborted"]).get("reason") == "SKIPPED" and "targetCompleted" in identity:
                     skipped_owners.add(Owner.parse(identity["targetCompleted"]))
@@ -397,7 +498,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             expected.update(Owner(label, target.configuration) for label, target in targets.items())
         except (OSError, ValueError) as error:
             errors.append(f"Expected analysis: {error}")
-    if info["command_kind"] in ("test", "build") and not expected_analysis and not labels:
+    if info["command_kind"] in ("test", "benchmark", "build") and not expected_analysis and not labels:
         errors.append("No independent expected selection was retained")
     if labels and expected and labels != {owner.label for owner in expected}:
         errors.append("Expected labels differ from selected analysis leaves")
@@ -410,9 +511,11 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     # A test command may also build test rules excluded by its execution
     # filters. Independent test-only analysis owns selection; results and
     # summaries below must still belong to that exact set of configurations.
-    different = expected - configured if info["command_kind"] == "test" else configured ^ expected
+    different = expected - configured if testing else configured ^ expected
     if different:
         errors.append(f"Configured owners differ from expected: {sorted(different)}")
+    if benchmark_mode and set(benchmark_expected) != {owner.label for owner in expected}:
+        errors.append("Benchmark manifest must cover every selected owner, and no others")
     if not finished:
         errors.append("Missing invocation finish event")
     accepted_analysis_exit = False
@@ -435,7 +538,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     owner_cases: Counter[Owner] = Counter()
     owner_executed: Counter[Owner] = Counter()
     skips: list[dict[str, object]] = []
-    if info["command_kind"] == "test":
+    if testing:
         missing.extend({**asdict(attempt), "reason": "announced result missing"} for attempt in sorted(announced - results.keys()))
         if results.keys() - announced:
             errors.append("Unannounced test results")
@@ -461,6 +564,19 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 skips.extend({**asdict(attempt), **mapping(item)} for item in sequence(counts["skips"]))
                 if counts["failed"]:
                     failures.append({**asdict(attempt), "reason": "XML test failures", "cases": counts["failures"]})
+                if benchmark_mode:
+                    rows = benchmark_rows(log)
+                    observation["benchmarks"] = rows
+                    wanted = {leaf.name: leaf for leaf in benchmark_expected.get(attempt.owner.label, [])}
+                    actual = Counter(string(row["name"]) for row in rows)
+                    if actual != Counter({name: leaf.count for name, leaf in wanted.items()}):
+                        errors.append(f"Benchmark rows differ for {attempt}: got {dict(actual)}, expected {wanted}")
+                    for row in rows:
+                        if (leaf := wanted.get(string(row["name"]))) is not None:
+                            if set(mapping(row["metrics"])) != set(leaf.units) or leaf.iterations is not None and row["iterations"] != leaf.iterations:
+                                errors.append(f"Benchmark metrics/iterations differ for {attempt}: {row}")
+                    if counts["passed"] or counts["skipped"]:
+                        errors.append(f"Benchmark-only invocation contains named tests: {attempt}")
             except (OSError, ValueError, KeyError, ET.ParseError) as error:
                 errors.append(f"{attempt}: {error}")
             if result.get("status") != "PASSED":
@@ -483,7 +599,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if summary.get("overallStatus") != "PASSED":
                 failures.append({**asdict(owner), "reason": "test summary", "status": summary.get("overallStatus")})
         for owner in sorted(expected | result_owners):
-            if owner_executed[owner] == 0:
+            if not benchmark_mode and owner_executed[owner] == 0:
                 errors.append(f"Test owner has no executed named cases; zero-case/all-skipped success is not coverage: {owner}")
     elif results or summaries:
         errors.append("Build/analysis invocation unexpectedly contains test execution")
@@ -496,6 +612,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "expected_labels": sorted(labels or {owner.label for owner in expected}),
             "expected": [asdict(owner) for owner in sorted(expected)], "executed": observations,
             "missing": missing, "skips": skips, "case_counts": dict(cases),
+            "benchmark_manifest": benchmark_evidence,
             "zero_case_owners": [asdict(owner) for owner, count in sorted(owner_cases.items()) if count == 0],
             "all_skipped_owners": [asdict(owner) for owner, count in sorted(owner_executed.items()) if count == 0 and owner_cases[owner] > 0],
             "skipped_owners": [asdict(owner) for owner in sorted(skipped_owners)],
@@ -588,12 +705,23 @@ def main() -> int:
     check.add_argument("--manifest", type=Path)
     check.add_argument("--expected-targets", type=Path)
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
+    check.add_argument("--expected-benchmarks", type=Path)
+    benchmarks = commands.add_parser("benchmark-arguments")
+    benchmarks.add_argument("--manifest", type=Path, required=True)
+    benchmarks.add_argument("--output", type=Path, required=True)
+    benchmarks.add_argument("--target", action="append", required=True)
     pack = commands.add_parser("bundle")
     for name in ("directory", "output"):
         pack.add_argument("--" + name, type=Path, required=True)
     for name in ("runner-exit", "capture-exit"):
         pack.add_argument("--" + name, type=int, required=True)
     args = parser.parse_args()
+    if args.command == "benchmark-arguments":
+        arguments, owners = benchmark_manifest(args.manifest)
+        if set(args.target) != set(owners):
+            parser.error("Benchmark manifest owners differ from selected targets")
+        args.output.write_text("".join(argument + "\n" for argument in arguments))
+        return 0
     if args.command == "capture":
         result = capture(args.events, args.output, args.output_root, args.report_dir)
         return int(bool(result["errors"]))
@@ -603,7 +731,7 @@ def main() -> int:
         return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
-                         args.expected_targets, tuple(args.expected_analysis))
+                         args.expected_targets, tuple(args.expected_analysis), args.expected_benchmarks)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
