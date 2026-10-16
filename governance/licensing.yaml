@@ -29,10 +29,9 @@ allowed_licenses:
   - Google patent license for Golang
 exceptions:
   - dependency: apt/container_test_tools/amd64/base-files
-    license: &apt_base_files_licenses
+    license:
       - GPL-2.0-or-later
       - GPL-3.0
-      - GPL-3.0-or-later
     exception_rationale: &apt_container_test_tools_rationale >-
       Currently used in the EROFS and BusyBox payload for
       runsc/container tests, not as a declared input to gVisor release
@@ -48,16 +47,14 @@ exceptions:
       - GPL-2.0
       - GPL-2.0-only
       - GPL-2.0-or-later
+      - Unlicense
     exception_rationale: *apt_container_test_tools_rationale
-  - dependency: apt/container_test_tools/amd64/gcc-12-base
-    license: &apt_gcc_12_base_licenses
+  - dependency: apt/container_test_tools/amd64/gcc-14-base
+    license: &apt_container_gcc_14_licenses
       - Artistic-1.0-Perl
       - BSD-2-Clause
       - BSD-3-Clause
       - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
       - GPL-3.0
       - GPL-3.0-or-later
       - HPND
@@ -91,7 +88,7 @@ exceptions:
       payload for runsc/container tests, not as a declared input to
       gVisor release artifacts.
   - dependency: apt/container_test_tools/amd64/libgcc-s1
-    license: *apt_gcc_12_base_licenses
+    license: *apt_container_gcc_14_licenses
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/amd64/liblz4-1
     license: &apt_liblz4_1_licenses
@@ -99,10 +96,21 @@ exceptions:
       - GPL-2.0
       - GPL-2.0-only
     exception_rationale: *apt_container_test_tools_rationale
-  - dependency: apt/container_test_tools/amd64/libselinux1
-    license: &apt_libselinux1_licenses
+  - dependency: apt/container_test_tools/amd64/liblzma5
+    license: &apt_container_liblzma5_licenses
+      - FSFULLR
       - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
       - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
       - libselinux-1.0
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/amd64/libuuid1
@@ -123,11 +131,15 @@ exceptions:
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/amd64/mawk
     license:
+      - CC-BY-3.0
       - GPL-2.0
       - GPL-2.0-only
+      - MIT
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/base-files
-    license: *apt_base_files_licenses
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/busybox-static
     license:
@@ -137,8 +149,8 @@ exceptions:
   - dependency: apt/container_test_tools/arm64/erofs-utils
     license: *apt_erofs_utils_licenses
     exception_rationale: *apt_container_test_tools_rationale
-  - dependency: apt/container_test_tools/arm64/gcc-12-base
-    license: *apt_gcc_12_base_licenses
+  - dependency: apt/container_test_tools/arm64/gcc-14-base
+    license: *apt_container_gcc_14_licenses
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/libc6
     license: *apt_libc6_licenses
@@ -152,21 +164,29 @@ exceptions:
       payload for runsc/container tests, not as a declared input to
       gVisor release artifacts.
   - dependency: apt/container_test_tools/arm64/libgcc-s1
-    license: *apt_gcc_12_base_licenses
+    license: *apt_container_gcc_14_licenses
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/liblz4-1
     license: *apt_liblz4_1_licenses
     exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/container_test_tools/arm64/liblzma5
+    license: *apt_container_liblzma5_licenses
+    exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/libselinux1
-    license: *apt_libselinux1_licenses
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - libselinux-1.0
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/libuuid1
     license: *apt_libuuid1_licenses
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/container_test_tools/arm64/mawk
     license:
+      - CC-BY-3.0
       - GPL-2.0
       - GPL-2.0-only
+      - MIT
     exception_rationale: *apt_container_test_tools_rationale
   - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/base-files
     license:
@@ -928,7 +948,10 @@ exceptions:
       guest, with package notices retained, not as a gVisor
       release-artifact input.
   - dependency: apt/kvm_amd64_guest/amd64/base-files
-    license: *apt_base_files_licenses
+    license: &apt_base_files_licenses
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
     exception_rationale: &kvm_tools_rationale >-
       The pinned packages provide the QEMU host tools and Linux guest used
       only by manual AMD64 RC-kernel tests. Their package copyright notices
@@ -976,7 +999,25 @@ exceptions:
       - GPL-3.0-or-later
     exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/kvm_amd64_guest/amd64/gcc-12-base
-    license: *apt_gcc_12_base_licenses
+    license: &apt_gcc_12_base_licenses
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
     exception_rationale: *kvm_tools_rationale
   - dependency: apt/kvm_amd64_guest/amd64/grep
     license:
@@ -1126,7 +1167,10 @@ exceptions:
       - LGPL-2.1-or-later
     exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/kvm_amd64_guest/amd64/libselinux1
-    license: *apt_libselinux1_licenses
+    license: &apt_libselinux1_licenses
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
     exception_rationale: *kvm_tools_rationale
   - dependency: apt/kvm_amd64_guest/amd64/libsmartcols1
     license: *apt_libuuid1_licenses
