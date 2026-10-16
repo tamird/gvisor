@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
@@ -411,18 +412,20 @@ func (c *Context) packetView(pkt *stack.PacketBuffer) *buffer.View {
 		c.t.Fatalf("got pkt.TransportProtocolNumber = %d, want = %d", got, want)
 	}
 
-	borrowed := pkt.AsView()
+	view := pkt.ToView()
+	cu := cleanup.Make(view.Release)
+	defer cu.Clean()
 
 	if pkt.GSOOptions.Type != stack.GSONone && pkt.GSOOptions.L3HdrLen != header.IPv4MinimumSize {
 		c.t.Errorf("got L3HdrLen = %d, want = %d", pkt.GSOOptions.L3HdrLen, header.IPv4MinimumSize)
 	}
 
-	checker.IPv4(c.t, &borrowed, checker.SrcAddr(StackAddr), checker.DstAddr(TestAddr))
+	checker.IPv4(c.t, view, checker.SrcAddr(StackAddr), checker.DstAddr(TestAddr))
 	if gso := pkt.GSOOptions; gso.NeedsCsum {
 		if got, want := gso.Type, stack.GSOTCPv4; got != want {
 			c.t.Fatalf("GSO type = %v, want %v", got, want)
 		}
-		ip := header.IPv4(borrowed.AsSlice())
+		ip := header.IPv4(view.AsSlice())
 		if got, want := gso.L3HdrLen, uint16(ip.HeaderLength()); got != want {
 			c.t.Fatalf("GSO L3 header length = %d, want %d", got, want)
 		}
@@ -435,9 +438,6 @@ func (c *Context) packetView(pkt *stack.PacketBuffer) *buffer.View {
 			c.t.Fatalf("partial TCP checksum = %d, want %d", got, want)
 		}
 	}
-	// All checks above borrow the packet's storage. Only create the
-	// caller-owned copy after validation can no longer abort the test.
-	view := pkt.ToView()
 	if pkt.GSOOptions.NeedsCsum {
 		// The channel has no host to complete CHECKSUM_PARTIAL. Finish the
 		// verified pseudo-header seed on the copy so ordinary TCP checkers
@@ -445,6 +445,7 @@ func (c *Context) packetView(pkt *stack.PacketBuffer) *buffer.View {
 		tcp := header.TCP(header.IPv4(view.AsSlice()).Payload())
 		tcp.SetChecksum(^checksum.Checksum(tcp, 0))
 	}
+	cu.Release()
 	return view
 }
 
@@ -681,10 +682,13 @@ func (c *Context) GetV6Packet() *buffer.View {
 	if got, want := pkt.NetworkProtocolNumber, ipv6.ProtocolNumber; got != want {
 		c.t.Fatalf("got pkt.NetworkProtocolNumber = %d, want = %d", got, want)
 	}
-	v := pkt.AsView()
+	v := pkt.ToView()
+	cu := cleanup.Make(v.Release)
+	defer cu.Clean()
 
-	checker.IPv6(c.t, &v, checker.SrcAddr(StackV6Addr), checker.DstAddr(TestV6Addr))
-	return pkt.ToView()
+	checker.IPv6(c.t, v, checker.SrcAddr(StackV6Addr), checker.DstAddr(TestV6Addr))
+	cu.Release()
+	return v
 }
 
 // SendV6Packet builds and sends an IPv6 Packet via the link layer endpoint of
