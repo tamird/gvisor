@@ -424,7 +424,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 					fmt.Fprintf(outputFile, "	%s.beforeSave()\n", saveRecv)
 					model.scan(scanFunctions{zerovalue: emitZeroCheck})
 					if len(record.fields) != 0 {
-						fmt.Fprintf(outputFile, " %s := %sRecord[%s](stateSinkObject, %d)\n", recordLocal, statePrefix, record.name, len(record.fields))
+						fmt.Fprintf(outputFile, " %s := %sRecord(stateSinkObject, %d, %s).(*%s)\n", recordLocal, statePrefix, len(record.fields), record.factory, record.name)
 					}
 					model.scan(scanFunctions{value: emitSaveValue})
 					model.scan(scanFunctions{normal: emitSave, wait: emitSave})

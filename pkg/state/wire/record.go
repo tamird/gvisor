@@ -45,27 +45,18 @@ func InitRecord(r *Record, id TypeID, count int, fields RecordFields) *Record {
 	return r
 }
 
-// RecordValue returns the capture storage selected for this record.
-// Keeping the exact type check here prevents a saver promoted from an embedded
-// type from interpreting another type's record as its own.
-func RecordValue[T any](r *Record) *T {
-	return any(r.fields).(*T)
-}
-
 // CaptureRecordValue returns the generated capture storage. When a manual
 // saver forwards to a generated saver, only that saver's prefix slots are
 // replaced. Other slots and subsequent ordinary saves remain composable.
-func CaptureRecordValue[T any, P interface {
-	*T
-	RecordFields
-}](r *Record, count int) *T {
+// The caller must assert its exact capture type before using the fields.
+func CaptureRecordValue(r *Record, count int, newRecord func(TypeID, int) *Record) RecordFields {
 	if slots, ok := r.fields.(*recordSlots); ok {
 		prefix := slots.prefix(count)
-		value := new(T)
-		captureRecordSlots(prefix, P(value))
-		return value
+		fields := newRecord(r.TypeID, count).fields
+		captureRecordSlots(prefix, fields)
+		return fields
 	}
-	return RecordValue[T](r)
+	return r.fields
 }
 
 // A compatibility slot contains either an ordinary capture or one field of a
@@ -115,7 +106,7 @@ func NewSlotRecord(id TypeID, count int) *Record {
 
 // Field returns a compatibility slot, replacing any earlier forwarded field.
 func (r *Record) Field(slot int) *Object {
-	value := &RecordValue[recordSlots](r).values[slot]
+	value := &r.fields.(*recordSlots).values[slot]
 	value.fields = nil
 	return &value.value
 }

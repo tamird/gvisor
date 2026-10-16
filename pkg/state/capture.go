@@ -24,11 +24,10 @@ import (
 // its exact receiver metadata selected a constructor before StateSave. Forwarding
 // from a manual saver instead adapts these fields into that saver's slots.
 // The saver must capture values now, not retain live fields for emission.
-func Record[T any, P interface {
-	*T
-	wire.RecordFields
-}](s Sink, count int) *T {
-	return wire.CaptureRecordValue[T, P](s.internal.encoded, count)
+// It must assert the exact capture type so promoted savers cannot use another
+// type's layout. newRecord is the same constructor returned by its metadata.
+func Record(s Sink, count int, newRecord func(wire.TypeID, int) *wire.Record) wire.RecordFields {
+	return wire.CaptureRecordValue(s.internal.encoded, count, newRecord)
 }
 
 // ForwardRecord resolves an identtype's capture layout on the actual converted
