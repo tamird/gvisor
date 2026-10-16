@@ -292,6 +292,7 @@ fi
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
 run_license_check() (
+  set -e
   local mode=$1 license_rc output arguments
   case "$mode" in
     verify) ;;
@@ -310,15 +311,15 @@ run_license_check() (
       fi
       # Preserve unchanged manual audits and retrieval dates in the generated
       # catalog, without modifying its checked-in source.
-      cp -- tools/licensecheck/dependencies.yaml "$output" || return
+      cp -- tools/licensecheck/dependencies.yaml "$output"
       printf -v arguments '%q ' --mode=fetch "--yaml=$output"
       ;;
     *) printf 'Unknown license mode: %s\n' "$mode" >&2; return 2 ;;
   esac
-  license_rc=$(mktemp) || return
+  license_rc=$(mktemp)
   trap 'rm -f "$license_rc"' EXIT
   printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
-    'build --keep_going' > "$license_rc" || return
+    'build --keep_going' > "$license_rc"
   if [[ $mode == fetch ]]; then
     make run DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc" \
       TARGETS=//tools/licensecheck/main:licensecheck ARGS="$arguments"
