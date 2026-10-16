@@ -165,7 +165,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     fi
     export qualification_full_unit
     qualification_retain_reports=false
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ( $QUALIFICATION_EXECUTION == local && ( $qualification_container == true || ${lanes[*]} == test ) ) ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions ||
+          $qualification_full_unit == true ||
+          ( $QUALIFICATION_EXECUTION == local &&
+            ( $qualification_container == true || ${lanes[*]} == test ||
+              ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-kvm ||
+              ${lanes[*]} == syscalls-resume ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
@@ -287,6 +292,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         if [[ $argument == build || $QUALIFICATION_LANES == test ]]; then
           cohort_dir="$RUNNER_TEMP/qualification/$argument"
         fi
+        case "$QUALIFICATION_LANES" in
+          syscalls|syscalls-kvm|syscalls-resume)
+            cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
+            ;;
+        esac
         if [[ $qualification_container == true ]]; then
           cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
           # Leave room for the work command and capture termination grace.
@@ -359,14 +369,14 @@ if count == 0:
 target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
 raise SystemExit(bool(errors))
 GUEST_EVENTS
-        rm -f "$raw_events"
-        printf '%s\n' "$result" > "$events_output.bazel-exit"
-        printf '%s\n' "$capture_status" > "$events_output.capture-exit"
+        rm -f "$raw_events" || capture_status=1
+        printf '%s\n' "$result" > "$events_output.bazel-exit" || capture_status=1
+        git rev-parse HEAD > "$cohort_dir/final-head.txt" || capture_status=1
+        [[ $(cat "$cohort_dir/final-head.txt") == "$QUALIFICATION_COMMIT" ]] || capture_status=1
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt" || capture_status=1
+        [[ ! -s "$cohort_dir/source-after.txt" ]] || capture_status=1
+        printf '%s\n' "$capture_status" > "$events_output.capture-exit" || capture_status=1
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$cohort_dir/final-head.txt"
-        if [[ $(cat "$cohort_dir/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt"
-        if [[ -s "$cohort_dir/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"

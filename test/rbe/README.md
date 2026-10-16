@@ -181,6 +181,11 @@ execution, including Firecracker tests whose requirements the workers satisfy.
 The test invocation's build events and execution log record configured tests,
 shards and actual placement. Syscall selection reports also retain the reason
 for each local route.
+The local `syscalls`, `syscalls-kvm` and `syscalls-resume` Actions lanes retain
+each invocation's original test logs and XML in the qualification artifact.
+Their command and source records are under `<lane>-full-profile`. Report
+capture failures fail otherwise successful work without replacing a native
+test or build failure.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
 
