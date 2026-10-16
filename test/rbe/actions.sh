@@ -359,9 +359,9 @@ qualification_bazel() {
 export -f qualification_bazel
 
 bazel() {
-  local argument command_kind="" result=0 capture_status=0 verdict_status=0 analysis_only=false
-  local directory raw_events expected_events=""
-  local -a capture_prefix=() verdict_options=()
+  local argument command_kind="" result=0 capture_status=0 verdict_status=0 preflight_status=0 analysis_only=false
+  local directory raw_events expected_events="" index
+  local -a capture_prefix=() verdict_options=() command_args=("$@") target_args=()
   for argument in "$@"; do
     case "$argument" in
       --nobuild|--nobuild=true|--build=false) analysis_only=true ;;
@@ -373,6 +373,14 @@ bazel() {
     qualification_bazel "$@"
     return
   fi
+  # Make separates target patterns with --; reporting options must precede it.
+  for (( index=0; index<${#command_args[@]}; index++ )); do
+    if [[ ${command_args[index]} == -- ]]; then
+      target_args=("${command_args[@]:index}")
+      command_args=("${command_args[@]:0:index}")
+      break
+    fi
+  done
   if [[ $qualification_root_bazel == true ]]; then capture_prefix=(sudo -n -H); fi
   # Some callers inspect Bazel's exit status with ||, which disables errexit
   # throughout this function. A failed evidence precondition must still stop
@@ -388,27 +396,40 @@ bazel() {
     return 1
   fi
 
-  # Resolve the exact test command before starting its actions. Besides catching
-  # invalid configuration early, this supplies an independent expected test set
+  # Resolve the exact command before starting its actions. Besides catching
+  # invalid configuration early, this supplies an independent expected target set
   # so a truncated result stream cannot silently lose selected owners.
-  if [[ $command_kind == test && $analysis_only == false ]]; then
+  if [[ $analysis_only == false ]]; then
     expected_events=$(mktemp "$qualification_private/expected-XXXXXX.json")
-    qualification_bazel "$@" --nobuild \
-      "--build_event_json_file=$expected_events" --build_event_json_file_path_conversion=false || result=$?
+    qualification_bazel "${command_args[@]}" --nobuild \
+      "--build_event_json_file=$expected_events" --build_event_json_file_path_conversion=false \
+      "${target_args[@]}" || result=$?
     printf '%s\n' "$result" > "$directory/preflight-exit.txt" || capture_status=1
     "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
       python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
       --events "$expected_events" --output "$directory/expected.jsonl" \
       --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" || capture_status=$?
     verdict_options+=(--expected-analysis "$directory/expected.jsonl")
+    if (( capture_status == 0 )); then
+      if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
+        --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
+        --output "$directory/selection.json"; then
+        result=0
+      else
+        preflight_status=$?
+        if (( result == 0 )); then capture_status=$preflight_status; fi
+      fi
+    fi
   fi
   if (( result == 0 && capture_status == 0 )); then
-    qualification_bazel "$@" \
+    qualification_bazel "${command_args[@]}" \
       "--execution_log_compact_file=$directory/execution.binpb" \
       "--profile=$directory/profile.json.gz" \
-      "--build_event_json_file=$raw_events" --build_event_json_file_path_conversion=false || result=$?
+      "--build_event_json_file=$raw_events" --build_event_json_file_path_conversion=false \
+      "${target_args[@]}" || result=$?
   fi
-  date -u +%Y-%m-%dT%H:%M:%S.%NZ > "$directory/execution-finished.txt" || capture_status=1
+  python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat())' \
+    > "$directory/execution-finished.txt" || capture_status=1
   printf '%s\n' "$result" > "$directory/native-exit.txt" || capture_status=1
   git rev-parse HEAD > "$directory/final-head.txt" || capture_status=1
   git status --porcelain --untracked-files=no > "$directory/source-after.txt" || capture_status=1
