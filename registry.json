@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+    "updatedAt": "2026-10-16T00:51:34.604685+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7065,7 +7065,7 @@
       "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
       "status": "Approved; awaiting prerequisite",
       "updatedAt": "2026-10-15T23:40:28.474328+00:00",
-      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor approved the correction. Upstream submission awaits the separate Karn correction; the fixed throughput comparison is running, with layout evidence to be checked from its artifacts.",
+      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor approved the correction. Upstream submission awaits the separate Karn correction; the completed comparison shows a conditional 1.48% upload-throughput regression and larger segment/sender heap classes. The owner is investigating a cheaper representation; the approved head is unchanged.",
       "followup": {
         "owner": "syscall_validation",
         "disposition": "Contributor approved; prerequisite outstanding",
@@ -8731,8 +8731,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
-      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: the Karn correction is published as #15819, and the minimum-RTT correction awaits its merge. A fixed two-host Upload/Download comparison is now running with Karn in both versions. No throughput or layout result is available yet.",
+      "updatedAt": "2026-10-16T00:51:34.604685+00:00",
+      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The fixed two-host comparison now shows a conditional 1.48% upload-throughput regression; download is inconclusive. Actual layouts imply larger segment and sender heap slots. The owner is investigating a cheaper representation; the approved source remains unchanged.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9288,7 +9288,7 @@
           ]
         },
         {
-          "text": "The third benchmark submission is running on the reviewed matched sources, with twelve balanced pairs per host and opposite starting orders on two hosts. Both versions include Karn; their production difference is the approved minimum-RTT correction. The existing Upload/Download fixture reports bandwidth as the primary metric. The first attempt stopped before Bazel because optional caller inputs were unset; the second failed to load the missing reporting-tool repository. Neither produced benchmark samples. The third corrects those setup contracts and preserves the fixed cohort. No recovery-benefit, throughput or memory-layout conclusion is available yet.",
+          "text": "The third benchmark submission completed all 52 fresh processes: four warmups and 48 measured processes, yielding 96 Upload/Download bandwidth rows. Original logs, fresh process results, opposite starting orders and arithmetic are independently checked. Both versions include Karn and differ by the approved minimum-RTT correction. The fixed paired-block analysis estimates upload throughput down 1.48% (pointwise 95% interval: -2.51% to -0.33%); download is inconclusive (+1.89%, -0.58% to +4.90%). Per-host unpaired benchstat detects neither difference. The hosts use different AMD EPYC models, so the aggregate is conditional on these two cohorts and assumes independent balanced blocks; it is not an equivalence claim. Actual Go 1.27.2 layouts imply segment heap slots grow from 256 to 288 bytes and sender slots from 896 to 1,024 bytes. These are allocator-class inferences, not measured per-packet allocations. The two earlier setup failures produced no samples and remain separate.",
           "evidence": [
             {
               "label": "Current fixed RACK comparison",
@@ -9313,7 +9313,7 @@
           ]
         }
       ],
-      "nextStep": "Verify the fixed two-host comparison and actual sender/segment layouts from retained artifacts. Keep the two setup failures separate. Upstream submission of the minimum-RTT correction still waits for #15819 to land.",
+      "nextStep": "Investigate a cheaper minimum-RTT representation using the measured layout and throughput costs. Keep the approved correction and its packet-regression evidence intact; upstream submission still awaits #15819. The comparison does not establish recovery benefit on lossy or changing paths.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9645,8 +9645,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
-      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Its complete fixed comparison now has verified source, native and numerical evidence for all 268 processes. UDP Save is 26.69% faster, but control-message Load is 26.88% slower and allocates 41.35% more bytes; pointer Load, map Save and UDP Load also regress. The proposal remains under investigation. Both provider failures and the incomplete 244-process Actions attempt remain separate. Earlier CLI and sandbox measurements apply to the preceding design, not this correction.",
+      "updatedAt": "2026-10-16T00:51:34.604685+00:00",
+      "summary": "The prior schema-ownership experiment completed its fixed comparison with mixed results: UDP Save improved 26.69%, while control-message Load regressed 26.88% and allocated 41.35% more bytes. A diagnostic successor now parses directly into one owned Value tree, removing temporary-frame conversion and generated load-lifetime metadata. Its fixed Linux AMD64 CLI comparison found no statistically significant timing difference (6.814 to 6.973 ms, p=.478, twelve batch means per version). Matched production files grow by 4,005,888 bytes on AMD64 and 3,735,552 bytes on ARM64. The successor's full package comparison is running. Both designs remain under investigation; the earlier failed and incomplete runs remain separate.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10549,9 +10549,26 @@
               "url": "https://github.com/tamird/gvisor/commit/fc2b6b435b97fed95b4c41fd5c39a535f2dee6e2"
             }
           ]
+        },
+        {
+          "text": "The owned-Value diagnostic successor completed the fixed 1,540-process CLI protocol against the existing control. Its twelve batch means per version have medians of 6.814 and 6.973 ms (p=.478), with no statistically significant difference detected. Matched production files grow by 4,005,888 bytes on AMD64 and 3,735,552 bytes on ARM64; size does not establish startup latency. Numerical/process and independent source/native reviews are complete. The full package timing comparison is running. This successor is a diagnostic source, not a new standalone proposal; review/state-schema-ownership at d702e9243 and its fc2b6b435 qualification remain the prior experiment.",
+          "evidence": [
+            {
+              "label": "Diagnostic owned-Value source",
+              "url": "https://github.com/tamird/gvisor/commit/391065ac5514e5ce1d9abb56a93d0ab8af085c49"
+            },
+            {
+              "label": "Fixed owned-Value CLI comparison",
+              "url": "https://app.buildbuddy.io/invocation/830cce87-a517-4e07-abc9-afce5930ea49"
+            },
+            {
+              "label": "Current fixed package comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38829797245"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate the confirmed control-message, pointer and UDP Load regressions, map Save regression and first-use allocation costs before proposing adoption. Keep the complete comparison separate from the earlier incomplete runs; do not infer startup or whole-checkpoint benefit from package measurements.",
+      "nextStep": "Finish verification of the owned-Value startup inputs and the complete package comparison, then assess its timing, allocation and production-size costs together. Preserve the prior schema-ownership results and source identity; no new contributor decision or adoption proposal is ready.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -13131,9 +13148,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T22:22:06.651889+00:00",
-      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated the netfilter change into merged PR #13810 and announced planned Tuesday-afternoon deployment. Brandon has also accepted the vhost changes for a follow-up after his 6.18 kernel upgrade, including the new kernel upload and dependency update. Hosted deployment and affected gVisor runtime behavior remain unverified. The duplicated-test cleanup is published separately as PR #13814.",
-      "nextStep": "Follow the provider’s 6.18 upgrade and promised vhost/kernel-upload follow-up, plus review of #13814. Verify the actual deployed worker before claiming the affected gVisor tests pass; no additional acknowledgment or reviewer ping is pending.",
+      "updatedAt": "2026-10-16T00:51:34.604685+00:00",
+      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated netfilter into merged PR #13810 and announced a planned deployment. Brandon accepted the vhost changes for a follow-up after his 6.18 upgrade, including the kernel upload and dependency update. Hosted deployment and affected gVisor runtime behavior remain unverified. Brandon approved the duplicated-test cleanup #13814 at its current head; two GitHub CI jobs fail because unchanged workflows receive an empty BuildBuddy API key, with no cleanup-code regression found.",
+      "nextStep": "Follow the provider's 6.18 upgrade and promised vhost/kernel-upload follow-up, and the approved cleanup's existing CI credential failure. Verify the deployed worker before claiming affected gVisor tests pass. No additional acknowledgment, reviewer ping or public CI comment is pending.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -13314,6 +13331,23 @@
               "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203437303"
             }
           ]
+        },
+        {
+          "text": "Brandon approved #13814 at dc0536b69 on October 16. Its two failed GitHub jobs run unchanged base workflows whose BuildBuddy API-key secret expands to an empty header. The build job fails remote access with exit 34 before executing tests. The ARM executor job builds successfully and passes both tests, then fails Build Event Protocol upload with exit 38. The cleanup changes only the duplicated kernel test and its BUILD targets; no regression from their removal is evidenced. Why the event received no secret was not independently established.",
+          "evidence": [
+            {
+              "label": "Exact-head approval",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13814#pullrequestreview-5541543869"
+            },
+            {
+              "label": "Build job: missing API key",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38810255698/job/116745500175"
+            },
+            {
+              "label": "ARM tests pass; result upload fails",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38810255652/job/116745497419"
+            }
+          ]
         }
       ]
     },
@@ -13322,8 +13356,8 @@
       "title": "Runtime startup performance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
-      "summary": "The current netip and state migrations completed separate fixed Linux AMD64 CLI startup comparisons; neither found a statistically significant timing difference. The matched sandbox comparison also completed all 288 container starts across twelve balanced blocks, with no detected timing difference for either migration. These results do not establish equal startup cost. Netip leaves executable lengths unchanged; the preceding state rewrite adds about 4 MB. A separate gofer correction now builds cgo filter rules only when needed; its configuration checks and initialization traces are verified, and contributor review is requested.",
+      "updatedAt": "2026-10-16T00:51:34.604685+00:00",
+      "summary": "Separate fixed Linux AMD64 CLI comparisons for netip, the earlier state design and the owned-Value successor found no statistically significant timing difference. The newest state comparison has medians of 6.814 and 6.973 ms (p=.478, twelve batch means per version), while its production files grow by about 4.01 MB on AMD64 and 3.74 MB on ARM64. The earlier 288-container-start comparison also found no statistically significant difference for netip or its then-current state design. These results do not establish equal startup cost or qualify the successor for sandbox startup. The independent gofer initialization correction remains under contributor review.",
       "findings": [
         {
           "text": "The netip migration adds three binary-codec registrations and changes header initialization. Both comparison arms include the cheaper non-race registration from #15814. The fixed method measures 12 balanced pairs of 64 fresh runsc --version processes on one worker, with separate initialization traces and matching AMD64/ARM64 builds. CLI measurements do not substitute for sandbox startup.",
@@ -13379,6 +13413,23 @@
             {
               "label": "Accepted config and initialization check",
               "url": "https://app.buildbuddy.io/invocation/5d536afd-488e-4a57-bd93-47d7fd760d24"
+            }
+          ]
+        },
+        {
+          "text": "The owned-Value successor completed 1,540 processes in the fixed Linux AMD64 CLI protocol, with no statistically significant timing difference across twelve batch means per version: 6.814 to 6.973 ms, p=.478. Production file growth is 4,005,888 bytes on AMD64 and 3,735,552 bytes on ARM64. These are separate latency and size observations; the earlier sandbox comparison used a different state design. Independent source/native verification is complete, and the current package comparison is still running.",
+          "evidence": [
+            {
+              "label": "Diagnostic owned-Value source",
+              "url": "https://github.com/tamird/gvisor/commit/391065ac5514e5ce1d9abb56a93d0ab8af085c49"
+            },
+            {
+              "label": "Fixed owned-Value CLI comparison",
+              "url": "https://app.buildbuddy.io/invocation/830cce87-a517-4e07-abc9-afce5930ea49"
+            },
+            {
+              "label": "Current fixed package comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38829797245"
             }
           ]
         }
