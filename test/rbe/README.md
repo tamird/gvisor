@@ -58,6 +58,24 @@ results apply to the recorded source, selected tests and actual workers.
 Declaring a lane does not establish that its tests pass, and failures remain
 part of the qualification result.
 
+## Qualification reports
+
+`actions.sh` captures reports for both hosted Bazel and Actions coordinators.
+Before executing a test command, it resolves the same selection with
+`--nobuild`. The final `qualification.tar.gz` contains a `verdict.json` with
+the source commit, expected configured targets, executed attempts, failures,
+skips and missing results. It also retains the original test logs and XML,
+their hashes, and sanitized build events. Test failures remain failures when
+report collection or cleanup also fails; missing results cannot produce a
+passing verdict.
+
+Collection and reconciliation run on the coordinator. Download the bundle
+once to inspect a failure or audit the verifier. The report records execution
+completion and verdict availability separately. Interrupted report collection
+can be resumed with `qualification_report.py capture` using the same inputs;
+copies matching the previous manifest are reused. The report tool does not
+rerun tests.
+
 ## GitHub Actions frontend
 
 Use `qualification/current-upstream-refresh` on `tamird/gvisor` for the

@@ -160,10 +160,13 @@ jobs:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: bash test/rbe/actions.sh
 
-    - name: Retain qualification placement and host facts
+    - name: Retain the qualification verdict and evidence bundle
       if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: qualification-${{ inputs.architecture }}
-        path: ${{ runner.temp }}/qualification
+        path: |
+          ${{ runner.temp }}/qualification.tar.gz
+          ${{ runner.temp }}/qualification/verdict.json
+        compression-level: 0
         if-no-files-found: error

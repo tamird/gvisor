@@ -73,12 +73,11 @@ qualification_private=
 qualification_workspace=$PWD
 qualification_artifacts=
 cleanup() {
-  local status=$?
+  local status=$? capture_status=0 bundle_status=0
   trap - EXIT
   # Preserve dependency resolution output even on failure or interruption.
   # A dirty lock remains a source-integrity failure; it is never restored here.
   if [[ -n $qualification_artifacts ]]; then
-    local capture_status=0
     cp -- "$qualification_workspace/MODULE.bazel.lock" "$qualification_artifacts/MODULE.bazel.lock" || capture_status=1
     sha256sum "$qualification_artifacts/MODULE.bazel.lock" > "$qualification_artifacts/MODULE.bazel.lock.sha256" || capture_status=1
     git -C "$qualification_workspace" diff --binary --full-index HEAD -- MODULE.bazel.lock > "$qualification_artifacts/MODULE.bazel.lock.diff" || capture_status=1
@@ -88,36 +87,59 @@ cleanup() {
     git -C "$qualification_workspace" status --porcelain --untracked-files=no > "$qualification_artifacts/source-after.txt" || capture_status=1
     [[ ! -s "$qualification_artifacts/source-after.txt" ]] || capture_status=1
     printf '%s\n' "$capture_status" > "$qualification_artifacts/lock-capture-exit" || capture_status=1
-    if (( status == 0 && capture_status != 0 )); then status=$capture_status; fi
   fi
   if ! rm -f -- "${temporary_files[@]}"; then
-    if (( status == 0 )); then status=1; fi
+    capture_status=1
   fi
   if [[ -n $qualification_private ]] && ! rm -rf -- "$qualification_private"; then
-    if (( status == 0 )); then status=1; fi
+    capture_status=1
   fi
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
     # left behind is a cleanup failure, not a reason to force-disconnect it.
     if ! sudo -n docker --host=unix:///var/run/docker.sock network rm "$GVISOR_DOCKER_NETWORK"; then
-      if (( status == 0 )); then status=1; fi
+      capture_status=1
     fi
+  fi
+  if [[ -n $qualification_artifacts ]]; then
+    # Reconcile on the coordinator and upload one archive. Preserve the original
+    # command failure if reporting or final cleanup also fails.
+    timeout --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
+      --directory "$qualification_artifacts" --native-exit "$status" --capture-exit "$capture_status" \
+      --output "${BUILDBUDDY_ARTIFACTS_DIRECTORY:-$RUNNER_TEMP}/qualification.tar.gz" || bundle_status=$?
+  fi
+  if (( status == 0 )); then
+    if (( capture_status != 0 )); then status=$capture_status; else status=$bundle_status; fi
   fi
   exit "$status"
 }
 trap cleanup EXIT
 
+# Both coordinator types retain and reconcile reports before uploading one
+# bundle. Bazel downloads the selected reports directly from its remote cache.
+RUNNER_TEMP=${RUNNER_TEMP:-$(mktemp -d)}
+export RUNNER_TEMP
+mkdir -p "$RUNNER_TEMP/qualification"
+qualification_artifacts=$RUNNER_TEMP/qualification
+qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
+qualification_rc=$(mktemp)
+temporary_files+=("$qualification_rc")
+qualification_bazel_binary=
+qualification_root_bazel=false
+export qualification_workspace qualification_artifacts qualification_private qualification_rc qualification_bazel_binary qualification_root_bazel
+cp -- MODULE.bazel.lock "$qualification_artifacts/MODULE.bazel.lock.before"
+git cat-file -p HEAD > "$qualification_artifacts/commit.txt"
+git status --porcelain --untracked-files=no > "$qualification_artifacts/source-before.txt"
+[[ ! -s "$qualification_artifacts/source-before.txt" ]]
+printf '%s\n' \
+  'common --lockfile_mode=error' \
+  'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
+  'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
+  > "$qualification_rc"
+
 case "${QUALIFICATION_EXECUTION:-remote}" in
-  remote) ;;
+  remote) qualification_bazel_binary=$(type -P bazel) ;;
   local|remote-actions)
-    # Capture the checked dependency input before any Bazel command, and retain
-    # both original bodies through the existing all-exit cleanup boundary.
-    mkdir -p "$RUNNER_TEMP/qualification"
-    qualification_artifacts=$RUNNER_TEMP/qualification
-    cp -- "$qualification_workspace/MODULE.bazel.lock" "$qualification_artifacts/MODULE.bazel.lock.before"
-    sha256sum "$qualification_artifacts/MODULE.bazel.lock.before" > "$qualification_artifacts/MODULE.bazel.lock.before.sha256"
-    git status --porcelain --untracked-files=no > "$qualification_artifacts/source-before.txt"
-    [[ ! -s "$qualification_artifacts/source-before.txt" ]]
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       options+=(--test-execution=local)
       case "${lanes[*]}" in
@@ -143,9 +165,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     USE_BAZEL_VERSION=$(<images/default/bazelversion)
     command -v bazelisk
     : "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"
-    qualification_rc=$(mktemp)
-    temporary_files+=("$qualification_rc")
-    export qualification_rc
+    qualification_bazel_binary=$(command -v bazelisk)
     # Bazel's Docker strategy runs each test as the coordinator's UID. These
     # lanes need root for their namespace fixture or KVM device; others retain
     # the nonroot server.
@@ -213,11 +233,6 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # bounded cache size and CPU-sized preparation limit.
         printf '%s\n' 'build:buildbuddy_remote_executor --experimental_remote_merkle_tree_cache'
       fi
-      if [[ $qualification_retain_reports == true ]]; then
-        printf '%s\n' \
-          'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
-          'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$'
-      fi
       # Report retention must not force successful unit tests to run again.
       if [[ $qualification_retain_reports == true && $qualification_full_unit == false ]]; then
         printf '%s\n' \
@@ -232,7 +247,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           printf '%s\n' 'test:buildbuddy_remote_executor --nozip_undeclared_test_outputs'
         fi
       fi
-    } > "$qualification_rc"
+    } >> "$qualification_rc"
     qualification_seconds=0
     if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true ]]; then
       qualification_seconds=7200
@@ -250,141 +265,6 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       export QUALIFICATION_WORK_DEADLINE
     fi
     unset BUILDBUDDY_API_KEY
-    # Capture spawn placement without including the credential RC in artifacts.
-    if [[ $qualification_retain_reports == true ]]; then
-      # Root cannot replace runner-owned files in sticky /tmp with Linux
-      # protected_regular enabled. Keep raw events in a private parent owned
-      # by this invocation, outside the uploaded artifact directory.
-      qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
-      export qualification_private
-    fi
-    bazel() {
-      local argument result=0 capture_status=0 raw_events="" events_output="" remaining cohort_dir="" capture_seconds=600
-      local -a evidence=() command_prefix=() capture_prefix=()
-      if [[ $qualification_root_bazel == true ]]; then
-        command_prefix=(sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION")
-        # Reports from root Bazel may be under /root. Use the same identity
-        # for bounded retention, without changing cache permissions.
-        capture_prefix=(sudo -n -H)
-      fi
-      # Startup options may precede the command. Queries perform no spawns and
-      # do not accept execution-log options; each build/test keeps its own log.
-      for argument in "$@"; do
-        if [[ $argument == --* ]]; then
-          continue
-        fi
-        if [[ $argument == build || $argument == test ]]; then
-          evidence=(
-            "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
-            # Retain the profile even if its remote upload is interrupted.
-            "--profile=$(mktemp "$RUNNER_TEMP/qualification/profile-XXXXXX.json.gz")"
-          )
-        fi
-        if [[ $qualification_retain_reports == true && ( $argument == build || $argument == test ) ]]; then
-          # Keep raw parsed options out of the uploaded artifact directory.
-          raw_events=$(mktemp "${qualification_private:?}/events-XXXXXX.json")
-          events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
-          evidence+=("--build_event_json_file=$raw_events" "--build_event_json_file_path_conversion=false")
-        fi
-        break
-      done
-      if [[ -n $raw_events ]]; then
-        # qualify.sh records the selected profile and configured test graph.
-        # Keep the actual command and checkout state alongside those records.
-        cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
-        if [[ $argument == build || $QUALIFICATION_LANES == test ]]; then
-          cohort_dir="$RUNNER_TEMP/qualification/$argument"
-        fi
-        case "$QUALIFICATION_LANES" in
-          syscalls|syscalls-kvm|syscalls-resume)
-            cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
-            ;;
-        esac
-        if [[ $qualification_container == true ]]; then
-          cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
-          # Leave room for the work command and capture termination grace.
-          capture_seconds=540
-        fi
-        if [[ $qualification_full_unit == true ]]; then
-          cohort_dir="$RUNNER_TEMP/qualification/unit-full-profile"
-        fi
-        mkdir -p "$cohort_dir"
-        printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
-        git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
-        [[ ! -s "$cohort_dir/source-before.txt" ]]
-        git cat-file -p HEAD > "$cohort_dir/commit.txt"
-      fi
-      if [[ -n ${QUALIFICATION_WORK_DEADLINE:-} ]]; then
-        remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
-        if (( remaining > 0 )); then
-          "${command_prefix[@]}" timeout --signal=INT --kill-after=30s "${remaining}s" \
-            "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
-        else
-          printf 'Qualification work deadline exhausted.\n' >&2
-          result=124
-        fi
-      else
-        "${command_prefix[@]}" "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
-      fi
-      if [[ -n $raw_events ]]; then
-        "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s "${capture_seconds}s" python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
-import json
-from pathlib import Path
-import shutil
-import sys
-from urllib.parse import unquote, urlsplit
-
-source, target = map(Path, sys.argv[1:])
-output_root = Path("bazel-out").resolve()
-keys = {"id", "children", "started", "finished", "configured", "completed", "testResult", "testSummary", "aborted", "namedSetOfFiles"}
-errors = []
-count = 0
-with source.open() as stream, target.open("w") as output:
-    for line_number, line in enumerate(stream, 1):
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError as error:
-            errors.append({"line": line_number, "error": str(error)})
-            continue
-        # Select reports from this invocation, not stale files in a warm cache.
-        for report in event.get("testResult", {}).get("testActionOutput", []):
-            if report["name"] not in ("test.log", "test.xml"):
-                continue
-            try:
-                uri = urlsplit(report.get("uri", ""))
-                if uri.scheme != "file":
-                    raise ValueError(f"Expected a local test report: {report.get('uri')}")
-                path = Path(unquote(uri.path)).resolve()
-                destination = target.parent / "reports" / path.relative_to(output_root)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, destination)
-            except (OSError, ValueError) as error:
-                errors.append({"line": line_number, "report": report["name"], "error": str(error)})
-        if "started" in event:
-            safe = {"uuid", "startTime", "startTimeMillis", "command"}
-            event["started"] = {key: value for key, value in event["started"].items() if key in safe}
-        serialized = json.dumps({key: value for key, value in event.items() if key in keys})
-        assert "x-buildbuddy-api-key" not in serialized.lower()
-        output.write(serialized + "\n")
-        count += 1
-if count == 0:
-    errors.append({"error": "No complete build events"})
-target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
-raise SystemExit(bool(errors))
-GUEST_EVENTS
-        rm -f "$raw_events" || capture_status=1
-        printf '%s\n' "$result" > "$events_output.bazel-exit" || capture_status=1
-        git rev-parse HEAD > "$cohort_dir/final-head.txt" || capture_status=1
-        [[ $(cat "$cohort_dir/final-head.txt") == "$QUALIFICATION_COMMIT" ]] || capture_status=1
-        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt" || capture_status=1
-        [[ ! -s "$cohort_dir/source-after.txt" ]] || capture_status=1
-        printf '%s\n' "$capture_status" > "$events_output.capture-exit" || capture_status=1
-        if (( result == 0 )); then result=$capture_status; fi
-        return "$result"
-      fi
-      return "$result"
-    }
-    export -f bazel
 
     # These are observations of this VM, not claims about other hosted images.
     {
@@ -458,6 +338,117 @@ GUEST_EVENTS
     ;;
   *) printf 'Unknown qualification execution mode.\n' >&2; exit 2 ;;
 esac
+
+# Keep one execution/deadline policy for preflight, queries and actual work.
+qualification_bazel() {
+  local remaining
+  local -a prefix=()
+  if [[ $qualification_root_bazel == true ]]; then
+    prefix=(sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION")
+  fi
+  if [[ -n ${QUALIFICATION_WORK_DEADLINE:-} ]]; then
+    remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
+    if (( remaining <= 0 )); then
+      printf 'Qualification work deadline exhausted.\n' >&2
+      return 124
+    fi
+    prefix+=(timeout --signal=INT --kill-after=30s "${remaining}s")
+  fi
+  "${prefix[@]}" "$qualification_bazel_binary" --bazelrc="$qualification_rc" "$@"
+}
+export -f qualification_bazel
+
+bazel() {
+  local argument command_kind="" result=0 capture_status=0 verdict_status=0 analysis_only=false
+  local directory raw_events expected_events=""
+  local -a capture_prefix=() verdict_options=()
+  for argument in "$@"; do
+    case "$argument" in
+      --nobuild|--nobuild=true|--build=false) analysis_only=true ;;
+      --*) ;;
+      *) if [[ -z $command_kind ]]; then command_kind=$argument; fi ;;
+    esac
+  done
+  if [[ $command_kind != build && $command_kind != test ]]; then
+    qualification_bazel "$@"
+    return
+  fi
+  if [[ $qualification_root_bazel == true ]]; then capture_prefix=(sudo -n -H); fi
+  # Some callers inspect Bazel's exit status with ||, which disables errexit
+  # throughout this function. A failed evidence precondition must still stop
+  # before actions start.
+  if ! {
+    directory=$(mktemp -d "$qualification_artifacts/invocation-XXXXXX") &&
+      raw_events=$(mktemp "$qualification_private/events-XXXXXX.json") &&
+      printf '%s\n' "$@" > "$directory/arguments.txt" &&
+      git cat-file -p HEAD > "$directory/commit.txt" &&
+      git status --porcelain --untracked-files=no > "$directory/source-before.txt" &&
+      [[ ! -s "$directory/source-before.txt" ]]
+  }; then
+    return 1
+  fi
+
+  # Resolve the exact test command before starting its actions. Besides catching
+  # invalid configuration early, this supplies an independent expected test set
+  # so a truncated result stream cannot silently lose selected owners.
+  if [[ $command_kind == test && $analysis_only == false ]]; then
+    expected_events=$(mktemp "$qualification_private/expected-XXXXXX.json")
+    qualification_bazel "$@" --nobuild \
+      "--build_event_json_file=$expected_events" --build_event_json_file_path_conversion=false || result=$?
+    printf '%s\n' "$result" > "$directory/preflight-exit.txt" || capture_status=1
+    "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+      python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
+      --events "$expected_events" --output "$directory/expected.jsonl" \
+      --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" || capture_status=$?
+    verdict_options+=(--expected-analysis "$directory/expected.jsonl")
+  fi
+  if (( result == 0 && capture_status == 0 )); then
+    qualification_bazel "$@" \
+      "--execution_log_compact_file=$directory/execution.binpb" \
+      "--profile=$directory/profile.json.gz" \
+      "--build_event_json_file=$raw_events" --build_event_json_file_path_conversion=false || result=$?
+  fi
+  date -u +%Y-%m-%dT%H:%M:%S.%NZ > "$directory/execution-finished.txt" || capture_status=1
+  printf '%s\n' "$result" > "$directory/native-exit.txt" || capture_status=1
+  git rev-parse HEAD > "$directory/final-head.txt" || capture_status=1
+  git status --porcelain --untracked-files=no > "$directory/source-after.txt" || capture_status=1
+  "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+    python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
+    --events "$raw_events" --output "$directory/events.jsonl" \
+    --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" || capture_status=$?
+  printf '%s\n' "$capture_status" > "$directory/capture-exit.txt" || capture_status=1
+  if [[ $analysis_only == true ]]; then command_kind=analysis; fi
+  python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" <<'CONTEXT' || capture_status=$?
+import json
+from pathlib import Path
+import sys
+
+directory = Path(sys.argv[1])
+context = {
+    "expected_source": sys.argv[2],
+    "command_kind": sys.argv[3],
+    "execution_finished_at": (directory / "execution-finished.txt").read_text().strip(),
+    "commit_file": "commit.txt",
+    "source_before": "source-before.txt",
+    "source_after": "source-after.txt",
+    "final_head": "final-head.txt",
+    "executed_arguments": "arguments.txt",
+    "native_exit": "native-exit.txt",
+    "capture_exit": "capture-exit.txt",
+}
+(directory / "context.json").write_text(json.dumps(context) + "\n")
+CONTEXT
+  "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+    python3 "$qualification_workspace/test/rbe/qualification_report.py" verdict \
+    --events "$directory/events.jsonl" --manifest "$directory/events.jsonl.manifest.json" \
+    --context "$directory/context.json" --output "$directory/verdict.json" \
+    "${verdict_options[@]}" || verdict_status=$?
+  if (( result == 0 )); then
+    if (( capture_status != 0 )); then result=$capture_status; else result=$verdict_status; fi
+  fi
+  return "$result"
+}
+export -f bazel
 
 if [[ -n $QUALIFICATION_HEADER_BASE ]]; then
   if [[ ! $QUALIFICATION_HEADER_BASE =~ ^[0-9a-f]{40}$ ]]; then

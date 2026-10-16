@@ -292,17 +292,12 @@ fi
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
 run_license_check() (
-  local qualification_rc
-  qualification_rc=$(mktemp)
-  trap 'rm -f "$qualification_rc"' EXIT
-  export qualification_rc
+  local license_rc
+  license_rc=$(mktemp)
+  trap 'rm -f "$license_rc"' EXIT
   printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
-    'build --keep_going' > "$qualification_rc"
-  bazel() {
-    command bazel --bazelrc="$qualification_rc" "$@"
-  }
-  export -f bazel
-  make license-check DOCKER_BUILD=false
+    'build --keep_going' > "$license_rc"
+  make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc"
 )
 
 # Set the caller's targets array from the same owning suites for standalone and
