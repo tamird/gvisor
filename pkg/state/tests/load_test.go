@@ -266,9 +266,7 @@ func TestConcurrentFieldLayouts(t *testing.T) {
 	if got, want := count, uint64(1); err != nil || got != want || !object {
 		t.Fatalf("ReadHeader = %d, %t, %v, want %d, true, nil", got, object, err, want)
 	}
-	var values wire.ValueBuffer
-	defer values.Release()
-	schemaValue := values.Load(&reader)
+	schemaValue := wire.Load(&reader)
 	if schemaValue.Kind() != wire.KindType {
 		t.Fatal("Save did not emit a type schema")
 	}
@@ -279,11 +277,11 @@ func TestConcurrentFieldLayouts(t *testing.T) {
 	if got, want := schema.Fields, []string{"first", "second", "text", "next"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("schema fields = %v, want %v", got, want)
 	}
-	id := values.Load(&reader).Uint()
+	id := wire.Load(&reader).Uint()
 	if got, want := id, uint64(1); got != want {
 		t.Fatalf("root ID = %v, want %v", got, want)
 	}
-	value := values.Load(&reader)
+	value := wire.Load(&reader)
 	if value.Kind() != wire.KindStruct {
 		t.Fatal("Save did not emit a struct")
 	}

@@ -35,11 +35,6 @@ type reconciledTypeEntry struct {
 	wire.Type
 	LocalType  reflect.Type
 	FieldOrder []int
-
-	// Loader metadata is resolved on an actual receiver, only after its body
-	// requires reconciliation. Promoted and forwarded methods remain owned.
-	metadataChecked bool
-	generated       bool
 }
 
 // typeEncodeDatabase is an internal TypeInfo database for encoding.
@@ -275,14 +270,13 @@ const interfaceType = "interface"
 // same underlying kind remain distinct.
 var primitiveTypeDatabase = map[string]reflect.Type{}
 
-// TypeMetadata describes generated capture and loader lifetime on an actual
-// receiver explicitly registered by the generator. Owner identifies the
+// TypeMetadata describes generated capture on an actual receiver explicitly
+// registered by the generator. Owner identifies the
 // method's declared receiver. Registration and allocation never call it.
-// Consumers retain only the constructor or mode, not the Owner type witness.
+// Consumers retain only the constructor, not the Owner type witness.
 type TypeMetadata struct {
-	Owner         Type
-	NewRecord     func(wire.TypeID, int) *wire.Record
-	LoadGenerated bool
+	Owner     Type
+	NewRecord func(wire.TypeID, int) *wire.Record
 }
 
 type generatedType interface {

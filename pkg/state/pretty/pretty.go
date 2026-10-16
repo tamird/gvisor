@@ -29,24 +29,26 @@ type printer struct {
 	typeSpecs map[string]*wire.Type
 }
 
-func (p *printer) formatRef(x wire.ReferenceView, graph uint64) string {
-	baseRef := fmt.Sprintf("g%dr%d", graph, x.Root())
+func (p *printer) formatRef(x wire.Ref, graph uint64) string {
+	baseRef := fmt.Sprintf("g%dr%d", graph, x.Root)
 	fullRef := baseRef
-	if x.Dots() > 0 {
-		typ, _ := p.formatType(x.Type(), graph)
+	if len(x.Dots) > 0 {
+		typ, _ := p.formatType(x.Type, graph)
 		var buf strings.Builder
 		buf.WriteString("(*")
 		buf.WriteString(typ)
 		buf.WriteString(")(")
 		buf.WriteString(baseRef)
 		buf.WriteString(")")
-		for i := 0; i < x.Dots(); i++ {
-			component := x.Dot(i)
-			if component.Field {
+		for _, dot := range x.Dots {
+			switch component := dot.(type) {
+			case *wire.FieldName:
 				buf.WriteString(".")
-				buf.WriteString(component.Name)
-			} else {
-				fmt.Fprintf(&buf, "[%d]", component.Index)
+				buf.WriteString(string(*component))
+			case wire.Index:
+				fmt.Fprintf(&buf, "[%d]", component)
+			default:
+				panic(fmt.Sprintf("unreachable: unknown path component %T", component))
 			}
 		}
 		fullRef = buf.String()
@@ -71,28 +73,27 @@ func (p *printer) formatTypeID(id wire.TypeID, graph uint64) (string, bool) {
 	return desc, true
 }
 
-func (p *printer) formatType(t wire.TypeView, graph uint64) (string, bool) {
-	switch t.Kind() {
-	case wire.TypeIDKind:
-		return p.formatTypeID(t.ID(), graph)
-	case wire.TypeNilKind:
+func (p *printer) formatType(t wire.TypeSpec, graph uint64) (string, bool) {
+	switch t := t.(type) {
+	case wire.TypeID:
+		return p.formatTypeID(t, graph)
+	case wire.TypeSpecNil:
 		return "", false
-	case wire.TypePointerKind:
-		element, _ := p.formatType(t.Element(), graph)
+	case *wire.TypeSpecPointer:
+		element, _ := p.formatType(t.Type, graph)
 		return fmt.Sprintf("(*%s)", element), true
-	case wire.TypeArrayKind:
-		element, _ := p.formatType(t.Element(), graph)
-		return fmt.Sprintf("[%d](%s)", t.Count(), element), true
-	case wire.TypeSliceKind:
-		element, _ := p.formatType(t.Element(), graph)
+	case *wire.TypeSpecArray:
+		element, _ := p.formatType(t.Type, graph)
+		return fmt.Sprintf("[%d](%s)", t.Count, element), true
+	case *wire.TypeSpecSlice:
+		element, _ := p.formatType(t.Type, graph)
 		return fmt.Sprintf("([]%s)", element), true
-	case wire.TypeMapKind:
-		keyType, valueType := t.Map()
-		key, _ := p.formatType(keyType, graph)
-		value, _ := p.formatType(valueType, graph)
+	case *wire.TypeSpecMap:
+		key, _ := p.formatType(t.Key, graph)
+		value, _ := p.formatType(t.Value, graph)
 		return fmt.Sprintf("(map[%s]%s)", key, value), true
 	default:
-		panic(fmt.Sprintf("unreachable: unknown type %v", t.Kind()))
+		panic(fmt.Sprintf("unreachable: unknown type %T", t))
 	}
 }
 
@@ -111,8 +112,8 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 		value := x.Complex()
 		return fmt.Sprintf("%f+%fi", real(value), imag(value)), value != 0
 	case wire.KindRef:
-		ref := x.ReferenceView()
-		return p.formatRef(ref, graph), ref.Root() != 0
+		ref := x.Reference()
+		return p.formatRef(ref, graph), ref.Root != 0
 	case wire.KindType:
 		x := x.Type()
 		tabs := "\n" + strings.Repeat("\t", depth)
@@ -124,7 +125,7 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 		items = append(items, "}")
 		return strings.Join(items, tabs), true // No zero value.
 	case wire.KindSlice:
-		slice := x.SliceView()
+		slice := x.Slice()
 		return fmt.Sprintf("%s{len:%d,cap:%d}", p.formatRef(slice.Ref, graph), slice.Length, slice.Capacity), slice.Capacity != 0
 	case wire.KindArray, wire.KindMultipleObjects:
 		if x.Len() == 0 {
@@ -191,8 +192,8 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 		items = append(items, "}")
 		return strings.Join(items, tabs), true
 	case wire.KindInterface:
-		typeView, value := x.InterfaceView()
-		typ, typOk := p.formatType(typeView, graph)
+		encodedType, value := x.Interface()
+		typ, typOk := p.formatType(encodedType, graph)
 		element, elementOk := p.format(graph, depth+1, value)
 		return fmt.Sprintf("interface[%s]{%s}", typ, element), typOk || elementOk
 	case wire.KindBool:
@@ -213,8 +214,6 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 // printStream is the basic print implementation.
 func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 	wr := wire.Reader{Reader: r}
-	var values wire.ValueBuffer
-	defer values.Release()
 
 	// current graph ID.
 	var graph uint64
@@ -272,7 +271,7 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 		)
 		for i := uint64(0); i < length; {
 			// Unmarshal either a type object or object ID.
-			encoded := values.Load(&wr)
+			encoded := wire.Load(&wr)
 			switch encoded.Kind() {
 			case wire.KindType:
 				we := encoded.Type()
@@ -292,7 +291,7 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 				id := encoded.Uint()
 				objects = append(objects, objectAndID{
 					id:  id,
-					obj: values.Load(&wr).Own(),
+					obj: wire.Load(&wr),
 				})
 				i++
 			default:

@@ -24,14 +24,13 @@ import (
 // restoreSet selects shared typed scalar operations from compiler-owned field
 // types. Containers and references retain Source.Load's common graph engine.
 type restoreSet struct {
-	modes       map[string]string
 	fields      map[string]map[string]string
 	waitValue   string
 	noWaitValue string
 }
 
 func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, group *groupModel) (*restoreSet, error) {
-	r := &restoreSet{modes: make(map[string]string), fields: make(map[string]map[string]string), waitValue: "true", noWaitValue: "false"}
+	r := &restoreSet{fields: make(map[string]map[string]string), waitValue: "true", noWaitValue: "false"}
 	// A package or import may shadow the predeclared boolean identifier.
 	if _, value := info.Scopes[file].LookupParent("true", token.NoPos); value != types.Universe.Lookup("true") {
 		r.waitValue = "0 == 0"
@@ -51,9 +50,6 @@ func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, group
 		if !ok {
 			return nil, fmt.Errorf("no checked restore type %s", name)
 		}
-		// Only this exact native generated method has the borrowing contract.
-		// Identtype forwarding and handwritten loaders may expose Source.
-		r.modes[name] = r.waitValue
 		fields := make(map[string]string)
 		for _, field := range model.fields {
 			if field.kind != fieldNormal && field.kind != fieldWait {

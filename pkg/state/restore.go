@@ -94,8 +94,8 @@ func LoadString[T ~string](s Source, slot int, ptr *T, wait bool) {
 // required. Wait registration still receives the original parsed value.
 func dataValue(value wire.Value) wire.Value {
 	for value.Kind() == wire.KindInterface {
-		typ, inner := value.InterfaceView()
-		if typ.Kind() != wire.TypeNilKind {
+		typ, inner := value.Interface()
+		if _, ok := typ.(wire.TypeSpecNil); !ok {
 			break
 		}
 		value = inner
@@ -111,7 +111,7 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 	case wire.KindNil:
 		return
 	case wire.KindRef:
-		ds.restoreReference(target, encoded.ReferenceView())
+		ds.restoreReference(target, encoded.Reference())
 	case wire.KindBool:
 		target.storeBool(encoded.Bool())
 	case wire.KindInt:
@@ -133,7 +133,7 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 	case wire.KindString:
 		target.storeString(encoded.Text())
 	case wire.KindSlice:
-		if slice := encoded.SliceView(); objectID(slice.Ref.Root()) != 0 {
+		if slice := encoded.Slice(); objectID(slice.Ref.Root) != 0 {
 			ds.assignSlice(target.value(), slice)
 		}
 	case wire.KindArray:
@@ -151,8 +151,8 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 
 // restoreReference retains register/Dots/assignment order. Only ordinary
 // pointer stores bypass reflect.Set; maps retain actual source flags and type.
-func (ds *decodeState) restoreReference(target restoreDestination, ref wire.ReferenceView) {
-	if objectID(ref.Root()) == 0 {
+func (ds *decodeState) restoreReference(target restoreDestination, ref wire.Ref) {
+	if objectID(ref.Root) == 0 {
 		return
 	}
 	if target.typ == nil {
@@ -164,11 +164,11 @@ func (ds *decodeState) restoreReference(target restoreDestination, ref wire.Refe
 		return
 	}
 	pointer := reflect.ValueOf(ds.register(ref, target.typ.Elem()))
-	if ref.Dots() != 0 {
+	if len(ref.Dots) != 0 {
 		pointer = reflectValueRWAddr(walkChild(ref, pointer.Elem()))
 	}
 	if pointer.IsNil() {
-		Failf("reference %d has no object storage", ref.Root())
+		Failf("reference %d has no object storage", ref.Root)
 	}
 	target.storePointer(pointer)
 }

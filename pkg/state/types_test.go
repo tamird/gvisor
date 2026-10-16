@@ -73,7 +73,6 @@ type lazyRegistered struct {
 }
 
 var lazyNames, lazyFields, lazyMetadata int
-var lazyGenerated bool
 
 func (*lazyRegistered) StateTypeName() string {
 	lazyNames++
@@ -96,7 +95,7 @@ func (l *lazyRegistered) StateMetadata() TypeMetadata {
 		panic("metadata requires an actual receiver")
 	}
 	lazyMetadata++
-	return TypeMetadata{Owner: (*lazyRegistered)(nil), LoadGenerated: lazyGenerated}
+	return TypeMetadata{Owner: (*lazyRegistered)(nil)}
 }
 
 func TestLazyRegistration(t *testing.T) {
@@ -111,7 +110,6 @@ func TestLazyRegistration(t *testing.T) {
 				delete(reverseTypeDatabase, reflect.TypeFor[lazyRegistered]())
 			})
 			lazyNames, lazyFields, lazyMetadata = 0, 0, 0
-			lazyGenerated = generated
 			// Describing a destination before registration must neither call
 			// its metadata on nil wire data nor cache a global fallback.
 			var buf bytes.Buffer
@@ -163,7 +161,7 @@ func TestLazyRegistration(t *testing.T) {
 			}
 			wantMetadata := 0
 			if generated {
-				wantMetadata = 2
+				wantMetadata = 1
 			}
 			if got, want := lazyMetadata, wantMetadata; got != want {
 				t.Errorf("Save/Load metadata calls = %d, want %d", got, want)
@@ -269,9 +267,7 @@ func TestPromotedChildPath(t *testing.T) {
 	writer := wire.Writer{Writer: &buf}
 	wire.Save(&writer, &wire.Ref{Root: 1, Dots: []wire.Dot{&name}, Type: wire.TypeID(0)})
 	reader := wire.Reader{Reader: &buf}
-	var values wire.ValueBuffer
-	defer values.Release()
-	child := walkChild(values.Load(&reader).ReferenceView(), reflect.ValueOf(&root).Elem())
+	child := walkChild(wire.Load(&reader).Reference(), reflect.ValueOf(&root).Elem())
 	if got, want := child.Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
 		t.Fatalf("promoted field address = %#x, want %#x", got, want)
 	}

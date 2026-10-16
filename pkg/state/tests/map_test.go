@@ -375,12 +375,10 @@ func reverseObjectBodies(t *testing.T, buf *bytes.Buffer) {
 	if err != nil || !object {
 		t.Fatalf("ReadHeader = %d, %t, %v", count, object, err)
 	}
-	var values wire.ValueBuffer
-	defer values.Release()
 	var schemas, objects [][]byte
 	for uint64(len(objects)) < count {
 		start := len(data) - input.Len()
-		value := values.Load(&reader)
+		value := wire.Load(&reader)
 		if value.Kind() == wire.KindType {
 			schemas = append(schemas, data[start:len(data)-input.Len()])
 			continue
@@ -388,7 +386,7 @@ func reverseObjectBodies(t *testing.T, buf *bytes.Buffer) {
 		if got, want := value.Kind(), wire.KindUint; got != want {
 			t.Fatalf("object ID kind = %v, want %v", got, want)
 		}
-		values.Load(&reader)
+		wire.Load(&reader)
 		objects = append(objects, data[start:len(data)-input.Len()])
 	}
 	buf.Reset()

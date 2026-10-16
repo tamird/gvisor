@@ -399,7 +399,7 @@ func (TypeSpecNil) isTypeSpec() {}
 // TypeSpec types.
 //
 // These use a distinct encoding on the wire, as they are used only in the
-// interface object. They are decoded through the dedicated valueFrame.loadType and
+// interface object. They are decoded through the dedicated loadType and
 // saveTypeSpec functions.
 const (
 	typeSpecTypeID Uint = iota

@@ -44,21 +44,53 @@ func TestLoadUnknownWideTag(t *testing.T) {
 					t.Errorf("Load panic = %q, want %q", got, want)
 				}
 			}()
-			var values ValueBuffer
-			defer values.Release()
-			values.Load(&Reader{Reader: &buf})
+			Load(&Reader{Reader: &buf})
 		})
 	}
 }
 
-func TestValueBufferOwnership(t *testing.T) {
+// The count must not narrow to an empty collection before allocation checks it.
+func TestLoadOversizedCount(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		tag  Uint
+	}{
+		{"array", typeArray},
+		{"map", typeMap},
+		{"fields", typeMultipleObjects},
+		{"path", typeRef},
+		{"schema", typeType},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writer := Writer{Writer: &buf}
+			test.tag.save(&writer)
+			switch test.tag {
+			case typeRef:
+				Uint(1).save(&writer)
+			case typeType:
+				name := String("schema")
+				name.save(&writer)
+			}
+			Uint(1 << 63).save(&writer)
+			defer func() {
+				if got := recover(); got == nil {
+					t.Error("Load accepted a count larger than an int")
+				}
+			}()
+			Load(&Reader{Reader: &buf})
+		})
+	}
+}
+
+func TestValueOwnership(t *testing.T) {
 	field := FieldName("Value")
 	want := &Array{Contents: []Object{
 		&Ref{Root: 7, Dots: []Dot{Index(257), &field}, Type: &TypeSpecArray{Count: 8, Type: TypeID(3)}},
 		&Ref{Root: 9, Dots: []Dot{Index(0)}, Type: &TypeSpecPointer{Type: TypeID(4)}},
 	}}
-	// Many recursive children force storage growth after reserving the array's
-	// element range. Their logical indices must survive every growth boundary.
+	// Retain a nested array with independent paths and type specifications.
+	// Following records must not alter any of its children.
 	for i := range 257 {
 		want.Contents = append(want.Contents, &Ref{
 			Root: Uint(i + 100),
@@ -79,8 +111,8 @@ func TestValueBufferOwnership(t *testing.T) {
 	Save(&w, &parent)
 	Save(&w, &Array{Contents: []Object{&text, &text, &text}})
 	Save(&w, reuse)
-	// A path count is an operand, not a byte tag. Reusing the same slots for
-	// index steps must also replace the previous field-name tags with zero.
+	// Full-width reference metadata and more than 255 path elements must
+	// survive both field-name and index paths in successive records.
 	path := &Ref{
 		Root: ^Uint(0),
 		Dots: make([]Dot, 257),
@@ -95,17 +127,16 @@ func TestValueBufferOwnership(t *testing.T) {
 	}
 	Save(&w, path)
 	Save(&w, Uint(29))
+	encoded := buf.Bytes()
 	r := Reader{Reader: &buf}
-	var values ValueBuffer
-	first := values.Load(&r)
-	owned := first.Field(1).Own()
+	first := Load(&r)
+	retained := first.Field(1)
 	retainedText := first.Field(2).Text()
-	// Reuse both node and string storage, then release the entire parser.
-	// Only the selected subtree and independently owned string remain usable.
-	values.Load(&r)
-	// Grow the logical record again after a short one, reusing storage that
-	// previously held reference metadata for ordinary scalar values.
-	reused := values.Load(&r)
+	// Keep only a nested subtree and text while reading unrelated records.
+	// Their lifetime must not depend on the reader or its input storage.
+	Load(&r)
+	// A large scalar array follows reference metadata and a short record.
+	reused := Load(&r)
 	if got, want := reused.Len(), len(reuse.Contents); got != want {
 		t.Fatalf("reused length = %d, want %d", got, want)
 	}
@@ -114,27 +145,27 @@ func TestValueBufferOwnership(t *testing.T) {
 			t.Fatalf("reused element %d = %d, want %d", i, got, want)
 		}
 	}
-	fields := values.Load(&r).ReferenceView()
-	if got, want := fields.Dots(), len(path.Dots); got != want {
+	fields := Load(&r).Reference()
+	if got, want := len(fields.Dots), len(path.Dots); got != want {
 		t.Fatalf("path length = %d, want %d", got, want)
 	}
 	for i := range path.Dots {
-		if got, want := fields.Dot(i), (PathElement{Name: string(field), Field: true}); got != want {
+		if got, want := fields.Dots[i], &field; !reflect.DeepEqual(got, want) {
 			t.Fatalf("field step %d = %+v, want %+v", i, got, want)
 		}
 	}
-	if got, want := values.Load(&r).Reference(), *path; !reflect.DeepEqual(got, want) {
+	if got, want := Load(&r).Reference(), *path; !reflect.DeepEqual(got, want) {
 		t.Fatalf("reused index path = %#v, want %#v", got, want)
 	}
-	if got, want := values.Load(&r).Uint(), uint64(29); got != want {
+	if got, want := Load(&r).Uint(), uint64(29); got != want {
 		t.Fatalf("following value = %d, want %d", got, want)
 	}
-	values.Release()
-	if got, want := owned.Len(), len(want.Contents); got != want {
+	clear(encoded)
+	if got, want := retained.Len(), len(want.Contents); got != want {
 		t.Fatalf("owned subtree length = %d, want %d", got, want)
 	}
 	for i, expected := range want.Contents {
-		if got, want := owned.Element(i).Reference(), *expected.(*Ref); !reflect.DeepEqual(got, want) {
+		if got, want := retained.Element(i).Reference(), *expected.(*Ref); !reflect.DeepEqual(got, want) {
 			t.Errorf("owned reference %d = %#v, want %#v", i, got, want)
 		}
 	}
@@ -143,7 +174,7 @@ func TestValueBufferOwnership(t *testing.T) {
 	}
 }
 
-func TestValueBufferSchemaOwnership(t *testing.T) {
+func TestSchemaOwnership(t *testing.T) {
 	schemas := []*Type{
 		{Name: "first", Fields: []string{"left", "right"}},
 		{Name: "empty", Fields: []string{}},
@@ -156,11 +187,8 @@ func TestValueBufferSchemaOwnership(t *testing.T) {
 		array.Contents = append(array.Contents, schema)
 	}
 	Save(&writer, array)
-	var values ValueBuffer
-	defer values.Release()
-	parsed := values.Load(&Reader{Reader: &saved})
+	parsed := Load(&Reader{Reader: &saved})
 	retained := parsed.Element(0).Type()
-	owned := parsed.Own()
 
 	// A later record may parse a complete nested schema before failing.
 	// It must not return that partial record or overwrite retained metadata.
@@ -172,17 +200,16 @@ func TestValueBufferSchemaOwnership(t *testing.T) {
 				t.Errorf("truncated schema panic = %v, want %v", got, want)
 			}
 		}()
-		values.Load(&Reader{Reader: bytes.NewReader(data[:len(data)-1])})
+		Load(&Reader{Reader: bytes.NewReader(data[:len(data)-1])})
 	}()
 	saved.Reset()
 	Save(&writer, &Type{Name: "replacement", Fields: []string{"other"}})
-	values.Load(&Reader{Reader: &saved})
-	values.Release()
+	Load(&Reader{Reader: &saved})
 	if got, want := retained, schemas[0]; !reflect.DeepEqual(got, want) {
 		t.Errorf("retained schema = %+v, want %+v", got, want)
 	}
 	for i, schema := range schemas {
-		if got, want := owned.Element(i).Type(), schema; !reflect.DeepEqual(got, want) {
+		if got, want := parsed.Element(i).Type(), schema; !reflect.DeepEqual(got, want) {
 			t.Errorf("owned schema %d = %+v, want %+v", i, got, want)
 		}
 	}
