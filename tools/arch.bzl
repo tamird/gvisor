@@ -7,10 +7,14 @@ select_arch = _select_arch
 transition_allowlist = _transition_allowlist
 
 def arch_transition_impl(settings, attr):
-    return {
+    configurations = {
         "arm64": _arm64_config(settings, attr),
         "amd64": _amd64_config(settings, attr),
     }
+    architecture = getattr(attr, "architecture", "")
+    if architecture:
+        return {architecture: configurations[architecture]}
+    return configurations
 
 arch_transition = transition(
     implementation = arch_transition_impl,
@@ -48,6 +52,10 @@ def _arch_genrule_impl(ctx):
 arch_genrule = rule(
     implementation = _arch_genrule_impl,
     attrs = {
+        "architecture": attr.string(
+            doc = "Generate only this architecture, or both when empty.",
+            values = ["", "amd64", "arm64"],
+        ),
         "src": attr.label(
             doc = "Sources for the genrule.",
             cfg = arch_transition,

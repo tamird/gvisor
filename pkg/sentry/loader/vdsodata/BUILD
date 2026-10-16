@@ -1,4 +1,4 @@
-load("//tools:arch.bzl", "arch_genrule")
+load("//tools:arch.bzl", "arch_genrule", "select_arch")
 load("//tools:defs.bzl", "go_library")
 
 package(
@@ -8,6 +8,7 @@ package(
 
 arch_genrule(
     name = "vdso_arch",
+    architecture = select_arch(amd64 = "amd64", arm64 = "arm64"),
     src = "//vdso",
     template = "vdso_%s.so",
 )
