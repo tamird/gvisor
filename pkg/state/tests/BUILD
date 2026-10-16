@@ -52,3 +52,34 @@ go_test(
         "//pkg/tcpip",
     ],
 )
+
+# Composition-only race owner; same sources and dependencies as the suite above.
+go_test(
+    name = "tests_test_slice_diagnostic_race",
+    size = "small",
+    srcs = [
+        "array_test.go",
+        "bench_test.go",
+        "binary_test.go",
+        "bool_test.go",
+        "float_test.go",
+        "integer_test.go",
+        "load_test.go",
+        "map_test.go",
+        "reference_array_test.go",
+        "register_test.go",
+        "snapshot_test.go",
+        "string_test.go",
+        "struct_test.go",
+    ],
+    architectures = [],
+    embed = [":tests"],
+    nogo = False,
+    race = "on",
+    tags = ["manual"],
+    deps = [
+        "//pkg/state",
+        "//pkg/state/wire",
+        "//pkg/tcpip",
+    ],
+)
