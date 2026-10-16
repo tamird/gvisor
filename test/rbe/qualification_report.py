@@ -171,8 +171,14 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path) -> 
                     identity = mapping(event.get("id"))
                     if "testResult" in event:
                         attempt = Attempt.parse(identity.get("testResult"))
-                        advertised = sequence(mapping(event["testResult"]).get("testActionOutput", []))
-                        for name in ("test.log", "test.xml"):
+                        result = mapping(event["testResult"])
+                        advertised = sequence(result.get("testActionOutput", []))
+                        names = ["test.log", "test.xml"]
+                        # Guest logs can survive only in undeclared outputs when
+                        # the wrapper times out before printing them to test.log.
+                        if result.get("status") != "PASSED" and any(mapping(item).get("name") == "test.outputs__outputs.zip" for item in advertised):
+                            names.append("test.outputs__outputs.zip")
+                        for name in names:
                             try:
                                 matches = [mapping(item) for item in advertised if mapping(item).get("name") == name]
                                 if len(matches) != 1 or (attempt, name) in seen:
