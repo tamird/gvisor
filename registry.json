@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T02:27:10.532806+00:00",
+    "updatedAt": "2026-10-16T02:49:48.081539+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9662,8 +9662,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T02:27:10.532806+00:00",
-      "summary": "The owned-Value diagnostic successor completed its fixed package comparison with mixed results: UDP Save improved 26.82% and map Load improved 10.95%, while UDP, control-message and pointer/slice-adoption Load regressed 13.45%, 12.72% and 7.45%. It parses directly into one owned Value tree, removing temporary-frame conversion and generated load-lifetime metadata. Its separate Linux AMD64 CLI comparison found no statistically significant timing difference (6.814 to 6.973 ms, p=.478, twelve batch means per version). Matched production files grow by 4,005,888 bytes on AMD64 and 3,735,552 bytes on ARM64. The Load regressions and size costs keep this design under investigation. The prior schema-ownership experiment and its failed attempts remain separate. Paired diagnostic profiles identify restoration, payload materialization and access costs without establishing a timing cause. The collection-accessor simplification at 967abd34f passes its selected correctness, race, analyzer and production-link checks; four single-operation allocation observations are unchanged. It has no performance result yet.",
+      "updatedAt": "2026-10-16T02:49:48.081539+00:00",
+      "summary": "The collection-accessor revision at 967abd34f completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.00% and map Load improved 11.04%, while UDP, control-message and pointer/slice-adoption Load regressed 14.43%, 11.44% and 9.54%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. These Load regressions keep the owned-Value design under investigation; it is not ready for adoption.\n\nThis is a separate cohort from the earlier Actions comparison of 391065ac5, with no pooled samples or attribution of the change in percentages to collection accessors. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source. The prior schema-ownership experiment and its failed attempts remain separate.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10598,7 +10598,7 @@
           ]
         },
         {
-          "text": "The collection-accessor revision at 967abd34f replaces repeated Element/Entry wrappers with checked Array/Map slices across maintained consumers, preserving the parser and owned Value representation. Original evidence verifies eight normal test processes, four race processes, eight analyzer wrappers and both fresh AMD64/ARM64 production links. Four additional fresh-process, single-operation observations match the prior owned-tree source at 391065ac5: ordinary 784 bytes/17 allocations, retained source 1,088/25, control message 4,712/113 and adoption 254,376/4,939. Wire sizes also match. The benchmark XML documents are empty; their native status and exact rows are separate from correctness coverage. These observations do not establish latency, startup or retained-heap benefit. The completed paired CPU/heap profiles motivate this simplification but do not prove it causes the earlier Load regressions. The four-process runner smoke check also passed and its original inputs and results were verified. The fixed comparison of this revision against the existing control is now running through that qualified single-TestRunner route; no new timing result is available.",
+          "text": "The collection-accessor revision at 967abd34f replaces repeated Element/Entry wrappers with checked Array/Map slices across maintained consumers, preserving the parser and owned Value representation. Original evidence verifies eight normal test processes, four race processes, eight analyzer wrappers and both fresh AMD64/ARM64 production links. Four additional fresh-process, single-operation observations match the prior owned-tree source at 391065ac5: ordinary 784 bytes/17 allocations, retained source 1,088/25, control message 4,712/113 and adoption 254,376/4,939. Wire sizes also match. The benchmark XML documents are empty; their native status and exact rows are separate from correctness coverage. These observations do not establish latency, startup or retained-heap benefit. The completed paired CPU/heap profiles motivate this simplification but do not prove it causes the earlier Load regressions. The four-process runner smoke check also passed and its original inputs and results were verified. Its subsequent fixed timing comparison is recorded separately below.",
           "evidence": [
             {
               "label": "Qualified collection-accessor diagnostic source",
@@ -10609,13 +10609,26 @@
               "url": "https://app.buildbuddy.io/invocation/3fcab254-3d18-402f-8da5-15bfa231247e"
             },
             {
-              "label": "Collection-accessor fixed comparison in progress",
+              "label": "Completed collection-accessor fixed comparison",
               "url": "https://app.buildbuddy.io/invocation/8a36f8d5-c592-413c-bd42-72d3dc85012d"
+            }
+          ]
+        },
+        {
+          "text": "The fixed comparison of collection-accessor source 967abd34f against control 6212e4f7b completed all 268 observations and 240 measured rows through one remote TestRunner. Original source and executable inputs, native outputs and independent statistics all verify. Twelve balanced pairs per workload show UDP Save −26.00%, UDP Load +14.43%, control-message Load +11.44%, pointer/slice-adoption Load +9.54% and map Load −11.04%. The three Load regressions remain material despite the Save and map gains. These results are one new worker cohort, with no previous Actions samples pooled and no claim that collection accessors caused a cross-cohort difference. Benchmark observation reports are not semantic correctness cases, and single first-use rows do not establish first-use latency.",
+          "evidence": [
+            {
+              "label": "Verified collection-accessor fixed comparison",
+              "url": "https://app.buildbuddy.io/invocation/8a36f8d5-c592-413c-bd42-72d3dc85012d"
+            },
+            {
+              "label": "Measured collection-accessor source",
+              "url": "https://github.com/tamird/gvisor/commit/967abd34f5c99d9f1b077f54b543db77f2eb661c"
             }
           ]
         }
       ],
-      "nextStep": "Complete the fixed comparison of the collection-accessor revision against the existing control using the qualified single-TestRunner route. The comparison is running; no performance result is available. Keep the owned-tree Load regressions and production-file growth visible. Correctness and unchanged allocation observations do not establish a timing improvement or readiness for adoption.",
+      "nextStep": "Investigate the remaining Load regressions and production-file growth. Qualify the separate shared-capture source simplification before making runtime or size claims. Keep each fixed cohort and source identity separate; correctness and allocation changes do not establish readiness.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11497,6 +11510,59 @@
             {
               "label": "Completed fixed package comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/38829797245"
+            }
+          ]
+        },
+        {
+          "title": "Collection-accessor revision: fixed remote comparison",
+          "description": "Source 967abd34f versus control 6212e4f7b, one Linux AMD64 worker and selected CPU, GOMAXPROCS=1. Twelve fixed balanced pairs per workload; 240 measured rows.",
+          "columns": [
+            "Operation",
+            "Control",
+            "Collection-accessor revision",
+            "Change"
+          ],
+          "rows": [
+            [
+              "UDP Save",
+              "342.916 µs",
+              "253.751 µs",
+              "-26.00%"
+            ],
+            [
+              "UDP Load",
+              "316.471 µs",
+              "362.147 µs",
+              "+14.43%"
+            ],
+            [
+              "Control-message Load",
+              "4.652 µs",
+              "5.184 µs",
+              "+11.44%"
+            ],
+            [
+              "Pointer/slice-adoption Load",
+              "263.221 µs",
+              "288.337 µs",
+              "+9.54%"
+            ],
+            [
+              "Map Load",
+              "213.395 µs",
+              "189.837 µs",
+              "-11.04%"
+            ]
+          ],
+          "note": "All five displayed differences are statistically significant in the fixed benchstat comparison. Adoption Load p=.008; the others p≤.001. Control Save, pointer Load and map Save had no statistically significant timing difference. No historical Actions samples are pooled, and no cross-cohort difference is attributed to the accessor change. This is package timing, not sandbox startup or whole-restore timing.",
+          "evidence": [
+            {
+              "label": "Verified collection-accessor fixed comparison",
+              "url": "https://app.buildbuddy.io/invocation/8a36f8d5-c592-413c-bd42-72d3dc85012d"
+            },
+            {
+              "label": "Measured collection-accessor source",
+              "url": "https://github.com/tamird/gvisor/commit/967abd34f5c99d9f1b077f54b543db77f2eb661c"
             }
           ]
         }
