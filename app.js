@@ -1141,7 +1141,7 @@ function applyLive(snapshot, nextRegistry = registry) {
       workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
-      if (!node.refinement && branch.refinement?.after.head === pr.head) {
+      if (node.refinement?.after.head !== pr.head && branch.refinement?.after.head === pr.head) {
         node.refinement = branch.refinement; node.head = pr.head;
       }
     }

@@ -54,6 +54,30 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
 });
 
+test('promotion uses an exact-head branch refinement when the PR comparison is stale', () => {
+  const before = 'a'.repeat(40), after = 'b'.repeat(40), old = 'c'.repeat(40), earlier = 'd'.repeat(40);
+  const branchRefinement = { before: { head: before }, after: { head: after } };
+  for (const [prRefinement, branchHead, expectedBefore] of [
+    [undefined, after, before],
+    [{ before: { head: earlier }, after: { head: old } }, after, before],
+    [{ before: { head: earlier }, after: { head: after } }, after, earlier],
+    [{ before: { head: earlier }, after: { head: old } }, old, null],
+  ]) {
+    const context = client();
+    const branch = { id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', ref: 'proposal', head: branchHead,
+      refinement: { ...branchRefinement, after: { head: branchHead } } };
+    const pr = { id: 'pr:1', type: 'pr', number: 1, repo: 'google/gvisor', head: prRefinement?.after.head,
+      ...(prRefinement ? { refinement: prRefinement } : {}) };
+    context.registryInput = { ...context.registryInput, nodes: [branch, pr], edges: [], groups: [] };
+    context.snapshotInput.prs = [{ ...attentionNode().github, head: after, ref: 'proposal', headRepo: 'tamird/gvisor' }];
+    context.document = { getElementById: () => ({ scrollTop: 0, scrollLeft: 0, querySelectorAll: () => [], scrollTo() {} }) };
+    vm.runInContext('updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
+    assert.equal(vm.runInContext('model.nodes.length', context), 1);
+    const command = vm.runInContext('refinementComparison(model.nodes[0])?.command ?? null', context);
+    assert.equal(command, expectedBefore ? `git range-diff ${expectedBefore}^! ${after}^!` : null);
+  }
+});
+
 test('refinement metadata rejects malformed ranges but tolerates a newer node head', () => {
   const context = client(), before = 'a'.repeat(40), after = 'b'.repeat(40);
   const node = { id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', head: after };
