@@ -153,7 +153,7 @@ type decodeState struct {
 
 	// deferred are objects that have been read, by no interest has been
 	// registered yet. These will be decoded once interest in registered.
-	deferred map[objectID]wire.Value
+	deferred map[objectID]wire.Object
 
 	// pending is the set of objects that are not yet complete.
 	pending odsList
@@ -236,21 +236,20 @@ func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback fun
 }
 
 // waitObject notes a blocking relationship.
-func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Value, callback func()) {
-	switch encoded.Kind() {
-	case wire.KindRef:
-		if ref := encoded.Reference(); ref.Root != 0 {
-			ds.wait(ods, objectID(ref.Root), callback)
+func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object, callback func()) {
+	switch value := encoded.(type) {
+	case *wire.Ref:
+		if value.Root != 0 {
+			ds.wait(ods, objectID(value.Root), callback)
 			return
 		}
-	case wire.KindSlice:
-		if slice := encoded.Slice(); slice.Ref.Root != 0 {
-			ds.wait(ods, objectID(slice.Ref.Root), callback)
+	case *wire.Slice:
+		if value.Ref.Root != 0 {
+			ds.wait(ods, objectID(value.Ref.Root), callback)
 			return
 		}
-	case wire.KindInterface:
-		_, value := encoded.Interface()
-		ds.waitObject(ods, value, callback)
+	case *wire.Interface:
+		ds.waitObject(ods, value.Value, callback)
 		return
 	}
 	if callback != nil {
@@ -265,7 +264,7 @@ func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Value, ca
 // struct or an array element, with one such indirection per element in
 // path. The returned value may be an unexported field, so it may not be
 // directly assignable. See decode_unsafe.go.
-func walkChild(path wire.Ref, obj reflect.Value) reflect.Value {
+func walkChild(path *wire.Ref, obj reflect.Value) reflect.Value {
 	// See wire.Ref.Dots. The path here is specified in reverse order.
 	for i := len(path.Dots) - 1; i >= 0; i-- {
 		switch step := path.Dots[i].(type) {
@@ -308,7 +307,7 @@ func (ds *decodeState) addObject(id objectID, pointer any) *objectDecodeState {
 
 // register publishes the enclosing allocation before restoring a deferred
 // body. Dots always chooses the actual enclosing type, never the child's type.
-func (ds *decodeState) register(r wire.Ref, typ reflect.Type) any {
+func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) any {
 	id := objectID(r.Root)
 	ds.growObjectsByID(id)
 	if ods := ds.objectsByID[id-1]; ods != nil {
@@ -338,16 +337,16 @@ type objectDecoder struct {
 	rte *reconciledTypeEntry
 
 	// encoded is the encoded object state.
-	encoded wire.Value
+	encoded *wire.Struct
 }
 
-func (od *objectDecoder) field(slot int) wire.Value {
+func (od *objectDecoder) field(slot int) wire.Object {
 	// Note that we have reconciled the type and may remap the fields here
 	// to match what's expected by the decoder. The "slot" parameter here
 	// is in terms of the local type, where the fields in the encoded
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
-	return od.encoded.Field(od.rte.FieldOrder[slot])
+	return *od.encoded.Field(od.rte.FieldOrder[slot])
 }
 
 // load is helper for the public methods on Source.
@@ -370,15 +369,15 @@ func (od *objectDecoder) afterLoad(fn func()) {
 // structSource prepares the schema and accounting shared by typed and dynamic
 // struct loaders. A false result is the existing anonymous empty-struct case.
 // The caller must finish the started accounting after invoking its loader.
-func (ds *decodeState) structSource(ods *objectDecodeState, typ reflect.Type, encoded wire.Value) (Source, bool) {
-	if encoded.StructType() == 0 {
+func (ds *decodeState) structSource(ods *objectDecodeState, typ reflect.Type, encoded *wire.Struct) (Source, bool) {
+	if encoded.TypeID == 0 {
 		if encoded.Fields() == 0 && typ.NumField() == 0 {
 			return Source{}, false
 		}
 		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, typ.Name())
 	}
-	rte := ds.types.Lookup(typeID(encoded.StructType()), typ)
-	ods.typ = typeID(encoded.StructType())
+	rte := ds.types.Lookup(typeID(encoded.TypeID), typ)
+	ods.typ = typeID(encoded.TypeID)
 	source := Source{internal: objectDecoder{ds: ds, ods: ods, rte: rte, encoded: encoded}}
 	ds.stats.start(ods.typ)
 	return source, true
@@ -386,7 +385,7 @@ func (ds *decodeState) structSource(ods *objectDecodeState, typ reflect.Type, en
 
 // decodeStruct adapts the actual receiver into the shared prepared Source.
 // Generated and manual methods both return their fields to the same engine.
-func (ds *decodeState) decodeStruct(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
+func (ds *decodeState) decodeStruct(ods *objectDecodeState, target restoreDestination, encoded *wire.Struct) {
 	var obj reflect.Value
 	var typ reflect.Type
 	if target.writable() && target.typ.Kind() == reflect.Struct {
@@ -435,8 +434,8 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 
 // decodeInterface restores an actual dynamic type. dataValue has already
 // applied nil-interface delegation at the common restore entry.
-func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded wire.Value) {
-	encodedType, value := encoded.Interface()
+func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded *wire.Interface) {
+	encodedType, value := encoded.Type, encoded.Value
 	// We now need to resolve the actual type.
 	typ := ds.findType(encodedType)
 
@@ -479,7 +478,7 @@ func assignMap(target, object reflect.Value) {
 
 // assignSlice owns runtime array construction, interior slicing and the
 // dynamic destination's ordinary assignment relation.
-func (ds *decodeState) assignSlice(obj reflect.Value, x wire.Slice) {
+func (ds *decodeState) assignSlice(obj reflect.Value, x *wire.Slice) {
 	// See *wire.Ref above; same applies.
 	if id := objectID(x.Ref.Root); id == 0 {
 		return
@@ -487,7 +486,7 @@ func (ds *decodeState) assignSlice(obj reflect.Value, x wire.Slice) {
 	// Note that it's fine to slice the array here and assume that
 	// contents will still be filled in later on.
 	typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-	v := walkChild(x.Ref, reflect.ValueOf(ds.register(x.Ref, typ)).Elem())
+	v := walkChild(&x.Ref, reflect.ValueOf(ds.register(&x.Ref, typ)).Elem())
 	obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 }
 
@@ -517,7 +516,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 
 	// Decode all objects.
 	var (
-		encoded wire.Value
+		encoded wire.Object
 		ods     *objectDecodeState
 		id      objectID
 	)
@@ -529,13 +528,13 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 		for i := uint64(0); i < numObjects; {
 			// Unmarshal either a type object or object ID.
 			encoded = wire.Load(&ds.r)
-			switch encoded.Kind() {
-			case wire.KindType:
-				ds.types.Register(encoded.Type())
-				encoded = wire.Value{}
+			switch value := encoded.(type) {
+			case *wire.Type:
+				ds.types.Register(value)
+				encoded = nil
 				continue
-			case wire.KindUint:
-				id = objectID(encoded.Uint())
+			case wire.Uint:
+				id = objectID(value)
 				i++
 				// Unmarshal and resolve the actual object.
 				encoded = wire.Load(&ds.r)
@@ -551,9 +550,9 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 				}
 				// For error handling.
 				ods = nil
-				encoded = wire.Value{}
+				encoded = nil
 			default:
-				Failf("wanted type or object ID, got wire kind %d", encoded.Kind())
+				Failf("wanted type or object ID, got %T", encoded)
 			}
 		}
 	}); err != nil {
@@ -561,7 +560,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 		// the possible state transitions above.
 		if ods != nil {
 			Failf("error decoding object ID %d (%T) from %#v: %w", id, reflect.ValueOf(ods.pointer).Elem().Interface(), encoded, err)
-		} else if encoded.Valid() {
+		} else if encoded != nil {
 			Failf("error decoding from %#v: %w", encoded, err)
 		} else {
 			Failf("general decoding error: %w", err)
@@ -570,8 +569,8 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 
 	// Check if we have any deferred objects.
 	for id, encoded := range ds.deferred {
-		if encoded.Kind() == wire.KindStruct && encoded.StructType() != 0 {
-			typ := ds.types.LookupType(typeID(encoded.StructType()))
+		if value, ok := encoded.(*wire.Struct); ok && value.TypeID != 0 {
+			typ := ds.types.LookupType(typeID(value.TypeID))
 			Failf("unused deferred object: ID %d, type %v", id, typ)
 		} else {
 			Failf("unused deferred object: ID %d, %#v", id, encoded)

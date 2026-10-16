@@ -262,7 +262,7 @@ func (r *Ref) save(w *Writer) {
 	l := Uint(len(r.Dots))
 	l.save(w)
 	for _, d := range r.Dots {
-		// See LoadRef. We use non-negative numbers to encode Index
+		// See loadReference. We use non-negative numbers to encode Index
 		// objects and negative numbers to encode field lengths.
 		switch x := d.(type) {
 		case Index:
@@ -468,11 +468,11 @@ func (t *Type) save(w *Writer) {
 	}
 }
 
-// multipleObjects is a special type for serializing multiple objects.
-type multipleObjects []Object
+// MultipleObjects is a special type for serializing multiple objects.
+type MultipleObjects []Object
 
 // save implements Object.save.
-func (m *multipleObjects) save(w *Writer) {
+func (m *MultipleObjects) save(w *Writer) {
 	l := Uint(len(*m))
 	l.save(w)
 	for i := 0; i < int(l); i++ {
@@ -480,26 +480,26 @@ func (m *multipleObjects) save(w *Writer) {
 	}
 }
 
-// noObjects represents no objects.
-type noObjects struct{}
+// NoObjects represents no objects.
+type NoObjects struct{}
 
 // save implements Object.save.
-func (noObjects) save(w *Writer) {}
+func (NoObjects) save(w *Writer) {}
 
 // Struct is a basic composite value.
 type Struct struct {
 	TypeID TypeID
-	fields Object // Optionally noObjects or *multipleObjects.
+	fields Object // Optionally NoObjects or *MultipleObjects.
 }
 
 // Field returns a pointer to the given field slot.
 //
 // This must be called after Alloc.
 func (s *Struct) Field(i int) *Object {
-	if fields, ok := s.fields.(*multipleObjects); ok {
+	if fields, ok := s.fields.(*MultipleObjects); ok {
 		return &((*fields)[i])
 	}
-	if _, ok := s.fields.(noObjects); ok {
+	if _, ok := s.fields.(NoObjects); ok {
 		// Alloc may be optionally called; can't call twice.
 		panic("Field called inappropriately, wrong Alloc?")
 	}
@@ -508,17 +508,17 @@ func (s *Struct) Field(i int) *Object {
 
 // Alloc allocates the given number of fields.
 //
-// This must be called before Add and Save.
+// This must be called before Field and Save.
 //
-// Precondition: slots must be positive.
+// Precondition: slots must be nonnegative.
 func (s *Struct) Alloc(slots int) {
 	switch {
 	case slots == 0:
-		s.fields = noObjects{}
+		s.fields = NoObjects{}
 	case slots == 1:
 		// Leave it alone.
 	case slots > 1:
-		fields := make(multipleObjects, slots)
+		fields := make(MultipleObjects, slots)
 		s.fields = &fields
 	default:
 		// Violates precondition.
@@ -529,9 +529,9 @@ func (s *Struct) Alloc(slots int) {
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
 	switch x := s.fields.(type) {
-	case *multipleObjects:
+	case *MultipleObjects:
 		return len(*x)
-	case noObjects:
+	case NoObjects:
 		return 0
 	default:
 		return 1
@@ -541,7 +541,7 @@ func (s *Struct) Fields() int {
 // save implements Object.save.
 //
 // Precondition: Alloc must have been called, and the fields all filled in
-// appropriately. See Alloc and Add for more details.
+// appropriately. See Alloc and Field for more details.
 func (s *Struct) save(w *Writer) {
 	Uint(s.TypeID).save(w)
 	Save(w, s.fields)
@@ -621,10 +621,10 @@ func Save(w *Writer, obj Object) {
 	case capturedArray:
 		typeArray.save(w)
 		x.save(w)
-	case noObjects:
+	case NoObjects:
 		typeNoObjects.save(w)
 		x.save(w)
-	case *multipleObjects:
+	case *MultipleObjects:
 		typeMultipleObjects.save(w)
 		x.save(w)
 	case *Interface:

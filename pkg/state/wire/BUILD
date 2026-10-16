@@ -10,9 +10,8 @@ go_library(
     srcs = [
         "array.go",
         "fields.go",
-        "load_unsafe.go",
+        "load.go",
         "record.go",
-        "value_unsafe.go",
         "wire.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state/wire",

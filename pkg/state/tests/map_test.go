@@ -379,12 +379,12 @@ func reverseObjectBodies(t *testing.T, buf *bytes.Buffer) {
 	for uint64(len(objects)) < count {
 		start := len(data) - input.Len()
 		value := wire.Load(&reader)
-		if value.Kind() == wire.KindType {
+		if _, ok := value.(*wire.Type); ok {
 			schemas = append(schemas, data[start:len(data)-input.Len()])
 			continue
 		}
-		if got, want := value.Kind(), wire.KindUint; got != want {
-			t.Fatalf("object ID kind = %v, want %v", got, want)
+		if _, ok := value.(wire.Uint); !ok {
+			t.Fatalf("object ID type = %T, want wire.Uint", value)
 		}
 		wire.Load(&reader)
 		objects = append(objects, data[start:len(data)-input.Len()])

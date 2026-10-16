@@ -29,11 +29,11 @@ func TestInternalFieldTags(t *testing.T) {
 		t.Fatal(err)
 	}
 	// The wire printer also accepts field-list tags outside a Struct, where
-	// their private Object implementations are unavailable to callers.
+	// they describe zero or multiple heterogeneous fields.
 	wire.Save(&w, wire.Uint(1))
-	wire.SaveUint(&w, uint64(wire.KindNoObjects))
+	wire.SaveUint(&w, 12 /* no objects */)
 	wire.Save(&w, wire.Uint(2))
-	wire.SaveUint(&w, uint64(wire.KindMultipleObjects))
+	wire.SaveUint(&w, 13 /* multiple objects */)
 	wire.SaveUint(&w, 2)
 	wire.Save(&w, wire.Int(17))
 	text := wire.String("owned")

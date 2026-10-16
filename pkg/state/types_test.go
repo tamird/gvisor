@@ -267,7 +267,7 @@ func TestPromotedChildPath(t *testing.T) {
 	writer := wire.Writer{Writer: &buf}
 	wire.Save(&writer, &wire.Ref{Root: 1, Dots: []wire.Dot{&name}, Type: wire.TypeID(0)})
 	reader := wire.Reader{Reader: &buf}
-	child := walkChild(wire.Load(&reader).Reference(), reflect.ValueOf(&root).Elem())
+	child := walkChild(wire.Load(&reader).(*wire.Ref), reflect.ValueOf(&root).Elem())
 	if got, want := child.Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
 		t.Fatalf("promoted field address = %#x, want %#x", got, want)
 	}

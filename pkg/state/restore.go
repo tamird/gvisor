@@ -21,14 +21,14 @@ import (
 )
 
 // Generated scalar fields retain their static type through assignment. The
-// Value accessors and truncation checks are shared with restoreValue. A scalar
-// has no graph dependency; other encodings, including nil and interfaces,
-// return to the ordinary Source path with its original wait semantics.
+// concrete wire payload and truncation rules are shared with restoreValue.
+// Other encodings, including nil and interfaces, use the ordinary Source path
+// with its original wait semantics.
 
 // LoadBool restores a generated boolean field.
 func LoadBool[T ~bool](s Source, slot int, ptr *T, wait bool) {
-	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindBool {
-		*ptr = T(encoded.Bool())
+	if encoded, ok := dataValue(s.internal.field(slot)).(wire.Bool); ok {
+		*ptr = T(encoded)
 		return
 	}
 	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
@@ -36,10 +36,9 @@ func LoadBool[T ~bool](s Source, slot int, ptr *T, wait bool) {
 
 // LoadInt restores a generated signed integer field, rejecting truncation.
 func LoadInt[T ~int | ~int8 | ~int16 | ~int32 | ~int64](s Source, slot int, ptr *T, wait bool) {
-	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindInt {
-		value := encoded.Int()
-		*ptr = T(value)
-		checkInt(value, int64(*ptr))
+	if encoded, ok := dataValue(s.internal.field(slot)).(wire.Int); ok {
+		*ptr = T(encoded)
+		checkInt(int64(encoded), int64(*ptr))
 		return
 	}
 	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
@@ -47,10 +46,9 @@ func LoadInt[T ~int | ~int8 | ~int16 | ~int32 | ~int64](s Source, slot int, ptr 
 
 // LoadUint restores a generated unsigned integer field, rejecting truncation.
 func LoadUint[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](s Source, slot int, ptr *T, wait bool) {
-	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindUint {
-		value := encoded.Uint()
-		*ptr = T(value)
-		checkUint(value, uint64(*ptr))
+	if encoded, ok := dataValue(s.internal.field(slot)).(wire.Uint); ok {
+		*ptr = T(encoded)
+		checkUint(uint64(encoded), uint64(*ptr))
 		return
 	}
 	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
@@ -59,91 +57,98 @@ func LoadUint[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](s Sourc
 // LoadFloat restores a generated floating-point field with the ordinary NaN
 // and truncation rules.
 func LoadFloat[T ~float32 | ~float64](s Source, slot int, ptr *T, wait bool) {
-	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindFloat32 || encoded.Kind() == wire.KindFloat64 {
-		value := encoded.Float()
-		*ptr = T(value)
-		checkFloat(value, float64(*ptr))
+	var value float64
+	switch encoded := dataValue(s.internal.field(slot)).(type) {
+	case wire.Float32:
+		value = float64(encoded)
+	case wire.Float64:
+		value = float64(encoded)
+	default:
+		s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
 		return
 	}
-	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
+	*ptr = T(value)
+	checkFloat(value, float64(*ptr))
 }
 
 // LoadComplex restores a generated complex field with the ordinary NaN and
 // truncation rules for both components.
 func LoadComplex[T ~complex64 | ~complex128](s Source, slot int, ptr *T, wait bool) {
-	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindComplex64 || encoded.Kind() == wire.KindComplex128 {
-		value := encoded.Complex()
-		*ptr = T(value)
-		checkComplex(value, complex128(*ptr))
+	var value complex128
+	switch encoded := dataValue(s.internal.field(slot)).(type) {
+	case *wire.Complex64:
+		value = complex128(*encoded)
+	case *wire.Complex128:
+		value = complex128(*encoded)
+	default:
+		s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
 		return
 	}
-	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
+	*ptr = T(value)
+	checkComplex(value, complex128(*ptr))
 }
 
 // LoadString restores a generated string field through an ordinary typed
 // assignment, including the Go write barrier.
 func LoadString[T ~string](s Source, slot int, ptr *T, wait bool) {
-	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindString {
-		*ptr = T(encoded.Text())
+	if encoded, ok := dataValue(s.internal.field(slot)).(*wire.String); ok {
+		*ptr = T(*encoded)
 		return
 	}
 	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
 }
 
-// dataValue preserves nil-interface delegation before any address or view is
-// required. Wait registration still receives the original parsed value.
-func dataValue(value wire.Value) wire.Value {
-	for value.Kind() == wire.KindInterface {
-		typ, inner := value.Interface()
-		if _, ok := typ.(wire.TypeSpecNil); !ok {
-			break
+// dataValue preserves nil-interface delegation before any address is required.
+// Wait registration still receives the original parsed object.
+func dataValue(value wire.Object) wire.Object {
+	for {
+		wrapped, ok := value.(*wire.Interface)
+		if !ok {
+			return value
 		}
-		value = inner
+		if _, ok := wrapped.Type.(wire.TypeSpecNil); !ok {
+			return value
+		}
+		value = wrapped.Value
 	}
-	return value
 }
 
 // restoreValue owns every encoded-kind operation, for generated fields,
 // manual Source calls, graph objects and dynamic interface/map storage alike.
-func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
-	encoded = dataValue(encoded)
-	switch encoded.Kind() {
-	case wire.KindNil:
+func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestination, encoded wire.Object) {
+	switch value := dataValue(encoded).(type) {
+	case wire.Nil:
 		return
-	case wire.KindRef:
-		ds.restoreReference(target, encoded.Reference())
-	case wire.KindBool:
-		target.storeBool(encoded.Bool())
-	case wire.KindInt:
-		value := encoded.Int()
-		checkInt(value, target.storeInt(value))
-	case wire.KindUint:
-		value := encoded.Uint()
-		checkUint(value, target.storeUint(value))
-	case wire.KindFloat32:
-		target.storeFloat(encoded.Float())
-	case wire.KindFloat64:
-		value := encoded.Float()
-		checkFloat(value, target.storeFloat(value))
-	case wire.KindComplex64:
-		target.storeComplex(encoded.Complex())
-	case wire.KindComplex128:
-		value := encoded.Complex()
-		checkComplex(value, target.storeComplex(value))
-	case wire.KindString:
-		target.storeString(encoded.Text())
-	case wire.KindSlice:
-		if slice := encoded.Slice(); objectID(slice.Ref.Root) != 0 {
-			ds.assignSlice(target.value(), slice)
+	case *wire.Ref:
+		ds.restoreReference(target, value)
+	case wire.Bool:
+		target.storeBool(bool(value))
+	case wire.Int:
+		checkInt(int64(value), target.storeInt(int64(value)))
+	case wire.Uint:
+		checkUint(uint64(value), target.storeUint(uint64(value)))
+	case wire.Float32:
+		target.storeFloat(float64(value))
+	case wire.Float64:
+		checkFloat(float64(value), target.storeFloat(float64(value)))
+	case *wire.Complex64:
+		target.storeComplex(complex128(*value))
+	case *wire.Complex128:
+		checkComplex(complex128(*value), target.storeComplex(complex128(*value)))
+	case *wire.String:
+		target.storeString(string(*value))
+	case *wire.Slice:
+		if objectID(value.Ref.Root) != 0 {
+			ds.assignSlice(target.value(), value)
 		}
-	case wire.KindArray:
-		ds.restoreArray(ods, target, encoded.Array())
-	case wire.KindMap:
-		ds.restoreMap(ods, target, encoded.Map())
-	case wire.KindStruct:
-		ds.decodeStruct(ods, target, encoded)
-	case wire.KindInterface:
-		ds.decodeInterface(ods, target.value(), encoded)
+	case *wire.Array:
+		ds.restoreArray(ods, target, value.Contents)
+	case *wire.Map:
+		ds.restoreMap(ods, target, value)
+	case *wire.Struct:
+		ds.decodeStruct(ods, target, value)
+	case *wire.Interface:
+		ds.decodeInterface(ods, target.value(), value)
 	default:
 		Failf("unknown object %#v for %q", encoded, target.value().Type().Name())
 	}
@@ -151,7 +156,7 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 
 // restoreReference retains register/Dots/assignment order. Only ordinary
 // pointer stores bypass reflect.Set; maps retain actual source flags and type.
-func (ds *decodeState) restoreReference(target restoreDestination, ref wire.Ref) {
+func (ds *decodeState) restoreReference(target restoreDestination, ref *wire.Ref) {
 	if objectID(ref.Root) == 0 {
 		return
 	}

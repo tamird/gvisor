@@ -266,37 +266,34 @@ func TestConcurrentFieldLayouts(t *testing.T) {
 	if got, want := count, uint64(1); err != nil || got != want || !object {
 		t.Fatalf("ReadHeader = %d, %t, %v, want %d, true, nil", got, object, err, want)
 	}
-	schemaValue := wire.Load(&reader)
-	if schemaValue.Kind() != wire.KindType {
+	parsedSchema, ok := wire.Load(&reader).(*wire.Type)
+	if !ok {
 		t.Fatal("Save did not emit a type schema")
 	}
-	parsedSchema := schemaValue.Type()
 	// The parsed metadata is read-only. Build the writer's schema explicitly
 	// before mutating field order, preserving the original parsed value.
 	schema := &wire.Type{Name: parsedSchema.Name, Fields: slices.Clone(parsedSchema.Fields)}
 	if got, want := schema.Fields, []string{"first", "second", "text", "next"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("schema fields = %v, want %v", got, want)
 	}
-	id := wire.Load(&reader).Uint()
+	id := uint64(wire.Load(&reader).(wire.Uint))
 	if got, want := id, uint64(1); got != want {
 		t.Fatalf("root ID = %v, want %v", got, want)
 	}
-	value := wire.Load(&reader)
-	if value.Kind() != wire.KindStruct {
+	value, ok := wire.Load(&reader).(*wire.Struct)
+	if !ok {
 		t.Fatal("Save did not emit a struct")
 	}
 	if got, want := value.Fields(), 4; got != want {
 		t.Fatalf("struct fields = %d, want %d", got, want)
 	}
 	schema.Fields[0], schema.Fields[1] = schema.Fields[1], schema.Fields[0]
-	reorderedValue := wire.Struct{TypeID: value.StructType()}
+	reorderedValue := wire.Struct{TypeID: value.TypeID}
 	reorderedValue.Alloc(value.Fields())
-	*reorderedValue.Field(0) = wire.Int(value.Field(1).Int())
-	*reorderedValue.Field(1) = wire.Int(value.Field(0).Int())
-	text := wire.String(value.Field(2).Text())
-	*reorderedValue.Field(2) = &text
-	ref := value.Field(3).Reference()
-	*reorderedValue.Field(3) = &ref
+	*reorderedValue.Field(0) = *value.Field(1)
+	*reorderedValue.Field(1) = *value.Field(0)
+	*reorderedValue.Field(2) = *value.Field(2)
+	*reorderedValue.Field(3) = *value.Field(3)
 	var reordered bytes.Buffer
 	writer := wire.Writer{Writer: &reordered}
 	if err := state.WriteHeader(&writer, count, true); err != nil {

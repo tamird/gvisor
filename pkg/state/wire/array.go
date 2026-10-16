@@ -214,7 +214,7 @@ func (a *stringArraySnapshot) save(w *Writer) {
 // RefArray stores a homogeneous reference array without one Object interface
 // and allocation per element. Contents must not move while a graph resolver
 // retains element pointers. Each save reads the current reference values.
-// The parser reads its encoding through the ordinary array Value grammar.
+// The parser reads its encoding through the ordinary Array grammar.
 type RefArray struct {
 	arrayCapture
 	Contents []Ref

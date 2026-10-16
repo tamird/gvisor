@@ -23,7 +23,7 @@ import (
 // restoreArray owns length checks, traversal and element waits. Actual arrays
 // use direct storage; legacy slice destinations reread their live header at
 // each Index, including when a previous element's loader replaced that header.
-func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestination, encoded []wire.Value) {
+func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestination, encoded []wire.Object) {
 	length := target.length()
 	if len(encoded) != length {
 		Failf("mismatching array length expect=%d, actual=%d", length, len(encoded))
@@ -47,18 +47,19 @@ func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestin
 // restoreMap keeps fresh typed cells and Go's map insertion semantics at the
 // shared boundary. Both cells exist before hooks; waits precede insertion,
 // which reads the live map header. Nonzero-sized cells are never reused.
-func (ds *decodeState) restoreMap(ods *objectDecodeState, target restoreDestination, encoded []wire.MapEntry) {
+func (ds *decodeState) restoreMap(ods *objectDecodeState, target restoreDestination, encoded *wire.Map) {
 	object := target.value()
 	if object.IsNil() {
 		object.Set(reflect.MakeMap(object.Type()))
 	}
-	for _, entry := range encoded {
+	for i, key := range encoded.Keys {
+		value := encoded.Values[i]
 		keyCell := reflect.New(object.Type().Key()).Elem()
 		valueCell := reflect.New(object.Type().Elem()).Elem()
-		ds.restoreValue(ods, ds.destination(keyCell), entry.Key)
-		ds.restoreValue(ods, ds.destination(valueCell), entry.Value)
-		ds.waitObject(ods, entry.Key, nil)
-		ds.waitObject(ods, entry.Value, nil)
+		ds.restoreValue(ods, ds.destination(keyCell), key)
+		ds.restoreValue(ods, ds.destination(valueCell), value)
+		ds.waitObject(ods, key, nil)
+		ds.waitObject(ods, value, nil)
 		object.SetMapIndex(keyCell, valueCell)
 	}
 }

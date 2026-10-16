@@ -25,7 +25,7 @@ type RecordFields interface {
 
 // Record is a captured struct, owned by an in-progress save. Its fields may
 // contain references that the graph resolver updates before emission. The
-// parser reads its encoding as an ordinary struct Value, never another Record.
+// parser reads its encoding as an ordinary Struct, never another Record.
 type Record struct {
 	TypeID TypeID
 	count  int
