@@ -79,10 +79,7 @@ func loadPayload(r *Reader, tag Uint) Object {
 		}
 		return array
 	case typeMultipleObjects:
-		values := make(MultipleObjects, loadUint(r)) // Escapes: owned field header and elements.
-		for i := range values {
-			values[i] = Load(r)
-		}
+		values := loadMultipleObjects(r) // Escapes: owned field header.
 		return &values
 	case typeMap:
 		count := loadUint(r)
@@ -102,7 +99,18 @@ func loadPayload(r *Reader, tag Uint) Object {
 		return value
 	case typeStruct:
 		id := TypeID(loadUint(r))
-		return &Struct{TypeID: id, fields: Load(r)} // Escapes: owned struct payload.
+		value := &Struct{TypeID: id} // Escapes: owned struct payload.
+		fieldTag := loadUint(r)
+		switch fieldTag {
+		case typeNoObjects:
+			value.form = structNoFields
+		case typeMultipleObjects:
+			value.form = structMultipleFields
+			value.fields = loadMultipleObjects(r)
+		default:
+			value.fields = []Object{loadPayload(r, fieldTag)} // Escapes: owned singleton field.
+		}
+		return value
 	case typeInterface:
 		typ := loadType(r)
 		return &Interface{Type: typ, Value: Load(r)} // Escapes: owned interface payload.
@@ -116,6 +124,16 @@ func loadPayload(r *Reader, tag Uint) Object {
 	default:
 		panic(fmt.Errorf("unknown header: %d", tag)) // Escapes: error formatting.
 	}
+}
+
+// loadMultipleObjects is the shared payload grammar for standalone field lists
+// and Struct fields. Struct owns the slice header directly.
+func loadMultipleObjects(r *Reader) MultipleObjects {
+	values := make(MultipleObjects, loadUint(r)) // Escapes: owned fields; make checks the full-width count.
+	for i := range values {
+		values[i] = Load(r)
+	}
+	return values
 }
 
 func loadReference(r *Reader) Ref {

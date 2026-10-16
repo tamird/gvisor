@@ -489,21 +489,34 @@ func (NoObjects) save(w *Writer) {}
 // Struct is a basic composite value.
 type Struct struct {
 	TypeID TypeID
-	fields Object // Optionally NoObjects or *MultipleObjects.
+	fields []Object
+	form   structFieldsForm
 }
+
+// The wire distinguishes a single field from MultipleObjects containing one
+// field, and NoObjects from an empty MultipleObjects. Keep that distinction
+// separate from the owned field storage.
+type structFieldsForm uint8
+
+const (
+	structSingleField structFieldsForm = iota
+	structNoFields
+	structMultipleFields
+)
 
 // Field returns a pointer to the given field slot.
 //
 // This must be called after Alloc.
 func (s *Struct) Field(i int) *Object {
-	if fields, ok := s.fields.(*MultipleObjects); ok {
-		return &((*fields)[i])
-	}
-	if _, ok := s.fields.(NoObjects); ok {
-		// Alloc may be optionally called; can't call twice.
+	switch s.form {
+	case structNoFields:
 		panic("Field called inappropriately, wrong Alloc?")
+	case structSingleField:
+		// Legacy single-field wire objects supply the same value for every
+		// requested slot, even when the schema names more than one field.
+		i = 0
 	}
-	return &s.fields
+	return &s.fields[i]
 }
 
 // Alloc allocates the given number of fields.
@@ -514,12 +527,14 @@ func (s *Struct) Field(i int) *Object {
 func (s *Struct) Alloc(slots int) {
 	switch {
 	case slots == 0:
-		s.fields = NoObjects{}
+		s.form = structNoFields
+		s.fields = nil
 	case slots == 1:
-		// Leave it alone.
+		s.form = structSingleField
+		s.fields = make([]Object, 1)
 	case slots > 1:
-		fields := make(MultipleObjects, slots)
-		s.fields = &fields
+		s.form = structMultipleFields
+		s.fields = make([]Object, slots)
 	default:
 		// Violates precondition.
 		panic(fmt.Sprintf("Alloc called with negative slots %d?", slots))
@@ -528,14 +543,7 @@ func (s *Struct) Alloc(slots int) {
 
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
-	switch x := s.fields.(type) {
-	case *MultipleObjects:
-		return len(*x)
-	case NoObjects:
-		return 0
-	default:
-		return 1
-	}
+	return len(s.fields)
 }
 
 // save implements Object.save.
@@ -544,7 +552,16 @@ func (s *Struct) Fields() int {
 // appropriately. See Alloc and Field for more details.
 func (s *Struct) save(w *Writer) {
 	Uint(s.TypeID).save(w)
-	Save(w, s.fields)
+	switch s.form {
+	case structNoFields:
+		Save(w, NoObjects{})
+	case structMultipleFields:
+		typeMultipleObjects.save(w)
+		fields := MultipleObjects(s.fields)
+		fields.save(w)
+	case structSingleField:
+		Save(w, s.fields[0])
+	}
 }
 
 // Object types.
