@@ -214,6 +214,37 @@ function reasonsFor(node) {
 function idsFor(node) { return reasonsFor(node).map(reason => reason.id); }
 function serviceStatus(name, state) { return { name, state, kind: 'status', purpose: 'validation', url: null }; }
 
+test('Copybara failures remain import attention without a public validation failure', () => {
+  const node = attentionNode();
+  node.github.checks.contexts.push(serviceStatus('import/copybara', 'ERROR'));
+  node.github.checks.total = 2; node.github.checks.state = 'FAILURE';
+  assert.deepEqual(idsFor(node), ['maintainer-import-failed']);
+  const context = client(); context.nodeInput = node;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Passed · import issue');
+  assert.equal(vm.runInContext('failureSources(nodeInput).length', context), 0);
+  assert.equal(node.github.checks.contexts[1].state, 'ERROR');
+  context.snapshotInput.workStates[node.id] = { failing: { scope: `1:${node.github.head}`, basis: 'unknown', since: null } };
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput).failing', context), undefined);
+  node.github.checks.complete = false;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).tone', context), 'bad');
+  assert.ok(vm.runInContext('stateRecords(snapshotInput, nodeInput).failing', context));
+  assert.deepEqual(idsFor(node), ['agent-refresh', 'maintainer-import-failed']);
+  node.github.checks.complete = true;
+  node.github.checks.contexts[0].state = 'FAILURE';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  assert.ok(idsFor(node).includes('maintainer-import-failed'));
+  node.github.checks.contexts[0].state = 'SUCCESS';
+  const imported = attentionImport(node);
+  imported.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('generate', 'FAILURE')] };
+  node.github.imports = [imported];
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').owner, 'agent');
+  imported.checks.contexts = [serviceStatus('feedback/copybara', 'ERROR'), serviceStatus('generate', 'SUCCESS')];
+  imported.checks.total = 2;
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
+});
+
 test('attention assigns simultaneous public and internal failures to their actual owners', () => {
   const node = attentionNode();
   node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [serviceStatus('import/copybara', 'ERROR'), serviceStatus('gazelle', 'FAILURE')] };

@@ -89,11 +89,12 @@ function completeChecks(pr) {
   const checks = pr?.checks;
   return Boolean(checks?.complete && checks.total > 0 && checks.contexts.length === checks.total);
 }
-function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment"); }
+function isImportStatus(check) { return check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name); }
+function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check)); }
 function codeCheckStates(pr) {
   const result = new Set(validationChecks(pr).map(check => check.state));
   const aggregate = pr?.checks?.state;
-  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment");
+  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check));
   const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
   const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && administrative.some(check => FAILURE_STATES.has(check.state))
     || pending.has(aggregate) && administrative.some(check => pending.has(check.state)));
@@ -108,10 +109,12 @@ function checkInfo(pr) {
   const pending = [...states].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state));
   const passed = completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
   const assignmentFailures = checks.contexts.filter(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state));
+  const importProblems = checks.contexts.filter(check => isImportStatus(check) && (FAILURE_STATES.has(check.state) || ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state)));
+  const serviceIssues = [assignmentFailures.length && "assignment", importProblems.length && "import"].filter(Boolean);
   const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
-    : passed ? { text: assignmentFailures.length ? "Passed · assignment issue" : "Success", tone: assignmentFailures.length ? "pending" : "good", glyph: assignmentFailures.length ? "!" : "✓" }
+    : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
       : { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
 const ATTENTION_REASONS = [
@@ -205,8 +208,7 @@ function attentionReasons(node, owner) {
   const contexts = pr.checks?.contexts || [];
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
-  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state)
-    && !(check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name)));
+  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
   if (publicFailures.length) add("author-public-checks", publicFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   if (review.author) add("author-feedback", "A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
@@ -222,14 +224,13 @@ function attentionReasons(node, owner) {
   if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "));
   const publicImportFailures = failed.flatMap(item => validationChecks(item)
     .filter(check => FAILURE_STATES.has(check.state)
-      && !recoveries.get(item.number)?.ids.has(check.id)
-      && !(check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name)))
+      && !recoveries.get(item.number)?.ids.has(check.id))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state} (${safeURL(check.url) || "direct link not recorded"})`));
   for (const item of failed) if (!completeChecks(item) || !validationChecks(item).some(check => FAILURE_STATES.has(check.state)))
     publicImportFailures.push(`Import #${item.number}: failure evidence is incomplete; refresh and investigate its public check records`);
   const importFailures = failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`);
-  const internalImportFailures = failed.flatMap(item => validationChecks(item)
-    .filter(check => check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name) && FAILURE_STATES.has(check.state))
+  const internalImportFailures = active.flatMap(item => (item.checks?.contexts || [])
+    .filter(check => isImportStatus(check) && FAILURE_STATES.has(check.state))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state}`));
   if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) importFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
   if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) internalImportFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
@@ -239,7 +240,8 @@ function attentionReasons(node, owner) {
     add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Ask for the current Copybara check status.`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
-  if (review.incomplete || checkInfo(pr).tone === "unknown" || active.some(item => checkInfo(item).tone === "unknown")
+  if (review.incomplete || !completeChecks(pr) || checkInfo(pr).tone === "unknown"
+      || active.some(item => !completeChecks(item) || checkInfo(item).tone === "unknown")
       || decision === "APPROVED" && (!pr.importsComplete || pr.labelsComplete !== true))
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
@@ -334,7 +336,7 @@ function appendChecks(container, pr, heading) {
   section.append(element("p", "detail-meta", info.detail));
   for (const check of pr.checks?.contexts || []) {
     const row = element("div", "check-row");
-    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${check.purpose === "reviewer-assignment" ? " · reviewer assignment" : ""}`));
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : ""}`));
     if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
     section.append(row);
   }
@@ -1101,7 +1103,7 @@ function stateRecords(snapshot, node) {
         : { scope: pr.head, since: pr.conflictCheckedAt, observedAt: pr.conflictCheckedAt, basis: "observed", qualifier: null };
     }
     // Reconcile legacy aggregate-failure records only from complete inventories.
-    // Administrative assignment errors remain visible in the raw check details.
+    // Assignment and import service errors remain visible in raw check details.
     const visible = [node.github, ...node.github.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))];
     if (node.github.importsComplete && visible.every(completeChecks)) {
       const failures = failureSources(node);

@@ -129,6 +129,37 @@ class WorkStatesTest(unittest.TestCase):
             with self.subTest(change=change):
                 self.assertEqual(check_purpose({**check, **change}), "validation")
 
+    def test_copybara_status_is_not_public_validation(self):
+        lint = {"name": "lint", "state": "SUCCESS", "purpose": "validation"}
+        for name in ("import/copybara", "feedback/copybara"):
+            with self.subTest(name=name):
+                service = {"kind": "status", "name": name, "state": "ERROR", "purpose": "validation"}
+                self.assertEqual(check_purpose(service), "validation")
+                self.assertEqual(check_purpose({**service, "kind": "check-run"}), "validation")
+                pr = original(reviewDecision="APPROVED", mergeable="MERGEABLE",
+                              checks={"state": "FAILURE", "total": 2, "complete": True,
+                                      "contexts": [service, lint.copy()]})
+                self.assertNotIn("failing", pr_states(pr))
+                self.assertEqual(pr_states(pr)["awaiting-import"]["qualifier"],
+                                 "Import status failing; validation checks passed")
+                self.assertFalse(checks_passed(pr))
+                pr["checks"]["complete"] = False
+                self.assertIn("failing", pr_states(pr))
+                pr["checks"]["complete"] = True
+                pr["checks"]["contexts"][1]["state"] = "FAILURE"
+                self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Source checks failing")
+
+    def test_public_import_failure_remains_actionable_with_copybara_error(self):
+        imported = original(number=2, head="b" * 40, matchesSourceHead=True,
+                            checks={"state": "FAILURE", "complete": True, "total": 1,
+                                    "contexts": [{"name": "generate", "state": "FAILURE"}]})
+        pr = original(reviewDecision="APPROVED", imports=[imported],
+                      checks={"state": "FAILURE", "complete": True, "total": 2,
+                              "contexts": [{"kind": "status", "name": "import/copybara", "state": "ERROR"},
+                                           {"name": "lint", "state": "SUCCESS"}]})
+        self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Import #2 failing")
+        self.assertNotIn("waiting-merge", pr_states(pr))
+
     def test_admin_only_and_incomplete_checks_do_not_grant_readiness(self):
         assignment = {"state": "FAILURE", "purpose": "reviewer-assignment"}
         for complete, total, contexts in [(True, 1, [assignment]),

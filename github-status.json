@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-16T17:41:29.225953+00:00",
-  "registryDate": "2026-10-16T18:26:56.201570+00:00",
+  "registryDate": "2026-10-16T18:39:11.185330+00:00",
   "prs": [
     {
       "number": 12470,
@@ -87034,7 +87034,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-16T18:25:38.794244+00:00",
+      "mergeabilityCheckedAt": "2026-10-16T18:39:11.158567+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -87185,21 +87185,10 @@
         ]
       },
       "checks": {
-        "state": "PENDING",
+        "state": "SUCCESS",
         "total": 12,
         "complete": true,
         "contexts": [
-          {
-            "id": "CR_kwDOB9IlXs8AAAAbRS9I7g",
-            "name": "generate",
-            "state": "IN_PROGRESS",
-            "url": "https://github.com/google/gvisor/actions/runs/38945909499/job/117124843758",
-            "kind": "check-run",
-            "app": "GitHub Actions",
-            "appSlug": "github-actions",
-            "workflow": "Go",
-            "purpose": "validation"
-          },
           {
             "id": "CR_kwDOB9IlXs8AAAAbRS9JBQ",
             "name": "gazelle",
@@ -87220,6 +87209,17 @@
             "app": "GitHub Actions",
             "appSlug": "github-actions",
             "workflow": "GitHub Actions Scan",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAbRS9I7g",
+            "name": "generate",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/38945909499/job/117124843758",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "workflow": "Go",
             "purpose": "validation"
           },
           {
@@ -87326,15 +87326,15 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-16T18:25:38.794244+00:00",
+      "checkedAt": "2026-10-16T18:39:11.185330+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "15a46f6871e7957989c770ee4544a7c975933f18",
         "base": "a89c378f21b08ef594149b01a30aec68ed4b66bc",
-        "checkedAt": "2026-10-16T18:25:38.794244+00:00"
+        "checkedAt": "2026-10-16T18:39:11.158567+00:00"
       },
-      "importsComplete": true,
-      "imports": []
+      "imports": [],
+      "importsComplete": true
     },
     {
       "number": 15738,
@@ -91449,7 +91449,7 @@
       "headIntroducedAt": null,
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
-      "updatedAt": "2026-10-16T18:24:19Z",
+      "updatedAt": "2026-10-16T18:25:46Z",
       "createdAt": "2026-10-15T08:29:15Z",
       "mergedAt": null,
       "closedAt": null,
@@ -91463,9 +91463,11 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-16T18:25:38.794250+00:00",
+      "mergeabilityCheckedAt": "2026-10-16T18:39:11.158709+00:00",
       "mergeState": "BLOCKED",
-      "labels": [],
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -91506,8 +91508,8 @@
         ]
       },
       "checks": {
-        "state": "SUCCESS",
-        "total": 14,
+        "state": "FAILURE",
+        "total": 15,
         "complete": true,
         "contexts": [
           {
@@ -91654,6 +91656,15 @@
             "purpose": "validation"
           },
           {
+            "id": "SC_kwDOB9IlXs8AAAANKrB80w",
+            "name": "import/copybara",
+            "state": "ERROR",
+            "url": null,
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
             "id": "CR_kwDOB9IlXs8AAAAbFYnBZw",
             "name": "cla/google",
             "state": "SUCCESS",
@@ -91669,15 +91680,15 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "a4eadcd7eff9248399315d5997908bb233f24504",
       "approvedAt": "2026-10-16T18:20:07Z",
-      "checkedAt": "2026-10-16T18:25:38.794250+00:00",
+      "checkedAt": "2026-10-16T18:39:11.185330+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a4eadcd7eff9248399315d5997908bb233f24504",
         "base": "d4d3e28027b4b6c94848a95bb7ada24bf82be84c",
-        "checkedAt": "2026-10-16T18:25:38.794250+00:00"
+        "checkedAt": "2026-10-16T18:39:11.158709+00:00"
       },
-      "importsComplete": true,
-      "imports": []
+      "imports": [],
+      "importsComplete": true
     },
     {
       "number": 15858,
@@ -93589,19 +93600,11 @@
       }
     },
     "pr:15169": {
-      "failing": {
-        "scope": "15169:d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
-        "since": "2026-10-06T08:06:14.932695+00:00",
-        "basis": "observed",
-        "qualifier": "Source checks failing",
-        "observedAt": "2026-10-16T17:41:29.225953+00:00",
-        "evidence": "https://github.com/tamird/gvisor/blob/43572e2f12b6e05835af23196b3906cd99650b61/github-status.json"
-      },
       "awaiting-import": {
         "scope": "d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
         "since": "2026-10-14T11:40:20.406115+00:00",
         "basis": "observed",
-        "qualifier": "Checks failing",
+        "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       }
     },
@@ -94055,10 +94058,10 @@
     },
     "pr:15416": {
       "failing": {
-        "scope": "15416:20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf,15794:d4000cd9efb6a7d51d18bf2ea7240adc93ecac75",
-        "since": "2026-10-14T22:58:22.713588+00:00",
+        "scope": "15794:d4000cd9efb6a7d51d18bf2ea7240adc93ecac75",
+        "since": "2026-10-16T17:41:29.225953+00:00",
         "basis": "observed",
-        "qualifier": "Source checks failing; Import #15794 failing",
+        "qualifier": "Import #15794 failing",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       },
       "importing": {
@@ -94263,34 +94266,20 @@
       }
     },
     "pr:15499": {
-      "failing": {
-        "scope": "15499:73b3b76556e7cb8b6ac03d418fc2c0e00704845f",
-        "since": "2026-10-09T05:45:45.852127+00:00",
-        "basis": "observed",
-        "qualifier": "Source checks failing",
-        "observedAt": "2026-10-16T17:41:29.225953+00:00"
-      },
       "awaiting-import": {
         "scope": "73b3b76556e7cb8b6ac03d418fc2c0e00704845f",
         "since": "2026-10-08T17:38:13.961445+00:00",
         "basis": "observed",
-        "qualifier": "Checks failing",
+        "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       }
     },
     "pr:15500": {
-      "failing": {
-        "scope": "15500:e49969d3e7a6696867870b4494557166442380b1",
-        "since": "2026-10-09T17:46:23.365254+00:00",
-        "basis": "observed",
-        "qualifier": "Source checks failing",
-        "observedAt": "2026-10-16T17:41:29.225953+00:00"
-      },
       "awaiting-import": {
         "scope": "e49969d3e7a6696867870b4494557166442380b1",
         "since": "2026-10-09T17:36:27.992866+00:00",
         "basis": "observed",
-        "qualifier": "Checks failing",
+        "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       }
     },
@@ -94367,34 +94356,20 @@
       }
     },
     "pr:15518": {
-      "failing": {
-        "scope": "15518:e5665960fd5df4b8a673d50fffedc5fde9191410",
-        "since": "2026-10-09T16:06:07.202156+00:00",
-        "basis": "observed",
-        "qualifier": "Source checks failing",
-        "observedAt": "2026-10-16T17:41:29.225953+00:00"
-      },
       "awaiting-import": {
         "scope": "e5665960fd5df4b8a673d50fffedc5fde9191410",
         "since": "2026-10-09T16:01:25.812969+00:00",
         "basis": "observed",
-        "qualifier": "Checks failing",
+        "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       }
     },
     "pr:15541": {
-      "failing": {
-        "scope": "15541:fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
-        "since": "2026-10-09T17:25:46.342832+00:00",
-        "basis": "observed",
-        "qualifier": "Source checks failing",
-        "observedAt": "2026-10-16T17:41:29.225953+00:00"
-      },
       "awaiting-import": {
         "scope": "fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
         "since": "2026-10-09T16:25:48.148610+00:00",
         "basis": "observed",
-        "qualifier": "Checks failing",
+        "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       }
     },
@@ -94525,18 +94500,11 @@
       }
     },
     "pr:15598": {
-      "failing": {
-        "scope": "15598:49328c2b8c6721966311d65791ff1255d3bc15ea",
-        "since": "2026-10-16T16:03:47.990748+00:00",
-        "basis": "observed",
-        "qualifier": "Source checks failing",
-        "observedAt": "2026-10-16T17:41:29.225953+00:00"
-      },
       "awaiting-import": {
         "scope": "49328c2b8c6721966311d65791ff1255d3bc15ea",
         "since": "2026-10-14T17:18:09.542014+00:00",
         "basis": "observed",
-        "qualifier": "Checks failing",
+        "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-16T17:41:29.225953+00:00"
       }
     },
@@ -94764,19 +94732,12 @@
       }
     },
     "pr:15730": {
-      "checks-pending": {
-        "scope": "15730:15a46f6871e7957989c770ee4544a7c975933f18",
-        "since": "2026-10-16T18:25:38.794244+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-16T18:25:38.794244+00:00"
-      },
       "changes-requested": {
         "scope": "15a46f6871e7957989c770ee4544a7c975933f18",
         "since": "2026-10-16T18:25:38.794244+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-16T18:25:38.794244+00:00"
+        "observedAt": "2026-10-16T18:39:11.185330+00:00"
       }
     },
     "pr:15738": {
@@ -94874,8 +94835,8 @@
         "scope": "a4eadcd7eff9248399315d5997908bb233f24504",
         "since": "2026-10-16T18:25:38.794250+00:00",
         "basis": "observed",
-        "qualifier": "Validation checks passed",
-        "observedAt": "2026-10-16T18:25:38.794250+00:00"
+        "qualifier": "Import status failing; validation checks passed",
+        "observedAt": "2026-10-16T18:39:11.185330+00:00"
       }
     },
     "pr:15858": {
@@ -94911,7 +94872,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-16T18:26:56.201570+00:00"
+        "observedAt": "2026-10-16T18:39:11.185330+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -94920,7 +94881,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-16T18:26:56.201570+00:00"
+        "observedAt": "2026-10-16T18:39:11.185330+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -94929,7 +94890,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-16T18:26:56.201570+00:00"
+        "observedAt": "2026-10-16T18:39:11.185330+00:00"
       }
     }
   },

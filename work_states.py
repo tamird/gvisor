@@ -40,6 +40,10 @@ def check_purpose(check: dict) -> Literal["validation", "reviewer-assignment"]:
             else "validation")
 
 
+def is_import_status(check: dict) -> bool:
+    return check.get("kind") == "status" and check.get("name") in {"import/copybara", "feedback/copybara"}
+
+
 def complete_checks(pr: dict) -> bool:
     checks = pr.get("checks") or {}
     return bool(checks.get("complete") and checks.get("total", 0) > 0
@@ -48,7 +52,7 @@ def complete_checks(pr: dict) -> bool:
 
 def validation_checks(pr: dict) -> list[dict]:
     return [item for item in (pr.get("checks") or {}).get("contexts", [])
-            if item.get("purpose") != "reviewer-assignment"]
+            if item.get("purpose") != "reviewer-assignment" and not is_import_status(item)]
 
 
 def check_states(pr: dict) -> set[str]:
@@ -56,7 +60,7 @@ def check_states(pr: dict) -> set[str]:
     states = {item["state"] for item in validation_checks(pr)}
     aggregate = checks.get("state")
     administrative = {item["state"] for item in checks.get("contexts", [])
-                      if item.get("purpose") == "reviewer-assignment"}
+                      if item.get("purpose") == "reviewer-assignment" or is_import_status(item)}
     explained = complete_checks(pr) and (
         aggregate in FAILURES and bool(administrative & FAILURES)
         or aggregate in PENDING and bool(administrative & PENDING))
@@ -78,9 +82,16 @@ def checks_passed(pr: dict) -> bool:
 
 def check_qualifier(pr: dict) -> str:
     states = check_states(pr)
-    return ("Checks failing" if states & FAILURES else "Checks pending" if states & PENDING
-            else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
-            else "Checks unknown")
+    validation = ("Checks failing" if states & FAILURES else "Checks pending" if states & PENDING
+                  else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
+                  else "Checks unknown")
+    imports = {item["state"] for item in (pr.get("checks") or {}).get("contexts", [])
+               if is_import_status(item)}
+    if imports & FAILURES:
+        return "Import status failing; " + validation.lower()
+    if imports & PENDING:
+        return "Import status pending; " + validation.lower()
+    return validation
 
 
 def effective_approval(pr: dict) -> dict | None:

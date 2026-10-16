@@ -250,7 +250,10 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   merge authority and does not claim internal import progress.
 - **Failing checks** and **Checks pending:** current source or active exact-source
   import validation checks, including CI/infrastructure failures but excluding
-  identified reviewer-assignment errors. Each failure label names
+  identified reviewer-assignment and Copybara import-status results. Copybara
+  errors remain maintainer import attention and visible raw statuses; a linked
+  import's failing public validation checks remain agent work. An incomplete
+  inventory cannot explain away an aggregate failure. Each failure label names
   the source or import PR; details link the failed checks. An old import failure
   stays in details without making the current head fail.
 
