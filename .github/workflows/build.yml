@@ -1,4 +1,4 @@
-name: State schema performance
+name: State owned-value performance
 
 "on":
   workflow_dispatch:
@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/state-schema-ownership-actions'
+    if: github.repository == 'tamird/gvisor' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/state-owned-values-actions'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -31,7 +31,7 @@ jobs:
         : "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"
         export BUILDBUDDY_ARTIFACTS_DIRECTORY="$RUNNER_TEMP/qualification"
         mkdir -p "$BUILDBUDDY_ARTIFACTS_DIRECTORY"
-        method="$RUNNER_TEMP/state-schema-performance.sh"
+        method="$RUNNER_TEMP/state-owned-values-performance.sh"
         export STATE_PERFORMANCE_CREDENTIAL_RC
         STATE_PERFORMANCE_CREDENTIAL_RC=$(mktemp "$RUNNER_TEMP/state-schema-credential.XXXXXX")
         finish() {
@@ -59,14 +59,14 @@ jobs:
                 'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'RUNNER_OS', 'RUNNER_ARCH',
                 'ImageOS', 'ImageVersion')
         record = {key: os.environ.get(key) for key in keys}
-        record['measuredSource'] = 'fc2b6b435b97fed95b4c41fd5c39a535f2dee6e2'
+        record['measuredSource'] = '391065ac5514e5ce1d9abb56a93d0ab8af085c49'
         record['beforeSource'] = '6212e4f7b92d3090be49c21a376f1e53b7e79ce5'
         record['methodSHA256'] = hashlib.sha256((root / 'method.sh').read_bytes()).hexdigest()
         record['workflowSHA256'] = hashlib.sha256((root / 'workflow.yml').read_bytes()).hexdigest()
         (root / 'actions-identity.json').write_text(json.dumps(record, indent=2) + '\n')
         PY
-        # Keep workflow changes outside the measured 48-path source comparison.
-        measured_source=fc2b6b435b97fed95b4c41fd5c39a535f2dee6e2
+        # Keep workflow changes outside the measured 47-path source comparison.
+        measured_source=391065ac5514e5ce1d9abb56a93d0ab8af085c49
         if ! git cat-file -e "$measured_source^{commit}" 2>/dev/null; then
           timeout --signal=TERM --kill-after=5s 60s git fetch --no-tags --depth=1 origin "$measured_source"
         fi
@@ -96,6 +96,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: state-schema-performance-${{ github.run_id }}-${{ github.run_attempt }}
+        name: state-owned-values-performance-${{ github.run_id }}-${{ github.run_attempt }}
         path: ${{ runner.temp }}/qualification
         if-no-files-found: error
