@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T09:59:12.905019+00:00",
+    "updatedAt": "2026-10-16T10:07:23.195955+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5026,19 +5026,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "27e04f934c909ee4196d7ec06aacd14e23e2cd85",
+      "head": "80be50dc4d54d058d8fb94750e4fcc894eb0313b",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/27e04f934c909ee4196d7ec06aacd14e23e2cd85",
-      "status": "Upstream refresh needs fixes",
-      "summary": "Canonical qualification/current-upstream-refresh remains at 27e04f934. The separate upstream refresh at 1b07cd6c9 failed its mixed-unit run: 690 owners passed, seven failed and five build targets were blocked. AMD64 normal and race release-smoke cases passed. ARM64 normal smoke passed, but the job was cancelled while compiling race dependencies, so the race case did not run. The refreshed source has not been adopted into the canonical refs.\n\nA separate generated-source export at 95949353b passed all six target-platform compilation cases in Actions 38866870348. The Linux AMD64 case compiled the full exported module with CGO; the five other target platforms compiled the selected portable packages without CGO. All six compilations ran freshly on remote Linux workers. This establishes compilation portability, not runtime execution on those target operating systems, and does not promote the canonical refs.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
-      "updatedAt": "2026-10-16T08:08:00.509658+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/80be50dc4d54d058d8fb94750e4fcc894eb0313b",
+      "status": "Adopted; strict full unit profile running",
+      "summary": "Canonical qualification/current-upstream-refresh has advanced by fast-forward to 80be50dc4. Focused corrections close the seven failed owners and five blocked build targets from the original refresh. AMD64 normal/race and ARM64 normal/race release-smoke cases now pass. The original failed mixed-unit run remains recorded: its 690 passing owners are historical results, because the modified lockfile bytes were not captured. They do not establish the exact dependency set at 80be. A full current unit profile is running on c88326a40, which adds only strict lockfile enforcement and before/after source/lock checks to the qualification route. It has no result yet. Container runtime remains outside the unit selection, and nine unavailable NVIDIA ABI source cases per architecture remain skipped.\n\nA separate generated-source export at 95949353b passed all six target-platform compilation cases in Actions 38866870348. The Linux AMD64 case compiled the full exported module with CGO; the five other target platforms compiled the selected portable packages without CGO. All six compilations ran freshly on remote Linux workers. This establishes compilation portability, not runtime execution on those target operating systems, and applies to the adopted 80be source without claiming target-platform runtime execution.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
+      "updatedAt": "2026-10-16T10:04:55.120358+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Upstream refresh failures require agent work",
-        "sourceHead": "27e04f934c909ee4196d7ec06aacd14e23e2cd85",
-        "observedAt": "2026-10-16T06:36:32.035368+00:00",
-        "nextAction": "Correct the failures in the separate upstream refresh, preserve the completed owner and release-smoke evidence, and close the unrun ARM64 race case before considering canonical adoption. Keep the remaining Triton and GPU provider gaps separate.",
+        "disposition": "Adopted integration; full unit dependency identity under validation",
+        "sourceHead": "80be50dc4d54d058d8fb94750e4fcc894eb0313b",
+        "observedAt": "2026-10-16T10:04:55.120358+00:00",
+        "nextAction": "Verify full mixed-unit Actions 38884118221 at c88326a40 and its exact unchanged source/dependency inputs. Keep focused correction/release/export results distinct from the historical 690 passes and preserve remaining container-runtime, full syscall/64 KiB/release-candidate, Triton and GPU coverage limits.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -5074,16 +5074,18 @@
           "https://github.com/tamird/gvisor/commit/1b07cd6c9394256b8580c2735515fa5e185d3432",
           "https://github.com/tamird/gvisor/actions/runs/38855027074",
           "https://github.com/tamird/gvisor/actions/runs/38856872319",
-          "https://github.com/tamird/gvisor/actions/runs/38857042112"
+          "https://github.com/tamird/gvisor/actions/runs/38857042112",
+          "https://github.com/tamird/gvisor/commit/80be50dc4d54d058d8fb94750e4fcc894eb0313b",
+          "https://github.com/tamird/gvisor/actions/runs/38884118221"
         ]
       },
       "evidence": [
         {
           "label": "Current adopted canonical source",
-          "url": "https://github.com/tamird/gvisor/commit/27e04f934c909ee4196d7ec06aacd14e23e2cd85"
+          "url": "https://github.com/tamird/gvisor/commit/80be50dc4d54d058d8fb94750e4fcc894eb0313b"
         },
         {
-          "label": "Separate upstream refresh source under validation",
+          "label": "Original upstream refresh source; failed outcome retained",
           "url": "https://github.com/tamird/gvisor/commit/1b07cd6c9394256b8580c2735515fa5e185d3432"
         },
         {
@@ -5155,12 +5157,16 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/38856872319"
         },
         {
-          "label": "Passed ARM64 normal smoke; race unrun after cancellation",
+          "label": "Original ARM64 normal pass; race cancelled before later correction",
           "url": "https://github.com/tamird/gvisor/actions/runs/38857042112"
         },
         {
           "label": "Passed six-platform generated-source compilation",
           "url": "https://github.com/tamird/gvisor/actions/runs/38866870348"
+        },
+        {
+          "label": "Strict-lock full mixed-unit profile in progress",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38884118221"
         }
       ]
     },
@@ -9907,8 +9913,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T08:37:30.843097+00:00",
-      "summary": "The dynamic reflect.Value successor at 458a8b419 completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save is 26.90% faster, with 28.43% fewer allocated bytes and 49.23% fewer allocations. The other nine timing comparisons are inconclusive with broad intervals; this does not establish equivalence or readiness. Load allocation counts and bytes match baseline, apart from a two-byte median variation in UDP. The 24 selected correctness, race, analyzer and first-use targets and both production links pass separately.\n\nEarlier source-specific results:\n\nThe owned wire.Object successor at 4a268179f completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save improves 28.68%, but control-message Load, pointer Load, map Load and map Save regress 11.54%, 4.97%, 8.51% and 9.01%. UDP and adoption Load differences are not statistically significant. This mixed result remains under investigation and is not ready for adoption. The 24 selected correctness, race, analyzer and first-use targets and both production links remain qualified separately.\n\nThe preceding container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
+      "updatedAt": "2026-10-16T10:07:23.195955+00:00",
+      "summary": "The current-upstream correction at 00d19e629 passes its selected semantic, analyzer and first-use checks and both production links, preserving the original failed empty-map/analyzer attempt. Both comparison arms share the existing #15648 and #15814 prerequisites. Its corrected fixed comparison completed all 268 processes and 240 measured rows against the matched current-upstream control. Originals, source/compiler/native inputs, the reporting tool and independent numerical review are verified. UDP Save is 23.84% faster, with 28.41% fewer allocated bytes and 49.23% fewer allocations. Control-message Save improves 7.81%, adoption Save/Load 4.01%/1.89%, and pointer Save/Load 2.11%/4.35%. The other four timing comparisons are inconclusive. Load allocation counts are unchanged; Save bytes rise 1.63% for pointer, 0.01% for adoption and 0.06% for map. These results are from one current-source cohort without historical sample pooling. Current-source startup costs remain to be measured, so no readiness decision is claimed. The first timing attempt failed during reporter analysis before any benchmark process ran; its missing pinned dependency was restored identically on both arms without changing the runtime comparison.\n\nThe dynamic reflect.Value successor at 458a8b419 completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save is 26.90% faster, with 28.43% fewer allocated bytes and 49.23% fewer allocations. The other nine timing comparisons are inconclusive with broad intervals; this does not establish equivalence or readiness. Load allocation counts and bytes match baseline, apart from a two-byte median variation in UDP. The 24 selected correctness, race, analyzer and first-use targets and both production links pass separately.\n\nEarlier source-specific results:\n\nThe owned wire.Object successor at 4a268179f completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save improves 28.68%, but control-message Load, pointer Load, map Load and map Save regress 11.54%, 4.97%, 8.51% and 9.01%. UDP and adoption Load differences are not statistically significant. This mixed result remains under investigation and is not ready for adoption. The 24 selected correctness, race, analyzer and first-use targets and both production links remain qualified separately.\n\nThe preceding container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10978,9 +10984,26 @@
               "url": "https://app.buildbuddy.io/invocation/ea39fac3-0572-4be1-8297-33f3229a3be9"
             }
           ]
+        },
+        {
+          "text": "The current-upstream correction at 00d19e629 passes its selected semantic, analyzer and first-use checks and both production links, preserving the original failed empty-map/analyzer attempt. Both comparison arms share the existing #15648 and #15814 prerequisites. Its corrected fixed comparison completed all 268 processes and 240 measured rows against the matched current-upstream control. Originals, source/compiler/native inputs, the reporting tool and independent numerical review are verified. UDP Save is 23.84% faster, with 28.41% fewer allocated bytes and 49.23% fewer allocations. Control-message Save improves 7.81%, adoption Save/Load 4.01%/1.89%, and pointer Save/Load 2.11%/4.35%. The other four timing comparisons are inconclusive. Load allocation counts are unchanged; Save bytes rise 1.63% for pointer, 0.01% for adoption and 0.06% for map. These results are from one current-source cohort without historical sample pooling. Current-source startup costs remain to be measured, so no readiness decision is claimed. The first timing attempt failed during reporter analysis before any benchmark process ran; its missing pinned dependency was restored identically on both arms without changing the runtime comparison.",
+          "evidence": [
+            {
+              "label": "Qualified current-upstream standalone correction",
+              "url": "https://github.com/tamird/gvisor/commit/00d19e629a19ecac3692b19a04c97e59b6e7e7c2"
+            },
+            {
+              "label": "Corrected timing candidate; reporter dependency shared with control",
+              "url": "https://github.com/tamird/gvisor/commit/91323cf62c755e861c47fe1f83a0339c0b4f7a23"
+            },
+            {
+              "label": "Matched current-upstream control",
+              "url": "https://github.com/tamird/gvisor/commit/685d734a548d89c313010ac183315734e1a5ec04"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the published current-upstream correction 00d19e629 after the retained empty-map and generated-method analyzer failures. Reuse existing source-order PR #15648 as a shared prerequisite in both arms, alongside #15814; the remaining-only qualification submission is in progress. The existing #15648 proposal dependency remains, and no duplicate analyzer fix is needed. No current-upstream performance or readiness result is claimed.",
+      "nextStep": "Assess CLI/inittrace and StartupEmpty costs on the exact current-source pair 91323cf62/685d734a5, including the split Sentry and all eight release files, before proposing adoption. Preserve the zero-process reporter failure and keep earlier 6212-based cohorts separate; their timing, startup and allocation conclusions do not transfer to this source.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11477,6 +11500,18 @@
         {
           "label": "Corrected current-upstream source with both shared prerequisites",
           "url": "https://github.com/tamird/gvisor/commit/00d19e629a19ecac3692b19a04c97e59b6e7e7c2"
+        },
+        {
+          "label": "Qualified current-upstream standalone correction",
+          "url": "https://github.com/tamird/gvisor/commit/00d19e629a19ecac3692b19a04c97e59b6e7e7c2"
+        },
+        {
+          "label": "Corrected timing candidate; reporter dependency shared with control",
+          "url": "https://github.com/tamird/gvisor/commit/91323cf62c755e861c47fe1f83a0339c0b4f7a23"
+        },
+        {
+          "label": "Matched current-upstream control",
+          "url": "https://github.com/tamird/gvisor/commit/685d734a548d89c313010ac183315734e1a5ec04"
         }
       ],
       "comparisons": [
