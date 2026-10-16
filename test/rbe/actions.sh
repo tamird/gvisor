@@ -464,6 +464,9 @@ CONTEXT
     --events "$directory/events.jsonl" --manifest "$directory/events.jsonl.manifest.json" \
     --context "$directory/context.json" --output "$directory/verdict.json" \
     "${verdict_options[@]}" || verdict_status=$?
+  if [[ $analysis_only == true ]] && (( capture_status == 0 && verdict_status == 0 )); then
+    return 0
+  fi
   if (( result == 0 )); then
     if (( capture_status != 0 )); then result=$capture_status; else result=$verdict_status; fi
   fi
