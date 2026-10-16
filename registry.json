@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T03:46:42.415921+00:00",
+    "updatedAt": "2026-10-16T05:25:02.027508+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5010,19 +5010,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "e5b875d0319315571ec74b7a2c8a73e3345c3d62",
+      "head": "27e04f934c909ee4196d7ec06aacd14e23e2cd85",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/e5b875d0319315571ec74b7a2c8a73e3345c3d62",
-      "status": "Qualified FIB corrections adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is now e5b875d03. The three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is awaiting contributor review before upstream submission.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
-      "updatedAt": "2026-10-15T00:12:18.972729+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/27e04f934c909ee4196d7ec06aacd14e23e2cd85",
+      "status": "Upstream refresh under validation",
+      "summary": "Canonical qualification/current-upstream-refresh remains at 27e04f934. The separate qualification/upstream-oct16 branch at 1b07cd6c9 is running the mixed-unit profile in Actions 38855027074. The refreshed source has not been adopted into the canonical refs; its result is still pending.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
+      "updatedAt": "2026-10-16T05:25:02.027508+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified FIB corrections adopted",
-        "sourceHead": "e5b875d0319315571ec74b7a2c8a73e3345c3d62",
-        "observedAt": "2026-10-15T00:12:18.972729+00:00",
-        "nextAction": "Continue the remaining source-built CI lanes and tracked provider gaps; deliver the standalone FIB correction after contributor review.",
+        "disposition": "Separate upstream refresh under validation",
+        "sourceHead": "27e04f934c909ee4196d7ec06aacd14e23e2cd85",
+        "observedAt": "2026-10-16T05:25:02.027508+00:00",
+        "nextAction": "Review the mixed-unit result for refreshed source 1b07cd6c9 before advancing the canonical qualification refs. Preserve earlier source-bound results and the remaining Triton and GPU provider gaps.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -5053,12 +5053,27 @@
           "https://app.buildbuddy.io/invocation/fad2318e-ff34-4ab3-b84a-c621d9b725db",
           "https://github.com/tamird/gvisor/commit/e5b875d0319315571ec74b7a2c8a73e3345c3d62",
           "https://app.buildbuddy.io/invocation/3cb3ddab-5b91-4622-b809-afbb3270ac65",
-          "https://github.com/tamird/gvisor/actions/runs/38654426088"
+          "https://github.com/tamird/gvisor/actions/runs/38654426088",
+          "https://github.com/tamird/gvisor/commit/27e04f934c909ee4196d7ec06aacd14e23e2cd85",
+          "https://github.com/tamird/gvisor/commit/1b07cd6c9394256b8580c2735515fa5e185d3432",
+          "https://github.com/tamird/gvisor/actions/runs/38855027074"
         ]
       },
       "evidence": [
         {
           "label": "Current adopted canonical source",
+          "url": "https://github.com/tamird/gvisor/commit/27e04f934c909ee4196d7ec06aacd14e23e2cd85"
+        },
+        {
+          "label": "Separate upstream refresh source under validation",
+          "url": "https://github.com/tamird/gvisor/commit/1b07cd6c9394256b8580c2735515fa5e185d3432"
+        },
+        {
+          "label": "Running mixed-unit upstream refresh",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38855027074"
+        },
+        {
+          "label": "Earlier adopted FIB integration source",
           "url": "https://github.com/tamird/gvisor/commit/e5b875d0319315571ec74b7a2c8a73e3345c3d62"
         },
         {
@@ -9751,8 +9766,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T03:46:42.415921+00:00",
-      "summary": "The container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
+      "updatedAt": "2026-10-16T05:25:02.027508+00:00",
+      "summary": "The successor at 4a268179f replaces the custom Value representation with owned wire.Object payloads in the existing restore engine. It passes 24 selected correctness, race, analyzer and first-use targets plus AMD64/ARM64 production links. Its fixed 268-process timing comparison against original control 6212e4f7b is now running. There is no timing result for this successor, and it remains under investigation.\n\nThe preceding container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10775,9 +10790,26 @@
               "url": "https://github.com/tamird/gvisor/commit/c83628573549f120d05d54caa02275cf05948b14"
             }
           ]
+        },
+        {
+          "text": "The owned wire.Object successor at 4a268179f passes 24 selected correctness, race, analyzer and first-use targets and both production links. It replaces the custom Value/header/accessor machinery while retaining one restore engine and typed scalar stores. First-use allocation observations match the original control for ordinary, retained-source and control-message cases; adoption is close to that control. Control-message and adoption allocation costs rise relative to container-local source c83628573. These descriptive allocation observations establish no latency benefit. The separate fixed comparison now runs all 268 processes against original control 6212e4f7b, with no sample pooling.",
+          "evidence": [
+            {
+              "label": "Owned wire.Object diagnostic source",
+              "url": "https://github.com/tamird/gvisor/commit/4a268179f4837918fe2e81b7e5b4227bcf97c5bf"
+            },
+            {
+              "label": "Completed owned wire.Object correctness qualification",
+              "url": "https://app.buildbuddy.io/invocation/5cfac46b-5a9b-4230-887f-8e3c2170ebd4"
+            },
+            {
+              "label": "Running fixed owned wire.Object comparison",
+              "url": "https://app.buildbuddy.io/invocation/fdb52f8f-a878-4346-a30a-481a7f1d78b6"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the completed CPU and allocation profiles of control-message Load, adoption Load, UDP Load and map Save to guide the next owning design correction. The owner is assessing reuse of existing owned wire.Object payloads in the sole restore engine. Preserve measured regressions and source-specific startup and size evidence; no readiness or new full timing cohort is claimed.",
+      "nextStep": "Complete and independently verify the fixed comparison of owned wire.Object source 4a268179f against original control 6212e4f7b. Keep the prior container-local timing regressions and source-specific startup and size findings separate; no historical samples are pooled and this is not a comparison against current upstream master.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11246,6 +11278,18 @@
         {
           "label": "Three-arm container-startup comparison",
           "url": "https://app.buildbuddy.io/invocation/96970fb0-5048-406d-be10-e12e3867b77a"
+        },
+        {
+          "label": "Owned wire.Object diagnostic source",
+          "url": "https://github.com/tamird/gvisor/commit/4a268179f4837918fe2e81b7e5b4227bcf97c5bf"
+        },
+        {
+          "label": "Completed owned wire.Object correctness qualification",
+          "url": "https://app.buildbuddy.io/invocation/5cfac46b-5a9b-4230-887f-8e3c2170ebd4"
+        },
+        {
+          "label": "Running fixed owned wire.Object comparison",
+          "url": "https://app.buildbuddy.io/invocation/fdb52f8f-a878-4346-a30a-481a7f1d78b6"
         }
       ],
       "comparisons": [
