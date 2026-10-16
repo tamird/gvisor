@@ -14,116 +14,81 @@
 
 package wire
 
-// SaveIntField writes a saved signed field without constructing an Object.
-func SaveIntField(w *Writer, value Int) {
+// Generated scalar captures snapshot values into the same owned Object slots
+// as dynamic capture. Ordinary zero fields are elided; values nested inside
+// interfaces and arrays retain their complete representation.
+
+// CaptureIntField snapshots a scalar field with zero elision.
+func CaptureIntField(dest *Object, value Int) {
 	if value == 0 {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeInt.save(w)
-		Int(value).save(w)
+		*dest = value
 	}
 }
 
-// SaveStringField writes a saved string without constructing an Object.
-func SaveStringField(w *Writer, value String) {
+// CaptureStringField snapshots a scalar field with zero elision.
+func CaptureStringField(dest *Object, value String) {
 	if value == "" {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeString.save(w)
-		text := String(value)
-		text.save(w)
+		*dest = &value
 	}
 }
 
-// SaveUintField writes a saved unsigned field without constructing an Object.
-func SaveUintField(w *Writer, value Uint) {
+// CaptureUintField snapshots a scalar field with zero elision.
+func CaptureUintField(dest *Object, value Uint) {
 	if value == 0 {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeUint.save(w)
-		Uint(value).save(w)
+		*dest = value
 	}
 }
 
-// SaveBoolField writes a saved boolean field without constructing an Object.
-func SaveBoolField(w *Writer, value Bool) {
-	if !value {
-		typeNil.save(w)
+// CaptureBoolField snapshots a scalar field with zero elision.
+func CaptureBoolField(dest *Object, value Bool) {
+	if value == false {
+		*dest = Nil{}
 	} else {
-		typeBool.save(w)
-		Bool(value).save(w)
+		*dest = value
 	}
 }
 
-// SaveFloat32Field preserves the existing Float32 encoding after capture's
-// float64 promotion, including the signaling-NaN conversion boundary.
-func SaveFloat32Field(w *Writer, value Float64) {
+// CaptureFloat32Field preserves the promotion and narrowing boundary used
+// by reflective capture, including signaling NaNs.
+func CaptureFloat32Field(dest *Object, value Float64) {
 	if value == 0 {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeFloat32.save(w)
-		Float32(value).save(w)
+		*dest = Float32(value)
 	}
 }
 
-// SaveFloat64Field writes a saved float64 without constructing an Object.
-func SaveFloat64Field(w *Writer, value Float64) {
+// CaptureFloat64Field snapshots a scalar field with zero elision.
+func CaptureFloat64Field(dest *Object, value Float64) {
 	if value == 0 {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeFloat64.save(w)
-		value.save(w)
+		*dest = value
 	}
 }
 
-// SaveComplex64Field preserves the existing complex128 promotion boundary.
-func SaveComplex64Field(w *Writer, value Complex128) {
+// CaptureComplex64Field preserves the promotion and narrowing boundary used
+// by reflective capture, including signaling NaNs.
+func CaptureComplex64Field(dest *Object, value Complex128) {
 	if value == 0 {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeComplex64.save(w)
 		narrow := Complex64(value)
-		narrow.save(w)
+		*dest = &narrow
 	}
 }
 
-// SaveComplex128Field writes a saved complex128 without constructing an Object.
-func SaveComplex128Field(w *Writer, value Complex128) {
+// CaptureComplex128Field snapshots a scalar field with zero elision.
+func CaptureComplex128Field(dest *Object, value Complex128) {
 	if value == 0 {
-		typeNil.save(w)
+		*dest = Nil{}
 	} else {
-		typeComplex128.save(w)
-		value.save(w)
-	}
-}
-
-// SaveRefField writes an inline pointer or map reference captured by state.
-// A nil reference uses the same primitive-zero elision as Sink.Save.
-func SaveRefField(w *Writer, value *Ref) {
-	if value.Root == 0 {
-		typeNil.save(w)
-	} else {
-		typeRef.save(w)
-		value.save(w)
-	}
-}
-
-// SaveSliceField writes a captured slice with ordinary nil-field elision.
-func SaveSliceField(w *Writer, value *Slice) {
-	if value.Ref.Root == 0 {
-		typeNil.save(w)
-	} else {
-		typeSlice.save(w)
-		value.save(w)
-	}
-}
-
-// SaveInterfaceField writes the dynamic type and captured interface value.
-func SaveInterfaceField(w *Writer, value *Interface) {
-	if value.Type == nil {
-		typeNil.save(w)
-	} else {
-		typeInterface.save(w)
-		value.save(w)
+		*dest = &value
 	}
 }

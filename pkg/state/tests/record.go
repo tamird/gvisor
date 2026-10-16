@@ -95,13 +95,13 @@ func (state *statePackageReceiver) loadObject(_ context.Context, value []state.T
 }
 
 // The forwarding owner deliberately precedes its underlying type's
-// registration. Record construction must not depend on init statement order.
+// registration. Capture must not depend on init statement order.
 // +stateify savable
 // +stateify identtype
 type forwardedRecord recordParent
 
 // The receiver deliberately shadows its own type name. Generated forwarding
-// metadata must preserve this spelling without using the type in its body.
+// methods must preserve this spelling without using the type in their bodies.
 func (forwardedRecord *forwardedRecord) recordValue() int {
 	return forwardedRecord.value
 }
@@ -126,6 +126,8 @@ type composedRecord struct {
 }
 
 func (r *composedRecord) StateSave(s state.Sink) {
+	// Forwarding must replace even a zero prefix without clearing siblings.
+	s.Save(0, &r.before)
 	s.Save(1, &r.before)
 	child := statewire{value: recordSigned(r.value)}
 	if r.replace {

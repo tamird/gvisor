@@ -87,8 +87,8 @@ func (b *badCycleStruct) afterLoad(context.Context) {
 // be fully parsed before StateLoad runs.
 // +stateify type
 type replayLoadStruct struct {
-	// Metadata must not be invoked through this nil intermediate pointer.
-	// Nor may its inherited method classify this manual loader as generated.
+	// Manual capture and replay must not traverse this nil intermediate
+	// pointer to invoke inherited hooks.
 	*replayLoadMiddle `state:"nosave"`
 	first             int64
 	second            string

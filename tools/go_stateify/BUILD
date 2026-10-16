@@ -10,8 +10,8 @@ go_binary(
     srcs = [
         "main.go",
         "model.go",
-        "records.go",
         "restore.go",
+        "typed.go",
     ],
     visibility = ["//:sandbox"],
     deps = [

@@ -101,7 +101,7 @@ type encodeState struct {
 	// encodings of those structs. This is necessary to avoid duplicate calls
 	// to SaverLoader.StateSave() that may result in multiple calls to
 	// Sink.SaveValue() for a given field, resulting in object duplication.
-	encodedStructs map[reflect.Value]*wire.Record
+	encodedStructs map[reflect.Value]*wire.Struct
 
 	// binaryBuf holds temporary BinaryAppender output. Each saved value is
 	// copied into an immutable string before this buffer is reused.
@@ -502,7 +502,7 @@ type objectEncoder struct {
 	es *encodeState
 
 	// encoded is the encoded struct.
-	encoded *wire.Record
+	encoded *wire.Struct
 }
 
 // save is called by the public methods on Sink.
@@ -510,9 +510,6 @@ func (oe *objectEncoder) save(slot int, obj reflect.Value) {
 	fieldValue := oe.encoded.Field(slot)
 	oe.es.encodeObject(obj, encodeDefault, fieldValue)
 }
-
-// emptyStructRecord is immutable and has no generated saver or references.
-var emptyStructRecord = wire.NewSlotRecord(0, 0)
 
 // encodeStruct encodes a composite object.
 func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
@@ -538,14 +535,16 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		if obj.NumField() == 0 {
 			// Allow unregistered anonymous, empty structs. This
 			// will just return success without ever invoking the
-			// passed function. The shared empty record is never changed.
+			// passed function.
 			//
 			// Note that this mechanism does *not* work for
 			// interfaces in general. So you can't dispatch
 			// non-registered empty structs via interfaces because
 			// then they can't be restored.
-			*dest = emptyStructRecord
-			es.encodedStructs[key] = emptyStructRecord
+			s := new(wire.Struct)
+			s.Alloc(0)
+			*dest = s
+			es.encodedStructs[key] = s
 			return
 		}
 		// We need a SaverLoader for struct types.
@@ -556,23 +555,11 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		es.pendingTypes = append(es.pendingTypes, te.Type)
 	}
 
-	// Resolve capture once, on a real receiver. A promoted metadata method
-	// must not reinterpret another type's record as its own.
+	// Publish the same owned struct before invoking any saver. Generated and
+	// manual savers fill its slots through the same graph resolver.
 	value := obj.Addr().Interface()
-	if te.newRecord == nil {
-		te.newRecord = wire.NewSlotRecord
-		if registered, _ := registeredType(te.Name); registered == obj.Type() {
-			if factory := generatedMetadata(value, te.Name, obj.Type()).NewRecord; factory != nil {
-				te.newRecord = factory
-			} else if _, saver := value.(SaverLoader); !saver {
-				if _, binary := value.(binaryObject); binary {
-					te.newRecord = newBinaryRecord
-				}
-			}
-		}
-	}
-	// Invoke the provided saver.
-	s := te.newRecord(wire.TypeID(te.ID), len(te.Fields))
+	s := &wire.Struct{TypeID: wire.TypeID(te.ID)}
+	s.Alloc(len(te.Fields))
 	*dest = s
 	es.encodedStructs[key] = s
 	oe := objectEncoder{

@@ -20,32 +20,18 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// Record returns the captured fields owned by this generated saver. Usually
-// its exact receiver metadata selected a constructor before StateSave. Forwarding
-// from a manual saver instead adapts these fields into that saver's slots.
-// The saver must capture values now, not retain live fields for emission.
-// It must assert the exact capture type so promoted savers cannot use another
-// type's layout. newRecord is the same constructor returned by its metadata.
-func Record(s Sink, count int, newRecord func(wire.TypeID, int) *wire.Record) wire.RecordFields {
-	return wire.CaptureRecordValue(s.internal.encoded, count, newRecord)
+// CaptureFields returns shared, owned slots for a generated saver. A manual
+// saver may forward a prefix to it, so leave all other slots untouched. Check
+// the count once before capturing custom values or indexing a singleton Struct.
+func CaptureFields(s Sink, count int) *wire.Struct {
+	fields := s.internal.encoded
+	if count < 0 || count > fields.Fields() {
+		Failf("generated field count %d exceeds struct's %d slots", count, fields.Fields())
+	}
+	return fields
 }
 
-// ForwardRecord resolves an identtype's capture layout on the actual converted
-// receiver. It retains exact registration and promoted-method checks, without
-// constructing a closure during package initialization.
-func ForwardRecord(owner Type) func(wire.TypeID, int) *wire.Record {
-	typ := reflect.TypeOf(owner).Elem()
-	name := owner.StateTypeName()
-	if registered, _ := registeredType(name); registered != typ {
-		Failf("forwarded record type %s is not registered as %v", name, typ)
-	}
-	if factory := generatedMetadata(owner, name, typ).NewRecord; factory != nil {
-		return factory
-	}
-	return wire.NewSlotRecord
-}
-
-// Capture saves a graph-bearing child into a stable field of the record. This
+// Capture saves a graph-bearing child into a stable field of the struct. This
 // uses the same resolver, deferred queue and object IDs as Sink.Save.
 func (s Sink) Capture(objPtr any, dest *wire.Object) {
 	s.internal.es.encodeObject(reflect.ValueOf(objPtr).Elem(), encodeDefault, dest)
@@ -56,46 +42,60 @@ func (s Sink) CaptureValue(value any, dest *wire.Object) {
 	s.internal.es.encodeObject(reflect.ValueOf(value), encodeDefault, dest)
 }
 
-// CapturePointer records a pointer in a stable, inline reference slot. The
-// resolver may change that slot if a containing object is discovered later.
-// The slot must initially be zero and must outlive graph discovery.
-func CapturePointer[T any](s Sink, value *T, dest *wire.Ref) {
-	if value != nil {
-		s.internal.es.resolve(reflect.ValueOf(value), dest)
-	}
+// CapturePointer captures a non-nil pointer in an owned reference cell. The
+// generated caller checks nil before converting its typed pointer to any.
+// The resolver retains the cell if a containing object is discovered later.
+func CapturePointer(s Sink, value any, dest *wire.Object) {
+	ref := new(wire.Ref)
+	*dest = ref
+	s.internal.es.resolve(reflect.ValueOf(value), ref)
 }
 
 // CaptureSlice snapshots the slice header and resolves its backing array. The
 // existing array owner still clears and captures the unused capacity.
-func CaptureSlice(s Sink, value any, dest *wire.Slice) {
+func CaptureSlice(s Sink, value any, dest *wire.Object) {
 	obj := reflect.ValueOf(value)
-	dest.Length = wire.Uint(obj.Len())
-	dest.Capacity = wire.Uint(obj.Cap())
-	if !obj.IsNil() {
-		s.internal.es.resolve(arrayFromSlice(obj), &dest.Ref)
+	if obj.IsNil() {
+		*dest = wire.Nil{}
+		return
 	}
+	captured := &wire.Slice{Length: wire.Uint(obj.Len()), Capacity: wire.Uint(obj.Cap())}
+	*dest = captured
+	s.internal.es.resolve(arrayFromSlice(obj), &captured.Ref)
 }
 
 // CaptureMap preserves Sink.Save's addressable map value. In particular, a
 // later save hook may reassign the original map variable before its deferred
 // capture; passing the map by value here would change that existing timing.
-func CaptureMap(s Sink, valuePtr any, dest *wire.Ref) {
-	s.internal.es.resolve(reflect.ValueOf(valuePtr).Elem(), dest)
+func CaptureMap(s Sink, valuePtr any, dest *wire.Object) {
+	s.captureMap(reflect.ValueOf(valuePtr).Elem(), dest)
 }
 
 // CaptureMapValue captures a custom map value as Sink.SaveValue does.
-func CaptureMapValue(s Sink, value any, dest *wire.Ref) {
-	s.internal.es.resolve(reflect.ValueOf(value), dest)
+func CaptureMapValue(s Sink, value any, dest *wire.Object) {
+	s.captureMap(reflect.ValueOf(value), dest)
 }
 
-// CaptureInterface saves an interface's dynamic type and value. A nil Type in
-// dest denotes the primitive-zero field, rather than a typed interface value.
-func CaptureInterface(s Sink, valuePtr any, dest *wire.Interface) {
+func (s Sink) captureMap(obj reflect.Value, dest *wire.Object) {
+	if obj.IsNil() {
+		*dest = wire.Nil{}
+		return
+	}
+	ref := new(wire.Ref)
+	*dest = ref
+	s.internal.es.resolve(obj, ref)
+}
+
+// CaptureInterface saves an interface's dynamic type and value. An ordinary
+// nil field is elided; typed nils inside it retain their complete wire form.
+func CaptureInterface(s Sink, valuePtr any, dest *wire.Object) {
 	obj := reflect.ValueOf(valuePtr).Elem()
 	if obj.IsNil() {
+		*dest = wire.Nil{}
 		return
 	}
 	value := obj.Elem()
-	dest.Type = s.internal.es.findType(value.Type())
-	s.internal.es.encodeObject(value, encodeAsValue, &dest.Value)
+	captured := &wire.Interface{Type: s.internal.es.findType(value.Type())}
+	*dest = captured
+	s.internal.es.encodeObject(value, encodeAsValue, &captured.Value)
 }

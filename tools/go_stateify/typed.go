@@ -63,119 +63,92 @@ type sourceGroup struct {
 	Output  string
 }
 
-type recordSet struct {
+// captureSet selects typed stores into shared wire.Object fields. The checked
+// types also select Load's scalar helpers; neither direction needs a per-type
+// capture layout or a factory.
+type captureSet struct {
 	wireAlias    string
 	saveReceiver string
-	types        map[string]*recordType
-	forward      map[string]string
+	pointerLocal string
+	types        map[string]*captureType
 	restore      *restoreSet
 }
 
-type recordType struct {
-	name    string
-	factory string
-	fields  []fieldEncoding
+type captureType struct {
+	fields []fieldEncoding
 }
 
-// fieldEncoding describes a field's capture storage and emitter. Scalar fields are
-// unboxed and references use inline stable slots; Object represents a child
-// requiring dynamic capture. No owner structs or ignored fields are copied.
+// fieldEncoding selects a scalar conversion or a shared graph operation from
+// the compiler-owned type, without re-reading live fields during serialization.
 type fieldEncoding struct {
-	storage string
-	emit    string
-	capture string
+	scalar string
+	helper string
 }
 
 func encodingFor(t types.Type, customValue bool) fieldEncoding {
 	if b, ok := t.Underlying().(*types.Basic); ok {
 		switch b.Kind() {
 		case types.Bool:
-			return fieldEncoding{"Bool", "SaveBoolField", ""}
+			return fieldEncoding{"Bool", "CaptureBoolField"}
 		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return fieldEncoding{"Int", "SaveIntField", ""}
+			return fieldEncoding{"Int", "CaptureIntField"}
 		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
-			return fieldEncoding{"Uint", "SaveUintField", ""}
+			return fieldEncoding{"Uint", "CaptureUintField"}
 		case types.String:
-			return fieldEncoding{"String", "SaveStringField", ""}
+			return fieldEncoding{"String", "CaptureStringField"}
 		case types.Float32:
-			// Preserve reflect.Value.Float's promotion, including signaling NaNs.
-			return fieldEncoding{"Float64", "SaveFloat32Field", ""}
+			return fieldEncoding{"Float64", "CaptureFloat32Field"}
 		case types.Float64:
-			return fieldEncoding{"Float64", "SaveFloat64Field", ""}
+			return fieldEncoding{"Float64", "CaptureFloat64Field"}
 		case types.Complex64:
-			return fieldEncoding{"Complex128", "SaveComplex64Field", ""}
+			return fieldEncoding{"Complex128", "CaptureComplex64Field"}
 		case types.Complex128:
-			return fieldEncoding{"Complex128", "SaveComplex128Field", ""}
+			return fieldEncoding{"Complex128", "CaptureComplex128Field"}
 		}
 	}
 	switch t.Underlying().(type) {
 	case *types.Pointer:
-		return fieldEncoding{"Ref", "SaveRefField", "CapturePointer"}
+		return fieldEncoding{helper: "CapturePointer"}
 	case *types.Slice:
-		return fieldEncoding{"Slice", "SaveSliceField", "CaptureSlice"}
+		return fieldEncoding{helper: "CaptureSlice"}
 	case *types.Map:
-		return fieldEncoding{"Ref", "SaveRefField", "CaptureMap"}
+		return fieldEncoding{helper: "CaptureMap"}
 	case *types.Interface:
 		if !customValue {
-			return fieldEncoding{"Interface", "SaveInterfaceField", "CaptureInterface"}
+			return fieldEncoding{helper: "CaptureInterface"}
 		}
 	}
-	return fieldEncoding{"Object", "Save", ""}
+	return fieldEncoding{}
 }
 
-func (r *recordType) declare(w io.Writer, wireAlias string) {
-	fmt.Fprintf(w, "type %s struct {\n", r.name)
-	fmt.Fprintf(w, " record %s.Record\n", wireAlias)
-	for i, f := range r.fields {
-		fmt.Fprintf(w, " F%d %s.%s\n", i, wireAlias, f.storage)
-	}
-	fmt.Fprint(w, "}\n\n")
-	fmt.Fprintf(w, "func %s(id %s.TypeID, count int) *%s.Record {\n", r.factory, wireAlias, wireAlias)
-	fmt.Fprintf(w, " value := new(%s)\n", r.name)
-	fmt.Fprintf(w, " return %s.InitRecord(&value.record, id, count, value)\n}\n\n", wireAlias)
-	fmt.Fprintf(w, "func (value *%s) SaveFields(w *%s.Writer, first, last int) {\n", r.name, wireAlias)
-	if len(r.fields) != 0 {
-		fmt.Fprint(w, " switch first {\n")
-	}
-	for i, f := range r.fields {
-		fmt.Fprintf(w, " case %d:\n", i)
+func (c *captureType) capture(w io.Writer, captures *captureSet, statePrefix, local string, slot int, expression string, value bool) {
+	f := c.fields[slot]
+	dest := fmt.Sprintf("%s.Field(%d)", local, slot)
+	if f.scalar != "" {
+		fmt.Fprintf(w, " %s.%s(%s, %s.%s(%s))\n", captures.wireAlias, f.helper, dest, captures.wireAlias, f.scalar, expression)
+	} else if f.helper == "CapturePointer" {
+		// Evaluate a custom value once and keep the ordinary nil field unboxed.
+		fmt.Fprintf(w, " if %s := %s; %s != nil {\n", captures.pointerLocal, expression, captures.pointerLocal)
+		fmt.Fprintf(w, " %sCapturePointer(stateSinkObject, %s, %s)\n", statePrefix, captures.pointerLocal, dest)
+		fmt.Fprintf(w, " } else { *%s = %s.Nil{} }\n", dest, captures.wireAlias)
+	} else if f.helper != "" {
+		helper := f.helper
 		address := ""
-		if f.capture != "" {
-			address = "&"
-		}
-		fmt.Fprintf(w, " %s.%s(w, %svalue.F%d)\n", wireAlias, f.emit, address, i)
-		if i+1 < len(r.fields) {
-			fmt.Fprintf(w, " if last == %d { return }\n fallthrough\n", i+1)
-		}
-	}
-	if len(r.fields) != 0 {
-		fmt.Fprint(w, " }\n")
-	}
-	fmt.Fprint(w, "}\n\n")
-}
-
-func (r *recordType) capture(w io.Writer, wireAlias, statePrefix, local string, slot int, expression string, value bool) {
-	f := r.fields[slot]
-	if f.capture != "" {
-		capture := f.capture
-		address := ""
-		if capture == "CaptureMap" {
+		if helper == "CaptureMap" {
 			if value {
-				capture = "CaptureMapValue"
+				helper = "CaptureMapValue"
 			} else {
 				address = "&"
 			}
 		}
-		if capture == "CaptureInterface" {
+		if helper == "CaptureInterface" {
 			address = "&"
 		}
-		fmt.Fprintf(w, " %s%s(stateSinkObject, %s%s, &%s.F%d)\n", statePrefix, capture, address, expression, local, slot)
-	} else if f.storage != "Object" {
-		fmt.Fprintf(w, " %s.F%d = %s.%s(%s)\n", local, slot, wireAlias, f.storage, expression)
+		fmt.Fprintf(w, " %s%s(stateSinkObject, %s%s, %s)\n", statePrefix, helper, address, expression, dest)
 	} else if value {
-		fmt.Fprintf(w, " stateSinkObject.CaptureValue(%s, &%s.F%d)\n", expression, local, slot)
+		fmt.Fprintf(w, " stateSinkObject.CaptureValue(%s, %s)\n", expression, dest)
 	} else {
-		fmt.Fprintf(w, " stateSinkObject.Capture(&%s, &%s.F%d)\n", expression, local, slot)
+		fmt.Fprintf(w, " stateSinkObject.Capture(&%s, %s)\n", expression, dest)
 	}
 }
 
@@ -210,7 +183,7 @@ func (i *exportImporter) Import(path string) (*types.Package, error) {
 	return gcexportdata.Read(reader, i.fset, i.packages, export.ImportMap)
 }
 
-func generateRecords(configPath string) error {
+func generateTyped(configPath string) error {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return err
@@ -361,11 +334,11 @@ func generateRecords(configPath string) error {
 		if canonical[i] == nil {
 			fmt.Fprintf(&b, "//go:build ignore\n\npackage %s\n", pkg.Name())
 		} else {
-			records, err := checkedRecords(canonical[i], info, pkg, models[i])
+			captures, err := checkedCaptures(canonical[i], info, pkg, models[i])
 			if err != nil {
 				return err
 			}
-			render(&b, groupNames[i], models[i], records, false)
+			render(&b, groupNames[i], models[i], captures, false)
 		}
 		if err := os.WriteFile(group.Output, b.Bytes(), 0644); err != nil {
 			return err
@@ -374,9 +347,9 @@ func generateRecords(configPath string) error {
 	return nil
 }
 
-// checkedRecords binds the shared field model to compiler-owned types. It
+// checkedCaptures binds the shared field model to compiler-owned types. It
 // does not infer the schema from generated Save calls or field spellings.
-func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel) (*recordSet, error) {
+func checkedCaptures(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel) (*captureSet, error) {
 	names := make(map[string]struct{})
 	for _, name := range pkg.Scope().Names() {
 		names[name] = struct{}{}
@@ -393,11 +366,11 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 	for _, name := range types.Universe.Names() {
 		names[name] = struct{}{}
 	}
-	records := &recordSet{
+	captures := &captureSet{
 		wireAlias:    unusedName("statewire", names),
 		saveReceiver: unusedName("stateObject", names),
-		types:        make(map[string]*recordType),
-		forward:      make(map[string]string),
+		types:        make(map[string]*captureType),
+		pointerLocal: unusedName("statePointer", names),
 	}
 	for _, typ := range model.types {
 		name := typ.spec.Name.Name
@@ -408,9 +381,6 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			continue
 		}
 		if _, structural := typ.spec.Type.(*ast.StructType); !structural {
-			if typ.identical {
-				_, records.forward[name] = resolveTypeName(typ.spec.Type)
-			}
 			continue
 		}
 		object, ok := pkg.Scope().Lookup(name).(*types.TypeName)
@@ -418,10 +388,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			return nil, fmt.Errorf("no checked type declaration for %s", name)
 		}
 		owner := types.NewPointer(object.Type())
-		record := &recordType{
-			name:    unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names),
-			factory: unusedName(fmt.Sprintf("newStateRecord%d_%s", len(name), name), names),
-		}
+		capture := &captureType{}
 		for _, field := range typ.fields {
 			if field.slot < 0 {
 				continue
@@ -444,19 +411,19 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			} else {
 				valueType = member.Type()
 			}
-			if field.slot != len(record.fields) {
+			if field.slot != len(capture.fields) {
 				panic("noncontiguous field model")
 			}
-			record.fields = append(record.fields, encodingFor(types.Unalias(valueType), field.kind == fieldValue))
+			capture.fields = append(capture.fields, encodingFor(types.Unalias(valueType), field.kind == fieldValue))
 		}
-		records.types[name] = record
+		captures.types[name] = capture
 	}
 	var err error
-	records.restore, err = checkedRestores(file, info, pkg, model)
+	captures.restore, err = checkedRestores(file, info, pkg, model)
 	if err != nil {
 		return nil, err
 	}
-	return records, nil
+	return captures, nil
 }
 
 // unusedName reserves a new generated identifier against existing scope names.

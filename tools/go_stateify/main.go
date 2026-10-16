@@ -182,7 +182,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if err := generateRecords(*typedConfig); err != nil {
+	if err := generateTyped(*typedConfig); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -204,7 +204,7 @@ func parseFiles(fset *token.FileSet, names []string) ([]*ast.File, error) {
 // render emits the production saver from the ordered field model. The internal
 // type-checking scaffold contains declarations, not an alternative saver.
 // Loading, hook order and field numbering share this model.
-func render(outputFile io.Writer, names []string, group *groupModel, records *recordSet, scaffold bool) {
+func render(outputFile io.Writer, names []string, group *groupModel, captures *captureSet, scaffold bool) {
 	// Set the statePrefix for below, depending on the import.
 	statePrefix := ""
 	if statePkg != "" {
@@ -216,43 +216,8 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 	var initCalls []string
 
 	// Common closures.
-	emitRegister := func(name string, generated bool) {
-		register := "Register"
-		if generated {
-			register = "RegisterGenerated"
-		}
-		initCalls = append(initCalls, fmt.Sprintf("%s%s((*%s)(nil))", statePrefix, register, name))
-	}
-
-	emitMetadata := func(name, recv string) bool {
-		if records == nil {
-			return false
-		}
-		record := records.types[name]
-		forward := records.forward[name]
-		if record == nil && forward == "" {
-			return false
-		}
-		capture := "nil"
-		owner := fmt.Sprintf("(*%s)(nil)", name)
-		metadataRecv := ""
-		if record != nil {
-			capture = record.factory
-		} else if forward != "" {
-			metadataRecv = recv
-			if statePrefix == recv+"." || typeUsesName(forward, recv) || recv == "true" || recv == "false" {
-				metadataRecv = records.saveReceiver
-			}
-			capture = fmt.Sprintf("%sForwardRecord((*%s)(%s))", statePrefix, forward, metadataRecv)
-			// The receiver may shadow its own type name. Its actual pointer
-			// supplies the same owner type without another type expression.
-			owner = metadataRecv
-		}
-		// Ordinary metadata does not use the receiver. Forwarding retains the
-		// owning type's receiver name, subject to the same scope constraints.
-		fmt.Fprintf(outputFile, "func (%s *%s) StateMetadata() %sTypeMetadata {\n", metadataRecv, name, statePrefix)
-		fmt.Fprintf(outputFile, " return %sTypeMetadata{Owner: %s, NewRecord: %s}\n}\n\n", statePrefix, owner, capture)
-		return true
+	emitRegister := func(name string) {
+		initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
 	}
 
 	// Automated warning.
@@ -278,8 +243,8 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		if statePkg != "" {
 			fmt.Fprintf(outputFile, "	\"%s\"\n", statePkg)
 		}
-		if records != nil && len(records.types) != 0 {
-			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", records.wireAlias)
+		if captures != nil && len(captures.types) != 0 {
+			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", captures.wireAlias)
 		}
 		if imports != "" {
 			for _, i := range strings.Split(imports, ",") {
@@ -317,22 +282,22 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				emitField(name)
 			}
 			loadRecv := recv
-			if records != nil {
+			if captures != nil {
 				// Typed field calls and their wait arguments must not be
 				// shadowed by the receiver.
 				shadowed := statePrefix == recv+"." || recv == "true" || recv == "false"
 				if statePrefix == "" {
-					for _, helper := range records.restore.fields[ts.Name.Name] {
+					for _, helper := range captures.restore.fields[ts.Name.Name] {
 						shadowed = shadowed || recv == helper
 					}
 				}
 				if shadowed {
-					loadRecv = records.saveReceiver
+					loadRecv = captures.saveReceiver
 				}
 				// Custom value type spellings also occur in this method.
 				for _, field := range model.fields {
 					if field.kind == fieldValue && typeUsesName(field.valueType, recv) {
-						loadRecv = records.saveReceiver
+						loadRecv = captures.saveReceiver
 						break
 					}
 				}
@@ -344,26 +309,37 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			// StateSave. Keep a handwritten receiver from shadowing that
 			// import, without renaming the hook or other generated methods.
 			saveRecv := recv
-			if records != nil && statePrefix == recv+"." {
-				saveRecv = records.saveReceiver
+			if captures != nil {
+				shadowed := statePrefix == recv+"." || recv == "nil"
+				if statePrefix == "" {
+					shadowed = shadowed || recv == "CaptureFields"
+					if capture := captures.types[ts.Name.Name]; capture != nil {
+						for _, field := range capture.fields {
+							shadowed = shadowed || recv == field.helper
+						}
+					}
+				}
+				if shadowed {
+					saveRecv = captures.saveReceiver
+				}
 			}
-			recordLocal := "stateSnapshotObject"
-			if recv == recordLocal {
-				recordLocal += "1"
+			captureLocal := "stateSnapshotObject"
+			if recv == captureLocal {
+				captureLocal += "1"
 			}
-			var record *recordType
-			if records != nil {
-				record = records.types[ts.Name.Name]
+			var capture *captureType
+			if captures != nil {
+				capture = captures.types[ts.Name.Name]
 			}
 			emitSaveValue := func(name, typName string) {
 				// Keep an explicit typName ascription as a compile-time
 				// check against code generation bugs while avoiding S1021.
 				fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, saveRecv, camelCased(name))
 				fmt.Fprintf(outputFile, "	_ = (%s)(%sValue)\n", typName, name)
-				record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, fields[name], name+"Value", true)
+				capture.capture(outputFile, captures, statePrefix, captureLocal, fields[name], name+"Value", true)
 			}
 			emitSave := func(name string) {
-				record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, fields[name], saveRecv+"."+name, false)
+				capture.capture(outputFile, captures, statePrefix, captureLocal, fields[name], saveRecv+"."+name, false)
 			}
 			emitZeroCheck := func(name string) {
 				fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, saveRecv, name, statePrefix, name, saveRecv, name)
@@ -412,19 +388,16 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				fmt.Fprintf(outputFile, "var _ %sSaverLoader = (*%s)(nil)\n\n", statePrefix, ts.Name.Name)
 			}
 			if generateSaverLoader && !hasStateSave {
-				if record != nil {
-					record.declare(outputFile, records.wireAlias)
-				}
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
 				fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", saveRecv, ts.Name.Name, statePrefix)
 				if !scaffold {
-					if record == nil {
-						panic("generated saver has no checked record")
+					if capture == nil {
+						panic("generated saver has no checked capture")
 					}
 					fmt.Fprintf(outputFile, "	%s.beforeSave()\n", saveRecv)
 					model.scan(scanFunctions{zerovalue: emitZeroCheck})
-					if len(record.fields) != 0 {
-						fmt.Fprintf(outputFile, " %s := %sRecord(stateSinkObject, %d, %s).(*%s)\n", recordLocal, statePrefix, len(record.fields), record.factory, record.name)
+					if len(capture.fields) != 0 {
+						fmt.Fprintf(outputFile, " %s := %sCaptureFields(stateSinkObject, %d)\n", captureLocal, statePrefix, len(capture.fields))
 					}
 					model.scan(scanFunctions{value: emitSaveValue})
 					model.scan(scanFunctions{normal: emitSave, wait: emitSave})
@@ -453,11 +426,11 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 						if field.kind != fieldNormal && field.kind != fieldWait {
 							continue
 						}
-						wait := records.restore.noWaitValue
+						wait := captures.restore.noWaitValue
 						if field.kind == fieldWait {
-							wait = records.restore.waitValue
+							wait = captures.restore.waitValue
 						}
-						if helper := records.restore.fields[ts.Name.Name][field.name]; helper != "" {
+						if helper := captures.restore.fields[ts.Name.Name][field.name]; helper != "" {
 							fmt.Fprintf(outputFile, " %s%s(stateSourceObject, %d, &%s.%s, %s)\n", statePrefix, helper, field.slot, loadRecv, field.name, wait)
 						} else {
 							method := "Load"
@@ -480,7 +453,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 
 			// Add to our registration.
-			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name, recv))
+			emitRegister(ts.Name.Name)
 
 		case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
 			maybeEmitImports()
@@ -526,7 +499,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 
 			// See above.
-			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name, recv))
+			emitRegister(ts.Name.Name)
 		}
 	}
 

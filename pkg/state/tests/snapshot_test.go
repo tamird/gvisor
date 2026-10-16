@@ -63,6 +63,7 @@ func TestGeneratedRecordForwarding(t *testing.T) {
 		forwardedRecord{value: 17, child: child},
 		composedRecord{value: 17, before: 11, after: 23},
 		composedRecord{value: 17, before: 11, after: 23, replace: true},
+		composedRecord{value: 0, before: 11, after: 23},
 	})
 	runTestCases(t, false, "configured_field", []any{
 		configuredRecord{value: recordModeSample()},

@@ -27,7 +27,6 @@ import (
 type typeEntry struct {
 	ID typeID
 	wire.Type
-	newRecord func(wire.TypeID, int) *wire.Record
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -152,7 +151,7 @@ func (tbd *typeDecodeDatabase) LookupName(id typeID) string {
 // LookupType looks up the type by ID.
 func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 	name := tbd.LookupName(id)
-	registered, _ := registeredType(name)
+	registered := globalTypeDatabase[name]
 	if registered == nil {
 		// If not available, see if it's primitive.
 		primitive, ok := primitiveTypeDatabase[name]
@@ -270,49 +269,9 @@ const interfaceType = "interface"
 // same underlying kind remain distinct.
 var primitiveTypeDatabase = map[string]reflect.Type{}
 
-// TypeMetadata describes generated capture on an actual receiver explicitly
-// registered by the generator. Owner identifies the
-// method's declared receiver. Registration and allocation never call it.
-// Consumers retain only the constructor, not the Owner type witness.
-type TypeMetadata struct {
-	Owner     Type
-	NewRecord func(wire.TypeID, int) *wire.Record
-}
-
-type generatedType interface {
-	Type
-	StateMetadata() TypeMetadata
-}
-
-func generatedMetadata(value any, name string, typ reflect.Type) TypeMetadata {
-	registered, generated := registeredType(name)
-	if registered == typ && generated {
-		value := value.(generatedType)
-		metadata := value.StateMetadata()
-		if reflect.TypeOf(metadata.Owner) == reflect.PointerTo(typ) {
-			return metadata
-		}
-	}
-	return TypeMetadata{}
-}
-
-// globalTypeDatabase stores a reflect.Type for ordinary registrations or a
-// typed-nil generatedType for explicit generated registrations. Both fit in
-// one interface value without per-type descriptors. In particular, ordinary
-// types must not be probed for metadata: a promoted method may traverse a nil
-// embedded pointer before it can report its declared owner.
-var globalTypeDatabase = map[string]any{}
-
-func registeredType(name string) (reflect.Type, bool) {
-	switch registered := globalTypeDatabase[name].(type) {
-	case reflect.Type:
-		return registered, false
-	case generatedType:
-		return reflect.TypeOf(registered).Elem(), true
-	default:
-		return nil, false
-	}
-}
+// globalTypeDatabase retains only registered Go types. Schemas are resolved
+// lazily on the first Save or Load, except for validation in race builds.
+var globalTypeDatabase = map[string]reflect.Type{}
 
 // reverseTypeDatabase supplies foreign codec schemas and the eagerly checked
 // schemas from race builds. Ordinary non-race registrations stay lazy.
@@ -332,24 +291,6 @@ type binaryObject interface {
 	encoding.BinaryUnmarshaler
 }
 
-// binaryRecord adapts a foreign codec to the same captured-field emitter as
-// generated savers. The codec owns its internal pointer relationships.
-type binaryRecord struct {
-	record wire.Record
-	value  wire.String
-}
-
-func newBinaryRecord(id wire.TypeID, count int) *wire.Record {
-	b := &binaryRecord{}
-	return wire.InitRecord(&b.record, id, count, b)
-}
-
-func (b *binaryRecord) SaveFields(w *wire.Writer, first, last int) {
-	if first < last {
-		wire.SaveStringField(w, b.value)
-	}
-}
-
 // saveBinary encodes a foreign struct's self-contained representation. Its
 // binary codec owns any internal pointer relationships.
 func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
@@ -361,7 +302,7 @@ func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
 	// Copy before reusing binaryBuf: wire objects are serialized only after
 	// the full graph is encoded. Strings also decode inline, so map keys are
 	// complete when restoreMap inserts them into the restored map.
-	Record(s, 1, newBinaryRecord).(*binaryRecord).value = wire.String(data)
+	wire.CaptureStringField(CaptureFields(s, 1).Field(0), wire.String(data))
 }
 
 func loadBinary(value binaryObject, name string, s Source) {
@@ -376,30 +317,14 @@ func loadBinary(value binaryObject, name string, s Source) {
 //
 // This must be called on init and only done once. Registration lets Load
 // reconstruct concrete types held in interfaces without a preceding Save.
-// Manually implemented savers use Sink.Save/SaveValue to populate the record's
-// compatibility slots.
+// Generated and manually implemented savers populate the same owned slots.
 func Register(t Type) {
-	registerType(t, false)
-}
-
-// RegisterGenerated registers a type whose StateMetadata method is declared
-// by the generator on this exact receiver. Inherited methods are insufficient.
-// Like Register, t must be a typed nil pointer; no metadata is called here.
-func RegisterGenerated(t generatedType) {
-	registerType(t, true)
-}
-
-func registerType(t Type, generated bool) {
 	name := t.StateTypeName()
 	typ := reflect.TypeOf(t)
 	if !raceEnabled {
 		// Every binary importing stateified packages registers their types on
 		// startup. Keep schema validation and restore work off this path.
-		if generated {
-			globalTypeDatabase[name] = t
-		} else {
-			globalTypeDatabase[name] = typ.Elem()
-		}
+		globalTypeDatabase[name] = typ.Elem()
 		return
 	}
 	fields := t.StateFields()
@@ -423,9 +348,6 @@ func registerType(t Type, generated bool) {
 		}
 	}
 	register(typ, wire.Type{Name: name, Fields: fields})
-	if generated {
-		globalTypeDatabase[name] = t
-	}
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
