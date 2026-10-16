@@ -19,10 +19,14 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
 from pathlib import Path
 import shutil
+import subprocess
+import sys
 import tarfile
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -434,6 +438,87 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 37))
         combined = report.bundle(self.evidence, 37, 1, self.root / "evidence.tar.gz")
         self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 37))
+
+    @unittest.skipUnless(sys.platform == "linux", "The Actions entry point requires Linux")
+    def test_work_deadline_reaches_capture_and_bundle(self) -> None:
+        # Run the actual shell entry point and reporter. Only Git identity and
+        # Bazel are fixtures; the real timeout interrupts a waiting child.
+        for phase in ("preflight", "execution"):
+            with self.subTest(phase=phase):
+                workspace = self.root / phase
+                scripts = workspace / "test/rbe"
+                scripts.mkdir(parents=True)
+                for name in ("actions.sh", "qualify.sh", "qualification_report.py", "unit_matrix.py"):
+                    shutil.copy2(Path(__file__).with_name(name), scripts / name)
+                (workspace / "MODULE.bazel.lock").write_text("fixture lock\n")
+                binary = workspace / "bin"
+                binary.mkdir()
+                (binary / "python3").symlink_to(sys.executable)
+                git = binary / "git"
+                git.write_text("""#!/usr/bin/env python3
+import os
+from pathlib import Path
+import sys
+args = sys.argv[1:]
+if args[:1] == ['-C']:
+    args = args[2:]
+if args == ['rev-parse', 'HEAD']:
+    print(os.environ['TEST_HEAD'])
+elif args == ['cat-file', '-p', 'HEAD']:
+    sys.stdout.write(Path(os.environ['TEST_COMMIT_FILE']).read_text())
+elif args[:1] not in (['status'], ['diff']):
+    raise SystemExit('Unexpected fixture Git command: ' + repr(args))
+""")
+                git.chmod(0o755)
+                bazel = binary / "bazel"
+                bazel.write_text("""#!/usr/bin/env python3
+import os
+from pathlib import Path
+import signal
+import sys
+events = Path(next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--build_event_json_file=')))
+events.write_text(Path(os.environ['TEST_ANALYSIS']).read_text())
+if '--nobuild' in sys.argv:
+    raise SystemExit(1)
+Path(os.environ['TEST_WORK_STARTED']).touch()
+signal.pause()
+""")
+                bazel.chmod(0o755)
+                runner_temp = workspace / "temporary"
+                runner_temp.mkdir()
+                started = workspace / "work-started"
+                source = (FIXTURES / "pass/final-head.txt").read_text().strip()
+                environment = {
+                    **os.environ,
+                    "PATH": str(binary) + os.pathsep + os.environ["PATH"],
+                    "RUNNER_TEMP": str(runner_temp),
+                    "BUILDBUDDY_ARTIFACTS_DIRECTORY": str(runner_temp),
+                    "QUALIFICATION_COMMIT": source,
+                    "QUALIFICATION_EXECUTION": "remote",
+                    "QUALIFICATION_ARCH": "amd64",
+                    "QUALIFICATION_LANES": "test",
+                    "QUALIFICATION_TARGETS": "//test/syscalls:exec_binary_test_native_amd64",
+                    "QUALIFICATION_HEADER_BASE": "",
+                    "QUALIFICATION_BENCHMARK_MANIFEST": "",
+                    "QUALIFICATION_COS_GZIP_BASE64": "",
+                    "QUALIFICATION_COS_SHA256": "",
+                    "QUALIFICATION_WORK_DEADLINE": str(time.monotonic() + (5 if phase == "execution" else -1)),
+                    "TEST_HEAD": source,
+                    "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
+                    "TEST_ANALYSIS": str(FIXTURES / "analysis-no-build/events.jsonl"),
+                    "TEST_WORK_STARTED": str(started),
+                }
+                result = subprocess.run(["bash", "test/rbe/actions.sh"], cwd=workspace,
+                                        env=environment, capture_output=True, text=True, timeout=30, check=False)
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(started.exists(), phase == "execution", result.stdout + result.stderr)
+                artifact = runner_temp / "qualification.tar.gz"
+                self.assertTrue(artifact.is_file(), result.stdout + result.stderr)
+                value = report.read_json(runner_temp / "qualification/verdict.json")
+                self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 124), value)
+                self.assertEqual(value["runner_exit"], result.returncode, value)
+                with tarfile.open(artifact) as archive:
+                    self.assertIn("verdict.json", archive.getnames())
 
     def test_capture_resumes_after_independent_copy_failure(self) -> None:
         invocation = self.fixture()

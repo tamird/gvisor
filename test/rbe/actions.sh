@@ -274,6 +274,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     else
       case "${lanes[*]}" in
         container) qualification_seconds=4800 ;;
+        # Leave the Actions step time to capture interrupted guest results and
+        # bundle them before GitHub terminates the coordinator.
+        syscalls-rc) qualification_seconds=5400 ;;
         # One six-GiB KVM guest at a time preserves the test memory budget.
         # Eight original 900-second shards need two hours before setup/capture.
         container-v1) qualification_seconds=8400 ;;

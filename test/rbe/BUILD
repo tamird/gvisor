@@ -30,7 +30,10 @@ py_test(
         "qualification_report_test.py",
         "unit_matrix.py",
     ],
-    data = glob(["testdata/qualification_report/**"]),
+    data = [
+        "actions.sh",
+        "qualify.sh",
+    ] + glob(["testdata/qualification_report/**"]),
     imports = ["."],
     main = "qualification_report_test.py",
     tags = ["manual"],

@@ -1871,8 +1871,11 @@ hash15 buckets and retains the owning arguments, shards and deadlines. Nogo
 keeps its dedicated lane; the public profiles exclude checkpoint owners.
 The report preserves each CPU's canonical selection and all unexecuted bucket
 owners. Actions selects an AMD64 coordinator for this mixed RC lane, while
-mixed unit tests retain their ARM64 coordinator. RC dispatches allow 90 minutes
-of work and 95 minutes for the job; individual test deadlines are unchanged.
+mixed unit tests retain their ARM64 coordinator. Local RC dispatches allow 90
+minutes of work, 115 minutes for execution and evidence capture, and 120 minutes
+for the job. The shared work deadline interrupts Bazel before the outer cutoff,
+leaving time to retain failed and missing results; individual test deadlines
+are unchanged.
 Guest capabilities and full-profile timing require qualification;
 declaring these routes does not establish that every selected owner can run.
 
