@@ -94,8 +94,8 @@ go_test(
     srcs = ["codec_queue_benchmark_test.go"],
     architectures = [],
     args = [
-        "-test.run=^$",
-        "-test.bench=^BenchmarkUDPReceiveQueueSave$/^32$",
+        "-test.run=^$$",
+        "-test.bench=^BenchmarkUDPReceiveQueueSave$$/^32$$",
         "-test.benchtime=1x",
         "-test.benchmem",
         "-test.count=1",
