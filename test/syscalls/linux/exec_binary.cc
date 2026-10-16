@@ -1471,8 +1471,7 @@ TEST(ElfTest, ProcessVMReadExecuteOnlyBinary) {
       // The first segment of StandardElf is loaded at 0x40000.
       struct iovec remote = {reinterpret_cast<void*>(0x40000), sizeof(buf)};
       errno = 0;
-      int64_t n =
-          syscall(SYS_process_vm_readv, child, &local, 1, &remote, 1, 0);
+      int64_t n = process_vm_readv(child, &local, 1, &remote, 1, 0);
       int64_t result = (n < 0) ? -errno : n;
       kill(child, SIGKILL);
       RetryEINTR(waitpid)(child, nullptr, 0);
