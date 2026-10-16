@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T01:15:31.030513+00:00",
+    "updatedAt": "2026-10-16T02:27:10.532806+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1722,15 +1722,15 @@
       "title": "Copy netlink memberships in complete words",
       "url": "https://github.com/google/gvisor/pull/15161",
       "group": "runtime",
-      "status": "open",
-      "summary": "Current import #15764 failed while downloading bats-core: HTTP 504 before compilation. The workflow also posts its go tests failure for that generation failure. The source/import patches are identical; no author code fix is indicated. The attempted rerun returned HTTP 403 requiring repository admin rights. A maintainer needs to rerun the failed generate job.\n\nThe user-approved correction is published at 27c59aad4, and the approved reply to Etienne is posted. Current source checks pass. Native Linux may report EFAULT after a cgroup hook while the test still verifies full length, complete words and the untouched tail; gVisor must succeed. The controlled Linux 6.1.0 probe and all three complete netlink owners passed. Both canonical formatters passed after formatting-only continuation; the first formatter failure remains retained. The reviewer’s own worker configuration is not inferred from the reproduction. Contributor approval is fulfilled; fresh maintainer review remains outstanding.",
+      "status": "merged",
+      "summary": "PR #15161 merged on October 16 at 02:15 UTC through import #15764. The approved correction copies netlink memberships in complete words while preserving the reported full length and untouched tail. The controlled Linux probe and all three complete netlink owners passed.\n\nAn earlier import revision failed downloading bats-core with HTTP 504 before compilation, and its attempted rerun was denied with HTTP 403. That historical infrastructure failure no longer blocks this merged delivery.",
       "number": 15161,
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-15T20:48:43.663537+00:00",
+      "updatedAt": "2026-10-16T02:27:10.532806+00:00",
       "followup": {
-        "disposition": "Approved correction and reply delivered; fresh review awaited",
+        "disposition": "Merged",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head review and import results. The normal Etienne native re-request returned HTTP404 once; no workaround or duplicate ping was used. Existing nybidari and parth-opensrc requests remain.",
+        "nextAction": "Merged through import #15764; no outstanding delivery action.",
         "sourceHead": "27c59aad4a40770fd7710d719937b98d14038ca3",
         "reviewedAt": "2026-10-10T18:38:04.777493+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
@@ -1740,29 +1740,18 @@
           "https://github.com/tamird/gvisor/commit/27c59aad4a40770fd7710d719937b98d14038ca3",
           "https://github.com/google/gvisor/pull/15161#pullrequestreview-5478326132",
           "https://github.com/google/gvisor/pull/15161",
-          "https://github.com/google/gvisor/pull/15265"
-        ]
+          "https://github.com/google/gvisor/pull/15265",
+          "https://github.com/google/gvisor/pull/15764"
+        ],
+        "observedAt": "2026-10-16T02:21:42.359712+00:00"
       },
       "head": "27c59aad4a40770fd7710d719937b98d14038ca3",
-      "ciRecovery": {
-        "kind": "dependency-download-retry-denied",
-        "sourceHead": "27c59aad4a40770fd7710d719937b98d14038ca3",
-        "importNumber": 15764,
-        "importHead": "8364190e4ad9df09af928285395a8beece6faea0",
-        "workflowRun": 38786476145,
-        "job": 116599642050,
-        "jobURL": "https://github.com/google/gvisor/actions/runs/38786476145/job/116599642050",
-        "checkId": "CR_kwDOB9IlXs8AAAAbJeFXwg",
-        "checkName": "generate",
-        "statuses": [
-          {
-            "id": "SC_kwDOB9IlXs8AAAANJSOVCA",
-            "name": "go tests"
-          }
-        ],
-        "httpStatus": 403,
-        "observedAt": "2026-10-15T20:46:48.629210+00:00"
-      }
+      "evidence": [
+        {
+          "label": "Historical dependency-download failure and denied rerun",
+          "url": "https://github.com/google/gvisor/actions/runs/38786476145/job/116599642050"
+        }
+      ]
     },
     {
       "id": "pr:15156",
@@ -5841,8 +5830,8 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15645",
       "status": "open",
-      "updatedAt": "2026-10-15T22:59:48.554319+00:00",
-      "summary": "The approved quota-isolation change is rebased and published at e12658471. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. The initial rebased head failed clang-format because of one extra blank line; the final amendment removes that whitespace without changing the qualified fixture behavior. Existing reviewer requests are preserved.\n\nThe rebase moves the upstream CanSetMaxKeys helper with its callers into the isolated quota target. Mutating cases restore and verify the captured host quota after ordinary assertion failures; native reads respect the configured positive limit and gVisor retains its default assertion. Current kernel, race and analyzer qualification is closed, with the earlier failure and source lineage retained.",
+      "updatedAt": "2026-10-16T02:23:02.033756+00:00",
+      "summary": "The approved quota-isolation change is published at e12658471. Its matching import #15843 now has successful public pipeline, internal and Go-test statuses. These are public check statuses, not inspected test-case results. The initial rebased head failed clang-format because of one extra blank line; the final amendment removes that whitespace without changing the qualified fixture behavior. Existing reviewer requests are preserved.\n\nThe rebase moves the upstream CanSetMaxKeys helper with its callers into the isolated quota target. Mutating cases restore and verify the captured host quota after ordinary assertion failures; native reads respect the configured positive limit and gVisor retains its default assertion. Current kernel, race and analyzer qualification is closed, with the earlier failure and source lineage retained.",
       "followup": {
         "disposition": "Rebased approved change delivered; maintainer review pending",
         "owner": "external_sweeps",
@@ -5856,7 +5845,9 @@
           "https://github.com/tamird/gvisor/commit/76c9cc22a7c8417c3e7d8fd74f744504548c58f9",
           "https://github.com/tamird/gvisor/actions/runs/37770125989",
           "https://github.com/tamird/gvisor/commit/f47c93525a7229e32d4325fef15a8ba051641217",
-          "https://github.com/tamird/gvisor/commit/e126584712c09b084d572c938f16cf2c5ea389d3"
+          "https://github.com/tamird/gvisor/commit/e126584712c09b084d572c938f16cf2c5ea389d3",
+          "https://github.com/google/gvisor/pull/15843",
+          "https://buildkite.com/gvisor/pipeline/builds/50955"
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -6870,19 +6861,20 @@
       "title": "Use CIDR masks in route-selection tests",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15771",
-      "status": "open",
-      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
-      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The approved patch and commit message are preserved in independent PR #15771 at 6b1f66d11. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "status": "merged",
+      "updatedAt": "2026-10-16T02:23:02.033756+00:00",
+      "summary": "PR #15771 and its matching import #15842 merged on October 16 at 01:46 UTC. The independently qualified change replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. It preserves that test matrix, not general noncontiguous-mask behavior.",
       "followup": {
-        "disposition": "Delivered; following CI and review",
+        "disposition": "Merged",
         "owner": "external_sweeps",
         "sourceHead": "6b1f66d119b28c6f8af317925b95ca19f6e6f97d",
-        "observedAt": "2026-10-14T11:06:01.686863+00:00",
-        "nextAction": "Follow PR #15771 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "observedAt": "2026-10-16T02:21:42.359712+00:00",
+        "nextAction": "Merged through matching import #15842; no outstanding delivery action.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
-          "https://github.com/google/gvisor/pull/15771"
+          "https://github.com/google/gvisor/pull/15771",
+          "https://github.com/google/gvisor/pull/15842"
         ]
       },
       "evidence": [
@@ -8731,8 +8723,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-16T01:15:31.030513+00:00",
-      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The fixed two-host comparison now shows a conditional 1.48% upload-throughput regression; download is inconclusive. Actual layouts imply larger segment and sender heap slots. A smaller metadata representation is source-reviewed; its focused execution completed and original correctness and layout evidence is being verified. Its layout and throughput benefit are not yet measured; the approved source remains unchanged.",
+      "updatedAt": "2026-10-16T02:23:02.033756+00:00",
+      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. A new fixed comparison against the Karn-only baseline is running; no compact throughput result is available. The approved source remains unchanged.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9313,20 +9305,32 @@
           ]
         },
         {
-          "text": "A diagnostic compact representation at eed3f29ed replaces the original-payload byte count with a flag recording whether a transmitted payload has been trimmed, preserving the reviewed first-send, clone, split, retransmission and partial-ACK semantics. Source review is complete. The focused execution completed successfully; its original unit, packet and analyzer reports and matched AMD64/ARM64 Sentry layout evidence against the measured 957b44880 source are being verified. There is no verified compact layout or throughput result yet. The approved minimum-RTT proposal remains unchanged at 7e371d8ac.",
+          "text": "The compact representation at eed3f29ed passes six semantic owners and three analyzer wrappers, including all three split/ACK witness cases on both CPUs. The two existing DSACK-related skips remain explicit; there is no race phase. Actual matched Sentry layouts on AMD64 and ARM64 imply 256-byte segment and 896-byte sender heap slots, restoring the baseline classes. These are allocator-class inferences, not per-packet allocation measurements. The new fixed two-host comparison uses matched runtime sources in 7c79da672 and bdc691f3c, with Karn in both arms, twelve balanced pairs per host, opposite starting orders and 96 primary bandwidth rows. Actions 38839701028 is running; no new throughput result or historical sample pooling is claimed. The approved proposal remains 7e371d8ac.",
           "evidence": [
             {
-              "label": "Diagnostic compact RACK source",
+              "label": "Qualified compact RACK source",
               "url": "https://github.com/tamird/gvisor/commit/eed3f29ed0d23454613d839b0fd9bb0d1c9b9085"
             },
             {
-              "label": "Focused compact RACK qualification",
+              "label": "Focused correctness and matched layout evidence",
               "url": "https://app.buildbuddy.io/invocation/9a396f1c-0df5-4be6-b2dc-da680c1ca90f"
+            },
+            {
+              "label": "New fixed compact RACK comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38839701028"
+            },
+            {
+              "label": "Matched compact candidate",
+              "url": "https://github.com/tamird/gvisor/commit/bdc691f3c8f19947e650460872bb79d6c04819eb"
+            },
+            {
+              "label": "Matched Karn-only control",
+              "url": "https://github.com/tamird/gvisor/commit/7c79da672b62f0e4706de7dab6f0aa1fb2471c43"
             }
           ]
         }
       ],
-      "nextStep": "Verify the compact representation's completed unit, packet and analyzer checks and matched AMD64/ARM64 layout evidence before judging whether it addresses the measured costs. Preserve the approved correction and its packet-regression evidence; upstream submission still awaits #15819. No compact-representation throughput result or recovery benefit on lossy or changing paths is established.",
+      "nextStep": "Complete and independently verify the new fixed compact-RACK comparison. Keep its samples separate from the earlier cohort; restored allocator classes do not prove restored throughput. Preserve the approved correction and its packet-regression evidence; upstream submission still awaits #15819. No recovery benefit on lossy or changing paths is established.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9658,8 +9662,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T01:15:31.030513+00:00",
-      "summary": "The owned-Value diagnostic successor completed its fixed package comparison with mixed results: UDP Save improved 26.82% and map Load improved 10.95%, while UDP, control-message and pointer/slice-adoption Load regressed 13.45%, 12.72% and 7.45%. It parses directly into one owned Value tree, removing temporary-frame conversion and generated load-lifetime metadata. Its separate Linux AMD64 CLI comparison found no statistically significant timing difference (6.814 to 6.973 ms, p=.478, twelve batch means per version). Matched production files grow by 4,005,888 bytes on AMD64 and 3,735,552 bytes on ARM64. The Load regressions and size costs keep this design under investigation. The prior schema-ownership experiment and its failed attempts remain separate.",
+      "updatedAt": "2026-10-16T02:27:10.532806+00:00",
+      "summary": "The owned-Value diagnostic successor completed its fixed package comparison with mixed results: UDP Save improved 26.82% and map Load improved 10.95%, while UDP, control-message and pointer/slice-adoption Load regressed 13.45%, 12.72% and 7.45%. It parses directly into one owned Value tree, removing temporary-frame conversion and generated load-lifetime metadata. Its separate Linux AMD64 CLI comparison found no statistically significant timing difference (6.814 to 6.973 ms, p=.478, twelve batch means per version). Matched production files grow by 4,005,888 bytes on AMD64 and 3,735,552 bytes on ARM64. The Load regressions and size costs keep this design under investigation. The prior schema-ownership experiment and its failed attempts remain separate. Paired diagnostic profiles identify restoration, payload materialization and access costs without establishing a timing cause. The collection-accessor simplification at 967abd34f passes its selected correctness, race, analyzer and production-link checks; four single-operation allocation observations are unchanged. It has no performance result yet.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10592,9 +10596,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/38829797245"
             }
           ]
+        },
+        {
+          "text": "The collection-accessor revision at 967abd34f replaces repeated Element/Entry wrappers with checked Array/Map slices across maintained consumers, preserving the parser and owned Value representation. Original evidence verifies eight normal test processes, four race processes, eight analyzer wrappers and both fresh AMD64/ARM64 production links. Four additional fresh-process, single-operation observations match the prior owned-tree source at 391065ac5: ordinary 784 bytes/17 allocations, retained source 1,088/25, control message 4,712/113 and adoption 254,376/4,939. Wire sizes also match. The benchmark XML documents are empty; their native status and exact rows are separate from correctness coverage. These observations do not establish latency, startup or retained-heap benefit. The completed paired CPU/heap profiles motivate this simplification but do not prove it causes the earlier Load regressions. The four-process runner smoke check also passed and its original inputs and results were verified. The fixed comparison of this revision against the existing control is now running through that qualified single-TestRunner route; no new timing result is available.",
+          "evidence": [
+            {
+              "label": "Qualified collection-accessor diagnostic source",
+              "url": "https://github.com/tamird/gvisor/commit/967abd34f5c99d9f1b077f54b543db77f2eb661c"
+            },
+            {
+              "label": "Collection-accessor correctness and allocation observations",
+              "url": "https://app.buildbuddy.io/invocation/3fcab254-3d18-402f-8da5-15bfa231247e"
+            },
+            {
+              "label": "Collection-accessor fixed comparison in progress",
+              "url": "https://app.buildbuddy.io/invocation/8a36f8d5-c592-413c-bd42-72d3dc85012d"
+            }
+          ]
         }
       ],
-      "nextStep": "Profile CPU and allocation costs of this exact owned-tree source in control-message, adoption and UDP operations, then correct the owning design. Keep the material production-file growth and separate CLI result visible. No new full timing cohort, contributor decision or adoption proposal is ready.",
+      "nextStep": "Complete the fixed comparison of the collection-accessor revision against the existing control using the qualified single-TestRunner route. The comparison is running; no performance result is available. Keep the owned-tree Load regressions and production-file growth visible. Correctness and unchanged allocation observations do not establish a timing improvement or readiness for adoption.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -13227,9 +13248,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-16T00:51:34.604685+00:00",
-      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated netfilter into merged PR #13810 and announced a planned deployment. Brandon accepted the vhost changes for a follow-up after his 6.18 upgrade, including the kernel upload and dependency update. Hosted deployment and affected gVisor runtime behavior remain unverified. Brandon approved the duplicated-test cleanup #13814 at its current head; two GitHub CI jobs fail because unchanged workflows receive an empty BuildBuddy API key, with no cleanup-code regression found.",
-      "nextStep": "Follow the provider's 6.18 upgrade and promised vhost/kernel-upload follow-up, and the approved cleanup's existing CI credential failure. Verify the deployed worker before claiming affected gVisor tests pass. No additional acknowledgment, reviewer ping or public CI comment is pending.",
+      "updatedAt": "2026-10-16T02:23:02.033756+00:00",
+      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated netfilter into merged PR #13810 and announced a planned deployment. Brandon accepted the vhost changes for a follow-up after his 6.18 upgrade, including the kernel upload and dependency update. Hosted deployment and affected gVisor runtime behavior remain unverified. Brandon approved cleanup #13814 at its current head. Two Linux CI jobs fail with an empty BuildBuddy API key; a separate Windows job times out in filecache_test. No cleanup-code regression is established.",
+      "nextStep": "Follow the provider's 6.18 upgrade and accepted vhost/kernel-upload follow-up, along with the approved cleanup's credential failures and separate Windows filecache timeout. Verify the deployed worker before claiming affected gVisor tests pass. No additional acknowledgment, reviewer ping or public CI comment is pending.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -13425,6 +13446,19 @@
             {
               "label": "ARM tests pass; result upload fails",
               "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38810255652/job/116745497419"
+            }
+          ]
+        },
+        {
+          "text": "The exact-head Windows job for #13814 reaches five selected local test targets: four pass and filecache_test times out twice at 60 seconds. Its target selection excludes the removed Linux kernel configuration test. Remote-cache warnings also mention the missing API key, but the public job log does not establish that those warnings caused the local timeout; the underlying test-attempt logs are not included. This failure is distinct from the two authenticated Linux credential failures, and no regression from the cleanup is established.",
+          "evidence": [
+            {
+              "label": "Separate Windows filecache timeout",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38810259830/job/116745501691"
+            },
+            {
+              "label": "Approved cleanup source",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13814"
             }
           ]
         }
