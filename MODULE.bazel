@@ -2381,6 +2381,12 @@ go_deps.gazelle_override(
 )
 go_deps.gazelle_override(
     directives = [
+        "gazelle:proto disable",
+    ],
+    path = "github.com/docker/docker",
+)
+go_deps.gazelle_override(
+    directives = [
         "gazelle:proto disable_global",
     ],
     path = "github.com/googleapis/gax-go/v2",
