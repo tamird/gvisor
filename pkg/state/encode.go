@@ -501,13 +501,22 @@ type objectEncoder struct {
 	// es is encodeState.
 	es *encodeState
 
-	// encoded is the encoded struct.
-	encoded *wire.Struct
+	// fields refers to the Struct's owned slots, selected once before StateSave.
+	fields []wire.Object
+}
+
+// field selects the same slot for generated and manual savers. A singleton
+// retains Struct.Field's legacy behavior of accepting any schema slot.
+func (oe *objectEncoder) field(slot int) *wire.Object {
+	if len(oe.fields) == 1 {
+		slot = 0
+	}
+	return &oe.fields[slot]
 }
 
 // save is called by the public methods on Sink.
 func (oe *objectEncoder) save(slot int, obj reflect.Value) {
-	fieldValue := oe.encoded.Field(slot)
+	fieldValue := oe.field(slot)
 	oe.es.encodeObject(obj, encodeDefault, fieldValue)
 }
 
@@ -559,12 +568,12 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	// manual savers fill its slots through the same graph resolver.
 	value := obj.Addr().Interface()
 	s := &wire.Struct{TypeID: wire.TypeID(te.ID)}
-	s.Alloc(len(te.Fields))
+	fields := s.Alloc(len(te.Fields))
 	*dest = s
 	es.encodedStructs[key] = s
 	oe := objectEncoder{
-		es:      es,
-		encoded: s,
+		es:     es,
+		fields: fields,
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()

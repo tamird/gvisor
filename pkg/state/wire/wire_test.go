@@ -132,6 +132,53 @@ func TestEmptyCollections(t *testing.T) {
 	}
 }
 
+func TestStructFieldWireForms(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		encoded   Object
+		fields    []Object
+		singleton bool
+	}{
+		{"none", NoObjects{}, nil, false},
+		{"multiple_empty", &MultipleObjects{}, nil, false},
+		{"single", Int(17), []Object{Int(17)}, true},
+		{"multiple_single", &MultipleObjects{Int(17)}, []Object{Int(17)}, false},
+		{"multiple", &MultipleObjects{Int(17), Int(29)}, []Object{Int(17), Int(29)}, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var original bytes.Buffer
+			writer := Writer{Writer: &original}
+			typeStruct.save(&writer)
+			Uint(7).save(&writer)
+			Save(&writer, test.encoded)
+			parsed := Load(&Reader{Reader: bytes.NewReader(original.Bytes())}).(*Struct)
+			if got, want := parsed.TypeID, TypeID(7); got != want {
+				t.Errorf("TypeID = %d, want %d", got, want)
+			}
+			if got, want := parsed.Fields(), len(test.fields); got != want {
+				t.Fatalf("Fields = %d, want %d", got, want)
+			}
+			for i, want := range test.fields {
+				if got := *parsed.Field(i); !reflect.DeepEqual(got, want) {
+					t.Errorf("Field(%d) = %v, want %v", i, got, want)
+				}
+			}
+			if test.singleton {
+				// Existing legacy inputs can use one value for several schema
+				// slots. MultipleObjects of length one is a distinct wire form.
+				if got, want := parsed.Field(19), parsed.Field(0); got != want {
+					t.Errorf("singleton Field(19) = %p, want %p", got, want)
+				}
+			}
+			var restored bytes.Buffer
+			Save(&Writer{Writer: &restored}, parsed)
+			if got, want := restored.Bytes(), original.Bytes(); !bytes.Equal(got, want) {
+				t.Errorf("reserialized struct = %x, want %x", got, want)
+			}
+		})
+	}
+}
+
 func TestObjectOwnership(t *testing.T) {
 	field := FieldName("Value")
 	want := &Array{Contents: []Object{

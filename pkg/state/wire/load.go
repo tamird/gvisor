@@ -102,7 +102,7 @@ func loadPayload(r *Reader, tag Uint) Object {
 		return value
 	case typeStruct:
 		id := TypeID(loadUint(r))
-		return &Struct{TypeID: id, fields: Load(r)} // Escapes: owned struct payload.
+		return &Struct{TypeID: id, fields: [1]Object{Load(r)}} // Escapes: owned struct payload.
 	case typeInterface:
 		typ := loadType(r)
 		return &Interface{Type: typ, Value: Load(r)} // Escapes: owned interface payload.

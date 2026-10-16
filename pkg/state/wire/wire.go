@@ -489,37 +489,44 @@ func (NoObjects) save(w *Writer) {}
 // Struct is a basic composite value.
 type Struct struct {
 	TypeID TypeID
-	fields Object // Optionally NoObjects or *MultipleObjects.
+	// The one-element array owns an inline singleton and lets Alloc return
+	// its slots without allocating another backing array. Its element also
+	// carries the NoObjects and *MultipleObjects wire forms.
+	fields [1]Object
 }
 
 // Field returns a pointer to the given field slot.
 //
 // This must be called after Alloc.
 func (s *Struct) Field(i int) *Object {
-	if fields, ok := s.fields.(*MultipleObjects); ok {
+	if fields, ok := s.fields[0].(*MultipleObjects); ok {
 		return &((*fields)[i])
 	}
-	if _, ok := s.fields.(NoObjects); ok {
+	if _, ok := s.fields[0].(NoObjects); ok {
 		// Alloc may be optionally called; can't call twice.
 		panic("Field called inappropriately, wrong Alloc?")
 	}
-	return &s.fields
+	return &s.fields[0]
 }
 
-// Alloc allocates the given number of fields.
+// Alloc allocates the given number of fields and returns their owned slots.
+// The returned slice refers to this Struct's inline singleton or multiple-field
+// backing; it may be retained while filling fields through a saver.
 //
 // This must be called before Field and Save.
 //
 // Precondition: slots must be nonnegative.
-func (s *Struct) Alloc(slots int) {
+func (s *Struct) Alloc(slots int) []Object {
 	switch {
 	case slots == 0:
-		s.fields = NoObjects{}
+		s.fields[0] = NoObjects{}
+		return nil
 	case slots == 1:
-		// Leave it alone.
+		return s.fields[:]
 	case slots > 1:
 		fields := make(MultipleObjects, slots)
-		s.fields = &fields
+		s.fields[0] = &fields
+		return fields
 	default:
 		// Violates precondition.
 		panic(fmt.Sprintf("Alloc called with negative slots %d?", slots))
@@ -528,7 +535,7 @@ func (s *Struct) Alloc(slots int) {
 
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
-	switch x := s.fields.(type) {
+	switch x := s.fields[0].(type) {
 	case *MultipleObjects:
 		return len(*x)
 	case NoObjects:
@@ -544,7 +551,7 @@ func (s *Struct) Fields() int {
 // appropriately. See Alloc and Field for more details.
 func (s *Struct) save(w *Writer) {
 	Uint(s.TypeID).save(w)
-	Save(w, s.fields)
+	Save(w, s.fields[0])
 }
 
 // Object types.
