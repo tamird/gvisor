@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T03:12:09.826924+00:00",
+    "updatedAt": "2026-10-16T03:36:27.655640+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -8723,8 +8723,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-16T02:23:02.033756+00:00",
-      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. A new fixed comparison against the Karn-only baseline is running; no compact throughput result is available. The approved source remains unchanged.",
+      "updatedAt": "2026-10-16T03:36:27.655640+00:00",
+      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). This cohort does not establish a throughput difference or equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9305,7 +9305,7 @@
           ]
         },
         {
-          "text": "The compact representation at eed3f29ed passes six semantic owners and three analyzer wrappers, including all three split/ACK witness cases on both CPUs. The two existing DSACK-related skips remain explicit; there is no race phase. Actual matched Sentry layouts on AMD64 and ARM64 imply 256-byte segment and 896-byte sender heap slots, restoring the baseline classes. These are allocator-class inferences, not per-packet allocation measurements. The new fixed two-host comparison uses matched runtime sources in 7c79da672 and bdc691f3c, with Karn in both arms, twelve balanced pairs per host, opposite starting orders and 96 primary bandwidth rows. Actions 38839701028 is running; no new throughput result or historical sample pooling is claimed. The approved proposal remains 7e371d8ac.",
+          "text": "The compact representation at eed3f29ed passes six semantic owners and three analyzer wrappers, including all three split/ACK witness cases on both CPUs. The two existing DSACK-related skips remain explicit; there is no race phase. Actual matched Sentry layouts on AMD64 and ARM64 imply 256-byte segment and 896-byte sender heap slots, restoring the baseline classes. These are allocator-class inferences, not per-packet allocation measurements. The new fixed two-host comparison uses matched runtime sources in 7c79da672 and bdc691f3c, with Karn in both arms, twelve balanced pairs per host, opposite starting orders and 96 primary bandwidth rows. Actions 38839701028 completed; its verified throughput results are recorded below, without historical sample pooling. The approved proposal remains 7e371d8ac.",
           "evidence": [
             {
               "label": "Qualified compact RACK source",
@@ -9328,9 +9328,26 @@
               "url": "https://github.com/tamird/gvisor/commit/7c79da672b62f0e4706de7dab6f0aa1fb2471c43"
             }
           ]
+        },
+        {
+          "text": "The compact RACK comparison completes all 52 fresh benchmark processes, including four warmups and 48 measured processes with 96 primary bandwidth rows. Original native PASS results, empty-but-clean XML reports, exact balanced order and private-daemon controls verify. Both runner cohorts record AMD EPYC 9V74 processors with four logical CPUs. The fixed equal-host paired-block analysis gives Upload +1.40% (pointwise 95% interval −0.0103% to +2.76%) and Download +0.83% (−1.07% to +2.55%). Neither aggregate interval excludes zero. Host 0 alone shows an upload gain; host 1 does not. This is not an equivalence result, and it does not establish behavior on lossy or changing paths. Historical samples are not pooled, and differences from the earlier cohort are not attributed to the compact representation alone. Source, native executable inputs and matched layouts are independently verified. The measured AMD64 segment and sender heap classes match the Karn-only baseline. Earlier separate qualification covers both architecture layouts; this throughput cohort is AMD64 only.",
+          "evidence": [
+            {
+              "label": "Verified compact RACK fixed comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38839701028"
+            },
+            {
+              "label": "Matched compact candidate",
+              "url": "https://github.com/tamird/gvisor/commit/bdc691f3c8f19947e650460872bb79d6c04819eb"
+            },
+            {
+              "label": "Matched Karn-only control",
+              "url": "https://github.com/tamird/gvisor/commit/7c79da672b62f0e4706de7dab6f0aa1fb2471c43"
+            }
+          ]
         }
       ],
-      "nextStep": "Complete and independently verify the new fixed compact-RACK comparison. Keep its samples separate from the earlier cohort; restored allocator classes do not prove restored throughput. Preserve the approved correction and its packet-regression evidence; upstream submission still awaits #15819. No recovery benefit on lossy or changing paths is established.",
+      "nextStep": "Prepare the compact production amendment for contributor review, preserving the direct comparison to approved 7e371d8ac and the #15819 prerequisite. The closed correctness, layout and throughput evidence does not establish equivalence or a recovery benefit on lossy or changing paths. No new contributor approval or upstream publication is implied.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9654,6 +9671,42 @@
               "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
             }
           ]
+        },
+        {
+          "title": "Compact RACK versus Karn-only: new fixed cohort",
+          "description": "Twelve balanced pairs per runner cohort, opposite starting orders; primary bandwidth metric. Equal-host paired-block analysis with 100,000 bootstrap replicates.",
+          "columns": [
+            "Operation",
+            "Aggregate change",
+            "Pointwise 95% interval"
+          ],
+          "rows": [
+            [
+              "Upload",
+              "+1.40%",
+              "−0.0103% to +2.76%"
+            ],
+            [
+              "Download",
+              "+0.83%",
+              "−1.07% to +2.55%"
+            ]
+          ],
+          "note": "Both intervals include zero. This is not an equivalence result or a general throughput-gain claim. Intervals are conditional on the two recorded runner cohorts and assume independent adjacent balanced blocks; no simultaneous-coverage claim or historical sample pooling. Host 0 alone shows an upload gain; host 1 does not.",
+          "evidence": [
+            {
+              "label": "Verified compact RACK fixed comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38839701028"
+            },
+            {
+              "label": "Matched compact candidate",
+              "url": "https://github.com/tamird/gvisor/commit/bdc691f3c8f19947e650460872bb79d6c04819eb"
+            },
+            {
+              "label": "Matched Karn-only control",
+              "url": "https://github.com/tamird/gvisor/commit/7c79da672b62f0e4706de7dab6f0aa1fb2471c43"
+            }
+          ]
         }
       ]
     },
@@ -9662,8 +9715,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T03:12:09.826924+00:00",
-      "summary": "The collection-accessor revision at 967abd34f completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.00% and map Load improved 11.04%, while UDP, control-message and pointer/slice-adoption Load regressed 14.43%, 11.44% and 9.54%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. These Load regressions keep the owned-Value design under investigation; it is not ready for adoption.\n\nThis is a separate cohort from the earlier Actions comparison of 391065ac5, with no pooled samples or attribution of the change in percentages to collection accessors. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source. The prior schema-ownership experiment and its failed attempts remain separate.\n\nThe separate shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. That is a size result, with no demonstrated latency or allocation improvement. The subsequent container-local storage prototype is undergoing qualification; it has no result yet.",
+      "updatedAt": "2026-10-16T03:36:27.655640+00:00",
+      "summary": "The container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10628,7 +10681,7 @@
           ]
         },
         {
-          "text": "The shared-capture revision reuses the existing generated factory through a shared selector and removes two generic helpers. Original normal, race and analyzer checks pass, with 32,917 XML entries and both production links verified. Matched full executable files change from 40,095,904 to 38,531,232 bytes on AMD64 and from 37,486,752 to 36,044,960 bytes on ARM64. These size reductions are measured against 967abd34f; they do not establish latency or resident-memory improvement. Single-operation allocation observations do not establish an improvement either: earlier observations of the same 967abd34f source already varied by 64 bytes and one allocation. The separate container-local storage prototype at c83628573 is now undergoing bounded qualification, with no correctness, allocation or timing result yet.",
+          "text": "The shared-capture revision reuses the existing generated factory through a shared selector and removes two generic helpers. Original normal, race and analyzer checks pass, with 32,917 XML entries and both production links verified. Matched full executable files change from 40,095,904 to 38,531,232 bytes on AMD64 and from 37,486,752 to 36,044,960 bytes on ARM64. These size reductions are measured against 967abd34f; they do not establish latency or resident-memory improvement. Single-operation allocation observations do not establish an improvement either: earlier observations of the same 967abd34f source already varied by 64 bytes and one allocation. The separate container-local storage revision and its completed fixed comparison are recorded below.",
           "evidence": [
             {
               "label": "Qualified shared-capture source",
@@ -10643,13 +10696,39 @@
               "url": "https://github.com/tamird/gvisor/commit/c83628573549f120d05d54caa02275cf05948b14"
             },
             {
-              "label": "Container-local storage qualification in progress",
+              "label": "Completed container-local storage qualification",
               "url": "https://app.buildbuddy.io/invocation/c4df46d6-18f2-494b-ab49-8c130e3861d1"
+            }
+          ]
+        },
+        {
+          "text": "The container-local storage revision at c83628573 passes 24 selected test, race, analyzer and single-operation processes, with 32,958 XML entries and two fresh production links verified. Against shared-capture source af9f06aef, single-operation observations are unchanged for the ordinary case (784 bytes/17 allocations), and decrease for retained source (1,088/25 to 1,072/24), control message (4,712/113 to 4,568/105) and adoption (254,312/4,938 to 254,200/4,933). Serialized bytes match. These descriptive allocation observations do not establish latency improvement.",
+          "evidence": [
+            {
+              "label": "Qualified container-local storage source",
+              "url": "https://github.com/tamird/gvisor/commit/c83628573549f120d05d54caa02275cf05948b14"
+            },
+            {
+              "label": "Completed container-local storage qualification",
+              "url": "https://app.buildbuddy.io/invocation/c4df46d6-18f2-494b-ab49-8c130e3861d1"
+            }
+          ]
+        },
+        {
+          "text": "The fixed comparison of container-local storage source c83628573 against control 6212e4f7b completes all 268 fresh observations and 240 measured rows through one remote TestRunner. Source, executable inputs, original process outputs and independent statistics verify. Twelve balanced pairs per workload show UDP Save −26.05%, control Save −8.24%, pointer Save −4.66% and map Load −9.01%; control-message Load +9.94%, adoption Load +10.38%, UDP Load +8.53% and map Save +4.85% are significant regressions. Pointer Load and adoption Save have no statistically significant timing difference. Lower Load bytes and allocation counts do not erase the timing regressions. No prior samples are pooled, and this package comparison does not establish sandbox startup or whole-restore performance.",
+          "evidence": [
+            {
+              "label": "Verified container-local storage comparison",
+              "url": "https://app.buildbuddy.io/invocation/759e3e75-b60c-4a93-a93c-ebe140bc486f"
+            },
+            {
+              "label": "Measured container-local storage source",
+              "url": "https://github.com/tamird/gvisor/commit/c83628573549f120d05d54caa02275cf05948b14"
             }
           ]
         }
       ],
-      "nextStep": "Verify the container-local storage prototype through its bounded qualification. Preserve the three measured Load regressions of 967abd34f and the source-specific startup and size evidence. Shared-capture file reductions do not establish latency or allocation improvement, and neither prototype is ready for adoption.",
+      "nextStep": "Use bounded CPU and allocation profiles of control-message Load, adoption Load, UDP Load and map Save to guide the next owning design correction. Preserve the measured regressions, source-specific startup and size evidence, and earlier cohorts separately. No new full timing comparison or adoption is justified by lower allocations alone.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11619,6 +11698,58 @@
             {
               "label": "Shared-capture qualification and matched production links",
               "url": "https://app.buildbuddy.io/invocation/3b0a5572-42b3-4124-8866-d93c4effef5b"
+            }
+          ]
+        },
+        {
+          "title": "Container-local storage: fixed remote comparison",
+          "description": "Source c83628573 versus control 6212e4f7b; one Linux AMD64 worker, CPU21, GOMAXPROCS=1. Twelve fixed balanced pairs per workload; 240 measured rows.",
+          "columns": [
+            "Operation",
+            "Timing change",
+            "Interpretation"
+          ],
+          "rows": [
+            [
+              "UDP Save",
+              "−26.05%",
+              "Faster"
+            ],
+            [
+              "Control-message Load",
+              "+9.94%",
+              "Slower"
+            ],
+            [
+              "Pointer/slice-adoption Load",
+              "+10.38%",
+              "Slower"
+            ],
+            [
+              "UDP Load",
+              "+8.53%",
+              "Slower"
+            ],
+            [
+              "Map Save",
+              "+4.85%",
+              "Slower"
+            ],
+            [
+              "Map Load",
+              "−9.01%",
+              "Faster"
+            ]
+          ],
+          "note": "All displayed changes are statistically significant in this fixed benchstat comparison. Pointer Load and adoption Save are inconclusive. No prior samples are pooled; lower allocations do not remove the timing regressions. These are package timings, not startup or whole-restore measurements.",
+          "evidence": [
+            {
+              "label": "Verified container-local storage comparison",
+              "url": "https://app.buildbuddy.io/invocation/759e3e75-b60c-4a93-a93c-ebe140bc486f"
+            },
+            {
+              "label": "Measured container-local storage source",
+              "url": "https://github.com/tamird/gvisor/commit/c83628573549f120d05d54caa02275cf05948b14"
             }
           ]
         }
