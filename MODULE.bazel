@@ -186,6 +186,9 @@ release_apt.sources_list(
         "jammy",
         "jammy-updates",
         "jammy-security",
+        "noble",
+        "noble-updates",
+        "noble-security",
     ],
     types = ["deb"],
     uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
@@ -235,6 +238,7 @@ release_apt.install(
         "jammy-security",
     ],
 )
+# Resolve the EROFS writer, dynamic loader and libraries from the same suite.
 release_apt.install(
     dependency_set = "container_test_tools",
     packages = [
@@ -244,9 +248,9 @@ release_apt.install(
         "erofs-utils",
     ],
     suites = [
-        "jammy",
-        "jammy-updates",
-        "jammy-security",
+        "noble",
+        "noble-updates",
+        "noble-security",
     ],
 )
 
