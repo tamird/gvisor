@@ -91,6 +91,7 @@ genrule(
 
 arch_genrule(
     name = "sighandler_binary_arch",
+    architecture = select_arch(amd64 = "amd64", arm64 = "arm64"),
     src = ":sighandler_binary",
     template = "sighandler.built-in.%s.bin",
 )
@@ -109,6 +110,7 @@ genrule(
 
 arch_genrule(
     name = "sighandler_go_arch",
+    architecture = select_arch(amd64 = "amd64", arm64 = "arm64"),
     src = ":sighandler_go",
     template = "sighandler_%s.go",
 )
