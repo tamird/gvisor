@@ -86,6 +86,45 @@ class QualificationReportTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "timezone-aware"):
             report.timestamp("2026-10-16T17:39:09")
 
+    def test_retained_test_no_build_preflight(self) -> None:
+        events = FIXTURES / "analysis-no-build/events.jsonl"
+        value = report.preflight(events, 1, "test")
+        self.assertEqual((value["status"], value["native_exit"]), ("PASS", 1))
+        self.assertEqual(len(value["expected"]), 2)
+        self.assertEqual(report.preflight(events, 1, "build")["status"], "INCOMPLETE")
+        self.assertEqual(report.preflight(events, 4, "test")["status"], "INCOMPLETE")
+
+    def test_test_no_build_requires_all_owners_and_no_failure(self) -> None:
+        original = [json.loads(line) for line in (FIXTURES / "analysis-no-build/events.jsonl").read_text().splitlines()]
+        no_build = next(event for event in original if event.get("aborted", {}).get("reason") == "NO_BUILD")
+        variants = {
+            "missing-owner": [event for event in original if event is not no_build],
+            "analysis-failure": original + [{"id": {"pattern": {"pattern": ["//missing:target"]}}, "aborted": {"reason": "ANALYSIS_FAILURE"}}],
+            "no-owners": [event for event in original if "configured" not in event],
+            "test-executed": original + [{"id": {}, "testResult": {"status": "PASSED"}}],
+        }
+        for name, events in variants.items():
+            with self.subTest(name=name):
+                path = self.root / (name + ".jsonl")
+                path.write_text("".join(json.dumps(event) + "\n" for event in events))
+                self.assertEqual(report.preflight(path, 1, "test")["status"], "INCOMPLETE")
+
+    def test_analysis_verdict_retains_accepted_original_exit(self) -> None:
+        invocation = self.fixture()
+        (invocation / "events.jsonl").write_bytes((FIXTURES / "analysis-no-build/events.jsonl").read_bytes())
+        (invocation / "expected.txt").write_text("")
+        (invocation / "native-exit").write_text("1\n")
+        (invocation / "executed-arguments.txt").write_text("test\n--nobuild\n")
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "analysis"
+        report.write_json(invocation / "context.json", context)
+        self.capture(invocation)
+        value = self.verdict(invocation)
+        self.assertEqual((value["status"], value["native_exit"], value["accepted_analysis_exit"]), ("PASS", 1, True))
+        combined = report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")
+        self.assertEqual((combined["status"], combined["native_exit"]), ("PASS", 0))
+        self.assertEqual(combined["native_exits"][0]["exit"], 1)
+
     def test_retained_failure_preserves_missing_shards(self) -> None:
         invocation = self.fixture("fail")
         self.assertEqual(self.capture(invocation)["errors"], [])

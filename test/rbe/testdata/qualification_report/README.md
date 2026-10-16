@@ -19,6 +19,10 @@ capture owner uses each `testResult`'s original reports.
   than inventing original command/capture records.
 * `zero`: run 38951386329, the filtered serialization wrapper returned native
   success and an empty XML suite. This is not named test coverage.
+* `analysis-no-build`: the bounded reporting probe's original `test --nobuild`
+  events and native exit 1. Both configured owners finish through `NO_BUILD`,
+  with no analysis failure or execution. The test checks this complete pattern
+  and rejects missing owners, other aborts, and unrelated nonzero exits.
 
 Other tests deliberately mutate these inputs to exercise source/configuration
 mismatches, missing results, report corruption, resumable capture, wrapper errors,

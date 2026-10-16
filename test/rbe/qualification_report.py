@@ -306,6 +306,24 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
             "arguments": arguments, "execution_finished_at": finished.isoformat(), **exits}, errors
 
 
+def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
+    """Validate analysis before allowing the caller to start expensive actions."""
+    errors: list[str] = []
+    targets: dict[str, unit_matrix.ConfiguredTarget] = {}
+    try:
+        if kind not in ("test", "build") or native_exit not in ((0, 1) if kind == "test" else (0,)):
+            raise ValueError(f"Unexpected {kind} preflight exit: {native_exit}")
+        targets = unit_matrix.configured_targets(
+            str(events), tests=True if kind == "test" else None,
+            allow_test_no_build=kind == "test", expected_exit=native_exit,
+        )
+    except (OSError, ValueError) as error:
+        errors.append(str(error))
+    return {"schema_version": 1, "status": "INCOMPLETE" if errors else "PASS",
+            "kind": kind, "native_exit": native_exit, "errors": errors,
+            "expected": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())]}
+
+
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
             expected_analysis: tuple[Path, ...] = ()) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
@@ -371,7 +389,10 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     expected: set[Owner] = set()
     for analysis in expected_analysis:
         try:
-            targets = unit_matrix.configured_targets(str(analysis), tests=True if info["bazel_command"] == "test" else None)
+            targets = unit_matrix.configured_targets(
+                str(analysis), tests=True if info["bazel_command"] == "test" else None,
+                allow_test_no_build=info["bazel_command"] == "test",
+            )
             expected.update(Owner(label, target.configuration) for label, target in targets.items())
         except (OSError, ValueError) as error:
             errors.append(f"Expected analysis: {error}")
@@ -389,7 +410,16 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append(f"Configured owners differ from expected: {sorted(configured ^ expected)}")
     if not finished:
         errors.append("Missing invocation finish event")
-    if info["native_exit"] == 0 and finished.get("overallSuccess") is not True:
+    accepted_analysis_exit = False
+    if info["command_kind"] == "analysis":
+        selection = preflight(events, number(info["native_exit"]), string(info["bazel_command"]))
+        errors.extend(string(error) for error in sequence(selection["errors"]))
+        if selection["status"] == "PASS":
+            accepted_analysis_exit = True
+            # Analysis completes configured roots through NO_BUILD events,
+            # not successful target executions.
+            completed.update((owner, True) for owner in expected)
+    if info["native_exit"] == 0 and finished.get("overallSuccess") is not True and not accepted_analysis_exit:
         errors.append("Native success disagrees with BEP finish")
     missing = [asdict(owner) for owner in sorted(expected - completed.keys())]
     missing.extend({"label": label, "configuration": None, "reason": "expected owner not configured"}
@@ -453,9 +483,10 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append("Build/analysis invocation unexpectedly contains test execution")
     if info["capture_exit"] != 0:
         errors.append("Caller recorded a capture failure")
-    status = "FAIL" if info["native_exit"] != 0 or failures else "INCOMPLETE" if errors or missing else "PASS"
+    status = "FAIL" if (info["native_exit"] != 0 and not accepted_analysis_exit) or failures else "INCOMPLETE" if errors or missing else "PASS"
     now = datetime.datetime.now(datetime.timezone.utc)
-    return {"schema_version": 1, **info, "status": status, "errors": errors, "failures": failures,
+    return {"schema_version": 1, **info, "status": status, "accepted_analysis_exit": accepted_analysis_exit,
+            "errors": errors, "failures": failures,
             "expected_labels": sorted(labels or {owner.label for owner in expected}),
             "expected": [asdict(owner) for owner in sorted(expected)], "executed": observations,
             "missing": missing, "skips": skips, "case_counts": dict(cases),
@@ -488,10 +519,12 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
     native_exits = []
     for row in rows:
         try:
-            native_exits.append({"invocation": row["path"], "exit": number(mapping(row["verdict"]).get("native_exit"))})
+            value = mapping(row["verdict"])
+            native_exits.append({"invocation": row["path"], "exit": number(value.get("native_exit")),
+                                 "accepted_analysis_exit": value.get("accepted_analysis_exit") is True})
         except ValueError as error:
             errors.append(str(error))
-    native_exit = next((number(row["exit"]) for row in native_exits if row["exit"] != 0), 0) if native_exits else None
+    native_exit = next((number(row["exit"]) for row in native_exits if row["exit"] != 0 and not row["accepted_analysis_exit"]), 0) if native_exits else None
     coordinator_failed = False
     if native_exit or any(row.get("status") == "FAIL" for row in verdicts):
         status = "FAIL"
@@ -538,6 +571,11 @@ def main() -> int:
     copy = commands.add_parser("capture")
     for name in ("events", "output", "output-root", "report-dir"):
         copy.add_argument("--" + name, type=Path, required=True)
+    analyze = commands.add_parser("preflight")
+    for name in ("events", "output"):
+        analyze.add_argument("--" + name, type=Path, required=True)
+    analyze.add_argument("--native-exit", type=int, required=True)
+    analyze.add_argument("--kind", choices=("test", "build"), required=True)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
         check.add_argument("--" + name, type=Path, required=True)
@@ -553,11 +591,15 @@ def main() -> int:
     if args.command == "capture":
         result = capture(args.events, args.output, args.output_root, args.report_dir)
         return int(bool(result["errors"]))
+    if args.command == "preflight":
+        result = preflight(args.events, args.native_exit, args.kind)
+        write_json(args.output, result)
+        return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
                          args.expected_targets, tuple(args.expected_analysis))
         write_json(args.output, result)
-        return number(result["native_exit"]) or int(result["status"] != "PASS")
+        return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
     return number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
 
