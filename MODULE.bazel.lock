@@ -585,6 +585,29 @@
             }
           }
         }
+      },
+      "os:linux,arch:amd64": {
+        "bzlTransitiveDigest": "EZ/5nbcahiR4giBw2O8ehkwrmOFRmQ7DWND7g7ab8f4=",
+        "usagesDigest": "OTTvD6cZNKUi3QUzOTDUG7oB96CmW5A0OizF7p6AdnU=",
+        "recordedInputs": [
+          "REPO_MAPPING:,bazel_lib bazel_lib+",
+          "REPO_MAPPING:,yq.bzl yq.bzl+"
+        ],
+        "generatedRepoSpecs": {
+          "governance_yq": {
+            "repoRuleId": "@@yq.bzl+//yq/toolchain:platforms.bzl%yq_platform_repo",
+            "attributes": {
+              "platform": "linux_amd64",
+              "version": "4.45.2"
+            }
+          },
+          "governance_areas": {
+            "repoRuleId": "@@//governance/tools/maintainers:repositories.bzl%_governance_areas",
+            "attributes": {
+              "yq": "@@+governance+governance_yq//:yq"
+            }
+          }
+        }
       }
     },
     "@@rules_android+//rules/android_sdk_repository:rule.bzl%android_sdk_repository_extension": {
