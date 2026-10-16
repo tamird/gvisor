@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T02:49:48.081539+00:00",
+    "updatedAt": "2026-10-16T03:12:09.826924+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9662,8 +9662,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T02:49:48.081539+00:00",
-      "summary": "The collection-accessor revision at 967abd34f completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.00% and map Load improved 11.04%, while UDP, control-message and pointer/slice-adoption Load regressed 14.43%, 11.44% and 9.54%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. These Load regressions keep the owned-Value design under investigation; it is not ready for adoption.\n\nThis is a separate cohort from the earlier Actions comparison of 391065ac5, with no pooled samples or attribution of the change in percentages to collection accessors. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source. The prior schema-ownership experiment and its failed attempts remain separate.",
+      "updatedAt": "2026-10-16T03:12:09.826924+00:00",
+      "summary": "The collection-accessor revision at 967abd34f completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.00% and map Load improved 11.04%, while UDP, control-message and pointer/slice-adoption Load regressed 14.43%, 11.44% and 9.54%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. These Load regressions keep the owned-Value design under investigation; it is not ready for adoption.\n\nThis is a separate cohort from the earlier Actions comparison of 391065ac5, with no pooled samples or attribution of the change in percentages to collection accessors. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source. The prior schema-ownership experiment and its failed attempts remain separate.\n\nThe separate shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. That is a size result, with no demonstrated latency or allocation improvement. The subsequent container-local storage prototype is undergoing qualification; it has no result yet.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10626,9 +10626,30 @@
               "url": "https://github.com/tamird/gvisor/commit/967abd34f5c99d9f1b077f54b543db77f2eb661c"
             }
           ]
+        },
+        {
+          "text": "The shared-capture revision reuses the existing generated factory through a shared selector and removes two generic helpers. Original normal, race and analyzer checks pass, with 32,917 XML entries and both production links verified. Matched full executable files change from 40,095,904 to 38,531,232 bytes on AMD64 and from 37,486,752 to 36,044,960 bytes on ARM64. These size reductions are measured against 967abd34f; they do not establish latency or resident-memory improvement. Single-operation allocation observations do not establish an improvement either: earlier observations of the same 967abd34f source already varied by 64 bytes and one allocation. The separate container-local storage prototype at c83628573 is now undergoing bounded qualification, with no correctness, allocation or timing result yet.",
+          "evidence": [
+            {
+              "label": "Qualified shared-capture source",
+              "url": "https://github.com/tamird/gvisor/commit/af9f06aef3ed6c94715fa6401a21e426edebe65e"
+            },
+            {
+              "label": "Shared-capture qualification and matched production links",
+              "url": "https://app.buildbuddy.io/invocation/3b0a5572-42b3-4124-8866-d93c4effef5b"
+            },
+            {
+              "label": "Container-local storage prototype",
+              "url": "https://github.com/tamird/gvisor/commit/c83628573549f120d05d54caa02275cf05948b14"
+            },
+            {
+              "label": "Container-local storage qualification in progress",
+              "url": "https://app.buildbuddy.io/invocation/c4df46d6-18f2-494b-ab49-8c130e3861d1"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate the remaining Load regressions and production-file growth. Qualify the separate shared-capture source simplification before making runtime or size claims. Keep each fixed cohort and source identity separate; correctness and allocation changes do not establish readiness.",
+      "nextStep": "Verify the container-local storage prototype through its bounded qualification. Preserve the three measured Load regressions of 967abd34f and the source-specific startup and size evidence. Shared-capture file reductions do not establish latency or allocation improvement, and neither prototype is ready for adoption.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11563,6 +11584,41 @@
             {
               "label": "Measured collection-accessor source",
               "url": "https://github.com/tamird/gvisor/commit/967abd34f5c99d9f1b077f54b543db77f2eb661c"
+            }
+          ]
+        },
+        {
+          "title": "Shared capture: matched production file sizes",
+          "description": "Collection-accessor source 967abd34f versus shared-capture source af9f06aef. Authenticated full linked executables.",
+          "columns": [
+            "Architecture",
+            "Before",
+            "After",
+            "Change"
+          ],
+          "rows": [
+            [
+              "AMD64",
+              "40,095,904 B",
+              "38,531,232 B",
+              "−1,564,672 B"
+            ],
+            [
+              "ARM64",
+              "37,486,752 B",
+              "36,044,960 B",
+              "−1,441,792 B"
+            ]
+          ],
+          "note": "File size only; no resident-memory, startup-latency or package-timing inference. First-use samples do not establish a causal allocation improvement.",
+          "evidence": [
+            {
+              "label": "Qualified shared-capture source",
+              "url": "https://github.com/tamird/gvisor/commit/af9f06aef3ed6c94715fa6401a21e426edebe65e"
+            },
+            {
+              "label": "Shared-capture qualification and matched production links",
+              "url": "https://app.buildbuddy.io/invocation/3b0a5572-42b3-4124-8866-d93c4effef5b"
             }
           ]
         }
