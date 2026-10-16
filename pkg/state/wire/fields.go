@@ -47,7 +47,7 @@ func CaptureUintField(dest *Object, value Uint) {
 
 // CaptureBoolField snapshots a scalar field with zero elision.
 func CaptureBoolField(dest *Object, value Bool) {
-	if value == false {
+	if !value {
 		*dest = Nil{}
 	} else {
 		*dest = value
