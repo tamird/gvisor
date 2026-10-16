@@ -70,6 +70,21 @@ class QualificationReportTest(unittest.TestCase):
                                 if "configured" in event or "finished" in event))
         return path
 
+    def mixed_fixture(self, xml: str) -> Path:
+        invocation = self.fixture()
+        events = self.events(invocation)
+        label = (invocation / "expected.txt").read_text().strip()
+        second_label = "//another:test"
+        second = invocation / "another"
+        second.mkdir()
+        (second / "test.xml").write_text(xml)
+        shutil.copyfile(invocation / "test.log", second / "test.log")
+        extra = json.dumps([event for event in events if "finished" not in event])
+        extra = extra.replace(label, second_label).replace(invocation.as_uri() + "/test.", second.as_uri() + "/test.")
+        self.write_events(invocation, json.loads(extra) + events)
+        (invocation / "expected.txt").write_text(label + "\n" + second_label + "\n")
+        return invocation
+
     def test_retained_pass(self) -> None:
         invocation = self.fixture()
         self.assertEqual(self.capture(invocation)["errors"], [])
@@ -316,6 +331,67 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(len(value["all_skipped_owners"]), 1)
         self.assertEqual(value["zero_case_owners"], [])
         self.assertEqual(value["skips"][0]["reason"], "environment")
+
+    def test_each_owner_requires_executed_cases(self) -> None:
+        for xml, field, skips in (
+            ("<testsuites/>", "zero_case_owners", 4),
+            ('<testsuite><testcase name="unavailable"><skipped>environment</skipped></testcase></testsuite>',
+             "all_skipped_owners", 5),
+        ):
+            with self.subTest(field=field):
+                invocation = self.mixed_fixture(xml)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual((value["status"], value["native_exit"]), ("INCOMPLETE", 0))
+                self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": skips})
+                self.assertEqual([owner["label"] for owner in value[field]], ["//another:test"])
+                self.assertEqual(value["missing"], [])
+                self.assertEqual(len(value["errors"]), 1, value)
+                self.assertIn("//another:test", value["errors"][0])
+                shutil.rmtree(invocation)
+
+    def test_empty_owner_does_not_hide_native_or_xml_failure(self) -> None:
+        for failure in ("native", "xml"):
+            with self.subTest(failure=failure):
+                invocation = self.mixed_fixture("<testsuites/>")
+                if failure == "native":
+                    (invocation / "native-exit").write_text("3\n")
+                else:
+                    (invocation / "test.xml").write_text(
+                        '<testsuite><testcase name="passed"/><testcase name="failed"><failure>original failure</failure></testcase></testsuite>')
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation)
+                self.assertEqual(value["status"], "FAIL", value)
+                self.assertEqual([owner["label"] for owner in value["zero_case_owners"]], ["//another:test"])
+                self.assertEqual(value["native_exit"], 3 if failure == "native" else 0)
+                if failure == "xml":
+                    self.assertEqual(value["case_counts"]["failed"], 1)
+                shutil.rmtree(invocation)
+
+    def test_empty_shard_preserves_same_owner_executed_coverage(self) -> None:
+        invocation = self.fixture()
+        events = self.events(invocation)
+        result = next(event for event in events if "testResult" in event)
+        empty = json.loads(json.dumps(result))
+        empty["id"]["testResult"]["shard"] = 2
+        empty_xml = invocation / "empty.xml"
+        empty_xml.write_text("<testsuites/>")
+        for output in empty["testResult"]["testActionOutput"]:
+            if output["name"] == "test.xml":
+                output["uri"] = empty_xml.as_uri()
+        for event in events:
+            if "completed" in event:
+                event["children"].append(empty["id"])
+            if "testSummary" in event:
+                event["testSummary"].update(shardCount=2, totalRunCount=2)
+        self.write_events(invocation, [empty] + events)
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation)
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": 4})
+        self.assertEqual(value["zero_case_owners"], [])
+        self.assertEqual(value["all_skipped_owners"], [])
+        self.assertEqual(len(value["executed"]), 2)
 
     def test_xml_notrun_and_wrapper_error(self) -> None:
         path = self.root / "report.xml"

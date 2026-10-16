@@ -478,8 +478,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 errors.append(f"Summary run/shard identities differ for {owner}")
             if summary.get("overallStatus") != "PASSED":
                 failures.append({**asdict(owner), "reason": "test summary", "status": summary.get("overallStatus")})
-        if not results or cases["passed"] + cases["failed"] == 0:
-            errors.append("Test invocation has no executed named cases; zero-case/all-skipped success is not coverage")
+        for owner in sorted(expected | result_owners):
+            if owner_executed[owner] == 0:
+                errors.append(f"Test owner has no executed named cases; zero-case/all-skipped success is not coverage: {owner}")
     elif results or summaries:
         errors.append("Build/analysis invocation unexpectedly contains test execution")
     if info["capture_exit"] != 0:
