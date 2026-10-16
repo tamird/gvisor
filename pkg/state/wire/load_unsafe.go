@@ -67,36 +67,40 @@ func loadPayload(r *Reader, kind Kind) Value {
 		p := &sliceValue{valueHeader: valueHeader{kind}, capacity: capacity, ref: ref} // Escapes: owned slice payload.
 		return Value{bits: uint64(length), payload: unsafe.Pointer(p)}
 	case KindArray, KindMultipleObjects:
-		count := loadUint(r)
-		p := &arrayValue{valueHeader: valueHeader{kind}} // Escapes: owned collection payload.
-		if count != 0 || kind == KindMultipleObjects {
-			p.values = make([]Value, count) // Escapes: owned collection elements; make checks the full-width count.
-			for i := range p.values {
-				if i == 0 || kind == KindMultipleObjects {
-					p.values[i] = Load(r)
-				} else {
-					p.values[i] = loadPayload(r, p.values[0].Kind())
-				}
+		count := loadContainerCount(r)
+		if count == 0 {
+			return scalarValue(kind, 0)
+		}
+		storage := make([]Value, count+1) // Escapes: owned header and elements; make checks the full-width size.
+		storage[0].bits = uint64(kind)
+		values := storage[1:]
+		for i := range values {
+			if i == 0 || kind == KindMultipleObjects {
+				values[i] = Load(r)
+			} else {
+				values[i] = loadPayload(r, values[0].Kind())
 			}
 		}
-		return Value{payload: unsafe.Pointer(p)}
+		return Value{bits: uint64(count), payload: unsafe.Pointer(&storage[0])}
 	case KindMap:
-		count := loadUint(r)
-		p := &mapValue{valueHeader: valueHeader{kind}} // Escapes: owned map payload.
-		if count != 0 {
-			p.entries = make([]MapEntry, count) // Escapes: owned entries; make checks the full-width count.
-			for i := range p.entries {
-				if i == 0 {
-					p.entries[i] = MapEntry{Key: Load(r), Value: Load(r)}
-				} else {
-					p.entries[i] = MapEntry{
-						Key:   loadPayload(r, p.entries[0].Key.Kind()),
-						Value: loadPayload(r, p.entries[0].Value.Kind()),
-					}
+		count := loadContainerCount(r)
+		if count == 0 {
+			return scalarValue(kind, 0)
+		}
+		storage := make([]MapEntry, count+1) // Escapes: owned header and entries; make checks the full-width size.
+		storage[0].Key.bits = uint64(kind)
+		entries := storage[1:]
+		for i := range entries {
+			if i == 0 {
+				entries[i] = MapEntry{Key: Load(r), Value: Load(r)}
+			} else {
+				entries[i] = MapEntry{
+					Key:   loadPayload(r, entries[0].Key.Kind()),
+					Value: loadPayload(r, entries[0].Value.Kind()),
 				}
 			}
 		}
-		return Value{payload: unsafe.Pointer(p)}
+		return Value{bits: uint64(count), payload: unsafe.Pointer(&storage[0])}
 	case KindStruct:
 		id := uint64(loadUint(r))
 		fields := Load(r)
@@ -117,6 +121,16 @@ func loadPayload(r *Reader, kind Kind) Value {
 	default:
 		panic(fmt.Errorf("unknown header: %d", kind)) // Escapes: error formatting.
 	}
+}
+
+// loadContainerCount reserves room for a header without wrapping the wire
+// count. The subsequent typed make checks the full allocation size.
+func loadContainerCount(r *Reader) Uint {
+	count := loadUint(r)
+	if count == ^Uint(0) {
+		panic(fmt.Errorf("container count overflows storage: %d", count)) // Escapes: error formatting.
+	}
+	return count
 }
 
 func loadReference(r *Reader) Value {

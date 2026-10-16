@@ -62,23 +62,64 @@ func TestLoadOversizedCount(t *testing.T) {
 		{"schema", typeType},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			for _, count := range []Uint{1 << 63, ^Uint(0)} {
+				t.Run(fmt.Sprint(count), func(t *testing.T) {
+					var buf bytes.Buffer
+					writer := Writer{Writer: &buf}
+					test.tag.save(&writer)
+					switch test.tag {
+					case typeRef:
+						Uint(1).save(&writer)
+					case typeType:
+						name := String("schema")
+						name.save(&writer)
+					}
+					count.save(&writer)
+					defer func() {
+						got := recover()
+						if got == nil || got == io.EOF {
+							t.Errorf("Load panic = %v, want count rejection before reading elements", got)
+						}
+					}()
+					Load(&Reader{Reader: &buf})
+				})
+			}
+		})
+	}
+}
+
+func TestEmptyCollections(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		tag     Uint
+		wantNil bool
+	}{
+		{"array", typeArray, true},
+		{"map", typeMap, true},
+		{"fields", typeMultipleObjects, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			writer := Writer{Writer: &buf}
 			test.tag.save(&writer)
-			switch test.tag {
-			case typeRef:
-				Uint(1).save(&writer)
-			case typeType:
-				name := String("schema")
-				name.save(&writer)
+			Uint(0).save(&writer)
+			value := Load(&Reader{Reader: &buf})
+			if got, want := value.Kind(), Kind(test.tag); got != want {
+				t.Fatalf("kind = %d, want %d", got, want)
 			}
-			Uint(1 << 63).save(&writer)
-			defer func() {
-				if got := recover(); got == nil {
-					t.Error("Load accepted a count larger than an int")
+			if test.tag == typeMap {
+				if got, want := value.Map() == nil, test.wantNil; got != want {
+					t.Errorf("nil entries = %t, want %t", got, want)
 				}
-			}()
-			Load(&Reader{Reader: &buf})
+				return
+			}
+			values := value.Array()
+			if got, want := len(values), 0; got != want {
+				t.Errorf("length = %d, want %d", got, want)
+			}
+			if got, want := values == nil, test.wantNil; got != want {
+				t.Errorf("nil elements = %t, want %t", got, want)
+			}
 		})
 	}
 }

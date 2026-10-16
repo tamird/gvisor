@@ -52,8 +52,10 @@ const (
 //
 // Scalar bits and pathless reference IDs are inline. payload points to either
 // a static header or the start of an ordinary, correctly typed Go allocation.
-// Every payload allocation begins with valueHeader. Checked accessors recover
-// its original type; pointers are never stored in bits.
+// Every payload allocation begins with a kind word. Containers reserve their
+// first typed element for that word, leaving its pointer slots nil; the other
+// payloads embed valueHeader. Checked accessors recover the original storage
+// type. Pointers are never stored in bits.
 type Value struct {
 	bits    uint64
 	payload unsafe.Pointer
@@ -87,19 +89,9 @@ type sliceValue struct {
 	ref      Value
 }
 
-type arrayValue struct {
-	valueHeader
-	values []Value
-}
-
 // MapEntry is one parsed map entry. Entries retain their wire order.
 type MapEntry struct {
 	Key, Value Value
-}
-
-type mapValue struct {
-	valueHeader
-	entries []MapEntry
 }
 
 type structValue struct {
@@ -215,9 +207,19 @@ func (v Value) Slice() Slice {
 // Array returns the read-only elements of an Array or MultipleObjects value.
 // The slice and its children remain valid independently of the reader.
 func (v Value) Array() []Value {
-	switch v.Kind() {
+	kind := v.Kind()
+	switch kind {
 	case KindArray, KindMultipleObjects:
-		return (*arrayValue)(v.payload).values
+		if v.bits == 0 {
+			if kind == KindMultipleObjects {
+				return []Value{}
+			}
+			return nil
+		}
+		// The header and elements share one []Value allocation. Only the
+		// container points at its header; copied children have no backpointer.
+		first := (*Value)(unsafe.Add(v.payload, unsafe.Sizeof(Value{})))
+		return unsafe.Slice(first, int(v.bits))
 	default:
 		panic("wire value is not an array")
 	}
@@ -227,7 +229,13 @@ func (v Value) Array() []Value {
 // The slice and its keys and values remain valid independently of the reader.
 func (v Value) Map() []MapEntry {
 	v.require(KindMap)
-	return (*mapValue)(v.payload).entries
+	if v.bits == 0 {
+		return nil
+	}
+	// As for Array, the header occupies one element of correctly typed
+	// storage and is never exposed as an entry.
+	first := (*MapEntry)(unsafe.Add(v.payload, unsafe.Sizeof(MapEntry{})))
+	return unsafe.Slice(first, int(v.bits))
 }
 
 // StructType returns a Struct's wire type ID.
