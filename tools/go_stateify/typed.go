@@ -109,8 +109,6 @@ func encodingFor(t types.Type, customValue bool) fieldEncoding {
 	switch t.Underlying().(type) {
 	case *types.Pointer:
 		return fieldEncoding{helper: "CapturePointer"}
-	case *types.Slice:
-		return fieldEncoding{helper: "CaptureSlice"}
 	case *types.Map:
 		if customValue {
 			return fieldEncoding{helper: "CaptureMapValue"}

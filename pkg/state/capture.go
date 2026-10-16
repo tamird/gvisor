@@ -154,20 +154,6 @@ func CapturePointer(s Sink, slot int, value any) {
 	s.internal.es.resolve(reflect.ValueOf(value), ref)
 }
 
-// CaptureSlice snapshots the slice header and resolves its backing array. The
-// existing array owner still clears and captures the unused capacity.
-func CaptureSlice(s Sink, slot int, value any) {
-	dest := s.internal.field(slot)
-	obj := reflect.ValueOf(value)
-	if obj.IsNil() {
-		*dest = wire.Nil{}
-		return
-	}
-	captured := &wire.Slice{Length: wire.Uint(obj.Len()), Capacity: wire.Uint(obj.Cap())}
-	*dest = captured
-	s.internal.es.resolve(arrayFromSlice(obj), &captured.Ref)
-}
-
 // CaptureMap preserves Sink.Save's addressable map value. In particular, a
 // later save hook may reassign the original map variable before its deferred
 // capture; passing the map by value here would change that existing timing.
