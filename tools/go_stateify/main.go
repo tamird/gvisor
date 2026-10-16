@@ -312,7 +312,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 			if captures != nil {
 				shadowed := statePrefix == recv+"." || recv == "nil"
 				if statePrefix == "" {
-					shadowed = shadowed || recv == "CaptureFields"
+					shadowed = shadowed || recv == "CheckCaptureFields" || recv == "CaptureNil"
 					if capture := captures.types[ts.Name.Name]; capture != nil {
 						for _, field := range capture.fields {
 							shadowed = shadowed || recv == field.helper
@@ -323,10 +323,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 					saveRecv = captures.saveReceiver
 				}
 			}
-			captureLocal := "stateSnapshotObject"
-			if recv == captureLocal {
-				captureLocal += "1"
-			}
 			var capture *captureType
 			if captures != nil {
 				capture = captures.types[ts.Name.Name]
@@ -336,10 +332,10 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 				// check against code generation bugs while avoiding S1021.
 				fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, saveRecv, camelCased(name))
 				fmt.Fprintf(outputFile, "	_ = (%s)(%sValue)\n", typName, name)
-				capture.capture(outputFile, captures, statePrefix, captureLocal, fields[name], name+"Value", true)
+				capture.capture(outputFile, captures, statePrefix, fields[name], name+"Value", true)
 			}
 			emitSave := func(name string) {
-				capture.capture(outputFile, captures, statePrefix, captureLocal, fields[name], saveRecv+"."+name, false)
+				capture.capture(outputFile, captures, statePrefix, fields[name], saveRecv+"."+name, false)
 			}
 			emitZeroCheck := func(name string) {
 				fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, saveRecv, name, statePrefix, name, saveRecv, name)
@@ -397,7 +393,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 					fmt.Fprintf(outputFile, "	%s.beforeSave()\n", saveRecv)
 					model.scan(scanFunctions{zerovalue: emitZeroCheck})
 					if len(capture.fields) != 0 {
-						fmt.Fprintf(outputFile, " %s := %sCaptureFields(stateSinkObject, %d)\n", captureLocal, statePrefix, len(capture.fields))
+						fmt.Fprintf(outputFile, " %sCheckCaptureFields(stateSinkObject, %d)\n", statePrefix, len(capture.fields))
 					}
 					model.scan(scanFunctions{value: emitSaveValue})
 					model.scan(scanFunctions{normal: emitSave, wait: emitSave})

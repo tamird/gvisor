@@ -89,21 +89,21 @@ func encodingFor(t types.Type, customValue bool) fieldEncoding {
 	if b, ok := t.Underlying().(*types.Basic); ok {
 		switch b.Kind() {
 		case types.Bool:
-			return fieldEncoding{"Bool", "CaptureBoolField"}
+			return fieldEncoding{"Bool", "CaptureBool"}
 		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return fieldEncoding{"Int", "CaptureIntField"}
+			return fieldEncoding{"Int", "CaptureInt"}
 		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
-			return fieldEncoding{"Uint", "CaptureUintField"}
+			return fieldEncoding{"Uint", "CaptureUint"}
 		case types.String:
-			return fieldEncoding{"String", "CaptureStringField"}
+			return fieldEncoding{"String", "CaptureString"}
 		case types.Float32:
-			return fieldEncoding{"Float64", "CaptureFloat32Field"}
+			return fieldEncoding{"Float64", "CaptureFloat32"}
 		case types.Float64:
-			return fieldEncoding{"Float64", "CaptureFloat64Field"}
+			return fieldEncoding{"Float64", "CaptureFloat64"}
 		case types.Complex64:
-			return fieldEncoding{"Complex128", "CaptureComplex64Field"}
+			return fieldEncoding{"Complex128", "CaptureComplex64"}
 		case types.Complex128:
-			return fieldEncoding{"Complex128", "CaptureComplex128Field"}
+			return fieldEncoding{"Complex128", "CaptureComplex128"}
 		}
 	}
 	switch t.Underlying().(type) {
@@ -112,6 +112,9 @@ func encodingFor(t types.Type, customValue bool) fieldEncoding {
 	case *types.Slice:
 		return fieldEncoding{helper: "CaptureSlice"}
 	case *types.Map:
+		if customValue {
+			return fieldEncoding{helper: "CaptureMapValue"}
+		}
 		return fieldEncoding{helper: "CaptureMap"}
 	case *types.Interface:
 		if !customValue {
@@ -121,34 +124,25 @@ func encodingFor(t types.Type, customValue bool) fieldEncoding {
 	return fieldEncoding{}
 }
 
-func (c *captureType) capture(w io.Writer, captures *captureSet, statePrefix, local string, slot int, expression string, value bool) {
+func (c *captureType) capture(w io.Writer, captures *captureSet, statePrefix string, slot int, expression string, value bool) {
 	f := c.fields[slot]
-	dest := fmt.Sprintf("%s.Field(%d)", local, slot)
 	if f.scalar != "" {
-		fmt.Fprintf(w, " %s.%s(%s, %s.%s(%s))\n", captures.wireAlias, f.helper, dest, captures.wireAlias, f.scalar, expression)
+		fmt.Fprintf(w, " %s%s(stateSinkObject, %d, %s.%s(%s))\n", statePrefix, f.helper, slot, captures.wireAlias, f.scalar, expression)
 	} else if f.helper == "CapturePointer" {
 		// Evaluate a custom value once and keep the ordinary nil field unboxed.
 		fmt.Fprintf(w, " if %s := %s; %s != nil {\n", captures.pointerLocal, expression, captures.pointerLocal)
-		fmt.Fprintf(w, " %sCapturePointer(stateSinkObject, %s, %s)\n", statePrefix, captures.pointerLocal, dest)
-		fmt.Fprintf(w, " } else { *%s = %s.Nil{} }\n", dest, captures.wireAlias)
+		fmt.Fprintf(w, " %sCapturePointer(stateSinkObject, %d, %s)\n", statePrefix, slot, captures.pointerLocal)
+		fmt.Fprintf(w, " } else { %sCaptureNil(stateSinkObject, %d) }\n", statePrefix, slot)
 	} else if f.helper != "" {
-		helper := f.helper
 		address := ""
-		if helper == "CaptureMap" {
-			if value {
-				helper = "CaptureMapValue"
-			} else {
-				address = "&"
-			}
-		}
-		if helper == "CaptureInterface" {
+		if f.helper == "CaptureMap" || f.helper == "CaptureInterface" {
 			address = "&"
 		}
-		fmt.Fprintf(w, " %s%s(stateSinkObject, %s%s, %s)\n", statePrefix, helper, address, expression, dest)
+		fmt.Fprintf(w, " %s%s(stateSinkObject, %d, %s%s)\n", statePrefix, f.helper, slot, address, expression)
 	} else if value {
-		fmt.Fprintf(w, " stateSinkObject.CaptureValue(%s, %s)\n", expression, dest)
+		fmt.Fprintf(w, " stateSinkObject.SaveValue(%d, %s)\n", slot, expression)
 	} else {
-		fmt.Fprintf(w, " stateSinkObject.Capture(&%s, %s)\n", expression, dest)
+		fmt.Fprintf(w, " stateSinkObject.Save(%d, &%s)\n", slot, expression)
 	}
 }
 

@@ -302,7 +302,8 @@ func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
 	// Copy before reusing binaryBuf: wire objects are serialized only after
 	// the full graph is encoded. Strings also decode inline, so map keys are
 	// complete when restoreMap inserts them into the restored map.
-	wire.CaptureStringField(CaptureFields(s, 1).Field(0), wire.String(data))
+	CheckCaptureFields(s, 1)
+	CaptureString(s, 0, wire.String(data))
 }
 
 func loadBinary(value binaryObject, name string, s Source) {

@@ -9,7 +9,6 @@ go_library(
     name = "wire",
     srcs = [
         "array.go",
-        "fields.go",
         "load.go",
         "wire.go",
     ],
