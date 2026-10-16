@@ -15,6 +15,9 @@
 # Ensure a strong hash function.
 startup --host_jvm_args=-Dbazel.DigestFunction=SHA256
 
+# Keep the container tools' Ubuntu providers separate from the release tools.
+common --experimental_isolated_extension_usages
+
 # Start Python programs with the declared interpreter, without requiring a host
 # Python interpreter to bootstrap it.
 build --@rules_python//python/config_settings:bootstrap_impl=script
