@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
+lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-fetch license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -256,7 +256,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    test|build|build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
+    test|build|build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-fetch|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -292,12 +292,39 @@ fi
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
 run_license_check() (
-  local license_rc
-  license_rc=$(mktemp)
+  local mode=$1 license_rc output arguments
+  case "$mode" in
+    verify) ;;
+    fetch)
+      if [[ -z ${qualification_artifacts:-} ||
+            $qualification_artifacts != /* ||
+            $qualification_artifacts != "${RUNNER_TEMP:-}/qualification" ||
+            ! -d $qualification_artifacts ]]; then
+        printf 'License fetch requires the coordinator evidence directory.\n' >&2
+        return 2
+      fi
+      output=$qualification_artifacts/dependencies.yaml
+      if [[ -e $output || -L $output ]]; then
+        printf 'License fetch output already exists: %s\n' "$output" >&2
+        return 2
+      fi
+      # Preserve unchanged manual audits and retrieval dates in the generated
+      # catalog, without modifying its checked-in source.
+      cp -- tools/licensecheck/dependencies.yaml "$output" || return
+      printf -v arguments '%q ' --mode=fetch "--yaml=$output"
+      ;;
+    *) printf 'Unknown license mode: %s\n' "$mode" >&2; return 2 ;;
+  esac
+  license_rc=$(mktemp) || return
   trap 'rm -f "$license_rc"' EXIT
   printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
-    'build --keep_going' > "$license_rc"
-  make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc"
+    'build --keep_going' > "$license_rc" || return
+  if [[ $mode == fetch ]]; then
+    make run DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc" \
+      TARGETS=//tools/licensecheck/main:licensecheck ARGS="$arguments"
+  else
+    make license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc"
+  fi
 )
 
 # Set the caller's targets array from the same owning suites for standalone and
@@ -1102,12 +1129,16 @@ run_lane() (
       command=build
       options=(--config=lint-cc)
       ;;
-    license-check)
+    license-check|license-fetch)
       if [[ $arch != amd64 ]]; then
         printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
         return 2
       fi
-      run_license_check
+      if [[ $lane == license-fetch ]]; then
+        run_license_check fetch
+      else
+        run_license_check verify
+      fi
       return "$?"
       ;;
     license-headers)
