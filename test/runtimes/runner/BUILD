@@ -9,6 +9,7 @@ go_binary(
     name = "runner",
     testonly = 1,
     srcs = ["main.go"],
+    data = ["//images:runtimes/nodejs22.2.0/tls-servername.patch"],
     visibility = ["//test/runtimes:__pkg__"],
     deps = [
         "//pkg/test/dockerutil",

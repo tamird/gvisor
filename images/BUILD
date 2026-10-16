@@ -6,6 +6,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    ["runtimes/nodejs22.2.0/tls-servername.patch"],
+    visibility = ["//test/runtimes/runner:__pkg__"],
+)
+
 bzl_library(
     name = "oci_bzl",
     srcs = ["oci.bzl"],

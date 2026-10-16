@@ -18,6 +18,7 @@ package lib
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -159,11 +160,24 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 		})
 	}
 	containerProctor := "/proctor/" + filepath.Base(proctorSettings.Runner)
-	if err := d.CopyFiles(&opts, "/proctor", proctorSettings.Runner); err != nil {
+	proctorFiles := []string{proctorSettings.Runner}
+	if image == "runtimes/nodejs22.2.0" {
+		patch, err := testutil.FindFile("images/runtimes/nodejs22.2.0/tls-servername.patch")
+		if err != nil {
+			return nil, fmt.Errorf("find Node SNI fixture patch: %w", err)
+		}
+		proctorFiles = append(proctorFiles, patch)
+	}
+	if err := d.CopyFiles(&opts, "/proctor", proctorFiles...); err != nil {
 		return nil, fmt.Errorf("copy proctor: %w", err)
 	}
 	if err := d.Spawn(ctx, opts, containerProctor, "--pause"); err != nil {
 		return nil, fmt.Errorf("docker run failed: %v", err)
+	}
+	if image == "runtimes/nodejs22.2.0" {
+		if err := checkNodeSNIFixture(ctx, d); err != nil {
+			return nil, err
+		}
 	}
 
 	done := make(chan struct{})
@@ -278,6 +292,51 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 	}
 
 	return itests, nil
+}
+
+// checkNodeSNIFixture is diagnostic setup for the existing pinned image. It
+// checks the old test before applying the exact source patch; the regular
+// proctor invocation then checks the patched test. This does not qualify a
+// newly built image.
+func checkNodeSNIFixture(ctx context.Context, d *dockerutil.Container) error {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Minute)
+	defer cancel()
+	opts := dockerutil.ExecOpts{Privileged: true, User: "0", WorkDir: "/root/node-v22.2.0"}
+	version, err := d.Exec(ctx, opts, "./node", "--version")
+	if err != nil || strings.TrimSpace(version) != "v22.2.0" {
+		return fmt.Errorf("Node fixture version: got %q, want v22.2.0 (error: %v)", version, err)
+	}
+	const test = "test/internet/test-tls-add-ca-cert.js"
+	checkHash := func(want string) error {
+		out, err := d.Exec(ctx, opts, "sha256sum", test)
+		if err != nil {
+			return fmt.Errorf("hash Node CA fixture: %w", err)
+		}
+		got := strings.Fields(out)
+		if len(got) != 2 || got[0] != want || got[1] != test {
+			return fmt.Errorf("Node CA fixture digest: got %q, want %s %s", out, want, test)
+		}
+		log.Infof("Node CA fixture sha256: %s", strings.TrimSpace(out))
+		return nil
+	}
+	if err := checkHash("28c6718f5702b5b83714537b0cf08a4c33b455bad14ca1200c4618fc1eff4067"); err != nil {
+		return err
+	}
+	out, err := d.Exec(ctx, opts, "/usr/bin/python3.10", "tools/test.py", "--timeout=180", "internet/test-tls-add-ca-cert.js")
+	if exitErr, ok := errors.AsType[*dockerutil.ExecError](err); !ok || exitErr.ExitStatus != 1 || !strings.Contains(out, "ERR_TLS_CERT_ALTNAME_INVALID") || !strings.Contains(out, "www.nodejs.org") {
+		return fmt.Errorf("unpatched Node CA fixture: want exit 1 with www.nodejs.org hostname rejection; got %v\n%s", err, out)
+	}
+	log.Infof("Unpatched Node CA fixture reproduced the hostname rejection:\n%s", out)
+	if out, err := d.Exec(ctx, opts, "patch", "--batch", "--fuzz=0", "-p1", "--no-backup-if-mismatch", "-i", "/proctor/tls-servername.patch"); err != nil {
+		return fmt.Errorf("apply Node SNI fixture patch: %w\n%s", err, out)
+	}
+	if err := checkHash("1a5b0069d3c7ef700347ae2358d6690d30eef4a173ab88fecf89233f7df5fecb"); err != nil {
+		return err
+	}
+	if out, err := d.Exec(ctx, opts, "./node", "--check", test); err != nil {
+		return fmt.Errorf("check patched Node CA fixture syntax: %w\n%s", err, out)
+	}
+	return nil
 }
 
 // ExcludeFilter reads the exclude file and returns a filter that excludes the tests listed in
