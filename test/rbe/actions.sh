@@ -105,7 +105,7 @@ cleanup() {
     # Reconcile on the coordinator and upload one archive. Preserve the original
     # command failure if reporting or final cleanup also fails.
     timeout --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
-      --directory "$qualification_artifacts" --native-exit "$status" --capture-exit "$capture_status" \
+      --directory "$qualification_artifacts" --runner-exit "$status" --capture-exit "$capture_status" \
       --output "${BUILDBUDDY_ARTIFACTS_DIRECTORY:-$RUNNER_TEMP}/qualification.tar.gz" || bundle_status=$?
   fi
   if (( status == 0 )); then
