@@ -95,6 +95,17 @@ def manifest_path(events: Path) -> Path:
     return Path(str(events) + ".manifest.json")
 
 
+def timestamp(value: str) -> datetime.datetime:
+    """Read RFC3339 coordinator/BEP times with Python 3.8's ISO parser."""
+    match = re.fullmatch(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})", value)
+    if match is None:
+        raise ValueError(f"Expected a timezone-aware timestamp: {value}")
+    seconds, fraction, zone = match.groups()
+    if fraction is not None:
+        seconds += "." + (fraction + "000000")[:6]
+    return datetime.datetime.fromisoformat(seconds + ("+00:00" if zone == "Z" else zone))
+
+
 @dataclass(frozen=True, order=True)
 class Owner:
     label: str
@@ -288,10 +299,10 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
         except (KeyError, ValueError):
             errors.append(f"Missing or invalid {key}")
             exits[key] = 1
-    finished = datetime.datetime.fromisoformat(string(context.get("execution_finished_at")))
+    finished = timestamp(string(context.get("execution_finished_at")))
     if finished.utcoffset() != datetime.timedelta(0):
         raise ValueError("execution_finished_at must be UTC")
-    return {"source": source, "source_evidence": evidence, "command_kind": kind,
+    return {"source": source, "source_evidence": evidence, "command_kind": kind, "bazel_command": command,
             "arguments": arguments, "execution_finished_at": finished.isoformat(), **exits}, errors
 
 
@@ -359,7 +370,13 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
     expected: set[Owner] = set()
     for analysis in expected_analysis:
-        expected.update(Owner(label, target.configuration) for label, target in unit_matrix.configured_tests(str(analysis)).items())
+        try:
+            targets = unit_matrix.configured_targets(str(analysis), tests=True if info["bazel_command"] == "test" else None)
+            expected.update(Owner(label, target.configuration) for label, target in targets.items())
+        except (OSError, ValueError) as error:
+            errors.append(f"Expected analysis: {error}")
+    if info["command_kind"] in ("test", "build") and not expected_analysis and not labels:
+        errors.append("No independent expected selection was retained")
     if labels and expected and labels != {owner.label for owner in expected}:
         errors.append("Expected labels differ from selected analysis leaves")
     if not expected:
@@ -377,7 +394,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     missing = [asdict(owner) for owner in sorted(expected - completed.keys())]
     missing.extend({"label": label, "configuration": None, "reason": "expected owner not configured"}
                    for label in sorted(labels - {owner.label for owner in expected}))
-    failures: list[dict[str, object]] = [asdict(owner) | {"reason": "target build failed"} for owner, ok in sorted(completed.items()) if not ok]
+    failures: list[dict[str, object]] = [{**asdict(owner), "reason": "target build failed"} for owner, ok in sorted(completed.items()) if not ok]
     cases: Counter[str] = Counter()
     observations: list[dict[str, object]] = []
     owner_cases: Counter[Owner] = Counter()
@@ -447,7 +464,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "skipped_owners": [asdict(owner) for owner in sorted(skipped_owners)],
             "bep_finish": finished, "verdict_available_at": now.isoformat(),
             "reporting_elapsed_seconds": time.monotonic() - started,
-            "execution_to_verdict_seconds": (now - datetime.datetime.fromisoformat(string(info["execution_finished_at"]))).total_seconds()}
+            "execution_to_verdict_seconds": (now - timestamp(string(info["execution_finished_at"]))).total_seconds()}
 
 
 def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
@@ -500,7 +517,11 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
     write_json(directory / "verdict.json", result)
     # The archive must be outside its input directory, and symlinks cannot
     # introduce private files from outside the owned artifact directory.
-    if output.resolve().is_relative_to(directory.resolve()):
+    try:
+        output.resolve().relative_to(directory.resolve())
+    except ValueError:
+        pass
+    else:
         raise ValueError("Bundle output must be outside the evidence directory")
     with tarfile.open(output, "w:gz") as archive:
         for path in sorted(directory.rglob("*")):

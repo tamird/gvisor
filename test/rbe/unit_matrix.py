@@ -180,8 +180,8 @@ class ConfiguredTarget:
     configuration: str
 
 
-def configured_targets(events_path: str, *, tests: bool) -> dict[str, ConfiguredTarget]:
-    """Read this successful analysis invocation's top-level targets."""
+def configured_targets(events_path: str, *, tests: bool | None) -> dict[str, ConfiguredTarget]:
+    """Read successful analysis roots; tests=None includes both target kinds."""
     targets: dict[str, ConfiguredTarget] = {}
     skipped: set[tuple[str, str]] = set()
     succeeded = False
@@ -215,7 +215,7 @@ def configured_targets(events_path: str, *, tests: bool) -> dict[str, Configured
             or not isinstance(children, list)
         ):
             raise ValueError(f"Invalid configured target: {event}")
-        if ("testSize" in configured) != tests or configured.get("targetKind") == "test_suite rule":
+        if (tests is not None and ("testSize" in configured) != tests) or configured.get("targetKind") == "test_suite rule":
             continue
         configurations = []
         for child in children:

@@ -15,7 +15,10 @@
 
 """Reconcile small projections of retained qualification results."""
 
+from __future__ import annotations
+
 import json
+import datetime
 from pathlib import Path
 import shutil
 import tarfile
@@ -76,6 +79,13 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
+    def test_rfc3339_timestamp_precision(self) -> None:
+        expected = datetime.datetime(2026, 10, 16, 17, 39, 9, 185849, datetime.timezone.utc)
+        self.assertEqual(report.timestamp("2026-10-16T17:39:09.1858490Z"), expected)
+        self.assertEqual(report.timestamp("2026-10-16T17:39:09.185849+00:00"), expected)
+        with self.assertRaisesRegex(ValueError, "timezone-aware"):
+            report.timestamp("2026-10-16T17:39:09")
+
     def test_retained_failure_preserves_missing_shards(self) -> None:
         invocation = self.fixture("fail")
         self.assertEqual(self.capture(invocation)["errors"], [])
@@ -116,6 +126,50 @@ class QualificationReportTest(unittest.TestCase):
         value = self.verdict(invocation, analysis=analysis)
         self.assertEqual(value["status"], "INCOMPLETE")
         self.assertEqual(any("Configured owners differ" in error for error in value["errors"]), True)
+
+    def test_failed_expected_analysis_preserves_native_exit(self) -> None:
+        invocation = self.fixture()
+        analysis = invocation / "expected-analysis.jsonl"
+        analysis.write_text('{"id":{"buildFinished":{}},"finished":{"overallSuccess":false}}\n')
+        self.write_events(invocation, [])
+        (invocation / "native-exit").write_text("1\n")
+        self.capture(invocation)
+        value = self.verdict(invocation, analysis=analysis)
+        self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 1))
+        self.assertEqual(any("Expected analysis:" in error for error in value["errors"]), True)
+        combined = report.bundle(self.evidence, 1, 0, self.root / "bundle.tar.gz")
+        self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 1))
+
+    def test_build_uses_independent_expected_configuration(self) -> None:
+        invocation = self.fixture()
+        events = [event for event in self.events(invocation) if "configured" in event or "finished" in event]
+        configured = next(event for event in events if "configured" in event)
+        second = json.loads(json.dumps(configured))
+        old_label = configured["id"]["targetConfigured"]["label"]
+        second = json.loads(json.dumps(second).replace(old_label, "//another:binary"))
+        second["configured"].pop("testSize")
+        second["configured"]["targetKind"] = "go_binary rule"
+        analysis = invocation / "expected-analysis.jsonl"
+        analysis.write_text("".join(json.dumps(event) + "\n" for event in events + [second]))
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "build"
+        report.write_json(invocation / "context.json", context)
+        (invocation / "executed-arguments.txt").write_text("build\n//...\n")
+        (invocation / "expected.txt").write_text("")
+        self.write_events(invocation, [event for event in self.events(invocation)
+                                       if "testResult" not in event and "testSummary" not in event])
+        self.capture(invocation)
+        value = self.verdict(invocation, analysis=analysis)
+        self.assertEqual(value["status"], "INCOMPLETE")
+        self.assertEqual(any(item["label"] == "//another:binary" for item in value["missing"]), True)
+
+    def test_execution_without_expected_selection_is_incomplete(self) -> None:
+        invocation = self.fixture()
+        self.capture(invocation)
+        value = report.verdict(invocation / "captured.jsonl", report.manifest_path(invocation / "captured.jsonl"),
+                               invocation / "context.json")
+        self.assertEqual(value["status"], "INCOMPLETE")
+        self.assertIn("No independent expected selection was retained", value["errors"])
 
     def test_missing_announced_result(self) -> None:
         invocation = self.fixture()
