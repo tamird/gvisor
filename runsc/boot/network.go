@@ -17,7 +17,6 @@ package boot
 import (
 	"fmt"
 	"io"
-	"net"
 	"net/netip"
 	"os"
 	"runtime"
