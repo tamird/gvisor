@@ -145,10 +145,10 @@
     - LGPL-2.1-or-later
     - Spencer-94
 - dependency: apt/container_test_tools/amd64/libcrypt1
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libcrypt1_4.4.27-1_amd64.deb
-  retrieved: "2026-10-03"
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libcrypt1_4.4.36-4build1_amd64.deb
+  retrieved: "2026-10-16"
   commit: ""
-  sha256: 3fa566e9f861a08736cbc5a97562d9d6e4f0c00450fbeafcb6d7583423b04a98
+  sha256: 9474785cd6f398512bf8c305c3901dbb111569dccb6f5832002373c0a8ac5832
   license: LicenseRef-libxcrypt-4.4.27
 - dependency: apt/container_test_tools/amd64/libgcc-s1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/libgcc-s1_12.3.0-1ubuntu1~22.04.3_amd64.deb
@@ -292,10 +292,10 @@
     - LGPL-2.1-or-later
     - Spencer-94
 - dependency: apt/container_test_tools/arm64/libcrypt1
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libcrypt1_4.4.27-1_arm64.deb
-  retrieved: "2026-10-03"
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libcrypt1_4.4.36-4build1_arm64.deb
+  retrieved: "2026-10-16"
   commit: ""
-  sha256: fb5f8d59de95bbb118a635e83e2a92077e13c6d297980dae3119df057bf88111
+  sha256: 5cd73ba112507dabd8e43b528ca9f530719a370e014b8e3e797770e6e940cccf
   license: LicenseRef-libxcrypt-4.4.27
 - dependency: apt/container_test_tools/arm64/libgcc-s1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/libgcc-s1_12.3.0-1ubuntu1~22.04.3_arm64.deb
