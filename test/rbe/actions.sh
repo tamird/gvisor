@@ -127,9 +127,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       # hosted coordinator disconnects. Actions owns coordination; actions
       # retain their remote execution requirements and declared deadlines.
       case "$QUALIFICATION_ARCH:${lanes[*]}" in
-        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test) ;;
+        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test|amd64:build-all) ;;
         *)
-          printf 'The Actions remote coordinator supports ARM64 guest profiles or explicit build/test targets.\n' >&2
+          printf 'The Actions remote coordinator supports ARM64 guest profiles, explicit build/test targets or AMD64 build-all.\n' >&2
           exit 2
           ;;
       esac

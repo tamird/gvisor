@@ -785,6 +785,13 @@ default compilation and stripping settings. Bazel's wildcard selection omits
 manual and incompatible targets; this lane builds test executables but does
 not run them. The separate runtime lanes remain necessary.
 
+With `lanes=build-all`, `architecture=amd64` and `execution=remote`, the Actions
+frontend uses the remote coordinator with a 120-minute work limit, a
+145-minute execution/capture step and a 155-minute job. Leave `targets` empty;
+the lane owns the recursive selection above. Compilation stays on RBE with
+400 remote jobs and no local fallback. The coordinator retains the checked
+lock and source-integrity evidence through its existing all-exit capture.
+
 The separate AMD64 plugin build retains `make runsc-plugin-stack`'s optimized
 TLDK configuration, which the all-target build excludes:
 
