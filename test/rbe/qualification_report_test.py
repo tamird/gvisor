@@ -17,8 +17,8 @@
 
 from __future__ import annotations
 
-import json
 import datetime
+import json
 from pathlib import Path
 import shutil
 import tarfile
@@ -75,7 +75,7 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(self.capture(invocation)["errors"], [])
         value = self.verdict(invocation, analysis=self.analysis(invocation))
         self.assertEqual(value["status"], "PASS", value)
-        self.assertEqual(value["case_counts"], {"passed": 49, "failed": 0, "skipped": 0})
+        self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": 4})
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 

@@ -354,36 +354,37 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     summaries: dict[Owner, dict[str, object]] = {}
     finished: dict[str, object] = {}
     skipped_owners: set[Owner] = set()
-    for line_number, line in enumerate(events.open(), 1):
-        try:
-            event = mapping(json.loads(line))
-            identity = mapping(event.get("id"))
-            children = [mapping(child) for child in sequence(event.get("children", []))]
-            if "configured" in event:
-                details = mapping(event["configured"])
-                if details.get("targetKind") != "test_suite rule" and (info["command_kind"] != "test" or "testSize" in details):
-                    configured.update(Owner.parse(child["targetCompleted"]) for child in children if "targetCompleted" in child)
-            if "aborted" in event and mapping(event["aborted"]).get("reason") == "SKIPPED" and "targetCompleted" in identity:
-                skipped_owners.add(Owner.parse(identity["targetCompleted"]))
-            announced.update(Attempt.parse(child["testResult"]) for child in children if "testResult" in child)
-            if "completed" in event:
-                completed[Owner.parse(identity.get("targetCompleted"))] = mapping(event["completed"]).get("success") is True
-            if "testResult" in event:
-                attempt = Attempt.parse(identity.get("testResult"))
-                if attempt in results:
-                    raise ValueError(f"Duplicate test result: {attempt}")
-                results[attempt] = mapping(event["testResult"])
-            if "testSummary" in event:
-                owner = Owner.parse(identity.get("testSummary"))
-                if owner in summaries:
-                    raise ValueError(f"Duplicate test summary: {owner}")
-                summaries[owner] = mapping(event["testSummary"])
-            if "finished" in event:
-                if finished:
-                    raise ValueError("Multiple invocation finish events")
-                finished = mapping(event["finished"])
-        except (ValueError, TypeError) as error:
-            errors.append(f"BEP line {line_number}: {error}")
+    with events.open() as stream:
+        for line_number, line in enumerate(stream, 1):
+            try:
+                event = mapping(json.loads(line))
+                identity = mapping(event.get("id"))
+                children = [mapping(child) for child in sequence(event.get("children", []))]
+                if "configured" in event:
+                    details = mapping(event["configured"])
+                    if details.get("targetKind") != "test_suite rule" and (info["command_kind"] != "test" or "testSize" in details):
+                        configured.update(Owner.parse(child["targetCompleted"]) for child in children if "targetCompleted" in child)
+                if "aborted" in event and mapping(event["aborted"]).get("reason") == "SKIPPED" and "targetCompleted" in identity:
+                    skipped_owners.add(Owner.parse(identity["targetCompleted"]))
+                announced.update(Attempt.parse(child["testResult"]) for child in children if "testResult" in child)
+                if "completed" in event:
+                    completed[Owner.parse(identity.get("targetCompleted"))] = mapping(event["completed"]).get("success") is True
+                if "testResult" in event:
+                    attempt = Attempt.parse(identity.get("testResult"))
+                    if attempt in results:
+                        raise ValueError(f"Duplicate test result: {attempt}")
+                    results[attempt] = mapping(event["testResult"])
+                if "testSummary" in event:
+                    owner = Owner.parse(identity.get("testSummary"))
+                    if owner in summaries:
+                        raise ValueError(f"Duplicate test summary: {owner}")
+                    summaries[owner] = mapping(event["testSummary"])
+                if "finished" in event:
+                    if finished:
+                        raise ValueError("Multiple invocation finish events")
+                    finished = mapping(event["finished"])
+            except (ValueError, TypeError) as error:
+                errors.append(f"BEP line {line_number}: {error}")
     configured -= skipped_owners
     labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
     expected: set[Owner] = set()
