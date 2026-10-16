@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T14:19:35.079986+00:00",
+    "updatedAt": "2026-10-16T14:55:43.768876+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5031,14 +5031,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/d58f4c1c227d7fcaa4b96dc93f11b5ebeb9fb8ee",
       "status": "Adopted; strict mixed-unit qualification complete",
-      "summary": "Canonical qualification/current-upstream-refresh has advanced by fast-forward to d58f4c1c2. The strict mixed-unit qualification closes 699 distinct owners with 719 results, 199,861 XML entries and 82 retained skipped cases. The original strict run passed 697 owners with unchanged source and lockfile, but could not analyze the two governance tests because the checked lockfile lacked the Linux ARM64 extension record. The canonical query added exactly 25 lockfile lines; the remaining-only run passed both governance tests freshly with unchanged source and lockfile. The failed strict parent remains recorded, and the 697 completed owners were not rerun. Focused corrections and AMD64/ARM64 normal/race release-smoke results remain separately qualified. The earlier failed refresh's 690 passing owners remain historical because its modified lockfile bytes were not captured. Container runtime remains outside the unit selection, and nine unavailable NVIDIA ABI source cases per architecture remain skipped.\n\nCurrent AMD64 public build-all compilation is running at f41e509b7 in the existing Actions remote coordinator, retaining the public -network_plugins //... selection and strict source/lock checks. The separate current AMD64 plugin build and existing fastbuild plugin-tldk TestDumpStack pass on that same source. The backtrace case ran freshly on a remote worker, with one case and no skips; source and strict lockfile bytes remained unchanged. This closes compilation and the selected backtrace test, not runsc, plugin-network or Sentry runtime behavior. A separate current plugin-network runtime check is now running in Actions 38913944997 on f41e509b7, using local AMD64 execution with remote compilation. It checks the changed PreInit/Sentry wiring; no runtime result is available yet. Canonical d58f4c1c2 remains unchanged; GPU execution and Triton producer qualification remain separate gaps.\n\nA separate generated-source export at 95949353b passed all six target-platform compilation cases in Actions 38866870348. The Linux AMD64 case compiled the full exported module with CGO; the five other target platforms compiled the selected portable packages without CGO. All six compilations ran freshly on remote Linux workers. This establishes compilation portability, not runtime execution on those target operating systems, and applies to the adopted 80be source without claiming target-platform runtime execution.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
-      "updatedAt": "2026-10-16T14:19:35.079986+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh has advanced by fast-forward to d58f4c1c2. The strict mixed-unit qualification closes 699 distinct owners with 719 results, 199,861 XML entries and 82 retained skipped cases. The original strict run passed 697 owners with unchanged source and lockfile, but could not analyze the two governance tests because the checked lockfile lacked the Linux ARM64 extension record. The canonical query added exactly 25 lockfile lines; the remaining-only run passed both governance tests freshly with unchanged source and lockfile. The failed strict parent remains recorded, and the 697 completed owners were not rerun. Focused corrections and AMD64/ARM64 normal/race release-smoke results remain separately qualified. The earlier failed refresh's 690 passing owners remain historical because its modified lockfile bytes were not captured. Container runtime remains outside the unit selection, and nine unavailable NVIDIA ABI source cases per architecture remain skipped.\n\nThe first current AMD64 public build-all attempt at f41e509b7 reached its work deadline. Its 56,646 recorded spawns all exited successfully and the strict source/lock checks remained unchanged, but this is an incomplete build, not an all-target pass. One continuation is running at c3359c577 with the same public -network_plugins //... targets, action concurrency and work budget. It applies the existing 8-GiB coordinator heap allowance, enables Bazel’s bounded Merkle-tree cache and retains a profile locally; no preparation-speed improvement is established yet. Canonical d58f4c1c2 remains unchanged.\n\nThe current AMD64 public plugin build and existing fastbuild plugin-tldk TestDumpStack pass at f41e509b7. The separate plugin-network runtime check also passes its one fresh local Docker TestConnectToSelf case without skips. Original runtime/source evidence verifies the current plugin runsc and plugin Sentry inputs and successful DPDK InitPluginStack, with unchanged source and strict lockfile. This does not establish ARM64, broader networking, remote Firecracker, deployment or timing coverage; GPU execution and Triton producer qualification remain separate gaps.\n\nA separate generated-source export at 95949353b passed all six target-platform compilation cases in Actions 38866870348. The Linux AMD64 case compiled the full exported module with CGO; the five other target platforms compiled the selected portable packages without CGO. All six compilations ran freshly on remote Linux workers. This establishes compilation portability, not runtime execution on those target operating systems, and applies to the adopted 80be source without claiming target-platform runtime execution.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
+      "updatedAt": "2026-10-16T14:55:43.768876+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Adopted integration; strict mixed-unit qualification complete",
         "sourceHead": "d58f4c1c227d7fcaa4b96dc93f11b5ebeb9fb8ee",
-        "observedAt": "2026-10-16T14:19:35.079986+00:00",
-        "nextAction": "Verify the current public build-all and separate plugin-network runtime results with their strict source/lock inputs. Preserve the closed plugin/backtrace and mixed-unit results with their separate release/export/runtime coverage limits.",
+        "observedAt": "2026-10-16T14:55:43.768876+00:00",
+        "nextAction": "Verify the bounded build-all continuation and its source/lock inputs. Preserve the original timeout and the separately closed plugin build, backtrace and ConnectToSelf runtime scope.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -5083,7 +5083,9 @@
           "https://github.com/tamird/gvisor/actions/runs/38900604664",
           "https://app.buildbuddy.io/invocation/b45fa8f1-939b-4aa8-9d26-bdd8dddfb79e",
           "https://app.buildbuddy.io/invocation/1b660598-084e-4de4-bf39-6d73524449b9",
-          "https://github.com/tamird/gvisor/actions/runs/38913944997"
+          "https://github.com/tamird/gvisor/actions/runs/38913944997",
+          "https://github.com/tamird/gvisor/actions/runs/38918463445",
+          "https://github.com/tamird/gvisor/commit/c3359c577ef576c1c2c923c297d5530d03b3bf27"
         ]
       },
       "evidence": [
@@ -5184,7 +5186,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/38890143582"
         },
         {
-          "label": "Current public build-all compilation in progress",
+          "label": "Original public build-all attempt: work deadline, incomplete",
           "url": "https://github.com/tamird/gvisor/actions/runs/38900604664"
         },
         {
@@ -5196,8 +5198,16 @@
           "url": "https://app.buildbuddy.io/invocation/1b660598-084e-4de4-bf39-6d73524449b9"
         },
         {
-          "label": "Current plugin-network runtime validation in progress",
+          "label": "Passed current AMD64 plugin ConnectToSelf runtime case",
           "url": "https://github.com/tamird/gvisor/actions/runs/38913944997"
+        },
+        {
+          "label": "Bounded build-all coordinator continuation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38918463445"
+        },
+        {
+          "label": "Coordinator input-tree preparation change",
+          "url": "https://github.com/tamird/gvisor/commit/c3359c577ef576c1c2c923c297d5530d03b3bf27"
         }
       ]
     },
@@ -7425,29 +7435,55 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "lint-go-import-groups",
-      "head": "d594d25328a0d37758ed76a805bd317517bf6e38",
+      "head": "611e97d4394faf9e66bafe2b84db222198d377c7",
       "title": "Check Go import separation and sorting",
       "group": "analysis",
-      "url": "https://github.com/tamird/gvisor/commit/d594d25328a0d37758ed76a805bd317517bf6e38",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-16T11:53:32.194070+00:00",
-      "summary": "Use the already-pinned goimports in format-only mode for the existing Go formatting check and fix commands. This checks standard-library separation and sorting while preserving intentional group boundaries; it does not impose one global grouping layout. Three misplaced archive/zip imports move into their standard-library groups. Deliberate go_generics output fixtures remain generator-owned. The separate fork change passes source review, the actual lint entrypoint and workflow checks, and clean --fix validation. The regression reproduces exit 1 on the original mixed group, fixes its separation, and then passes lint. Its initial setup failed because the hosted checkout was shallow; the corrected bounded regression used the authenticated original file. Contributor review is requested; no upstream PR exists, and #15473 remains unchanged.",
+      "url": "https://github.com/tamird/gvisor/commit/611e97d4394faf9e66bafe2b84db222198d377c7",
+      "status": "Published as #15868",
+      "updatedAt": "2026-10-16T14:55:43.768876+00:00",
+      "summary": "Use the already-pinned goimports in format-only mode for the existing Go formatting check and fix commands. This checks standard-library separation and sorting while preserving intentional group boundaries; it does not impose one global grouping layout. Three misplaced archive/zip imports move into their standard-library groups. Deliberate go_generics output fixtures remain generator-owned. The separate fork change passes source review, the actual lint entrypoint and workflow checks, and clean --fix validation. The regression reproduces exit 1 on the original mixed group, fixes its separation, and then passes lint. Its initial setup failed because the hosted checkout was shallow; the corrected bounded regression used the authenticated original file. The contributor approved the change and requested the shorter formatter label. The upstream rebase preserves the implementation with only that label adjustment and is published as #15868. Maintainer review and current-head CI are pending; #15473 remains unchanged.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor review requested",
-        "sourceHead": "d594d25328a0d37758ed76a805bd317517bf6e38",
-        "observedAt": "2026-10-16T11:53:32.194070+00:00",
-        "nextAction": "Await the contributor decision on the validated standalone change before upstream delivery.",
+        "owner": "external_sweeps",
+        "disposition": "Delivered; follow public checks and review",
+        "sourceHead": "611e97d4394faf9e66bafe2b84db222198d377c7",
+        "observedAt": "2026-10-16T14:54:46.750045+00:00",
+        "nextAction": "Follow current-head checks and maintainer feedback on #15868.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d594d25328a0d37758ed76a805bd317517bf6e38",
           "https://app.buildbuddy.io/invocation/17c0d0eb-db01-457d-9c96-e7218566a6c9",
-          "https://app.buildbuddy.io/invocation/18750c78-813d-47b7-92f8-42a58bd63186"
+          "https://app.buildbuddy.io/invocation/18750c78-813d-47b7-92f8-42a58bd63186",
+          "https://github.com/google/gvisor/pull/15868"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "d594d25328a0d37758ed76a805bd317517bf6e38",
-        "url": "https://github.com/tamird/gvisor/commit/d594d25328a0d37758ed76a805bd317517bf6e38"
+      "refinement": {
+        "before": {
+          "head": "d594d25328a0d37758ed76a805bd317517bf6e38"
+        },
+        "after": {
+          "head": "611e97d4394faf9e66bafe2b84db222198d377c7"
+        }
+      }
+    },
+    {
+      "id": "pr:15868",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15868,
+      "ref": "lint-go-import-groups",
+      "head": "611e97d4394faf9e66bafe2b84db222198d377c7",
+      "title": "Check Go import groups with goimports",
+      "url": "https://github.com/google/gvisor/pull/15868",
+      "group": "analysis",
+      "status": "open",
+      "summary": "Use the already-pinned goimports in format-only mode for the existing Go formatting check and fix commands. This checks standard-library separation and sorting while preserving intentional group boundaries; it does not impose one global grouping layout. Three misplaced archive/zip imports move into their standard-library groups. Deliberate go_generics output fixtures remain generator-owned. The separate fork change passes source review, the actual lint entrypoint and workflow checks, and clean --fix validation. The regression reproduces exit 1 on the original mixed group, fixes its separation, and then passes lint. Its initial setup failed because the hosted checkout was shallow; the corrected bounded regression used the authenticated original file. The contributor approved the change and requested the shorter formatter label. The upstream rebase preserves the implementation with only that label adjustment and is published as #15868. Maintainer review and current-head CI are pending; #15473 remains unchanged.",
+      "updatedAt": "2026-10-16T14:55:43.768876+00:00",
+      "refinement": {
+        "before": {
+          "head": "d594d25328a0d37758ed76a805bd317517bf6e38"
+        },
+        "after": {
+          "head": "611e97d4394faf9e66bafe2b84db222198d377c7"
+        }
       }
     }
   ],
@@ -9974,7 +10010,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T14:19:35.079986+00:00",
+      "updatedAt": "2026-10-16T14:55:43.768876+00:00",
       "summary": "The current-upstream correction at 00d19e629 passes its selected semantic, analyzer and first-use checks and both production links, preserving the original failed empty-map/analyzer attempt. Both comparison arms share the existing #15648 and #15814 prerequisites. Its corrected fixed comparison completed all 268 processes and 240 measured rows against the matched current-upstream control. Originals, source/compiler/native inputs, the reporting tool and independent numerical review are verified. UDP Save is 23.84% faster, with 28.41% fewer allocated bytes and 49.23% fewer allocations. Control-message Save improves 7.81%, adoption Save/Load 4.01%/1.89%, and pointer Save/Load 2.11%/4.35%. The other four timing comparisons are inconclusive. Load allocation counts are unchanged; Save bytes rise 1.63% for pointer, 0.01% for adoption and 0.06% for map. These results are from one current-source cohort without historical sample pooling. Current-source CLI and sandbox startup comparisons are verified and inconclusive. The completed whole checkpoint/restore comparison finds Nginx restore 2.69% slower (p=.033); the other three leaf timings are inconclusive. This regression and material production-file growth keep the rewrite under investigation, not ready for contributor review. The first timing attempt failed during reporter analysis before any benchmark process ran; its missing pinned dependency was restored identically on both arms without changing the runtime comparison.\n\nThe bounded restore diagnostic completed four ABBA children and sixteen RestoreNginx operations using the approved #15817 common fixture and unchanged 685d734a5/91323cf62 runtime releases. All 64 initial/restored CPU and heap profiles and the original process/source evidence are verified. Readiness Exec means were 38.84 and 36.74 ms, with no 500 ms plateau in these observations. The kernel Load/statistics-log phase means were 25.65 and 29.19 ms. Restored state.Load cumulative CPU samples rose from 150 to 170 ms while total restored-process CPU samples fell from 850 to 680 ms; the lower total does not establish a restore-engine improvement. This diagnostic changes the fixture and enables profiling, so it provides no statistical timing-benefit claim and is not pooled with the earlier complete comparison. The original whole-operation regression and material production-file growth remain unresolved.\n\nThe 96 retained Nginx-restore logs narrow the timing attribution: the kernel state.Load and statistics-log phase has a mean increase of 1.313 ms, versus 34.156 ms for the whole operation. Most of the measured difference lies outside that phase; these logs do not establish a codec-only cause. The original whole-operation regression and production-file growth remain unresolved while boot and readiness polling are investigated.\n\nThe matched current-source startup comparison is verified for 685d734a5 versus 91323cf62, including the split runsc/Sentry binaries and all eight release files. Linux AMD64 CLI medians are 5.868 to 6.054 ms (p=.143), from twelve batch means of 64 timed children per arm. StartupEmpty medians are 251.116 to 254.198 ms (p=.932), from twelve batch means of eight starts per arm. Neither comparison found a statistically significant timing difference; neither establishes equivalence. Each AMD64 runsc and Sentry production file grows by 2,351,104 bytes, and each ARM64 file by 2,293,760 bytes. The growth is code and Go metadata, not debug sections; it is not a measured RSS cost. Untimed state initialization adds 64 bytes and one allocation in each split binary. Whole-program initializer totals change by -96 bytes and no allocations for runsc, and +112 bytes and two allocations for Sentry. Both arms share #15648 and #15814; their benefits are not attributed to the rewrite.\n\nThe dynamic reflect.Value successor at 458a8b419 completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save is 26.90% faster, with 28.43% fewer allocated bytes and 49.23% fewer allocations. The other nine timing comparisons are inconclusive with broad intervals; this does not establish equivalence or readiness. Load allocation counts and bytes match baseline, apart from a two-byte median variation in UDP. The 24 selected correctness, race, analyzer and first-use targets and both production links pass separately.\n\nEarlier source-specific results:\n\nThe owned wire.Object successor at 4a268179f completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save improves 28.68%, but control-message Load, pointer Load, map Load and map Save regress 11.54%, 4.97%, 8.51% and 9.01%. UDP and adoption Load differences are not statistically significant. This mixed result remains under investigation and is not ready for adoption. The 24 selected correctness, race, analyzer and first-use targets and both production links remain qualified separately.\n\nThe preceding container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
       "findings": [
         {
@@ -11119,9 +11155,22 @@
               "url": "https://github.com/google/gvisor/pull/15817"
             }
           ]
+        },
+        {
+          "text": "The source-reviewed shared Struct/Object capture replacement is published at b772f0172. Its first bounded correctness, first-use and size qualification ended in failure; original evidence is being collected to establish the cause. This source has no new qualification, size or timing credit. The measured 685d734a5/91323cf62 runtime pair remains unchanged.",
+          "evidence": [
+            {
+              "label": "Shared Struct/Object capture diagnostic source",
+              "url": "https://github.com/tamird/gvisor/commit/b772f0172d2c7e3a12e66855c9d07ef9d66ac563"
+            },
+            {
+              "label": "Original failed capture qualification; evidence under review",
+              "url": "https://app.buildbuddy.io/invocation/c0d80f6e-13f1-4631-9dc8-3e3ac553489a"
+            }
+          ]
         }
       ],
-      "nextStep": "Implement and review the shared Struct/Object capture simplification, then qualify its correctness and measure linked-code/metadata costs. Keep the original whole-operation regression and file growth as readiness concerns; the bounded restore diagnostic does not establish a timing benefit.",
+      "nextStep": "Review the original failure evidence from the shared Struct/Object capture qualification before correcting or measuring that revision. Keep the earlier complete whole-operation regression and file growth as readiness concerns; no correctness, production-size or performance benefit is established for the new source.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
