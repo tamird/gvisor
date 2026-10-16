@@ -25,7 +25,7 @@ usage() {
 Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] build
        test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] test
-       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=N[,N...]] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -172,8 +172,9 @@ if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 |
   exit 2
 fi
 if [[ -n $syscall_bucket ]]; then
-  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k && $test_execution:$arch:${1:-} != remote:arm64:syscalls-rc && $test_execution:$arch:${1:-} != local:amd64:syscalls-rc && $test_execution:$arch:${1:-} != local:all:syscalls-rc ) ]]; then
-    printf 'A syscall bucket must be 0..14 and requires a supported local or guest syscall profile.\n' >&2
+  python3 test/rbe/unit_matrix.py syscall-buckets "$syscall_bucket" > /dev/null || exit 2
+  if [[ $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k && $test_execution:$arch:${1:-} != remote:arm64:syscalls-rc && $test_execution:$arch:${1:-} != local:amd64:syscalls-rc && $test_execution:$arch:${1:-} != local:all:syscalls-rc ) ]]; then
+    printf 'Syscall buckets require a supported local or guest syscall profile.\n' >&2
     exit 2
   fi
 fi
@@ -660,7 +661,7 @@ run_hybrid_profile() (
   save_profile_selection "$selection_dir" "$lane"
   printf '%s %s profile: test placement follows the recorded per-target requirements; compilation stays remote.\n' "$arch" "$lane"
   if [[ -n $syscall_bucket ]]; then
-    printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
+    printf 'Running syscall hash15 buckets %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
   fi
   if [[ $lane == syscalls && $arch == amd64 ]]; then
     docker_test_options

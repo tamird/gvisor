@@ -36,6 +36,18 @@ py_test(
     tags = ["manual"],
 )
 
+py_test(
+    name = "unit_matrix_test",
+    srcs = [
+        "unit_matrix.py",
+        "unit_matrix_test.py",
+    ],
+    data = ["qualify.sh"] + glob(["testdata/syscall_buckets/**"]),
+    imports = ["."],
+    main = "unit_matrix_test.py",
+    tags = ["manual"],
+)
+
 # Fork-only observation of the guest used by each qualification test.
 sh_binary(
     name = "worker_identity",

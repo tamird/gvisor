@@ -1839,7 +1839,12 @@ or namespace privileges. See [the guest contract](tcg/README.md) for inputs,
 resource estimates and output handling.
 
 Use `test/rbe/qualify.sh --arch=arm64 syscalls-64k` for the separate profile,
-optionally with `--syscall-bucket=0..14` to select an existing hash15 partition.
+optionally with `--syscall-bucket=0` for one existing hash15 partition or
+`--syscall-bucket=1,2,3` for their union in one invocation. The same
+comma-separated input is available as `syscall_bucket` in the workflow.
+IDs must be distinct, increasing, and between 0 and 14; omitting the option
+selects the full profile. Sets preserve the existing execution concurrency
+and deadlines, so select a bounded group that fits the owning lane.
 The report lists every unexecuted owner; declared routing is not a claim that
 the whole profile has passed.
 
@@ -1861,8 +1866,8 @@ share one invocation, with compilation remote and AMD64 guests serialized:
 test/rbe/qualify.sh --arch=all --test-execution=local syscalls-rc
 ```
 
-Use `--arch=amd64` for that profile alone. Either route accepts an existing
-hash15 bucket and retains the owning arguments, shards and deadlines. Nogo
+Use `--arch=amd64` for that profile alone. Either route accepts a set of existing
+hash15 buckets and retains the owning arguments, shards and deadlines. Nogo
 keeps its dedicated lane; the public profiles exclude checkpoint owners.
 The report preserves each CPU's canonical selection and all unexecuted bucket
 owners. Actions selects an AMD64 coordinator for this mixed RC lane, while

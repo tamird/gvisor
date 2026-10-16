@@ -416,6 +416,16 @@ def local_routing_reasons(
     return reasons
 
 
+def syscall_buckets(value: str) -> tuple[int, ...]:
+    """Parse a canonical set so workflow concurrency keys have one spelling."""
+    if not re.fullmatch(r"(?:[0-9]|1[0-4])(?:,(?:[0-9]|1[0-4]))*", value):
+        raise argparse.ArgumentTypeError("Expected comma-separated syscall buckets from 0 through 14")
+    buckets = tuple(map(int, value.split(",")))
+    if buckets != tuple(sorted(set(buckets))):
+        raise argparse.ArgumentTypeError("Syscall buckets must be distinct and in increasing order")
+    return buckets
+
+
 def select_profile(
     profile_path: str,
     architecture: str,
@@ -428,13 +438,13 @@ def select_profile(
     hybrid: bool = False,
     kvm_only: bool = False,
     rc_kernel: bool = False,
-    syscall_bucket: int | None = None,
+    selected_buckets: tuple[int, ...] | None = None,
     local_test_requirements: str = "namespace",
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
         raise ValueError("Hybrid syscall execution requires a native 4K syscall profile")
     guest = page_size == "64k" or rc_kernel
-    if syscall_bucket is not None and not (hybrid or syscall_policy and guest):
+    if selected_buckets is not None and not (hybrid or syscall_policy and guest):
         raise ValueError("Syscall buckets require hybrid or guest execution")
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only, rc_kernel=rc_kernel))
@@ -489,16 +499,17 @@ def select_profile(
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
     eligible = expected - unavailable.keys() - policy_excluded.keys()
     buckets: dict[str, list[str]] = {}
-    if syscall_bucket is not None:
+    if selected_buckets is not None:
         buckets = {str(bucket): [] for bucket in range(15)}
         for label in sorted(eligible):
             tags = [tag[len("hash15:"):] for tag in configured[label].tags if tag.startswith("hash15:")]
             if len(tags) != 1 or tags[0] not in buckets:
                 raise ValueError(f"Expected one graph-declared hash15 bucket for {label}: {tags}")
             buckets[tags[0]].append(label)
-        selected = buckets[str(syscall_bucket)]
-        if not selected:
-            raise ValueError(f"The canonical profile has no owners in syscall bucket {syscall_bucket}")
+        for bucket in selected_buckets:
+            if not buckets[str(bucket)]:
+                raise ValueError(f"The canonical profile has no owners in syscall bucket {bucket}")
+        selected = sorted(label for bucket in selected_buckets for label in buckets[str(bucket)])
     else:
         selected = sorted(eligible)
     groups = hybrid_local_owners(set(selected), requirements, kvm=kvm_only) if hybrid else {}
@@ -528,7 +539,8 @@ def select_profile(
         "local_test_requirements": local_test_requirements.split(",") if hybrid and local_test_requirements else [],
         "local_routing_reasons": local_routing_reasons(groups, requirements, configured, local_test_requirements) if hybrid else {},
         "remote_owners": sorted(set(selected) - local),
-        "syscall_bucket": syscall_bucket,
+        "syscall_bucket": selected_buckets[0] if selected_buckets and len(selected_buckets) == 1 else None,
+        "selected_syscall_buckets": selected_buckets,
         "syscall_buckets": buckets,
         "unexecuted_bucket_owners": sorted(eligible - set(selected)),
     }, indent=2))
@@ -620,6 +632,8 @@ def select_variants(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    buckets = commands.add_parser("syscall-buckets")
+    buckets.add_argument("buckets", type=syscall_buckets)
     query = commands.add_parser("query")
     query.add_argument("patterns")
     query.add_argument("--unit-rc", help="Apply the canonical unit test-tag exclusions before adding ARM variants")
@@ -674,14 +688,16 @@ def main() -> None:
     profile.add_argument("--syscall-policy", action="store_true", help="Apply the existing syscall runtime exclusions")
     profile.add_argument("--hybrid", action="store_true", help="Run graph-declared native namespace owners locally")
     profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
-    profile.add_argument("--syscall-bucket", type=int, choices=range(15), help="Select one existing hash15 bucket and report the full partition")
+    profile.add_argument("--syscall-bucket", type=syscall_buckets, help="Select increasing comma-separated hash15 buckets and report the full partition")
     profile.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
     verify.add_argument("--profile", action="append", help="Successful analysis of additional suite roots")
     args = parser.parse_args()
-    if args.command == "query":
+    if args.command == "syscall-buckets":
+        print(",".join(map(str, args.buckets)))
+    elif args.command == "query":
         print(owner_query(args.patterns, args.unit_rc))
     elif args.command == "unit-patterns":
         environment = owner_labels(args.environment_owners) if args.environment_owners else []
@@ -739,7 +755,7 @@ def main() -> None:
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, syscall_bucket=args.syscall_bucket, local_test_requirements=args.local_test_requirements)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, selected_buckets=args.syscall_bucket, local_test_requirements=args.local_test_requirements)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:

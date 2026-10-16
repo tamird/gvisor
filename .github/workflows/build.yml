@@ -31,7 +31,7 @@ name: CI
         type: string
         default: namespace
       syscall_bucket:
-        description: Optional hash15 bucket (0..14) for local syscall lanes
+        description: Optional increasing comma-separated hash15 buckets (0..14) for local or guest syscall lanes
         type: string
       targets:
         description: Optional build/test labels, or one continuous benchmark label
