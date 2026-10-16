@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T06:36:32.035368+00:00",
+    "updatedAt": "2026-10-16T07:34:24.921541+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2119,26 +2119,27 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "GitHub directly reports a merge conflict at current head d543737e0 in the 06:11 UTC observation. The agent is responsible for resolving the upstream conflict; no source amendment has been published for this new observation.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
+      "summary": "The upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "disposition": "Current upstream conflict requires agent work",
-        "owner": "root",
-        "nextAction": "Resolve the current upstream conflict, preserve the reviewed behavior and source-specific evidence, then validate the amendment before publication.",
+        "disposition": "Published rebase awaiting maintainer review",
+        "owner": "external_sweeps",
+        "nextAction": "Follow maintainer review and current-head checks. Preserve existing reviewer requests; there was no prior approval to invalidate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/tamird/gvisor/commit/069085391e6f3c5264f54b4d253356b1efec26be",
-          "https://github.com/tamird/gvisor/commit/d543737e0b8fe765d2401e0a7492f8ef4ebc779a"
+          "https://github.com/tamird/gvisor/commit/d543737e0b8fe765d2401e0a7492f8ef4ebc779a",
+          "https://github.com/tamird/gvisor/commit/4006dae11bc963504eb196aa20ce6c6c87fd33ee"
         ],
         "reviewedAt": "2026-10-08T03:51:23.594895+00:00",
-        "sourceHead": "d543737e0b8fe765d2401e0a7492f8ef4ebc779a",
+        "sourceHead": "4006dae11bc963504eb196aa20ce6c6c87fd33ee",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-10-16T06:11:55.042363+00:00"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-16T07:32:28.619478+00:00"
       },
-      "updatedAt": "2026-10-16T06:11:55.042363+00:00",
-      "head": "d543737e0b8fe765d2401e0a7492f8ef4ebc779a"
+      "updatedAt": "2026-10-16T07:34:24.921541+00:00",
+      "head": "4006dae11bc963504eb196aa20ce6c6c87fd33ee"
     },
     {
       "id": "pr:15183",
@@ -3236,27 +3237,28 @@
       "url": "https://github.com/google/gvisor/pull/15322",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-16T06:11:55.042363+00:00",
-      "summary": "GitHub directly reports a merge conflict at current head 7a0b5bb44 in the 06:11 UTC observation. The agent is responsible for resolving the upstream conflict; no source amendment has been published for this new observation.\n\nEarlier delivery and review context:\n\nThe live PR has green visible checks, no reported approval and no import; it is awaiting maintainer review. The older local proposal 1644e8205f63bc3c0886221e22b0bfe61f949e17 added reconciliation for releaseWasteChunkLocked and reclaim tests that upstream later removed. Those symbols are absent from freshly fetched master 254aeb360ee148130c24b62f0655bc832a647fe0. Its old contributor-review metadata is retired; the ref and evidence are preserved. No new amendment is a live PR prerequisite.\n\nEarlier observations (superseded proposal status):\n\nThe 02:56 UTC snapshot reports unchanged live head 7a0b5bb as MERGEABLE again. The separate exact 1644 amendment still awaits the contributor decision; this status change is not approval or publication of that candidate.\n\nPrior reconciliation and evidence:\n\nCurrent upstream reclaim changes conflict with live head 7a0. Separate candidate pgalloc-restore-sync-reclaim-review@1644e8205 preserves the newer reclaim behavior and existing save/restore contracts, adds the reclaim helper mutex annotation and uses real locks in the two new upstream fixtures. Nine of eleven prior files remain byte-identical; independent source peer 6123c16a7bac passes.\n\nCombined validation of 1644 with current allocation-request source 069085391 passes at composition dd891d7ba on compiler base 247d/current master e1bc. Parent af70d136 passes in 226.48 seconds: normal AMD64 allocator reports 59 XML entries, 57 leaves and five roots without skips; four Nogo owners pass both CPU analyses. Five actual uncached remote actions retain 60/300-second limits, and source is restored cleanly. Independent saved peer acfe2c41bb39 closes the evidence. The composition adds real locking around the interacting AllocateAndCommit fixture setup and post-failure inspection; allocator/DecRef/ReaderFunc calls remain unlocked. This combined result is distinct from a standalone replay; no 64K or ARM runtime is claimed. The exact 1644 contributor amendment question is now pending. Live PR head 7a0 remains unchanged until approval.\n\nEarlier delivered consolidation: the contributor-approved change was published on the live PR at 7a0b5bb44e53d46b30df93d813b08c1a5bf143a6, with matching local/fork/tracking refs and the exact reviewed description. It folds the three remaining atomic-field annotations and fixture ownership contracts from draft #14348 into this change while preserving the newer PagesFileOffset, save/restore and watchdog behavior. Complete combined-source peer 144cdefb4f72 passes.\n\nParent 297da469 passes in 389.868 seconds on the fresh-master compiler composition 7ebe3911f. The existing normal AMD64 allocator suite passes 50 XML entries / 49 leaves without skips, including LoadFromWithUpdateUsage. Four owning Nogo targets pass both CPU analyses. Outcome 42ce2a511cda and independent saved peer c6577aa23e10 bind five actual uncached remote actions, original 60/300-second timeouts, all eleven standalone source blobs and the complete patch. No 64K or ARM runtime result is claimed. At the earlier delivery, publication was verified OPEN/MERGEABLE and all visible new-head checks passed in the 03:52 snapshot. Superseded draft #14348 is closed and its exact named local/remote branches are retired; its recovery head remains preserved. Original failure and earlier source heads remain preserved.",
+      "updatedAt": "2026-10-16T07:34:24.921541+00:00",
+      "summary": "The upstream conflict is resolved in published head 34f0facf9e on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe live PR has green visible checks, no reported approval and no import; it is awaiting maintainer review. The older local proposal 1644e8205f63bc3c0886221e22b0bfe61f949e17 added reconciliation for releaseWasteChunkLocked and reclaim tests that upstream later removed. Those symbols are absent from freshly fetched master 254aeb360ee148130c24b62f0655bc832a647fe0. Its old contributor-review metadata is retired; the ref and evidence are preserved. No new amendment is a live PR prerequisite.\n\nEarlier observations (superseded proposal status):\n\nThe 02:56 UTC snapshot reports unchanged live head 7a0b5bb as MERGEABLE again. The separate exact 1644 amendment still awaits the contributor decision; this status change is not approval or publication of that candidate.\n\nPrior reconciliation and evidence:\n\nCurrent upstream reclaim changes conflict with live head 7a0. Separate candidate pgalloc-restore-sync-reclaim-review@1644e8205 preserves the newer reclaim behavior and existing save/restore contracts, adds the reclaim helper mutex annotation and uses real locks in the two new upstream fixtures. Nine of eleven prior files remain byte-identical; independent source peer 6123c16a7bac passes.\n\nCombined validation of 1644 with current allocation-request source 069085391 passes at composition dd891d7ba on compiler base 247d/current master e1bc. Parent af70d136 passes in 226.48 seconds: normal AMD64 allocator reports 59 XML entries, 57 leaves and five roots without skips; four Nogo owners pass both CPU analyses. Five actual uncached remote actions retain 60/300-second limits, and source is restored cleanly. Independent saved peer acfe2c41bb39 closes the evidence. The composition adds real locking around the interacting AllocateAndCommit fixture setup and post-failure inspection; allocator/DecRef/ReaderFunc calls remain unlocked. This combined result is distinct from a standalone replay; no 64K or ARM runtime is claimed. The exact 1644 contributor amendment question is now pending. Live PR head 7a0 remains unchanged until approval.\n\nEarlier delivered consolidation: the contributor-approved change was published on the live PR at 7a0b5bb44e53d46b30df93d813b08c1a5bf143a6, with matching local/fork/tracking refs and the exact reviewed description. It folds the three remaining atomic-field annotations and fixture ownership contracts from draft #14348 into this change while preserving the newer PagesFileOffset, save/restore and watchdog behavior. Complete combined-source peer 144cdefb4f72 passes.\n\nParent 297da469 passes in 389.868 seconds on the fresh-master compiler composition 7ebe3911f. The existing normal AMD64 allocator suite passes 50 XML entries / 49 leaves without skips, including LoadFromWithUpdateUsage. Four owning Nogo targets pass both CPU analyses. Outcome 42ce2a511cda and independent saved peer c6577aa23e10 bind five actual uncached remote actions, original 60/300-second timeouts, all eleven standalone source blobs and the complete patch. No 64K or ARM runtime result is claimed. At the earlier delivery, publication was verified OPEN/MERGEABLE and all visible new-head checks passed in the 03:52 snapshot. Superseded draft #14348 is closed and its exact named local/remote branches are retired; its recovery head remains preserved. Original failure and earlier source heads remain preserved.",
       "number": 15322,
       "followup": {
-        "disposition": "Current upstream conflict requires agent work",
-        "owner": "root",
-        "nextAction": "Resolve the current upstream conflict, preserve the reviewed behavior and source-specific evidence, then validate the amendment before publication.",
+        "disposition": "Published rebase awaiting maintainer review",
+        "owner": "external_sweeps",
+        "nextAction": "Follow maintainer review and current-head checks. Preserve existing reviewer requests; there was no prior approval to invalidate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15322",
           "https://github.com/tamird/gvisor/commit/7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
           "https://app.buildbuddy.io/invocation/297da469-0931-42e3-a213-9f7124543cf0",
           "https://github.com/tamird/gvisor/commit/1644e8205f63bc3c0886221e22b0bfe61f949e17",
-          "https://app.buildbuddy.io/invocation/af70d136-107c-47c8-9ecd-f89178749ab0"
+          "https://app.buildbuddy.io/invocation/af70d136-107c-47c8-9ecd-f89178749ab0",
+          "https://github.com/tamird/gvisor/commit/34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8"
         ],
         "reviewedAt": "2026-10-08T16:06:25.906644+00:00",
-        "sourceHead": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
+        "sourceHead": "34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-10-16T06:11:55.042363+00:00"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-16T07:32:28.619478+00:00"
       },
-      "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6"
+      "head": "34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8"
     },
     {
       "id": "pr:15335",
@@ -4051,13 +4053,13 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
-      "summary": "The approved netip guards are delivered in PR #15730, now rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub directly reports the new head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-16T07:34:24.921541+00:00",
+      "summary": "The current head 50b6766a6 has an upstream conflict. The agent owns the rebase, preserving the reviewed invalid-address guards and existing benchmark description. Zach’s earlier changes-requested review remains; both prior inline threads are resolved, with no new incoming feedback.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, now rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub directly reports the new head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Rebased and delivered; awaiting maintainer review",
+        "owner": "root",
+        "disposition": "Current upstream conflict requires agent work",
         "sourceHead": "50b6766a62177f9bf594f536737497f62dbbf810",
-        "nextAction": "Follow current-head checks and maintainer review of the delivered guard amendment. The independent IPv6 fixture cleanup #15770 has merged; the registration split remains held.",
+        "nextAction": "Resolve the upstream conflict while preserving the reviewed netip guards, accepted fixture changes and benchmark description; independently review the amendment before publication.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
@@ -4066,7 +4068,8 @@
           "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb",
           "https://github.com/tamird/gvisor/commit/50b6766a62177f9bf594f536737497f62dbbf810"
         ],
-        "observedAt": "2026-10-15T21:59:12.602926+00:00"
+        "observedAt": "2026-10-16T07:32:28.619478+00:00",
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
         {
@@ -9778,8 +9781,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-16T06:36:32.035368+00:00",
-      "summary": "The owned wire.Object successor at 4a268179f completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save improves 28.68%, but control-message Load, pointer Load, map Load and map Save regress 11.54%, 4.97%, 8.51% and 9.01%. UDP and adoption Load differences are not statistically significant. This mixed result remains under investigation and is not ready for adoption. The 24 selected correctness, race, analyzer and first-use targets and both production links remain qualified separately.\n\nThe preceding container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
+      "updatedAt": "2026-10-16T07:34:24.921541+00:00",
+      "summary": "The dynamic reflect.Value successor at 458a8b419 completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save is 26.90% faster, with 28.43% fewer allocated bytes and 49.23% fewer allocations. The other nine timing comparisons are inconclusive with broad intervals; this does not establish equivalence or readiness. Load allocation counts and bytes match baseline, apart from a two-byte median variation in UDP. The 24 selected correctness, race, analyzer and first-use targets and both production links pass separately.\n\nEarlier source-specific results:\n\nThe owned wire.Object successor at 4a268179f completed its fixed comparison against original control 6212e4f7b. All 268 processes and 240 measured rows pass source, native-input and independent numerical verification. UDP Save improves 28.68%, but control-message Load, pointer Load, map Load and map Save regress 11.54%, 4.97%, 8.51% and 9.01%. UDP and adoption Load differences are not statistically significant. This mixed result remains under investigation and is not ready for adoption. The 24 selected correctness, race, analyzer and first-use targets and both production links remain qualified separately.\n\nThe preceding container-local storage revision at c83628573 completed its fixed comparison against control 6212e4f7b. UDP Save improved 26.05% and map Load improved 9.01%, while control-message Load, pointer/slice-adoption Load and UDP Load regressed 9.94%, 10.38% and 8.53%. Map Save also regressed 4.85%. All 268 observations completed, including 240 measured rows in twelve balanced pairs per workload on one worker. Source, native inputs and independent numerical review are complete. Lower allocation counts and bytes do not remove these timing regressions; the owned-Value design remains under investigation and is not ready for adoption.\n\nThis is a separate cohort from the earlier collection-accessor and Actions comparisons, with no pooled samples or attribution of differences between cohorts to a particular revision. The earlier owned-tree CLI comparison found no statistically significant timing difference, while matched production files grew by about 4.01 MB on AMD64 and 3.74 MB on ARM64. Those startup and size observations remain specific to that earlier source.\n\nThe shared-capture revision at af9f06aef passes its selected normal, race and analyzer checks and both production links. Matched files shrink by 1,564,672 bytes on AMD64 and 1,441,792 bytes on ARM64 versus 967abd34f. The subsequent container-local storage revision also passes its selected correctness and production-link checks. Neither result transfers the earlier startup measurements to the latest source.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10832,9 +10835,26 @@
               "url": "https://github.com/tamird/gvisor/commit/4a268179f4837918fe2e81b7e5b4227bcf97c5bf"
             }
           ]
+        },
+        {
+          "text": "The dynamic-value comparison at 458a8b419 completes 268 fresh processes, 240 measured rows and 536 initialization traces on one worker against frozen control 6212e4f7b. UDP Save improves 26.90% in time, 28.43% in allocated bytes and 49.23% in allocations. Other nine timing comparisons are inconclusive with broad intervals. No historical samples are pooled, and these results neither establish equivalence nor causally resolve earlier regressions. This development baseline excludes current upstream map-cell reuse, so current-upstream integration and qualification remain necessary. No startup or whole-restore result transfers to this source.",
+          "evidence": [
+            {
+              "label": "Verified dynamic-value fixed comparison",
+              "url": "https://app.buildbuddy.io/invocation/abafa389-82c9-437d-9692-39560a972e8d"
+            },
+            {
+              "label": "Dynamic-value diagnostic source",
+              "url": "https://github.com/tamird/gvisor/commit/458a8b419afc6243402e8f88872aa2b99b5105c6"
+            },
+            {
+              "label": "Selected dynamic-value correctness qualification",
+              "url": "https://app.buildbuddy.io/invocation/ea39fac3-0572-4be1-8297-33f3229a3be9"
+            }
+          ]
         }
       ],
-      "nextStep": "Validate the implemented, source-reviewed simplification that uses reflect.Value for dynamic destinations and the graph, removes restoreDestination, and retains generated scalar assignments and the owned Object grammar. The six paired Control, pointer and map Load profiles and independent interpretation are complete; they do not establish a timing cause. The published diagnostic at 458a8b419 is under qualification, with no runtime, size or latency result yet. Keep the measured regressions and earlier source-specific startup and size evidence separate.",
+      "nextStep": "Qualify the published current-upstream composition ce0bc94b6 on fd123c19d with the shared #15814 prerequisite, preserving merged map-cell reuse and benchmark corrections, then assess the current-source comparison. Source review is complete; fresh qualification awaits the canonical generated-input correction. No current-upstream result is claimed. No additional old-baseline profiling or timing cohort is queued, and this experiment is not yet an upstream-ready proposal.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11319,6 +11339,10 @@
         {
           "label": "Dynamic reflect.Value diagnostic under qualification",
           "url": "https://github.com/tamird/gvisor/commit/458a8b419afc6243402e8f88872aa2b99b5105c6"
+        },
+        {
+          "label": "Source-reviewed current-upstream composition awaiting qualification",
+          "url": "https://github.com/tamird/gvisor/commit/ce0bc94b670824241192da1cedaf23471d817711"
         }
       ],
       "comparisons": [
