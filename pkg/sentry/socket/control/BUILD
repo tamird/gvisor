@@ -10,9 +10,6 @@ go_library(
     srcs = [
         "control.go",
     ],
-    imports = [
-        "gvisor.dev/gvisor/pkg/sentry/fs",
-    ],
     visibility = ["//pkg/sentry:internal"],
     deps = [
         "//pkg/abi/linux",

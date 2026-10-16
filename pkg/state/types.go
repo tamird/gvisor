@@ -27,6 +27,7 @@ import (
 type typeEntry struct {
 	ID typeID
 	wire.Type
+	newRecord func(wire.TypeID, int) *wire.Record
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -96,9 +97,8 @@ func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 		// unregistered embedded types and anonymous empty structs.
 		return wire.Type{}, false
 	}
-	// Non-race builds do not record ordinary types in reverseTypeDatabase at
-	// registration time (see Register), so validate them here, once per type
-	// per save or restore.
+	// Ordinary non-race registration does not build or validate schemas.
+	// The per-Save and per-Load databases cache this work when it is needed.
 	info := wire.Type{Name: t.StateTypeName(), Fields: t.StateFields()}
 	validateTypeInfo(info)
 	return info, true
@@ -152,10 +152,10 @@ func (tbd *typeDecodeDatabase) LookupName(id typeID) string {
 // LookupType looks up the type by ID.
 func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 	name := tbd.LookupName(id)
-	typ, ok := globalTypeDatabase[name]
-	if !ok {
+	registered, _ := registeredType(name)
+	if registered == nil {
 		// If not available, see if it's primitive.
-		typ, ok = primitiveTypeDatabase[name]
+		primitive, ok := primitiveTypeDatabase[name]
 		if !ok && name == interfaceType {
 			// Matches the built-in interface type.
 			var i any
@@ -165,9 +165,9 @@ func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 			// The type is perhaps not registered?
 			Failf("type name %q is not available", name)
 		}
-		return typ // Primitive type.
+		return primitive // Primitive type.
 	}
-	return typ // Registered type.
+	return registered // Registered type.
 }
 
 // singleFieldOrder defines the field order for a single field.
@@ -266,37 +266,56 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 // interfaceType defines all interfaces.
 const interfaceType = "interface"
 
-// primitiveTypeDatabase is a set of fixed types.
-var primitiveTypeDatabase = func() map[string]reflect.Type {
-	r := make(map[string]reflect.Type)
-	for _, t := range []reflect.Type{
-		reflect.TypeFor[bool](),
-		reflect.TypeFor[int](),
-		reflect.TypeFor[int8](),
-		reflect.TypeFor[int16](),
-		reflect.TypeFor[int32](),
-		reflect.TypeFor[int64](),
-		reflect.TypeFor[uint](),
-		reflect.TypeFor[uintptr](),
-		reflect.TypeFor[uint8](),
-		reflect.TypeFor[uint16](),
-		reflect.TypeFor[uint32](),
-		reflect.TypeFor[uint64](),
-		reflect.TypeFor[string](),
-		reflect.TypeFor[float32](),
-		reflect.TypeFor[float64](),
-		reflect.TypeFor[complex64](),
-		reflect.TypeFor[complex128](),
-	} {
-		r[t.Name()] = t
+// primitiveTypeDatabase owns the fixed wire identities. Named types with the
+// same underlying kind remain distinct.
+var primitiveTypeDatabase = map[string]reflect.Type{}
+
+// TypeMetadata describes generated capture on an actual receiver explicitly
+// registered by the generator. Owner identifies the
+// method's declared receiver. Registration and allocation never call it.
+// Consumers retain only the constructor, not the Owner type witness.
+type TypeMetadata struct {
+	Owner     Type
+	NewRecord func(wire.TypeID, int) *wire.Record
+}
+
+type generatedType interface {
+	Type
+	StateMetadata() TypeMetadata
+}
+
+func generatedMetadata(value any, name string, typ reflect.Type) TypeMetadata {
+	registered, generated := registeredType(name)
+	if registered == typ && generated {
+		value := value.(generatedType)
+		metadata := value.StateMetadata()
+		if reflect.TypeOf(metadata.Owner) == reflect.PointerTo(typ) {
+			return metadata
+		}
 	}
-	return r
-}()
+	return TypeMetadata{}
+}
 
-// globalTypeDatabase is used for dispatching interfaces on decode.
-var globalTypeDatabase = map[string]reflect.Type{}
+// globalTypeDatabase stores a reflect.Type for ordinary registrations or a
+// typed-nil generatedType for explicit generated registrations. Both fit in
+// one interface value without per-type descriptors. In particular, ordinary
+// types must not be probed for metadata: a promoted method may traverse a nil
+// embedded pointer before it can report its declared owner.
+var globalTypeDatabase = map[string]any{}
 
-// reverseTypeDatabase holds immutable metadata indexed by the original type.
+func registeredType(name string) (reflect.Type, bool) {
+	switch registered := globalTypeDatabase[name].(type) {
+	case reflect.Type:
+		return registered, false
+	case generatedType:
+		return reflect.TypeOf(registered).Elem(), true
+	default:
+		return nil, false
+	}
+}
+
+// reverseTypeDatabase supplies foreign codec schemas and the eagerly checked
+// schemas from race builds. Ordinary non-race registrations stay lazy.
 var reverseTypeDatabase = map[reflect.Type]wire.Type{}
 
 // Release releases references to global type databases.
@@ -313,6 +332,24 @@ type binaryObject interface {
 	encoding.BinaryUnmarshaler
 }
 
+// binaryRecord adapts a foreign codec to the same captured-field emitter as
+// generated savers. The codec owns its internal pointer relationships.
+type binaryRecord struct {
+	record wire.Record
+	value  wire.String
+}
+
+func newBinaryRecord(id wire.TypeID, count int) *wire.Record {
+	b := &binaryRecord{}
+	return wire.InitRecord(&b.record, id, count, b)
+}
+
+func (b *binaryRecord) SaveFields(w *wire.Writer, first, last int) {
+	if first < last {
+		wire.SaveStringField(w, b.value)
+	}
+}
+
 // saveBinary encodes a foreign struct's self-contained representation. Its
 // binary codec owns any internal pointer relationships.
 func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
@@ -323,8 +360,8 @@ func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
 	}
 	// Copy before reusing binaryBuf: wire objects are serialized only after
 	// the full graph is encoded. Strings also decode inline, so map keys are
-	// complete when decodeMap inserts them into the restored map.
-	s.SaveValue(0, string(data))
+	// complete when restoreMap inserts them into the restored map.
+	Record(s, 1, newBinaryRecord).(*binaryRecord).value = wire.String(data)
 }
 
 func loadBinary(value binaryObject, name string, s Source) {
@@ -339,14 +376,30 @@ func loadBinary(value binaryObject, name string, s Source) {
 //
 // This must be called on init and only done once. Registration lets Load
 // reconstruct concrete types held in interfaces without a preceding Save.
+// Manually implemented savers use Sink.Save/SaveValue to populate the record's
+// compatibility slots.
 func Register(t Type) {
+	registerType(t, false)
+}
+
+// RegisterGenerated registers a type whose StateMetadata method is declared
+// by the generator on this exact receiver. Inherited methods are insufficient.
+// Like Register, t must be a typed nil pointer; no metadata is called here.
+func RegisterGenerated(t generatedType) {
+	registerType(t, true)
+}
+
+func registerType(t Type, generated bool) {
 	name := t.StateTypeName()
 	typ := reflect.TypeOf(t)
 	if !raceEnabled {
-		// Register runs in the init functions of every binary that links
-		// stateified packages, on every process start. It needs to be
-		// very cheap. Race builds verify integrity.
-		globalTypeDatabase[name] = typ.Elem()
+		// Every binary importing stateified packages registers their types on
+		// startup. Keep schema validation and restore work off this path.
+		if generated {
+			globalTypeDatabase[name] = t
+		} else {
+			globalTypeDatabase[name] = typ.Elem()
+		}
 		return
 	}
 	fields := t.StateFields()
@@ -356,28 +409,23 @@ func Register(t Type) {
 	}
 	typ = typ.Elem()
 	if typ.Kind() == reflect.Struct {
-		// All registered structs must implement SaverLoader. We allow
-		// the registration is non-struct types with just the Type
-		// interface, but we need to call StateSave/StateLoad methods
-		// on aggregate types.
+		// Aggregate types need both methods; non-structs use the common
+		// scalar and collection operations instead.
 		if _, ok := t.(SaverLoader); !ok {
 			Failf("struct %T does not implement SaverLoader", t)
 		}
 	} else {
-		// Non-structs must not have any fields. We don't support
-		// calling StateSave/StateLoad methods on any non-struct types.
-		// If custom behavior is required, these types should be
-		// wrapped in a structure of some kind.
 		if len(fields) != 0 {
 			Failf("non-struct %T has non-zero fields %v", t, fields)
 		}
-		// We don't allow non-structs to implement StateSave/StateLoad
-		// methods, because they won't be called and it's confusing.
 		if _, ok := t.(SaverLoader); ok {
 			Failf("non-struct %T implements SaverLoader", t)
 		}
 	}
 	register(typ, wire.Type{Name: name, Fields: fields})
+	if generated {
+		globalTypeDatabase[name] = t
+	}
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -408,8 +456,7 @@ func register(typ reflect.Type, info wire.Type) {
 	reverseTypeDatabase[typ] = info
 }
 
-// validateTypeInfo checks that a type has a name and unique, non-empty field
-// names.
+// validateTypeInfo checks that a type has a name and unique, non-empty fields.
 func validateTypeInfo(info wire.Type) {
 	if info.Name == "" {
 		Failf("type has empty name")
@@ -425,5 +472,15 @@ func validateTypeInfo(info wire.Type) {
 }
 
 func init() {
+	for _, typ := range []reflect.Type{
+		reflect.TypeFor[bool](),
+		reflect.TypeFor[int](), reflect.TypeFor[int8](), reflect.TypeFor[int16](), reflect.TypeFor[int32](), reflect.TypeFor[int64](),
+		reflect.TypeFor[uint](), reflect.TypeFor[uintptr](), reflect.TypeFor[uint8](), reflect.TypeFor[uint16](), reflect.TypeFor[uint32](), reflect.TypeFor[uint64](),
+		reflect.TypeFor[string](),
+		reflect.TypeFor[float32](), reflect.TypeFor[float64](),
+		reflect.TypeFor[complex64](), reflect.TypeFor[complex128](),
+	} {
+		primitiveTypeDatabase[typ.Name()] = typ
+	}
 	registerBinary((*time.Time)(nil))
 }
