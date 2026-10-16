@@ -107,11 +107,6 @@ type sender struct {
 
 	ep *Endpoint
 
-	// finSent is set when the FIN segment is actually transmitted.
-	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
-	// queued behind blocked data; finSent guards closing ACK completions.
-	finSent bool
-
 	// lr is the loss recovery algorithm used by the sender.
 	lr lossRecovery
 
@@ -122,6 +117,11 @@ type sender struct {
 	// zeroWindowProbing is set if the sender is currently probing
 	// for zero receive window.
 	zeroWindowProbing bool `state:"nosave"`
+
+	// finSent is set when the FIN segment is actually transmitted.
+	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
+	// queued behind blocked data; finSent guards closing ACK completions.
+	finSent bool
 
 	// unackZeroWindowProbes is the number of unacknowledged zero
 	// window probes.
@@ -166,6 +166,9 @@ type sender struct {
 	// gso is set if generic segmentation offload is enabled.
 	gso bool
 
+	// startCork start corking the segments.
+	startCork bool
+
 	// state is the current state of congestion control for this endpoint.
 	state tcpip.CongestionControlState
 
@@ -191,9 +194,6 @@ type sender struct {
 	// segment after entering an RTO for the first time as described in
 	// RFC3522 Section 3.2.
 	retransmitTS uint32
-
-	// startCork start corking the segments.
-	startCork bool
 
 	// corkTimer is used to drain the segments which are held when TCP_CORK
 	// option is enabled.
@@ -816,7 +816,10 @@ func (s *sender) splitSeg(seg *segment, size int) {
 	}
 	// Split this segment up.
 	nSeg := seg.clone()
-	nSeg.pkt.Data().TrimFront(size)
+	nSeg.TrimFront(seqnum.Size(size))
+	if seg.xmitCount != 0 {
+		seg.payloadTrimmed = true
+	}
 	nSeg.sequenceNumber.UpdateForward(seqnum.Size(size))
 	s.writeList.InsertAfter(seg, nSeg)
 
@@ -1814,11 +1817,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 				samples.cumulative = minimumRTTSample(samples.cumulative, rcvdSeg.rcvdTime.Sub(seg.xmitTime))
 				// This is the narrow lone-runt heuristic in tcp_clean_rtx_queue:
 				// https://github.com/torvalds/linux/blob/ab185e0c4/net/ipv4/tcp_input.c
-				// Original payload size excludes partial ACKs and
+				// Payload trimming excludes partial ACKs and
 				// post-transmission splits; the generation excludes any
 				// intervening delivery ACK.
 				samples.maybeDelayed = ackLeft == acked && int(acked) == seg.payloadSize() &&
-					seg.originalPayloadSize == seg.payloadSize() &&
+					!seg.payloadTrimmed &&
 					seg.payloadSize() < int(s.ep.scoreboard.SMSS()) &&
 					seg.deliveryGeneration+1 == s.deliveryGeneration &&
 					!priorSACK && !rcvdSeg.hasNewSACKInfo && !hasDSACK &&
@@ -1965,7 +1968,7 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 		}
 	} else {
 		seg.deliveryGeneration = s.deliveryGeneration
-		seg.originalPayloadSize = seg.payloadSize()
+		seg.payloadTrimmed = false
 	}
 	seg.xmitTime = s.ep.stack.Clock().NowMonotonic()
 	seg.xmitCount++

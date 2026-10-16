@@ -107,6 +107,81 @@ func TestMinimumRTTWindow(t *testing.T) {
 	}
 }
 
+func TestMinimumRTTSplitACK(t *testing.T) {
+	// A whole lone runt retains the old minimum because delayed ACK may
+	// inflate its RTT. A shortened prefix admits the new sample instead.
+	const (
+		payloadSize = 8
+		oldRTT      = 10 * time.Millisecond
+		newRTT      = 100 * time.Millisecond
+	)
+	for _, test := range []struct {
+		name      string
+		splitSize int
+		ackSize   seqnum.Size
+		want      time.Duration
+	}{
+		{name: "whole_original", splitSize: payloadSize, ackSize: payloadSize, want: oldRTT},
+		{name: "shortened_prefix", splitSize: payloadSize / 2, ackSize: payloadSize / 2, want: newRTT},
+		{name: "unchanged_remainder", splitSize: 0, ackSize: payloadSize, want: oldRTT},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			ctx := newRACKTestContext(clock, 0)
+			defer ctx.cleanup()
+			s := &ctx.snd
+			s.ep.mu.Lock()
+			defer s.ep.mu.Unlock()
+			s.ep.snd = s
+			s.ep.scoreboard = NewSACKScoreboard(2*payloadSize, 0)
+			s.ep.ops.SetSendBufferSize(s.ep.OnSetSendBufferSize(4096), false /* notify */)
+			s.ep.sndQueueInfo.sndQueueMu.Lock()
+			s.ep.sndQueueInfo.SndBufUsed = payloadSize
+			s.ep.sndQueueInfo.sndQueueMu.Unlock()
+			s.ep.keepalive.timer.init(clock, func() {})
+			defer s.ep.keepalive.timer.cleanup()
+			s.resendTimer.init(clock, func() {})
+			defer s.resendTimer.cleanup()
+			s.probeTimer.init(clock, func() {})
+			defer s.probeTimer.cleanup()
+			s.MaxPayloadSize = 2 * payloadSize
+			s.SndUna, s.SndNxt = 1, 1+payloadSize
+			s.RTTMeasureSeqNum = s.SndNxt
+			s.RTO = time.Second
+			s.Outstanding = 1
+			s.cc = s.initCongestionControl(ccReno)
+			s.minRTT.update(oldRTT, clock.NowMonotonic(), false)
+			clock.Advance(minRTTWindow + time.Second)
+
+			// Start with one original transmission. Split it before its
+			// first ACK, as recovery's NextSeg scan can do even without
+			// selecting the prefix for retransmission.
+			seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithData(make([]byte, payloadSize)), 0)
+			seg.sequenceNumber = s.SndUna
+			seg.flags = header.TCPFlagAck
+			seg.xmitCount = 1
+			seg.xmitTime = clock.NowMonotonic()
+			s.writeList.PushBack(seg)
+			defer func() {
+				for seg := s.writeList.Front(); seg != nil; seg = s.writeList.Front() {
+					s.writeList.Remove(seg)
+					seg.DecRef()
+				}
+			}()
+			s.splitSeg(seg, test.splitSize)
+
+			clock.Advance(newRTT)
+			ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+			defer ack.DecRef()
+			ack.ackNumber = s.SndUna.Add(test.ackSize)
+			s.handleRcvdSegment(ack)
+			if got, want := s.minRTT.value(), test.want; got != want {
+				t.Fatalf("minimum RTT after ACKing %d bytes of split at %d = %v, want %v", test.ackSize, test.splitSize, got, want)
+			}
+		})
+	}
+}
+
 func TestMinimumRTTSACKSequenceBoundary(t *testing.T) {
 	for _, test := range []struct {
 		name string
