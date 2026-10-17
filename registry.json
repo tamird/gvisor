@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T11:34:30.300285+00:00",
+    "updatedAt": "2026-10-17T11:40:17.115106+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2600,12 +2600,12 @@
       "url": "https://github.com/google/gvisor/pull/15499",
       "group": "runtime",
       "status": "open",
-      "summary": "Source #15499 remains at 728f546af. The matching import #15910 at de72f3161e failed public Buildkite 51218 while its internal check passed. Authenticated shard-two logs show TestUIDMap/kvm and TestUIDMap/systrap failing in both cgroup modes with client-sync EOF and empty mounts JSON; the other seven shards were cached. The public hook uploads only *.boot.txt, so absent gofer artifacts do not establish a failure before logging. The producing gofer diagnostic is missing and the public /home cause remains unresolved. A separate reviewed proposal extends the existing failed-test upload loop to retain gofer logs alongside boot logs; its contributor decision is pending. Independent fixture fix #15920 is qualified for the demonstrated /tmp shadowing defect: failing V4 becomes passing V5 with the fix, and original source passes V7 in /var/tmp. Those results do not establish whether it resolves the public /home failures or exonerates #15499. The user's comment6233198945 asks maintainers whether the PR can advance; no agent reply or causal affirmation is implied.\n\nEarlier observations:\n\nThe current approved head 73b3b7655 conflicts with upstream. Rebase and review of the conflict are agent work; the separate Copybara migration error still has no public diagnostic. Exact-head approval is retained as historical review evidence for any replacement head.\n\nEarlier observations:\n\nThe author already requested importer help. The ready-to-pull label is present, but Copybara reports a generic migration error with no log URL. Current-head approval remains separate from this failed import attempt.\n\nEarlier observations:\n\nContributor-approved PR #15499 is published at 73b3b7655 on master a926. The requested checkErr-to-err rename and source-preserving seven-path refresh are independently verified; the exact description, one-commit head and publication were read back. No contributor hold remains. Existing validation is retained with its original limitations.\n\nEarlier preparation and validation:\n\nContributor approved after renaming checkErr to err; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained.",
-      "updatedAt": "2026-10-17T11:34:30.300285+00:00",
+      "summary": "Source #15499 remains at 728f546af. The matching import #15910 at de72f3161e failed public Buildkite 51218 while its internal check passed. Authenticated shard-two logs show TestUIDMap/kvm and TestUIDMap/systrap failing in both cgroup modes with client-sync EOF and empty mounts JSON; the other seven shards were cached. The public hook uploads only *.boot.txt, so absent gofer artifacts do not establish a failure before logging. The producing gofer diagnostic is missing and the public /home cause remains unresolved. A separate reviewed proposal extends the existing failed-test upload loop to retain gofer logs alongside boot logs; it is now delivered as #15927 and awaits maintainer review. Independent fixture fix #15920 is qualified for the demonstrated /tmp shadowing defect: failing V4 becomes passing V5 with the fix, and original source passes V7 in /var/tmp. Those results do not establish whether it resolves the public /home failures or exonerates #15499. The user's comment6233198945 asks maintainers whether the PR can advance; no agent reply or causal affirmation is implied.\n\nEarlier observations:\n\nThe current approved head 73b3b7655 conflicts with upstream. Rebase and review of the conflict are agent work; the separate Copybara migration error still has no public diagnostic. Exact-head approval is retained as historical review evidence for any replacement head.\n\nEarlier observations:\n\nThe author already requested importer help. The ready-to-pull label is present, but Copybara reports a generic migration error with no log URL. Current-head approval remains separate from this failed import attempt.\n\nEarlier observations:\n\nContributor-approved PR #15499 is published at 73b3b7655 on master a926. The requested checkErr-to-err rename and source-preserving seven-path refresh are independently verified; the exact description, one-commit head and publication were read back. No contributor hold remains. Existing validation is retained with its original limitations.\n\nEarlier preparation and validation:\n\nContributor approved after renaming checkErr to err; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained.",
+      "updatedAt": "2026-10-17T11:39:21.004426+00:00",
       "followup": {
-        "disposition": "Public failure unresolved; gofer capture proposal awaiting contributor decision",
+        "disposition": "Public failure unresolved; gofer capture change delivered as #15927",
         "owner": "restore_integration_review",
-        "nextAction": "Preserve the current public failure and user maintainer request. If the independent capture proposal is approved and adopted, use the retained gofer diagnostic from a future authorized run to investigate the public /home failure; do not infer causality from the /tmp fix.",
+        "nextAction": "Follow the delivered capture change and the maintainer response. Use a retained gofer diagnostic from a future authorized run to investigate the public /home failure; do not infer causality from the /tmp fix.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5be0d814fd650cf2cbc33238fb92ab2cf9555943",
           "https://github.com/google/gvisor/pull/15499",
@@ -2623,13 +2623,14 @@
           "https://github.com/google/gvisor/pull/15499#issuecomment-6233198945",
           "https://buildkite.com/gvisor/pipeline/builds/51218",
           "https://github.com/google/gvisor/blob/de72f3161e17ca61e496466d8c0c602afacbff2e/.buildkite/hooks/post-command#L31",
-          "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a"
+          "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a",
+          "https://github.com/google/gvisor/pull/15927"
         ],
         "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
         "reviewedAt": "2026-10-17T11:22:54.391522+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-17T11:34:30.300285+00:00"
+        "observedAt": "2026-10-17T11:39:21.004426+00:00"
       },
       "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
       "number": 15499,
@@ -8555,25 +8556,21 @@
       "title": "Supply the server name in the Node TLS fixture",
       "url": "https://github.com/tamird/gvisor/commit/572bc01df566512c5c19de100615b05c211bb6ca",
       "group": "tests",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-17T06:15:34.557144+00:00",
-      "summary": "The Node.js CA fixture connects to www.nodejs.org without SNI, causing the public endpoint to present a certificate for a different hostname. This standalone correction supplies the server name while retaining certificate verification and the existing CA assertions. In the pinned Node22.2.0 image, directfs and goferfs each reproduce the original hostname failure and pass with this patch. The full source-image build and all twenty selected Node owners now pass at 375eb2bf4: 160 fresh shard results and 160 passing XML entries, with no skips, failures, missing results or capture errors. The resource-only continuation supplies 32 GB to the source-image build while preserving selections, shards and owner deadlines. Its original 8 GB build failure reports ResourceExhausted/cannot allocate memory before any owner executed and remains retained, alongside the earlier execution-stream failure. Full source-image validation is complete; the existing contributor decision on the standalone fixture remains pending. The equivalent upstream Node patch and source citation are prepared. Node requires human submission under its contribution policy; no Node PR was opened, and the gVisor proposal has not received a new approval.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "572bc01df566512c5c19de100615b05c211bb6ca",
-        "url": "https://github.com/tamird/gvisor/commit/572bc01df566512c5c19de100615b05c211bb6ca"
-      },
+      "status": "Agent follow-up blocked by upstream submission policy",
+      "updatedAt": "2026-10-17T11:40:17.115106+00:00",
+      "summary": "The Node.js CA fixture connects to www.nodejs.org without SNI, causing the public endpoint to present a certificate for a different hostname. This standalone correction supplies the server name while retaining certificate verification and the existing CA assertions. In the pinned Node22.2.0 image, directfs and goferfs each reproduce the original hostname failure and pass with this patch. The full source-image build and all twenty selected Node owners now pass at 375eb2bf4: 160 fresh shard results and 160 passing XML entries, with no skips, failures, missing results or capture errors. The resource-only continuation supplies 32 GB to the source-image build while preserving selections, shards and owner deadlines. Its original 8 GB build failure reports ResourceExhausted/cannot allocate memory before any owner executed and remains retained, alongside the earlier execution-stream failure. Full source-image validation is complete. Upstream Node submission and its citation in the gVisor patch remain agent follow-up. Node's current policy prohibits automated-tooling PR creation without prior project approval, so no upstream PR has been submitted. The equivalent patch is prepared and ROOT is checking it against current upstream source. No contributor code-review decision is pending.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor decision pending",
+        "disposition": "Upstream submission blocked by Node automation policy",
         "sourceHead": "572bc01df566512c5c19de100615b05c211bb6ca",
-        "observedAt": "2026-10-17T06:15:34.557144+00:00",
-        "nextAction": "Keep the existing gVisor contributor decision separate from the prepared upstream Node patch, which requires human submission. Full source-image validation is complete.",
+        "observedAt": "2026-10-17T11:40:17.115106+00:00",
+        "nextAction": "Keep the prepared upstream patch current and resolve its submission path under the linked Node policy. Add an actual upstream submission citation to the gVisor patch when one exists; do not invent a PR or request another contributor code review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/572bc01df566512c5c19de100615b05c211bb6ca",
           "https://app.buildbuddy.io/invocation/b62ea990-30d3-40f3-ac69-3e8b6ffb01fd",
           "https://github.com/tamird/gvisor/actions/runs/38996541148",
-          "https://github.com/tamird/gvisor/actions/runs/39003749809"
+          "https://github.com/tamird/gvisor/actions/runs/39003749809",
+          "https://github.com/nodejs/node/blob/269cab632/doc/contributing/ai-guidelines.md"
         ]
       },
       "evidence": [
@@ -8592,6 +8589,10 @@
         {
           "label": "Full source-image build and twenty selected Node owners pass",
           "url": "https://github.com/tamird/gvisor/actions/runs/39003749809"
+        },
+        {
+          "label": "Current Node policy for automated PR creation",
+          "url": "https://github.com/nodejs/node/blob/269cab632/doc/contributing/ai-guidelines.md"
         }
       ]
     },
@@ -8929,24 +8930,47 @@
       "title": "Retain gofer logs from failed Buildkite tests",
       "url": "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a",
       "group": "runtime",
-      "status": "Contributor review pending",
-      "summary": "This one-file proposal retains *.gofer.txt alongside *.boot.txt in the existing failed-test artifact upload loop. It preserves the failed-test selection, upload bounds and command status handling. Source reviews and shell syntax checks pass; no workload was run. Public 51218 excludes gofer logs under its current selector, so the additional artifact can supply the missing producer diagnostic on a future authorized run. The proposal does not claim a TestUIDMap runtime fix. A contributor review request is now pending for exact 3be9e8ee88a6d70730a111ee376af749cc875c5a.",
-      "updatedAt": "2026-10-17T11:34:30.300285+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
-        "url": "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a"
-      },
+      "status": "Delivered as #15927",
+      "summary": "This one-file proposal retains *.gofer.txt alongside *.boot.txt in the existing failed-test artifact upload loop. It preserves the failed-test selection, upload bounds and command status handling. Source reviews and shell syntax checks pass; no workload was run. Public 51218 excludes gofer logs under its current selector, so the additional artifact can supply the missing producer diagnostic on a future authorized run. The proposal does not claim a TestUIDMap runtime fix. The contributor approved exact 3be9e8ee88, and it is delivered as PR #15927 with the reviewed title and description. Maintainer review and current-head checks remain pending.",
+      "updatedAt": "2026-10-17T11:39:21.004426+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor review requested for independent capture change",
+        "owner": "external_sweeps",
+        "disposition": "Approved capture change delivered as #15927",
         "sourceHead": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
-        "observedAt": "2026-10-17T11:34:30.300285+00:00",
-        "nextAction": "Await the existing contributor decision on exact 3be9e8ee88. Open the independent PR only after approval; this artifact-capture change does not establish or fix the public TestUIDMap cause.",
+        "observedAt": "2026-10-17T11:39:21.004426+00:00",
+        "nextAction": "Follow PR #15927 current-head checks, maintainer feedback and import lifecycle. Preserve the independent capture scope and unresolved public TestUIDMap cause.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a",
           "https://buildkite.com/gvisor/pipeline/builds/51218",
-          "https://github.com/google/gvisor/pull/15499"
+          "https://github.com/google/gvisor/pull/15499",
+          "https://github.com/google/gvisor/pull/15927"
+        ]
+      }
+    },
+    {
+      "id": "pr:15927",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15927,
+      "ref": "buildkite-gofer-failure-logs",
+      "head": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
+      "title": "Upload gofer logs for failed Buildkite tests",
+      "url": "https://github.com/google/gvisor/pull/15927",
+      "group": "tests",
+      "status": "open",
+      "summary": "This one-file proposal retains *.gofer.txt alongside *.boot.txt in the existing failed-test artifact upload loop. It preserves the failed-test selection, upload bounds and command status handling. Source reviews and shell syntax checks pass; no workload was run. Public 51218 excludes gofer logs under its current selector, so the additional artifact can supply the missing producer diagnostic on a future authorized run. The proposal does not claim a TestUIDMap runtime fix. The contributor approved exact 3be9e8ee88, and it is delivered as PR #15927 with the reviewed title and description. Maintainer review and current-head checks remain pending.",
+      "updatedAt": "2026-10-17T11:39:21.004426+00:00",
+      "followup": {
+        "owner": "external_sweeps",
+        "disposition": "Approved capture change delivered as #15927",
+        "sourceHead": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
+        "observedAt": "2026-10-17T11:39:21.004426+00:00",
+        "nextAction": "Follow PR #15927 current-head checks, maintainer feedback and import lifecycle. Preserve the independent capture scope and unresolved public TestUIDMap cause.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a",
+          "https://buildkite.com/gvisor/pipeline/builds/51218",
+          "https://github.com/google/gvisor/pull/15499",
+          "https://github.com/google/gvisor/pull/15927"
         ]
       }
     }
