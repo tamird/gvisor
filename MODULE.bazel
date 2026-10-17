@@ -354,6 +354,8 @@ release_apt.install(
         "netcat-openbsd:arm64",
         "procps:arm64",
         "sed:arm64",
+        # setpriv supplies supplementary groups for native setgid tests.
+        "util-linux:arm64",
     ],
     suites = [
         "jammy",
@@ -379,6 +381,8 @@ _KVM_GUEST_PACKAGES = [
     "netcat-openbsd:amd64",
     "procps:amd64",
     "sed:amd64",
+    # setpriv supplies supplementary groups for native setgid tests.
+    "util-linux:amd64",
 ]
 
 release_apt.install(
@@ -393,10 +397,9 @@ release_apt.install(
 release_apt.install(
     dependency_set = "kvm_amd64_cgroup_v1_guest",
     packages = _KVM_GUEST_PACKAGES + [
-        # The fixture needs cmp, unshare and awk; container tests set hostname.
+        # The fixture needs cmp and awk; container tests set hostname.
         "diffutils:amd64",
         "hostname:amd64",
-        "util-linux:amd64",
         "mawk:amd64",
         "linux-image-6.8.0-138-generic:amd64 (= 6.8.0-138.138~22.04.1)",
         # Keep the generic kernel's filesystem/device module closure.

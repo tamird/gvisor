@@ -99,4 +99,6 @@ cat /proc/self/limits > /result/limits-before.txt
 ulimit -n 65536
 cat /proc/self/limits > /result/limits.txt
 /bin/busybox tar -xf /input/payload.tar -C /work/payload
-/bin/bash /input/launch.sh
+# Native setgid tests need two usable supplementary groups. PID 1 inherits
+# none, unlike a normal login session; keep root credentials and add the pair.
+setpriv --groups=0,1 /bin/bash /input/launch.sh

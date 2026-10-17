@@ -113,6 +113,7 @@ flatten(
         "@tcg_arm64_guest//netcat-openbsd/arm64",
         "@tcg_arm64_guest//procps/arm64",
         "@tcg_arm64_guest//sed/arm64",
+        "@tcg_arm64_guest//util-linux/arm64",
     ],
 )
 
