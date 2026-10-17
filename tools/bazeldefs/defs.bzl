@@ -127,7 +127,7 @@ def target_emulators(name):
     """Defines the user-mode emulators used by target_emulator.
 
     Each emulator is the pinned QEMU build for the execution platform's
-    architecture (see extensions/deb_data.bzl), or a stub that fails if there
+    architecture (see MODULE.bazel), or a stub that fails if there
     is none. This must only be called from tools/bazeldefs/BUILD.
 
     Args:
@@ -136,7 +136,7 @@ def target_emulators(name):
     native.alias(
         name = name + "_aarch64",
         actual = select({
-            ":amd64": "@qemu_user_amd64_files//:usr/bin/qemu-aarch64",
+            ":amd64": "@qemu_user_prebuilt_linux_amd64_aarch64//:qemu-aarch64",
             "//conditions:default": ":no_emulator.sh",
         }),
         tags = ["manual"],
@@ -144,8 +144,8 @@ def target_emulators(name):
     native.alias(
         name = name + "_riscv64",
         actual = select({
-            ":amd64": "@qemu_user_amd64_files//:usr/bin/qemu-riscv64",
-            ":arm64": "@qemu_user_arm64_files//:usr/bin/qemu-riscv64",
+            ":amd64": "@qemu_user_prebuilt_linux_amd64_riscv64//:qemu-riscv64",
+            ":arm64": "@qemu_user_prebuilt_linux_arm64_riscv64//:qemu-riscv64",
             "//conditions:default": ":no_emulator.sh",
         }),
         tags = ["manual"],
@@ -153,7 +153,7 @@ def target_emulators(name):
     native.alias(
         name = name + "_x86_64",
         actual = select({
-            ":arm64": "@qemu_user_arm64_files//:usr/bin/qemu-x86_64",
+            ":arm64": "@qemu_user_prebuilt_linux_arm64_x86_64//:qemu-x86_64",
             "//conditions:default": ":no_emulator.sh",
         }),
         tags = ["manual"],

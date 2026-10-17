@@ -31,12 +31,6 @@ bzl_library(
     deps = [":defs_bzl"],
 )
 
-bzl_library(
-    name = "deb_data_bzl",
-    srcs = ["extensions/deb_data.bzl"],
-    visibility = ["//visibility:private"],
-)
-
 # Keep Go's pure/cgo mode in its build settings, not the target platform:
 # Bazel 9 also uses target constraints to select a test execution platform.
 platform(
