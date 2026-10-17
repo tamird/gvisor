@@ -19,7 +19,9 @@ linux_kernel(
         "@platforms//cpu:x86_64",
     ],
     exec_properties = {
-        "EstimatedCPU": "16",
+        # Explicit compute units keep measured or predicted task sizes from
+        # reducing the resources requested for this parallel kernel build.
+        "EstimatedComputeUnits": "16",
         "EstimatedMemory": "32GB",
         "EstimatedFreeDiskBytes": "40GB",
         "default-timeout": "45m",
