@@ -139,7 +139,7 @@ def main() -> None:
         run(configure, "configure")
         run([*make, "olddefconfig"], "olddefconfig")
         settings = (build / ".config").read_text().splitlines()
-        required = ("KCOV", "DEBUG_FS")
+        required = ("KCOV", "KCOV_INSTRUMENT_ALL", "DEBUG_FS")
         if architecture == "arm64":
             required += ("ARM64_4K_PAGES",)
         for option in required:
