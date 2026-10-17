@@ -68,7 +68,9 @@ guest_host_tools(
     archive = "@kvm_host_tools//:flat",
     members = _HOST_TOOL_MEMBERS + [
         "usr/bin/qemu-system-x86_64",
-        "usr/share/seabios",
+        # The launcher selects this BIOS explicitly. The unused optionrom
+        # directory contains dangling compatibility links in the package.
+        "usr/share/seabios/bios-256k.bin",
     ],
     tags = ["manual"],
 )
