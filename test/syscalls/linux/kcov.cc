@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <cstdint>
@@ -45,7 +46,8 @@ namespace {
 // collect_coverage_data --instrumentation_filter=//pkg/... <test>.
 
 constexpr char kcovPath[] = "/sys/kernel/debug/kcov";
-constexpr int kSize = 4096;
+// KCOV mmap requires a whole number of pages, including on 64 KiB-page hosts.
+const size_t kSize = std::max<size_t>(4096, kPageSize / sizeof(uint64_t));
 constexpr int KCOV_INIT_TRACE = 0x80086301;
 constexpr int KCOV_ENABLE = 0x6364;
 constexpr int KCOV_DISABLE = 0x6365;
