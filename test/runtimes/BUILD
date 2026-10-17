@@ -30,6 +30,7 @@ _RUNTIMES = {
         memory = "8GB",
         partitions = 10,
         shard_count = most_shards,
+        source_archive = "//test/docker:nodejs_source_amd64",
     ),
     "php8.5.11": dict(
         exclude_file = "exclude/php8.5.11.csv",

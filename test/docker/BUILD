@@ -410,22 +410,28 @@ test_suite(
     tests = ["//test/e2e:integration_test_" + PLUGIN_NETWORK_VARIANT.name + "_owned"],
 )
 
-# Build PHP once and share its declared archive among the runtime owners.
-source_image_archive(
-    name = "php_source_amd64",
-    testonly = True,
-    architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
-    exec_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-    exec_properties = docker_test_exec_properties(
-        exec_group = "",
-        free_disk = "40GB",
-        memory = "8GB",
-        start_daemon = True,
-    ),
-    image = "runtimes/php8.5.11",
-    tags = ["manual"],
-)
+# Build each image once for all of its filesystem modes and partitions.
+[
+    source_image_archive(
+        name = name,
+        testonly = True,
+        architecture = "x86_64",
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "40GB",
+            memory = "8GB",
+            start_daemon = True,
+        ),
+        image = image,
+        tags = ["manual"],
+    )
+    for name, image in [
+        ("nodejs_source_amd64", "runtimes/nodejs22.2.0"),
+        ("php_source_amd64", "runtimes/php8.5.11"),
+    ]
+]
