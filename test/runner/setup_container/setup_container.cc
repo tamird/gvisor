@@ -160,7 +160,9 @@ PosixError SetupExternalNetwork() {
   route.rtm_dst_len = 8;
   route.rtm_table = RT_TABLE_MAIN;
   route.rtm_protocol = RTPROT_BOOT;
-  route.rtm_type = RTN_UNICAST;
+  // Linux rejects unicast routes through lo for non-loopback destinations.
+  // Use a local route for this namespace's multicast delivery.
+  route.rtm_type = RTN_LOCAL;
   RETURN_IF_ERRNO(ConfigureNetwork(fd, RTM_NEWROUTE, &route, sizeof(route),
                                    {{RTA_DST, &multicast, sizeof(multicast)},
                                     {RTA_OIF, &loopback, sizeof(loopback)},
