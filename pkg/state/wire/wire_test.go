@@ -36,9 +36,10 @@ func TestLoadUnknownWideTag(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
 			w := Writer{Writer: &buf}
-			if test.name == "type" {
+			switch test.name {
+			case "type":
 				typeInterface.save(&w)
-			} else if test.name == "array" {
+			case "array":
 				typeArray.save(&w)
 				Uint(1).save(&w)
 			}
