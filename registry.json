@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T06:53:53.643166+00:00",
+    "updatedAt": "2026-10-17T06:58:53.214123+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -8801,8 +8801,8 @@
       "url": "https://github.com/tamird/gvisor/commit/ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9",
       "group": "bazel",
       "status": "Contributor review pending",
-      "summary": "The complete comparison found no independent source to salvage from closed #15187 after merged #15913. The signed, published qemu-prebuilt-user proposal at ce9a1c3bdf (a message-only amendment of validated 24d79a05a with the exact same tree) replaces Debian extraction with four pinned hermeticbuild/qemu-prebuilt 11.0.0.1 archives and an explicitly pinned QEMU notice-source mechanism. Canonical Fetch and Verify pass for 197 dependencies. The complete checker and AMD64 usage report 27 passing entries, ARM64 usage reports three, and both uncached cross-generator actions execute on opposite-CPU workers. Buildifier and gofmt pass. The original reverse-build parent remains failed only for the absent ambient Go tool; the remaining-only gofmt check uses the declared SDK without repeating tests. RISC-V archives were inspected and resolved, with no runtime coverage claimed. Original #15187 refs and review evidence remain preserved; no upstream PR has been updated. The contributor review request is now pending for exact ce9a1c3bdf.",
-      "updatedAt": "2026-10-17T06:53:53.643166+00:00",
+      "summary": "The complete comparison found no independent source to salvage from closed #15187 after merged #15913. The published qemu-prebuilt-user proposal at ce9a1c3bdf (a message-only amendment of validated 24d79a05a with the exact same tree) replaces Debian extraction with four pinned hermeticbuild/qemu-prebuilt 11.0.0.1 archives and an explicitly pinned QEMU notice-source mechanism. Canonical Fetch and Verify pass for 197 dependencies. The complete checker and AMD64 usage report 27 passing entries, ARM64 usage reports three, and both uncached cross-generator actions execute on opposite-CPU workers. Buildifier and gofmt pass. The original reverse-build parent remains failed only for the absent ambient Go tool; the remaining-only gofmt check uses the declared SDK without repeating tests. RISC-V archives were inspected and resolved, with no runtime coverage claimed. Original #15187 refs and review evidence remain preserved; no upstream PR has been updated. The contributor review request is now pending for exact ce9a1c3bdf.",
+      "updatedAt": "2026-10-17T06:58:53.214123+00:00",
       "contributorReview": {
         "status": "pending",
         "head": "ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9",
@@ -16641,8 +16641,8 @@
       "title": "Audit generator replacement and QEMU tooling",
       "status": "active",
       "owner": "Codex \u2014 syscall validation",
-      "updatedAt": "2026-10-17T06:53:53.643166+00:00",
-      "summary": "The complete comparison found no independent source to salvage from closed #15187 after merged #15913. The signed, published qemu-prebuilt-user proposal at ce9a1c3bdf (a message-only amendment of validated 24d79a05a with the exact same tree) replaces Debian extraction with four pinned hermeticbuild/qemu-prebuilt 11.0.0.1 archives and an explicitly pinned QEMU notice-source mechanism. Canonical Fetch and Verify pass for 197 dependencies. The complete checker and AMD64 usage report 27 passing entries, ARM64 usage reports three, and both uncached cross-generator actions execute on opposite-CPU workers. Buildifier and gofmt pass. The original reverse-build parent remains failed only for the absent ambient Go tool; the remaining-only gofmt check uses the declared SDK without repeating tests. RISC-V archives were inspected and resolved, with no runtime coverage claimed. Original #15187 refs and review evidence remain preserved; no upstream PR has been updated. The contributor review request is now pending for exact ce9a1c3bdf.",
+      "updatedAt": "2026-10-17T06:58:53.214123+00:00",
+      "summary": "The complete comparison found no independent source to salvage from closed #15187 after merged #15913. The published qemu-prebuilt-user proposal at ce9a1c3bdf (a message-only amendment of validated 24d79a05a with the exact same tree) replaces Debian extraction with four pinned hermeticbuild/qemu-prebuilt 11.0.0.1 archives and an explicitly pinned QEMU notice-source mechanism. Canonical Fetch and Verify pass for 197 dependencies. The complete checker and AMD64 usage report 27 passing entries, ARM64 usage reports three, and both uncached cross-generator actions execute on opposite-CPU workers. Buildifier and gofmt pass. The original reverse-build parent remains failed only for the absent ambient Go tool; the remaining-only gofmt check uses the declared SDK without repeating tests. RISC-V archives were inspected and resolved, with no runtime coverage claimed. Original #15187 refs and review evidence remain preserved; no upstream PR has been updated. The contributor review request is now pending for exact ce9a1c3bdf.",
       "findings": [],
       "nextStep": "The exact validated-tree proposal is now awaiting the contributor decision. Preserve closed #15187 and merged #15913 evidence; do not update an upstream PR before that decision.",
       "evidence": [
