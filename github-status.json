@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-17T11:14:04.514256+00:00",
-  "registryDate": "2026-10-17T11:40:17.115106+00:00",
+  "registryDate": "2026-10-17T11:45:11.369312+00:00",
   "prs": [
     {
       "number": 12470,
@@ -98756,7 +98756,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-17T11:40:17.115106+00:00"
+        "observedAt": "2026-10-17T11:45:11.369312+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -98765,7 +98765,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-17T11:40:17.115106+00:00"
+        "observedAt": "2026-10-17T11:45:11.369312+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -98774,7 +98774,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-17T11:40:17.115106+00:00"
+        "observedAt": "2026-10-17T11:45:11.369312+00:00"
       }
     },
     "branch:diagnostics/state-integrated-array-proposal": {
@@ -98783,7 +98783,16 @@
         "since": "2026-10-17T02:45:40.196371+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-17T11:40:17.115106+00:00"
+        "observedAt": "2026-10-17T11:45:11.369312+00:00"
+      }
+    },
+    "branch:qemu-prebuilt-user": {
+      "contributor-review": {
+        "scope": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb",
+        "since": "2026-10-17T11:45:11.369312+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-17T11:45:11.369312+00:00"
       }
     }
   },
