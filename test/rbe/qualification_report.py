@@ -33,6 +33,7 @@ import datetime
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import shutil
@@ -746,7 +747,20 @@ def main() -> int:
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
-    return number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
+    exit_code = number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
+    # The coordinator can upload the archive and then lose its build-event
+    # stream. Retain its CAS identity in the execution log for recovery.
+    try:
+        receipt = (json.dumps({"qualification_archive": file_record(args.output),
+                               "sources": result["sources"], "status": result["status"]}) + "\n").encode()
+        # A buffered write to a closed pipe can override the original exit
+        # during Python's shutdown flush, even after catching BrokenPipeError.
+        if os.write(1, receipt) != len(receipt):
+            raise OSError("Incomplete archive identity write")
+    except OSError:
+        if not exit_code:
+            raise
+    return exit_code
 
 
 if __name__ == "__main__":
