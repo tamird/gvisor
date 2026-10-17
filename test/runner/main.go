@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -471,6 +472,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 		"-gvisor-gro",
 		"-host-settings=check_mandatory",
 		"-allow-suid",
+		"-profile=true",
 	}
 
 	args = append(args, testutil.RuntimeTestFlags()...)
@@ -664,6 +666,33 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	// Capture the fork race after the preceding sleep-based SIGSTOP cases.
+	// The bounded profile is complete before the original test deadline.
+	profileCtx, cancelProfile := context.WithCancel(context.Background())
+	profileDone := make(chan struct{})
+	finishProfile := func() {
+		cancelProfile()
+		<-profileDone
+	}
+	defer finishProfile()
+	go func() {
+		defer close(profileDone)
+		select {
+		case <-profileCtx.Done():
+			return
+		case <-time.After(60 * time.Second):
+		}
+		profileArgs := append([]string{}, args...)
+		profileArgs = append(profileArgs,
+			"debug", "--duration=30s",
+			"--profile-cpu="+filepath.Join(undeclaredOutputsDir, "sigstop-cpu.pprof"), id)
+		profile := exec.CommandContext(profileCtx, specutils.ExePath, profileArgs...)
+		profile.Stdout = os.Stdout
+		profile.Stderr = os.Stderr
+		if err := profile.Run(); err != nil {
+			log.Warningf("Collecting SIGSTOP CPU profile: %v", err)
+		}
+	}()
 	sig := make(chan os.Signal, 1)
 	defer close(sig)
 	signalled := atomic.Bool{}
@@ -803,6 +832,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 			}
 		}
 	}
+	finishProfile()
 	if err == nil && len(testLogDir) > 0 {
 		var warningsFound []string
 		files, err := os.ReadDir(runscLogDir)
