@@ -34,7 +34,7 @@ name: CI
         description: Optional increasing comma-separated hash15 buckets (0..14) for local or guest syscall lanes
         type: string
       targets:
-        description: Optional build/test labels, or one continuous benchmark label
+        description: Optional build/test/syscall owner labels, or one continuous benchmark label
         type: string
       test_filter:
         description: Optional Bazel test filter for the test or container-v1 lane
@@ -52,7 +52,7 @@ name: CI
 concurrency:
   # Explicit target lists can exceed GitHub's concurrency-key length limit.
   # Keep those runs independent; different selections must not cancel each other.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ contains(fromJSON('["build","test","benchmarks"]'), inputs.lanes) && github.run_id || '' }}-${{ inputs.clock_source }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ (contains(fromJSON('["build","test","benchmarks"]'), inputs.lanes) || inputs.targets != '') && github.run_id || '' }}-${{ inputs.clock_source }}
   cancel-in-progress: true
 
 jobs:

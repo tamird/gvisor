@@ -439,6 +439,7 @@ def select_profile(
     kvm_only: bool = False,
     rc_kernel: bool = False,
     selected_buckets: tuple[int, ...] | None = None,
+    selected_owners: list[str] | None = None,
     local_test_requirements: str = "namespace",
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
@@ -446,6 +447,13 @@ def select_profile(
     guest = page_size == "64k" or rc_kernel
     if selected_buckets is not None and not (hybrid or syscall_policy and guest):
         raise ValueError("Syscall buckets require hybrid or guest execution")
+    if selected_owners is not None:
+        if not syscall_policy or not (hybrid or rc_kernel):
+            raise ValueError("Explicit syscall owners require a hybrid or RC profile")
+        if selected_buckets is not None:
+            raise ValueError("Select explicit syscall owners or buckets, not both")
+        if not selected_owners or len(selected_owners) != len(set(selected_owners)):
+            raise ValueError("Explicit syscall owners must be nonempty and distinct")
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only, rc_kernel=rc_kernel))
     configured = configured_tests(events_path)
@@ -512,6 +520,11 @@ def select_profile(
         selected = sorted(label for bucket in selected_buckets for label in buckets[str(bucket)])
     else:
         selected = sorted(eligible)
+    unexecuted_bucket_owners = sorted(eligible - set(selected))
+    if selected_owners is not None:
+        if unknown := set(selected_owners) - eligible:
+            raise ValueError(f"Explicit owners outside the eligible syscall profile: {sorted(unknown)}")
+        selected = sorted(selected_owners)
     groups = hybrid_local_owners(set(selected), requirements, kvm=kvm_only) if hybrid else {}
     if rc_kernel and architecture == "amd64":
         groups = {"root": selected, "unprivileged": []}
@@ -531,6 +544,8 @@ def select_profile(
         "canonical_profile": profile_path,
         "canonical_owners": sorted(original),
         "selected_owners": selected,
+        "explicit_owners": selected_owners,
+        "unexecuted_owners": sorted(eligible - set(selected)),
         "unavailable_owners": unavailable,
         "policy_excluded_owners": policy_excluded,
         "local_owners": groups,
@@ -542,7 +557,7 @@ def select_profile(
         "syscall_bucket": selected_buckets[0] if selected_buckets and len(selected_buckets) == 1 else None,
         "selected_syscall_buckets": selected_buckets,
         "syscall_buckets": buckets,
-        "unexecuted_bucket_owners": sorted(eligible - set(selected)),
+        "unexecuted_bucket_owners": unexecuted_bucket_owners,
     }, indent=2))
 
 
@@ -689,6 +704,7 @@ def main() -> None:
     profile.add_argument("--hybrid", action="store_true", help="Run graph-declared native namespace owners locally")
     profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
     profile.add_argument("--syscall-bucket", type=syscall_buckets, help="Select increasing comma-separated hash15 buckets and report the full partition")
+    profile.add_argument("--owner", action="append", help="Select an exact eligible syscall owner and report the unexecuted complement")
     profile.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
@@ -755,7 +771,7 @@ def main() -> None:
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, selected_buckets=args.syscall_bucket, local_test_requirements=args.local_test_requirements)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, selected_buckets=args.syscall_bucket, selected_owners=args.owner, local_test_requirements=args.local_test_requirements)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:
