@@ -231,7 +231,8 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), cpus = 2, **kwa
         emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
         tags = tags + ["no-local"],
         exec_properties = {
-            "test.EstimatedCPU": str(cpus),
+            # Reserve configured capacity instead of adaptive task sizing.
+            "test.EstimatedComputeUnits": str(cpus),
             "test.EstimatedMemory": "6GB",
             "test.EstimatedFreeDiskBytes": "8GB",
             # Bazel's undeclared-output collection requires file and zip.
