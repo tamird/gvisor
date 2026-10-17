@@ -121,16 +121,20 @@ def main() -> None:
         configure = [str(source / "scripts/config"), "--file", str(build / ".config")]
         # KCOV needs compiler instrumentation and a mounted debugfs. The other
         # options provide the existing guest's disks, 9p exports and setup.
-        for option in (
+        required = (
             "KCOV", "KCOV_INSTRUMENT_ALL", "DEBUG_FS",
             "VIRTIO_PCI", "VIRTIO_BLK", "EXT4_FS", "DEVTMPFS", "DEVTMPFS_MOUNT",
             "NET_9P", "NET_9P_VIRTIO", "9P_FS", "KVM",
             "NETFILTER", "NETFILTER_XTABLES", "NF_CONNTRACK", "IP_NF_IPTABLES",
             "IP6_NF_IPTABLES", "NETFILTER_XT_MATCH_CONNTRACK",
+            # The guest initializes the legacy socket handlers with modprobe.
+            # https://github.com/torvalds/linux/blob/fd73f4a66/net/ipv4/netfilter/Kconfig#L13-L22
+            "NETFILTER_XTABLES_LEGACY", "IP_NF_IPTABLES_LEGACY", "IP6_NF_IPTABLES_LEGACY",
         ) + {
             "x86_64": ("KVM_INTEL", "KVM_AMD"),
             "arm64": ("ARM64_4K_PAGES", "VIRTIO_MMIO", "SERIAL_AMBA_PL011", "SERIAL_AMBA_PL011_CONSOLE"),
-        }[architecture]:
+        }[architecture]
+        for option in required:
             configure += ["--enable", option]
         # Linux 7.3-rc3's boot selftest panics when IRQ-exit work leaks into
         # task coverage. Keep KCOV instrumentation for the native syscall tests.
@@ -140,9 +144,6 @@ def main() -> None:
         run(configure, "configure")
         run([*make, "olddefconfig"], "olddefconfig")
         settings = (build / ".config").read_text().splitlines()
-        required = ("KCOV", "KCOV_INSTRUMENT_ALL", "DEBUG_FS")
-        if architecture == "arm64":
-            required += ("ARM64_4K_PAGES",)
         for option in required:
             if "CONFIG_" + option + "=y" not in settings:
                 raise RuntimeError(f"Kconfig did not enable {option}")
