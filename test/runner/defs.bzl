@@ -176,8 +176,9 @@ def _syscall_test(
     if arm64_64k:
         tags += ["rbe-has-64k-arm64-variant", "rbe-has-64k-tcg-variant"]
 
-    # The public ARM64 RC lane uses ordinary ptrace and systrap payloads.
-    arm64_rc = platform in ["ptrace", "systrap"] and "allsave" not in tags
+    # The public ARM64 RC lane uses ptrace and systrap. Native variants also
+    # let focused tests use kernel features absent from hosted ARM64 workers.
+    arm64_rc = platform in ["native", "ptrace", "systrap"] and "allsave" not in tags
     if arm64_rc:
         tags.append("rbe-has-rc-tcg-variant")
     amd64_rc = platform in ["native", "ptrace", "systrap", "kvm"] and "allsave" not in tags
