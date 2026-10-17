@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import datetime
+import itertools
 import json
 import os
 from pathlib import Path
@@ -441,17 +442,23 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 37))
 
     def test_bundle_retains_undeclared_outputs_only_for_failed_attempts(self) -> None:
-        for status in ("PASSED", "TIMEOUT"):
-            with self.subTest(status=status):
+        for status, name in itertools.product(("PASSED", "TIMEOUT"),
+                                              ("test.outputs__outputs.zip", "test.outputs/guest/console.log")):
+            with self.subTest(status=status, name=name):
                 invocation = self.fixture()
-                outputs = invocation / "outputs.zip"
-                with zipfile.ZipFile(outputs, "w") as archive:
-                    archive.writestr("guest.log", "payload completed before wrapper timeout\n")
+                relative = "test.outputs/outputs.zip" if name.endswith(".zip") else name
+                outputs = invocation / relative
+                outputs.parent.mkdir(parents=True)
+                if name.endswith(".zip"):
+                    with zipfile.ZipFile(outputs, "w") as archive:
+                        archive.writestr("guest.log", "payload completed before wrapper timeout\n")
+                else:
+                    outputs.write_text("payload completed before wrapper timeout\n")
                 original = outputs.read_bytes()
                 events = self.events(invocation)
                 result = next(event["testResult"] for event in events if "testResult" in event)
                 result["status"] = status
-                result["testActionOutput"].append({"name": "test.outputs__outputs.zip", "uri": outputs.as_uri()})
+                result["testActionOutput"].append({"name": name, "uri": outputs.as_uri()})
                 self.write_events(invocation, events)
                 native_exit = 0 if status == "PASSED" else 3
                 (invocation / "native-exit").write_text(f"{native_exit}\n")
@@ -464,7 +471,7 @@ class QualificationReportTest(unittest.TestCase):
                 bundle = self.root / "evidence.tar.gz"
                 report.bundle(self.evidence, native_exit, 0, bundle)
                 with tarfile.open(bundle) as archive:
-                    path = "invocation-pass/reports/outputs.zip"
+                    path = f"invocation-pass/reports/{relative}"
                     if status == "PASSED":
                         self.assertNotIn(path, archive.getnames())
                     else:

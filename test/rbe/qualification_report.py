@@ -172,15 +172,20 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path) -> 
                     if "testResult" in event:
                         attempt = Attempt.parse(identity.get("testResult"))
                         result = mapping(event["testResult"])
-                        advertised = sequence(result.get("testActionOutput", []))
+                        advertised: dict[str, list[dict[str, object]]] = {}
+                        for item in sequence(result.get("testActionOutput", [])):
+                            report = mapping(item)
+                            advertised.setdefault(string(report.get("name")), []).append(report)
                         names = ["test.log", "test.xml"]
                         # Guest logs can survive only in undeclared outputs when
                         # the wrapper times out before printing them to test.log.
-                        if result.get("status") != "PASSED" and any(mapping(item).get("name") == "test.outputs__outputs.zip" for item in advertised):
-                            names.append("test.outputs__outputs.zip")
+                        # Bazel may publish a ZIP or the individual files.
+                        if result.get("status") != "PASSED":
+                            names.extend(name for name in advertised
+                                         if name == "test.outputs__outputs.zip" or name.startswith("test.outputs/"))
                         for name in names:
                             try:
-                                matches = [mapping(item) for item in advertised if mapping(item).get("name") == name]
+                                matches = advertised.get(name, [])
                                 if len(matches) != 1 or (attempt, name) in seen:
                                     raise ValueError(f"Expected one original {name} for {attempt}")
                                 seen.add((attempt, name))
