@@ -424,14 +424,15 @@ test_suite(
         exec_properties = docker_test_exec_properties(
             exec_group = "",
             free_disk = "40GB",
-            memory = "8GB",
+            memory = memory,
             start_daemon = True,
         ),
         image = image,
         tags = ["manual"],
     )
-    for name, image in [
-        ("nodejs_source_amd64", "runtimes/nodejs22.2.0"),
-        ("php_source_amd64", "runtimes/php8.5.11"),
+    for name, image, memory in [
+        # Node's parallel V8 compilation exhausts an 8 GiB worker.
+        ("nodejs_source_amd64", "runtimes/nodejs22.2.0", "32GB"),
+        ("php_source_amd64", "runtimes/php8.5.11", "8GB"),
     ]
 ]
