@@ -14,8 +14,8 @@
 
 #include <arpa/inet.h>
 #include <linux/capability.h>
-#include <linux/if.h>
 #include <linux/sockios.h>
+#include <net/if.h>
 #include <sched.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -101,8 +101,10 @@ PosixError SetupExternalNetwork() {
                        {{IFLA_IFNAME, kName, sizeof(kName)},
                         {IFLA_LINKINFO, link_info.data(), link_info.size()}}));
 
-  int index;
-  ASSIGN_OR_RETURN_ERRNO(index, InterfaceIndex(kName));
+  const unsigned int index = if_nametoindex(kName);
+  if (index == 0) {
+    return PosixError(errno, "find fixture interface index");
+  }
   const in_addr ipv4 = {.s_addr = htonl(0xc0000201)};  // 192.0.2.1
   const in_addr broadcast = {.s_addr = htonl(0xc00002ff)};
   ifaddrmsg addr = {};
