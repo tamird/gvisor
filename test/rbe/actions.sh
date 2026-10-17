@@ -48,10 +48,19 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
     exit 2
   fi
   read -r -a selected_targets <<< "$QUALIFICATION_TARGETS"
+  if (( ${#selected_targets[@]} == 0 )); then
+    printf 'Supply at least one explicit target label.\n' >&2
+    exit 2
+  fi
   case "${lanes[*]}" in
     build|test)
       for target in "${selected_targets[@]}"; do
         options+=("--${lanes[0]}-target=$target")
+      done
+      ;;
+    syscalls|syscalls-kvm|syscalls-rc)
+      for target in "${selected_targets[@]}"; do
+        options+=("--test-target=$target")
       done
       ;;
     benchmarks)
@@ -62,7 +71,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
       options+=("--benchmark-target=${selected_targets[0]}")
       ;;
     *)
-      printf 'Explicit targets require the build, test or benchmarks lane.\n' >&2
+      printf 'Explicit targets require the build, test, syscall, KVM syscall, RC syscall or benchmarks lane.\n' >&2
       exit 2
       ;;
   esac
