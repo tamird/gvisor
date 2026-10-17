@@ -34,7 +34,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/log"
-	"gvisor.dev/gvisor/pkg/sentry/control"
+	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
 	"gvisor.dev/gvisor/pkg/sentry/hostmm"
 	"gvisor.dev/gvisor/pkg/sighandling"
 	"gvisor.dev/gvisor/pkg/unet"
@@ -189,14 +189,14 @@ type Args struct {
 	// ExecFile is the host file used for program execution.
 	ExecFile *os.File
 
-	// If FSRestoreImagePath is non-empty, it is a path to a filesystem
-	// checkpoint that should be restored. FSRestoreImagePath may only be set
-	// for containers in a new Sandbox process.
-	FSRestoreImagePath string
-	FSRestoreDirect    bool
+	// If FSRestoreImagePaths is non-empty, it lists paths to filesystem
+	// checkpoints that should be restored. FSRestoreImagePaths may only be
+	// set for containers in a new Sandbox process.
+	FSRestoreImagePaths []string
+	FSRestoreDirect     bool
 
 	// CheckpointDirPath is the path to the sentry checkpoint directory.
-	// Used to default FSRestoreImagePath if it is empty.
+	// Used to default FSRestoreImagePaths if it is empty.
 	CheckpointDirPath string
 
 	// NoRootContainer creates a sandbox with no root container: Spec has
@@ -211,9 +211,10 @@ type Args struct {
 func New(conf *config.Config, args Args) (*Container, error) {
 	log.Debugf("Create container, cid: %s, rootDir: %q", args.ID, conf.RootDir)
 
-	if specutils.IsRootContainer(args.Spec) && args.FSRestoreImagePath == "" && args.CheckpointDirPath != "" {
+	args.FSRestoreImagePaths = slices.DeleteFunc(slices.Clone(args.FSRestoreImagePaths), func(p string) bool { return p == "" })
+	if specutils.IsRootContainer(args.Spec) && len(args.FSRestoreImagePaths) == 0 && args.CheckpointDirPath != "" {
 		if sandbox.HasFSCheckpointManifest(args.CheckpointDirPath) {
-			args.FSRestoreImagePath = args.CheckpointDirPath
+			args.FSRestoreImagePaths = []string{args.CheckpointDirPath}
 		}
 	}
 
@@ -240,8 +241,8 @@ func New(conf *config.Config, args Args) (*Container, error) {
 		if !ok {
 			return nil, fmt.Errorf("no sandbox ID found when creating container")
 		}
-		if args.FSRestoreImagePath != "" {
-			return nil, fmt.Errorf("cannot set FSRestoreImagePath when creating container in existing sandbox")
+		if len(args.FSRestoreImagePaths) > 0 {
+			return nil, fmt.Errorf("cannot set FSRestoreImagePaths when creating container in existing sandbox")
 		}
 	}
 
@@ -447,7 +448,7 @@ func (c *Container) createRoot(conf *config.Config, args Args, sandboxID string)
 			MountHints:          mountHints,
 			PassFiles:           args.PassFiles,
 			ExecFile:            args.ExecFile,
-			FSRestoreImagePath:  args.FSRestoreImagePath,
+			FSRestoreImagePaths: args.FSRestoreImagePaths,
 			FSRestoreDirect:     args.FSRestoreDirect,
 			NoRootContainer:     args.NoRootContainer,
 		}
@@ -669,7 +670,7 @@ func (c *Container) Update(res *specs.LinuxResources) error {
 
 // Execute runs the specified command in the container. It returns the PID of
 // the newly created process.
-func (c *Container) Execute(conf *config.Config, args *control.ExecArgs) (int32, error) {
+func (c *Container) Execute(conf *config.Config, args *controlapi.ExecArgs) (int32, error) {
 	log.Debugf("Execute in container, cid: %s, args: %+v", c.ID, args)
 	if err := c.requireStatus("execute in", Created, Running); err != nil {
 		return 0, err
@@ -1004,7 +1005,7 @@ func (c *Container) State() specs.State {
 
 // Processes retrieves the list of processes and associated metadata inside a
 // container.
-func (c *Container) Processes() ([]*control.Process, error) {
+func (c *Container) Processes() ([]*controlapi.Process, error) {
 	if err := c.requireStatus("get processes of", Running, Paused); err != nil {
 		return nil, err
 	}
