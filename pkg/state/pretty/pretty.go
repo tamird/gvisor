@@ -124,10 +124,10 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, 
 		return strings.Join(items, tabs), true // No zero value.
 	case *wire.Slice:
 		return fmt.Sprintf("%s{len:%d,cap:%d}", p.formatRef(&x.Ref, graph), x.Length, x.Capacity), x.Capacity != 0
-	case *wire.Array:
-		return p.formatArray(graph, depth, x.Contents)
+	case wire.Array:
+		return p.formatArray(graph, depth, x.Len(), x.Element)
 	case *wire.MultipleObjects:
-		return p.formatArray(graph, depth, *x)
+		return p.formatArray(graph, depth, len(*x), func(i int) wire.Object { return (*x)[i] })
 	case *wire.Struct:
 		tag := fmt.Sprintf("g%dt%d", graph, x.TypeID)
 		spec := p.typeSpecs[tag]
@@ -177,15 +177,16 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, 
 	}
 }
 
-func (p *printer) formatArray(graph uint64, depth int, values []wire.Object) (string, bool) {
-	if len(values) == 0 {
+func (p *printer) formatArray(graph uint64, depth int, length int, element func(int) wire.Object) (string, bool) {
+	if length == 0 {
 		return "[]", false
 	}
-	items := make([]string, 0, len(values)+2)
+	items := make([]string, 0, length+2)
 	zeros := make([]string, 0) // used to eliminate zero entries.
 	items = append(items, "[")
 	tabs := "\n" + strings.Repeat("\t", depth)
-	for _, value := range values {
+	for i := range length {
+		value := element(i)
 		item, ok := p.format(graph, depth+1, value)
 		if !ok {
 			zeros = append(zeros, fmt.Sprintf("\t%s,", item))
@@ -201,7 +202,7 @@ func (p *printer) formatArray(graph uint64, depth int, values []wire.Object) (st
 		items = append(items, fmt.Sprintf("\t... (%d zeros),", len(zeros)))
 	}
 	items = append(items, "]")
-	return strings.Join(items, tabs), len(zeros) < len(values)
+	return strings.Join(items, tabs), len(zeros) < length
 }
 
 // printStream is the basic print implementation.

@@ -16,17 +16,22 @@ package wire
 
 import "slices"
 
-// capturedArray owns the save-side homogeneous array representation. Primitive
-// payloads are copied; reference payloads remain stable until graph resolution
-// completes. All use the ordinary Array wire grammar.
-type capturedArray interface {
+// Array is an owned homogeneous array. Capture and Load use the same typed
+// payloads. Element is for inspection; primitive restoration reads the typed
+// contents directly, without boxing each element. Pointer-valued elements are
+// copied so retaining one element does not retain the array's backing storage.
+// Load uses IntArray[Int], UintArray[Uint] and Float32Array[Float32]; capture
+// may retain a different native width until writing the same wire payload.
+type Array interface {
 	Object
-	capturedArray()
+	Len() int
+	Element(int) Object
+	array()
 }
 
-type arrayCapture struct{}
+type arrayKind struct{}
 
-func (arrayCapture) capturedArray() {}
+func (arrayKind) array() {}
 
 func snapshotValues[T any](values []T) []T {
 	if len(values) == 0 {
@@ -47,57 +52,60 @@ func saveArrayHeader(w *Writer, length int, kind Uint) bool {
 
 // CaptureBoolArray copies values now and emits the existing Array wire form.
 func CaptureBoolArray(values []bool) Object {
-	return &boolArraySnapshot{values: snapshotValues(values)}
+	return &BoolArray{Contents: snapshotValues(values)}
 }
 
-type boolArraySnapshot struct {
-	arrayCapture
-	values []bool
+// BoolArray owns homogeneous boolean values.
+type BoolArray struct {
+	arrayKind
+	Contents []bool
 }
 
-func (a *boolArraySnapshot) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeBool) {
+func (a *BoolArray) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeBool) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		Bool(value).save(w)
 	}
 }
 
 // CaptureIntArray copies values now and emits the existing Array wire form.
 func CaptureIntArray[T ~int | ~int8 | ~int16 | ~int32 | ~int64](values []T) Object {
-	return &intArraySnapshot[T]{values: snapshotValues(values)}
+	return &IntArray[T]{Contents: snapshotValues(values)}
 }
 
-type intArraySnapshot[T ~int | ~int8 | ~int16 | ~int32 | ~int64] struct {
-	arrayCapture
-	values []T
+// IntArray owns homogeneous signed integer values.
+type IntArray[T ~int | ~int8 | ~int16 | ~int32 | ~int64] struct {
+	arrayKind
+	Contents []T
 }
 
-func (a *intArraySnapshot[T]) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeInt) {
+func (a *IntArray[T]) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeInt) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		Int(value).save(w)
 	}
 }
 
 // CaptureUintArray copies values now and emits the existing Array wire form.
 func CaptureUintArray[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](values []T) Object {
-	return &uintArraySnapshot[T]{values: snapshotValues(values)}
+	return &UintArray[T]{Contents: snapshotValues(values)}
 }
 
-type uintArraySnapshot[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr] struct {
-	arrayCapture
-	values []T
+// UintArray owns homogeneous unsigned integer values.
+type UintArray[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr] struct {
+	arrayKind
+	Contents []T
 }
 
-func (a *uintArraySnapshot[T]) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeUint) {
+func (a *UintArray[T]) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeUint) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		Uint(value).save(w)
 	}
 }
@@ -111,61 +119,64 @@ func CaptureFloat32Array(values []float32) Object {
 	for i, value := range values {
 		captured[i] = float64(value)
 	}
-	return &float32ArraySnapshot{values: captured}
+	return &Float32Array[float64]{Contents: captured}
 }
 
-type float32ArraySnapshot struct {
-	arrayCapture
-	values []float64
+// Float32Array owns homogeneous 32-bit floating point values.
+type Float32Array[T ~float32 | ~float64] struct {
+	arrayKind
+	Contents []T
 }
 
-func (a *float32ArraySnapshot) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeFloat32) {
+func (a *Float32Array[T]) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeFloat32) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		Float32(value).save(w)
 	}
 }
 
 // CaptureFloat64Array copies values now and emits the existing Array wire form.
 func CaptureFloat64Array(values []float64) Object {
-	return &float64ArraySnapshot{values: snapshotValues(values)}
+	return &Float64Array{Contents: snapshotValues(values)}
 }
 
-type float64ArraySnapshot struct {
-	arrayCapture
-	values []float64
+// Float64Array owns homogeneous 64-bit floating point values.
+type Float64Array struct {
+	arrayKind
+	Contents []float64
 }
 
-func (a *float64ArraySnapshot) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeFloat64) {
+func (a *Float64Array) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeFloat64) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		Float64(value).save(w)
 	}
 }
 
 // CaptureComplex64Array copies values now and emits the existing Array wire form.
 func CaptureComplex64Array(values []complex64) Object {
-	captured := make([]complex128, len(values))
+	captured := make([]Complex64, len(values))
 	for i, value := range values {
-		captured[i] = complex128(value)
+		captured[i] = Complex64(complex128(value))
 	}
-	return &complex64ArraySnapshot{values: captured}
+	return &Complex64Array{Contents: captured}
 }
 
-type complex64ArraySnapshot struct {
-	arrayCapture
-	values []complex128
+// Complex64Array owns homogeneous 64-bit complex values.
+type Complex64Array struct {
+	arrayKind
+	Contents []Complex64
 }
 
-func (a *complex64ArraySnapshot) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeComplex64) {
+func (a *Complex64Array) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeComplex64) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		v := Complex64(value)
 		v.save(w)
 	}
@@ -173,19 +184,24 @@ func (a *complex64ArraySnapshot) save(w *Writer) {
 
 // CaptureComplex128Array copies values now and emits the existing Array wire form.
 func CaptureComplex128Array(values []complex128) Object {
-	return &complex128ArraySnapshot{values: snapshotValues(values)}
+	captured := make([]Complex128, len(values))
+	for i, value := range values {
+		captured[i] = Complex128(value)
+	}
+	return &Complex128Array{Contents: captured}
 }
 
-type complex128ArraySnapshot struct {
-	arrayCapture
-	values []complex128
+// Complex128Array owns homogeneous 128-bit complex values.
+type Complex128Array struct {
+	arrayKind
+	Contents []Complex128
 }
 
-func (a *complex128ArraySnapshot) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeComplex128) {
+func (a *Complex128Array) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeComplex128) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		v := Complex128(value)
 		v.save(w)
 	}
@@ -193,19 +209,20 @@ func (a *complex128ArraySnapshot) save(w *Writer) {
 
 // CaptureStringArray copies values now and emits the existing Array wire form.
 func CaptureStringArray(values []string) Object {
-	return &stringArraySnapshot{values: snapshotValues(values)}
+	return &StringArray{Contents: snapshotValues(values)}
 }
 
-type stringArraySnapshot struct {
-	arrayCapture
-	values []string
+// StringArray owns homogeneous string values.
+type StringArray struct {
+	arrayKind
+	Contents []string
 }
 
-func (a *stringArraySnapshot) save(w *Writer) {
-	if !saveArrayHeader(w, len(a.values), typeString) {
+func (a *StringArray) save(w *Writer) {
+	if !saveArrayHeader(w, len(a.Contents), typeString) {
 		return
 	}
-	for _, value := range a.values {
+	for _, value := range a.Contents {
 		v := String(value)
 		v.save(w)
 	}
@@ -214,9 +231,9 @@ func (a *stringArraySnapshot) save(w *Writer) {
 // RefArray stores a homogeneous reference array without one Object interface
 // and allocation per element. Contents must not move while a graph resolver
 // retains element pointers. Each save reads the current reference values.
-// The parser reads its encoding through the ordinary Array grammar.
+// Load uses this same storage for the ordinary Array wire grammar.
 type RefArray struct {
-	arrayCapture
+	arrayKind
 	Contents []Ref
 }
 
@@ -227,4 +244,35 @@ func (a *RefArray) save(w *Writer) {
 	for i := range a.Contents {
 		a.Contents[i].save(w)
 	}
+}
+
+func (a *BoolArray) Len() int                   { return len(a.Contents) }
+func (a *BoolArray) Element(i int) Object       { return Bool(a.Contents[i]) }
+func (a *IntArray[T]) Len() int                 { return len(a.Contents) }
+func (a *IntArray[T]) Element(i int) Object     { return Int(a.Contents[i]) }
+func (a *UintArray[T]) Len() int                { return len(a.Contents) }
+func (a *UintArray[T]) Element(i int) Object    { return Uint(a.Contents[i]) }
+func (a *Float32Array[T]) Len() int             { return len(a.Contents) }
+func (a *Float32Array[T]) Element(i int) Object { return Float32(a.Contents[i]) }
+func (a *Float64Array) Len() int                { return len(a.Contents) }
+func (a *Float64Array) Element(i int) Object    { return Float64(a.Contents[i]) }
+func (a *Complex64Array) Len() int              { return len(a.Contents) }
+func (a *Complex64Array) Element(i int) Object {
+	value := a.Contents[i]
+	return &value
+}
+func (a *Complex128Array) Len() int { return len(a.Contents) }
+func (a *Complex128Array) Element(i int) Object {
+	value := a.Contents[i]
+	return &value
+}
+func (a *StringArray) Len() int { return len(a.Contents) }
+func (a *StringArray) Element(i int) Object {
+	value := String(a.Contents[i])
+	return &value
+}
+func (a *RefArray) Len() int { return len(a.Contents) }
+func (a *RefArray) Element(i int) Object {
+	value := a.Contents[i]
+	return &value
 }

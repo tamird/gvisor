@@ -40,12 +40,26 @@ func arrayFromSlice(obj reflect.Value) reflect.Value {
 // captureArray selects one save-owned array representation without
 // reflecting or boxing each primitive or pointer element. Kind selects its
 // native width and layout, including defined scalar types. Typed copies retain
-// GC ownership for strings. Other kinds and unaddressable values use encodeArray's
-// existing path. Each invocation captures anew; late parent replacement must
+// GC ownership for strings. Other kinds use encodeArray's composite path.
+// Each invocation captures anew; late parent replacement must
 // remain able to observe changes made before re-encoding a containing array.
+// Unaddressable inputs come from interfaceable SaveValue or map values; no
+// caller supplies a reflect.Value obtained from an unexported struct field.
 func (es *encodeState) captureArray(obj reflect.Value) (wire.Object, bool) {
 	if !obj.CanAddr() {
-		return nil, false
+		switch obj.Type().Elem().Kind() {
+		case reflect.Ptr, reflect.Bool,
+			reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.String:
+			// Interface and map values can supply an unaddressable array.
+			// Obtain a typed address once instead of boxing its elements.
+			local := reflect.New(obj.Type()).Elem()
+			local.Set(obj)
+			obj = local
+		default:
+			return nil, false
+		}
 	}
 	var captured wire.Object
 	length := obj.Len()

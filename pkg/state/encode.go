@@ -592,7 +592,7 @@ func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
 		return
 	}
 	l := obj.Len()
-	a := &wire.Array{
+	a := &wire.ObjectArray{
 		Contents: make([]wire.Object, l),
 	}
 	*dest = a

@@ -67,8 +67,8 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value
 		if objectID(value.Ref.Root) != 0 {
 			ds.assignSlice(target, value)
 		}
-	case *wire.Array:
-		ds.restoreArray(ods, target, value.Contents)
+	case wire.Array:
+		ds.restoreArray(ods, target, value)
 	case *wire.Map:
 		ds.restoreMap(ods, target, value)
 	case *wire.Struct:

@@ -452,7 +452,7 @@ func TestNilEmptyArrayDestination(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "nil", value: wire.Nil{}},
-		{name: "array", value: &wire.Array{}, wantErr: true},
+		{name: "array", value: &wire.ObjectArray{}, wantErr: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var encoded bytes.Buffer

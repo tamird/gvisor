@@ -67,14 +67,14 @@ func TestGeneratedLegacyFields(t *testing.T) {
 	}{
 		{"nil_interface_in_integer", 0, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Int(17)}, restoreLegacyFields{}, restoreLegacyFields{integer: 17}, false},
 		{"schema_in_integer", 0, &emptySchema, restoreLegacyFields{integer: 23}, restoreLegacyFields{integer: 23}, false},
-		{"empty_array_in_string", 1, &wire.Array{}, restoreLegacyFields{}, restoreLegacyFields{}, false},
-		{"array_noops_in_string", 1, &wire.Array{Contents: []wire.Object{wrapped(wire.Nil{}), wrapped(&wire.Ref{})}}, restoreLegacyFields{text: "ab"}, restoreLegacyFields{text: "ab"}, false},
-		{"array_in_slice", 2, &wire.Array{Contents: []wire.Object{wire.Int(17), wire.Int(29)}}, restoreLegacyFields{slice: []int64{0, 0}}, restoreLegacyFields{slice: []int64{17, 29}}, false},
+		{"empty_array_in_string", 1, &wire.ObjectArray{}, restoreLegacyFields{}, restoreLegacyFields{}, false},
+		{"array_noops_in_string", 1, &wire.ObjectArray{Contents: []wire.Object{wrapped(wire.Nil{}), wrapped(&wire.Ref{})}}, restoreLegacyFields{text: "ab"}, restoreLegacyFields{text: "ab"}, false},
+		{"array_in_slice", 2, &wire.ObjectArray{Contents: []wire.Object{wire.Int(17), wire.Int(29)}}, restoreLegacyFields{slice: []int64{0, 0}}, restoreLegacyFields{slice: []int64{17, 29}}, false},
 		{"empty_map_in_slice", 2, &wire.Map{}, restoreLegacyFields{slice: []int64{23}}, restoreLegacyFields{slice: []int64{23}}, false},
 		{"empty_map_in_pointer", 3, &wire.Map{}, restoreLegacyFields{pointer: new(int64(23))}, restoreLegacyFields{pointer: new(int64(23))}, false},
 		{"converted_zero_reference", 3, &wire.Ref{Root: 1 << 32}, restoreLegacyFields{pointer: new(int64(23))}, restoreLegacyFields{pointer: new(int64(23))}, false},
-		{"array_in_array", 4, &wire.Array{Contents: []wire.Object{wrapped(wire.Nil{}), wrapped(wire.Int(29))}}, restoreLegacyFields{array: [2]int64{17, 0}}, restoreLegacyFields{array: [2]int64{17, 29}}, false},
-		{"empty_array_in_map", 5, &wire.Array{}, restoreLegacyFields{mapping: map[int]int64{}}, restoreLegacyFields{mapping: map[int]int64{}}, false},
+		{"array_in_array", 4, &wire.ObjectArray{Contents: []wire.Object{wrapped(wire.Nil{}), wrapped(wire.Int(29))}}, restoreLegacyFields{array: [2]int64{17, 0}}, restoreLegacyFields{array: [2]int64{17, 29}}, false},
+		{"empty_array_in_map", 5, &wire.ObjectArray{}, restoreLegacyFields{mapping: map[int]int64{}}, restoreLegacyFields{mapping: map[int]int64{}}, false},
 		{"nil_in_integer", 0, wire.Nil{}, restoreLegacyFields{integer: 23}, restoreLegacyFields{integer: 23}, false},
 		{"interface_in_integer", 0, &wire.Interface{Type: wire.TypeID(2), Value: wire.Int(17)}, restoreLegacyFields{}, restoreLegacyFields{integer: 17}, false},
 		{"signed_limit", 6, wire.Int(-128), restoreLegacyFields{}, restoreLegacyFields{signed: -128}, false},
@@ -206,7 +206,7 @@ func TestSourceReplay(t *testing.T) {
 	value := wire.Struct{TypeID: 1}
 	value.Alloc(3)
 	*value.Field(0), *value.Field(1), *value.Field(2) = &text, wire.Int(99), wire.Int(17)
-	wire.Save(&w, &wire.Array{Contents: []wire.Object{&value}})
+	wire.Save(&w, &wire.ObjectArray{Contents: []wire.Object{&value}})
 	const trailing = "following non-state data"
 	buf.WriteString(trailing)
 	var restored [1]replayLoadStruct

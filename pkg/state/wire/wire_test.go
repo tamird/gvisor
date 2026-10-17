@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -29,6 +30,7 @@ func TestLoadUnknownWideTag(t *testing.T) {
 		tag  Uint
 	}{
 		{"value", Uint(1<<63) | typeInt},
+		{"array", Uint(1<<63) | typeInt},
 		{"type", Uint(1<<63) | typeSpecNil},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -36,6 +38,9 @@ func TestLoadUnknownWideTag(t *testing.T) {
 			w := Writer{Writer: &buf}
 			if test.name == "type" {
 				typeInterface.save(&w)
+			} else if test.name == "array" {
+				typeArray.save(&w)
+				Uint(1).save(&w)
 			}
 			test.tag.save(&w)
 			Save(&w, Int(17))
@@ -45,6 +50,41 @@ func TestLoadUnknownWideTag(t *testing.T) {
 				}
 			}()
 			Load(&Reader{Reader: &buf})
+		})
+	}
+}
+
+func TestArrayPayloadWireRoundTrip(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		values []Object
+	}{
+		{"empty", nil},
+		{"bool", []Object{Bool(false), Bool(true)}},
+		{"int", []Object{Int(math.MinInt64), Int(math.MaxInt64)}},
+		{"uint", []Object{Uint(0), ^Uint(0)}},
+		{"float32", []Object{Float32(math.Float32frombits(0x7f800001)), Float32(math.Float32frombits(1 << 31))}},
+		{"float64", []Object{Float64(math.Float64frombits(0x7ff0000000000001)), Float64(math.Float64frombits(1 << 63))}},
+		{"complex64", []Object{new(Complex64(1 + 2i)), new(Complex64(-3 - 4i))}},
+		{"complex128", []Object{new(Complex128(1 + 2i)), new(Complex128(-3 - 4i))}},
+		{"string", []Object{new(String("")), new(String("owned"))}},
+		{"ref", []Object{&Ref{}, &Ref{Root: 7}}},
+		{"nil", []Object{Nil{}, Nil{}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var original bytes.Buffer
+			Save(&Writer{Writer: &original}, &ObjectArray{Contents: test.values})
+			parsed := Load(&Reader{Reader: bytes.NewReader(original.Bytes())}).(Array)
+			if got, want := parsed.Len(), len(test.values); got != want {
+				t.Fatalf("array length = %d, want %d", got, want)
+			}
+			// Compare bytes, including signaling NaNs that DeepEqual cannot
+			// compare. Parsing must not apply destination conversion early.
+			var restored bytes.Buffer
+			Save(&Writer{Writer: &restored}, parsed)
+			if got, want := restored.Bytes(), original.Bytes(); !bytes.Equal(got, want) {
+				t.Errorf("reserialized array = %x, want %x", got, want)
+			}
 		})
 	}
 }
@@ -107,7 +147,7 @@ func TestEmptyCollections(t *testing.T) {
 			var values []Object
 			switch test.tag {
 			case typeArray:
-				values = value.(*Array).Contents
+				values = value.(*ObjectArray).Contents
 			case typeMultipleObjects:
 				values = *value.(*MultipleObjects)
 			case typeMap:
@@ -181,7 +221,7 @@ func TestStructFieldWireForms(t *testing.T) {
 
 func TestObjectOwnership(t *testing.T) {
 	field := FieldName("Value")
-	want := &Array{Contents: []Object{
+	want := &ObjectArray{Contents: []Object{
 		&Ref{Root: 7, Dots: []Dot{Index(257), &field}, Type: &TypeSpecArray{Count: 8, Type: TypeID(3)}},
 		&Ref{Root: 9, Dots: []Dot{Index(0)}, Type: &TypeSpecPointer{Type: TypeID(4)}},
 	}}
@@ -194,7 +234,7 @@ func TestObjectOwnership(t *testing.T) {
 			Type: &TypeSpecPointer{Type: TypeID(4)},
 		})
 	}
-	reuse := &Array{Contents: make([]Object, 257)}
+	reuse := &ObjectArray{Contents: make([]Object, 257)}
 	for i := range reuse.Contents {
 		reuse.Contents[i] = Uint(i & 1)
 	}
@@ -209,7 +249,7 @@ func TestObjectOwnership(t *testing.T) {
 	var buf bytes.Buffer
 	w := Writer{Writer: &buf}
 	Save(&w, &parent)
-	Save(&w, &Array{Contents: []Object{&text, &text, &text}})
+	Save(&w, &ObjectArray{Contents: []Object{&text, &text, &text}})
 	Save(&w, reuse)
 	// Full-width reference metadata and more than 255 path elements must
 	// survive both field-name and index paths in successive records.
@@ -230,19 +270,19 @@ func TestObjectOwnership(t *testing.T) {
 	encoded := buf.Bytes()
 	r := Reader{Reader: &buf}
 	first := Load(&r).(*Struct)
-	retained := (*first.Field(1)).(*Array).Contents
+	retained := (*first.Field(1)).(Array)
 	retainedText := string(*(*first.Field(2)).(*String))
 	retainedMap := (*first.Field(3)).(*Map)
 	// Keep only a nested subtree and text while reading unrelated records.
 	// Their lifetime must not depend on the reader or its input storage.
 	Load(&r)
 	// A large scalar array follows reference metadata and a short record.
-	reused := Load(&r).(*Array).Contents
-	if got, want := len(reused), len(reuse.Contents); got != want {
+	reused := Load(&r).(Array)
+	if got, want := reused.Len(), len(reuse.Contents); got != want {
 		t.Fatalf("reused length = %d, want %d", got, want)
 	}
 	for i := range reuse.Contents {
-		if got, want := uint64(reused[i].(Uint)), uint64(i&1); got != want {
+		if got, want := uint64(reused.Element(i).(Uint)), uint64(i&1); got != want {
 			t.Fatalf("reused element %d = %d, want %d", i, got, want)
 		}
 	}
@@ -262,11 +302,11 @@ func TestObjectOwnership(t *testing.T) {
 		t.Fatalf("following value = %d, want %d", got, want)
 	}
 	clear(encoded)
-	if got, want := len(retained), len(want.Contents); got != want {
+	if got, want := retained.Len(), len(want.Contents); got != want {
 		t.Fatalf("owned subtree length = %d, want %d", got, want)
 	}
 	for i, expected := range want.Contents {
-		if got, want := retained[i].(*Ref), expected.(*Ref); !reflect.DeepEqual(got, want) {
+		if got, want := retained.Element(i).(*Ref), expected.(*Ref); !reflect.DeepEqual(got, want) {
 			t.Errorf("owned reference %d = %#v, want %#v", i, got, want)
 		}
 	}
@@ -294,13 +334,13 @@ func TestSchemaOwnership(t *testing.T) {
 	}
 	var saved bytes.Buffer
 	writer := Writer{Writer: &saved}
-	array := &Array{}
+	array := &ObjectArray{}
 	for _, schema := range schemas {
 		array.Contents = append(array.Contents, schema)
 	}
 	Save(&writer, array)
-	parsed := Load(&Reader{Reader: &saved}).(*Array).Contents
-	retained := parsed[0].(*Type)
+	parsed := Load(&Reader{Reader: &saved}).(Array)
+	retained := parsed.Element(0).(*Type)
 
 	// A later record may parse a complete nested schema before failing.
 	// It must not return that partial record or overwrite retained metadata.
@@ -321,7 +361,7 @@ func TestSchemaOwnership(t *testing.T) {
 		t.Errorf("retained schema = %+v, want %+v", got, want)
 	}
 	for i, schema := range schemas {
-		if got, want := parsed[i].(*Type), schema; !reflect.DeepEqual(got, want) {
+		if got, want := parsed.Element(i).(*Type), schema; !reflect.DeepEqual(got, want) {
 			t.Errorf("owned schema %d = %+v, want %+v", i, got, want)
 		}
 	}
