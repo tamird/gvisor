@@ -72,8 +72,15 @@ if [[ "${expected_architecture:?}" == amd64 ]]; then
 fi
 # The launcher fixes scratch/root at PCI slots 4/5, respectively. Check their
 # identities before mounting writable test storage.
-[[ "$(findmnt -n -o MAJ:MIN /)" == "$(lsblk -dn -o MAJ:MIN /dev/vdb)" ]]
-[[ "$(blkid -s LABEL -o value /dev/vdb)" == gvisor-root ]]
+root_device=
+while read -r _ _ device _ mountpoint _; do
+  if [[ "$mountpoint" == / ]]; then root_device="$device"; break; fi
+done < /proc/self/mountinfo
+read -r expected_root_device < /sys/class/block/vdb/dev
+if [[ -z "$root_device" || "$root_device" != "$expected_root_device" ]]; then
+  printf 'Root device %s does not match vdb %s\n' "$root_device" "$expected_root_device" >&2
+  exit 1
+fi
 mount -t ext4 /dev/vda /work
 mkdir -p /work/payload /work/tmp
 chmod 1777 /work/tmp
