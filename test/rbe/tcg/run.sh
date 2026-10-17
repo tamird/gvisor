@@ -30,7 +30,7 @@ host_phase() {
 host_phase launcher_start
 host="$(realpath "$1")"
 kernel="$(realpath "$2")"
-initramfs="$(realpath "$3")"
+rootfs="$(realpath "$3")"
 payload_archive="$(realpath "$4")"
 payload="$5"
 payload_label="$6"
@@ -189,16 +189,21 @@ trap 'host_phase signal_INT 130; exit 130' INT
 # shared libraries and firmware use the immutable declared host-tool directory.
 emulator_path="${guest_emulator:-$host/usr/bin/$emulator}"
 # Networking and privileged host mounts are not needed by the guest transport.
-QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
+# snapshot=on opens the declared root as a read-only backing file. QEMU keeps
+# its temporary writable overlay in this test's scratch via TMPDIR; the raw
+# scratch disk stays independently writable for existing failure recovery.
+TMPDIR="$scratch" QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
   -smp 2 -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \
-  -kernel "$kernel" -initrd "$initramfs" \
-  -append "console=$console rdinit=/init panic=-1" \
+  -kernel "$kernel" \
+  -append "console=$console root=/dev/vdb rootfstype=ext4 rw rootwait init=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \
   -drive "file=$scratch/scratch.ext4,format=raw,if=none,id=scratch" \
-  -device virtio-blk-pci,drive=scratch \
+  -device virtio-blk-pci,drive=scratch,addr=4 \
+  -drive "file=$rootfs,format=raw,if=none,id=root,snapshot=on" \
+  -device virtio-blk-pci,drive=root,addr=5 \
   -fsdev "local,id=input,path=$scratch/input,security_model=none,readonly=on" \
   -device virtio-9p-pci,fsdev=input,mount_tag=input \
   -fsdev "local,id=result,path=$result,security_model=none" \

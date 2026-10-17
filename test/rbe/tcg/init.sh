@@ -16,7 +16,7 @@
 # PID 1 inside the disposable full-system guest.
 set -euo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-/bin/busybox mount -t devtmpfs devtmpfs /dev
+# CONFIG_DEVTMPFS_MOUNT mounts /dev before this direct-root init runs.
 exec </dev/console >/dev/console 2>&1
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
@@ -69,6 +69,10 @@ if [[ "${expected_architecture:?}" == amd64 ]]; then
   [[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]]
   printf 'Guest KVM module: %s\n' "$module" | tee /result/kvm.txt
 fi
+# The launcher fixes scratch/root at PCI slots 4/5, respectively. Check their
+# identities before mounting writable test storage.
+[[ "$(findmnt -n -o MAJ:MIN /)" == "$(lsblk -dn -o MAJ:MIN /dev/vdb)" ]]
+[[ "$(blkid -s LABEL -o value /dev/vdb)" == gvisor-root ]]
 mount -t ext4 /dev/vda /work
 mkdir -p /work/payload /work/tmp
 chmod 1777 /work/tmp

@@ -28,8 +28,8 @@ def _guest_config(settings, attr):
 _guest_transition = transition(implementation = _guest_config, inputs = [], outputs = arch_config)
 
 TcgImageInfo = provider(
-    doc = "Declared kernel and initramfs for a full-system test guest.",
-    fields = ["kernel", "initramfs", "architecture"],
+    doc = "Declared kernel and root filesystem for a full-system test guest.",
+    fields = ["kernel", "rootfs", "architecture"],
 )
 
 def _host_tools_impl(ctx):
@@ -67,7 +67,7 @@ guest_host_tools = rule(
 def _image_impl(ctx):
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     kernel = ctx.actions.declare_file(ctx.label.name + ".Image")
-    initramfs = ctx.actions.declare_file(ctx.label.name + ".cpio.zst")
+    rootfs = ctx.actions.declare_file(ctx.label.name + ".ext4")
     ctx.actions.run(
         executable = ctx.executable._builder,
         arguments = [
@@ -77,21 +77,21 @@ def _image_impl(ctx):
             ctx.file.init.path,
             ctx.attr.kernel_release,
             kernel.path,
-            initramfs.path,
+            rootfs.path,
             str(ctx.attr.page_size),
             ctx.executable._zstd.path,
             ctx.attr.architecture,
         ] + [archive.path for archive in ctx.files.kernel_archives],
         inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init] + ctx.files.kernel_archives,
         tools = [ctx.attr._builder[DefaultInfo].files_to_run, ctx.attr._zstd[DefaultInfo].files_to_run, tar.tarinfo.binary],
-        outputs = [kernel, initramfs],
+        outputs = [kernel, rootfs],
         env = tar.tarinfo.default_env,
         mnemonic = "TcgGuestImage",
         progress_message = "Preparing the %s guest with %s" % (ctx.attr.architecture, ctx.attr.kernel_release),
     )
     return [
-        DefaultInfo(files = depset([kernel, initramfs])),
-        TcgImageInfo(kernel = kernel, initramfs = initramfs, architecture = ctx.attr.architecture),
+        DefaultInfo(files = depset([kernel, rootfs])),
+        TcgImageInfo(kernel = kernel, rootfs = rootfs, architecture = ctx.attr.architecture),
     ]
 
 tcg_image = rule(
@@ -150,13 +150,13 @@ def _tcg_test_impl(ctx):
             " ".join([shell.quote(key) for key in inherited_environment]),
         ),
     )
-    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
+    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
     if ctx.file.emulator != None:
         inputs.append(ctx.file.emulator)
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
-        image.initramfs.short_path,
+        image.rootfs.short_path,
         ctx.file.archive.short_path,
         ctx.executable.payload.short_path,
         str(ctx.attr.payload.label),
