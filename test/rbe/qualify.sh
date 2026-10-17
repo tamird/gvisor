@@ -49,6 +49,7 @@ The KVM lane uses local AMD64 execution, or remote ARM64 unit payloads in an
 EL2-enabled TCG guest. Guest skips remain incomplete qualification.
 The syscalls-rc lane selects the public ordinary profile for each requested CPU.
 Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
+Explicit --test-target owners may span both RC architectures with --arch=all.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports explicit test targets on either architecture, smoke,
@@ -187,8 +188,8 @@ if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
-  if [[ $# != 1 || $arch == all ]]; then
-    printf 'Explicit targets require one supported lane and a single target architecture.\n' >&2
+  if [[ $# != 1 || ( $arch == all && ${1:-} != syscalls-rc ) ]]; then
+    printf 'Explicit targets require one supported lane; both architectures require syscalls-rc.\n' >&2
     exit 2
   fi
   case "$1" in
@@ -448,6 +449,9 @@ select_test_profile() {
     for owner in "${test_targets[@]}"; do
       selection_options+=("--owner=$owner")
     done
+    if [[ $lane == syscalls-rc && $arch == all ]]; then
+      selection_options+=(--mixed-rc-owners)
+    fi
   fi
   if [[ $lane == syscalls-64k || $lane == syscalls-rc ]]; then
     if [[ $lane == syscalls-64k ]]; then
@@ -510,7 +514,7 @@ select_syscall_profile() {
 run_guest_profile() (
   set -e
   local lane=$1 selection_dir target_arch
-  local -a architectures=("$arch") options=()
+  local -a architectures=("$arch") options=() selection_options=()
   if [[ $arch == all ]]; then
     architectures=(amd64 arm64)
   fi
@@ -521,6 +525,11 @@ run_guest_profile() (
     cat "$selection_dir/$lane-$target_arch-targets" >> "$selection_dir/targets"
   done
   if [[ $arch == all ]]; then
+    local owner
+    for owner in "${test_targets[@]}"; do
+      selection_options+=("--owner=$owner")
+    done
+    python3 test/rbe/unit_matrix.py combine-rc-profiles "$selection_dir" "${selection_options[@]}" > "$selection_dir/selection.json"
     # Reconcile the combined configuration with both independently selected
     # public profiles before dispatching any TestRunner.
     python3 test/rbe/unit_matrix.py actions "$selection_dir/targets" --exact > "$selection_dir/combined.query"
@@ -530,17 +539,6 @@ run_guest_profile() (
       "--build_event_json_file=$selection_dir/profile.json" \
       "--query_file=$selection_dir/combined.query" > "$selection_dir/actions.json"
     python3 test/rbe/unit_matrix.py verify "$selection_dir/targets" "$selection_dir/profile.json"
-    python3 - "$selection_dir" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-root = Path(sys.argv[1])
-profiles = {arch: json.loads((root / f"{arch}-selection.json").read_text()) for arch in ("amd64", "arm64")}
-selected = [label for profile in profiles.values() for label in profile["selected_owners"]]
-assert len(selected) == len(set(selected)), "RC architecture selections overlap"
-(root / "selection.json").write_text(json.dumps({"profile_architecture": "all", "profile_kernel": "rc", "profiles": profiles, "selected_owners": sorted(selected)}, indent=2) + "\n")
-PY
   else
     cp "$selection_dir/$arch-selection.json" "$selection_dir/selection.json"
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"

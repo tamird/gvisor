@@ -36,10 +36,10 @@ class SyscallBucketsTest(unittest.TestCase):
     def select(
         self, value: str | None, routing: Path = FIXTURE / "routing.jsonl",
         *, owners: list[str] | None = None, rc_arch: str | None = None,
+        mixed_rc_owners: bool = False, actions: Path = FIXTURE / "actions.json",
     ):
         with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(io.StringIO()) as stdout:
             output = Path(directory) / "targets"
-            actions = FIXTURE / "actions.json"
             if rc_arch is not None:
                 # Project the retained owners into the two declared RC routing
                 # contracts; the real one-owner run checks graph integration.
@@ -67,11 +67,76 @@ class SyscallBucketsTest(unittest.TestCase):
                 str(routing), str(actions), str(output),
                 syscall_policy=True, hybrid=rc_arch is None, rc_kernel=rc_arch is not None,
                 selected_buckets=unit_matrix.syscall_buckets(value) if value is not None else None,
-                selected_owners=owners,
+                selected_owners=owners, mixed_rc_owners=mixed_rc_owners,
             )
             selection = json.loads(stdout.getvalue())
             self.assertEqual(output.read_text().splitlines(), selection["selected_owners"])
             return selection
+
+    def combine(self, profiles, owners=None):
+        with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(io.StringIO()) as stdout:
+            for architecture, profile in profiles.items():
+                (Path(directory) / f"{architecture}-selection.json").write_text(json.dumps(profile))
+            unit_matrix.combine_rc_profiles(directory, owners)
+            return json.loads(stdout.getvalue())
+
+    def test_mixed_rc_subset_preserves_exact_union_and_routing(self):
+        full = {architecture: self.select(None, rc_arch=architecture) for architecture in ("amd64", "arm64")}
+        owners = [profile["selected_owners"][0] for profile in full.values()]
+        # A mixed invocation may also select only one architecture's owners.
+        for requested in (owners, owners[:1]):
+            with self.subTest(owners=requested):
+                profiles = {
+                    architecture: self.select(None, owners=requested, rc_arch=architecture, mixed_rc_owners=True)
+                    for architecture in full
+                }
+                combined = self.combine(profiles, requested)
+                self.assertEqual(combined["selected_owners"], sorted(requested))
+                self.assertEqual(combined["explicit_owners"], requested)
+                self.assertEqual(sorted(requested + combined["unexecuted_owners"]), sorted(
+                    label for profile in full.values() for label in profile["selected_owners"]
+                ))
+                for architecture, profile in profiles.items():
+                    self.assertEqual(profile["canonical_owners"], full[architecture]["canonical_owners"])
+                    self.assertEqual(profile["selected_owners"], sorted(set(requested) & set(full[architecture]["selected_owners"])))
+                    self.assertEqual(profile["local_owners"], {
+                        group: [owner for owner in labels if owner in requested]
+                        for group, labels in full[architecture]["local_owners"].items()
+                    })
+                    self.assertEqual(profile["remote_owners"], [owner for owner in full[architecture]["remote_owners"] if owner in requested])
+
+    def test_mixed_rc_union_rejects_missing_wrong_profile_and_extra_owners(self):
+        owner = self.select(None, rc_arch="amd64")["selected_owners"][0]
+        for invalid in ("//test/syscalls:missing_rc_tcg", owner.removesuffix("_rc_kvm") + "_arm64"):
+            with self.subTest(owner=invalid):
+                requested = [owner, invalid]
+                profiles = {
+                    architecture: self.select(None, owners=requested, rc_arch=architecture, mixed_rc_owners=True)
+                    for architecture in ("amd64", "arm64")
+                }
+                with self.assertRaisesRegex(ValueError, "Combined RC profile changes explicit owners"):
+                    self.combine(profiles, requested)
+        profiles = {architecture: self.select(None, rc_arch=architecture) for architecture in ("amd64", "arm64")}
+        with self.assertRaisesRegex(ValueError, "Combined RC profile changes explicit owners"):
+            self.combine(profiles, [owner])
+        for requested in ([], [owner, owner]):
+            with self.subTest(owners=requested), self.assertRaisesRegex(ValueError, "nonempty and distinct"):
+                self.select(None, owners=requested, rc_arch="amd64", mixed_rc_owners=True)
+        with self.assertRaisesRegex(ValueError, "RC architecture selections overlap"):
+            self.combine({"amd64": profiles["amd64"], "arm64": profiles["amd64"]})
+
+    def test_mixed_rc_subset_requires_unselected_owner_routing(self):
+        owner, unselected, *_ = self.select(None)["selected_owners"]
+        with tempfile.TemporaryDirectory() as directory:
+            graph = json.loads((FIXTURE / "actions.json").read_text())
+            target_id, = [target["id"] for target in graph["targets"] if target["label"] == unselected]
+            graph["actions"] = [action for action in graph["actions"] if action["targetId"] != target_id]
+            actions = Path(directory) / "actions.json"
+            actions.write_text(json.dumps(graph))
+            for architecture, suffix in (("amd64", "_rc_kvm"), ("arm64", "_rc_tcg")):
+                with self.subTest(architecture=architecture), self.assertRaisesRegex(ValueError, "Missing profile TestRunners"):
+                    self.select(None, owners=[owner.removesuffix("_arm64") + suffix], rc_arch=architecture,
+                                mixed_rc_owners=True, actions=actions)
 
     def test_explicit_owner_subset_preserves_profile_and_routing(self):
         for architecture in (None, "amd64", "arm64"):
@@ -196,6 +261,8 @@ class SyscallBucketsTest(unittest.TestCase):
         owner = "--test-target=//test/syscalls:msync_test_runsc_kvm_rc_kvm"
         for arguments in (
             ["--arch=all", owner, "syscalls-rc"],
+            ["--arch=all", owner, "test"],
+            ["--arch=all", "--test-execution=local", "--syscall-bucket=0", owner, "syscalls-rc"],
             ["--arch=arm64", "--syscall-bucket=0", owner, "syscalls-rc"],
             ["--arch=arm64", owner, "syscalls"],
             ["--arch=arm64", owner, "unit"],

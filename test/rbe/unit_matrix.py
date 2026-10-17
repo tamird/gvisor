@@ -440,6 +440,7 @@ def select_profile(
     rc_kernel: bool = False,
     selected_buckets: tuple[int, ...] | None = None,
     selected_owners: list[str] | None = None,
+    mixed_rc_owners: bool = False,
     local_test_requirements: str = "namespace",
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
@@ -447,6 +448,8 @@ def select_profile(
     guest = page_size == "64k" or rc_kernel
     if selected_buckets is not None and not (hybrid or syscall_policy and guest):
         raise ValueError("Syscall buckets require hybrid or guest execution")
+    if mixed_rc_owners and not rc_kernel:
+        raise ValueError("Mixed architecture owners require RC profiles")
     if selected_owners is not None:
         if not syscall_policy or not (hybrid or rc_kernel):
             raise ValueError("Explicit syscall owners require a hybrid or RC profile")
@@ -522,6 +525,10 @@ def select_profile(
         selected = sorted(eligible)
     unexecuted_bucket_owners = sorted(eligible - set(selected))
     if selected_owners is not None:
+        if mixed_rc_owners:
+            # Both complete routing graphs are checked independently. The
+            # combined selection must account for every requested owner.
+            selected_owners = [owner for owner in selected_owners if owner in eligible]
         if unknown := set(selected_owners) - eligible:
             raise ValueError(f"Explicit owners outside the eligible syscall profile: {sorted(unknown)}")
         selected = sorted(selected_owners)
@@ -558,6 +565,30 @@ def select_profile(
         "selected_syscall_buckets": selected_buckets,
         "syscall_buckets": buckets,
         "unexecuted_bucket_owners": unexecuted_bucket_owners,
+    }, indent=2))
+
+
+def combine_rc_profiles(selection_dir: str, selected_owners: list[str] | None = None) -> None:
+    root = Path(selection_dir)
+    profiles = {
+        arch: json.loads((root / f"{arch}-selection.json").read_text())
+        for arch in ("amd64", "arm64")
+    }
+    selected = [label for profile in profiles.values() for label in profile["selected_owners"]]
+    if len(selected) != len(set(selected)):
+        raise ValueError("RC architecture selections overlap")
+    if selected_owners is not None:
+        if not selected_owners or len(selected_owners) != len(set(selected_owners)):
+            raise ValueError("Explicit syscall owners must be nonempty and distinct")
+        if set(selected) != set(selected_owners):
+            raise ValueError(f"Combined RC profile changes explicit owners: {sorted(set(selected) ^ set(selected_owners))}")
+    print(json.dumps({
+        "profile_architecture": "all",
+        "profile_kernel": "rc",
+        "profiles": profiles,
+        "selected_owners": sorted(selected),
+        "explicit_owners": selected_owners,
+        "unexecuted_owners": sorted(label for profile in profiles.values() for label in profile["unexecuted_owners"]),
     }, indent=2))
 
 
@@ -705,7 +736,11 @@ def main() -> None:
     profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
     profile.add_argument("--syscall-bucket", type=syscall_buckets, help="Select increasing comma-separated hash15 buckets and report the full partition")
     profile.add_argument("--owner", action="append", help="Select an exact eligible syscall owner and report the unexecuted complement")
+    profile.add_argument("--mixed-rc-owners", action="store_true", help="Intersect owners with this RC profile; require combine-rc-profiles to verify the full selection")
     profile.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
+    combined = commands.add_parser("combine-rc-profiles")
+    combined.add_argument("directory")
+    combined.add_argument("--owner", action="append", help="Require exactly these owners across both RC architectures")
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
@@ -771,7 +806,9 @@ def main() -> None:
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, selected_buckets=args.syscall_bucket, selected_owners=args.owner, local_test_requirements=args.local_test_requirements)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, selected_buckets=args.syscall_bucket, selected_owners=args.owner, mixed_rc_owners=args.mixed_rc_owners, local_test_requirements=args.local_test_requirements)
+    elif args.command == "combine-rc-profiles":
+        combine_rc_profiles(args.directory, args.owner)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:
