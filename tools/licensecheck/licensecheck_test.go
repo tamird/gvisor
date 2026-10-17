@@ -18,7 +18,9 @@ import (
 	"archive/zip"
 	"bytes"
 	_ "embed"
+	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -374,6 +376,14 @@ func TestPinnedManualEntries(t *testing.T) {
 			}
 		})
 	}
+	// Explicit notices must be fetched even if a previous manual audit used
+	// LicenseRef terms. Artifact validation belongs to that fetch path.
+	explicit := entry
+	explicit.LicenseSource = "https://raw.githubusercontent.com/example/upstream/0123456789abcdef0123456789abcdef01234567/COPYING"
+	got, err := pinnedManualEntries([]dep{{name: entry.Dependency, kind: kindArchive, url: entry.Version, sha256: entry.SHA256}}, map[string]Entry{entry.Dependency: explicit})
+	if err != nil || len(got) != 0 {
+		t.Fatalf("pinnedManualEntries with explicit notice = %v, %v; want fetch", got, err)
+	}
 	// Accepting an identifier does not permit its terms. Even mixed sets still
 	// require the existing dependency-specific policy decision.
 	policy := &Policy{AllowedLicenses: []License{"MIT"}}
@@ -486,5 +496,111 @@ func TestCheckPolicy(t *testing.T) {
 	}
 	if len(problems) != 5 {
 		t.Errorf("CheckPolicy returned %d problems, want 5: %v", len(problems), problems)
+	}
+}
+
+// roundTripFunc serves the actual notice-fetch path without external HTTP.
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+func TestFetchLicenseSource(t *testing.T) {
+	const artifact = "https://github.com/example/builder/releases/download/v1/tool.tar.gz"
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
+	const hash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	d := dep{name: "tool", kind: kindArchive, url: artifact, sha256: hash}
+	previous := Entry{Version: artifact, SHA256: hash, License: Licenses{"MIT"}, LicenseSource: source}
+	oldClient := httpClient
+	t.Cleanup(func() { httpClient = oldClient })
+	requests := 0
+	status := http.StatusOK
+	httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		requests++
+		if r.URL.String() != source {
+			t.Fatalf("requested %q, want exact notice %q", r.URL, source)
+		}
+		return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader(bsdText)), Header: make(http.Header)}, nil
+	})}
+	for range 2 {
+		got, err := fetchLicense(d, previous)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.commit != commit || got.sha256 != hash || !slices.Equal(got.license, Licenses{"BSD-3-Clause"}) {
+			t.Fatalf("fetchLicense = %+v, want upstream commit, artifact hash and BSD-3-Clause", got)
+		}
+	}
+	if requests != 2 {
+		t.Fatalf("got %d notice requests, want a fresh request for each audit", requests)
+	}
+	status = http.StatusNotFound
+	if _, err := fetchLicense(d, previous); err == nil {
+		t.Fatal("fetchLicense accepted a missing explicit notice")
+	}
+}
+
+func TestLicenseSourceIdentity(t *testing.T) {
+	const artifact = "https://github.com/example/builder/releases/download/v1/tool.tar.gz"
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
+	const hash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	for _, test := range []struct {
+		name     string
+		url      string
+		hash     string
+		source   string
+		goModule bool
+		wantErr  bool
+	}{
+		{name: "pinned", url: artifact, hash: hash, source: source},
+		{name: "automatic", url: artifact, hash: hash},
+		{name: "changed artifact", url: artifact + "?changed", hash: hash, source: source, wantErr: true},
+		{name: "changed digest", url: artifact, hash: strings.Repeat("a", 64), source: source, wantErr: true},
+		{name: "unpinned artifact", url: artifact, source: source, wantErr: true},
+		{name: "mutable notice", url: artifact, hash: hash, source: strings.ReplaceAll(source, commit, "main"), wantErr: true},
+		{name: "notice traversal", url: artifact, hash: hash, source: strings.ReplaceAll(source, "/COPYING", "/../main/COPYING"), wantErr: true},
+		{name: "encoded traversal", url: artifact, hash: hash, source: strings.ReplaceAll(source, "/COPYING", "/%2e%2e/main/COPYING"), wantErr: true},
+		{name: "go module", url: artifact, hash: hash, source: source, goModule: true, wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			d := dep{name: "tool", kind: kindArchive, url: test.url, sha256: test.hash}
+			if test.goModule {
+				d.kind = kindGoModule
+			}
+			e := Entry{Version: artifact, SHA256: hash, LicenseSource: test.source}
+			got, err := licenseSourceCommit(d, e)
+			if (err != nil) != test.wantErr {
+				t.Fatalf("licenseSourceCommit = %q, %v; want error %t", got, err, test.wantErr)
+			}
+			if !test.wantErr && test.source != "" && got != commit {
+				t.Fatalf("licenseSourceCommit = %q, want %q", got, commit)
+			}
+		})
+	}
+}
+
+func TestLicenseSourceRejectsPackageKinds(t *testing.T) {
+	for _, kind := range []depKind{kindGoModule, kindWheel, kindApt} {
+		d := dep{name: "tool", kind: kind, url: "https://example.com/tool", sha256: strings.Repeat("a", 64)}
+		e := Entry{Version: d.url, SHA256: d.sha256, LicenseSource: "https://raw.githubusercontent.com/example/upstream/0123456789abcdef0123456789abcdef01234567/COPYING"}
+		if _, err := fetchLicense(d, e); err == nil {
+			t.Errorf("fetchLicense accepted explicit notice for package kind %v", kind)
+		}
+	}
+}
+
+func TestVerifyLicenseSource(t *testing.T) {
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	d := dep{name: "tool", kind: kindArchive, url: "https://example.com/tool.tar.gz", sha256: strings.Repeat("a", 64)}
+	e := Entry{Dependency: d.name, Version: d.url, SHA256: d.sha256, Retrieved: "2026-10-17", Commit: commit, License: Licenses{"BSD-3-Clause"}, LicenseSource: "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"}
+	if problems := verifyProblems([]dep{d}, []Entry{e}); len(problems) != 0 {
+		t.Fatalf("verifyProblems = %v, want a valid explicit notice", problems)
+	}
+	e.Commit = strings.Repeat("b", 40)
+	if problems := verifyProblems([]dep{d}, []Entry{e}); len(problems) != 1 || !strings.Contains(problems[0], "license_source commit") {
+		t.Fatalf("verifyProblems = %v, want mismatched notice commit", problems)
 	}
 }

@@ -30,6 +30,8 @@
 // current notices were available or classified successfully. LicenseRef entries
 // are always maintained by hand and require a new audit when their artifact pin
 // changes.
+// Explicit license_source notices are re-fetched on every audit and fail closed
+// if the notice or its artifact binding is invalid.
 package licensecheck
 
 import (
@@ -75,6 +77,9 @@ type Entry struct {
 	Commit     string   `yaml:"commit"`
 	SHA256     string   `yaml:"sha256"`
 	License    Licenses `yaml:"license"`
+	// LicenseSource pins the notice for an executable distributed by a
+	// differently licensed builder repository. It is bound to Version/SHA256.
+	LicenseSource string `yaml:"license_source,omitempty"`
 }
 
 // License identifies terms recognized by the configured scanner, an explicit
@@ -182,6 +187,8 @@ const (
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
 # LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
+# license_source selects an immutable upstream notice for a pinned binary artifact;
+# changing its artifact URL/hash requires renewing that explicit source audit.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -211,7 +218,7 @@ func Fetch(p Paths) error {
 
 	var aptDeps []dep
 	for _, d := range deps {
-		if _, ok := manual[d.name]; !ok && d.kind == kindApt {
+		if _, ok := manual[d.name]; !ok && d.kind == kindApt && oldByName[d.name].LicenseSource == "" {
 			aptDeps = append(aptDeps, d)
 		}
 	}
@@ -223,7 +230,7 @@ func Fetch(p Paths) error {
 		if _, ok := manual[d.name]; ok {
 			continue
 		}
-		if d.kind == kindApt {
+		if d.kind == kindApt && oldByName[d.name].LicenseSource == "" {
 			results[i] = aptResults[d.name]
 			continue
 		}
@@ -232,7 +239,7 @@ func Fetch(p Paths) error {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			f, err := fetchLicense(d)
+			f, err := fetchLicense(d, oldByName[d.name])
 			results[i] = fetchResult{f, err}
 		}(i, d)
 	}
@@ -249,7 +256,11 @@ func Fetch(p Paths) error {
 		}
 		r := results[i]
 		if r.err != nil {
-			if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
+			if e := oldByName[d.name]; e.LicenseSource != "" {
+				// Keep the explicit source so a later audit cannot silently
+				// fall back to the builder repository's license.
+				entries = append(entries, e)
+			} else if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
 				fmt.Fprintf(os.Stderr, "%-60s %s (kept existing entry: %v)\n", d.name, e.License, r.err)
 				entries = append(entries, e)
 				continue
@@ -259,12 +270,13 @@ func Fetch(p Paths) error {
 			continue
 		}
 		e := Entry{
-			Dependency: d.name,
-			Version:    d.source(),
-			Retrieved:  today,
-			Commit:     r.fetched.commit,
-			SHA256:     r.fetched.sha256,
-			License:    r.fetched.license,
+			Dependency:    d.name,
+			Version:       d.source(),
+			Retrieved:     today,
+			Commit:        r.fetched.commit,
+			SHA256:        r.fetched.sha256,
+			License:       r.fetched.license,
+			LicenseSource: oldByName[d.name].LicenseSource,
 		}
 		// Keep the old retrieval date when nothing changed, so that re-running
 		// fetch does not churn the file.
@@ -293,6 +305,9 @@ func pinnedManualEntries(deps []dep, byName map[string]Entry) (map[string]Entry,
 	manual := make(map[string]Entry)
 	for _, d := range deps {
 		e := byName[d.name]
+		if e.LicenseSource != "" {
+			continue
+		}
 		if !slices.ContainsFunc(e.License, func(l License) bool { return strings.HasPrefix(string(l), "LicenseRef-") }) {
 			continue
 		}
@@ -364,6 +379,11 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 		case len(e.License) == 0:
 			problems = append(problems, fmt.Sprintf("%s has no license", d.name))
 		default:
+			if commit, err := licenseSourceCommit(d, e); err != nil {
+				problems = append(problems, fmt.Sprintf("%s: %v", d.name, err))
+			} else if commit != "" && commit != e.Commit {
+				problems = append(problems, fmt.Sprintf("%s: license_source commit does not match the audited commit", d.name))
+			}
 			if e.Version != d.source() {
 				problems = append(problems, fmt.Sprintf("%s was audited at %q, but is now %q", d.name, e.Version, d.source()))
 			}
@@ -727,7 +747,22 @@ type fetchResult struct {
 
 // fetchLicense returns the upstream commit, artifact hash, and licenses of a
 // dependency.
-func fetchLicense(d dep) (*fetched, error) {
+func fetchLicense(d dep, previous Entry) (*fetched, error) {
+	commit, err := licenseSourceCommit(d, previous)
+	if err != nil {
+		return nil, err
+	}
+	if commit != "" {
+		body, err := httpGet(previous.LicenseSource, nil)
+		if err != nil {
+			return nil, err
+		}
+		licenses, err := classify(string(body))
+		if err != nil {
+			return nil, err
+		}
+		return &fetched{commit: commit, sha256: d.sha256, license: licenses}, nil
+	}
 	if d.kind == kindGoModule {
 		return fetchGoModule(d.modulePath, d.version)
 	}
@@ -748,6 +783,25 @@ func fetchLicense(d dep) (*fetched, error) {
 	}
 	f.sha256 = d.sha256
 	return f, nil
+}
+
+// An explicit notice source must identify immutable upstream bytes, not a
+// mutable tag or the repository that happens to distribute the executable.
+var licenseSourceRE = regexp.MustCompile(`^https://raw\.githubusercontent\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/([0-9a-f]{40})/[A-Za-z0-9_-][A-Za-z0-9_.-]*$`)
+var artifactSHA256RE = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
+func licenseSourceCommit(d dep, e Entry) (string, error) {
+	if e.LicenseSource == "" {
+		return "", nil
+	}
+	if d.kind != kindArchive || !artifactSHA256RE.MatchString(d.sha256) || e.Version != d.source() || e.SHA256 != d.sha256 {
+		return "", errors.New("license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source")
+	}
+	match := licenseSourceRE.FindStringSubmatch(e.LicenseSource)
+	if match == nil {
+		return "", errors.New("license_source must be a raw GitHub root notice URL pinned to a full commit")
+	}
+	return match[1], nil
 }
 
 // licenseFileNames are candidate root paths for GitHub raw-file requests.
