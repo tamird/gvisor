@@ -102,6 +102,45 @@ TEST(KcovTest, PrematureMmap) {
   ASSERT_TRUE(area == MAP_FAILED);
 }
 
+TEST(KcovTest, UnalignedSize) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_DAC_OVERRIDE)));
+
+  FileDescriptor fd(open(kcovPath, O_RDWR));
+  SKIP_IF(fd.get() == -1 && errno == ENOENT);
+  ASSERT_THAT(fd.get(), SyscallSucceeds());
+
+  // The size counts entries, including the counter and at least one PC.
+  ASSERT_THAT(ioctl(fd.get(), KCOV_INIT_TRACE, 2), SyscallSucceeds());
+  // mmap rounds its length to a page, which cannot match this buffer.
+  ASSERT_THAT(mmap(nullptr, 2 * sizeof(uint64_t), PROT_READ | PROT_WRITE,
+                   MAP_SHARED, fd.get(), 0),
+              SyscallFailsWithErrno(EINVAL));
+}
+
+TEST(KcovTest, MappingRange) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_DAC_OVERRIDE)));
+
+  FileDescriptor fd(open(kcovPath, O_RDWR));
+  SKIP_IF(fd.get() == -1 && errno == ENOENT);
+  ASSERT_THAT(fd.get(), SyscallSucceeds());
+
+  const size_t bytes = 2 * kPageSize;
+  ASSERT_THAT(ioctl(fd.get(), KCOV_INIT_TRACE, bytes / sizeof(uint64_t)),
+              SyscallSucceeds());
+  ASSERT_THAT(
+      mmap(nullptr, kPageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0),
+      SyscallFailsWithErrno(EINVAL));
+  ASSERT_THAT(mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(),
+                   kPageSize),
+              SyscallFailsWithErrno(EINVAL));
+
+  // Linux compares the page-rounded VMA length, not the syscall's length.
+  void* area =
+      mmap(nullptr, bytes - 1, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0);
+  ASSERT_THAT(area, SyscallSucceeds());
+  ASSERT_THAT(munmap(area, bytes), SyscallSucceeds());
+}
+
 // Tests that multiple kcov fds can be used simultaneously.
 TEST(KcovTest, MultipleFds) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability((CAP_DAC_OVERRIDE))));
