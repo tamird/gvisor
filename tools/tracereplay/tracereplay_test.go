@@ -36,12 +36,13 @@ func TestBasic(t *testing.T) {
 	}
 
 	// An absolute socket path here exceeds Linux's 108-byte Unix socket limit,
-	// as can Bazel's TEST_TMPDIR. Reproduce that existing failure explicitly.
+	// as can Bazel's TEST_TMPDIR. Keep the pathname relative to this directory.
 	dir := filepath.Join(t.TempDir(), strings.Repeat("x", 128))
 	if err := os.Mkdir(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	endpoint := filepath.Join(dir, "tracereplay.sock")
+	t.Chdir(dir)
+	const endpoint = "tracereplay.sock"
 
 	// Start a new save server to store the replayed file. This tests that save
 	// communicates with clients correctly and generates a valid file.
