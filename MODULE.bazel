@@ -346,6 +346,7 @@ use_repo(
     "org_uber_go_atomic",
     "org_uber_go_multierr",
 )
+
 go_deps.module(
     path = "cloud.google.com/go/auth",
     sum = "h1:mFWNQ2FEVWAliEQWpAdH80omXFokmrnbDhUS9cBywsI=",
