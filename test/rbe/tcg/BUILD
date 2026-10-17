@@ -149,11 +149,8 @@ tcg_image(
     guest = "@kvm_amd64_guest//:flat",
     host_tools = "@kvm_host_tools//:flat",
     init = "init.sh",
-    kernel_archives = [
-        "@kvm_amd64_rc_image//:data.tar",
-        "@kvm_amd64_rc_modules//:data.tar",
-    ],
-    kernel_release = "7.3.0-070300rc3-generic",
+    kernel_archives = ["//test/rbe/tcg/kernel:kcov"],
+    kernel_release = "7.3.0-rc3-gvisor-kcov",
     page_size = 4096,
     tags = ["manual"],
 )

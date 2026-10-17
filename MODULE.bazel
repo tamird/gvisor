@@ -411,7 +411,27 @@ release_apt.install(
         "jammy-security",
     ],
 )
-use_repo(release_apt, "kvm_amd64_cgroup_v1_guest", "kvm_amd64_guest", "kvm_host_tools", "qemu_build_deps", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
+release_apt.install(
+    dependency_set = "kernel_build_deps",
+    packages = [
+        "base-files:amd64",  # Common-license texts referenced by package notices.
+        "bc:amd64",  # Generate kernel time constants.
+        "bison:amd64",  # Generate the Kconfig parser.
+        "flex:amd64",  # Generate the Kconfig lexer.
+        "libc6-dev:amd64",  # Headers and startup objects for host build helpers.
+        "libelf-dev:amd64",  # Objtool reads and rewrites ELF objects.
+        "libgcc-11-dev:amd64",  # Runtime support for host helpers linked by Clang.
+        "libssl-dev:amd64",  # Kernel certificate and module-signing helpers.
+        "perl:amd64",  # Kbuild generators.
+        "pkg-config:amd64",  # Locate declared host-helper libraries.
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+use_repo(release_apt, "kernel_build_deps", "kvm_amd64_cgroup_v1_guest", "kvm_amd64_guest", "kvm_host_tools", "qemu_build_deps", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
 
 # Ubuntu's mainline test packages pin the historical RC release, not the
 # mutable Buildkite worker image. Keep the image and modules from one build.
@@ -1522,6 +1542,14 @@ use_repo(kernel_headers, "kernel_headers")
 
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+# Match the RC guest's upstream source while enabling native KCOV coverage.
+http_file(
+    name = "kcov_linux_source",
+    downloaded_file_path = "linux.tar.gz",
+    sha256 = "1846a6d56bda7798cdff7b743d54975f1e96cbcf89cb48d5f92b2b863cdf262f",
+    urls = ["https://github.com/torvalds/linux/archive/fd73f4a6659897191fa0d40695fe370925dd3780.tar.gz"],
+)
 
 # Invoke the declared Buildx client directly; no worker plugin installation.
 http_file(

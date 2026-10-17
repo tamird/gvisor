@@ -49,6 +49,11 @@ source /etc/gvisor-test-kernel
 uname -a | tee /result/kernel.txt
 # Kernel options determine which native syscall features the guest can test.
 cp /etc/gvisor-test-kernel.config /result/kernel.config
+# Native KCOV exposes its per-task coverage device through debugfs.
+# https://docs.kernel.org/dev-tools/kcov.html#prerequisites
+if [[ $'\n'"$(</etc/gvisor-test-kernel.config)"$'\n' == *$'\nCONFIG_KCOV=y\n'* ]]; then
+  mount -t debugfs none /sys/kernel/debug
+fi
 cat /etc/gvisor-test-root-image | tee /result/root-image.txt
 [[ "$(uname -r)" == "${expected_kernel_release:?}" ]]
 page_size="$(getconf PAGESIZE)"
