@@ -15,7 +15,6 @@
 package licensecheck
 
 import (
-	"archive/zip"
 	"bytes"
 	_ "embed"
 	"io/fs"
@@ -24,6 +23,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"archive/zip"
 )
 
 // Verbatim notices from the modules that exposed incomplete discovery:

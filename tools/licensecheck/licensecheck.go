@@ -682,10 +682,10 @@ func fetchLicense(d dep, previous Entry) (*fetched, error) {
 	return f, nil
 }
 
-// An explicit notice source must identify immutable upstream bytes, not a
-// mutable tag or the repository that happens to distribute the executable.
 var artifactSHA256RE = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
+// licenseSourceCommit requires immutable upstream notice bytes, not a mutable
+// tag or the repository that happens to distribute the executable.
 func licenseSourceCommit(d dep, e Entry) (string, error) {
 	if e.LicenseSource == "" {
 		return "", nil
