@@ -36,10 +36,12 @@ Test deadlines include guest boot and output transfer. Tests without an
 explicit emulation override retain their usual deadlines: 60 seconds for
 small tests and 300 seconds for medium tests. The proc suite uses a
 900-second emulation deadline for its fixed fork/reap workloads. Native
-deadlines remain unchanged. Each action requests two emulated CPUs and 3 GiB
-guest memory; the OCI action requests two CPUs,
-6 GB memory and 8 GB scratch space. This is the resource allocation used by
-the pilot, including QEMU and kernel overhead; it is not evidence that every
+deadlines remain unchanged. Each action defaults to two emulated CPUs and
+requests 3 GiB guest memory.
+An owner may set `tcg_cpus` to change both its emulated CPU count and the
+matching OCI executor estimate; the SIGSTOP diagnostic uses four. Memory
+and scratch requests remain 6 GB and 8 GB respectively. These allocations
+include QEMU and kernel overhead; they are not evidence that every
 owner fits. Qualification compares configured payload and outer requirements
 against the declared emulation policy and retains failures at those limits.
 

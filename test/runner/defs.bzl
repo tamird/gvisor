@@ -68,6 +68,7 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
+        tcg_cpus = 2,
         tcg_timeout = None,
         tcg_shard_count = None,
         native_kernel_requirements = [],
@@ -240,6 +241,7 @@ def _syscall_test(
     # Avoid per-syscall trace formatting under software emulation. Keep debug
     # logging; later arguments can opt back into tracing for diagnosis.
     tcg_attributes["args"] = ["--strace=false"] + tcg_attributes.get("args", [])
+    tcg_attributes["cpus"] = tcg_cpus
     if tcg_timeout != None:
         tcg_attributes["timeout"] = tcg_timeout
     if tcg_shard_count != None:
@@ -350,9 +352,10 @@ def syscall_test_variants(
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
-        and requires_atime enables host atime updates. tcg_timeout overrides
-        the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
-        overrides the shard count only for those tests. native_kernel_requirements
+        and requires_atime enables host atime updates. tcg_cpus sets the guest
+        CPU count and matching executor estimate for outer ARM64 TCG tests.
+        tcg_timeout overrides the Bazel timeout category only for those tests;
+        tcg_shard_count overrides their shard count. native_kernel_requirements
         and hostnet_kernel_requirements declare host features needed only by the
         corresponding variants; the caller's worker policy chooses their placement.
         native_rc_images maps architectures to guest images for native RC tests
@@ -554,9 +557,10 @@ def syscall_test(
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
-        and requires_atime enables host atime updates. tcg_timeout overrides
-        the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
-        overrides the shard count only for those tests. native_kernel_requirements
+        and requires_atime enables host atime updates. tcg_cpus sets the guest
+        CPU count and matching executor estimate for outer ARM64 TCG tests.
+        tcg_timeout overrides the Bazel timeout category only for those tests;
+        tcg_shard_count overrides their shard count. native_kernel_requirements
         and hostnet_kernel_requirements declare host features needed only by the
         corresponding variants; the caller's worker policy chooses their placement.
         native_rc_images maps architectures to guest images for native RC tests
