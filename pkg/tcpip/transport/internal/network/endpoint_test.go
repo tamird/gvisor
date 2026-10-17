@@ -359,6 +359,73 @@ func TestBindNICID(t *testing.T) {
 	}
 }
 
+func TestIPv6MulticastInterfaceBinding(t *testing.T) {
+	linkLocal := testutil.MustParse6("fe80::1")
+	for _, test := range []struct {
+		name   string
+		device int32
+		bind   tcpip.FullAddress
+	}{
+		{"address", 0, tcpip.FullAddress{Addr: ipv6NICAddr}},
+		{"device", 1, tcpip.FullAddress{Addr: ipv6NICAddr}},
+		{"scope", 0, tcpip.FullAddress{Addr: linkLocal, NIC: 1}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s := stack.New(stack.Options{
+				NetworkProtocols:   []stack.NetworkProtocolFactory{ipv6.NewProtocol},
+				TransportProtocols: []stack.TransportProtocolFactory{udp.NewProtocol},
+				Clock:              &faketime.NullClock{},
+			})
+			defer s.Destroy()
+			for _, id := range []tcpip.NICID{1, 2} {
+				if err := s.CreateNIC(id, loopback.New()); err != nil {
+					t.Fatalf("CreateNIC(%d): %s", id, err)
+				}
+			}
+			addr := tcpip.ProtocolAddress{Protocol: ipv6.ProtocolNumber, AddressWithPrefix: test.bind.Addr.WithPrefix()}
+			if err := s.AddProtocolAddress(1, addr, stack.AddressProperties{}); err != nil {
+				t.Fatalf("AddProtocolAddress(1, %+v): %s", addr, err)
+			}
+			ep, err := s.NewEndpoint(udp.ProtocolNumber, ipv6.ProtocolNumber, &waiter.Queue{})
+			if err != nil {
+				t.Fatalf("NewEndpoint: %s", err)
+			}
+			defer ep.Close()
+			if err := ep.SocketOptions().SetBindToDevice(test.device); err != nil {
+				t.Fatalf("SetBindToDevice(%d): %s", test.device, err)
+			}
+			if err := ep.Bind(test.bind); err != nil {
+				t.Fatalf("Bind(%+v): %s", test.bind, err)
+			}
+			var otherErr tcpip.Error
+			otherNIC := 2
+			if test.device != 0 || test.bind.NIC != 0 {
+				otherErr = &tcpip.ErrInvalidEndpointState{}
+				otherNIC = 1
+			}
+			for _, step := range []struct {
+				name string
+				nic  int
+				err  tcpip.Error
+				want int
+			}{
+				{"matching", 1, nil, 1},
+				{"other", 2, otherErr, otherNIC},
+				{"reset", 0, nil, 0},
+				{"unknown", 3, &tcpip.ErrUnknownNICID{}, 0},
+			} {
+				err := ep.SetSockOptInt(tcpip.IPv6MulticastInterfaceOption, step.nic)
+				if diff := cmp.Diff(step.err, err); diff != "" {
+					t.Fatalf("%s: SetSockOptInt(%d) error mismatch (-want +got):\n%s", step.name, step.nic, diff)
+				}
+				if got, err := ep.GetSockOptInt(tcpip.IPv6MulticastInterfaceOption); err != nil || got != step.want {
+					t.Errorf("%s: GetSockOptInt() = (%d, %v), want (%d, nil)", step.name, got, err, step.want)
+				}
+			}
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()
