@@ -20,7 +20,7 @@ _MUSL_PLATFORMS = select_arch(
 # Instrumenting the BPF optimizer also makes sandbox startup prohibitively
 # expensive in race builds.
 # Prefix matching intentionally excludes descendants as well as the package.
-_COVERAGE_FILTER = "^//,-//pkg/(sentry/platform|ring0|coverage|sleep|sync|syncevent|bpf)"
+COVERAGE_FILTER = "^//,-//pkg/(sentry/platform|ring0|coverage|sleep|sync|syncevent|bpf)"
 
 def _go_binary_variant(static = False, coverage = False):
     # Compose settings before building one wrapper around the upstream macro.
@@ -37,7 +37,7 @@ def _go_binary_variant(static = False, coverage = False):
         # declared SDK. Direct imports need no cmd/go internal-import patch.
         configured = configured.set("collect_code_coverage", True).set(
             "instrumentation_filter",
-            _COVERAGE_FILTER,
+            COVERAGE_FILTER,
         )
     return configured.build()
 

@@ -41,8 +41,8 @@ namespace {
 
 // For this set of tests to run, they must be run with coverage enabled. On
 // native Linux, this involves compiling the kernel with kcov enabled. For
-// gVisor, we need to enable the Go coverage tool, e.g. bazel test --
-// collect_coverage_data --instrumentation_filter=//pkg/... <test>.
+// gVisor, the syscall test targets select an instrumented Sentry and disable
+// runtime coverage reports, which would otherwise consume the same counters.
 
 constexpr char kcovPath[] = "/sys/kernel/debug/kcov";
 constexpr int kSize = 4096;

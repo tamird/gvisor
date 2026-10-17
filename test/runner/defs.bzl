@@ -3,6 +3,7 @@
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
+load("//tools/bazeldefs:go_variants.bzl", "COVERAGE_FILTER")
 load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":runner_test.bzl", _runner_test_rule = "runner_test")
 
@@ -21,9 +22,18 @@ _platform_support_env_vars = {
 # buildifier: disable=unused-variable
 _runner_test, _runner_compilation_transition = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"]).build()
 
-def _compile_runner_test(compile_exec_compatible_with, **kwargs):
+# KCOV needs instrumented Sentry code, but the other syscall tests should keep
+# using the ordinary runtime. Reuse the release coverage exclusions so context
+# switching and coverage collection itself remain safe.
+_runner_kcov_test, _runner_kcov_transition = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"]).set(
+    Label("//tools/bazeldefs:kcov"),
+    True,
+).set("collect_code_coverage", True).set("instrumentation_filter", COVERAGE_FILTER).build()
+
+def _compile_runner_test(compile_exec_compatible_with, kcov = False, **kwargs):
     kwargs["exec_compatible_with"] = compile_exec_compatible_with
-    _runner_test(**kwargs)
+    test_rule = _runner_kcov_test if kcov else _runner_test
+    test_rule(**kwargs)
 
 runner_amd64_test, _runner_amd64_transition = with_test_architecture(_compile_runner_test, "amd64", extra_providers = [testing.ExecutionInfo]).build()
 runner_arm64_test, _runner_arm64_transition = with_test_architecture(_compile_runner_test, "arm64", extra_providers = [testing.ExecutionInfo]).build()
@@ -56,6 +66,7 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
+        kcov = False,
         tcg_timeout = None,
         tcg_shard_count = None,
         native_kernel_requirements = [],
@@ -161,6 +172,10 @@ def _syscall_test(
         "--kvm-use-cpu-nums=" + str(kvm_use_cpu_nums),
     ]
 
+    if kcov:
+        # KCOV consumes the counters, so simultaneous report collection disables it.
+        runner_args.append("--coverage-report=false")
+
     if in_sandbox_cgroup:
         runner_args.append("--in-sandbox-cgroup=" + in_sandbox_cgroup)
 
@@ -192,12 +207,14 @@ def _syscall_test(
         runner_args = runner_args,
         tags = test_architecture_tags(["amd64", "arm64"], tags),
     )
-    _runner_test(name = name, **attributes)
+    kcov = kcov and platform != "native"
+    test_rule = _runner_kcov_test if kcov else _runner_test
+    test_rule(name = name, **attributes)
     test_architecture_variants(
         name,
         ["amd64", "arm64"],
         {"amd64": runner_amd64_test, "arm64": runner_arm64_test},
-        dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
+        dict(attributes, kcov = kcov, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
     )
 
     # Emulation may need more wall time than the native payload. Keep that
@@ -216,7 +233,7 @@ def _syscall_test(
             name + "_64k",
             ["arm64"],
             {"arm64": runner_arm64_64k_test},
-            dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
+            dict(attributes, kcov = kcov, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
         )
         arm64_tcg_test(
             name = name + "_64k_tcg",
@@ -307,7 +324,8 @@ def syscall_test_variants(
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
-        and requires_atime enables host atime updates. tcg_timeout overrides
+        and requires_atime enables host atime updates. kcov selects an instrumented
+        Sentry for KCOV tests. tcg_timeout overrides
         the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
         overrides the shard count only for those tests. native_kernel_requirements
         and hostnet_kernel_requirements declare host features needed only by the
@@ -507,7 +525,8 @@ def syscall_test(
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
-        and requires_atime enables host atime updates. tcg_timeout overrides
+        and requires_atime enables host atime updates. kcov selects an instrumented
+        Sentry for KCOV tests. tcg_timeout overrides
         the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
         overrides the shard count only for those tests. native_kernel_requirements
         and hostnet_kernel_requirements declare host features needed only by the

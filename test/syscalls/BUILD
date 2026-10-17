@@ -380,6 +380,7 @@ syscall_test(
 )
 
 syscall_test(
+    kcov = True,
     test = "//test/syscalls/linux:kcov_test",
 )
 

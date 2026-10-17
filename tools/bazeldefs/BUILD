@@ -144,7 +144,7 @@ bzl_library(
 bzl_library(
     name = "go_variants_bzl",
     srcs = ["go_variants.bzl"],
-    visibility = ["//visibility:private"],
+    visibility = ["//:sandbox"],
     deps = [
         ":cgroup_test_bzl",
         ":defs_bzl",
@@ -222,6 +222,17 @@ genrule(
         "notap",
     ],
     visibility = ["//:sandbox"],
+)
+
+# KCOV tests need these tags alongside architecture and race-specific tags.
+bool_flag(
+    name = "kcov",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "kcov_enabled",
+    flag_values = {":kcov": "true"},
 )
 
 # A build setting lets individual test targets select their page size without

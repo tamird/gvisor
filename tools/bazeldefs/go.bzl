@@ -109,6 +109,9 @@ def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs
     }) + select({
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
+    }) + select({
+        "//tools/bazeldefs:kcov_enabled": ["kcov", "opensource"],
+        "//conditions:default": [],
     })
     binary_rule(
         name = name,
