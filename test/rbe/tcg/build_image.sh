@@ -22,7 +22,7 @@ guest_archive="$(realpath "$3")"
 init="$(realpath "$4")"
 release="$5"
 kernel_out="$(realpath -m "$6")"
-initramfs_out="$(realpath -m "$7")"
+rootfs_out="$(realpath -m "$7")"
 page_size="$8"
 zstd="$(realpath "$9")"
 architecture="${10}"
@@ -47,6 +47,14 @@ kmod_tool() {
   "$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2" --inhibit-cache --argv0 "$1" \
     --library-path "$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu" "$host/bin/kmod" "${@:2}"
 }
+# Mount the root disk directly, without loading modules from an initramfs.
+# Every configured kernel must provide these drivers before /init runs.
+for option in VIRTIO_PCI VIRTIO_BLK EXT4_FS DEVTMPFS DEVTMPFS_MOUNT; do
+  if [[ $'\n'"$(<"$root/boot/config-$release")"$'\n' != *$'\n'"CONFIG_$option=y"$'\n'* ]]; then
+    printf 'Guest kernel %s must enable CONFIG_%s=y\n' "$release" "$option" >&2
+    exit 1
+  fi
+done
 kernel="$root/boot/vmlinuz-$release"
 # zboot stores the compressed payload inside .text, not in a separate PE
 # section. Its public header supplies the offset, size and compression type:
@@ -98,6 +106,32 @@ cp "$root/usr/share/base-passwd/group.master" "$root/etc/group"
 ln -sfn bash "$root/bin/sh"
 ln -sfn nc.openbsd "$root/bin/nc"
 ln -sfn which.debianutils "$root/usr/bin/which"
-# cpio owns numeric IDs, independent of the remote action's uid.
-cd "$root"
-host_tool usr/bin/find . -print0 | host_tool bin/cpio --null -o --format=newc --owner=0:0 --reproducible | host_tool bin/gzip -n > "$initramfs_out"
+# Size from the complete tree, including modules, with room for filesystem
+# metadata and guest root writes. Payloads and test scratch use a separate disk.
+read -r root_bytes _ < <(host_tool usr/bin/du --apparent-size --block-size=1 -s "$root")
+read -r module_bytes _ < <(host_tool usr/bin/du --apparent-size --block-size=1 -s "$root/lib/modules")
+root_kib=$(( (root_bytes * 2 + 1023) / 1024 + 256 * 1024 ))
+printf 'Guest root before size record: %s bytes; modules: %s bytes; ext4: %s KiB\n' \
+  "$root_bytes" "$module_bytes" "$root_kib" > "$root/etc/gvisor-test-root-image"
+# mke2fs copies each inode's ownership. Match cpio's former --owner=0:0 using
+# the declared fakeroot wrapper's default unknown-is-root policy. Its official
+# wrapper owns the daemon lifetime and propagates mke2fs's status; only its
+# getopt probe and optional environment reads require errexit/nounset off.
+# Keep all ELF loading in our closure.
+(
+  set +eu
+  # Called by the sourced upstream wrapper.
+  # shellcheck disable=SC2329
+  getopt() { host_tool usr/bin/getopt "$@"; }
+  # shellcheck disable=SC2329
+  cut() { host_tool usr/bin/cut "$@"; }
+  # shellcheck disable=SC2329
+  faked() { host_tool usr/bin/faked-sysv "$@"; }
+  export MKE2FS_CONFIG="$host/etc/mke2fs.conf"
+  # shellcheck disable=SC1091
+  source "$host/usr/bin/fakeroot-sysv" \
+    -l "$host/usr/lib/x86_64-linux-gnu/libfakeroot/libfakeroot-sysv.so" \
+    -f faked -- host_tool sbin/mke2fs -q -t ext4 -F -m 0 \
+    -d "$root" -E root_owner=0:0 -L gvisor-root "$rootfs_out" "${root_kib}K"
+)
+E2FSCK_CONFIG=/dev/null host_tool sbin/e2fsck -fn "$rootfs_out"

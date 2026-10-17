@@ -15,6 +15,7 @@
 """Full-system tests with declared QEMU and guest inputs."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@tar.bzl//tar:tar.bzl", "tar_lib")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
@@ -27,14 +28,46 @@ def _guest_config(settings, attr):
 _guest_transition = transition(implementation = _guest_config, inputs = [], outputs = arch_config)
 
 TcgImageInfo = provider(
-    doc = "Declared kernel and initramfs for a full-system test guest.",
-    fields = ["kernel", "initramfs", "architecture"],
+    doc = "Declared kernel and root filesystem for a full-system test guest.",
+    fields = ["kernel", "rootfs", "architecture"],
+)
+
+def _host_tools_impl(ctx):
+    tar = ctx.toolchains[tar_lib.toolchain_type]
+    coreutils = ctx.toolchains["@bazel_lib//lib:coreutils_toolchain_type"]
+    directory = ctx.actions.declare_directory(ctx.label.name)
+    args = ctx.actions.args()
+    args.add(coreutils.coreutils_info.bin)
+    args.add(directory.path)
+    args.add(tar.tarinfo.binary.path)
+    args.add(ctx.file.archive.path)
+    args.add_all(ctx.attr.members, format_each = "./%s")
+    ctx.actions.run_shell(
+        command = '"$1" mkdir -p "$2" && "$3" -xpf "$4" -C "$2" --no-same-owner "${@:5}"',
+        arguments = [args],
+        inputs = [ctx.file.archive],
+        tools = [coreutils.default.files, tar.default.files],
+        outputs = [directory],
+        env = tar.tarinfo.default_env,
+        mnemonic = "GuestHostTools",
+        progress_message = "Extracting declared guest host tools %{label}",
+    )
+    return [DefaultInfo(files = depset([directory]))]
+
+guest_host_tools = rule(
+    implementation = _host_tools_impl,
+    doc = "Extracts the immutable runtime tool closure once for all guest tests.",
+    attrs = {
+        "archive": attr.label(allow_single_file = True, mandatory = True),
+        "members": attr.string_list(mandatory = True),
+    },
+    toolchains = [tar_lib.toolchain_type, "@bazel_lib//lib:coreutils_toolchain_type"],
 )
 
 def _image_impl(ctx):
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     kernel = ctx.actions.declare_file(ctx.label.name + ".Image")
-    initramfs = ctx.actions.declare_file(ctx.label.name + ".cpio.gz")
+    rootfs = ctx.actions.declare_file(ctx.label.name + ".ext4")
     ctx.actions.run(
         executable = ctx.executable._builder,
         arguments = [
@@ -44,21 +77,21 @@ def _image_impl(ctx):
             ctx.file.init.path,
             ctx.attr.kernel_release,
             kernel.path,
-            initramfs.path,
+            rootfs.path,
             str(ctx.attr.page_size),
             ctx.executable._zstd.path,
             ctx.attr.architecture,
         ] + [archive.path for archive in ctx.files.kernel_archives],
         inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init] + ctx.files.kernel_archives,
         tools = [ctx.attr._builder[DefaultInfo].files_to_run, ctx.attr._zstd[DefaultInfo].files_to_run, tar.tarinfo.binary],
-        outputs = [kernel, initramfs],
+        outputs = [kernel, rootfs],
         env = tar.tarinfo.default_env,
         mnemonic = "TcgGuestImage",
         progress_message = "Preparing the %s guest with %s" % (ctx.attr.architecture, ctx.attr.kernel_release),
     )
     return [
-        DefaultInfo(files = depset([kernel, initramfs])),
-        TcgImageInfo(kernel = kernel, initramfs = initramfs, architecture = ctx.attr.architecture),
+        DefaultInfo(files = depset([kernel, rootfs])),
+        TcgImageInfo(kernel = kernel, rootfs = rootfs, architecture = ctx.attr.architecture),
     ]
 
 tcg_image = rule(
@@ -92,7 +125,6 @@ def _tcg_test_impl(ctx):
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     if ctx.attr.arm64_el2 and architecture != "arm64":
         fail("EL2 exposure requires an ARM64 guest")
-    tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     configuration = ctx.actions.declare_file(ctx.label.name + ".guest.sh")
     if ctx.attr.memory_mib <= 0 or ctx.attr.scratch_gib <= 0:
@@ -118,16 +150,15 @@ def _tcg_test_impl(ctx):
             " ".join([shell.quote(key) for key in inherited_environment]),
         ),
     )
-    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, configuration, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
+    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
     if ctx.file.emulator != None:
         inputs.append(ctx.file.emulator)
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
-        image.initramfs.short_path,
+        image.rootfs.short_path,
         ctx.file.archive.short_path,
         ctx.executable.payload.short_path,
-        tar.tarinfo.binary.short_path,
         str(ctx.attr.payload.label),
         ctx.attr.machine,
         ctx.file._test_setup.short_path,
@@ -140,10 +171,10 @@ def _tcg_test_impl(ctx):
         "exec %s %s \"$@\"\n" % (shell.quote(ctx.executable._launcher.short_path), " ".join([shell.quote(arg) for arg in arguments])),
         is_executable = True,
     )
-    runfiles = ctx.runfiles(files = inputs, transitive_files = tar.default.files).merge(ctx.attr._launcher[DefaultInfo].default_runfiles)
+    runfiles = ctx.runfiles(files = inputs).merge(ctx.attr._launcher[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(executable = executable, runfiles = runfiles),
-        RunEnvironmentInfo(environment = tar.tarinfo.default_env, inherited_environment = inherited_environment),
+        RunEnvironmentInfo(environment = {}, inherited_environment = inherited_environment),
     ]
 
 _tcg_test = rule(
@@ -152,7 +183,7 @@ _tcg_test = rule(
     attrs = {
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
-        "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "host_tools": attr.label(default = Label(":host_tools"), allow_single_file = True, cfg = "exec"),
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "arm64_el2": attr.bool(default = False),
@@ -164,7 +195,6 @@ _tcg_test = rule(
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
         "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
     },
-    toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )
 
 def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
@@ -220,7 +250,7 @@ def amd64_kvm_test(name, payload, tags, image, **kwargs):
         payload = payload,
         image = image,
         machine = "amd64_kvm",
-        host_tools = "@kvm_host_tools//:flat",
+        host_tools = Label(":kvm_host_tools"),
         # Only the VM process needs the host device. Its declared inputs and
         # payload remain ordinary remotely executable build actions.
         tags = tags + ["no-remote-exec", "no-sandbox"],

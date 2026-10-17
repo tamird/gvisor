@@ -235,6 +235,7 @@ release_apt.install(
         "jammy-security",
     ],
 )
+
 # Resolve the EROFS writer, loader and libraries together, without changing
 # virtual package providers in the existing Jammy dependency sets.
 container_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt", isolate = True)
@@ -308,11 +309,10 @@ http_archive(
 _VM_HOST_PACKAGES = [
     "base-files:amd64",
     "coreutils:amd64",
-    "cpio:amd64",
     "e2fsprogs:amd64",
-    "findutils:amd64",
-    "gzip:amd64",
+    "fakeroot:amd64",
     "kmod:amd64",
+    "util-linux:amd64",
 ]
 
 release_apt.install(

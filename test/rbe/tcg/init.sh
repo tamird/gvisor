@@ -16,7 +16,7 @@
 # PID 1 inside the disposable full-system guest.
 set -euo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-/bin/busybox mount -t devtmpfs devtmpfs /dev
+# CONFIG_DEVTMPFS_MOUNT mounts /dev before this direct-root init runs.
 exec </dev/console >/dev/console 2>&1
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
@@ -49,6 +49,7 @@ source /etc/gvisor-test-kernel
 uname -a | tee /result/kernel.txt
 # Kernel options determine which native syscall features the guest can test.
 cp /etc/gvisor-test-kernel.config /result/kernel.config
+cat /etc/gvisor-test-root-image | tee /result/root-image.txt
 [[ "$(uname -r)" == "${expected_kernel_release:?}" ]]
 page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt
@@ -68,6 +69,17 @@ if [[ "${expected_architecture:?}" == amd64 ]]; then
   modprobe "$module"
   [[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]]
   printf 'Guest KVM module: %s\n' "$module" | tee /result/kvm.txt
+fi
+# The launcher fixes scratch/root at PCI slots 4/5, respectively. Check their
+# identities before mounting writable test storage.
+root_device=
+while read -r _ _ device _ mountpoint _; do
+  if [[ "$mountpoint" == / ]]; then root_device="$device"; break; fi
+done < /proc/self/mountinfo
+read -r expected_root_device < /sys/class/block/vdb/dev
+if [[ -z "$root_device" || "$root_device" != "$expected_root_device" ]]; then
+  printf 'Root device %s does not match vdb %s\n' "$root_device" "$expected_root_device" >&2
+  exit 1
 fi
 mount -t ext4 /dev/vda /work
 mkdir -p /work/payload /work/tmp
