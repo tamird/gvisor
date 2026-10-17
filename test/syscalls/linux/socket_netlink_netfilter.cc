@@ -4768,7 +4768,7 @@ TEST_P(AddRuleWithExprTest, AddRuleWithExpr) {
     if (std::tie(version.major, version.minor, version.micro) <
         std::tie(minimum.major, minimum.minor, minimum.micro)) {
       GTEST_SKIP() << "Requires native kernel " << minimum.major << "."
-                  << minimum.minor << "." << minimum.micro << " or newer";
+                   << minimum.minor << "." << minimum.micro << " or newer";
     }
   }
   FileDescriptor fd =
