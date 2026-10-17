@@ -26,6 +26,7 @@ def _runner_test_variant(runtime_coverage = False):
 # with_cfg requires the returned transition rule to be exported at module scope.
 # buildifier: disable=unused-variable
 _runner_test, _runner_compilation_transition = _runner_test_variant()
+
 # buildifier: disable=unused-variable
 _coverage_runner_test, _runner_coverage_transition = _runner_test_variant(runtime_coverage = True)
 
