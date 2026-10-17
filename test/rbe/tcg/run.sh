@@ -49,7 +49,10 @@ case "$machine" in
     # QEMU's software CPU identity avoids Linux workarounds for physical CPU
     # errata, which can prevent the emulated guest from entering KVM.
     # https://github.com/qemu/qemu/blob/4fc49f46d/target/arm/tcg/cpu64.c#L1189-L1206
-    machine_options=(-machine "virt-6.2,gic-version=3" -cpu max -accel "tcg,thread=multi")
+    # Keep pointer authentication without emulating QARMA5 on kernel returns.
+    # https://www.qemu.org/docs/master/system/arm/cpu-features.html#tcg-vcpu-features
+    # https://github.com/qemu/qemu/blob/4fc49f46d/target/arm/cpu64.c#L561-L633
+    machine_options=(-machine "virt-6.2,gic-version=3" -cpu max,pauth-impdef=on -accel "tcg,thread=multi")
     if [[ "$guest_arm64_el2" == true ]]; then
       machine_options[1]+=",virtualization=on"
     fi
