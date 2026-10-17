@@ -47,6 +47,7 @@ def _syscall_test(
         debug,
         network = "none",
         external_network = False,
+        limit_ephemeral_ports = False,
         file_access = "exclusive",
         overlay = False,
         add_host_uds = False,
@@ -75,8 +76,9 @@ def _syscall_test(
         kcov = False,
         **kwargs):
     runtime_coverage = kcov and platform != "native"
-    if external_network:
+    if external_network or limit_ephemeral_ports:
         container = True
+    if external_network:
         if platform != "native" and network == "none":
             network = "sandbox"
 
@@ -182,6 +184,9 @@ def _syscall_test(
 
     if external_network:
         runner_args.append("--external-network")
+
+    if limit_ephemeral_ports:
+        runner_args.append("--limit-ephemeral-ports")
 
     if runtime_coverage:
         # Reporting consumes the counters that the KCOV syscall tests need.

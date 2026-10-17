@@ -65,6 +65,7 @@ var (
 	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
 	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
 	externalNetwork    = flag.Bool("external-network", false, "create a private addressed interface for broadcast and multicast tests")
+	limitPorts         = flag.Bool("limit-ephemeral-ports", false, "constrain the private network namespace's ephemeral port range for exhaustion tests")
 	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
 	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
@@ -121,6 +122,9 @@ func wrapInSetupContainer(cmd *exec.Cmd) {
 	args := []string{cmd.Path}
 	if *externalNetwork {
 		args = append(args, "--external-network")
+	}
+	if *limitPorts {
+		args = append(args, "--limit-ephemeral-ports")
 	}
 	cmd.Args = append(args, cmd.Args...)
 }
@@ -608,7 +612,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 		createCmd := exec.Command(specutils.ExePath, createArgs...)
 		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
-		if *externalNetwork {
+		if *externalNetwork || *limitPorts {
 			createCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
 			wrapInSetupContainer(createCmd)
 		}
@@ -1046,7 +1050,7 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	// Mark the root as writeable, as some tests attempt to
 	// write to the rootfs, and expect EACCES, not EROFS.
 	spec.Root.Readonly = false
-	if *externalNetwork {
+	if *externalNetwork || *limitPorts {
 		// Join the namespace prepared by setup_container instead of creating
 		// another empty namespace when the sandbox starts.
 		spec.Linux = &specs.Linux{

@@ -282,6 +282,8 @@ PosixError SetupContainer() {
 }  // namespace gvisor
 
 using ::gvisor::testing::EnableAtime;
+using ::gvisor::testing::PosixError;
+using ::gvisor::testing::SetContents;
 using ::gvisor::testing::SetupContainer;
 using ::gvisor::testing::SetupExternalNetwork;
 
@@ -290,6 +292,7 @@ using ::gvisor::testing::SetupExternalNetwork;
 // Usage:
 //   ./setup_container test_binary [arguments forwarded to test_binary...]
 //   ./setup_container --external-network test_binary [arguments...]
+//   ./setup_container --limit-ephemeral-ports test_binary [arguments...]
 //   ./setup_container --require-atime runner [arguments forwarded to runner...]
 int main(int argc, char* argv[], char* envp[]) {
   if (argc < 2) {
@@ -308,19 +311,31 @@ int main(int argc, char* argv[], char* envp[]) {
       return 1;
     }
     command = 2;
-  } else if (!SetupContainer().ok()) {
-    return 1;
-  } else if (strcmp(argv[1], "--external-network") == 0) {
-    if (argc < 3) {
-      std::cerr << "Must provide arguments to exec." << std::endl;
-      return 2;
-    }
-    const auto err = SetupExternalNetwork();
-    if (!err.ok()) {
-      std::cerr << "Cannot prepare test network: " << err << std::endl;
+  } else {
+    if (!SetupContainer().ok()) {
       return 1;
     }
-    command = 2;
+    for (; command < argc; ++command) {
+      PosixError err;
+      if (strcmp(argv[command], "--external-network") == 0) {
+        err = SetupExternalNetwork();
+      } else if (strcmp(argv[command], "--limit-ephemeral-ports") == 0) {
+        // Hostinet cannot change this sysctl from inside the sandbox. Limit
+        // its private namespace before runsc starts so exhaustion is bounded.
+        err = SetContents("/proc/sys/net/ipv4/ip_local_port_range",
+                          "32768 32818");
+      } else {
+        break;
+      }
+      if (!err.ok()) {
+        std::cerr << "Cannot prepare test network: " << err << std::endl;
+        return 1;
+      }
+    }
+  }
+  if (command == argc) {
+    std::cerr << "Must provide arguments to exec." << std::endl;
+    return 2;
   }
   if (execve(argv[command], &argv[command], envp) == -1) {
     std::cerr << "execv returned errno " << errno << std::endl;
