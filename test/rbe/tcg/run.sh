@@ -28,16 +28,15 @@ host_phase() {
   printf '%s\n' "$record" || true
 }
 host_phase launcher_start
-host_archive="$(realpath "$1")"
+host="$(realpath "$1")"
 kernel="$(realpath "$2")"
 initramfs="$(realpath "$3")"
 payload_archive="$(realpath "$4")"
 payload="$5"
-tar_tool="$(realpath "$6")"
-payload_label="$7"
-machine="$8"
-test_setup="$(realpath "$9")"
-shift 9
+payload_label="$6"
+machine="$7"
+test_setup="$(realpath "$8")"
+shift 8
 # The owning rule writes this declared configuration beside the launcher.
 declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2
 declare -a guest_env guest_inherited_env
@@ -69,10 +68,8 @@ case "$machine" in
 esac
 scratch="$(mktemp -d "${TEST_TMPDIR}/tcg.XXXXXX")"
 result="${TEST_UNDECLARED_OUTPUTS_DIR}/guest"
-mkdir -p "$scratch/host" "$scratch/input" "$result"
-"$tar_tool" -xf "$host_archive" -C "$scratch/host" --no-same-owner
+mkdir -p "$scratch/input" "$result"
 host_phase host_tools_ready
-host="$scratch/host"
 if [[ "$machine" == amd64_kvm ]]; then
   # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
   # Select the declared BIOS instead of the host's /usr/share/seabios.
@@ -189,7 +186,7 @@ trap cleanup EXIT
 trap 'host_phase signal_TERM 143; exit 143' TERM
 trap 'host_phase signal_INT 130; exit 130' INT
 # ARM TCG supplies its source-built emulator. Guest preparation, recovery,
-# shared libraries and firmware use the existing declared host archive.
+# shared libraries and firmware use the immutable declared host-tool directory.
 emulator_path="${guest_emulator:-$host/usr/bin/$emulator}"
 # Networking and privileged host mounts are not needed by the guest transport.
 QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \

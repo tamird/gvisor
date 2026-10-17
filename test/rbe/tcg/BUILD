@@ -15,7 +15,7 @@
 load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
-load(":defs.bzl", "tcg_image")
+load(":defs.bzl", "guest_host_tools", "tcg_image")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -33,6 +33,43 @@ sh_binary(
     name = "run",
     testonly = True,
     srcs = ["run.sh"],
+    tags = ["manual"],
+)
+
+# Keep only the launcher tools and their library/firmware/notice closure. The
+# package root also contains unused absolute and dangling symlinks, which cannot
+# be safely materialized as a Bazel tree artifact. Selected links stay relative
+# and resolve within this directory; no host filesystem paths are substituted.
+_HOST_TOOL_MEMBERS = [
+    "etc/mke2fs.conf",
+    "lib/x86_64-linux-gnu",
+    "sbin/debugfs",
+    "sbin/e2fsck",
+    "sbin/mke2fs",
+    "usr/bin/timeout",
+    "usr/bin/truncate",
+    "usr/lib/x86_64-linux-gnu",
+    "usr/share/common-licenses",
+    "usr/share/doc",
+    "usr/share/qemu",
+]
+
+guest_host_tools(
+    name = "host_tools",
+    testonly = True,
+    archive = "@tcg_host_tools//:flat",
+    members = _HOST_TOOL_MEMBERS,
+    tags = ["manual"],
+)
+
+guest_host_tools(
+    name = "kvm_host_tools",
+    testonly = True,
+    archive = "@kvm_host_tools//:flat",
+    members = _HOST_TOOL_MEMBERS + [
+        "usr/bin/qemu-system-x86_64",
+        "usr/share/seabios",
+    ],
     tags = ["manual"],
 )
 
@@ -164,5 +201,6 @@ bzl_library(
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
+        "@tar.bzl//tar",
     ],
 )
