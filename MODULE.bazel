@@ -23,7 +23,7 @@ bazel_dep(name = "protobuf", version = "35.1", repo_name = "com_google_protobuf"
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "abseil-cpp", version = "20260817.0", repo_name = "com_google_absl")
 bazel_dep(name = "googletest", version = "1.18.0", repo_name = "com_google_googletest")
-bazel_dep(name = "google_benchmark", version = "1.9.5", repo_name = "com_google_benchmark")
+bazel_dep(name = "google_benchmark", version = "1.10.0", repo_name = "com_google_benchmark")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.2")
 bazel_dep(name = "rules_python", version = "2.0.2")
 bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2", repo_name = "llvm_zlib")
@@ -43,13 +43,12 @@ single_version_override(
     version = "0.63.0",
 )
 
-# Enable Benchmark's mutex annotations with Clang and libc++.
-# https://github.com/google/benchmark/commit/82a895089
-# Remove when the selected Benchmark release includes this fix.
-single_version_override(
+# Use the release archive until Benchmark 1.10.0 is available in BCR.
+archive_override(
     module_name = "google_benchmark",
-    patch_strip = 1,
-    patches = ["//tools:benchmark-thread-safety.patch"],
+    integrity = "sha256-rMXHwPvthVxKqi18PDb7grDBXCj04VHj9nnC/AqkBK8=",
+    strip_prefix = "benchmark-1.10.0",
+    urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.10.0.tar.gz"],
 )
 
 ### LLVM
