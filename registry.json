@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T19:26:01.095672+00:00",
+    "updatedAt": "2026-10-17T19:27:40.059532+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7000,19 +7000,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fscheckpoint-test-lifecycle",
-      "head": "534046f9628f7fc9b56071bf2cf4a9c391de2328",
+      "head": "e10ab455e3c02b5432be3059adb1d699d17df965",
       "title": "Respect sandbox exit in FS checkpoint tests",
       "group": "tests",
-      "summary": "The contributor-approved change is now PR #15653 at exact head 534046f96. No contributor decision remains; maintainer review and current-head CI are followed upstream.\n\nThe observed shared-volume test sent a child signal after filesystem checkpointing and root termination had closed the control server. Both synchronous ExitAfterSaving tests now wait for the root sandbox and require status zero; the resume=true annotation test explicitly destroys the whole sandbox. The separate filesystem-checkpoint waiter, which lacked a registration handshake, is removed without changing production API semantics. The three existing roots and subtests pass across both cgroup modes and systrap/KVM, with owning analyzers passing both architectures. The actual before failure and the separate unresolved chained-restore stall remain recorded.\n\nA later third-party report on ARM64/systrap in a Docker Desktop builder observed three failures in sixty SharedVolume runs on master c1058949e and sixty passes with this change, plus twenty passes each for Command and Annotation and one clean combined checkpoint run. That report does not cover KVM or cgroup v1 and is separate from our source-bound validation. The user subsequently requested Etienne review in the public thread.",
+      "summary": "The requested comment amendment is published at e10ab455e3. It explains why the resumed sandbox must be stopped before restoring it, without referring to removed code. Rebase range-diff confirms executable code is unchanged. Etienne\u2019s changes-requested thread remains open; no new reply or resolution has been posted.\n\nThe observed shared-volume test sent a child signal after filesystem checkpointing and root termination had closed the control server. Both synchronous ExitAfterSaving tests now wait for the root sandbox and require status zero; the resume=true annotation test explicitly destroys the whole sandbox. The separate filesystem-checkpoint waiter, which lacked a registration handshake, is removed without changing production API semantics. The three existing roots and subtests pass across both cgroup modes and systrap/KVM, with owning analyzers passing both architectures. The actual before failure and the separate unresolved chained-restore stall remain recorded.\n\nA later third-party report on ARM64/systrap in a Docker Desktop builder observed three failures in sixty SharedVolume runs on master c1058949e and sixty passes with this change, plus twenty passes each for Command and Annotation and one clean combined checkpoint run. That report does not cover KVM or cgroup v1 and is separate from our source-bound validation. The user subsequently requested Etienne review in the public thread.",
       "url": "https://github.com/google/gvisor/pull/15653",
       "status": "open",
-      "updatedAt": "2026-10-17T16:40:09.859646+00:00",
+      "updatedAt": "2026-10-17T19:27:40.059532+00:00",
       "followup": {
-        "disposition": "Maintainer review continues; additional third-party validation and the user-authored review request are recorded.",
-        "owner": "external_sweeps",
-        "sourceHead": "534046f9628f7fc9b56071bf2cf4a9c391de2328",
+        "disposition": "Requested comment amendment published; review thread remains open",
+        "owner": "root",
+        "sourceHead": "e10ab455e3c02b5432be3059adb1d699d17df965",
         "reviewedAt": "2026-10-17T16:40:09.859646+00:00",
-        "nextAction": "Follow current-head CI and maintainer review. The additional ARM64/systrap report is third-party evidence, not our qualification; the user has already requested Etienne review in the public thread, so no duplicate outreach is needed.",
+        "nextAction": "Follow current-head CI and Etienne\u2019s review of the comment correction; the unchanged executable patch retains its earlier validation.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15653",
           "https://github.com/tamird/gvisor/commit/534046f9628f7fc9b56071bf2cf4a9c391de2328",
@@ -7021,11 +7021,22 @@
           "https://github.com/tamird/gvisor/actions/runs/38163311486",
           "https://app.buildbuddy.io/invocation/b4b82809-a24f-4f5b-9978-c34f4b405451",
           "https://github.com/google/gvisor/pull/15653#issuecomment-6236047547",
-          "https://github.com/google/gvisor/pull/15653#issuecomment-6236554589"
+          "https://github.com/google/gvisor/pull/15653#issuecomment-6236554589",
+          "https://github.com/tamird/gvisor/commit/e10ab455e3c02b5432be3059adb1d699d17df965",
+          "https://github.com/google/gvisor/pull/15653#discussion_r4303996517"
         ],
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-17T19:27:40.059532+00:00"
       },
-      "number": 15653
+      "number": 15653,
+      "refinement": {
+        "before": {
+          "head": "534046f9628f7fc9b56071bf2cf4a9c391de2328"
+        },
+        "after": {
+          "head": "e10ab455e3c02b5432be3059adb1d699d17df965"
+        }
+      }
     },
     {
       "id": "pr:15666",
@@ -8885,19 +8896,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qemu-prebuilt-user",
-      "head": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb",
+      "head": "5f964e3829c23ded8bb0167a02823f97ffbe66f8",
       "title": "Use rules_qemu for cross-architecture generators",
       "url": "https://github.com/tamird/gvisor/commit/284970814f9f46b0afe9dd2a9d6f6e1161c99ccb",
       "group": "bazel",
-      "status": "Contributor review pending",
-      "summary": "The revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor review request is now pending for this exact refinement of ce9a1c3bdf. Original #15187 is closed, and its source/review evidence and the earlier custom-archive proposal remain preserved; no upstream PR has been opened or updated for this replacement.",
-      "updatedAt": "2026-10-17T11:45:11.369312+00:00",
+      "status": "Delivered as #15929",
+      "summary": "The revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
+      "updatedAt": "2026-10-17T19:27:40.059532+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "BCR revision validated; contributor review requested",
-        "sourceHead": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb",
-        "observedAt": "2026-10-17T11:45:11.369312+00:00",
-        "nextAction": "Await the existing contributor decision on exact 284970814f and its ce9a1c3bdf refinement. Preserve closed #15187; deliver the approved replacement through the verified applicable upstream PR path only after the decision.",
+        "owner": "hostinet_delivery",
+        "disposition": "Approved change delivered as #15929",
+        "sourceHead": "5f964e3829c23ded8bb0167a02823f97ffbe66f8",
+        "observedAt": "2026-10-17T19:27:40.059532+00:00",
+        "nextAction": "Follow #15929 current-head checks, maintainer feedback and import lifecycle.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9",
           "https://app.buildbuddy.io/invocation/3e511359-6043-4e1b-bf33-f2272fb1b112",
@@ -8905,21 +8916,17 @@
           "https://app.buildbuddy.io/invocation/1b0f3182-baf2-4540-81b2-7b26cae70a46",
           "https://app.buildbuddy.io/invocation/142a3449-e5fa-4d59-a35e-8ca12328b782",
           "https://app.buildbuddy.io/invocation/2189ed47-24f6-43d4-a464-3535c372fbab",
-          "https://app.buildbuddy.io/invocation/5d81ba4b-3187-4b3f-8aa1-5a3236987215"
+          "https://app.buildbuddy.io/invocation/5d81ba4b-3187-4b3f-8aa1-5a3236987215",
+          "https://github.com/google/gvisor/pull/15929"
         ]
       },
       "refinement": {
         "before": {
-          "head": "ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9"
+          "head": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb"
         },
         "after": {
-          "head": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb"
+          "head": "5f964e3829c23ded8bb0167a02823f97ffbe66f8"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb",
-        "url": "https://github.com/tamird/gvisor/commit/284970814f9f46b0afe9dd2a9d6f6e1161c99ccb"
       }
     },
     {
@@ -9051,6 +9058,45 @@
           "https://github.com/google/gvisor/pull/15927"
         ]
       }
+    },
+    {
+      "id": "pr:15929",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "qemu-prebuilt-user",
+      "head": "5f964e3829c23ded8bb0167a02823f97ffbe66f8",
+      "title": "Use rules_qemu for cross-architecture generators",
+      "url": "https://github.com/google/gvisor/pull/15929",
+      "group": "bazel",
+      "status": "open",
+      "summary": "The revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
+      "updatedAt": "2026-10-17T19:27:40.059532+00:00",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "Approved change delivered as #15929",
+        "sourceHead": "5f964e3829c23ded8bb0167a02823f97ffbe66f8",
+        "observedAt": "2026-10-17T19:27:40.059532+00:00",
+        "nextAction": "Follow #15929 current-head checks, maintainer feedback and import lifecycle.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9",
+          "https://app.buildbuddy.io/invocation/3e511359-6043-4e1b-bf33-f2272fb1b112",
+          "https://github.com/tamird/gvisor/commit/284970814f9f46b0afe9dd2a9d6f6e1161c99ccb",
+          "https://app.buildbuddy.io/invocation/1b0f3182-baf2-4540-81b2-7b26cae70a46",
+          "https://app.buildbuddy.io/invocation/142a3449-e5fa-4d59-a35e-8ca12328b782",
+          "https://app.buildbuddy.io/invocation/2189ed47-24f6-43d4-a464-3535c372fbab",
+          "https://app.buildbuddy.io/invocation/5d81ba4b-3187-4b3f-8aa1-5a3236987215",
+          "https://github.com/google/gvisor/pull/15929"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "284970814f9f46b0afe9dd2a9d6f6e1161c99ccb"
+        },
+        "after": {
+          "head": "5f964e3829c23ded8bb0167a02823f97ffbe66f8"
+        }
+      },
+      "number": 15929
     }
   ],
   "edges": [
@@ -16871,12 +16917,12 @@
     {
       "id": "investigation:qemu-prebuilt-generator",
       "title": "Audit generator replacement and QEMU tooling",
-      "status": "active",
+      "status": "concluded",
       "owner": "Codex \u2014 syscall validation",
-      "updatedAt": "2026-10-17T06:58:53.214123+00:00",
-      "summary": "The complete comparison found no independent source to salvage from closed #15187 after merged #15913. The published qemu-prebuilt-user proposal at ce9a1c3bdf (a message-only amendment of validated 24d79a05a with the exact same tree) replaces Debian extraction with four pinned hermeticbuild/qemu-prebuilt 11.0.0.1 archives and an explicitly pinned QEMU notice-source mechanism. Canonical Fetch and Verify pass for 197 dependencies. The complete checker and AMD64 usage report 27 passing entries, ARM64 usage reports three, and both uncached cross-generator actions execute on opposite-CPU workers. Buildifier and gofmt pass. The original reverse-build parent remains failed only for the absent ambient Go tool; the remaining-only gofmt check uses the declared SDK without repeating tests. RISC-V archives were inspected and resolved, with no runtime coverage claimed. Original #15187 refs and review evidence remain preserved; no upstream PR has been updated. The contributor review request is now pending for exact ce9a1c3bdf.",
+      "updatedAt": "2026-10-17T19:27:40.059532+00:00",
+      "summary": "The comparison found no independent source to salvage from #15187 after #15913 merged. The replacement now uses Bazel Central Registry rules_qemu 0.3.0 and its public toolchains instead of the Debian extraction rule. All twenty user-mode archives and the 197-dependency license audit pass; both existing usage tests and fresh opposite-architecture generator actions are qualified. The contributor-approved patch is delivered as #15929 at 5f964e3829. The earlier custom-archive proposal is superseded.",
       "findings": [],
-      "nextStep": "The exact validated-tree proposal is now awaiting the contributor decision. Preserve closed #15187 and merged #15913 evidence; do not update an upstream PR before that decision.",
+      "nextStep": "Track #15929 through maintainer review, import and merge. The investigation is concluded; PR delivery remains active.",
       "evidence": [
         {
           "label": "Original closed generator proposal",
@@ -16901,6 +16947,10 @@
         {
           "label": "Exact validated proposal awaiting contributor decision",
           "url": "https://github.com/tamird/gvisor/commit/ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9"
+        },
+        {
+          "label": "Delivered BCR rules_qemu replacement",
+          "url": "https://github.com/google/gvisor/pull/15929"
         }
       ]
     },
