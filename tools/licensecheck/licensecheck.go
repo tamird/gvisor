@@ -33,7 +33,6 @@
 package licensecheck
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -58,6 +57,8 @@ import (
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/semver"
 	yaml "gopkg.in/yaml.v3"
+
+	"gvisor.dev/gvisor/pkg/zip"
 )
 
 // Paths locates the audit's inputs and output, relative to the repo root.

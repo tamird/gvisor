@@ -15,7 +15,6 @@
 package licensecheck
 
 import (
-	"archive/zip"
 	"bufio"
 	"bytes"
 	"crypto/sha256"
@@ -30,6 +29,8 @@ import (
 	"path"
 	"slices"
 	"strings"
+
+	"gvisor.dev/gvisor/pkg/zip"
 )
 
 // enumerateWheels follows the imported pip hubs' generated whl_map through

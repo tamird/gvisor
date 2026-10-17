@@ -19,6 +19,7 @@ go_library(
     stateify = False,
     visibility = ["//tools/licensecheck:__subpackages__"],
     deps = [
+        "//pkg/zip",
         "@com_github_google_licensecheck//:go_default_library",
         "@in_gopkg_yaml_v3//:go_default_library",
         "@org_golang_x_mod//modfile:go_default_library",
@@ -42,4 +43,5 @@ go_test(
     ],
     embed = [":licensecheck"],
     embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),  # keep
+    deps = ["//pkg/zip"],
 )

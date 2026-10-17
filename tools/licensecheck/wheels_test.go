@@ -15,7 +15,6 @@
 package licensecheck
 
 import (
-	"archive/zip"
 	"bytes"
 	"crypto/sha256"
 	"fmt"
@@ -23,6 +22,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/zip"
 )
 
 func TestPipHubRepositories(t *testing.T) {
