@@ -60,6 +60,7 @@ def _syscall_test(
         tcg_shard_count = None,
         native_kernel_requirements = [],
         hostnet_kernel_requirements = [],
+        native_rc_images = {},
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -226,11 +227,21 @@ def _syscall_test(
             **tcg_attributes
         )
 
+    rc_images = {
+        "amd64": "//test/rbe/tcg:amd64_rc_guest",
+        "arm64": "//test/rbe/tcg:rc_guest",
+    }
+    if platform == "native":
+        for architecture, image in native_rc_images.items():
+            if architecture not in rc_images:
+                fail("Unsupported native RC guest architecture: " + architecture)
+            rc_images[architecture] = image
+
     if arm64_rc:
         arm64_tcg_test(
             name = name + "_rc_tcg",
             payload = ":" + name + "_arm64",
-            image = "//test/rbe/tcg:rc_guest",
+            image = rc_images["arm64"],
             tags = attributes["tags"] + ["arm64-rc-tcg"],
             **tcg_attributes
         )
@@ -239,7 +250,7 @@ def _syscall_test(
         amd64_kvm_test(
             name = name + "_rc_kvm",
             payload = ":" + name + "_amd64",
-            image = "//test/rbe/tcg:amd64_rc_guest",
+            image = rc_images["amd64"],
             tags = attributes["tags"] + ["amd64-rc-kvm"],
             **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
@@ -313,6 +324,8 @@ def syscall_test_variants(
         overrides the shard count only for those tests. native_kernel_requirements
         and hostnet_kernel_requirements declare host features needed only by the
         corresponding variants; the caller's worker policy chooses their placement.
+        native_rc_images maps architectures to guest images for native RC tests
+        requiring features absent from the default packaged kernels.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -513,6 +526,8 @@ def syscall_test(
         overrides the shard count only for those tests. native_kernel_requirements
         and hostnet_kernel_requirements declare host features needed only by the
         corresponding variants; the caller's worker policy chooses their placement.
+        native_rc_images maps architectures to guest images for native RC tests
+        requiring features absent from the default packaged kernels.
     """
     if not tags:
         tags = []

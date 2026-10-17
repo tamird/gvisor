@@ -129,6 +129,47 @@ tcg_image(
     guest = ":rc_userspace",
     host_tools = "@tcg_host_tools//:flat",
     init = "init.sh",
+    kernel_archives = [
+        "@tcg_arm64_rc_image//:data.tar",
+        "@tcg_arm64_rc_modules//:data.tar",
+    ],
+    kernel_release = "7.3.0-070300rc3-generic",
+    page_size = 4096,
+    tags = ["manual"],
+)
+
+tcg_image(
+    name = "amd64_rc_guest",
+    testonly = True,
+    architecture = "amd64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    guest = "@kvm_amd64_guest//:flat",
+    host_tools = "@kvm_host_tools//:flat",
+    init = "init.sh",
+    kernel_archives = [
+        "@kvm_amd64_rc_image//:data.tar",
+        "@kvm_amd64_rc_modules//:data.tar",
+    ],
+    kernel_release = "7.3.0-070300rc3-generic",
+    page_size = 4096,
+    tags = ["manual"],
+)
+
+# These focused native KCOV fixtures use instrumented source-defconfig kernels.
+# General RC syscall tests retain the packaged Ubuntu configs and module closure.
+tcg_image(
+    name = "kcov_guest",
+    testonly = True,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    guest = ":rc_userspace",
+    host_tools = "@tcg_host_tools//:flat",
+    init = "init.sh",
     kernel_archives = ["//test/rbe/tcg/kernel:kcov_arm64"],
     kernel_release = "7.3.0-rc3-gvisor-kcov",
     page_size = 4096,
@@ -136,7 +177,7 @@ tcg_image(
 )
 
 tcg_image(
-    name = "amd64_rc_guest",
+    name = "amd64_kcov_guest",
     testonly = True,
     architecture = "amd64",
     exec_compatible_with = [

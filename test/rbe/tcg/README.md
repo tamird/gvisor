@@ -126,6 +126,14 @@ extracts the ARM64 Image from the EFI zboot header with the declared zstd
 tool, retains the matching module closure and preserves package notices.
 The init checks the declared release and page size before running tests.
 
+Native KCOV owners explicitly select separate `kcov_guest` and
+`amd64_kcov_guest` images because the packaged Ubuntu kernels omit KCOV.
+Those fixtures build the pinned upstream source with architecture defconfigs
+and the instrumentation and boot options needed by the existing KCOV cases.
+They do not preserve the Ubuntu kernel configuration and are not substitutes
+for the general RC guests. Non-native KCOV variants retain the ordinary
+packaged RC images; their coverage comes from gVisor instrumentation.
+
 The release string matches the October 2 public RC workers. It does not
 establish that this package has the same binary or config as a Buildkite
 worker, nor does it qualify the mutable RC queues. AMD64 RC execution also

@@ -380,6 +380,11 @@ syscall_test(
 )
 
 syscall_test(
+    # Packaged Ubuntu RC kernels do not enable native KCOV instrumentation.
+    native_rc_images = {
+        "amd64": "//test/rbe/tcg:amd64_kcov_guest",
+        "arm64": "//test/rbe/tcg:kcov_guest",
+    },
     test = "//test/syscalls/linux:kcov_test",
 )
 
