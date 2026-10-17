@@ -47,6 +47,11 @@ kmod_tool() {
   "$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2" --inhibit-cache --argv0 "$1" \
     --library-path "$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu" "$host/bin/kmod" "${@:2}"
 }
+# Fail at image construction if a future kernel cannot decode this initramfs.
+if [[ $'\n'"$(<"$root/boot/config-$release")"$'\n' != *$'\nCONFIG_RD_ZSTD=y\n'* ]]; then
+  printf 'Guest kernel %s must enable CONFIG_RD_ZSTD=y\n' "$release" >&2
+  exit 1
+fi
 kernel="$root/boot/vmlinuz-$release"
 # zboot stores the compressed payload inside .text, not in a separate PE
 # section. Its public header supplies the offset, size and compression type:
@@ -100,4 +105,5 @@ ln -sfn nc.openbsd "$root/bin/nc"
 ln -sfn which.debianutils "$root/usr/bin/which"
 # cpio owns numeric IDs, independent of the remote action's uid.
 cd "$root"
-host_tool usr/bin/find . -print0 | host_tool bin/cpio --null -o --format=newc --owner=0:0 --reproducible | host_tool bin/gzip -n > "$initramfs_out"
+# Decode the complete module tree quickly under TCG without pruning drivers.
+host_tool usr/bin/find . -print0 | host_tool bin/cpio --null -o --format=newc --owner=0:0 --reproducible | "$zstd" -q -3 -c > "$initramfs_out"

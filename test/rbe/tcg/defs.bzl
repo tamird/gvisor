@@ -67,7 +67,7 @@ guest_host_tools = rule(
 def _image_impl(ctx):
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     kernel = ctx.actions.declare_file(ctx.label.name + ".Image")
-    initramfs = ctx.actions.declare_file(ctx.label.name + ".cpio.gz")
+    initramfs = ctx.actions.declare_file(ctx.label.name + ".cpio.zst")
     ctx.actions.run(
         executable = ctx.executable._builder,
         arguments = [
