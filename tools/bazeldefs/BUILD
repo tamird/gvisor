@@ -1,6 +1,6 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
-load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag", "target_emulators")
 load(":platforms.bzl", "docker_exec_properties")
 
 package(
@@ -249,3 +249,6 @@ config_setting(
     ],
     flag_values = {":page_size": "64k"},
 )
+
+# Host-configured emulators used by the target-configured seccomp generator.
+target_emulators(name = "qemu")

@@ -16020,6 +16020,30 @@
   commit: ""
   sha256: 731b5681e4bb18be313231579b8efd0296c5b015fa36dc533874b639ba838016
   license: LicenseRef-QEMU-11.1.2-Source
+- dependency: qemu_user_amd64_aarch64
+  version: https://github.com/hermeticbuild/qemu-prebuilt/releases/download/11.0.0.1/qemu-user-linux-amd64-aarch64-11.0.0.1.tar.gz
+  retrieved: ""
+  commit: ""
+  sha256: 6704548b543cc0c0363f980af5d441a6d42d50117c8ab00df010838823e28ca2
+  license_source: https://raw.githubusercontent.com/qemu/qemu/98b060da3a4f92b2a994ead5b16a87e783baf77c/COPYING
+- dependency: qemu_user_amd64_riscv64
+  version: https://github.com/hermeticbuild/qemu-prebuilt/releases/download/11.0.0.1/qemu-user-linux-amd64-riscv64-11.0.0.1.tar.gz
+  retrieved: ""
+  commit: ""
+  sha256: 6abe4fdab45e82ff87d226f1e7e0bd4d74b9b3f920befe67f6d482aa8666b9bc
+  license_source: https://raw.githubusercontent.com/qemu/qemu/98b060da3a4f92b2a994ead5b16a87e783baf77c/COPYING
+- dependency: qemu_user_arm64_riscv64
+  version: https://github.com/hermeticbuild/qemu-prebuilt/releases/download/11.0.0.1/qemu-user-linux-arm64-riscv64-11.0.0.1.tar.gz
+  retrieved: ""
+  commit: ""
+  sha256: 31f1ff73b63783931d816306825b31c101dafcddcd54f9a52639f0987fa0cb1a
+  license_source: https://raw.githubusercontent.com/qemu/qemu/98b060da3a4f92b2a994ead5b16a87e783baf77c/COPYING
+- dependency: qemu_user_arm64_x86_64
+  version: https://github.com/hermeticbuild/qemu-prebuilt/releases/download/11.0.0.1/qemu-user-linux-arm64-x86_64-11.0.0.1.tar.gz
+  retrieved: ""
+  commit: ""
+  sha256: bc827f55acf54eda5b201251804efc63b2c78bae5e0bb1bed7e8be1e13d36f49
+  license_source: https://raw.githubusercontent.com/qemu/qemu/98b060da3a4f92b2a994ead5b16a87e783baf77c/COPYING
 - dependency: rules_cc
   version: https://github.com/bazelbuild/rules_cc/releases/download/0.2.25/rules_cc-0.2.25.tar.gz
   retrieved: "2026-09-26"

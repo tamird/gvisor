@@ -4097,6 +4097,34 @@ exceptions:
       licensed firmware is not represented as GPLv2 by this audit. This
       scoped exception does not authorize linking or packaging QEMU in
       gVisor release artifacts.
+  - dependency: qemu_user_amd64_aarch64
+    license: GPL-2.0
+    exception_rationale: >-
+      QEMU user-mode emulator for aarch64 target binaries on amd64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: qemu_user_amd64_riscv64
+    license: GPL-2.0
+    exception_rationale: >-
+      QEMU user-mode emulator for riscv64 target binaries on amd64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: qemu_user_arm64_riscv64
+    license: GPL-2.0
+    exception_rationale: >-
+      QEMU user-mode emulator for riscv64 target binaries on arm64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
+  - dependency: qemu_user_arm64_x86_64
+    license: GPL-2.0
+    exception_rationale: >-
+      QEMU user-mode emulator for x86_64 target binaries on arm64 build
+      machines. The executable uses QEMU's GPL terms, not the MIT license of
+      the prebuilt repository's build scripts. Used only for cross-compilation;
+      QEMU is neither linked into nor distributed with gVisor.
   - dependency: tcg_arm64_rc_image
     license: GPL-2.0-only
     exception_rationale: >-
