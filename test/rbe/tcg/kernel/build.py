@@ -106,6 +106,7 @@ def main() -> None:
         # https://docs.kernel.org/kbuild/llvm.html#cross-compiling
         make = [str(root / config["make"]), "-C", str(source), "O=" + str(build),
                 "ARCH=" + architecture, "LLVM=1", "HOSTCC=" + str(tools / "hostcc"),
+                "PYTHON3=" + sys.executable,
                 "HOSTLDFLAGS=--ld-path=" + str(root / config["llvm"]["ld.lld"])]
 
         def run(command: list[str], name: str) -> None:
