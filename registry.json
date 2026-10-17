@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T20:06:13.472289+00:00",
+    "updatedAt": "2026-10-17T20:19:52.132311+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9123,19 +9123,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "hostinet-port-range",
-      "head": "b0037235be1de0f379334846931f83ed0e343874",
+      "head": "194f76d6969a39915bf9caaddfdaf35642da2644",
       "title": "Report the host's ephemeral port range in hostinet",
-      "url": "https://github.com/tamird/gvisor/commit/b0037235be1de0f379334846931f83ed0e343874",
+      "url": "https://github.com/tamird/gvisor/commit/194f76d6969a39915bf9caaddfdaf35642da2644",
       "group": "runtime",
-      "status": "Delivered as #15931; formatting correction in progress",
-      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
-      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. The existing exhaustion tests use a private namespace with a narrow range so they execute instead of skipping. The standalone extraction preserves the qualified production and fixture changes; both independent source reviews passed. The contributor approved the change with a comment-only Linux source citation correction. That correction passed independent review and is delivered as #15931. The 20:04 GitHub snapshot found a two-line clang-format mismatch in setup_container.cc; the owner has the exact public CI diff and is preparing a formatting-only correction.",
+      "status": "Delivered as #15931",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
       "followup": {
-        "owner": "root",
-        "disposition": "Published; addressing public lint",
-        "sourceHead": "b0037235be1de0f379334846931f83ed0e343874",
-        "observedAt": "2026-10-17T20:06:13.472289+00:00",
-        "nextAction": "Apply the exact two-line clang-format correction from public CI, publish the amendment and verify the rerun. Preserve the approved behavior and existing runtime evidence.",
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15931",
+        "sourceHead": "194f76d6969a39915bf9caaddfdaf35642da2644",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15931.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae",
           "https://github.com/tamird/gvisor/actions/runs/39053728306",
@@ -9145,20 +9145,20 @@
       },
       "evidence": [
         {
-          "label": "Standalone change for contributor review",
-          "url": "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae"
-        },
-        {
-          "label": "Qualified integration runtime: applicable TCP and UDP exhaustion cases pass",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39053728306"
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/194f76d6969a39915bf9caaddfdaf35642da2644"
         },
         {
           "label": "Upstream PR",
           "url": "https://github.com/google/gvisor/pull/15931"
         },
         {
-          "label": "Public clang-format failure",
-          "url": "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
+          "label": "Qualified integration runtime: applicable TCP and UDP exhaustion cases pass",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39053728306"
+        },
+        {
+          "label": "Corrected-head lint passed",
+          "url": "https://github.com/google/gvisor/actions/runs/39065839277/job/117493198521"
         }
       ],
       "refinement": {
@@ -9166,7 +9166,7 @@
           "head": "688cb1e12cc6825a7c40263ccc5dece9d5911aae"
         },
         "after": {
-          "head": "b0037235be1de0f379334846931f83ed0e343874"
+          "head": "194f76d6969a39915bf9caaddfdaf35642da2644"
         }
       }
     },
@@ -9181,12 +9181,12 @@
       "group": "tests",
       "status": "Delivered as #15930",
       "summary": "Upstream a30d5fc67 already fixed the NaN bucketer panic reported in #10045. This change removes the remaining Make exclusion and not_run:arm tag. One mixed-platform invocation at 2785e7bfce passes all 102 AMD64/ARM64 cases, including the reported regression, with no failures, skips or missing results. The production and test sources match upstream; the selection-only diff was source-reviewed, not executed. The contributor-approved change is delivered as #15930.",
-      "updatedAt": "2026-10-17T20:00:33.018220+00:00",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "work_map_delivery",
         "disposition": "Delivered as #15930",
         "sourceHead": "a1461b691bc87b2d1314c3d9696d4e1e2c12ffae",
-        "observedAt": "2026-10-17T20:00:33.018220+00:00",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
         "nextAction": "Follow current-head checks, review and import status on #15930.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a1461b691bc87b2d1314c3d9696d4e1e2c12ffae",
@@ -9197,7 +9197,7 @@
       },
       "evidence": [
         {
-          "label": "Source change",
+          "label": "Published source",
           "url": "https://github.com/tamird/gvisor/commit/a1461b691bc87b2d1314c3d9696d4e1e2c12ffae"
         },
         {
@@ -9225,12 +9225,12 @@
       "group": "tests",
       "status": "open",
       "summary": "Upstream a30d5fc67 already fixed the NaN bucketer panic reported in #10045. This change removes the remaining Make exclusion and not_run:arm tag. One mixed-platform invocation at 2785e7bfce passes all 102 AMD64/ARM64 cases, including the reported regression, with no failures, skips or missing results. The production and test sources match upstream; the selection-only diff was source-reviewed, not executed. The contributor-approved change is delivered as #15930.",
-      "updatedAt": "2026-10-17T20:00:33.018220+00:00",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "work_map_delivery",
         "disposition": "Delivered as #15930",
         "sourceHead": "a1461b691bc87b2d1314c3d9696d4e1e2c12ffae",
-        "observedAt": "2026-10-17T20:00:33.018220+00:00",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
         "nextAction": "Follow current-head checks, review and import status on #15930.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a1461b691bc87b2d1314c3d9696d4e1e2c12ffae",
@@ -9241,7 +9241,7 @@
       },
       "evidence": [
         {
-          "label": "Source change",
+          "label": "Published source",
           "url": "https://github.com/tamird/gvisor/commit/a1461b691bc87b2d1314c3d9696d4e1e2c12ffae"
         },
         {
@@ -9264,29 +9264,34 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tracereplay-short-socket",
-      "head": "c9e8e210b5a6a376936f73a87f1e415655b77350",
+      "head": "0068142bdeb9de91fe72bf9794204de6dec92cb4",
       "title": "Use a relative socket in tracereplay tests",
-      "url": "https://github.com/tamird/gvisor/commit/c9e8e210b5a6a376936f73a87f1e415655b77350",
+      "url": "https://github.com/tamird/gvisor/commit/0068142bdeb9de91fe72bf9794204de6dec92cb4",
       "group": "tests",
-      "status": "Remote validation in progress",
-      "summary": "TestBasic uses an absolute temporary-directory pathname for its Unix socket; a long Bazel TEST_TMPDIR can exceed sockaddr_un capacity before trace replay starts. The prepared change resolves the input path before entering its test-owned temporary directory and binds a relative socket name. Mixed AMD64/ARM64 before/after validation is underway; no contributor decision is pending.",
-      "updatedAt": "2026-10-17T20:00:33.018220+00:00",
+      "status": "Delivered as #15934",
+      "summary": "TestBasic exceeded the Unix-socket address limit when Bazel supplied a long temporary-directory path. The fix resolves its input before entering a test-owned directory and uses a relative socket name, preserving the replay comparison. The long-path regression fails before and passes after on AMD64 and ARM64, without skips or missing results. The approved change is published as #15934 and removes the stale CI exclusion.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Remote validation in progress",
-        "sourceHead": "c9e8e210b5a6a376936f73a87f1e415655b77350",
-        "observedAt": "2026-10-17T20:00:33.018220+00:00",
-        "nextAction": "Finish the existing before/after runs, review the results, then prepare the standalone contributor review request.",
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15934",
+        "sourceHead": "0068142bdeb9de91fe72bf9794204de6dec92cb4",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15934.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c9e8e210b5a6a376936f73a87f1e415655b77350",
           "https://github.com/tamird/gvisor/actions/runs/39064684467",
-          "https://github.com/tamird/gvisor/actions/runs/39064718670"
+          "https://github.com/tamird/gvisor/actions/runs/39064718670",
+          "https://github.com/google/gvisor/pull/15934"
         ]
       },
       "evidence": [
         {
-          "label": "Source change",
-          "url": "https://github.com/tamird/gvisor/commit/c9e8e210b5a6a376936f73a87f1e415655b77350"
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/0068142bdeb9de91fe72bf9794204de6dec92cb4"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15934"
         },
         {
           "label": "Before-fix validation",
@@ -9303,29 +9308,34 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "kcov-size-validation",
-      "head": "e1aa51f2562cd44cee1b860d6f1488ee491fb525",
+      "head": "4c5874f87a9f691043036a0d56c4e7bd99cebfde",
       "title": "Match Linux KCOV buffer-size validation",
-      "url": "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525",
+      "url": "https://github.com/tamird/gvisor/commit/4c5874f87a9f691043036a0d56c4e7bd99cebfde",
       "group": "runtime",
-      "status": "Approved; publication underway",
-      "summary": "Move page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. Independent source and result review is complete. The contributor approved the code, conditional on changing the Linux source citations to GitHub permalinks. The owner is completing those message-only corrections and opening the independent PRs.",
-      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
+      "status": "Delivered as #15932",
+      "summary": "Move page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. The contributor-approved change is published as #15932 with GitHub Linux source permalinks.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor approved; publishing",
-        "sourceHead": "e1aa51f2562cd44cee1b860d6f1488ee491fb525",
-        "observedAt": "2026-10-17T20:06:13.472289+00:00",
-        "nextAction": "Complete the approved citation-only amendment, open the upstream PR and verify its head and description. No new code review is pending.",
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15932",
+        "sourceHead": "4c5874f87a9f691043036a0d56c4e7bd99cebfde",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15932.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525",
           "https://github.com/tamird/gvisor/actions/runs/39064221095",
-          "https://github.com/tamird/gvisor/actions/runs/39064225594"
+          "https://github.com/tamird/gvisor/actions/runs/39064225594",
+          "https://github.com/google/gvisor/pull/15932"
         ]
       },
       "evidence": [
         {
-          "label": "Source change",
-          "url": "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525"
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/4c5874f87a9f691043036a0d56c4e7bd99cebfde"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15932"
         },
         {
           "label": "Corrected suites and analyzers",
@@ -9342,30 +9352,35 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "kcov-page-size",
-      "head": "e828b6564b1cac68f8f4696bc47f037fec9d8290",
+      "head": "7d1038826ea571268880ba14ea9a40aa4ab484e7",
       "title": "Run KCOV tests on systems with 64 KiB pages",
-      "url": "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290",
+      "url": "https://github.com/tamird/gvisor/commit/7d1038826ea571268880ba14ea9a40aa4ab484e7",
       "group": "tests",
-      "status": "Approved; publication underway",
-      "summary": "Allocate at least one host page and release peer waits when a threaded assertion returns. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks. A cleanup-only control preserves the invalid buffer and returns the two expected assertions in 0.093 and 0.304 seconds instead of waiting for the 300-second deadline. Original failed runs remain recorded. The contributor approved the code, conditional on changing the Linux source citations to GitHub permalinks. The owner is completing those message-only corrections and opening the independent PRs.",
-      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
+      "status": "Delivered as #15933",
+      "summary": "Allocate at least one host page and release peer waits when a threaded assertion returns. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks. A cleanup-only control preserves the invalid buffer and returns the two expected assertions in 0.093 and 0.304 seconds instead of waiting for the 300-second deadline. The contributor-approved change is published as #15933 with GitHub Linux source permalinks.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor approved; publishing",
-        "sourceHead": "e828b6564b1cac68f8f4696bc47f037fec9d8290",
-        "observedAt": "2026-10-17T20:06:13.472289+00:00",
-        "nextAction": "Complete the approved citation-only amendment, open the upstream PR and verify its head and description. No new code review is pending.",
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15933",
+        "sourceHead": "7d1038826ea571268880ba14ea9a40aa4ab484e7",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15933.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290",
           "https://github.com/tamird/gvisor/actions/runs/39064221095",
           "https://github.com/tamird/gvisor/actions/runs/39064225594",
-          "https://github.com/tamird/gvisor/actions/runs/39062637291"
+          "https://github.com/tamird/gvisor/actions/runs/39062637291",
+          "https://github.com/google/gvisor/pull/15933"
         ]
       },
       "evidence": [
         {
-          "label": "Source change",
-          "url": "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290"
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/7d1038826ea571268880ba14ea9a40aa4ab484e7"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15933"
         },
         {
           "label": "Corrected suites and analyzers",
@@ -9386,19 +9401,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "hostinet-port-range",
-      "head": "b0037235be1de0f379334846931f83ed0e343874",
+      "head": "194f76d6969a39915bf9caaddfdaf35642da2644",
       "title": "Report the host's ephemeral port range in hostinet",
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
-      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. The existing exhaustion tests use a private namespace with a narrow range so they execute instead of skipping. The standalone extraction preserves the qualified production and fixture changes; both independent source reviews passed. The contributor approved the change with a comment-only Linux source citation correction. That correction passed independent review and is delivered as #15931. The 20:04 GitHub snapshot found a two-line clang-format mismatch in setup_container.cc; the owner has the exact public CI diff and is preparing a formatting-only correction.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
       "followup": {
-        "owner": "root",
-        "disposition": "Published; addressing public lint",
-        "sourceHead": "b0037235be1de0f379334846931f83ed0e343874",
-        "observedAt": "2026-10-17T20:06:13.472289+00:00",
-        "nextAction": "Apply the exact two-line clang-format correction from public CI, publish the amendment and verify the rerun. Preserve the approved behavior and existing runtime evidence.",
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15931",
+        "sourceHead": "194f76d6969a39915bf9caaddfdaf35642da2644",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15931.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae",
           "https://github.com/tamird/gvisor/actions/runs/39053728306",
@@ -9408,20 +9423,20 @@
       },
       "evidence": [
         {
-          "label": "Standalone change for contributor review",
-          "url": "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae"
-        },
-        {
-          "label": "Qualified integration runtime: applicable TCP and UDP exhaustion cases pass",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39053728306"
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/194f76d6969a39915bf9caaddfdaf35642da2644"
         },
         {
           "label": "Upstream PR",
           "url": "https://github.com/google/gvisor/pull/15931"
         },
         {
-          "label": "Public clang-format failure",
-          "url": "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
+          "label": "Qualified integration runtime: applicable TCP and UDP exhaustion cases pass",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39053728306"
+        },
+        {
+          "label": "Corrected-head lint passed",
+          "url": "https://github.com/google/gvisor/actions/runs/39065839277/job/117493198521"
         }
       ],
       "refinement": {
@@ -9429,10 +9444,150 @@
           "head": "688cb1e12cc6825a7c40263ccc5dece9d5911aae"
         },
         "after": {
-          "head": "b0037235be1de0f379334846931f83ed0e343874"
+          "head": "194f76d6969a39915bf9caaddfdaf35642da2644"
         }
       },
       "number": 15931
+    },
+    {
+      "id": "pr:15932",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "kcov-size-validation",
+      "head": "4c5874f87a9f691043036a0d56c4e7bd99cebfde",
+      "title": "Match Linux KCOV buffer-size validation",
+      "url": "https://github.com/google/gvisor/pull/15932",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Move page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. The contributor-approved change is published as #15932 with GitHub Linux source permalinks.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "followup": {
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15932",
+        "sourceHead": "4c5874f87a9f691043036a0d56c4e7bd99cebfde",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15932.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525",
+          "https://github.com/tamird/gvisor/actions/runs/39064221095",
+          "https://github.com/tamird/gvisor/actions/runs/39064225594",
+          "https://github.com/google/gvisor/pull/15932"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/4c5874f87a9f691043036a0d56c4e7bd99cebfde"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15932"
+        },
+        {
+          "label": "Corrected suites and analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39064221095"
+        },
+        {
+          "label": "Linux reference and failing-before ABI cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39064225594"
+        }
+      ],
+      "number": 15932
+    },
+    {
+      "id": "pr:15933",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "kcov-page-size",
+      "head": "7d1038826ea571268880ba14ea9a40aa4ab484e7",
+      "title": "Run KCOV tests on systems with 64 KiB pages",
+      "url": "https://github.com/google/gvisor/pull/15933",
+      "group": "tests",
+      "status": "open",
+      "summary": "Allocate at least one host page and release peer waits when a threaded assertion returns. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks. A cleanup-only control preserves the invalid buffer and returns the two expected assertions in 0.093 and 0.304 seconds instead of waiting for the 300-second deadline. The contributor-approved change is published as #15933 with GitHub Linux source permalinks.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "followup": {
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15933",
+        "sourceHead": "7d1038826ea571268880ba14ea9a40aa4ab484e7",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15933.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290",
+          "https://github.com/tamird/gvisor/actions/runs/39064221095",
+          "https://github.com/tamird/gvisor/actions/runs/39064225594",
+          "https://github.com/tamird/gvisor/actions/runs/39062637291",
+          "https://github.com/google/gvisor/pull/15933"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/7d1038826ea571268880ba14ea9a40aa4ab484e7"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15933"
+        },
+        {
+          "label": "Corrected suites and analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39064221095"
+        },
+        {
+          "label": "Linux reference and failing-before ABI cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39064225594"
+        },
+        {
+          "label": "Cleanup-only expected-failure control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39062637291"
+        }
+      ],
+      "number": 15933
+    },
+    {
+      "id": "pr:15934",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tracereplay-short-socket",
+      "head": "0068142bdeb9de91fe72bf9794204de6dec92cb4",
+      "title": "Use a relative socket in tracereplay tests",
+      "url": "https://github.com/google/gvisor/pull/15934",
+      "group": "tests",
+      "status": "open",
+      "summary": "TestBasic exceeded the Unix-socket address limit when Bazel supplied a long temporary-directory path. The fix resolves its input before entering a test-owned directory and uses a relative socket name, preserving the replay comparison. The long-path regression fails before and passes after on AMD64 and ARM64, without skips or missing results. The approved change is published as #15934 and removes the stale CI exclusion.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "followup": {
+        "owner": "work_map_delivery",
+        "disposition": "Delivered as #15934",
+        "sourceHead": "0068142bdeb9de91fe72bf9794204de6dec92cb4",
+        "observedAt": "2026-10-17T20:19:52.132311+00:00",
+        "nextAction": "Follow current-head checks, review and import status on #15934.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c9e8e210b5a6a376936f73a87f1e415655b77350",
+          "https://github.com/tamird/gvisor/actions/runs/39064684467",
+          "https://github.com/tamird/gvisor/actions/runs/39064718670",
+          "https://github.com/google/gvisor/pull/15934"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/0068142bdeb9de91fe72bf9794204de6dec92cb4"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15934"
+        },
+        {
+          "label": "Before-fix validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39064684467"
+        },
+        {
+          "label": "Corrected validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39064718670"
+        }
+      ],
+      "number": 15934
     }
   ],
   "edges": [
@@ -17295,8 +17450,8 @@
       "title": "Restore excluded Buildkite unit tests (#10045)",
       "status": "active",
       "owner": "Codex \u2014 qualification backlog and active fixture work",
-      "updatedAt": "2026-10-17T20:00:33.018220+00:00",
-      "summary": "Restore the four unit targets excluded by #10045 to routine CI. The metric selection cleanup is delivered as #15930 after both architectures pass. The tracereplay socket-path correction is under mixed-platform before/after validation. Coretag and trace remain queued investigations; config_test is already included on current master.",
+      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "summary": "Restore the four unit targets excluded by #10045 to routine CI. Metric and tracereplay fixes are published as #15930 and #15934 after mixed AMD64/ARM64 qualification. The coretag/trace baseline could not start tests because a remote worker image download failed; those runtime failures remain unverified. config_test is already included on current master.",
       "findings": [
         {
           "text": "At upstream master 9e9495997, Makefile retains the issue #10045 TODO and four explicit target exclusions. This confirms the remaining coverage gap; it does not establish that all of the original failures still reproduce.",
@@ -17325,16 +17480,33 @@
           ]
         },
         {
-          "text": "The tracereplay fixture uses an absolute temporary socket path that can exceed the Unix-socket address limit. Branch tracereplay-short-socket replaces it with a relative path; its before/after runs are still in progress.",
+          "text": "The tracereplay fixture exceeded the Unix-socket address limit under a long temporary directory. The existing replay test fails before and passes after the relative-path correction on AMD64 and ARM64, with no skips or missing results. #15934 removes its CI exclusion.",
           "evidence": [
             {
-              "label": "Prepared tracereplay correction",
-              "url": "https://github.com/tamird/gvisor/commit/c9e8e210b5a6a376936f73a87f1e415655b77350"
+              "label": "Tracereplay CI fix",
+              "url": "https://github.com/google/gvisor/pull/15934"
+            },
+            {
+              "label": "Failing-before mixed-platform run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39064684467"
+            },
+            {
+              "label": "Corrected mixed-platform run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39064718670"
+            }
+          ]
+        },
+        {
+          "text": "The coretag/trace baseline at de22cf145 selected four AMD64/ARM64 targets but executed none. Remote worker preparation failed while fetching the Ubuntu image token from auth.docker.io; all four results are missing. This is an infrastructure failure, not evidence of a coretag or trace test failure.",
+          "evidence": [
+            {
+              "label": "Infrastructure-blocked baseline",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39065630326"
             }
           ]
         }
       ],
-      "nextStep": "Finish tracereplay before/after validation and remove its exclusion only with direct evidence. Reconcile current evidence for coretag and trace before reproducing unresolved failures. Follow #15930 through upstream review; no further metric production fix is needed.",
+      "nextStep": "Follow #15930 and #15934 through upstream review. Retry the unchanged coretag/trace baseline after remote worker image preparation succeeds, then diagnose actual test results before changing source or CI selection.",
       "evidence": [
         {
           "label": "Issue #10045 and reported failures",
