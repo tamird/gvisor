@@ -39,10 +39,11 @@ small tests and 300 seconds for medium tests. The proc suite uses a
 deadlines remain unchanged. Each action defaults to two emulated CPUs and
 requests 3 GiB guest memory.
 An owner may set `tcg_cpus` to change both its emulated CPU count and the
-matching OCI executor estimate; the SIGSTOP diagnostic uses four. Memory
-and scratch requests remain 6 GB and 8 GB respectively. These allocations
-include QEMU and kernel overhead; they are not evidence that every
-owner fits. Qualification compares configured payload and outer requirements
+matching OCI executor allocation; the SIGSTOP diagnostic uses four. The
+[compute-unit setting] disables automatic task-size prediction, which can
+override a CPU-only estimate. Explicit memory and scratch requests remain
+6 GB and 8 GB respectively. These allocations include QEMU and kernel
+overhead; they are not evidence that every owner fits. Qualification compares configured payload and outer requirements
 against the declared emulation policy and retains failures at those limits.
 
 ARM64 TCG uses QEMU 11.1.2, built from its pinned upstream release with the
@@ -209,3 +210,5 @@ The separate KVM package probe must pass in this guest before the full
 container profile runs; all existing guest KVM capability checks remain.
 
 [ARM RCsc store-release correction]: https://www.mail-archive.com/qemu-devel%40nongnu.org/msg1218202.html
+
+[compute-unit setting]: https://www.buildbuddy.io/docs/rbe-platforms#runner-resource-allocation
