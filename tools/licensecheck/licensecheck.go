@@ -19,8 +19,9 @@
 // bazel_deps, the http_archive/http_file repos declared in MODULE.bazel, and
 // the Go repos imported from the go_deps extension, unioned with go.mod's
 // requirements, independently resolved module proxies, and the packages exposed
-// by imported pip and apt hubs. Fetch reads each dependency's license text from
-// the Go module proxy, pinned package archives, or GitHub, classifies it, and
+// by imported pip and apt hubs, plus QEMU user-mode archives. Fetch reads each
+// dependency's license text from the Go module proxy, pinned package archives,
+// or GitHub, classifies it, and
 // records it in a YAML file. Verify checks that the YAML file has an entry for
 // every dependency, without fetching licenses.
 //
@@ -30,6 +31,8 @@
 // current notices were available or classified successfully. Entries marked
 // manually_audited, and entries containing LicenseRef identifiers, always retain
 // their reviewed terms and require a new audit when their artifact pin changes.
+// Explicit license_source notices are re-fetched on every audit and fail closed
+// if the notice or its artifact binding is invalid.
 package licensecheck
 
 import (
@@ -78,6 +81,10 @@ type Entry struct {
 
 	// ManuallyAudited preserves reviewed terms that automatic discovery misses.
 	ManuallyAudited bool `yaml:"manually_audited,omitempty"`
+
+	// LicenseSource pins the notice for an executable distributed by a
+	// differently licensed builder repository. It is bound to Version/SHA256.
+	LicenseSource string `yaml:"license_source,omitempty"`
 }
 
 func (e Entry) manuallyAudited() bool {
@@ -192,6 +199,8 @@ const (
 # classification limitation, not a successful automatic audit.
 # Entries marked manually_audited or containing LicenseRef identifiers require
 # re-audit when their artifact pin changes.
+# license_source selects an immutable upstream notice for a pinned binary artifact;
+# changing its artifact URL/hash requires renewing that explicit source audit.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -242,7 +251,7 @@ func Fetch(p Paths) error {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			f, err := fetchLicense(d)
+			f, err := fetchLicense(d, oldByName[d.name])
 			results[i] = fetchResult{f, err}
 		}(i, d)
 	}
@@ -259,7 +268,11 @@ func Fetch(p Paths) error {
 		}
 		r := results[i]
 		if r.err != nil {
-			if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
+			if e := oldByName[d.name]; e.LicenseSource != "" {
+				// Keep the explicit source so a later audit cannot silently
+				// fall back to the builder repository's license.
+				entries = append(entries, e)
+			} else if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
 				fmt.Fprintf(os.Stderr, "%-60s %s (kept existing entry: %v)\n", d.name, e.License, r.err)
 				entries = append(entries, e)
 				continue
@@ -269,12 +282,13 @@ func Fetch(p Paths) error {
 			continue
 		}
 		e := Entry{
-			Dependency: d.name,
-			Version:    d.source(),
-			Retrieved:  today,
-			Commit:     r.fetched.commit,
-			SHA256:     r.fetched.sha256,
-			License:    r.fetched.license,
+			Dependency:    d.name,
+			Version:       d.source(),
+			Retrieved:     today,
+			Commit:        r.fetched.commit,
+			SHA256:        r.fetched.sha256,
+			License:       r.fetched.license,
+			LicenseSource: oldByName[d.name].LicenseSource,
 		}
 		if o, ok := oldByName[d.name]; ok && o.Version == e.Version && o.SHA256 == e.SHA256 {
 			// Commit lookup is best-effort. A missing response does not
@@ -380,6 +394,11 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 		case len(e.License) == 0:
 			problems = append(problems, fmt.Sprintf("%s has no license", d.name))
 		default:
+			if commit, err := licenseSourceCommit(d, e); err != nil {
+				problems = append(problems, fmt.Sprintf("%s: %v", d.name, err))
+			} else if commit != "" && commit != e.Commit {
+				problems = append(problems, fmt.Sprintf("%s: license_source commit does not match the audited commit", d.name))
+			}
 			if e.Version != d.source() {
 				problems = append(problems, fmt.Sprintf("%s was audited at %q, but is now %q", d.name, e.Version, d.source()))
 			}
@@ -414,6 +433,11 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 	return problems
 }
 
+// repoRef identifies a repository to audit and its stable catalog name.
+type repoRef struct {
+	ref, name string
+}
+
 // enumerate returns all external dependencies, sorted by name.
 func enumerate(p Paths) ([]dep, error) {
 	graphOut, err := makeMod("graph", "--depth", "1", "--extension_info=all", "--output", "json")
@@ -425,16 +449,36 @@ func enumerate(p Paths) ([]dep, error) {
 		return nil, err
 	}
 	// refs are the repos to audit: modules as name@version, everything else
-	// by apparent repo name.
-	type repoRef struct {
-		ref, name string
-	}
+	// by apparent or canonical repo name.
 	var refs []repoRef
 	for _, m := range graph.Dependencies {
 		refs = append(refs, repoRef{m.Key, m.Name})
 	}
 	for _, r := range graph.auditedRepos() {
 		refs = append(refs, repoRef{"@" + r, r})
+	}
+	for _, usage := range graph.ExtensionUsages {
+		if !strings.HasSuffix(usage.Key, "//qemu/extension:qemu.bzl%qemu") {
+			continue
+		}
+		// Audit the complete user-mode family, including unselected architectures.
+		root, err := readRepoMapping("")
+		if err != nil {
+			return nil, err
+		}
+		hub := root["qemu_user_toolchains"]
+		if hub == "" {
+			return nil, errors.New("QEMU user toolchain repository is not imported")
+		}
+		mapping, err := readRepoMapping(hub)
+		if err != nil {
+			return nil, err
+		}
+		qemuRefs, err := qemuUserRepoRefs(mapping)
+		if err != nil {
+			return nil, err
+		}
+		refs = append(refs, qemuRefs...)
 	}
 	refNames := make([]string, 0, len(refs)+1)
 	refNames = append(refNames, "show_repo")
@@ -528,6 +572,45 @@ func enumerate(p Paths) ([]dep, error) {
 		}
 	}
 	return deps, nil
+}
+
+// readRepoMapping asks Bazel for apparent-to-canonical repository names.
+func readRepoMapping(repo string) (map[string]string, error) {
+	if repo == "" {
+		// Preserve the empty root repository argument through make's shell.
+		repo = "''"
+	}
+	out, err := makeMod("dump_repo_mapping", repo)
+	if err != nil {
+		return nil, err
+	}
+	start := strings.Index(out, "{")
+	if start < 0 {
+		return nil, fmt.Errorf("no repository mapping JSON in %q", out)
+	}
+	var mapping map[string]string
+	if err := json.Unmarshal([]byte(out[start:]), &mapping); err != nil {
+		return nil, fmt.Errorf("cannot parse repository mapping: %w", err)
+	}
+	return mapping, nil
+}
+
+func qemuUserRepoRefs(mapping map[string]string) ([]repoRef, error) {
+	var refs []repoRef
+	for name, canonical := range mapping {
+		if !strings.HasPrefix(name, "qemu_user_prebuilt_") {
+			continue
+		}
+		if canonical == "" {
+			return nil, fmt.Errorf("QEMU archive %s has no canonical repository name", name)
+		}
+		refs = append(refs, repoRef{"@@" + canonical, name})
+	}
+	if len(refs) == 0 {
+		return nil, errors.New("QEMU user toolchain exposes no emulator archives")
+	}
+	slices.SortFunc(refs, func(a, b repoRef) int { return strings.Compare(a.name, b.name) })
+	return refs, nil
 }
 
 // makeMod runs `make mod TARGETS="..."`, which wraps `bazel mod`.
@@ -748,7 +831,22 @@ type fetchResult struct {
 
 // fetchLicense returns the upstream commit, artifact hash, and licenses of a
 // dependency.
-func fetchLicense(d dep) (*fetched, error) {
+func fetchLicense(d dep, previous Entry) (*fetched, error) {
+	commit, err := licenseSourceCommit(d, previous)
+	if err != nil {
+		return nil, err
+	}
+	if commit != "" {
+		body, err := httpGet(previous.LicenseSource, nil)
+		if err != nil {
+			return nil, err
+		}
+		licenses, err := classify(string(body))
+		if err != nil {
+			return nil, err
+		}
+		return &fetched{commit: commit, sha256: d.sha256, license: licenses}, nil
+	}
 	if d.kind == kindGoModule {
 		return fetchGoModule(d.modulePath, d.version)
 	}
@@ -769,6 +867,29 @@ func fetchLicense(d dep) (*fetched, error) {
 	}
 	f.sha256 = d.sha256
 	return f, nil
+}
+
+var artifactSHA256RE = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
+// licenseSourceCommit requires immutable upstream notice bytes, not a mutable
+// tag or the repository that happens to distribute the executable.
+func licenseSourceCommit(d dep, e Entry) (string, error) {
+	if e.LicenseSource == "" {
+		return "", nil
+	}
+	if d.kind != kindArchive || !artifactSHA256RE.MatchString(d.sha256) || e.Version != d.source() || e.SHA256 != d.sha256 {
+		return "", errors.New("license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source")
+	}
+	owner, repo, commit, err := parseGitHubURL(e.LicenseSource)
+	if err != nil || !commitRE.MatchString(commit) {
+		return "", errors.New("license_source must identify a GitHub notice pinned to a full commit")
+	}
+	prefix := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/", owner, repo, commit)
+	name, ok := strings.CutPrefix(e.LicenseSource, prefix)
+	if !ok || !slices.Contains(licenseFileNames, name) {
+		return "", errors.New("license_source must name a recognized raw GitHub root notice")
+	}
+	return commit, nil
 }
 
 // licenseFileNames are candidate root paths for GitHub raw-file requests.
