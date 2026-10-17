@@ -30,6 +30,12 @@ sh_binary(
 )
 
 sh_binary(
+    name = "build_payload",
+    srcs = ["build_payload.sh"],
+    tags = ["manual"],
+)
+
+sh_binary(
     name = "run",
     testonly = True,
     srcs = ["run.sh"],
@@ -41,11 +47,15 @@ sh_binary(
 # be safely materialized as a Bazel tree artifact. Selected links stay relative
 # and resolve within this directory; no host filesystem paths are substituted.
 _HOST_TOOL_MEMBERS = [
+    "bin/chmod",
+    "bin/cp",
     "etc/mke2fs.conf",
     "lib/x86_64-linux-gnu",
     "sbin/debugfs",
     "sbin/e2fsck",
     "sbin/mke2fs",
+    "sbin/resize2fs",
+    "usr/bin/stat",
     "usr/bin/timeout",
     "usr/bin/truncate",
     "usr/lib/x86_64-linux-gnu",
