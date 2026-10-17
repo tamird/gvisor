@@ -25,6 +25,7 @@ _runner_test, _runner_compilation_transition = with_cfg(_runner_test_rule, extra
 # KCOV needs instrumented Sentry code, but the other syscall tests should keep
 # using the ordinary runtime. Reuse the release coverage exclusions so context
 # switching and coverage collection itself remain safe.
+# buildifier: disable=unused-variable
 _runner_kcov_test, _runner_kcov_transition = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"]).set(
     Label("//tools/bazeldefs:kcov"),
     True,
