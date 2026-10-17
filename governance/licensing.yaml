@@ -188,6 +188,829 @@ exceptions:
       - GPL-2.0-only
       - MIT
     exception_rationale: *apt_container_test_tools_rationale
+  - dependency: apt/kernel_build_deps/amd64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: &apt_kernel_build_deps_rationale >-
+      Used only to compile instrumented Linux kernels for the native
+      syscall test guests, not as an input to gVisor release artifacts.
+  - dependency: apt/kernel_build_deps/amd64/bc
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - Latex2e
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/binutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/binutils-common
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/binutils-x86-64-linux-gnu
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/bison
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/bzip2
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/dpkg
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/dpkg-dev
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/flex
+    license:
+      - BSD-3-Clause
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/gcc-11-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/guile-3.0-libs
+    license:
+      - FSFULLR
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libasan6
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libatomic1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libbinutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libc-dev-bin
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libc6-dev
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libcom-err2
+    license: HPND
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libcrypt-dev
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The archive is identical to
+      apt/syzkaller_sysroot/amd64/libcrypt-dev; retain its existing
+      notice audit. Used only to compile instrumented Linux kernels for
+      the native syscall test guests, not as an input to gVisor release
+      artifacts.
+  - dependency: apt/kernel_build_deps/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: >-
+      The archive is identical to apt/tcg_host_tools/amd64/libcrypt1;
+      retain its existing notice audit. Used only to compile
+      instrumented Linux kernels for the native syscall test guests, not
+      as an input to gVisor release artifacts.
+  - dependency: apt/kernel_build_deps/amd64/libctf-nobfd0
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libctf0
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libdpkg-perl
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libelf-dev
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libelf1
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libffi8
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgc1
+    license: LicenseRef-libgc-8.0.6
+    exception_rationale: >-
+      The archive is identical to apt/qemu_build_deps/amd64/libgc1;
+      retain its existing notice audit. Used only to compile
+      instrumented Linux kernels for the native syscall test guests, not
+      as an input to gVisor release artifacts.
+  - dependency: apt/kernel_build_deps/amd64/libgcc-11-dev
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgdbm-compat4
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgdbm6
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgomp1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libgssapi-krb5-2
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libitm1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libk5crypto3
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libkeyutils1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libkrb5-3
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libkrb5support0
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - BSD-4-Clause-UC
+      - GPL-2.0
+      - HPND
+      - ISC
+      - MIT
+      - OLDAP-2.8
+      - RSA-MD
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/liblsan0
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/liblzma5
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libnsl-dev
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libnsl2
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libperl5.34
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libpkgconf3
+    license:
+      - BSD-2-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libquadmath0
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libreadline8
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libsigsegv2
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libssl-dev
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libssl3
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libstdc++6
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtirpc-common
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtirpc-dev
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtirpc3
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - LGPL-2.1
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libtsan0
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libubsan1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libunistring2
+    license:
+      - FSFULLR
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+      - LGPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libzstd1
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/linux-libc-dev
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/lto-disabled-list
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/m4
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/make-guile
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/patch
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/perl
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/perl-base
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/perl-modules-5.34
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/pkgconf
+    license:
+      - BSD-2-Clause
+      - BSD-4-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - ISC
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/readline-common
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/rpcsvc-proto
+    license:
+      - BSD-3-Clause
+      - FSFAP
+      - FSFUL
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - MIT
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/tar
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/xz-utils
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *apt_kernel_build_deps_rationale
   - dependency: apt/kvm_amd64_cgroup_v1_guest/amd64/base-files
     license:
       - GPL-2.0-or-later
@@ -3827,6 +4650,17 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: kcov_linux_source
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned kernel COPYING file specifies GPL version 2 only, with
+      Linux-syscall-note covering ordinary system calls. The referenced
+      GPL text and syscall exception were audited at fd73f4a66.
+      File-specific compatible terms remain in the source tree. Used
+      only for native syscall test guests, not linked into or packaged
+      with gVisor releases.
+      https://github.com/torvalds/linux/blob/fd73f4a66/COPYING
+
   - dependency: kvm_amd64_rc_image
     license: GPL-2.0-only
     exception_rationale: >-
@@ -4111,838 +4945,3 @@ exceptions:
       The matching modules package carries the same audited GPL-2 notice
       as tcg_arm64_rc_image. Used only by that manual RC test guest, with
       the notice and complete GPL-2 text retained.
-
-  # Build tools and Linux source for the instrumented native test guests.
-  - dependency: apt/kernel_build_deps/amd64/base-files
-    license:
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: &apt_kernel_build_deps_rationale >-
-      Used only to compile instrumented Linux kernels for the native
-      syscall test guests, not as an input to gVisor release artifacts.
-  - dependency: apt/kernel_build_deps/amd64/bc
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - Latex2e
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/binutils
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/binutils-common
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/binutils-x86-64-linux-gnu
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/bison
-    license:
-      - GPL-2.0
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/bzip2
-    license:
-      - GPL-2.0
-      - bzip2-1.0.6
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/dpkg
-    license:
-      - BSD-2-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/dpkg-dev
-    license:
-      - BSD-2-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/flex
-    license:
-      - BSD-3-Clause
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/gcc-11-base
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/gcc-12-base
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/guile-3.0-libs
-    license:
-      - FSFULLR
-      - LGPL-3.0
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libacl1
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libasan6
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libatomic1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libbinutils
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libbz2-1.0
-    license:
-      - GPL-2.0
-      - bzip2-1.0.6
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libc-dev-bin
-    license:
-      - BSD-3-Clause
-      - GFDL-1.3
-      - GPL-2.0
-      - GPL-2.0-only
-      - HPND
-      - ISC
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - Spencer-94
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libc6
-    license:
-      - BSD-3-Clause
-      - GFDL-1.3
-      - GPL-2.0
-      - GPL-2.0-only
-      - HPND
-      - ISC
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - Spencer-94
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libc6-dev
-    license:
-      - BSD-3-Clause
-      - GFDL-1.3
-      - GPL-2.0
-      - GPL-2.0-only
-      - HPND
-      - ISC
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - Spencer-94
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libcom-err2
-    license: HPND
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libcrypt-dev
-    license: LicenseRef-libxcrypt-4.4.27
-    exception_rationale: >-
-      The archive is identical to
-      apt/syzkaller_sysroot/amd64/libcrypt-dev; retain its existing
-      notice audit. Used only to compile instrumented Linux kernels for
-      the native syscall test guests, not as an input to gVisor release
-      artifacts.
-  - dependency: apt/kernel_build_deps/amd64/libcrypt1
-    license: LicenseRef-libxcrypt-4.4.27
-    exception_rationale: >-
-      The archive is identical to apt/tcg_host_tools/amd64/libcrypt1;
-      retain its existing notice audit. Used only to compile
-      instrumented Linux kernels for the native syscall test guests, not
-      as an input to gVisor release artifacts.
-  - dependency: apt/kernel_build_deps/amd64/libctf-nobfd0
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libctf0
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libdpkg-perl
-    license:
-      - BSD-2-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libelf-dev
-    license:
-      - GPL-2.0
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libelf1
-    license:
-      - GPL-2.0
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libffi8
-    license:
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgc1
-    license: LicenseRef-libgc-8.0.6
-    exception_rationale: >-
-      The archive is identical to apt/qemu_build_deps/amd64/libgc1;
-      retain its existing notice audit. Used only to compile
-      instrumented Linux kernels for the native syscall test guests, not
-      as an input to gVisor release artifacts.
-  - dependency: apt/kernel_build_deps/amd64/libgcc-11-dev
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgcc-s1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgdbm-compat4
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgdbm6
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgmp10
-    license:
-      - GPL-2.0
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgomp1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libgssapi-krb5-2
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - BSD-4-Clause-UC
-      - GPL-2.0
-      - HPND
-      - ISC
-      - MIT
-      - OLDAP-2.8
-      - RSA-MD
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libitm1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libk5crypto3
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - BSD-4-Clause-UC
-      - GPL-2.0
-      - HPND
-      - ISC
-      - MIT
-      - OLDAP-2.8
-      - RSA-MD
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libkeyutils1
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.0
-      - LGPL-2.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libkrb5-3
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - BSD-4-Clause-UC
-      - GPL-2.0
-      - HPND
-      - ISC
-      - MIT
-      - OLDAP-2.8
-      - RSA-MD
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libkrb5support0
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - BSD-4-Clause-UC
-      - GPL-2.0
-      - HPND
-      - ISC
-      - MIT
-      - OLDAP-2.8
-      - RSA-MD
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/liblsan0
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/liblzma5
-    license:
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.0
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libnsl-dev
-    license:
-      - BSD-3-Clause
-      - FSFAP
-      - FSFUL
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libnsl2
-    license:
-      - BSD-3-Clause
-      - FSFAP
-      - FSFUL
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libperl5.34
-    license:
-      - Artistic-1.0-Perl
-      - Artistic-2.0
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - CC0-1.0
-      - FSFAP
-      - GPL-1.0
-      - GPL-1.0-or-later
-      - GPL-2.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.1
-      - MIT
-      - Spencer-86
-      - Unicode-DFS-2015
-      - Zlib
-      - bzip2-1.0.6
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libpkgconf3
-    license:
-      - BSD-2-Clause
-      - BSD-4-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - ISC
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libquadmath0
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libreadline8
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libselinux1
-    license:
-      - GPL-2.0
-      - LGPL-2.1
-      - libselinux-1.0
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libsigsegv2
-    license:
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-only
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libssl-dev
-    license:
-      - Apache-2.0
-      - Artistic-1.0-Perl
-      - GPL-1.0
-      - GPL-1.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libssl3
-    license:
-      - Apache-2.0
-      - Artistic-1.0-Perl
-      - GPL-1.0
-      - GPL-1.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libstdc++6
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libtirpc-common
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - GPL-2.0
-      - LGPL-2.1
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libtirpc-dev
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - GPL-2.0
-      - LGPL-2.1
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libtirpc3
-    license:
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - GPL-2.0
-      - LGPL-2.1
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libtsan0
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libubsan1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libunistring2
-    license:
-      - FSFULLR
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-      - LGPL-3.0-or-later
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/libzstd1
-    license:
-      - BSD-3-Clause
-      - GPL-2.0
-      - MIT
-      - Zlib
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/linux-libc-dev
-    license:
-      - GPL-2.0
-      - GPL-2.0-only
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/lto-disabled-list
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/m4
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/make-guile
-    license:
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/mawk
-    license:
-      - GPL-2.0
-      - GPL-2.0-only
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/patch
-    license:
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/perl
-    license:
-      - Artistic-1.0-Perl
-      - Artistic-2.0
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - CC0-1.0
-      - FSFAP
-      - GPL-1.0
-      - GPL-1.0-or-later
-      - GPL-2.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.1
-      - MIT
-      - Spencer-86
-      - Unicode-DFS-2015
-      - Zlib
-      - bzip2-1.0.6
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/perl-base
-    license:
-      - Artistic-1.0-Perl
-      - Artistic-2.0
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - CC0-1.0
-      - FSFAP
-      - GPL-1.0
-      - GPL-1.0-or-later
-      - GPL-2.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.1
-      - MIT
-      - Spencer-86
-      - Unicode-DFS-2015
-      - Zlib
-      - bzip2-1.0.6
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/perl-modules-5.34
-    license:
-      - Artistic-1.0-Perl
-      - Artistic-2.0
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - CC0-1.0
-      - FSFAP
-      - GPL-1.0
-      - GPL-1.0-or-later
-      - GPL-2.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.1
-      - MIT
-      - Spencer-86
-      - Unicode-DFS-2015
-      - Zlib
-      - bzip2-1.0.6
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/pkgconf
-    license:
-      - BSD-2-Clause
-      - BSD-4-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - ISC
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/readline-common
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/rpcsvc-proto
-    license:
-      - BSD-3-Clause
-      - FSFAP
-      - FSFUL
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - MIT
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/tar
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: apt/kernel_build_deps/amd64/xz-utils
-    license:
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.0
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *apt_kernel_build_deps_rationale
-  - dependency: kcov_linux_source
-    license: GPL-2.0-only
-    exception_rationale: >-
-      The pinned kernel COPYING file specifies GPL version 2 only, with
-      Linux-syscall-note covering ordinary system calls. The referenced
-      GPL text and syscall exception were audited at fd73f4a66.
-      File-specific compatible terms remain in the source tree. Used
-      only for native syscall test guests, not linked into or packaged
-      with gVisor releases.
-      https://github.com/torvalds/linux/blob/fd73f4a66/COPYING
