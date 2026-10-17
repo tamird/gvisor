@@ -368,11 +368,13 @@ shared_test_targets() {
     kvm)
       if [[ $target_arch == arm64 ]]; then
         targets=(
+          //pkg/coretag:coretag_smt_arm64_tcg_test
           //pkg/pinring:pinring_kvm_arm64_tcg_test
           //runsc/cmd:boot_posture_kvm_arm64_tcg_test
         )
       else
         targets=(
+          //pkg/coretag:coretag_smt_kvm_test_amd64
           //pkg/sentry/platform/kvm:kvm_test
           //test/docker:kvm_tests
           //pkg/pinring:pinring_kvm_test_amd64

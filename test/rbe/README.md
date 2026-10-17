@@ -286,8 +286,14 @@ reuse the original Go executables and runfiles to exercise AF_PACKET with
 CAP_NET_RAW, hard links with CAP_DAC_READ_SEARCH, and the unreadable-directory
 and sandbox-network validation cases as a nonroot user. The original unit
 owners retain their portable environment skips. The KVM lane separately
-selects the pinring VM-release and boot-posture KVM cases. A skipped required
-case remains unqualified even when its owner exits successfully.
+selects the pinring VM-release and boot-posture KVM cases. It also runs the
+unchanged coretag test in a two-thread SMT guest on each architecture:
+AMD64 uses local KVM, and ARM64 uses remote TCG on an AMD64 worker. These
+frontends retain the original 60-second deadline and require
+`CONFIG_SCHED_CORE=y` with both guest CPUs sharing a thread-sibling mask.
+The native coretag exclusion remains because bare workers may lack SMT.
+A skipped required case remains unqualified even when its owner exits
+successfully.
 
 The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
 leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends
