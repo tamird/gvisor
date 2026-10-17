@@ -438,7 +438,7 @@ analyze_profile() {
 select_test_profile() {
   local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
   shift 4
-  local -a selection_options=() page_size_options=() routing_options=() variant_options=()
+  local -a selection_options=() page_size_options=() routing_options=() variant_options=() owner_options=()
   prefix=$selection_dir/$lane-$target_arch
   if [[ $target_arch == arm64 ]]; then
     target_config=aarch64
@@ -447,11 +447,12 @@ select_test_profile() {
     selection_options=(--syscall-policy)
     local owner
     for owner in "${test_targets[@]}"; do
-      selection_options+=("--owner=$owner")
+      owner_options+=("--owner=$owner")
     done
     if [[ $lane == syscalls-rc && $arch == all ]]; then
-      selection_options+=(--mixed-rc-owners)
+      owner_options+=(--mixed-rc-owners)
     fi
+    selection_options+=("${owner_options[@]}")
   fi
   if [[ $lane == syscalls-64k || $lane == syscalls-rc ]]; then
     if [[ $lane == syscalls-64k ]]; then
@@ -482,7 +483,7 @@ select_test_profile() {
   analyze_profile "$roots" "$prefix-profile.json" \
     --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
-    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" "${variant_options[@]}" > "$prefix.query"
+    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" "${variant_options[@]}" "${owner_options[@]}" > "$prefix.query"
   bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --build_tests_only \
     "${routing_options[@]}" \
     --output=jsonproto --include_artifacts=false \
