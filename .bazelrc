@@ -63,3 +63,17 @@ build:aarch64 --platforms=//tools/bazeldefs:linux_arm64
 # Use prebuilt protoc to speed up builds.
 common --@com_google_protobuf//bazel/toolchains:prefer_prebuilt_protoc
 common --incompatible_enable_proto_toolchain_resolution=true
+
+# Qualification-only remote execution; dependency declarations are unchanged.
+build:rbe-common --config=buildbuddy_remote_executor
+build:rbe-common --jobs=400
+build:rbe-common --spawn_strategy=remote
+build:rbe-common --noremote_local_fallback
+build:rbe-common --remote_cache_compression
+test:rbe-common --strategy=TestRunner=remote
+build:rbe --config=rbe-common
+build:rbe --extra_execution_platforms=//test/rbe:linux_amd64,//test/rbe:linux_arm64
+build:rbe --host_platform=//test/rbe:linux_amd64
+build:rbe-arm64 --config=rbe-common
+build:rbe-arm64 --extra_execution_platforms=//test/rbe:linux_arm64,//test/rbe:linux_amd64
+build:rbe-arm64 --host_platform=//test/rbe:linux_arm64
