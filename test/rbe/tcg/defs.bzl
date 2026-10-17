@@ -127,8 +127,8 @@ def _tcg_test_impl(ctx):
         fail("EL2 exposure requires an ARM64 guest")
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     configuration = ctx.actions.declare_file(ctx.label.name + ".guest.sh")
-    if ctx.attr.memory_mib <= 0 or ctx.attr.scratch_gib <= 0:
-        fail("Guest memory and scratch capacity must be positive")
+    if ctx.attr.cpus <= 0 or ctx.attr.memory_mib <= 0 or ctx.attr.scratch_gib <= 0:
+        fail("Guest CPU count, memory and scratch capacity must be positive")
     environment = {}
     inherited_environment = []
     if RunEnvironmentInfo in ctx.attr.payload:
@@ -138,7 +138,8 @@ def _tcg_test_impl(ctx):
     environment.update(ctx.attr.guest_env)
     ctx.actions.write(
         configuration,
-        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\nguest_arm64_el2=%s\n" % (
+        "guest_cpus=%d\nguest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\nguest_arm64_el2=%s\n" % (
+            ctx.attr.cpus,
             ctx.attr.memory_mib,
             ctx.attr.scratch_gib,
             shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
@@ -190,6 +191,7 @@ _tcg_test = rule(
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),
+        "cpus": attr.int(default = 2),
         "memory_mib": attr.int(default = 3072),
         "scratch_gib": attr.int(default = 4),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
@@ -218,17 +220,18 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
         **kwargs
     )
 
-def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), cpus = 2, **kwargs):
     """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
 
     _guest_test(
         name = name,
         payload = payload,
         image = image,
+        cpus = cpus,
         emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
         tags = tags + ["no-local"],
         exec_properties = {
-            "test.EstimatedCPU": "2",
+            "test.EstimatedCPU": str(cpus),
             "test.EstimatedMemory": "6GB",
             "test.EstimatedFreeDiskBytes": "8GB",
             # Bazel's undeclared-output collection requires file and zip.

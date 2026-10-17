@@ -23,6 +23,7 @@ syscall_test(
     network_tools = True,
     overlay = True,
     save = False,
+    tcg_cpus = 4,
     test = "//test/rtnetlink/linux:bridge_test",
     use_tmpfs = True,
 )

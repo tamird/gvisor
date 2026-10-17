@@ -38,7 +38,7 @@ machine="$7"
 test_setup="$(realpath "$8")"
 shift 8
 # The owning rule writes this declared configuration beside the launcher.
-declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2
+declare guest_cpus guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2
 declare -a guest_env guest_inherited_env
 # shellcheck disable=SC1090
 source "${GVISOR_TEST_GUEST_CONFIG:?}"
@@ -196,7 +196,7 @@ TMPDIR="$scratch" QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
-  -smp 2 -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \
+  -smp "$guest_cpus" -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" \
   -append "console=$console root=/dev/vdb rootfstype=ext4 rw rootwait init=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \
