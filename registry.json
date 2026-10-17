@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T21:26:31.738237+00:00",
+    "updatedAt": "2026-10-17T21:34:44.337864+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9653,21 +9653,21 @@
       "number": 15934
     },
     {
-      "id": "branch:trace-assertions",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15936",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "trace-assertions",
       "head": "72882e3e3a305f7ac6237cd1d995c768e5b53360",
       "title": "Strengthen trace event validation",
       "group": "tests",
-      "status": "Awaiting contributor review",
-      "summary": "Strengthen timestamp, file-offset and exec-argument checks in the existing trace suite. Full AMD64 validation passes. Full ARM64 validation exposed a separate fchdir producer defect; after that independent correction, both complete native-namespace owners pass with no skips or missing results. The correction and these assertion improvements remain separate changes.",
-      "url": "https://github.com/tamird/gvisor/commit/72882e3e3a305f7ac6237cd1d995c768e5b53360",
-      "updatedAt": "2026-10-17T21:26:31.738237+00:00",
+      "status": "open",
+      "summary": "Published as ready PR #15936 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nStrengthen timestamp, file-offset and exec-argument checks in the existing trace suite. Full AMD64 validation passes. Full ARM64 validation exposed a separate fchdir producer defect; after that independent correction, both complete native-namespace owners pass with no skips or missing results. The correction and these assertion improvements remain separate changes.",
+      "url": "https://github.com/google/gvisor/pull/15936",
+      "updatedAt": "2026-10-17T21:34:44.337864+00:00",
       "followup": {
-        "owner": "Tamir",
-        "disposition": "Concrete contributor review request sent at 21:20 UTC",
-        "next": "Review the published commit; source and remote validation are complete."
+        "owner": "Codex",
+        "disposition": "Published; awaiting maintainer review and CI",
+        "next": "Follow actionable upstream feedback and checks through the existing status workflow."
       },
       "evidence": [
         {
@@ -9685,13 +9685,13 @@
         {
           "label": "Full corrected ARM64 trace owner passes",
           "url": "https://github.com/tamird/gvisor/actions/runs/39070126847"
+        },
+        {
+          "label": "Owning analyzers pass on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39070688547"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "72882e3e3a305f7ac6237cd1d995c768e5b53360",
-        "url": "https://github.com/tamird/gvisor/commit/72882e3e3a305f7ac6237cd1d995c768e5b53360"
-      }
+      "number": 15936
     },
     {
       "id": "external-pr:buildbuddy:13848",
@@ -9733,21 +9733,21 @@
       "number": 13848
     },
     {
-      "id": "branch:trace-fchdir-arguments",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15935",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "trace-fchdir-arguments",
       "head": "9b0952805a1d2489871edf72bb098f9658363793",
       "title": "Ignore nonexistent fchdir pathname arguments",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/9b0952805a1d2489871edf72bb098f9658363793",
-      "status": "Awaiting contributor review",
-      "summary": "fchdir takes only a file descriptor, but its trace producer read an unused argument register as a pathname. Stop reading that register and check the resolved descriptor path instead. The existing workload supplies a readable ignored argument: both architectures fail twice before the fix and pass their full TestAll afterward, with no skips or missing results. Compilation stays remote; native namespace tests run uncached on Actions.",
-      "updatedAt": "2026-10-17T21:26:31.738237+00:00",
+      "url": "https://github.com/google/gvisor/pull/15935",
+      "status": "open",
+      "summary": "Published as ready PR #15935 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nfchdir takes only a file descriptor, but its trace producer read an unused argument register as a pathname. Stop reading that register and check the resolved descriptor path instead. The existing workload supplies a readable ignored argument: both architectures fail twice before the fix and pass their full TestAll afterward, with no skips or missing results. Compilation stays remote; native namespace tests run uncached on Actions.",
+      "updatedAt": "2026-10-17T21:34:44.337864+00:00",
       "followup": {
-        "owner": "Tamir",
-        "disposition": "Concrete contributor review request sent at 21:20 UTC",
-        "next": "Review the published commit; source and remote validation are complete."
+        "owner": "Codex",
+        "disposition": "Published; awaiting maintainer review and CI",
+        "next": "Follow actionable upstream feedback and checks through the existing status workflow."
       },
       "evidence": [
         {
@@ -9765,13 +9765,13 @@
         {
           "label": "ARM64 full owner passes after fix",
           "url": "https://github.com/tamird/gvisor/actions/runs/39070126847"
+        },
+        {
+          "label": "Owning analyzers pass on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39070688547"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "9b0952805a1d2489871edf72bb098f9658363793",
-        "url": "https://github.com/tamird/gvisor/commit/9b0952805a1d2489871edf72bb098f9658363793"
-      }
+      "number": 15935
     },
     {
       "id": "branch:trace-unit-selection",
@@ -11348,7 +11348,7 @@
       "evidence": "https://github.com/tamird/gvisor/commit/befdfe4a63044b5f58dd937b0cec296093826266"
     },
     {
-      "from": "branch:trace-fchdir-arguments",
+      "from": "pr:15935",
       "to": "branch:trace-unit-selection",
       "type": "depends_on",
       "reason": "Routine trace CI requires the corrected fchdir producer and regression expectations.",
@@ -17660,7 +17660,7 @@
       "status": "active",
       "owner": "Codex \u2014 qualification backlog and active fixture work",
       "updatedAt": "2026-10-17T21:20:16.359569+00:00",
-      "summary": "Restore the four unit targets excluded by #10045 to routine CI. Metric and tracereplay fixes are published as #15930 and #15934. The unchanged coretag tests pass in AMD64 and ARM64 SMT guests with no skips. Full trace validation identified and verified a correction for reading a nonexistent fchdir argument. config_test is already included on current master.",
+      "summary": "Restore the four unit targets excluded by #10045 to routine CI. Metric and tracereplay fixes are published as #15930 and #15934. The unchanged coretag tests pass in AMD64 and ARM64 SMT guests with no skips. The corrected fchdir producer and stronger event assertions are published as #15935 and #15936. config_test is already included on current master.",
       "findings": [
         {
           "text": "At upstream master 9e9495997, Makefile retains the issue #10045 TODO and four explicit target exclusions. This confirms the remaining coverage gap; it does not establish that all of the original failures still reproduce.",
@@ -17769,9 +17769,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/39070126847"
             }
           ]
+        },
+        {
+          "text": "Both independently reviewed trace changes are now ready upstream PRs. The exact-source runtime before/after results and owning AMD64/ARM64 analyzer checks are verified; no contributor decision remains for either PR.",
+          "evidence": [
+            {
+              "label": "Correct fchdir trace events #15935",
+              "url": "https://github.com/google/gvisor/pull/15935"
+            },
+            {
+              "label": "Strengthen trace assertions #15936",
+              "url": "https://github.com/google/gvisor/pull/15936"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow the published metric/tracereplay PRs, integrate an explicitly guest-based coretag route. Await the requested contributor review of the independently validated trace changes before removing the remaining trace exclusion.",
+      "nextStep": "Follow metric/tracereplay and trace PRs; integrate the qualified SMT coretag cohort. Keep the trace CI selector follow-up dependent on the fchdir correction and complete its contributor review handoff.",
       "evidence": [
         {
           "label": "Issue #10045 and reported failures",
