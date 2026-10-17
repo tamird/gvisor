@@ -1889,6 +1889,12 @@ are unchanged.
 Guest capabilities and full-profile timing require qualification;
 declaring these routes does not establish that every selected owner can run.
 
+For an explicit `--test-target` selection, preflight checks membership and
+variant declarations against the full canonical profile, then analyzes
+execution actions only for the requested owners. The report retains the
+unexecuted complement and lists its routing as unchecked. Full-profile and
+bucket selections analyze every variant's routing.
+
 The combined command keeps the original unit patterns and configuration,
 including build-only tests and non-test targets. Selected syscall owners must
 also survive those final filters; a conflicting selection fails before tests

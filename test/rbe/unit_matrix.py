@@ -113,6 +113,9 @@ def test_requirements(
     configurations: dict[str, str] | None = None,
 ) -> dict[str, dict[str, str]]:
     decoded = json.loads(Path(actions_path).read_text())
+    if configurations == {} and decoded == {}:
+        # An empty mixed-architecture subset produces an empty aquery graph.
+        return {}
     if (
         not isinstance(decoded, dict)
         or not isinstance(raw_targets := decoded.get("targets"), list)
@@ -182,7 +185,7 @@ class ConfiguredTarget:
 
 def configured_targets(
     events_path: str, *, tests: bool | None, allow_test_no_build: bool = False,
-    expected_exit: int | None = None,
+    expected_exit: int | None = None, allow_empty: bool = False,
 ) -> dict[str, ConfiguredTarget]:
     """Read successful analysis roots; tests=None includes both target kinds."""
     targets: dict[str, ConfiguredTarget] = {}
@@ -280,14 +283,16 @@ def configured_targets(
             and not invalid_abort
             and not executed
         )
-    if not succeeded or not targets:
+    if allow_empty and (invalid_abort or executed):
+        raise ValueError(f"Preflight contains a failure or test execution: {events_path}")
+    if not succeeded or (not targets and not allow_empty):
         raise ValueError(f"Expected successful, nonempty target analysis: {events_path}")
     return targets
 
 
-def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
+def configured_tests(events_path: str, *, allow_empty: bool = False) -> dict[str, ConfiguredTarget]:
     """Read this successful analysis invocation's runnable top-level tests."""
-    return configured_targets(events_path, tests=True)
+    return configured_targets(events_path, tests=True, allow_empty=allow_empty)
 
 
 def cgroup_targets(events_path: str, *, guest_kvm: bool = False) -> list[str]:
@@ -364,6 +369,23 @@ def profile_targets(
     if missing:
         raise ValueError(f"Profile owners without {suffix} variants: {missing}")
     return sorted(label + suffix for label in targets)
+
+
+def explicit_profile_owners(
+    eligible: set[str], requested: list[str] | None, *, mixed_rc_owners: bool = False,
+) -> set[str]:
+    """Validate exact requests against the complete canonical profile."""
+    if requested is None:
+        return eligible
+    if not requested or len(requested) != len(set(requested)):
+        raise ValueError("Explicit syscall owners must be nonempty and distinct")
+    if mixed_rc_owners:
+        # combine_rc_profiles must account for every requested owner across
+        # both architectures, including requests absent from this profile.
+        return eligible.intersection(requested)
+    if unknown := set(requested) - eligible:
+        raise ValueError(f"Explicit owners outside the eligible syscall profile: {sorted(unknown)}")
+    return set(requested)
 
 
 def hybrid_local_owners(
@@ -455,21 +477,20 @@ def select_profile(
             raise ValueError("Explicit syscall owners require a hybrid or RC profile")
         if selected_buckets is not None:
             raise ValueError("Select explicit syscall owners or buckets, not both")
-        if not selected_owners or len(selected_owners) != len(set(selected_owners)):
-            raise ValueError("Explicit syscall owners must be nonempty and distinct")
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only, rc_kernel=rc_kernel))
-    configured = configured_tests(events_path)
-    if configured.keys() != expected:
-        raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
+    routed = explicit_profile_owners(expected, selected_owners, mixed_rc_owners=mixed_rc_owners)
+    configured = configured_tests(events_path, allow_empty=selected_owners is not None and not routed)
+    if configured.keys() != routed:
+        raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ routed)}")
     execution_architecture = "amd64" if guest else architecture
     requirements = test_requirements(
         actions_path,
         execution_architecture,
         {label: target.configuration for label, target in configured.items()},
     )
-    if requirements.keys() != expected:
-        raise ValueError(f"Missing profile TestRunners: {sorted(expected - requirements.keys())}")
+    if requirements.keys() != routed:
+        raise ValueError(f"Missing profile TestRunners: {sorted(routed - requirements.keys())}")
     if guest:
         for label, target in configured.items():
             properties = requirements[label]
@@ -506,7 +527,7 @@ def select_profile(
                 policy_excluded[label] = "KVM runs in the dedicated syscalls-kvm lane."
             else:
                 unavailable[variant] = "KVM execution is unavailable."
-        elif not hybrid and architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
+        elif variant in requirements and not hybrid and architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
     eligible = expected - unavailable.keys() - policy_excluded.keys()
     buckets: dict[str, list[str]] = {}
@@ -525,13 +546,7 @@ def select_profile(
         selected = sorted(eligible)
     unexecuted_bucket_owners = sorted(eligible - set(selected))
     if selected_owners is not None:
-        if mixed_rc_owners:
-            # Both complete routing graphs are checked independently. The
-            # combined selection must account for every requested owner.
-            selected_owners = [owner for owner in selected_owners if owner in eligible]
-        if unknown := set(selected_owners) - eligible:
-            raise ValueError(f"Explicit owners outside the eligible syscall profile: {sorted(unknown)}")
-        selected = sorted(selected_owners)
+        selected = sorted(explicit_profile_owners(eligible, selected_owners, mixed_rc_owners=mixed_rc_owners))
     groups = hybrid_local_owners(set(selected), requirements, kvm=kvm_only) if hybrid else {}
     if rc_kernel and architecture == "amd64":
         groups = {"root": selected, "unprivileged": []}
@@ -553,6 +568,7 @@ def select_profile(
         "selected_owners": selected,
         "explicit_owners": selected_owners,
         "unexecuted_owners": sorted(eligible - set(selected)),
+        "routing_unchecked_owners": sorted(expected - routed),
         "unavailable_owners": unavailable,
         "policy_excluded_owners": policy_excluded,
         "local_owners": groups,
@@ -724,6 +740,9 @@ def main() -> None:
         profile.add_argument("--rc-kernel", action="store_true", help="Select the declared RC guest for this architecture")
         profile.add_argument("--hybrid", action="store_true", help="Select native local variants")
         profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
+        if command == "profile-actions":
+            profile.add_argument("--owner", action="append", help="Analyze only exact owners from the complete canonical profile")
+            profile.add_argument("--mixed-rc-owners", action="store_true", help="Intersect owners with this RC profile; verify their union separately")
     profile = commands.add_parser("select-profile")
     profile.add_argument("profile")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
@@ -802,7 +821,13 @@ def main() -> None:
             "limitation": "KVM identities come from loading only; their configurations and execution remain unqualified.",
         }, indent=2))
     elif args.command == "profile-actions":
-        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)) + ")")
+        targets = profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)
+        if args.mixed_rc_owners and not args.rc_kernel:
+            raise ValueError("Mixed architecture owners require RC profiles")
+        if args.owner is not None and not (args.hybrid or args.rc_kernel):
+            raise ValueError("Explicit syscall owners require a hybrid or RC profile")
+        selected = explicit_profile_owners(set(targets), args.owner, mixed_rc_owners=args.mixed_rc_owners)
+        print('mnemonic("^TestRunner$", ' + target_set(sorted(selected)) + ")")
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)))
     elif args.command == "select-profile":

@@ -37,6 +37,7 @@ class SyscallBucketsTest(unittest.TestCase):
         self, value: str | None, routing: Path = FIXTURE / "routing.jsonl",
         *, owners: list[str] | None = None, rc_arch: str | None = None,
         mixed_rc_owners: bool = False, actions: Path = FIXTURE / "actions.json",
+        profile: Path = FIXTURE / "profile.jsonl",
     ):
         with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(io.StringIO()) as stdout:
             output = Path(directory) / "targets"
@@ -62,8 +63,23 @@ class SyscallBucketsTest(unittest.TestCase):
                     action["executionInfo"] = [{"key": key, "value": value} for key, value in properties.items()]
                 actions = Path(directory) / "actions.json"
                 actions.write_text(json.dumps(graph))
+            if owners is not None:
+                # Model the narrowed second aquery, retaining the complete
+                # first profile and its variant declarations independently.
+                events = [json.loads(line) for line in routing.read_text().splitlines()]
+                routing = Path(directory) / "selected-routing.jsonl"
+                routing.write_text("".join(
+                    json.dumps(event) + "\n" for event in events
+                    if "targetConfigured" not in event["id"]
+                    or event["id"]["targetConfigured"]["label"] in owners
+                ))
+                graph = json.loads(actions.read_text())
+                selected_ids = {target["id"] for target in graph["targets"] if target["label"] in owners}
+                graph["actions"] = [action for action in graph["actions"] if action["targetId"] in selected_ids]
+                actions = Path(directory) / "selected-actions.json"
+                actions.write_text(json.dumps(graph if selected_ids else {}))
             unit_matrix.select_profile(
-                str(FIXTURE / "profile.jsonl"), rc_arch or "arm64",
+                str(profile), rc_arch or "arm64",
                 str(routing), str(actions), str(output),
                 syscall_policy=True, hybrid=rc_arch is None, rc_kernel=rc_arch is not None,
                 selected_buckets=unit_matrix.syscall_buckets(value) if value is not None else None,
@@ -125,7 +141,7 @@ class SyscallBucketsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "RC architecture selections overlap"):
             self.combine({"amd64": profiles["amd64"], "arm64": profiles["amd64"]})
 
-    def test_mixed_rc_subset_requires_unselected_owner_routing(self):
+    def test_mixed_rc_subset_does_not_claim_unselected_routing(self):
         owner, unselected, *_ = self.select(None)["selected_owners"]
         with tempfile.TemporaryDirectory() as directory:
             graph = json.loads((FIXTURE / "actions.json").read_text())
@@ -134,9 +150,11 @@ class SyscallBucketsTest(unittest.TestCase):
             actions = Path(directory) / "actions.json"
             actions.write_text(json.dumps(graph))
             for architecture, suffix in (("amd64", "_rc_kvm"), ("arm64", "_rc_tcg")):
-                with self.subTest(architecture=architecture), self.assertRaisesRegex(ValueError, "Missing profile TestRunners"):
-                    self.select(None, owners=[owner.removesuffix("_arm64") + suffix], rc_arch=architecture,
-                                mixed_rc_owners=True, actions=actions)
+                with self.subTest(architecture=architecture):
+                    selected = self.select(None, owners=[owner.removesuffix("_arm64") + suffix], rc_arch=architecture,
+                                           mixed_rc_owners=True, actions=actions)
+                    self.assertEqual(selected["routing_unchecked_owners"], selected["unexecuted_owners"])
+                    self.assertIn(unselected.removesuffix("_arm64") + suffix, selected["routing_unchecked_owners"])
 
     def test_explicit_owner_subset_preserves_profile_and_routing(self):
         for architecture in (None, "amd64", "arm64"):
@@ -149,6 +167,7 @@ class SyscallBucketsTest(unittest.TestCase):
                 self.assertEqual(selected["canonical_owners"], full["canonical_owners"])
                 self.assertEqual(sorted(owners + selected["unexecuted_owners"]), full["selected_owners"])
                 self.assertEqual(selected["unexecuted_bucket_owners"], [])
+                self.assertEqual(selected["routing_unchecked_owners"], selected["unexecuted_owners"])
                 self.assertEqual(selected["local_owners"], {
                     group: [owner for owner in labels if owner in owners]
                     for group, labels in full["local_owners"].items()
@@ -169,17 +188,65 @@ class SyscallBucketsTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "owners or buckets"):
             self.select("0", owners=[owner])
 
-    def test_explicit_subset_still_requires_complete_profile_analysis(self):
+    def test_explicit_query_analyzes_only_requested_owners(self):
+        owner = self.select(None)["selected_owners"][0]
+        command = [sys.executable, str(Path(unit_matrix.__file__)), "profile-actions", str(FIXTURE / "profile.jsonl"), "arm64", "--hybrid"]
+        result = subprocess.run(command + [f"--owner={owner}"], capture_output=True, text=True, check=True)
+        self.assertEqual(result.stdout.strip(), f'mnemonic("^TestRunner$", set("{owner}"))')
+        full = subprocess.run(command, capture_output=True, text=True, check=True)
+        for label in self.select(None)["selected_owners"]:
+            self.assertIn(f'"{label}"', full.stdout)
+        for owners in ([owner, owner], [owner.removesuffix("_arm64") + "_amd64"]):
+            with self.subTest(owners=owners):
+                result = subprocess.run(command + [f"--owner={value}" for value in owners], capture_output=True, text=True, check=False)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, "")
+
+    def test_explicit_subset_still_checks_all_canonical_variant_declarations(self):
         owner, unselected, *_ = self.select(None)["selected_owners"]
         with tempfile.TemporaryDirectory() as directory:
+            events = [json.loads(line) for line in (FIXTURE / "profile.jsonl").read_text().splitlines()]
+            for event in events:
+                if event.get("id", {}).get("targetConfigured", {}).get("label") == unselected.removesuffix("_arm64"):
+                    event["configured"]["tag"].remove("rbe-has-arm64-variant")
+            profile = Path(directory) / "profile.jsonl"
+            profile.write_text("".join(json.dumps(event) + "\n" for event in events))
+            with self.assertRaisesRegex(ValueError, "Profile owners without _arm64 variants"):
+                self.select(None, owners=[owner], profile=profile)
+
+    def test_explicit_subset_rejects_missing_or_invalid_selected_route(self):
+        owner = self.select(None)["selected_owners"][0]
+        for defect in ("missing", "configuration", "placement"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as directory:
+                graph = json.loads((FIXTURE / "actions.json").read_text())
+                target_id, = [target["id"] for target in graph["targets"] if target["label"] == owner]
+                action, = [action for action in graph["actions"] if action["targetId"] == target_id]
+                if defect == "missing":
+                    graph["actions"].remove(action)
+                elif defect == "configuration":
+                    action["configurationId"] = "wrong-configuration"
+                    graph["configuration"].append({"id": "wrong-configuration", "checksum": "wrong-checksum"})
+                else:
+                    for item in action["executionInfo"]:
+                        if item["key"] == "Arch":
+                            item["value"] = "amd64"
+                actions = Path(directory) / "actions.json"
+                actions.write_text(json.dumps(graph))
+                message = {"missing": "Missing profile TestRunners", "configuration": "Unexpected TestRunner configuration", "placement": "Unexpected native test routing"}[defect]
+                with self.assertRaisesRegex(ValueError, message):
+                    self.select(None, owners=[owner], actions=actions)
+
+    def test_empty_subset_still_requires_successful_analysis(self):
+        owner = self.select(None, rc_arch="amd64")["selected_owners"][0]
+        with tempfile.TemporaryDirectory() as directory:
             events = [json.loads(line) for line in (FIXTURE / "routing.jsonl").read_text().splitlines()]
+            for event in events:
+                if "finished" in event:
+                    event["finished"]["overallSuccess"] = False
             routing = Path(directory) / "routing.jsonl"
-            routing.write_text("".join(
-                json.dumps(event) + "\n" for event in events
-                if event.get("id", {}).get("targetConfigured", {}).get("label") != unselected
-            ))
-            with self.assertRaisesRegex(ValueError, "Configured owners differ from profile"):
-                self.select(None, routing, owners=[owner])
+            routing.write_text("".join(json.dumps(event) + "\n" for event in events))
+            with self.assertRaisesRegex(ValueError, "Expected successful"):
+                self.select(None, routing, owners=[owner], rc_arch="arm64", mixed_rc_owners=True)
 
     def test_single_and_union_partition(self):
         expected = json.loads((FIXTURE / "expected.json").read_text())
