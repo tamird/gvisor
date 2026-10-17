@@ -1036,6 +1036,16 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	// Mark the root as writeable, as some tests attempt to
 	// write to the rootfs, and expect EACCES, not EROFS.
 	spec.Root.Readonly = false
+	if *externalNetwork {
+		// Join the namespace prepared by setup_container instead of creating
+		// another empty namespace when the sandbox starts.
+		spec.Linux = &specs.Linux{
+			Namespaces: []specs.LinuxNamespace{{
+				Type: specs.NetworkNamespace,
+				Path: "/proc/self/ns/net",
+			}},
+		}
+	}
 
 	// Test spec comes with pre-defined mounts that we don't want. Reset it.
 	spec.Mounts = nil
