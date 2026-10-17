@@ -111,7 +111,8 @@ ln -sfn which.debianutils "$root/usr/bin/which"
 read -r root_bytes _ < <(host_tool usr/bin/du --apparent-size --block-size=1 -s "$root")
 read -r module_bytes _ < <(host_tool usr/bin/du --apparent-size --block-size=1 -s "$root/lib/modules")
 root_kib=$(( (root_bytes * 2 + 1023) / 1024 + 256 * 1024 ))
-printf 'Guest root bytes: %s; module bytes: %s; ext4 KiB: %s\n' "$root_bytes" "$module_bytes" "$root_kib"
+printf 'Guest root before size record: %s bytes; modules: %s bytes; ext4: %s KiB\n' \
+  "$root_bytes" "$module_bytes" "$root_kib" > "$root/etc/gvisor-test-root-image"
 # mke2fs copies each inode's ownership. Match cpio's former --owner=0:0 using
 # the declared fakeroot wrapper's default unknown-is-root policy. Its official
 # wrapper owns the daemon lifetime and propagates mke2fs's status; only its

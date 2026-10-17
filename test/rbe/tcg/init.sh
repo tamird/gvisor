@@ -49,6 +49,7 @@ source /etc/gvisor-test-kernel
 uname -a | tee /result/kernel.txt
 # Kernel options determine which native syscall features the guest can test.
 cp /etc/gvisor-test-kernel.config /result/kernel.config
+cat /etc/gvisor-test-root-image | tee /result/root-image.txt
 [[ "$(uname -r)" == "${expected_kernel_release:?}" ]]
 page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt
