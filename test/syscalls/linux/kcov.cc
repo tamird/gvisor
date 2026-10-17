@@ -189,6 +189,11 @@ TEST(KcovTest, MultipleThreads) {
   std::atomic<bool> t1_enabled(false), t1_disabled(false), t2_failed(false),
       t2_exited(false);
   auto t1 = ScopedThread([&] {
+    // Fatal assertions return from this worker; its peer must still wake up.
+    auto unblock_t2 = Cleanup([&] {
+      t1_enabled = true;
+      t1_disabled = true;
+    });
     ASSERT_THAT(ioctl(fd, KCOV_INIT_TRACE, kSize), SyscallSucceeds());
     uint64_t* area = KcovMmap(fd);
     ASSERT_TRUE(area != MAP_FAILED);
@@ -211,6 +216,7 @@ TEST(KcovTest, MultipleThreads) {
   });
 
   auto t2 = ScopedThread([&] {
+    auto unblock_t1 = Cleanup([&] { t2_failed = true; });
     // Wait for t1 to enable kcov, and make sure that enabling kcov again fails.
     while (!t1_enabled) {
       sched_yield();
