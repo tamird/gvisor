@@ -243,8 +243,8 @@ TEST_P(IPv6UDPUnboundExternalNetworkingSocketTest, TestIPv6MulticastIf) {
   // the multicast selection must preserve the socket's device binding.
   for (const auto& [selected, expected_errno, expected] :
        {std::tuple{eth_if_idx(), 0, eth_if_idx()},
-        std::tuple{lo_if_idx(), EINVAL, eth_if_idx()},
-        std::tuple{0, 0, 0}, std::tuple{lo_if_idx(), EINVAL, 0}}) {
+        std::tuple{lo_if_idx(), EINVAL, eth_if_idx()}, std::tuple{0, 0, 0},
+        std::tuple{lo_if_idx(), EINVAL, 0}}) {
     SCOPED_TRACE(selected);
     if (expected_errno == 0) {
       ASSERT_THAT(setsockopt(sock->get(), IPPROTO_IPV6, IPV6_MULTICAST_IF,
