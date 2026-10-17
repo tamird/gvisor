@@ -31,7 +31,7 @@ host_phase launcher_start
 host="$(realpath "$1")"
 kernel="$(realpath "$2")"
 rootfs="$(realpath "$3")"
-payload_archive="$(realpath "$4")"
+payload_image="$(realpath "$4")"
 payload="$5"
 payload_label="$6"
 machine="$7"
@@ -80,13 +80,22 @@ fi
 loader="$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
 libraries="$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu"
 host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "${@:2}"; }
-# A private copy prevents the guest from modifying a Bazel input. The export
-# itself is read-only as well; the writable export contains only test outputs.
-cp "$payload_archive" "$scratch/input/payload.tar"
 cp "$test_setup" "$scratch/input/test-setup.sh"
+# Preserve the existing shared payload/scratch capacity and recovery disk.
+# Copy sparsely (or reflink when supported) so guest writes cannot modify the
+# declared template; extending it does not cache a full scratch disk per test.
+image_bytes="$(host_tool usr/bin/stat -c %s "$payload_image")"
+if (( image_bytes > guest_scratch_gib * 1024 * 1024 * 1024 )); then
+  printf 'Payload image (%s bytes) exceeds scratch capacity (%s GiB)\n' "$image_bytes" "$guest_scratch_gib" >&2
+  exit 1
+fi
+printf 'Payload filesystem template: %s bytes; scratch capacity: %s GiB\n' "$image_bytes" "$guest_scratch_gib"
+host_tool bin/cp --reflink=auto --sparse=always "$payload_image" "$scratch/scratch.ext4"
+# Materialized Bazel outputs may have write permission removed.
+host_tool bin/chmod u+w "$scratch/scratch.ext4"
 host_phase payload_copy_ready
 host_tool usr/bin/truncate -s "${guest_scratch_gib}G" "$scratch/scratch.ext4"
-MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "$scratch/scratch.ext4"
+host_tool sbin/resize2fs "$scratch/scratch.ext4"
 host_phase scratch_ready
 {
   printf '#!/bin/bash\nset -uo pipefail\n'
@@ -119,9 +128,10 @@ host_phase scratch_ready
     # establish KVM ioctl support; their own skips remain incomplete.
     printf '%s\n' '[[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]] || { echo "ARM64 guest KVM device unavailable" >&2; exit 1; }'
   fi
+  printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
   printf 'exec /bin/bash /input/test-setup.sh'
   if [[ -n $guest_run_under ]]; then
-    # Both executables and their runfiles are in the declared payload archive.
+    # Both executables and their runfiles are in the declared payload image.
     # Absolute paths remain valid after the harness enters payload runfiles.
     printf ' %q' "/work/payload/$guest_run_under" "/work/payload/$payload"
   else

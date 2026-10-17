@@ -81,8 +81,9 @@ def _image_impl(ctx):
             str(ctx.attr.page_size),
             ctx.executable._zstd.path,
             ctx.attr.architecture,
+            ctx.file._ext4.path,
         ] + [archive.path for archive in ctx.files.kernel_archives],
-        inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init] + ctx.files.kernel_archives,
+        inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init, ctx.file._ext4] + ctx.files.kernel_archives,
         tools = [ctx.attr._builder[DefaultInfo].files_to_run, ctx.attr._zstd[DefaultInfo].files_to_run, tar.tarinfo.binary],
         outputs = [kernel, rootfs],
         env = tar.tarinfo.default_env,
@@ -105,10 +106,47 @@ tcg_image = rule(
         "kernel_archives": attr.label_list(allow_files = True),
         "architecture": attr.string(default = "arm64", values = ["amd64", "arm64"]),
         "page_size": attr.int(default = 65536, values = [4096, 65536]),
+        "_ext4": attr.label(default = Label(":ext4.sh"), allow_single_file = True),
         "_zstd": attr.label(default = Label("@llvm_zstd//:zstd_cli"), executable = True, cfg = "exec"),
         "_builder": attr.label(default = Label(":build_image"), executable = True, cfg = "exec"),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
+)
+
+def _payload_image_impl(ctx):
+    tar = ctx.toolchains[tar_lib.toolchain_type]
+    payload = ctx.executable.payload.short_path
+    payload_image = ctx.actions.declare_file(ctx.label.name + ".ext4")
+    ctx.actions.run(
+        executable = ctx.executable._payload_builder,
+        arguments = [
+            tar.tarinfo.binary.path,
+            ctx.file._image_host_tools.path,
+            ctx.file.archive.path,
+            payload_image.path,
+            ctx.file._ext4.path,
+            # test-setup.sh resolves the executable inside its runfiles tree.
+            "%s.runfiles/%s/%s" % (payload, ctx.workspace_name, payload),
+        ],
+        inputs = [ctx.file._image_host_tools, ctx.file.archive, ctx.file._ext4],
+        tools = [ctx.attr._payload_builder[DefaultInfo].files_to_run, tar.tarinfo.binary],
+        outputs = [payload_image],
+        env = tar.tarinfo.default_env,
+        mnemonic = "GuestPayloadImage",
+        progress_message = "Preparing guest payload filesystem %{label}",
+    )
+    return [DefaultInfo(files = depset([payload_image]))]
+
+_payload_image = rule(
+    implementation = _payload_image_impl,
+    attrs = {
+        "payload": attr.label(executable = True, cfg = "target", mandatory = True),
+        "archive": attr.label(allow_single_file = True, mandatory = True),
+        "_image_host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True, cfg = "exec"),
+        "_ext4": attr.label(default = Label(":ext4.sh"), allow_single_file = True),
+        "_payload_builder": attr.label(default = Label(":build_payload"), executable = True, cfg = "exec"),
+    },
+    toolchains = [tar_lib.toolchain_type],
 )
 
 def _tcg_test_impl(ctx):
@@ -150,14 +188,14 @@ def _tcg_test_impl(ctx):
             " ".join([shell.quote(key) for key in inherited_environment]),
         ),
     )
-    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
+    inputs = [ctx.file.payload_image, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
     if ctx.file.emulator != None:
         inputs.append(ctx.file.emulator)
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
         image.rootfs.short_path,
-        ctx.file.archive.short_path,
+        ctx.file.payload_image.short_path,
         ctx.executable.payload.short_path,
         str(ctx.attr.payload.label),
         ctx.attr.machine,
@@ -182,7 +220,7 @@ _tcg_test = rule(
     test = True,
     attrs = {
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
-        "archive": attr.label(allow_single_file = True, mandatory = True),
+        "payload_image": attr.label(allow_single_file = True, mandatory = True),
         "host_tools": attr.label(default = Label(":host_tools"), allow_single_file = True, cfg = "exec"),
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
@@ -207,12 +245,22 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
         allow_duplicates_with_different_content = False,
         tags = ["manual"],
     )
+    # Image construction remains remote even when the guest test needs KVM on
+    # the local worker. Test execution tags must not constrain build actions.
+    _payload_image(
+        name = name + "_payload_image",
+        testonly = True,
+        payload = payload,
+        archive = ":" + name + "_payload",
+        exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+        tags = ["manual"],
+    )
     _tcg_test(
         name = name,
         payload = payload,
         image = image,
         run_under = run_under,
-        archive = ":" + name + "_payload",
+        payload_image = ":" + name + "_payload_image",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
         tags = tags + ["manual"],
         **kwargs

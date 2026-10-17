@@ -95,8 +95,11 @@ if [[ -z "$root_device" || "$root_device" != "$expected_root_device" ]]; then
   printf 'Root device %s does not match vdb %s\n' "$root_device" "$expected_root_device" >&2
   exit 1
 fi
+guest_phase payload_mount_start
 mount -t ext4 /dev/vda /work
-mkdir -p /work/payload /work/tmp
+guest_phase payload_mount_return
+stat -f -c 'Guest work filesystem: block_size=%S blocks=%b' /work
+mkdir -p /work/tmp
 chmod 1777 /work/tmp
 # Gofer's read-only root remount needs its own mount, not the scratch disk root.
 mount --bind /work/tmp /work/tmp
@@ -112,9 +115,6 @@ modprobe xt_conntrack
 cat /proc/self/limits > /result/limits-before.txt
 ulimit -n 65536
 cat /proc/self/limits > /result/limits.txt
-guest_phase payload_extract_start
-/bin/busybox tar -xf /input/payload.tar -C /work/payload
-guest_phase payload_extract_return
 # Native setgid tests need two usable supplementary groups. PID 1 inherits
 # none, unlike a normal login session; keep root credentials and add the pair.
 setpriv --groups=0,1 /bin/bash /input/launch.sh

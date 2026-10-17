@@ -71,15 +71,20 @@ the declared root image remains read-only. The root image has twice the input
 file size plus 256 MiB for metadata and root writes, separate from the existing
 private payload and scratch disk. Payload packaging uses
 `pkg_tar(include_runfiles = True)` and preserves the complete Bazel runfiles
-layout, including the runtime release and sidecars. Custom runfiles aliases
-are rejected because the pinned packaging rule does not preserve them.
+layout, including the runtime release and sidecars. A cacheable Bazel action
+extracts that archive and prepares a compact ext4 template with the same
+root-owned files. Each test sparsely copies or reflinks the template and grows
+its private copy to the existing scratch capacity before booting. The guest
+mounts the prepared payload directly; it performs no archive extraction.
+Custom runfiles aliases are rejected because the pinned packaging rule does
+not preserve them.
 
 The 64K guest must report a 65,536-byte page size before executing the payload.
 Payload files and scratch live on a private ext4 disk. Virtio 9p transports
-inputs and results only; test filesystem operations use ext4. The host returns
-the guest's original XML and exit status, requires an explicit completion
-record, and kills/reaps QEMU on interruption. A successful QEMU shutdown alone
-does not count as a passing test.
+launch scripts and results only; test filesystem operations use ext4. The
+host returns the guest's original XML and exit status, requires an explicit
+completion record, and kills/reaps QEMU on interruption. A successful QEMU
+shutdown alone does not count as a passing test.
 
 If the guest does not return a completion record, failed host cleanup stops
 QEMU, replays the ext4 journal with the declared `e2fsck -E journal_only`,
