@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T20:02:33.633566+00:00",
+    "updatedAt": "2026-10-17T20:06:13.472289+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9123,22 +9123,24 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "hostinet-port-range",
-      "head": "688cb1e12cc6825a7c40263ccc5dece9d5911aae",
+      "head": "b0037235be1de0f379334846931f83ed0e343874",
       "title": "Report the host's ephemeral port range in hostinet",
-      "url": "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae",
+      "url": "https://github.com/tamird/gvisor/commit/b0037235be1de0f379334846931f83ed0e343874",
       "group": "runtime",
-      "status": "Approved; publication underway",
-      "updatedAt": "2026-10-17T20:02:33.633566+00:00",
-      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. The existing exhaustion tests use a private namespace with a narrow range so they execute instead of skipping. The standalone extraction preserves the qualified production and fixture changes; both independent source reviews passed. The contributor approved the change with a comment-only Linux source citation correction. That correction passed independent review; upstream publication is underway.",
+      "status": "Delivered as #15931; formatting correction in progress",
+      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
+      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. The existing exhaustion tests use a private namespace with a narrow range so they execute instead of skipping. The standalone extraction preserves the qualified production and fixture changes; both independent source reviews passed. The contributor approved the change with a comment-only Linux source citation correction. That correction passed independent review and is delivered as #15931. The 20:04 GitHub snapshot found a two-line clang-format mismatch in setup_container.cc; the owner has the exact public CI diff and is preparing a formatting-only correction.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor approved; publishing",
-        "sourceHead": "688cb1e12cc6825a7c40263ccc5dece9d5911aae",
-        "observedAt": "2026-10-17T20:02:33.633566+00:00",
-        "nextAction": "Publish the approved comment-only amendment, open its upstream PR, and verify the exact published head and description.",
+        "disposition": "Published; addressing public lint",
+        "sourceHead": "b0037235be1de0f379334846931f83ed0e343874",
+        "observedAt": "2026-10-17T20:06:13.472289+00:00",
+        "nextAction": "Apply the exact two-line clang-format correction from public CI, publish the amendment and verify the rerun. Preserve the approved behavior and existing runtime evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae",
-          "https://github.com/tamird/gvisor/actions/runs/39053728306"
+          "https://github.com/tamird/gvisor/actions/runs/39053728306",
+          "https://github.com/google/gvisor/pull/15931",
+          "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
         ]
       },
       "evidence": [
@@ -9149,8 +9151,24 @@
         {
           "label": "Qualified integration runtime: applicable TCP and UDP exhaustion cases pass",
           "url": "https://github.com/tamird/gvisor/actions/runs/39053728306"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15931"
+        },
+        {
+          "label": "Public clang-format failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "688cb1e12cc6825a7c40263ccc5dece9d5911aae"
+        },
+        "after": {
+          "head": "b0037235be1de0f379334846931f83ed0e343874"
+        }
+      }
     },
     {
       "id": "branch:metric-unit-selection",
@@ -9289,15 +9307,15 @@
       "title": "Match Linux KCOV buffer-size validation",
       "url": "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525",
       "group": "runtime",
-      "status": "Contributor review pending",
-      "summary": "Move page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. Independent source and result review is complete.",
-      "updatedAt": "2026-10-17T20:00:33.018220+00:00",
+      "status": "Approved; publication underway",
+      "summary": "Move page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. Independent source and result review is complete. The contributor approved the code, conditional on changing the Linux source citations to GitHub permalinks. The owner is completing those message-only corrections and opening the independent PRs.",
+      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor review pending",
+        "disposition": "Contributor approved; publishing",
         "sourceHead": "e1aa51f2562cd44cee1b860d6f1488ee491fb525",
-        "observedAt": "2026-10-17T20:00:33.018220+00:00",
-        "nextAction": "Await the pending contributor decision, then open the independent upstream PR.",
+        "observedAt": "2026-10-17T20:06:13.472289+00:00",
+        "nextAction": "Complete the approved citation-only amendment, open the upstream PR and verify its head and description. No new code review is pending.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525",
           "https://github.com/tamird/gvisor/actions/runs/39064221095",
@@ -9317,12 +9335,7 @@
           "label": "Linux reference and failing-before ABI cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/39064225594"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "e1aa51f2562cd44cee1b860d6f1488ee491fb525",
-        "url": "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525"
-      }
+      ]
     },
     {
       "id": "branch:kcov-page-size",
@@ -9333,15 +9346,15 @@
       "title": "Run KCOV tests on systems with 64 KiB pages",
       "url": "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290",
       "group": "tests",
-      "status": "Contributor review pending",
-      "summary": "Allocate at least one host page and release peer waits when a threaded assertion returns. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks. A cleanup-only control preserves the invalid buffer and returns the two expected assertions in 0.093 and 0.304 seconds instead of waiting for the 300-second deadline. Original failed runs remain recorded.",
-      "updatedAt": "2026-10-17T20:00:33.018220+00:00",
+      "status": "Approved; publication underway",
+      "summary": "Allocate at least one host page and release peer waits when a threaded assertion returns. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks. A cleanup-only control preserves the invalid buffer and returns the two expected assertions in 0.093 and 0.304 seconds instead of waiting for the 300-second deadline. Original failed runs remain recorded. The contributor approved the code, conditional on changing the Linux source citations to GitHub permalinks. The owner is completing those message-only corrections and opening the independent PRs.",
+      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor review pending",
+        "disposition": "Contributor approved; publishing",
         "sourceHead": "e828b6564b1cac68f8f4696bc47f037fec9d8290",
-        "observedAt": "2026-10-17T20:00:33.018220+00:00",
-        "nextAction": "Await the pending contributor decision, then open the independent upstream PR.",
+        "observedAt": "2026-10-17T20:06:13.472289+00:00",
+        "nextAction": "Complete the approved citation-only amendment, open the upstream PR and verify its head and description. No new code review is pending.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290",
           "https://github.com/tamird/gvisor/actions/runs/39064221095",
@@ -9366,12 +9379,60 @@
           "label": "Cleanup-only expected-failure control",
           "url": "https://github.com/tamird/gvisor/actions/runs/39062637291"
         }
+      ]
+    },
+    {
+      "id": "pr:15931",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "hostinet-port-range",
+      "head": "b0037235be1de0f379334846931f83ed0e343874",
+      "title": "Report the host's ephemeral port range in hostinet",
+      "url": "https://github.com/google/gvisor/pull/15931",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-17T20:06:13.472289+00:00",
+      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. The existing exhaustion tests use a private namespace with a narrow range so they execute instead of skipping. The standalone extraction preserves the qualified production and fixture changes; both independent source reviews passed. The contributor approved the change with a comment-only Linux source citation correction. That correction passed independent review and is delivered as #15931. The 20:04 GitHub snapshot found a two-line clang-format mismatch in setup_container.cc; the owner has the exact public CI diff and is preparing a formatting-only correction.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Published; addressing public lint",
+        "sourceHead": "b0037235be1de0f379334846931f83ed0e343874",
+        "observedAt": "2026-10-17T20:06:13.472289+00:00",
+        "nextAction": "Apply the exact two-line clang-format correction from public CI, publish the amendment and verify the rerun. Preserve the approved behavior and existing runtime evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae",
+          "https://github.com/tamird/gvisor/actions/runs/39053728306",
+          "https://github.com/google/gvisor/pull/15931",
+          "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Standalone change for contributor review",
+          "url": "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae"
+        },
+        {
+          "label": "Qualified integration runtime: applicable TCP and UDP exhaustion cases pass",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39053728306"
+        },
+        {
+          "label": "Upstream PR",
+          "url": "https://github.com/google/gvisor/pull/15931"
+        },
+        {
+          "label": "Public clang-format failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
+        }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "e828b6564b1cac68f8f4696bc47f037fec9d8290",
-        "url": "https://github.com/tamird/gvisor/commit/e828b6564b1cac68f8f4696bc47f037fec9d8290"
-      }
+      "refinement": {
+        "before": {
+          "head": "688cb1e12cc6825a7c40263ccc5dece9d5911aae"
+        },
+        "after": {
+          "head": "b0037235be1de0f379334846931f83ed0e343874"
+        }
+      },
+      "number": 15931
     }
   ],
   "edges": [
