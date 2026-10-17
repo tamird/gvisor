@@ -118,21 +118,16 @@ func main() {
 	}
 
 	// Parse the IP address. Support both ipv4 and ipv6.
-	parsedAddr := net.ParseIP(addrName)
-	if parsedAddr == nil {
+	parsedAddr, err := netip.ParseAddr(addrName)
+	if err != nil || parsedAddr.Zone() != "" {
 		log.Fatalf("Bad IP address: %v", addrName)
 	}
+	parsedAddr = parsedAddr.Unmap()
 
-	var addrWithPrefix netip.Prefix
-	var proto tcpip.NetworkProtocolNumber
-	if parsedAddr.To4() != nil {
-		addrWithPrefix = tcpip.FullPrefix(netip.AddrFrom4([4]byte(parsedAddr.To4())))
+	addrWithPrefix := tcpip.FullPrefix(parsedAddr)
+	proto := ipv6.ProtocolNumber
+	if parsedAddr.Is4() {
 		proto = ipv4.ProtocolNumber
-	} else if parsedAddr.To16() != nil {
-		addrWithPrefix = tcpip.FullPrefix(netip.AddrFrom16([16]byte(parsedAddr.To16())))
-		proto = ipv6.ProtocolNumber
-	} else {
-		log.Fatalf("Unknown IP type: %v", addrName)
 	}
 
 	localPort, err := strconv.Atoi(portName)
