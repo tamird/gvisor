@@ -608,14 +608,20 @@ save_profile_selection() {
   python3 - "$selection_dir" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY'
 import json
 from pathlib import Path
+import shutil
 import sys
 
-keys = {"id", "children", "configured", "finished", "aborted"}
+for source in Path(sys.argv[1]).glob("*.query"):
+    shutil.copyfile(source, Path(sys.argv[2]) / source.name)
+keys = {"id", "children", "started", "configured", "finished", "aborted"}
 for source in Path(sys.argv[1]).glob("*.json"):
     if source.name == "profile.json" or source.name.endswith(("-profile.json", "-routing.json")):
         with (Path(sys.argv[2]) / source.name).open("w") as output:
             for line in source.read_text().splitlines():
                 event = json.loads(line)
+                if "started" in event:
+                    event["started"] = {key: value for key, value in event["started"].items()
+                                        if key in ("uuid", "startTime", "startTimeMillis", "command")}
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
 }
