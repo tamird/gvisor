@@ -73,15 +73,18 @@ def sidecars(flavor):
 SIDECARS = sidecars("default")
 
 # RELEASE_RUNSC and RELEASE_SIDECARS are the runsc binary and the sidecars of
-# the flavor matching the build configuration: race under --config=race,
-# default otherwise.
+# the flavor matching the build's race and runtime coverage settings.
 RELEASE_RUNSC = select({
+    "//tools:gotsan_runtime_coverage": RUNSC["race-coverage"],
     "//tools:gotsan": RUNSC["race"],
+    "//tools:runtime_coverage_enabled": RUNSC["coverage"],
     "//conditions:default": RUNSC["default"],
 })
 
 RELEASE_SIDECARS = select({
+    "//tools:gotsan_runtime_coverage": sidecars("race-coverage"),
     "//tools:gotsan": sidecars("race"),
+    "//tools:runtime_coverage_enabled": sidecars("coverage"),
     "//conditions:default": sidecars("default"),
 })
 

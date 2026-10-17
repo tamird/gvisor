@@ -1,5 +1,5 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values", "py_test")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "gotsan_flag_values", "gotsan_values", "py_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -29,6 +29,27 @@ config_setting(
     visibility = [
         "//:sandbox",
     ],
+)
+
+# KCOV tests need an instrumented gVisor kernel even outside bazel coverage.
+# Keep this setting on their runtime dependencies, leaving other tests alone.
+bool_flag(
+    name = "runtime_coverage",
+    build_setting_default = False,
+    visibility = ["//:sandbox"],
+)
+
+config_setting(
+    name = "runtime_coverage_enabled",
+    flag_values = {":runtime_coverage": "true"},
+    visibility = ["//:sandbox"],
+)
+
+config_setting(
+    name = "gotsan_runtime_coverage",
+    flag_values = gotsan_flag_values | {":runtime_coverage": "true"},
+    values = gotsan_values,
+    visibility = ["//:sandbox"],
 )
 
 bzl_library(

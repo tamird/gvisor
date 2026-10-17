@@ -110,7 +110,10 @@ go_cov(
     ],
     pure = True,
     race = "off",
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//:__pkg__",
+        "//debian:__pkg__",
+    ],
     deps = [
         "//runsc/cli/maincli",
         "//runsc/version",
@@ -128,7 +131,10 @@ go_cov(
     ],
     race = "on",
     static = True,
-    visibility = ["//debian:__pkg__"],
+    visibility = [
+        "//:__pkg__",
+        "//debian:__pkg__",
+    ],
     deps = [
         "//runsc/cli/maincli",
         "//runsc/version",

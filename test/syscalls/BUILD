@@ -380,6 +380,8 @@ syscall_test(
 )
 
 syscall_test(
+    # gVisor exposes KCOV only when its kernel is built with Go coverage.
+    kcov = True,
     # Packaged Ubuntu RC kernels do not enable native KCOV instrumentation.
     native_rc_images = {
         "amd64": "//test/rbe/tcg:amd64_kcov_guest",

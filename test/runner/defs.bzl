@@ -17,13 +17,22 @@ _platform_support_env_vars = {
 
 # Keep the public syscall compiler policy on this graph, rather than imposing
 # it on unit and release targets in the same invocation.
+def _runner_test_variant(runtime_coverage = False):
+    configured = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"])
+    if runtime_coverage:
+        configured = configured.set(Label("//tools:runtime_coverage"), True)
+    return configured.build()
+
 # with_cfg requires the returned transition rule to be exported at module scope.
 # buildifier: disable=unused-variable
-_runner_test, _runner_compilation_transition = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"]).build()
+_runner_test, _runner_compilation_transition = _runner_test_variant()
+# buildifier: disable=unused-variable
+_coverage_runner_test, _runner_coverage_transition = _runner_test_variant(runtime_coverage = True)
 
-def _compile_runner_test(compile_exec_compatible_with, **kwargs):
+def _compile_runner_test(compile_exec_compatible_with, runtime_coverage = False, **kwargs):
     kwargs["exec_compatible_with"] = compile_exec_compatible_with
-    _runner_test(**kwargs)
+    test_rule = _coverage_runner_test if runtime_coverage else _runner_test
+    test_rule(**kwargs)
 
 runner_amd64_test, _runner_amd64_transition = with_test_architecture(_compile_runner_test, "amd64", extra_providers = [testing.ExecutionInfo]).build()
 runner_arm64_test, _runner_arm64_transition = with_test_architecture(_compile_runner_test, "arm64", extra_providers = [testing.ExecutionInfo]).build()
@@ -62,7 +71,9 @@ def _syscall_test(
         native_kernel_requirements = [],
         hostnet_kernel_requirements = [],
         native_rc_images = {},
+        kcov = False,
         **kwargs):
+    runtime_coverage = kcov and platform != "native"
     if external_network:
         container = True
         if platform != "native" and network == "none":
@@ -171,6 +182,10 @@ def _syscall_test(
     if external_network:
         runner_args.append("--external-network")
 
+    if runtime_coverage:
+        # Reporting consumes the counters that the KCOV syscall tests need.
+        runner_args.append("--coverage-report=false")
+
     if in_sandbox_cgroup:
         runner_args.append("--in-sandbox-cgroup=" + in_sandbox_cgroup)
 
@@ -203,12 +218,13 @@ def _syscall_test(
         runner_args = runner_args,
         tags = test_architecture_tags(["amd64", "arm64"], tags),
     )
-    _runner_test(name = name, **attributes)
+    test_rule = _coverage_runner_test if runtime_coverage else _runner_test
+    test_rule(name = name, **attributes)
     test_architecture_variants(
         name,
         ["amd64", "arm64"],
         {"amd64": runner_amd64_test, "arm64": runner_arm64_test},
-        dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
+        dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", []), runtime_coverage = runtime_coverage),
     )
 
     # Emulation may need more wall time than the native payload. Keep that
@@ -227,7 +243,7 @@ def _syscall_test(
             name + "_64k",
             ["arm64"],
             {"arm64": runner_arm64_64k_test},
-            dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
+            dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", []), runtime_coverage = runtime_coverage),
         )
         arm64_tcg_test(
             name = name + "_64k_tcg",
@@ -335,6 +351,8 @@ def syscall_test_variants(
         corresponding variants; the caller's worker policy chooses their placement.
         native_rc_images maps architectures to guest images for native RC tests
         requiring features absent from the default packaged kernels.
+        kcov selects an instrumented gVisor runtime and leaves coverage counters
+        available to the test instead of collecting a runtime coverage report.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -537,6 +555,8 @@ def syscall_test(
         corresponding variants; the caller's worker policy chooses their placement.
         native_rc_images maps architectures to guest images for native RC tests
         requiring features absent from the default packaged kernels.
+        kcov selects an instrumented gVisor runtime and leaves coverage counters
+        available to the test instead of collecting a runtime coverage report.
     """
     if not tags:
         tags = []
