@@ -144,6 +144,27 @@ PosixError SetupExternalNetwork() {
                                      {{RTA_DST, &address, sizeof(address)},
                                       {RTA_OIF, &index, sizeof(index)}}));
   }
+
+  // The IPv6 tests join multicast groups on loopback, including when the
+  // sender selects that interface explicitly. Prefer it over eth0's automatic
+  // multicast route so address-bound senders use the same interface.
+  const unsigned int loopback = if_nametoindex("lo");
+  if (loopback == 0) {
+    return PosixError(errno, "find fixture loopback index");
+  }
+  in6_addr multicast = {};
+  multicast.s6_addr[0] = 0xff;
+  const uint32_t metric = 1;
+  rtmsg route = {};
+  route.rtm_family = AF_INET6;
+  route.rtm_dst_len = 8;
+  route.rtm_table = RT_TABLE_MAIN;
+  route.rtm_protocol = RTPROT_BOOT;
+  route.rtm_type = RTN_UNICAST;
+  RETURN_IF_ERRNO(ConfigureNetwork(fd, RTM_NEWROUTE, &route, sizeof(route),
+                                   {{RTA_DST, &multicast, sizeof(multicast)},
+                                    {RTA_OIF, &loopback, sizeof(loopback)},
+                                    {RTA_PRIORITY, &metric, sizeof(metric)}}));
   return NoError();
 }
 
