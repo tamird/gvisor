@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-17T05:02:58.604115+00:00",
-  "registryDate": "2026-10-17T05:29:14.541892+00:00",
+  "registryDate": "2026-10-17T05:42:23.282810+00:00",
   "prs": [
     {
       "number": 12470,
@@ -65584,7 +65584,7 @@
       "headIntroducedAt": "2026-10-17T04:47:52Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
-      "updatedAt": "2026-10-17T04:48:35Z",
+      "updatedAt": "2026-10-17T05:36:09Z",
       "createdAt": "2026-10-08T06:56:47Z",
       "mergedAt": null,
       "closedAt": null,
@@ -65598,7 +65598,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-17T05:02:36.361920+00:00",
+      "mergeabilityCheckedAt": "2026-10-17T05:41:14.416631+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -65679,12 +65679,28 @@
             "commit": {
               "oid": "82c9f8fc129fcc2fb62a61906be3ead239eda8e0"
             }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABSzDieQ",
+            "url": "https://github.com/google/gvisor/pull/15498#pullrequestreview-5556462201",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-17T05:35:55Z",
+            "updatedAt": "2026-10-17T05:35:56Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "e9b0e1eb831c5e43e1a9c2b4a6376c95f66380d4"
+            }
           }
         ]
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 12,
+        "total": 13,
         "complete": true,
         "contexts": [
           {
@@ -65818,20 +65834,28 @@
             "appSlug": "google-cla",
             "workflow": null,
             "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAANLJXv6g",
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
           }
         ]
       },
-      "reviewDecision": "REVIEW_REQUIRED",
-      "approvedHead": null,
-      "approvedAt": null,
-      "checkedAt": "2026-10-17T05:02:58.604115+00:00",
+      "reviewDecision": "APPROVED",
+      "approvedHead": "e9b0e1eb831c5e43e1a9c2b4a6376c95f66380d4",
+      "approvedAt": "2026-10-17T05:35:55Z",
+      "checkedAt": "2026-10-17T05:41:14.417216+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e9b0e1eb831c5e43e1a9c2b4a6376c95f66380d4",
         "base": "383c1da19bb5ba6b4eeaf9d5824046714b8f4447",
-        "checkedAt": "2026-10-17T05:02:36.361920+00:00"
+        "checkedAt": "2026-10-17T05:41:14.416631+00:00"
       },
-      "importsComplete": true,
       "imports": [
         {
           "number": 15718,
@@ -66081,7 +66105,8 @@
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15718"
         }
-      ]
+      ],
+      "importsComplete": true
     },
     {
       "number": 15499,
@@ -95550,12 +95575,12 @@
       }
     },
     "pr:15498": {
-      "maintainer-review": {
+      "awaiting-import": {
         "scope": "e9b0e1eb831c5e43e1a9c2b4a6376c95f66380d4",
-        "since": "2026-10-17T04:49:58.146273+00:00",
+        "since": "2026-10-17T05:41:14.417216+00:00",
         "basis": "observed",
-        "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-17T05:02:58.604115+00:00"
+        "qualifier": "Validation checks passed",
+        "observedAt": "2026-10-17T05:41:14.417216+00:00"
       }
     },
     "pr:15499": {
@@ -96209,7 +96234,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -96218,7 +96243,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -96227,7 +96252,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:review/tcp-nagle-cleanup": {
@@ -96236,7 +96261,7 @@
         "since": "2026-10-17T01:14:01.645631+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:review/go-import-groups-zip": {
@@ -96245,7 +96270,7 @@
         "since": "2026-10-16T21:54:43.798809+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:diagnostics/state-integrated-array-proposal": {
@@ -96254,7 +96279,7 @@
         "since": "2026-10-17T02:45:40.196371+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:fix/nodejs-tls-server-name": {
@@ -96263,7 +96288,7 @@
         "since": "2026-10-17T04:51:18.334993+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     },
     "branch:plugin-network-test-package": {
@@ -96272,7 +96297,25 @@
         "since": "2026-10-17T04:51:18.334993+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-17T04:51:18.334993+00:00"
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
+      }
+    },
+    "branch:kcov-portable-records": {
+      "contributor-review": {
+        "scope": "8ba4c3b89c2f15e22f610d03f0ea295409a47a8a",
+        "since": "2026-10-17T05:42:23.282810+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
+      }
+    },
+    "branch:trace-metadata-stdout": {
+      "contributor-review": {
+        "scope": "60399ad7b133ebe0c972fa54f430c889b36a88c2",
+        "since": "2026-10-17T05:42:23.282810+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-17T05:42:23.282810+00:00"
       }
     }
   },
