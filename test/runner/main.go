@@ -894,6 +894,13 @@ func isWarning(line string) bool {
 
 	// Caused by properties of the host that runsc doesn't necessarily control.
 	case strings.Contains(line, "Host limit is lower than recommended"):
+	// SO_RCVBUFFORCE/SO_SNDBUFFORCE require CAP_NET_ADMIN in the initial
+	// user namespace. The isolated network fixture uses the ordinary buffer
+	// fallback; its functional tests do not require high-throughput buffers.
+	case *externalNetwork && line[0] == 'W' &&
+		(strings.Contains(line, "Failed to increase rcv buffer to ") || strings.Contains(line, "Failed to increase snd buffer to ")) &&
+		strings.Contains(line, " on SOCK_RAW on eth0. Current buffer ") &&
+		strings.HasSuffix(line, ": operation not permitted"):
 
 	// TODO(gvisor.dev/issue/11649): Systrap needs to roll back created
 	// patches for traced procs.

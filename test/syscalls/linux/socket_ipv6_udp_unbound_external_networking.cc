@@ -217,6 +217,11 @@ TEST_P(IPv6UDPUnboundExternalNetworkingSocketTest, TestIPv6MulticastIf) {
   auto sock = ASSERT_NO_ERRNO_AND_VALUE(NewSocket());
 
   // Bind sock to the ethernet interface.
+  char ifname[IF_NAMESIZE];
+  ASSERT_NE(if_indextoname(eth_if_idx(), ifname), nullptr);
+  ASSERT_THAT(setsockopt(sock->get(), SOL_SOCKET, SO_BINDTODEVICE, ifname,
+                         strlen(ifname) + 1),
+              SyscallSucceeds());
   struct sockaddr_in6 bind_addr = eth_if_addr();
   ASSERT_THAT(bind(sock->get(), AsSockAddr(&bind_addr), sizeof(bind_addr)),
               SyscallSucceeds());
