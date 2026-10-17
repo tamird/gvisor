@@ -1374,6 +1374,26 @@
     - GPL-2.0-or-later
     - LGPL-2.1
     - LGPL-2.1-or-later
+- dependency: apt/kvm_amd64_guest/amd64/libaudit-common
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit-common_3.0.7-1ubuntu0.1_all.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 3e4e8586db5f57f431954a9125556fe6df86610592c0cf46ba1127fae8871e3f
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
+- dependency: apt/kvm_amd64_guest/amd64/libaudit1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit1_3.0.7-1ubuntu0.1_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 00d7eb086dedc85bd5b9cbde650a1c71460499cb62e439acb761bc7bcb4eaaac
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
 - dependency: apt/kvm_amd64_guest/amd64/libblkid1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libblkid1_2.37.2-4ubuntu3.6_amd64.deb
   retrieved: "2026-10-08"
@@ -1455,6 +1475,17 @@
     - LGPL-2.1
     - LGPL-2.1-or-later
     - Spencer-94
+- dependency: apt/kvm_amd64_guest/amd64/libcap-ng0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap-ng/libcap-ng0_0.7.9-2.2build3_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 124d0c8748a841f279e996298ef8aac69a249e294792f4b5e16dc00496f1d3ac
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
 - dependency: apt/kvm_amd64_guest/amd64/libcap2
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap2/libcap2_2.44-1ubuntu0.22.04.3_amd64.deb
   retrieved: "2026-10-08"
@@ -1660,6 +1691,14 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: apt/kvm_amd64_guest/amd64/libpam0g
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pam/libpam0g_1.4.0-11ubuntu2.8_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: faaf4b6d1bfb33a7fc4e195448439c202869d67c8de17c4ecd29b7719e0ac4d6
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
 - dependency: apt/kvm_amd64_guest/amd64/libpcre2-8-0
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_amd64.deb
   retrieved: "2026-10-08"
@@ -1742,6 +1781,38 @@
   sha256: 3b8dff43a31168f5020928f2ab9a97324c5b47ae708311781f6bd01306c96214
   license:
     - BSD-3-Clause
+    - MIT
+- dependency: apt/kvm_amd64_guest/amd64/libudev1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libudev1_249.11-0ubuntu3.22_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 48e47354d8d421b59bc2aac1437bc6b22ba04526963e4a73f9313b0dd518556b
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
+- dependency: apt/kvm_amd64_guest/amd64/libuuid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 97eaa1090c2e7ddaad55d58f9d0d7907d64b70f89228405d68a7ce7d56a89d67
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
     - MIT
 - dependency: apt/kvm_amd64_guest/amd64/libxtables12
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libxtables12_1.8.7-1ubuntu5.2_amd64.deb
@@ -1857,6 +1928,25 @@
     - GPL-2.0-or-later
     - GPL-3.0
     - GPL-3.0-or-later
+- dependency: apt/kvm_amd64_guest/amd64/util-linux
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/util-linux_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 9c852ffb8b350157ad938be483c7157627bfd553e93937910ac47280068ff165
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/kvm_amd64_guest/amd64/zlib1g
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/z/zlib/zlib1g_1.2.11.dfsg-2ubuntu9.2_amd64.deb
   retrieved: "2026-10-08"
@@ -6859,6 +6949,26 @@
     - GPL-2.0-or-later
     - LGPL-2.1
     - LGPL-2.1-or-later
+- dependency: apt/tcg_arm64_guest/arm64/libaudit-common
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit-common_3.0.7-1ubuntu0.1_all.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 3e4e8586db5f57f431954a9125556fe6df86610592c0cf46ba1127fae8871e3f
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
+- dependency: apt/tcg_arm64_guest/arm64/libaudit1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit1_3.0.7-1ubuntu0.1_arm64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 963474b42258e8caa15eec1db61d8424fd6b7ef717ca4e371b3240506854b3fe
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
 - dependency: apt/tcg_arm64_guest/arm64/libblkid1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libblkid1_2.37.2-4ubuntu3.6_arm64.deb
   retrieved: "2026-10-08"
@@ -6940,6 +7050,17 @@
     - LGPL-2.1
     - LGPL-2.1-or-later
     - Spencer-94
+- dependency: apt/tcg_arm64_guest/arm64/libcap-ng0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap-ng/libcap-ng0_0.7.9-2.2build3_arm64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 884c8bc87da241abaa2b0ca80162486cf66eff67dfc545bea56622e1170e9ee5
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
 - dependency: apt/tcg_arm64_guest/arm64/libcap2
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap2/libcap2_2.44-1ubuntu0.22.04.3_arm64.deb
   retrieved: "2026-10-08"
@@ -7145,6 +7266,14 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: apt/tcg_arm64_guest/arm64/libpam0g
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pam/libpam0g_1.4.0-11ubuntu2.8_arm64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: f61ae0342dfba2b6c6b61f3d46925371434a4719a251f7585f9baa1341fcc9e2
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
 - dependency: apt/tcg_arm64_guest/arm64/libpcre2-8-0
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_arm64.deb
   retrieved: "2026-10-08"
@@ -7227,6 +7356,38 @@
   sha256: 971b5fd1cf8f7d68ba00f40d8eec6474fae6a6adbe19883aa42dd2b74c672e4a
   license:
     - BSD-3-Clause
+    - MIT
+- dependency: apt/tcg_arm64_guest/arm64/libudev1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libudev1_249.11-0ubuntu3.22_arm64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: ec814eee0c7a398e031ece85d07c0108c16f609fb033d7b77700e9106ce86130
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
+- dependency: apt/tcg_arm64_guest/arm64/libuuid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 2478ccd8df956d8e5cf087bff1471bcd9991838be9c7999e5737d092034c492d
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
     - MIT
 - dependency: apt/tcg_arm64_guest/arm64/libxtables12
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libxtables12_1.8.7-1ubuntu5.2_arm64.deb
@@ -7366,6 +7527,25 @@
     - GPL-2.0-or-later
     - GPL-3.0
     - GPL-3.0-or-later
+- dependency: apt/tcg_arm64_guest/arm64/util-linux
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/util-linux_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 7802e3573582011b2a2b232f305190b6e29cc27055eff6076183083290caa509
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/tcg_arm64_guest/arm64/zlib1g
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/z/zlib/zlib1g_1.2.11.dfsg-2ubuntu9.2_arm64.deb
   retrieved: "2026-10-08"
