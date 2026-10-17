@@ -163,6 +163,8 @@ def _tcg_test_impl(ctx):
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     if ctx.attr.arm64_el2 and architecture != "arm64":
         fail("EL2 exposure requires an ARM64 guest")
+    if ctx.attr.amd64_smt and architecture != "amd64":
+        fail("SMT topology requires an AMD64 guest")
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     configuration = ctx.actions.declare_file(ctx.label.name + ".guest.sh")
     if ctx.attr.memory_mib <= 0 or ctx.attr.scratch_gib <= 0:
@@ -176,12 +178,13 @@ def _tcg_test_impl(ctx):
     environment.update(ctx.attr.guest_env)
     ctx.actions.write(
         configuration,
-        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\nguest_arm64_el2=%s\n" % (
+        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\nguest_arm64_el2=%s\nguest_smp=%s\n" % (
             ctx.attr.memory_mib,
             ctx.attr.scratch_gib,
             shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
             shell.quote(ctx.file.emulator.short_path if ctx.file.emulator != None else ""),
             "true" if ctx.attr.arm64_el2 else "false",
+            shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.amd64_smt else "2"),
         ) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
             " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
@@ -225,6 +228,7 @@ _tcg_test = rule(
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "arm64_el2": attr.bool(default = False),
+        "amd64_smt": attr.bool(default = False),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),
@@ -245,6 +249,7 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
         allow_duplicates_with_different_content = False,
         tags = ["manual"],
     )
+
     # Image construction remains remote even when the guest test needs KVM on
     # the local worker. Test execution tags must not constrain build actions.
     _payload_image(

@@ -38,7 +38,7 @@ machine="$7"
 test_setup="$(realpath "$8")"
 shift 8
 # The owning rule writes this declared configuration beside the launcher.
-declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2
+declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2 guest_smp
 declare -a guest_env guest_inherited_env
 # shellcheck disable=SC1090
 source "${GVISOR_TEST_GUEST_CONFIG:?}"
@@ -128,6 +128,15 @@ host_phase scratch_ready
     # establish KVM ioctl support; their own skips remain incomplete.
     printf '%s\n' '[[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]] || { echo "ARM64 guest KVM device unavailable" >&2; exit 1; }'
   fi
+  if [[ "$guest_smp" == "2,sockets=1,cores=1,threads=2" ]]; then
+    # Keep the guest's actual capability and topology in passing test.log too.
+    printf '%s\n' \
+      'grep -Fx CONFIG_SCHED_CORE=y /etc/gvisor-test-kernel.config' \
+      'for cpu in 0 1; do' \
+      '  printf "Guest CPU %s thread siblings: " "$cpu"' \
+      '  cat "/sys/devices/system/cpu/cpu${cpu}/topology/thread_siblings_list"' \
+      'done'
+  fi
   printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
   printf 'exec /bin/bash /input/test-setup.sh'
   if [[ -n $guest_run_under ]]; then
@@ -206,7 +215,7 @@ TMPDIR="$scratch" QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
-  -smp 2 -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \
+  -smp "$guest_smp" -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" \
   -append "console=$console root=/dev/vdb rootfstype=ext4 rw rootwait init=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \
