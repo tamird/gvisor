@@ -915,6 +915,9 @@ TEST_P(TcpSocketTest, TcpSCMPriority) {
       setsockopt(accepted_.get(), SOL_SOCKET, SO_TIMESTAMP, &val, sizeof(val)),
       SyscallSucceedsWithValue(0));
 
+  // Diagnostic only: allow Linux's deferred netstamp_work to run.
+  absl::SleepFor(absl::Milliseconds(100));
+
   char buf[1024];
   ASSERT_THAT(RetryEINTR(write)(connected_.get(), buf, sizeof(buf)),
               SyscallSucceedsWithValue(sizeof(buf)));
