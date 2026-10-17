@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T18:45:51.320256+00:00",
+    "updatedAt": "2026-10-17T19:26:01.095672+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -16901,6 +16901,40 @@
         {
           "label": "Exact validated proposal awaiting contributor decision",
           "url": "https://github.com/tamird/gvisor/commit/ce9a1c3bdfa1b341bdf7eede059f24e32e6963c9"
+        }
+      ]
+    },
+    {
+      "id": "investigation:buildkite-excluded-unit-tests",
+      "title": "Restore excluded Buildkite unit tests (#10045)",
+      "status": "active",
+      "owner": "Codex \u2014 qualification backlog",
+      "updatedAt": "2026-10-17T19:26:01.095672+00:00",
+      "summary": "Queued investigation of four unit targets still excluded from the public Make unit-test selection: //pkg/metric:metric_test, //pkg/coretag:coretag_test, //tools/tracereplay:tracereplay_test and //test/trace:trace_test. The original issue also reported //runsc/config:config_test, which is no longer excluded on current master. The goal is to fix the remaining failures and restore these targets to routine CI.",
+      "findings": [
+        {
+          "text": "At upstream master 9e9495997, Makefile retains the issue #10045 TODO and four explicit target exclusions. This confirms the remaining coverage gap; it does not establish that all of the original failures still reproduce.",
+          "evidence": [
+            {
+              "label": "Current unit-test selection",
+              "url": "https://github.com/google/gvisor/blob/9e9495997/Makefile#L259-L261"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Reconcile existing qualification evidence and merged fixes for each target. Reproduce unresolved failures on appropriate Linux AMD64 and ARM64 workers, correct their causes, then remove the exclusions with direct execution evidence. Start with the current tests; do not assume the 2024 failure modes are unchanged.",
+      "evidence": [
+        {
+          "label": "Issue #10045 and reported failures",
+          "url": "https://github.com/google/gvisor/issues/10045"
+        },
+        {
+          "label": "Maintainer inventory of excluded tests",
+          "url": "https://github.com/google/gvisor/issues/10045#issuecomment-3727116935"
+        },
+        {
+          "label": "Current unit-test selection",
+          "url": "https://github.com/google/gvisor/blob/9e9495997/Makefile#L259-L261"
         }
       ]
     }
