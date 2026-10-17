@@ -19,6 +19,13 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 # CONFIG_DEVTMPFS_MOUNT mounts /dev before this direct-root init runs.
 exec </dev/console >/dev/console 2>&1
 mount -t proc proc /proc
+guest_phase() {
+  local uptime idle
+  # Diagnostics must not replace a setup failure or the payload's exit status.
+  read -r uptime idle < /proc/uptime || return 0
+  printf 'guest_uptime_seconds=%s phase=%s\n' "$uptime" "$1" || true
+}
+guest_phase init_start
 mount -t sysfs sysfs /sys
 mkdir -p /dev/pts /dev/shm /sys/fs/cgroup
 mount -t devpts devpts /dev/pts
@@ -33,6 +40,7 @@ finish() {
   local status=$?
   trap - EXIT
   set +e
+  guest_phase output_copy_start
   # When QEMU runs unprivileged, guest root must not replace the export owner.
   if [[ -d /work/outputs ]]; then cp -a --no-preserve=ownership /work/outputs /result/ || status=125; fi
   if [[ -d /work/harness ]]; then cp -a --no-preserve=ownership /work/harness /result/ || status=125; fi
@@ -40,6 +48,7 @@ finish() {
   if [[ -f /work/shard_status ]]; then cp /work/shard_status /result/shard_status || status=125; fi
   printf '%s\n' "$status" > /result/exit_status
   sync
+  guest_phase poweroff_start
   /bin/busybox poweroff -f
 }
 trap finish EXIT
@@ -103,7 +112,9 @@ modprobe xt_conntrack
 cat /proc/self/limits > /result/limits-before.txt
 ulimit -n 65536
 cat /proc/self/limits > /result/limits.txt
+guest_phase payload_extract_start
 /bin/busybox tar -xf /input/payload.tar -C /work/payload
+guest_phase payload_extract_return
 # Native setgid tests need two usable supplementary groups. PID 1 inherits
 # none, unlike a normal login session; keep root credentials and add the pair.
 setpriv --groups=0,1 /bin/bash /input/launch.sh
