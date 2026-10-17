@@ -56,13 +56,9 @@ func toTcpipRoute(r *sentryapi.Route, id tcpip.NICID) (tcpip.Route, error) {
 	if !r.Destination.IsValid() || r.Destination != r.Destination.Masked() {
 		return tcpip.Route{}, fmt.Errorf("invalid route destination: %v", r.Destination)
 	}
-	subnet := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice(r.Destination.Addr().AsSlice()),
-		PrefixLen: r.Destination.Bits(),
-	}.Subnet()
 	return tcpip.Route{
-		Destination: subnet,
-		Gateway:     tcpip.AddrFromSlice(r.Gateway.AsSlice()),
+		Destination: r.Destination,
+		Gateway:     r.Gateway.WithZone(""),
 		NIC:         id,
 		MTU:         r.MTU,
 	}, nil
@@ -427,11 +423,8 @@ func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts
 	for _, addr := range addrs {
 		proto, tcpipAddr := ipToAddressAndProto(addr.Addr())
 		protocolAddr := tcpip.ProtocolAddress{
-			Protocol: proto,
-			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpipAddr,
-				PrefixLen: addr.Bits(),
-			},
+			Protocol:          proto,
+			AddressWithPrefix: netip.PrefixFrom(tcpipAddr, addr.Bits()),
 		}
 		if err := n.Stack.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
 			return fmt.Errorf("AddProtocolAddress(%d, %+v, {}) failed: %s", id, protocolAddr, err)
@@ -440,10 +433,11 @@ func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts
 	return nil
 }
 
-// ipToAddressAndProto converts IP to tcpip.Address and a protocol number.
-func ipToAddressAndProto(ip netip.Addr) (tcpip.NetworkProtocolNumber, tcpip.Address) {
+// ipToAddressAndProto returns IP and its protocol number.
+func ipToAddressAndProto(ip netip.Addr) (tcpip.NetworkProtocolNumber, netip.Addr) {
+	ip = ip.WithZone("")
 	if ip.Is4() {
-		return ipv4.ProtocolNumber, tcpip.AddrFrom4(ip.As4())
+		return ipv4.ProtocolNumber, ip
 	}
-	return ipv6.ProtocolNumber, tcpip.AddrFromSlice(ip.AsSlice())
+	return ipv6.ProtocolNumber, ip
 }
