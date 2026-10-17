@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-17T11:22:54.391522+00:00",
+    "updatedAt": "2026-10-17T11:34:30.300285+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2600,12 +2600,12 @@
       "url": "https://github.com/google/gvisor/pull/15499",
       "group": "runtime",
       "status": "open",
-      "summary": "Source #15499 remains at 728f546af with passing public source checks. Etienne requested changes on this exact head for the TestUIDMap failure. The matching import #15910 has advanced to de72f3161e, with public 51218 and internal 32918 pending. The preceding import 13a225a895 failed public 51213 while internal 32914 passed; that public failing step remains under owner-led diagnosis. The earlier import 46d765796 failed public Buildkite 51210; the exact public shard-two artifacts again show TestUIDMap/kvm and TestUIDMap/systrap failing with client-sync EOF and empty mounts JSON. The complete public inventory contains no corresponding UIDMap gofer log. The source feedback context retains the internal-failure report from the preceding import attempt. The earlier public 51191 failure at import ee30f6b876 remains unresolved: TestUIDMap/kvm and TestUIDMap/systrap receive an empty mounts JSON message before sandbox startup. The corrected-workdir reproduction now executes the named systrap child and fails with a gofer log proving /tmp fixture shadowing in that /tmp workspace. The original public workspace was under /home, so this does not establish the original failure cause. The earlier V3 lifecycle remains UNKNOWN. The separate five-line fixture correction ab0c540d9 now passes the focused V5 systrap child and parent, two XML entries, with native/capture/runner exits zero in the same numeric-user, pinned-image and /tmp-workspace environment as failing V4. The original source also passes the focused V7 systrap child and parent in /var/tmp on the larger scratch filesystem, with the same pinned image and numeric user. V6 failed before tests from workspace ENOSPC and retained its failure bundle. The contributor-approved independent fixture correction c2888e590 is now delivered as #15920. The original public /home cause remains unknown; no public reply or source-PR amendment is implied.\n\nEarlier observations:\n\nThe current approved head 73b3b7655 conflicts with upstream. Rebase and review of the conflict are agent work; the separate Copybara migration error still has no public diagnostic. Exact-head approval is retained as historical review evidence for any replacement head.\n\nEarlier observations:\n\nThe author already requested importer help. The ready-to-pull label is present, but Copybara reports a generic migration error with no log URL. Current-head approval remains separate from this failed import attempt.\n\nEarlier observations:\n\nContributor-approved PR #15499 is published at 73b3b7655 on master a926. The requested checkErr-to-err rename and source-preserving seven-path refresh are independently verified; the exact description, one-commit head and publication were read back. No contributor hold remains. Existing validation is retained with its original limitations.\n\nEarlier preparation and validation:\n\nContributor approved after renaming checkErr to err; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained. The user asked maintainers in comment6233198945 whether #15920 resolves the public failure and whether this PR can advance. The demonstrated independent fixture correction covers /tmp geometry; the original public /home cause remains unresolved. No agent reply or causal claim is implied.",
-      "updatedAt": "2026-10-17T11:22:54.391522+00:00",
+      "summary": "Source #15499 remains at 728f546af. The matching import #15910 at de72f3161e failed public Buildkite 51218 while its internal check passed. Authenticated shard-two logs show TestUIDMap/kvm and TestUIDMap/systrap failing in both cgroup modes with client-sync EOF and empty mounts JSON; the other seven shards were cached. The public hook uploads only *.boot.txt, so absent gofer artifacts do not establish a failure before logging. The producing gofer diagnostic is missing and the public /home cause remains unresolved. A separate reviewed proposal extends the existing failed-test upload loop to retain gofer logs alongside boot logs; its contributor decision is pending. Independent fixture fix #15920 is qualified for the demonstrated /tmp shadowing defect: failing V4 becomes passing V5 with the fix, and original source passes V7 in /var/tmp. Those results do not establish whether it resolves the public /home failures or exonerates #15499. The user's comment6233198945 asks maintainers whether the PR can advance; no agent reply or causal affirmation is implied.\n\nEarlier observations:\n\nThe current approved head 73b3b7655 conflicts with upstream. Rebase and review of the conflict are agent work; the separate Copybara migration error still has no public diagnostic. Exact-head approval is retained as historical review evidence for any replacement head.\n\nEarlier observations:\n\nThe author already requested importer help. The ready-to-pull label is present, but Copybara reports a generic migration error with no log URL. Current-head approval remains separate from this failed import attempt.\n\nEarlier observations:\n\nContributor-approved PR #15499 is published at 73b3b7655 on master a926. The requested checkErr-to-err rename and source-preserving seven-path refresh are independently verified; the exact description, one-commit head and publication were read back. No contributor hold remains. Existing validation is retained with its original limitations.\n\nEarlier preparation and validation:\n\nContributor approved after renaming checkErr to err; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained.",
+      "updatedAt": "2026-10-17T11:34:30.300285+00:00",
       "followup": {
-        "disposition": "User maintainer request observed; public cause unresolved",
-        "owner": "external_sweeps",
-        "nextAction": "Follow the maintainer response and current import evidence. Preserve the proven /tmp fixture correction separately from the unresolved public /home failure; no new agent reply or workload is authorized by this observation.",
+        "disposition": "Public failure unresolved; gofer capture proposal awaiting contributor decision",
+        "owner": "restore_integration_review",
+        "nextAction": "Preserve the current public failure and user maintainer request. If the independent capture proposal is approved and adopted, use the retained gofer diagnostic from a future authorized run to investigate the public /home failure; do not infer causality from the /tmp fix.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5be0d814fd650cf2cbc33238fb92ab2cf9555943",
           "https://github.com/google/gvisor/pull/15499",
@@ -2620,13 +2620,16 @@
           "https://app.buildbuddy.io/invocation/cc2089b1-e68e-411c-a99b-0c2b8a653af2",
           "https://buildkite.com/gvisor/pipeline/builds/51210",
           "https://app.buildbuddy.io/invocation/27d1158e-702d-4cc4-b190-7f158885a045",
-          "https://github.com/google/gvisor/pull/15499#issuecomment-6233198945"
+          "https://github.com/google/gvisor/pull/15499#issuecomment-6233198945",
+          "https://buildkite.com/gvisor/pipeline/builds/51218",
+          "https://github.com/google/gvisor/blob/de72f3161e17ca61e496466d8c0c602afacbff2e/.buildkite/hooks/post-command#L31",
+          "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a"
         ],
         "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
         "reviewedAt": "2026-10-17T11:22:54.391522+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-17T11:22:54.391522+00:00"
+        "observedAt": "2026-10-17T11:34:30.300285+00:00"
       },
       "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
       "number": 15499,
@@ -2713,31 +2716,42 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "benchmark-thread-safety-current",
-      "title": "Fix Benchmark annotations with Clang and libc++",
+      "title": "Update Benchmark to 1.10.0",
       "url": "https://github.com/google/gvisor/pull/15376",
       "group": "bazel",
       "status": "open",
-      "summary": "The upstream-release comment was captured by both the October 14 event sweep and full-snapshot feedback reconciliation, but its recorded next action stayed at observation. ROOT now owns the requested Benchmark release update and its canonical license/test validation. The public PR remains b27a28828 until that revision is published; assigning the work does not claim delivery.",
-      "head": "b27a288280d40013f1b54fa099b304b9d5662f2d",
-      "updatedAt": "2026-10-17T11:22:54.391522+00:00",
+      "summary": "The contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
+      "head": "639c23a1717ed3bb20826b0dfa5cc5a6823290df",
+      "updatedAt": "2026-10-17T11:34:30.300285+00:00",
       "followup": {
-        "disposition": "Released upstream fix: source revision assigned",
-        "owner": "root",
-        "nextAction": "Finish the Benchmark release update and canonical license/test validation, then deliver the reviewed revision. The current published head remains b27; this assignment is not completion.",
-        "sourceHead": "b27a288280d40013f1b54fa099b304b9d5662f2d",
-        "reviewedAt": "2026-10-17T11:22:54.391522+00:00",
+        "disposition": "Approved release update delivered; maintainer review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Keep the requested release update complete. Follow current-head checks, maintainer feedback and import lifecycle; retain the missed-comment diagnosis and active feedback retention correction.",
+        "sourceHead": "639c23a1717ed3bb20826b0dfa5cc5a6823290df",
+        "reviewedAt": "2026-10-17T11:34:30.300285+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15376",
           "https://github.com/google/gvisor/pull/15376#issuecomment-6180054286",
           "https://github.com/google/gvisor/pull/15376#issuecomment-6232214376",
-          "https://github.com/google/gvisor/pull/15376#issuecomment-6232659511"
+          "https://github.com/google/gvisor/pull/15376#issuecomment-6232659511",
+          "https://github.com/tamird/gvisor/commit/639c23a1717ed3bb20826b0dfa5cc5a6823290df",
+          "https://github.com/google/gvisor/pull/15376#issuecomment-6233369017",
+          "https://app.buildbuddy.io/invocation/8673afff-f5f0-4a7f-a371-cd869dcd1ab6"
         ],
-        "observedAt": "2026-10-17T11:22:54.391522+00:00"
+        "observedAt": "2026-10-17T11:34:30.300285+00:00"
       },
       "number": 15376,
-      "reviewDecision": null
+      "reviewDecision": null,
+      "refinement": {
+        "before": {
+          "head": "b27a288280d40013f1b54fa099b304b9d5662f2d"
+        },
+        "after": {
+          "head": "639c23a1717ed3bb20826b0dfa5cc5a6823290df"
+        }
+      }
     },
     {
       "id": "pr:15414",
@@ -8867,12 +8881,12 @@
       "group": "runtime",
       "status": "open",
       "summary": "The bounded timestamp-readiness correction is contributor-approved and delivered as PR #15921 at 6168ff8c3a. The two full native and gVisor KVM TCP owners pass 376 cases with four existing skips across eight fresh results; all four IPv4/IPv6 TcpSCMPriority cases pass. Formatting passes in the remaining-only continuation. Required timestamp, TCP_INQ and ordering assertions remain strict. Runtime and formatting results verified 33.060 and 13.051 seconds after execution without manual collection or reconciliation. The original failing cases and earlier fixed-delay diagnostic remain retained. The public cpplint failure was corrected using the existing monotonic-clock helper and direct timer_util dependency. Lint passed at c12b1d772. The subsequent rebase to 02e19cf28 on current upstream 207afc has an identical single-commit range-diff; no runtime workload was repeated. Current-head checks are reported by the snapshot.",
-      "updatedAt": "2026-10-17T11:22:54.391522+00:00",
+      "updatedAt": "2026-10-17T11:34:30.300285+00:00",
       "followup": {
         "owner": "external_sweeps",
-        "disposition": "Lint correction delivered; current-head review pending",
+        "disposition": "Current-head public checks complete; maintainer review pending",
         "sourceHead": "02e19cf28c7c83b6c32aed7845771b58c7297cc7",
-        "observedAt": "2026-10-17T11:22:54.391522+00:00",
+        "observedAt": "2026-10-17T11:34:30.300285+00:00",
         "nextAction": "Follow the current head checks, reviews and import lifecycle. Preserve prior validation under its exact source identities.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15921",
@@ -8903,6 +8917,36 @@
           "https://github.com/google/gvisor/pull/15926",
           "https://github.com/google/gvisor/pull/15635",
           "https://app.buildbuddy.io/invocation/f6fb4e81-b218-47b3-914f-2b4450d4c534"
+        ]
+      }
+    },
+    {
+      "id": "branch:buildkite-gofer-failure-logs",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "buildkite-gofer-failure-logs",
+      "head": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
+      "title": "Retain gofer logs from failed Buildkite tests",
+      "url": "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "summary": "This one-file proposal retains *.gofer.txt alongside *.boot.txt in the existing failed-test artifact upload loop. It preserves the failed-test selection, upload bounds and command status handling. Source reviews and shell syntax checks pass; no workload was run. Public 51218 excludes gofer logs under its current selector, so the additional artifact can supply the missing producer diagnostic on a future authorized run. The proposal does not claim a TestUIDMap runtime fix. A contributor review request is now pending for exact 3be9e8ee88a6d70730a111ee376af749cc875c5a.",
+      "updatedAt": "2026-10-17T11:34:30.300285+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
+        "url": "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Contributor review requested for independent capture change",
+        "sourceHead": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
+        "observedAt": "2026-10-17T11:34:30.300285+00:00",
+        "nextAction": "Await the existing contributor decision on exact 3be9e8ee88. Open the independent PR only after approval; this artifact-capture change does not establish or fix the public TestUIDMap cause.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3be9e8ee88a6d70730a111ee376af749cc875c5a",
+          "https://buildkite.com/gvisor/pipeline/builds/51218",
+          "https://github.com/google/gvisor/pull/15499"
         ]
       }
     }
