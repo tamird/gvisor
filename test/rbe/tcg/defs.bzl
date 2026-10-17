@@ -163,8 +163,6 @@ def _tcg_test_impl(ctx):
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     if ctx.attr.arm64_el2 and architecture != "arm64":
         fail("EL2 exposure requires an ARM64 guest")
-    if ctx.attr.amd64_smt and architecture != "amd64":
-        fail("SMT topology requires an AMD64 guest")
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     configuration = ctx.actions.declare_file(ctx.label.name + ".guest.sh")
     if ctx.attr.memory_mib <= 0 or ctx.attr.scratch_gib <= 0:
@@ -184,7 +182,7 @@ def _tcg_test_impl(ctx):
             shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
             shell.quote(ctx.file.emulator.short_path if ctx.file.emulator != None else ""),
             "true" if ctx.attr.arm64_el2 else "false",
-            shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.amd64_smt else "2"),
+            shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.smt else "2"),
         ) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
             " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
@@ -228,7 +226,7 @@ _tcg_test = rule(
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "arm64_el2": attr.bool(default = False),
-        "amd64_smt": attr.bool(default = False),
+        "smt": attr.bool(default = False),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),

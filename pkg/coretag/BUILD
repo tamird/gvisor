@@ -1,4 +1,4 @@
-load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "go_library", "go_test", "native_test")
 
 package(
@@ -37,9 +37,18 @@ go_test(
 amd64_kvm_test(
     name = "coretag_smt_kvm_guest",
     size = "small",
-    amd64_smt = True,
     image = "//test/rbe/tcg:amd64_rc_guest",
     payload = ":coretag_test_amd64",
+    smt = True,
+    tags = ["nogotsan"],
+)
+
+arm64_tcg_test(
+    name = "coretag_smt_arm64_tcg_test",
+    size = "small",
+    image = "//test/rbe/tcg:rc_guest",
+    payload = ":coretag_test_arm64",
+    smt = True,
     tags = ["nogotsan"],
 )
 
