@@ -15,3 +15,4 @@
 common --lockfile_mode=error
 build:buildbuddy_remote_executor --remote_download_outputs=minimal
 build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$
+test:rbe-hybrid-tests --runs_per_test=5
