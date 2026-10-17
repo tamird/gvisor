@@ -50,7 +50,9 @@ _HOST_TOOL_MEMBERS = [
     "usr/bin/truncate",
     "usr/lib/x86_64-linux-gnu",
     "usr/share/common-licenses",
-    "usr/share/doc",
+    # QEMU's documentation directory aliases fail local materialization of the
+    # remote output. Runtime tools need only the package copyright notices.
+    "usr/share/doc/*/copyright",
     "usr/share/qemu",
 ]
 
