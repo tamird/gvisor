@@ -32,6 +32,7 @@ py_test(
     ],
     data = [
         "actions.sh",
+        "license.bazelrc",
         "qualification.bazelrc",
         "qualify.sh",
     ] + glob(["testdata/qualification_report/**"]),

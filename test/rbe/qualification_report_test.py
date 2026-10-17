@@ -506,7 +506,14 @@ class QualificationReportTest(unittest.TestCase):
                 workspace = self.root / phase
                 scripts = workspace / "test/rbe"
                 scripts.mkdir(parents=True)
-                for name in ("actions.sh", "qualification.bazelrc", "qualify.sh", "qualification_report.py", "unit_matrix.py"):
+                for name in (
+                    "actions.sh",
+                    "license.bazelrc",
+                    "qualification.bazelrc",
+                    "qualify.sh",
+                    "qualification_report.py",
+                    "unit_matrix.py",
+                ):
                     shutil.copy2(Path(__file__).with_name(name), scripts / name)
                 (workspace / "MODULE.bazel.lock").write_text("fixture lock\n")
                 binary = workspace / "bin"

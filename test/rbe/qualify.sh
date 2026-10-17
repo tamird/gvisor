@@ -317,10 +317,8 @@ run_license_check() (
       ;;
     *) printf 'Unknown license mode: %s\n' "$mode" >&2; return 2 ;;
   esac
-  license_rc=$(mktemp)
-  trap 'rm -f "$license_rc"' EXIT
-  printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
-    'build --keep_going' > "$license_rc"
+  # BuildBuddy reuses startup options after the lane exits; keep this file.
+  license_rc=$PWD/test/rbe/license.bazelrc
   if [[ $mode == fetch ]]; then
     make run DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$license_rc" \
       TARGETS=//tools/licensecheck/main:licensecheck ARGS="$arguments"
