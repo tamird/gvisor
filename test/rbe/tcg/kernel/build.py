@@ -121,7 +121,7 @@ def main() -> None:
         # KCOV needs compiler instrumentation and a mounted debugfs. The other
         # options provide the existing guest's disks, 9p exports and setup.
         for option in (
-            "KCOV", "KCOV_INSTRUMENT_ALL", "KCOV_SELFTEST", "DEBUG_FS",
+            "KCOV", "KCOV_INSTRUMENT_ALL", "DEBUG_FS",
             "VIRTIO_PCI", "VIRTIO_BLK", "EXT4_FS", "DEVTMPFS", "DEVTMPFS_MOUNT",
             "NET_9P", "NET_9P_VIRTIO", "9P_FS", "KVM",
             "NETFILTER", "NETFILTER_XTABLES", "NF_CONNTRACK", "IP_NF_IPTABLES",
@@ -131,7 +131,11 @@ def main() -> None:
             "arm64": ("ARM64_4K_PAGES", "VIRTIO_MMIO", "SERIAL_AMBA_PL011", "SERIAL_AMBA_PL011_CONSOLE"),
         }[architecture]:
             configure += ["--enable", option]
-        configure += ["--disable", "LOCALVERSION_AUTO", "--set-str", "LOCALVERSION", "-gvisor-kcov"]
+        # Linux 7.3-rc3's boot selftest panics when IRQ-exit work leaks into
+        # task coverage. Keep KCOV instrumentation for the native syscall tests.
+        # https://lore.kernel.org/r/20261005185803.39170-1-kmehltretter@gmail.com
+        configure += ["--disable", "KCOV_SELFTEST", "--disable", "LOCALVERSION_AUTO",
+                      "--set-str", "LOCALVERSION", "-gvisor-kcov"]
         run(configure, "configure")
         run([*make, "olddefconfig"], "olddefconfig")
         settings = (build / ".config").read_text().splitlines()
