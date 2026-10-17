@@ -787,7 +787,6 @@ func fetchLicense(d dep, previous Entry) (*fetched, error) {
 
 // An explicit notice source must identify immutable upstream bytes, not a
 // mutable tag or the repository that happens to distribute the executable.
-var licenseSourceRE = regexp.MustCompile(`^https://raw\.githubusercontent\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/([0-9a-f]{40})/[A-Za-z0-9_-][A-Za-z0-9_.-]*$`)
 var artifactSHA256RE = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 func licenseSourceCommit(d dep, e Entry) (string, error) {
@@ -797,11 +796,16 @@ func licenseSourceCommit(d dep, e Entry) (string, error) {
 	if d.kind != kindArchive || !artifactSHA256RE.MatchString(d.sha256) || e.Version != d.source() || e.SHA256 != d.sha256 {
 		return "", errors.New("license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source")
 	}
-	match := licenseSourceRE.FindStringSubmatch(e.LicenseSource)
-	if match == nil {
-		return "", errors.New("license_source must be a raw GitHub root notice URL pinned to a full commit")
+	owner, repo, commit, err := parseGitHubURL(e.LicenseSource)
+	if err != nil || !commitRE.MatchString(commit) {
+		return "", errors.New("license_source must identify a GitHub notice pinned to a full commit")
 	}
-	return match[1], nil
+	prefix := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/", owner, repo, commit)
+	name, ok := strings.CutPrefix(e.LicenseSource, prefix)
+	if !ok || !slices.Contains(licenseFileNames, name) {
+		return "", errors.New("license_source must name a recognized raw GitHub root notice")
+	}
+	return commit, nil
 }
 
 // licenseFileNames are candidate root paths for GitHub raw-file requests.

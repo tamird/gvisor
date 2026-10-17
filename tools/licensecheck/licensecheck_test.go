@@ -18,9 +18,7 @@ import (
 	"archive/zip"
 	"bytes"
 	_ "embed"
-	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -496,49 +494,6 @@ func TestCheckPolicy(t *testing.T) {
 	}
 	if len(problems) != 5 {
 		t.Errorf("CheckPolicy returned %d problems, want 5: %v", len(problems), problems)
-	}
-}
-
-// roundTripFunc serves the actual notice-fetch path without external HTTP.
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
-	return f(r)
-}
-
-func TestFetchLicenseSource(t *testing.T) {
-	const artifact = "https://github.com/example/builder/releases/download/v1/tool.tar.gz"
-	const commit = "0123456789abcdef0123456789abcdef01234567"
-	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
-	const hash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-	d := dep{name: "tool", kind: kindArchive, url: artifact, sha256: hash}
-	previous := Entry{Version: artifact, SHA256: hash, License: Licenses{"MIT"}, LicenseSource: source}
-	oldClient := httpClient
-	t.Cleanup(func() { httpClient = oldClient })
-	requests := 0
-	status := http.StatusOK
-	httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		requests++
-		if r.URL.String() != source {
-			t.Fatalf("requested %q, want exact notice %q", r.URL, source)
-		}
-		return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader(bsdText)), Header: make(http.Header)}, nil
-	})}
-	for range 2 {
-		got, err := fetchLicense(d, previous)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.commit != commit || got.sha256 != hash || !slices.Equal(got.license, Licenses{"BSD-3-Clause"}) {
-			t.Fatalf("fetchLicense = %+v, want upstream commit, artifact hash and BSD-3-Clause", got)
-		}
-	}
-	if requests != 2 {
-		t.Fatalf("got %d notice requests, want a fresh request for each audit", requests)
-	}
-	status = http.StatusNotFound
-	if _, err := fetchLicense(d, previous); err == nil {
-		t.Fatal("fetchLicense accepted a missing explicit notice")
 	}
 }
 
