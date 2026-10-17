@@ -164,8 +164,8 @@ func validatePoints(t *testing.T, msgs []test.Message, matchers map[pb.MessageTy
 }
 
 func checkTimeNs(ns int64) error {
-	if ns <= int64(cutoffTime.Nanosecond()) {
-		return fmt.Errorf("time: got: %d (%v), should not be less than %d (%v)", ns, time.Unix(0, ns), cutoffTime.Nanosecond(), cutoffTime)
+	if ns <= cutoffTime.UnixNano() {
+		return fmt.Errorf("time: got: %d (%v), should be greater than %d (%v)", ns, time.Unix(0, ns), cutoffTime.UnixNano(), cutoffTime)
 	}
 	return nil
 }
@@ -351,7 +351,7 @@ func checkSyscallRead(msg test.Message) error {
 	}
 	if p.HasOffset {
 		// Workload always uses 20 for read offsets (account for partial reads).
-		if lower, upper := int64(20), int64(120); p.Offset < lower && p.Offset > upper {
+		if lower, upper := int64(20), int64(120); p.Offset < lower || p.Offset > upper {
 			return fmt.Errorf("invalid offset, got: %d, want: [%d, %d]", p.Offset, lower, upper)
 		}
 	} else if p.Offset != 0 {
@@ -377,7 +377,7 @@ func checkSyscallWrite(msg test.Message) error {
 	}
 	if p.HasOffset {
 		// Workload always uses 10 for write offsets (account for partial writes).
-		if lower, upper := int64(10), int64(110); p.Offset < lower && p.Offset > upper {
+		if lower, upper := int64(10), int64(110); p.Offset < lower || p.Offset > upper {
 			return fmt.Errorf("invalid offset, got: %d, want: [%d, %d]", p.Offset, lower, upper)
 		}
 	} else if p.Offset != 0 {
@@ -418,11 +418,11 @@ func checkSentryExec(msg test.Message) error {
 		return err
 	}
 
-	if want := "/bin/true"; !strings.Contains(p.BinaryPath, want) && p.Argv[0] != "test_memfd" {
-		return fmt.Errorf("wrong BinaryPath, got: %q, want substring: %q", p.BinaryPath, want)
-	}
 	if len(p.Argv) == 0 {
 		return fmt.Errorf("empty Argv")
+	}
+	if want := "/bin/true"; !strings.Contains(p.BinaryPath, want) && p.Argv[0] != "test_memfd" {
+		return fmt.Errorf("wrong BinaryPath, got: %q, want substring: %q", p.BinaryPath, want)
 	}
 
 	// workload.cc fires distinct execution workloads:
