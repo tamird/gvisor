@@ -74,6 +74,7 @@ syscall_test(
 )
 
 syscall_test(
+    args = ["--diagnostic-stacks-after=10s"],
     one_sandbox = False,
     test = "//test/syscalls/linux:cgroup_test",
 )
