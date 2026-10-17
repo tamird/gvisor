@@ -63,6 +63,7 @@ var (
 	clockSource        = flag.String("clock-source", "", "runsc clock source (empty uses the runtime default)")
 	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
 	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
+	externalNetwork    = flag.Bool("external-network", false, "create a private addressed interface for broadcast and multicast tests")
 	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
 	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
@@ -111,6 +112,16 @@ func getSetupContainerPath() string {
 		fatalf("cannot find setup_container: %v", err)
 	}
 	return setupContainer
+}
+
+// wrapInSetupContainer configures the already-owned namespaces before exec.
+func wrapInSetupContainer(cmd *exec.Cmd) {
+	cmd.Path = getSetupContainerPath()
+	args := []string{cmd.Path}
+	if *externalNetwork {
+		args = append(args, "--external-network")
+	}
+	cmd.Args = append(args, cmd.Args...)
 }
 
 func removeShardAndXMLEnvVars(env []string, tc *gtest.TestCase) []string {
@@ -252,8 +263,7 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 
 	if *container || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		// setup_container takes in its target argv as positional arguments.
-		cmd.Path = getSetupContainerPath()
-		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
+		wrapInSetupContainer(cmd)
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
 		// Preserve privileged native tests' existing UID/GID mappings: mapping
 		// only the current user prevents tests from switching to another ID.
@@ -595,6 +605,10 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 		createCmd := exec.Command(specutils.ExePath, createArgs...)
 		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
+		if *externalNetwork {
+			createCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
+			wrapInSetupContainer(createCmd)
+		}
 		createCmd.Stdout = os.Stdout
 		createCmd.Stderr = os.Stderr
 		if err := createCmd.Run(); err != nil {
@@ -639,8 +653,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	cmd.SysProcAttr = sysProcAttr
 	if *container || *network == "host" || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-		cmd.Path = getSetupContainerPath()
-		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
+		wrapInSetupContainer(cmd)
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -732,8 +745,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 			restoreCmd.SysProcAttr = sysProcAttr
 			if *container || *network == "host" || (restoreCmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 				restoreCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-				restoreCmd.Path = getSetupContainerPath()
-				restoreCmd.Args = append([]string{restoreCmd.Path}, restoreCmd.Args...)
+				wrapInSetupContainer(restoreCmd)
 			}
 			restoreCmd.Stdout = os.Stdout
 			restoreCmd.Stderr = os.Stderr
@@ -1170,6 +1182,9 @@ func matchString(a, b string) (bool, error) {
 
 func main() {
 	flag.Parse()
+	if *externalNetwork && (!*container || (*platform != "native" && *network == "none")) {
+		fatalf("external networking requires a private container and a sandbox or host network stack")
+	}
 	if flag.NArg() != 1 {
 		fatalf("test must be provided")
 	}
