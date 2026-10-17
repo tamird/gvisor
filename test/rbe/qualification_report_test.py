@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import datetime
+import hashlib
 import itertools
 import json
 import os
@@ -748,6 +749,31 @@ signal.pause()
         self.assertEqual(value["status"], "INCOMPLETE")
         self.assertEqual(value["invocations"], [])
         self.assertEqual((value["native_exit"], value["runner_exit"]), (None, 19))
+
+    def test_bundle_command_logs_recoverable_archive_identity(self) -> None:
+        invocation = self.fixture()
+        self.capture(invocation)
+        self.verdict(invocation)
+        output = self.root / "bundle.tar.gz"
+        for runner_exit, status in ((0, "PASS"), (17, "FAIL")):
+            with self.subTest(runner_exit=runner_exit):
+                arguments = [sys.executable, report.__file__, "bundle", "--directory", str(self.evidence),
+                             "--runner-exit", str(runner_exit), "--capture-exit", "0", "--output", str(output)]
+                command = subprocess.run(arguments, capture_output=True, text=True, check=False)
+                self.assertEqual(command.returncode, runner_exit, command.stderr)
+                receipt = json.loads(command.stdout)
+                content = output.read_bytes()
+                self.assertEqual(receipt["qualification_archive"],
+                                 {"sha256": hashlib.sha256(content).hexdigest(), "bytes": len(content)})
+                with tarfile.open(output) as archive:
+                    verdict = json.load(archive.extractfile("verdict.json"))
+                self.assertEqual(receipt["sources"], verdict["sources"])
+                self.assertEqual(receipt["status"], status)
+                read_fd, write_fd = os.pipe()
+                os.close(read_fd)
+                with os.fdopen(write_fd, "wb") as closed_pipe:
+                    command = subprocess.run(arguments, stdout=closed_pipe, stderr=subprocess.PIPE, check=False)
+                self.assertEqual(command.returncode, runner_exit or 1, command.stderr)
 
     def test_bundle_distinguishes_reporting_and_coordinator_failure(self) -> None:
         invocation = self.fixture()
