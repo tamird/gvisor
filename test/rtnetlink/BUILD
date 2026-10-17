@@ -19,6 +19,7 @@ syscall_test(
 
 syscall_test(
     size = "small",
+    args = ["--diagnostic-stacks-after=10s"],
     container = True,
     network_tools = True,
     overlay = True,

@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -79,6 +80,7 @@ var (
 	ioUring          = flag.Bool("iouring", false, "Enables IO_URING API for asynchronous I/O")
 	leakCheck        = flag.Bool("leak-check", false, "check for reference leaks")
 	waitForPid       = flag.Duration("delay-for-debugger", 0, "Print out the sandbox PID and wait for the specified duration to start the test. This is useful for attaching a debugger to the runsc-sandbox process.")
+	diagnosticAfter  = flag.Duration("diagnostic-stacks-after", 0, "Dump runner and sandbox stacks once after this duration without signalling the test (zero disables).")
 	save             = flag.Bool("save", false, "enables save restore")
 	saveResume       = flag.Bool("save-resume", false, "enables save resume")
 	nftables         = flag.Bool("nftables", false, "enables nftables")
@@ -644,6 +646,38 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	if *diagnosticAfter > 0 {
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan struct{})
+		defer func() {
+			cancel()
+			<-done
+		}()
+		go func() {
+			defer close(done)
+			timer := time.NewTimer(*diagnosticAfter)
+			defer timer.Stop()
+			select {
+			case <-ctx.Done():
+				return
+			case <-timer.C:
+			}
+			log.Infof("Diagnostic runner stacks:\n%s", log.Stacks(true))
+			ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+			dArgs := append([]string{}, args...)
+			dArgs = append(dArgs, "debug", "--stacks", "--ps", id)
+			log.Infof("Diagnostic command: %v", append([]string{specutils.ExePath}, dArgs...))
+			debug := exec.CommandContext(ctx, specutils.ExePath, dArgs...)
+			debug.Stdout = os.Stdout
+			debug.Stderr = os.Stderr
+			if err := debug.Run(); err != nil {
+				log.Infof("Diagnostic command failed: %v", err)
+			}
+		}()
+	}
+
 	sig := make(chan os.Signal, 1)
 	defer close(sig)
 	signalled := atomic.Bool{}
@@ -1170,6 +1204,9 @@ func matchString(a, b string) (bool, error) {
 
 func main() {
 	flag.Parse()
+	if *diagnosticAfter < 0 {
+		fatalf("diagnostic-stacks-after must not be negative")
+	}
 	if flag.NArg() != 1 {
 		fatalf("test must be provided")
 	}
