@@ -122,8 +122,9 @@ export RUNNER_TEMP
 mkdir -p "$RUNNER_TEMP/qualification"
 qualification_artifacts=$RUNNER_TEMP/qualification
 qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
-qualification_rc=$(mktemp)
-temporary_files+=("$qualification_rc")
+# BuildBuddy reuses the last startup options for its final workspace-lock check.
+# Its coordinator must still be able to read this file after our cleanup.
+qualification_rc=$qualification_workspace/test/rbe/qualification.bazelrc
 qualification_bazel_binary=
 qualification_root_bazel=false
 export qualification_workspace qualification_artifacts qualification_private qualification_rc qualification_bazel_binary qualification_root_bazel
@@ -131,11 +132,6 @@ cp -- MODULE.bazel.lock "$qualification_artifacts/MODULE.bazel.lock.before"
 git cat-file -p HEAD > "$qualification_artifacts/commit.txt"
 git status --porcelain --untracked-files=no > "$qualification_artifacts/source-before.txt"
 [[ ! -s "$qualification_artifacts/source-before.txt" ]]
-printf '%s\n' \
-  'common --lockfile_mode=error' \
-  'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
-  'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
-  > "$qualification_rc"
 
 # Benchmark observations have a different coverage contract from named tests.
 # Validate and retain the opt-in before any Bazel command can start.
@@ -160,6 +156,10 @@ export qualification_benchmark_manifest qualification_benchmark_arguments
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) qualification_bazel_binary=$(type -P bazel) ;;
   local|remote-actions)
+    # Actions adds credentials and runner settings; keep those temporary.
+    qualification_rc=$(mktemp)
+    temporary_files+=("$qualification_rc")
+    cp -- "$qualification_workspace/test/rbe/qualification.bazelrc" "$qualification_rc"
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       options+=(--test-execution=local)
       case "${lanes[*]}" in

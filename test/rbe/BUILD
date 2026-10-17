@@ -32,6 +32,7 @@ py_test(
     ],
     data = [
         "actions.sh",
+        "qualification.bazelrc",
         "qualify.sh",
     ] + glob(["testdata/qualification_report/**"]),
     imports = ["."],
