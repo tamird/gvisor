@@ -69,10 +69,12 @@ their hashes, and sanitized build events. Test failures remain failures when
 report collection or cleanup also fails; missing results cannot produce a
 passing verdict.
 
-Collection and reconciliation run on the coordinator. Download the bundle
-once to inspect a failure or audit the verifier. The report records execution
-completion and verdict availability separately. Interrupted report collection
-can be resumed with `qualification_report.py capture` using the same inputs;
+Collection and reconciliation run on the coordinator. Both coordinator types
+publish the small verdict separately from the evidence archive, compressed for
+transfer. Read the verdict for the result; download the bundle to inspect a
+failure or audit the verifier. Execution completion and verdict availability have
+separate timestamps. Interrupted report collection can be resumed with
+`qualification_report.py capture` using the same inputs;
 copies matching the previous manifest are reused. The report tool does not
 rerun tests.
 

@@ -168,5 +168,4 @@ jobs:
         path: |
           ${{ runner.temp }}/qualification.tar.gz
           ${{ runner.temp }}/qualification/verdict.json
-        compression-level: 0
         if-no-files-found: error
