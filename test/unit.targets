@@ -12,7 +12,5 @@
 //test/util/...
 
 # FIXME(gvisor.dev/issue/10045): Need to fix broken tests.
--//pkg/metric:metric_test
 -//pkg/coretag:coretag_test
--//tools/tracereplay:tracereplay_test
 -//test/trace:trace_test

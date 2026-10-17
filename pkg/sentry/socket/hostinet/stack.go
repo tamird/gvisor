@@ -158,8 +158,9 @@ func readTCPBufferSizeFile(filename string) (inet.TCPBufferSize, error) {
 }
 
 // ReadPortRange reads the host network namespace's ephemeral port range.
-// It must run before installing seccomp filters. If procfs is unavailable,
-// it preserves the Linux default range previously reported by hostinet.
+// It must run before installing seccomp filters. If the range cannot be read,
+// it uses the defaults set by Linux's inet_init_net():
+// https://github.com/torvalds/linux/blob/e5f0a698b/net/ipv4/af_inet.c#L1785-L1790
 func ReadPortRange() [2]uint16 {
 	ports, err := readPortRangeFile("/proc/sys/net/ipv4/ip_local_port_range")
 	if err != nil {
