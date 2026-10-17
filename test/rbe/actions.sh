@@ -116,6 +116,10 @@ cleanup() {
     timeout --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
       --directory "$qualification_artifacts" --runner-exit "$status" --capture-exit "$capture_status" \
       --output "${BUILDBUDDY_ARTIFACTS_DIRECTORY:-$RUNNER_TEMP}/qualification.tar.gz" || bundle_status=$?
+    if [[ -n ${BUILDBUDDY_ARTIFACTS_DIRECTORY:-} ]]; then
+      # A slow log download must not delay reporting the completed test results.
+      gzip -c -- "$qualification_artifacts/verdict.json" > "$BUILDBUDDY_ARTIFACTS_DIRECTORY/verdict.json.gz" || bundle_status=$?
+    fi
   fi
   if (( status == 0 )); then
     if (( capture_status != 0 )); then status=$capture_status; else status=$bundle_status; fi
