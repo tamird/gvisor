@@ -7,6 +7,7 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
+import time
 import xml.etree.ElementTree as ET
 
 
@@ -70,27 +71,39 @@ def main() -> int:
                                CLI_RELEASE_FILE='release/' + release_file,
                                BENCH_CPU=str(cpu))
             with (output / f'{phase}-wrapper.log').open('wb') as log:
+                started = time.monotonic()
                 child = subprocess.Popen([sys.executable, str(PACKAGE / 'cli_batch.py'),
                                           str(executable), '--version'], env=environment,
                                          stdout=log, stderr=subprocess.STDOUT,
                                          start_new_session=True)
-                try:
-                    child.wait(timeout=660)
-                except subprocess.TimeoutExpired:
+                if cancelled:
+                    signal_child(signal.SIGTERM)
+                timed_out = False
+                while child.poll() is None and not cancelled:
+                    remaining = 660 - (time.monotonic() - started)
+                    if remaining <= 0:
+                        timed_out = True
+                        break
+                    try:
+                        child.wait(timeout=min(remaining, 1))
+                    except subprocess.TimeoutExpired:
+                        pass
+                if child.poll() is None:
                     signal_child(signal.SIGTERM)
                     try:
                         child.wait(timeout=5)
                     except subprocess.TimeoutExpired:
                         signal_child(signal.SIGKILL)
                         child.wait()
-                    status = 124
-                else:
-                    status = child.returncode if child.returncode >= 0 else 128 - child.returncode
+                status = cancelled or (124 if timed_out else
+                    (child.returncode if child.returncode >= 0 else 128 - child.returncode))
+                if cancelled or timed_out:
+                    signal_child(signal.SIGKILL)
                 child = None
-            print((output / f'{phase}-wrapper.log').read_text(), end='', flush=True)
             if cancelled or status:
                 return cancelled or status
             status = 1
+            print((output / f'{phase}-wrapper.log').read_text(), end='', flush=True)
             record = json.loads((output / f'{phase}-processes.json').read_text())
             assert record['count'] == len(record['rows']) == count, phase
             assert record['side'] == side and record['inittrace'] == traced, phase
