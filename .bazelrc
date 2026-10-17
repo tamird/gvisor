@@ -72,8 +72,8 @@ build:rbe-common --noremote_local_fallback
 build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
 build:rbe --config=rbe-common
-build:rbe --extra_execution_platforms=//test/rbe:linux_amd64,//test/rbe:linux_arm64
-build:rbe --host_platform=//test/rbe:linux_amd64
+build:rbe --extra_execution_platforms=//test/rbe:linux_arm64,//test/rbe:linux_amd64
+build:rbe --host_platform=//test/rbe:linux_arm64
 build:rbe-arm64 --config=rbe-common
 build:rbe-arm64 --extra_execution_platforms=//test/rbe:linux_arm64,//test/rbe:linux_amd64
 build:rbe-arm64 --host_platform=//test/rbe:linux_arm64
