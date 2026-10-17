@@ -1276,11 +1276,6 @@ exceptions:
   - dependency: apt/kvm_host_tools/amd64/coreutils
     license: *kvm_coreutils_licenses
     exception_rationale: *kvm_tools_rationale
-  - dependency: apt/kvm_host_tools/amd64/cpio
-    license: &kvm_cpio_licenses
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *kvm_tools_rationale
   - dependency: apt/kvm_host_tools/amd64/dpkg
     license: *kvm_dpkg_licenses
     exception_rationale: *kvm_tools_rationale
@@ -1289,22 +1284,20 @@ exceptions:
       - GPL-2.0
       - LGPL-2.0
     exception_rationale: *kvm_tools_rationale
-  - dependency: apt/kvm_host_tools/amd64/findutils
-    license: &kvm_findutils_licenses
-      - GFDL-1.3
+  - dependency: apt/kvm_host_tools/amd64/fakeroot
+    license: &guest_image_fakeroot_licenses
+      - Artistic-1.0-Perl
       - GPL-3.0
       - GPL-3.0-or-later
-    exception_rationale: *kvm_tools_rationale
+    exception_rationale: &guest_image_fakeroot_rationale >-
+      The pinned supplier notice provides GPL-3.0-or-later terms and
+      the Perl module under the same terms as Perl. The unmodified
+      wrapper and preload library preserve ownership while constructing
+      disposable test guest images. Their package notices are retained;
+      they are not linked into or packaged with gVisor release artifacts.
   - dependency: apt/kvm_host_tools/amd64/gcc-12-base
     license: *apt_gcc_12_base_licenses
     exception_rationale: *kvm_tools_rationale
-  - dependency: apt/kvm_host_tools/amd64/gzip
-    license: LicenseRef-Gzip-Copyright-7fc508e25
-    exception_rationale: >-
-      This is the same pinned artifact and verbatim notice already
-      audited under apt/release_tools/amd64/gzip.
-      It supplies only the manual AMD64 RC test tools or guest,
-      not gVisor release artifacts.
   - dependency: apt/kvm_host_tools/amd64/ipxe-qemu
     license: &kvm_ipxe_qemu_licenses
       - BSD-2-Clause
@@ -1424,6 +1417,9 @@ exceptions:
   - dependency: apt/kvm_host_tools/amd64/libext2fs2
     license: *kvm_e2fsprogs_licenses
     exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libfakeroot
+    license: *guest_image_fakeroot_licenses
+    exception_rationale: *guest_image_fakeroot_rationale
   - dependency: apt/kvm_host_tools/amd64/libfdt1
     license: &kvm_libfdt1_licenses
       - BSD-2-Clause
@@ -1651,7 +1647,9 @@ exceptions:
       - LGPL-2.1
     exception_rationale: *kvm_tools_rationale
   - dependency: apt/kvm_host_tools/amd64/libpam-modules
-    license: *kvm_cpio_licenses
+    license: &kvm_cpio_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
     exception_rationale: *kvm_tools_rationale
   - dependency: apt/kvm_host_tools/amd64/libpam-modules-bin
     license: *kvm_cpio_licenses
@@ -1710,6 +1708,13 @@ exceptions:
   - dependency: apt/kvm_host_tools/amd64/libsepol2
     license: *kvm_libsemanage_common_licenses
     exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/libsmartcols1
+    license: *apt_libuuid1_licenses
+    exception_rationale: &guest_image_util_linux_rationale >-
+      These are the same pinned artifacts and supplier copyright notice
+      already audited for the AMD64 cgroup-v1 guest. They provide getopt
+      and its package dependencies for the guest image builder, with
+      notices retained, not as gVisor release-artifact inputs.
   - dependency: apt/kvm_host_tools/amd64/libspice-server1
     license: &kvm_libspice_server1_licenses
       - BSD-3-Clause
@@ -1855,6 +1860,9 @@ exceptions:
   - dependency: apt/kvm_host_tools/amd64/tar
     license: *kvm_tar_licenses
     exception_rationale: *kvm_tools_rationale
+  - dependency: apt/kvm_host_tools/amd64/util-linux
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_image_util_linux_rationale
   - dependency: apt/qemu_build_deps/amd64/base-files
     license: *apt_base_files_licenses
     exception_rationale: &apt_qemu_build_deps_rationale >-
@@ -2124,7 +2132,10 @@ exceptions:
     license: *apt_gcc_12_base_licenses
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libreadline8
-    license: *kvm_findutils_licenses
+    license: &kvm_findutils_licenses
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libselinux1
     license: *apt_libselinux1_licenses
@@ -3253,11 +3264,6 @@ exceptions:
   - dependency: apt/tcg_host_tools/amd64/coreutils
     license: *tcg_coreutils_licenses
     exception_rationale: *tcg_tools_rationale
-  - dependency: apt/tcg_host_tools/amd64/cpio
-    license: &tcg_cpio_licenses
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *tcg_tools_rationale
   - dependency: apt/tcg_host_tools/amd64/dpkg
     license: *apt_dpkg_licenses
     exception_rationale: *tcg_tools_rationale
@@ -3266,19 +3272,12 @@ exceptions:
       - GPL-2.0
       - LGPL-2.0
     exception_rationale: *tcg_tools_rationale
-  - dependency: apt/tcg_host_tools/amd64/findutils
-    license: *apt_diffutils_licenses
-    exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/fakeroot
+    license: *guest_image_fakeroot_licenses
+    exception_rationale: *guest_image_fakeroot_rationale
   - dependency: apt/tcg_host_tools/amd64/gcc-12-base
     license: *apt_gcc_12_base_licenses
     exception_rationale: *tcg_tools_rationale
-  - dependency: apt/tcg_host_tools/amd64/gzip
-    license: LicenseRef-Gzip-Copyright-7fc508e25
-    exception_rationale: >-
-      This is the same pinned artifact and verbatim notice already
-      audited under apt/release_tools/amd64/gzip.
-      It supplies only the manual full-system test tools or guest,
-      not gVisor release artifacts.
   - dependency: apt/tcg_host_tools/amd64/iso-codes
     license: &tcg_iso_codes_licenses
       - LGPL-2.1
@@ -3366,6 +3365,9 @@ exceptions:
   - dependency: apt/tcg_host_tools/amd64/libext2fs2
     license: *tcg_e2fsprogs_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libfakeroot
+    license: *guest_image_fakeroot_licenses
+    exception_rationale: *guest_image_fakeroot_rationale
   - dependency: apt/tcg_host_tools/amd64/libfdt1
     license: &tcg_libfdt1_licenses
       - BSD-2-Clause
@@ -3558,7 +3560,9 @@ exceptions:
       - LGPL-2.1
     exception_rationale: *tcg_tools_rationale
   - dependency: apt/tcg_host_tools/amd64/libpam-modules
-    license: *tcg_cpio_licenses
+    license: &tcg_cpio_licenses
+      - GPL-3.0
+      - GPL-3.0-or-later
     exception_rationale: *tcg_tools_rationale
   - dependency: apt/tcg_host_tools/amd64/libpam-modules-bin
     license: *tcg_cpio_licenses
@@ -3604,6 +3608,9 @@ exceptions:
   - dependency: apt/tcg_host_tools/amd64/libsepol2
     license: *apt_libsemanage_common_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/libsmartcols1
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_image_util_linux_rationale
   - dependency: apt/tcg_host_tools/amd64/libspice-server1
     license: &tcg_libspice_server1_licenses
       - BSD-3-Clause
@@ -3726,6 +3733,9 @@ exceptions:
   - dependency: apt/tcg_host_tools/amd64/tar
     license: *apt_libgdbm_compat4_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_host_tools/amd64/util-linux
+    license: *apt_libuuid1_licenses
+    exception_rationale: *guest_image_util_linux_rationale
   - dependency: codeql_bundle
     license: LicenseRef-CodeQL-Bundle-2.27.1
     exception_rationale: >-
