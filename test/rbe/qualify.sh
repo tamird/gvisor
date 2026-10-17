@@ -187,15 +187,26 @@ if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
-  if [[ $# != 1 || $arch == all || ( $test_execution == local && ${1:-} != test ) ]]; then
-    printf 'Explicit targets require one build or test lane and a single target architecture; only tests may execute locally.\n' >&2
+  if [[ $# != 1 || $arch == all ]]; then
+    printf 'Explicit targets require one supported lane and a single target architecture.\n' >&2
     exit 2
   fi
   case "$1" in
     build) explicit_targets=("${build_targets[@]}"); conflicting_targets=${#test_targets[@]} ;;
     test) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
+    syscalls|syscalls-kvm|syscalls-rc)
+      if [[ -n $syscall_bucket || ( $1 != syscalls-rc && $test_execution != local ) ]]; then
+        printf 'Explicit syscall owners require a local ordinary or RC profile without buckets.\n' >&2
+        exit 2
+      fi
+      explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]}
+      ;;
     *) printf 'Explicit targets require the matching build or test lane.\n' >&2; exit 2 ;;
   esac
+  if [[ $1 == build && $test_execution == local ]]; then
+    printf 'Explicit builds require remote execution.\n' >&2
+    exit 2
+  fi
   if (( ${#explicit_targets[@]} == 0 || conflicting_targets != 0 )); then
     printf 'Supply only the target option matching the selected lane.\n' >&2
     exit 2
@@ -433,6 +444,10 @@ select_test_profile() {
   fi
   if [[ $lane == syscalls* ]]; then
     selection_options=(--syscall-policy)
+    local owner
+    for owner in "${test_targets[@]}"; do
+      selection_options+=("--owner=$owner")
+    done
   fi
   if [[ $lane == syscalls-64k || $lane == syscalls-rc ]]; then
     if [[ $lane == syscalls-64k ]]; then

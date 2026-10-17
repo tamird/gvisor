@@ -157,6 +157,16 @@ test lane does not grant that guest device access. Record the selected cases
 when reporting a filtered result. Other named profiles reject this option,
 and omitting it preserves the complete lane selection.
 
+The local `syscalls` and `syscalls-kvm` lanes and the `syscalls-rc` lane also
+accept `targets` for a single architecture. Supply exact owner labels from
+that lane's selection, including its architecture or guest suffix. Direct
+callers use repeated `--test-target=LABEL` options. The shared selector checks
+the complete configured profile and rejects unknown, excluded or wrong-CPU
+owners before execution. The report retains the selected owners and every
+eligible owner left unexecuted. Do not combine explicit owners with buckets.
+This restriction preserves the owning lane's device setup, placement, shards
+and deadlines; it does not grant the generic `test` lane new privileges.
+
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested
 commit before qualification. For `cos-metadata` or the full `amd64` profile,
