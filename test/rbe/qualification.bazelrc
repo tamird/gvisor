@@ -15,3 +15,7 @@
 common --lockfile_mode=error
 build:buildbuddy_remote_executor --remote_download_outputs=minimal
 build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$
+
+# Retain executed cross-host generator commands instead of cache-only proof.
+build --remote_accept_cached=false
+build --subcommands=pretty_print
