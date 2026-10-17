@@ -1901,14 +1901,6 @@
     - GPL-3.0
     - GPL-3.0-or-later
     - ISC
-- dependency: apt/kvm_host_tools/amd64/cpio
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/cpio/cpio_2.13+dfsg-7ubuntu0.2_amd64.deb
-  retrieved: "2026-10-08"
-  commit: ""
-  sha256: b5dc44053877921937645004d672fbc020ec231e27fa6dc7e767a24febf8c2c0
-  license:
-    - GPL-3.0
-    - GPL-3.0-or-later
 - dependency: apt/kvm_host_tools/amd64/debconf
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/debconf/debconf_1.5.79ubuntu1_all.deb
   retrieved: "2026-10-08"
@@ -1932,13 +1924,13 @@
   license:
     - GPL-2.0
     - LGPL-2.0
-- dependency: apt/kvm_host_tools/amd64/findutils
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/findutils/findutils_4.8.0-1ubuntu3_amd64.deb
-  retrieved: "2026-10-08"
+- dependency: apt/kvm_host_tools/amd64/fakeroot
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/fakeroot/fakeroot_1.28-1ubuntu1_amd64.deb
+  retrieved: "2026-10-17"
   commit: ""
-  sha256: 36b82c9455c45b4f1b88d07bdf30a1b62a4ad6164595b55254c0def2265ff4d6
+  sha256: 6a08de63f375566d3d91b181ff01a5fb797a5ecd6720b2c28f11d8e32071933b
   license:
-    - GFDL-1.3
+    - Artistic-1.0-Perl
     - GPL-3.0
     - GPL-3.0-or-later
 - dependency: apt/kvm_host_tools/amd64/gcc-12-base
@@ -1965,12 +1957,6 @@
     - Spencer-94
     - Unicode-DFS-2015
     - Zlib
-- dependency: apt/kvm_host_tools/amd64/gzip
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gzip/gzip_1.10-4ubuntu4.2_amd64.deb
-  retrieved: "2026-10-03"
-  commit: ""
-  sha256: 018db5661b38873d1e650be8612ff7e1d882c4576c95079f94e0d6ac2320342b
-  license: LicenseRef-Gzip-Copyright-7fc508e25
 - dependency: apt/kvm_host_tools/amd64/ipxe-qemu
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/ipxe/ipxe-qemu_1.21.1+git-20220113.fbbdc3926-0ubuntu1_all.deb
   retrieved: "2026-10-08"
@@ -2252,6 +2238,15 @@
   license:
     - GPL-2.0
     - LGPL-2.0
+- dependency: apt/kvm_host_tools/amd64/libfakeroot
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/fakeroot/libfakeroot_1.28-1ubuntu1_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 54083b86b4f74853cb5c0881e1c4273fd2071af507e90f794a56956109067b12
+  license:
+    - Artistic-1.0-Perl
+    - GPL-3.0
+    - GPL-3.0-or-later
 - dependency: apt/kvm_host_tools/amd64/libfdt1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/device-tree-compiler/libfdt1_1.6.1-1_amd64.deb
   retrieved: "2026-10-08"
@@ -2881,6 +2876,25 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: apt/kvm_host_tools/amd64/libsmartcols1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libsmartcols1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: ffcfe348fe320833df0231b46de8d130843532d30f4fce2975b696702c13856f
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/kvm_host_tools/amd64/libspice-server1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/spice/libspice-server1_0.15.0-2ubuntu4_amd64.deb
   retrieved: "2026-10-08"
@@ -3231,6 +3245,25 @@
     - GPL-2.0-or-later
     - GPL-3.0
     - GPL-3.0-or-later
+- dependency: apt/kvm_host_tools/amd64/util-linux
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/util-linux_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 9c852ffb8b350157ad938be483c7157627bfd553e93937910ac47280068ff165
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/kvm_host_tools/amd64/zlib1g
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/z/zlib/zlib1g_1.2.11.dfsg-2ubuntu9.2_amd64.deb
   retrieved: "2026-10-08"
@@ -7377,14 +7410,6 @@
     - GPL-3.0
     - GPL-3.0-or-later
     - ISC
-- dependency: apt/tcg_host_tools/amd64/cpio
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/cpio/cpio_2.13+dfsg-7ubuntu0.2_amd64.deb
-  retrieved: "2026-10-08"
-  commit: ""
-  sha256: b5dc44053877921937645004d672fbc020ec231e27fa6dc7e767a24febf8c2c0
-  license:
-    - GPL-3.0
-    - GPL-3.0-or-later
 - dependency: apt/tcg_host_tools/amd64/debconf
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/debconf/debconf_1.5.79ubuntu1_all.deb
   retrieved: "2026-10-08"
@@ -7408,13 +7433,13 @@
   license:
     - GPL-2.0
     - LGPL-2.0
-- dependency: apt/tcg_host_tools/amd64/findutils
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/findutils/findutils_4.8.0-1ubuntu3_amd64.deb
-  retrieved: "2026-10-08"
+- dependency: apt/tcg_host_tools/amd64/fakeroot
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/fakeroot/fakeroot_1.28-1ubuntu1_amd64.deb
+  retrieved: "2026-10-17"
   commit: ""
-  sha256: 36b82c9455c45b4f1b88d07bdf30a1b62a4ad6164595b55254c0def2265ff4d6
+  sha256: 6a08de63f375566d3d91b181ff01a5fb797a5ecd6720b2c28f11d8e32071933b
   license:
-    - GFDL-1.3
+    - Artistic-1.0-Perl
     - GPL-3.0
     - GPL-3.0-or-later
 - dependency: apt/tcg_host_tools/amd64/gcc-12-base
@@ -7441,12 +7466,6 @@
     - Spencer-94
     - Unicode-DFS-2015
     - Zlib
-- dependency: apt/tcg_host_tools/amd64/gzip
-  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gzip/gzip_1.10-4ubuntu4.2_amd64.deb
-  retrieved: "2026-10-03"
-  commit: ""
-  sha256: 018db5661b38873d1e650be8612ff7e1d882c4576c95079f94e0d6ac2320342b
-  license: LicenseRef-Gzip-Copyright-7fc508e25
 - dependency: apt/tcg_host_tools/amd64/iso-codes
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iso-codes/iso-codes_4.9.0-1_all.deb
   retrieved: "2026-10-08"
@@ -7704,6 +7723,15 @@
   license:
     - GPL-2.0
     - LGPL-2.0
+- dependency: apt/tcg_host_tools/amd64/libfakeroot
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/fakeroot/libfakeroot_1.28-1ubuntu1_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 54083b86b4f74853cb5c0881e1c4273fd2071af507e90f794a56956109067b12
+  license:
+    - Artistic-1.0-Perl
+    - GPL-3.0
+    - GPL-3.0-or-later
 - dependency: apt/tcg_host_tools/amd64/libfdt1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/device-tree-compiler/libfdt1_1.6.1-1_amd64.deb
   retrieved: "2026-10-08"
@@ -8333,6 +8361,25 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: apt/tcg_host_tools/amd64/libsmartcols1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libsmartcols1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: ffcfe348fe320833df0231b46de8d130843532d30f4fce2975b696702c13856f
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/tcg_host_tools/amd64/libspice-server1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/spice/libspice-server1_0.15.0-2ubuntu4_amd64.deb
   retrieved: "2026-10-08"
@@ -8677,6 +8724,25 @@
     - GPL-2.0-or-later
     - GPL-3.0
     - GPL-3.0-or-later
+- dependency: apt/tcg_host_tools/amd64/util-linux
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/util-linux_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-17"
+  commit: ""
+  sha256: 9c852ffb8b350157ad938be483c7157627bfd553e93937910ac47280068ff165
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/tcg_host_tools/amd64/zlib1g
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/z/zlib/zlib1g_1.2.11.dfsg-2ubuntu9.2_amd64.deb
   retrieved: "2026-10-08"
