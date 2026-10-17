@@ -33,7 +33,7 @@ def main() -> None:
     config = json.loads(Path(config_name).read_text())
     root = Path.cwd()
     evidence = root / config["evidence"]
-    evidence.mkdir(parents=True)
+    evidence.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="kcov-kernel-") as temporary:
         work = Path(temporary)
         source = work / "source"
