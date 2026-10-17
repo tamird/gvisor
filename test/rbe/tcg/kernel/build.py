@@ -72,7 +72,6 @@ def main() -> None:
             str(tools / "clang"), "--target=x86_64-linux-gnu",
             "--sysroot=" + str(sysroot),
             "--gcc-install-dir=" + str(sysroot / "usr/lib/gcc/x86_64-linux-gnu/11"),
-            "--ld-path=" + str(root / config["llvm"]["ld.lld"]),
         ])
         env = {
             **os.environ,
@@ -98,7 +97,8 @@ def main() -> None:
         build = work / "build"
         build.mkdir()
         make = [str(root / config["make"]), "-C", str(source), "O=" + str(build),
-                "ARCH=x86_64", "LLVM=1", "HOSTCC=" + str(tools / "hostcc")]
+                "ARCH=x86_64", "LLVM=1", "HOSTCC=" + str(tools / "hostcc"),
+                "HOSTLDFLAGS=--ld-path=" + str(root / config["llvm"]["ld.lld"])]
 
         def run(command: list[str], name: str) -> None:
             log = evidence / (name + ".log")
