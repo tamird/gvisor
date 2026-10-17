@@ -31,6 +31,7 @@
 #include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
 #include "test/util/linux_capability_util.h"
+#include "test/util/memory_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/test_util.h"
 #include "test/util/thread_util.h"
@@ -114,9 +115,9 @@ TEST(KcovTest, UnalignedSize) {
   // The size counts entries, including the counter and at least one PC.
   ASSERT_THAT(ioctl(fd.get(), KCOV_INIT_TRACE, 2), SyscallSucceeds());
   // mmap rounds its length to a page, which cannot match this buffer.
-  ASSERT_THAT(mmap(nullptr, 2 * sizeof(uint64_t), PROT_READ | PROT_WRITE,
+  ASSERT_THAT(Mmap(nullptr, 2 * sizeof(uint64_t), PROT_READ | PROT_WRITE,
                    MAP_SHARED, fd.get(), 0),
-              SyscallFailsWithErrno(EINVAL));
+              PosixErrorIs(EINVAL));
 }
 
 TEST(KcovTest, MappingRange) {
@@ -130,17 +131,15 @@ TEST(KcovTest, MappingRange) {
   ASSERT_THAT(ioctl(fd.get(), KCOV_INIT_TRACE, bytes / sizeof(uint64_t)),
               SyscallSucceeds());
   ASSERT_THAT(
-      mmap(nullptr, kPageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0),
-      SyscallFailsWithErrno(EINVAL));
-  ASSERT_THAT(mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(),
+      Mmap(nullptr, kPageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0),
+      PosixErrorIs(EINVAL));
+  ASSERT_THAT(Mmap(nullptr, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(),
                    kPageSize),
-              SyscallFailsWithErrno(EINVAL));
+              PosixErrorIs(EINVAL));
 
   // Linux compares the page-rounded VMA length, not the syscall's length.
-  void* area =
-      mmap(nullptr, bytes - 1, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0);
-  ASSERT_THAT(area, SyscallSucceeds());
-  ASSERT_THAT(munmap(area, bytes), SyscallSucceeds());
+  ASSERT_NO_ERRNO(Mmap(nullptr, bytes - 1, PROT_READ | PROT_WRITE, MAP_SHARED,
+                       fd.get(), 0));
 }
 
 // Tests that multiple kcov fds can be used simultaneously.
