@@ -15,12 +15,14 @@
 package coretag
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 	"testing"
 
+	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/hostos"
 )
 
@@ -94,6 +96,11 @@ func TestEnable(t *testing.T) {
 		return
 	}
 	tag, err := Enable()
+	// Linux requires active SMT for core scheduling.
+	// https://github.com/torvalds/linux/blob/fd73f4a66/kernel/sched/core_sched.c#L139-L140
+	if errors.Is(err, unix.ENODEV) {
+		t.Skipf("Core tagging requires active SMT: %v", err)
+	}
 	if err != nil {
 		t.Fatalf("Enable() got error %v, wanted nil", err)
 	}
