@@ -108,7 +108,12 @@ TEST_P(IPv6UDPUnboundExternalNetworkingSocketTest, TestJoinLeaveMulticast) {
                          &group_req, sizeof(group_req)),
               SyscallSucceeds());
 
-  // Set the sender to the loopback interface.
+  // Select loopback explicitly; binding its address does not select the
+  // multicast output interface.
+  const int mcast_idx = lo_if_idx();
+  ASSERT_THAT(setsockopt(sender->get(), IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                         &mcast_idx, sizeof(mcast_idx)),
+              SyscallSucceeds());
   auto sender_addr = V6Loopback();
   ASSERT_THAT(
       bind(sender->get(), AsSockAddr(&sender_addr.addr), sender_addr.addr_len),
