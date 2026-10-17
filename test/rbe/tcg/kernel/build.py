@@ -31,6 +31,11 @@ def main() -> None:
         case _:
             raise SystemExit("Expected one generated configuration path")
     config = json.loads(Path(config_name).read_text())
+    architecture = config["architecture"]
+    defconfig, image_target, image_path = {
+        "x86_64": ("x86_64_defconfig", "bzImage", "arch/x86/boot/bzImage"),
+        "arm64": ("defconfig", "Image", "arch/arm64/boot/Image"),
+    }[architecture]
     root = Path.cwd()
     evidence = root / config["evidence"]
     evidence.mkdir(parents=True, exist_ok=True)
@@ -96,8 +101,11 @@ def main() -> None:
         }
         build = work / "build"
         build.mkdir()
+        # LLVM selects its cross-compilation target from ARCH; the host tools
+        # still use the execution platform's GNU sysroot through HOSTCC.
+        # https://docs.kernel.org/kbuild/llvm.html#cross-compiling
         make = [str(root / config["make"]), "-C", str(source), "O=" + str(build),
-                "ARCH=x86_64", "LLVM=1", "HOSTCC=" + str(tools / "hostcc"),
+                "ARCH=" + architecture, "LLVM=1", "HOSTCC=" + str(tools / "hostcc"),
                 "HOSTLDFLAGS=--ld-path=" + str(root / config["llvm"]["ld.lld"])]
 
         def run(command: list[str], name: str) -> None:
@@ -108,26 +116,32 @@ def main() -> None:
                 sys.stderr.write(log.read_text(errors="replace"))
                 raise subprocess.CalledProcessError(result.returncode, command)
 
-        run([*make, "x86_64_defconfig"], "defconfig")
+        run([*make, defconfig], "defconfig")
         configure = [str(source / "scripts/config"), "--file", str(build / ".config")]
         # KCOV needs compiler instrumentation and a mounted debugfs. The other
         # options provide the existing guest's disks, 9p exports and setup.
         for option in (
             "KCOV", "KCOV_INSTRUMENT_ALL", "KCOV_SELFTEST", "DEBUG_FS",
             "VIRTIO_PCI", "VIRTIO_BLK", "EXT4_FS", "DEVTMPFS", "DEVTMPFS_MOUNT",
-            "NET_9P", "NET_9P_VIRTIO", "9P_FS", "KVM", "KVM_INTEL", "KVM_AMD",
+            "NET_9P", "NET_9P_VIRTIO", "9P_FS", "KVM",
             "NETFILTER", "NETFILTER_XTABLES", "NF_CONNTRACK", "IP_NF_IPTABLES",
             "IP6_NF_IPTABLES", "NETFILTER_XT_MATCH_CONNTRACK",
-        ):
+        ) + {
+            "x86_64": ("KVM_INTEL", "KVM_AMD"),
+            "arm64": ("ARM64_4K_PAGES", "VIRTIO_MMIO", "SERIAL_AMBA_PL011", "SERIAL_AMBA_PL011_CONSOLE"),
+        }[architecture]:
             configure += ["--enable", option]
         configure += ["--disable", "LOCALVERSION_AUTO", "--set-str", "LOCALVERSION", "-gvisor-kcov"]
         run(configure, "configure")
         run([*make, "olddefconfig"], "olddefconfig")
         settings = (build / ".config").read_text().splitlines()
-        for option in ("KCOV", "DEBUG_FS"):
+        required = ("KCOV", "DEBUG_FS")
+        if architecture == "arm64":
+            required += ("ARM64_4K_PAGES",)
+        for option in required:
             if "CONFIG_" + option + "=y" not in settings:
                 raise RuntimeError(f"Kconfig did not enable {option}")
-        run([*make, "-j16", "bzImage", "modules"], "build")
+        run([*make, "-j16", image_target, "modules"], "build")
         release = subprocess.check_output([*make, "-s", "kernelrelease"], env=env, text=True).strip()
         if release != config["release"]:
             raise RuntimeError(f"Kernel release {release!r} != {config['release']!r}")
@@ -141,7 +155,7 @@ def main() -> None:
             (staging / "lib/modules" / release / name).unlink(missing_ok=True)
         boot = staging / "boot"
         boot.mkdir()
-        shutil.copyfile(build / "arch/x86/boot/bzImage", boot / ("vmlinuz-" + release))
+        shutil.copyfile(build / image_path, boot / ("vmlinuz-" + release))
         shutil.copyfile(build / ".config", boot / ("config-" + release))
         shutil.copyfile(build / ".config", evidence / "kernel.config")
         archive = root / config["archive"]

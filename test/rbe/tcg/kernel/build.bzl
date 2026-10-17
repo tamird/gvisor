@@ -39,6 +39,7 @@ def _build_impl(ctx):
         "tar": tar.tarinfo.binary.path,
         "tar_env": tar.tarinfo.default_env,
         "archive": archive.path,
+        "architecture": ctx.attr.architecture,
         "release": ctx.attr.release,
         "evidence": evidence.path,
     }))
@@ -62,6 +63,7 @@ def _build_impl(ctx):
 linux_kernel = rule(
     implementation = _build_impl,
     attrs = {
+        "architecture": attr.string(default = "x86_64", values = ["x86_64", "arm64"]),
         "release": attr.string(mandatory = True),
         "_source": attr.label(default = "@kcov_linux_source//file", allow_single_file = True),
         "_sysroot": attr.label(default = "@kernel_build_deps//:flat", allow_single_file = True, cfg = "exec"),

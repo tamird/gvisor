@@ -129,11 +129,8 @@ tcg_image(
     guest = ":rc_userspace",
     host_tools = "@tcg_host_tools//:flat",
     init = "init.sh",
-    kernel_archives = [
-        "@tcg_arm64_rc_image//:data.tar",
-        "@tcg_arm64_rc_modules//:data.tar",
-    ],
-    kernel_release = "7.3.0-070300rc3-generic",
+    kernel_archives = ["//test/rbe/tcg/kernel:kcov_arm64"],
+    kernel_release = "7.3.0-rc3-gvisor-kcov",
     page_size = 4096,
     tags = ["manual"],
 )

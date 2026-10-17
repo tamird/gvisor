@@ -12,20 +12,33 @@ py_binary(
     main = "build.py",
 )
 
+_EXEC_COMPATIBLE_WITH = [
+    "@platforms//os:linux",
+    "@platforms//cpu:x86_64",
+]
+
+_EXEC_PROPERTIES = {
+    # Explicit compute units keep measured or predicted task sizes from
+    # reducing the resources requested for this parallel kernel build.
+    "EstimatedComputeUnits": "16",
+    "EstimatedMemory": "32GB",
+    "EstimatedFreeDiskBytes": "40GB",
+    "default-timeout": "45m",
+}
+
 linux_kernel(
     name = "kcov",
-    exec_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-    exec_properties = {
-        # Explicit compute units keep measured or predicted task sizes from
-        # reducing the resources requested for this parallel kernel build.
-        "EstimatedComputeUnits": "16",
-        "EstimatedMemory": "32GB",
-        "EstimatedFreeDiskBytes": "40GB",
-        "default-timeout": "45m",
-    },
+    exec_compatible_with = _EXEC_COMPATIBLE_WITH,
+    exec_properties = _EXEC_PROPERTIES,
+    release = "7.3.0-rc3-gvisor-kcov",
+    visibility = ["//test/rbe/tcg:__pkg__"],
+)
+
+linux_kernel(
+    name = "kcov_arm64",
+    architecture = "arm64",
+    exec_compatible_with = _EXEC_COMPATIBLE_WITH,
+    exec_properties = _EXEC_PROPERTIES,
     release = "7.3.0-rc3-gvisor-kcov",
     visibility = ["//test/rbe/tcg:__pkg__"],
 )
