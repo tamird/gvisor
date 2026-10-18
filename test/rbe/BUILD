@@ -282,6 +282,63 @@ go_test(
 )
 
 docker_daemon_config(
+    name = "ollama_small_archive_config",
+    testonly = True,
+    images = ["//test/docker:gpu_ollama_small_source_amd64"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+# One owned daemon loads the archive once for the generic identity check and
+# the real server's list/show checks. No GPU or model inference is required.
+go_test(
+    name = "ollama_model_test",
+    srcs = [
+        "ollama_model_test.go",
+        "source_archive_test.go",
+    ],
+    rundir = ".",
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "ollama_small_archive_load_test",
+    size = "enormous",
+    timeout = "eternal",
+    command = ":ollama_model_test",
+    command_args = [
+        "-test.v",
+        "--archive=$(rootpath //test/docker:gpu_ollama_small_source_amd64)",
+        "--image=gpu/ollama/bench/small",
+        "--ollama-model=snowflake-arctic-embed2:568m-l-fp16",
+        "--ollama-manifest=$(rootpath //images/gpu/ollama/bench:manifests/snowflake-arctic-embed2_568m-l-fp16.json)",
+    ],
+    data = [
+        "//images/gpu/ollama/bench:manifests/snowflake-arctic-embed2_568m-l-fp16.json",
+        "//test/docker:gpu_ollama_small_source_amd64",
+    ],
+    docker_config = ":ollama_small_archive_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "80GB",
+        memory = "12GB",
+        vfs = True,
+    ),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+docker_daemon_config(
     name = "source_archive_config",
     testonly = True,
     images = ["//test/docker:containerd_harness_source_amd64"],
@@ -394,7 +451,7 @@ sh_test(
 # Checks of the source exports. Each action owns a disposable daemon;
 # no container or GPU workload is executed.
 # Stable/Triton archives are 21.7/48.3GB compressed; a prior 80GB worker
-# exhausted disk. Ollama adds about 96GiB of models, with compressed archive
+# exhausted disk. Ollama adds about 92.2GB of models, with compressed archive
 # inputs and expanded Docker layers coexisting during load and verification.
 _SOURCE_ARCHIVES = {
     "ollama_bench": ("gpu/ollama/bench", "gpu_ollama_bench_source_amd64", "512GB"),

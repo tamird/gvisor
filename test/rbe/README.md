@@ -1199,8 +1199,8 @@ uses the ordinary remote executor. Neither archive construction nor loading
 requires a GPU. The cache read uses command-local HTTP/1 after the bounded
 transfer comparison; this does not identify a specific HTTP/2 defect.
 
-The source producer retains network access and disables disk and remote result
-caching because Dockerfile tags and package mirrors are mutable. A cache hit
+The Dockerfile producer retains network access and disables disk and remote
+result caching because Dockerfile tags and package mirrors are mutable. A cache hit
 does not qualify source construction. `//test/rbe:source_image_miss_load_test`
 uses a marked Redis context with the unchanged Dockerfile to exercise a miss;
 its recorded producer log must show the miss and build.
@@ -1215,11 +1215,26 @@ identities without starting application containers. The Ollama benchmark and
 TPU vLLM archives have explicit source targets because Make excludes them from
 its routine image checks.
 
+The Ollama benchmark image instead packages its six checked-in raw model
+manifests with their immutable blobs and the pinned Ollama 0.40.6 server. A
+small repository rule reads only manifest metadata; `crane blob` downloads
+the digest-verified bytes in declared remote actions. Each model is packaged
+by `pkg_tar` directly into a gzip layer, and `oci_image`/`oci_load` supply the
+same archive interface, with an image-digest tag and `latest`. No server runs
+during construction, so the image does not include a generated private key.
+The manual `ollama_small_archive_load_test` uses the smallest existing model,
+checks archive identity, and runs the actual server's list/show commands
+without network access. It qualifies packaging and model discovery, not GPU
+inference. The benchmark remains excluded from routine image cohorts.
+
 Large source builds request 256GB disk and 12GB memory; conversion requests
-80GB disk and 12GB memory. The Ollama benchmark image's models alone occupy
-about 96GiB, so its producer, conversion and load check request 512GB disk for
-coexisting snapshots, archives and expanded layers. TPU vLLM uses the ordinary
-80GB source/conversion allowance and requests 80GB for its load check. These
+80GB disk and 12GB memory. Ollama's raw blobs total 92.2GB. Its largest model's
+packaging action needs raw bytes plus the compressed tar, while the final
+archive needs all compressed input layers plus its output. Docker load also
+keeps a temporary extracted archive beside expanded layers. Its existing
+512GB load request remains a request; the full image is not qualified by a
+small-model pass or by the provider's roughly 200GB root cap. TPU vLLM uses the
+ordinary 80GB source/conversion allowance and requests 80GB for its load check. These
 are requests, not guaranteed capacity or measured source-build requirements.
 Prior large load workers supplied about 198GB on the root filesystem;
 Triton had a separate 49GB workspace and used about 119.5GB at peak on the

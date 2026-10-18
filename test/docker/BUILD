@@ -21,20 +21,17 @@ filegroup(
 
 # Conversion only reads OCI content and writes a compressed Docker archive.
 # Keep it on the ordinary executor used by the completed large-image exports.
-SOURCE_ARCHIVE_EXEC_PROPERTIES = {
-    free_disk: select({
-        "//tools/bazeldefs:rbe": dict(
-            docker_exec_properties(
-                exec_group = "",
-                free_disk = free_disk,
-                memory = "12GB",
-                vfs = True,
-            ).items() + [("workload-isolation-type", "oci")],
-        ),
-        "//conditions:default": {},
-    })
-    for free_disk in ["80GB", "512GB"]
-}
+SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
+    "//tools/bazeldefs:rbe": dict(
+        docker_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ).items() + [("workload-isolation-type", "oci")],
+    ),
+    "//conditions:default": {},
+})
 
 # A context-only marker changes the canonical directory hash without changing
 # the Redis Dockerfile. Its apt RUN exercises the source build on a cache miss.
@@ -56,7 +53,7 @@ source_image_archive(
     name = "redis_source_miss_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     contexts = ":source_image_miss_context",
     exec_compatible_with = [
         "@platforms//os:linux",
@@ -88,7 +85,7 @@ source_image_archive(
     name = "containerd_harness_source_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -108,7 +105,7 @@ source_image_archive(
     name = "moby_source_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -130,7 +127,7 @@ source_image_archive(
         name = name,
         testonly = True,
         architecture = "x86_64",
-        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
@@ -167,13 +164,18 @@ amd64_image_archive(
     tags = ["manual"],
 )
 
-# Force the Ollama Dockerfile build instead of exporting the canonical image
-# cache. The marker does not change the Dockerfile or files it consumes.
-pkg_tar(
-    name = "ollama_source_miss_context",
-    empty_files = ["images/gpu/ollama/bench/.qualification-miss"],
+amd64_image_archive(
+    name = "gpu_ollama_bench_source_amd64",
+    testonly = True,
+    srcs = ["//images/gpu/ollama/bench:image_archive"],
     tags = ["manual"],
-    deps = ["//images:source_contexts"],
+)
+
+amd64_image_archive(
+    name = "gpu_ollama_small_source_amd64",
+    testonly = True,
+    srcs = ["//images/gpu/ollama/bench/small:image_archive"],
+    tags = ["manual"],
 )
 
 # GPU/TPU model images use the source/archive producer for CUDA images.
@@ -183,8 +185,7 @@ pkg_tar(
         name = name,
         testonly = True,
         architecture = "x86_64",
-        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["512GB" if image == "gpu/ollama/bench" else "80GB"],
-        contexts = ":ollama_source_miss_context" if image == "gpu/ollama/bench" else "//images:source_contexts",
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
@@ -192,10 +193,7 @@ pkg_tar(
         exec_properties = docker_test_exec_properties(
             exec_group = "",
             # The measured Triton load used 119.5GB before a builder cache.
-            # Ollama's large model set also needs room for build snapshots and
-            # compressed content while the output is streamed.
             free_disk = {
-                "gpu/ollama/bench": "512GB",
                 "gpu/stable-diffusion-xl": "256GB",
                 "gpu/triton": "256GB",
             }.get(image, "80GB"),
@@ -431,7 +429,7 @@ source_image_archive(
     name = "php_source_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",

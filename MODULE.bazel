@@ -497,6 +497,31 @@ oci.pull(
 )
 use_repo(oci, "source_buildkit", "source_buildkit_linux_amd64", "source_buildkit_linux_arm64")
 
+# Ollama 0.40.6, preserving the benchmark's AMD64 server image.
+oci.pull(
+    name = "ollama_server",
+    digest = "sha256:40c61dbf5091e0b4cc46f406f912fb061cfeca51208f0f7173c87c3b5f795c95",
+    image = "docker.io/ollama/ollama",
+    platforms = ["linux/amd64"],
+)
+use_repo(oci, "ollama_server", "ollama_server_linux_amd64")
+
+# Only these small checked-in manifests are read on Bazel's host. Their blobs
+# are declared execution actions, so model downloads and packaging run on RBE.
+ollama_models = use_repo_rule("//images/gpu/ollama/bench:repositories.bzl", "ollama_models")
+
+ollama_models(
+    name = "ollama_models",
+    manifests = {
+        "//images/gpu/ollama/bench:manifests/snowflake-arctic-embed2_568m-l-fp16.json": "snowflake-arctic-embed2:568m-l-fp16",
+        "//images/gpu/ollama/bench:manifests/gemma2_2b-instruct-fp16.json": "gemma2:2b-instruct-fp16",
+        "//images/gpu/ollama/bench:manifests/sailor2_8b-chat-fp16.json": "sailor2:8b-chat-fp16",
+        "//images/gpu/ollama/bench:manifests/qwen2.5-coder_7b-instruct-q8_0.json": "qwen2.5-coder:7b-instruct-q8_0",
+        "//images/gpu/ollama/bench:manifests/llama2_70b-chat-q4_K_S.json": "llama2:70b-chat-q4_K_S",
+        "//images/gpu/ollama/bench:manifests/llama3.2-vision_11b-instruct-fp16.json": "llama3.2-vision:11b-instruct-fp16",
+    },
+)
+
 # Pin both supported client platforms to the same Alpine release index.
 oci.pull(
     name = "ollama_client_alpine",
