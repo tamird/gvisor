@@ -363,13 +363,14 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
         **kwargs
     )
 
-def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), scratch_gib = 4, **kwargs):
     """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
 
     _guest_test(
         name = name,
         payload = payload,
         image = image,
+        scratch_gib = scratch_gib,
         emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
         tags = tags + ["no-local"],
         exec_properties = {
@@ -378,7 +379,9 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
             # https://github.com/buildbuddy-io/buildbuddy/blob/171043b63/enterprise/server/tasksize_model/tasksize_model.go#L190-L198
             "test.EstimatedComputeUnits": "2",
             "test.EstimatedMemory": "6GB",
-            "test.EstimatedFreeDiskBytes": "8GB",
+            # Normal and recovery output copies can coexist with scratch.
+            # Leave another 8 GiB for declared inputs, root overlay and reports.
+            "test.EstimatedFreeDiskBytes": str((3 * scratch_gib + 8) * 1024 * 1024 * 1024),
             # Bazel's undeclared-output collection requires file and zip.
             "test.container-image": RBE_DOCKER_TOOLS_IMAGE,
             "test.dockerUser": "nobody",

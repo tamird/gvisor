@@ -131,6 +131,31 @@ trap 'host_phase signal_TERM 143; exit 143' TERM
 trap 'host_phase signal_INT 130; exit 130' INT
 mkdir -p "$scratch/input" "$result"
 host_phase host_tools_ready
+if [[ "$machine" == arm64_tcg ]]; then
+  # Inputs are already materialized. Allow for scratch, normal output copies
+  # and interrupted-copy recovery, plus the root overlay and a GiB reserve for
+  # console/filesystem metadata. These are planning allowances, not output caps.
+  root_bytes="$(host_tool usr/bin/stat -c %s "$rootfs")"
+  required_bytes=$((3 * guest_scratch_gib * 1024 * 1024 * 1024 + root_bytes + 64 * 1024 * 1024 + 1024 * 1024 * 1024))
+  for directory in "$scratch" "$TEST_UNDECLARED_OUTPUTS_DIR"; do
+    storage="$(host_tool usr/bin/stat -f -c '%a %S %T' "$directory")"
+    read -r available_blocks block_bytes filesystem <<< "$storage"
+    # build_payload.sh fixes guest filesystem blocks at 4 KiB. Larger host
+    # allocations could expand copied small files beyond the guest disk size.
+    if [[ ! $available_blocks =~ ^[0-9]+$ || ! $block_bytes =~ ^[0-9]+$ ]] || (( block_bytes == 0 || block_bytes > 4096 )); then
+      printf 'Cannot establish guest storage allocation: %s\n' "$directory" >&2
+      exit 1
+    fi
+    available_bytes=$((available_blocks * block_bytes))
+    printf 'Guest host storage: path=%s filesystem=%s block_bytes=%s available_bytes=%s required_bytes=%s\n' \
+      "$directory" "$filesystem" "$block_bytes" "$available_bytes" "$required_bytes" \
+      | tee -a "$TEST_UNDECLARED_OUTPUTS_DIR/host-storage.txt"
+    if (( available_bytes < required_bytes )); then
+      printf 'Insufficient guest host storage before scratch allocation.\n' >&2
+      exit 1
+    fi
+  done
+fi
 if [[ "$machine" == amd64_kvm ]]; then
   # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
   # Select the declared BIOS instead of the host's /usr/share/seabios.
