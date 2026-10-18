@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
   java-common \
   make \
   openjdk-21-jdk \
+  patch \
   unzip \
   zip
 
@@ -29,6 +30,10 @@ RUN set -ex \
  && mkdir /opt/jdk \
  && tar -zxzf /tmp/jdk.tar.gz --strip-components=1 -C /opt/jdk \
  && rm -f /tmp/jdk.tar.gz
+
+# Test disabled PKCS12 support using a private keystore, not Ubuntu's cacerts.
+RUN --mount=type=bind,source=private-keystore.patch,target=/tmp/private-keystore.patch \
+  patch -d /opt/jdk -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/private-keystore.patch
 
 # Install jtreg 7.5.2+1, the minimum required by the matching JDK tests.
 #
