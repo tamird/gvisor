@@ -349,12 +349,13 @@ func checkSyscallRead(msg test.Message) error {
 		// Although negative FD is possible, it doesn't happen in the test.
 		return fmt.Errorf("read negative FD: %d", p.Fd)
 	}
-	if p.HasOffset {
-		// Workload always uses 20 for read offsets (account for partial reads).
+	if p.HasOffset && strings.HasSuffix(p.FdPath, "/read-write.txt") {
+		// runReadWrite uses 20 for read offsets (account for partial reads).
+		// Other files, such as shared libraries, can be read at any offset.
 		if lower, upper := int64(20), int64(120); p.Offset < lower || p.Offset > upper {
 			return fmt.Errorf("invalid offset, got: %d, want: [%d, %d]", p.Offset, lower, upper)
 		}
-	} else if p.Offset != 0 {
+	} else if !p.HasOffset && p.Offset != 0 {
 		return fmt.Errorf("offset should be 0: %+v", &p)
 	}
 	if p.Flags != 0 && p.Flags != unix.RWF_HIPRI {
@@ -375,12 +376,12 @@ func checkSyscallWrite(msg test.Message) error {
 		// Although negative FD is possible, it doesn't happen in the test.
 		return fmt.Errorf("write negative FD: %d", p.Fd)
 	}
-	if p.HasOffset {
-		// Workload always uses 10 for write offsets (account for partial writes).
+	if p.HasOffset && strings.HasSuffix(p.FdPath, "/read-write.txt") {
+		// runReadWrite uses 10 for write offsets (account for partial writes).
 		if lower, upper := int64(10), int64(110); p.Offset < lower || p.Offset > upper {
 			return fmt.Errorf("invalid offset, got: %d, want: [%d, %d]", p.Offset, lower, upper)
 		}
-	} else if p.Offset != 0 {
+	} else if !p.HasOffset && p.Offset != 0 {
 		return fmt.Errorf("offset should be 0: %+v", &p)
 	}
 	if p.Flags != 0 && p.Flags != unix.RWF_HIPRI {
