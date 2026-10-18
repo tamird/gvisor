@@ -1300,6 +1300,25 @@
     - LGPL-3.0
     - LGPL-3.0-or-later
     - MIT
+- dependency: apt/kernel_build_deps/amd64/libuuid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-18"
+  commit: ""
+  sha256: 97eaa1090c2e7ddaad55d58f9d0d7907d64b70f89228405d68a7ce7d56a89d67
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/kernel_build_deps/amd64/libzstd1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libz/libzstd/libzstd1_1.4.8+dfsg-3build1_amd64.deb
   retrieved: "2026-10-17"
@@ -1474,6 +1493,25 @@
     - GPL-2.0-or-later
     - GPL-3.0
     - GPL-3.0-or-later
+- dependency: apt/kernel_build_deps/amd64/uuid-dev
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/uuid-dev_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-18"
+  commit: ""
+  sha256: bca1cd5ca6b3be8b5d6498fe80b2cb7e2b63040adda7ff40b9ca26eecb825f58
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
 - dependency: apt/kernel_build_deps/amd64/xz-utils
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/x/xz-utils/xz-utils_5.2.5-2ubuntu1.1_amd64.deb
   retrieved: "2026-10-17"
