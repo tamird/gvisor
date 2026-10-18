@@ -868,6 +868,12 @@ exceptions:
       - LGPL-3.0-or-later
       - MIT
     exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/libuuid1
+    license: *apt_libuuid1_licenses
+    exception_rationale: &apt_kernel_selftest_uuid_rationale >-
+      Used only in the upstream Linux KVM selftest build sysroot, not in
+      gVisor release artifacts. These are the same pinned UUID packages
+      already used by apt/qemu_build_deps.
   - dependency: apt/kernel_build_deps/amd64/libzstd1
     license:
       - BSD-3-Clause
@@ -1000,6 +1006,9 @@ exceptions:
       - GPL-3.0
       - GPL-3.0-or-later
     exception_rationale: *apt_kernel_build_deps_rationale
+  - dependency: apt/kernel_build_deps/amd64/uuid-dev
+    license: *apt_libuuid1_licenses
+    exception_rationale: *apt_kernel_selftest_uuid_rationale
   - dependency: apt/kernel_build_deps/amd64/xz-utils
     license:
       - FSFULLR
