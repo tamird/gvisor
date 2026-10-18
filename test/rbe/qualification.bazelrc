@@ -13,5 +13,10 @@
 # limitations under the License.
 
 common --lockfile_mode=error
+# Include underlying remote upload errors, not just the outer artifact digest.
+build:buildbuddy_remote_executor --verbose_failures
+# Large OCI inputs exceed the default 60-second cache-write deadline.
+# https://www.buildbuddy.io/docs/troubleshooting-rbe/
+build:buildbuddy_remote_executor --remote_timeout=10m
 build:buildbuddy_remote_executor --remote_download_outputs=minimal
 build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$

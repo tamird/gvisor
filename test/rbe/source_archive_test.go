@@ -128,6 +128,7 @@ func TestSourceArchiveLoad(t *testing.T) {
 	var loaded []struct {
 		ID       string `json:"Id"`
 		RepoTags []string
+		Size     int64
 		RootFS   struct{ Layers []string }
 	}
 	if err := json.Unmarshal(output, &loaded); err != nil {
@@ -137,6 +138,7 @@ func TestSourceArchiveLoad(t *testing.T) {
 		t.Fatalf("loaded images = %d, want %d", got, want)
 	}
 	for i, actual := range loaded {
+		t.Logf("Loaded %s: expanded image size=%d bytes", image.RepoTags[i], actual.Size)
 		if got, want := actual.ID, configID; got != want {
 			t.Errorf("tag %q config = %q, want %q", image.RepoTags[i], got, want)
 		}

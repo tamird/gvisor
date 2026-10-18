@@ -163,7 +163,21 @@ amd64_image_archive(
     tags = ["manual"],
 )
 
-# Other runtime GPU images use the source/archive producer for CUDA images.
+amd64_image_archive(
+    name = "gpu_ollama_bench_source_amd64",
+    testonly = True,
+    srcs = ["//images/gpu/ollama/bench:image_archive"],
+    tags = ["manual"],
+)
+
+amd64_image_archive(
+    name = "gpu_ollama_small_source_amd64",
+    testonly = True,
+    srcs = ["//images/gpu/ollama/bench/small:image_archive"],
+    tags = ["manual"],
+)
+
+# GPU/TPU model images use the source/archive producer for CUDA images.
 # Source builds require a disposable namespace-capable worker; no GPU test runs.
 [
     source_image_archive(
@@ -178,11 +192,10 @@ amd64_image_archive(
         exec_properties = docker_test_exec_properties(
             exec_group = "",
             # The measured Triton load used 119.5GB before a builder cache.
-            # Large source builds also retain compressed content and snapshots.
-            free_disk = "256GB" if image in [
-                "gpu/stable-diffusion-xl",
-                "gpu/triton",
-            ] else "80GB",
+            free_disk = {
+                "gpu/stable-diffusion-xl": "256GB",
+                "gpu/triton": "256GB",
+            }.get(image, "80GB"),
             memory = "12GB",
             start_daemon = True,
             vfs = True,

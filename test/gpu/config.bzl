@@ -1,7 +1,7 @@
 """Declared GPU/TPU source images and public GPU runtime cohorts."""
 
-# Dockerfile contexts retain images.mk's source hashing. The Ollama client
-# is assembled directly by its OCI target and keeps the same consumer label.
+# Dockerfile contexts retain images.mk's source hashing. The Ollama client and
+# benchmark image use OCI targets and keep their existing consumer labels.
 GPU_SOURCE_IMAGES = {
     "gpu_nccl_source_amd64": "gpu/nccl-tests",
     "gpu_ollama_source_amd64": "gpu/ollama",

@@ -93,7 +93,6 @@ pkg_tar(
         "fuse/gcs/run_test.sh": "0755",
         "gpu/cuda-tests-12-8/run_smoke.sh": "0755",
         "gpu/cuda-tests/run_smoke.sh": "0755",
-        "gpu/ollama/bench/pull.sh": "0755",
         "jekyll/build.sh": "0755",
     },
     package_dir = "images",
