@@ -5,6 +5,7 @@ still report completed benchmarks as "No pass/skip/fail event found for test".
 This local candidate can be removed once rules_go releases an equivalent fix.
 Source: https://github.com/bazel-contrib/rules_go/blob/v0.64.2/go/tools/bzltestutil/xml.go
 
+diff --git a/go/tools/bzltestutil/xml.go b/go/tools/bzltestutil/xml.go
 --- a/go/tools/bzltestutil/xml.go
 +++ b/go/tools/bzltestutil/xml.go
 @@ -21,6 +21,7 @@
@@ -119,6 +120,7 @@ Source: https://github.com/bazel-contrib/rules_go/blob/v0.64.2/go/tools/bzltestu
  		switch c.state {
  		case "skip":
  			suite.Skipped++
+diff --git a/go/tools/bzltestutil/xml_test.go b/go/tools/bzltestutil/xml_test.go
 --- a/go/tools/bzltestutil/xml_test.go
 +++ b/go/tools/bzltestutil/xml_test.go
 @@ -16,6 +16,8 @@
