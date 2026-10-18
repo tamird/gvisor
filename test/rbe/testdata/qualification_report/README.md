@@ -23,6 +23,11 @@ capture owner uses each `testResult`'s original reports.
   events and native exit 1. Both configured owners finish through `NO_BUILD`,
   with no analysis failure or execution. The test checks this complete pattern
   and rejects missing owners, other aborts, and unrelated nonzero exits.
+* `aspect-analysis`: run 39111747901 successfully analyzed the standalone TUN
+  target and its ClangTidy aspect. The shared owner parser rejected their
+  distinct events as duplicate targets, so no lint action executed. These
+  unchanged analysis events test that distinction; build-verdict variants
+  replace `NO_BUILD` with explicit success/failure or missing completions.
 * `filtered-save`: invocation e1d9f7dd-28c6-4cab-a212-9cb84868a94a built
   `32bit_test_native` but its `save_restore` filter executed only
   `32bit_test_runsc_systrap_directfs_save`. Both remain in the actual BEP.

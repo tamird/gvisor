@@ -178,6 +178,7 @@ def test_requirements(
 class ConfiguredTarget:
     tags: list[str]
     configuration: str
+    aspects: tuple[str, ...] = ()
 
 
 def configured_targets(
@@ -186,6 +187,7 @@ def configured_targets(
 ) -> dict[str, ConfiguredTarget]:
     """Read successful analysis roots; tests=None includes both target kinds."""
     targets: dict[str, ConfiguredTarget] = {}
+    aspects: dict[tuple[str, str], list[str]] = {}
     skipped: set[tuple[str, str]] = set()
     no_build: set[tuple[str, str]] = set()
     all_configured: set[tuple[str, str]] = set()
@@ -214,7 +216,8 @@ def configured_targets(
                     and isinstance(checksum := configuration.get("id"), str)
                 ):
                     raise ValueError(f"Invalid no-build identity: {event}")
-                no_build.add((label, checksum))
+                if not completed.get("aspect"):
+                    no_build.add((label, checksum))
             elif aborted.get("reason") != "SKIPPED":
                 invalid_abort = True
         if isinstance(aborted := event.get("aborted"), dict) and aborted.get("reason") == "SKIPPED":
@@ -225,7 +228,8 @@ def configured_targets(
                 and isinstance(checksum := configuration.get("id"), str)
             ):
                 raise ValueError(f"Invalid skipped target identity: {event}")
-            skipped.add((label, checksum))
+            if not completed.get("aspect"):
+                skipped.add((label, checksum))
         if "targetConfigured" not in event_id:
             continue
         identity = event_id["targetConfigured"]
@@ -248,16 +252,29 @@ def configured_targets(
                 isinstance(child, dict)
                 and isinstance(completed := child.get("targetCompleted"), dict)
                 and completed.get("label") == label
+                and completed.get("aspect", "") == identity.get("aspect", "")
                 and isinstance(configuration := completed.get("configuration"), dict)
                 and isinstance(checksum := configuration.get("id"), str)
             ):
                 configurations.append(checksum)
-        if len(configurations) != 1 or label in targets:
-            raise ValueError(f"Ambiguous top-level test identity: {event}")
+        if len(configurations) != 1:
+            raise ValueError(f"Ambiguous top-level target identity: {event}")
+        # An aspect is a separate build obligation, not another selected root.
+        # Retain its name for the reporter's independent expected selection.
+        if aspect := identity.get("aspect"):
+            names = aspects.setdefault((label, configurations[0]), [])
+            if not isinstance(aspect, str) or aspect in names:
+                raise ValueError(f"Invalid or duplicate configured aspect: {event}")
+            names.append(aspect)
+            continue
+        if label in targets:
+            raise ValueError(f"Ambiguous top-level target identity: {event}")
         all_configured.add((label, configurations[0]))
         if tests is not None and ("testSize" in configured) != tests:
             continue
         targets[label] = ConfiguredTarget(tags, configurations[0])
+    if orphaned := aspects.keys() - all_configured:
+        raise ValueError(f"Configured aspects have no matching ordinary root: {sorted(orphaned)}")
     for label, checksum in sorted(skipped):
         if (target := targets.get(label)) is not None and target.configuration == checksum:
             del targets[label]
@@ -282,7 +299,9 @@ def configured_targets(
         )
     if not succeeded or not targets:
         raise ValueError(f"Expected successful, nonempty target analysis: {events_path}")
-    return targets
+    return {label: ConfiguredTarget(target.tags, target.configuration,
+                                    tuple(aspects.get((label, target.configuration), ())))
+            for label, target in targets.items()}
 
 
 def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:

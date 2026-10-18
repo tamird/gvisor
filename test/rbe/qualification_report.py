@@ -125,6 +125,17 @@ class Owner:
 
 
 @dataclass(frozen=True, order=True)
+class Aspect:
+    owner: Owner
+    name: str
+
+    @classmethod
+    def parse(cls, raw: object) -> Aspect:
+        value = mapping(raw)
+        return cls(Owner.parse(value), string(value.get("aspect")))
+
+
+@dataclass(frozen=True, order=True)
 class Attempt:
     owner: Owner
     run: int
@@ -545,6 +556,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     configured: set[Owner] = set()
     announced: set[Attempt] = set()
     completed: dict[Owner, bool] = {}
+    aspects: set[Aspect] = set()
+    completed_aspects: dict[Aspect, bool] = {}
     results: dict[Attempt, dict[str, object]] = {}
     summaries: dict[Owner, dict[str, object]] = {}
     finished: dict[str, object] = {}
@@ -558,12 +571,25 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 if "configured" in event:
                     details = mapping(event["configured"])
                     if details.get("targetKind") != "test_suite rule" and (not testing or "testSize" in details):
-                        configured.update(Owner.parse(child["targetCompleted"]) for child in children if "targetCompleted" in child)
+                        configured.update(Owner.parse(child["targetCompleted"]) for child in children
+                                          if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
+                for child in children:
+                    if "targetCompleted" in child and mapping(child["targetCompleted"]).get("aspect"):
+                        aspects.add(Aspect.parse(child["targetCompleted"]))
                 if "aborted" in event and mapping(event["aborted"]).get("reason") == "SKIPPED" and "targetCompleted" in identity:
-                    skipped_owners.add(Owner.parse(identity["targetCompleted"]))
+                    if not mapping(identity["targetCompleted"]).get("aspect"):
+                        skipped_owners.add(Owner.parse(identity["targetCompleted"]))
                 announced.update(Attempt.parse(child["testResult"]) for child in children if "testResult" in child)
                 if "completed" in event:
-                    completed[Owner.parse(identity.get("targetCompleted"))] = mapping(event["completed"]).get("success") is True
+                    completion = mapping(identity.get("targetCompleted"))
+                    success = mapping(event["completed"]).get("success") is True
+                    if completion.get("aspect"):
+                        aspect = Aspect.parse(completion)
+                        if aspect in completed_aspects:
+                            raise ValueError(f"Duplicate aspect completion: {aspect}")
+                        completed_aspects[aspect] = success
+                    else:
+                        completed[Owner.parse(completion)] = success
                 if "testResult" in event:
                     attempt = Attempt.parse(identity.get("testResult"))
                     if attempt in results:
@@ -583,6 +609,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     configured -= skipped_owners
     labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
     expected: set[Owner] = set()
+    expected_aspects: set[Aspect] = set()
     for analysis in expected_analysis:
         try:
             targets = unit_matrix.configured_targets(
@@ -590,10 +617,14 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 allow_test_no_build=info["bazel_command"] == "test",
             )
             expected.update(Owner(label, target.configuration) for label, target in targets.items())
+            expected_aspects.update(Aspect(Owner(label, target.configuration), name)
+                                    for label, target in targets.items() for name in target.aspects)
         except (OSError, ValueError) as error:
             errors.append(f"Expected analysis: {error}")
     if info["command_kind"] in ("test", "benchmark", "build") and not expected_analysis and not labels:
         errors.append("No independent expected selection was retained")
+    if not expected_analysis:
+        expected_aspects = set(aspects)
     if labels and expected and labels != {owner.label for owner in expected}:
         errors.append("Expected labels differ from selected analysis leaves")
     if not expected:
@@ -627,6 +658,18 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     missing.extend({"label": label, "configuration": None, "reason": "expected owner not configured"}
                    for label in sorted(labels - {owner.label for owner in expected}))
     failures: list[dict[str, object]] = [{**asdict(owner), "reason": "target build failed"} for owner, ok in sorted(completed.items()) if not ok]
+    if info["command_kind"] != "analysis":
+        aspects = {aspect for aspect in aspects if aspect.owner not in skipped_owners}
+        if expected_analysis:
+            different_aspects = expected_aspects - aspects if testing else aspects ^ expected_aspects
+            if different_aspects:
+                errors.append(f"Configured aspects differ from expected: {sorted(different_aspects)}")
+        missing.extend({**asdict(aspect.owner), "aspect": aspect.name, "reason": "aspect completion missing"}
+                       for aspect in sorted((aspects | expected_aspects) - completed_aspects.keys()))
+        if completed_aspects.keys() - aspects:
+            errors.append("Unannounced aspect completions")
+        failures.extend({**asdict(aspect.owner), "aspect": aspect.name, "reason": "aspect build failed"}
+                        for aspect, ok in sorted(completed_aspects.items()) if not ok)
     cases: Counter[str] = Counter()
     observations: list[dict[str, object]] = []
     owner_cases: Counter[Owner] = Counter()
@@ -722,6 +765,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "errors": errors, "failures": failures,
             "expected_labels": sorted(labels or {owner.label for owner in expected}),
             "expected": [asdict(owner) for owner in sorted(expected)], "executed": observations,
+            "expected_aspects": [{**asdict(aspect.owner), "aspect": aspect.name} for aspect in sorted(expected_aspects)],
+            "completed_aspects": [{**asdict(aspect.owner), "aspect": aspect.name, "success": ok}
+                                  for aspect, ok in sorted(completed_aspects.items())],
             "missing": missing, "skips": skips, "case_counts": dict(cases),
             "benchmark_manifest": benchmark_evidence,
             "zero_case_owners": [asdict(owner) for owner, count in sorted(owner_cases.items()) if count == 0],
@@ -842,10 +888,14 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
     for raw in sequence(producer["invocations"]):
         row = mapping(raw)
         verdict = mapping(row["verdict"])
-        invocations.append({"path": row["path"], **{key: verdict[key] for key in (
+        invocation = {"path": row["path"], **{key: verdict[key] for key in (
             "source", "status", "command_kind", "native_exit", "capture_exit", "accepted_analysis_exit",
             "errors", "execution_finished_at", "bep_finish", "verdict_available_at",
-        )}})
+        )}}
+        for key in ("expected_aspects", "completed_aspects"):
+            if key in verdict:
+                invocation[key] = verdict[key]
+        invocations.append(invocation)
     return {**result, "artifact": {"path": str(artifact), **identity},
             "expected_labels": labels, "expected_owner_count": len(expected),
             "executed_attempt_count": len(sequence(producer["executed"])), "invocations": invocations,
