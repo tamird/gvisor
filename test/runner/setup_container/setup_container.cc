@@ -13,7 +13,9 @@
 // limitations under the License.
 
 // The libc interface declarations must precede the Linux compatibility header.
+// clang-format off
 #include <net/if.h>
+// clang-format on
 
 #include <arpa/inet.h>
 #include <linux/capability.h>
