@@ -11,13 +11,15 @@ RUN apt-get update && apt-get install -y \
   unzip \
   zip
 
-# Download the JDK source which contains the tests.
+# Match the JDK tests to the installed package, including security updates.
 # Proctor expects this to be in /root/jdk.
 WORKDIR /root
 RUN set -ex \
- && curl -fsSL --retry 10 -o /tmp/jdk.tar.gz https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.3-ga.tar.gz \
- && tar -zxzf /tmp/jdk.tar.gz \
- && mv jdk21u-jdk-21.0.3-ga /root/jdk \
+ && jdk_version="$(dpkg-query --show --showformat='${source:Upstream-Version}' openjdk-21-jdk)" \
+ && test -n "$jdk_version" \
+ && curl -fsSL --retry 10 -o /tmp/jdk.tar.gz "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-${jdk_version}.tar.gz" \
+ && mkdir /root/jdk \
+ && tar -zxzf /tmp/jdk.tar.gz --strip-components=1 -C /root/jdk \
  && rm -f /tmp/jdk.tar.gz
 
 # Install jtreg 7.4 and add to PATH.
