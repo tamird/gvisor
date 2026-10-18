@@ -347,6 +347,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns) == 0 ]]
       fi
+      if [[ $qualification_root_bazel == true ]]; then
+        # Private Docker daemons use legacy iptables inside their namespaces.
+        # Load the table modules on the host before entering those namespaces.
+        sudo -n modprobe iptable_filter
+        sudo -n modprobe iptable_nat
+      fi
       if [[ ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-resume || ${lanes[*]} == syscalls-kvm ]]; then
         # The maintained rtnetlink syscall owners invoke ip and OpenBSD nc.
         sudo -n apt-get update
