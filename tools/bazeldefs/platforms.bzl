@@ -84,7 +84,13 @@ def namespace_test_exec_properties(user = "root", image = None, memory = None):
         properties["test.container-image"] = image
     if memory != None:
         properties["test.EstimatedMemory"] = memory
+    cgroup_properties = dict(properties)
+    if user != "root":
+        # Mount controllers as root, then restore the test's requested identity.
+        cgroup_properties["test.dockerUser"] = "root"
+        cgroup_properties["test.env-overrides"] = "GVISOR_CGROUP_TEST_USER=" + user
     return select({
+        Label("//tools/bazeldefs:rbe_cgroup_v1"): cgroup_properties,
         Label("//tools/bazeldefs:rbe"): properties,
         "//conditions:default": {},
     })
