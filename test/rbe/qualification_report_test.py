@@ -757,6 +757,61 @@ signal.pause()
         self.assertEqual(value["invocations"], [])
         self.assertEqual((value["native_exit"], value["runner_exit"]), (None, 19))
 
+    def artifact(self, invocation: Path) -> tuple[Path, dict[str, object]]:
+        self.capture(invocation)
+        value = self.verdict(invocation)
+        bundle = self.root / "qualification.tar.gz"
+        producer = report.bundle(self.evidence, value["native_exit"], value["capture_exit"], bundle)
+        artifact = self.root / "artifact.zip"
+        with zipfile.ZipFile(artifact, "w") as archive:
+            archive.write(bundle, "qualification.tar.gz")
+            archive.write(self.evidence / "verdict.json", "qualification/verdict.json")
+        return artifact, producer
+
+    def test_receipt_preserves_retained_outcomes(self) -> None:
+        for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"),
+                             ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):
+            with self.subTest(name=name):
+                invocation = self.fixture("pass" if name == "all-skipped" else name)
+                if name == "all-skipped":
+                    (invocation / "test.xml").write_text(
+                        '<testsuite><testcase name="unavailable"><skipped>environment</skipped></testcase></testsuite>')
+                artifact, producer = self.artifact(invocation)
+                digest = report.file_record(artifact)["sha256"]
+                output = self.root / "receipt.json"
+                command = subprocess.run(
+                    [sys.executable, report.__file__, "receipt", "--artifact", str(artifact),
+                     "--sha256", "sha256:" + digest, "--expected-source", producer["sources"][0],
+                     "--output", str(output)], capture_output=True, text=True, check=False)
+                self.assertEqual(command.returncode, int(status != "PASS"), command.stderr)
+                self.assertEqual(command.stdout.strip(), f"{status}: {output}")
+                value = report.read_json(output)
+                for key in ("status", "case_counts", "failures", "missing", "skips", "zero_case_owners",
+                            "all_skipped_owners", "native_exits", "verdict_available_at"):
+                    self.assertEqual(value[key], producer[key], key)
+                self.assertEqual(value["invocations"][0]["errors"], producer["invocations"][0]["verdict"]["errors"])
+                self.assertEqual(value["expected_owner_count"], len(producer["expected"]))
+                self.assertEqual(value["executed_attempt_count"], len(producer["executed"]))
+                self.assertGreaterEqual(report.timestamp(value["consumer_verified_at"]),
+                                        report.timestamp(value["verdict_available_at"]))
+                self.assertEqual(value["invocations"][0]["execution_finished_at"],
+                                 producer["invocations"][0]["verdict"]["execution_finished_at"])
+                shutil.rmtree(invocation)
+
+    def test_receipt_rejects_wrong_artifact_source_and_targets(self) -> None:
+        artifact, producer = self.artifact(self.fixture())
+        digest = report.file_record(artifact)["sha256"]
+        source = producer["sources"][0]
+        targets = [row["label"] for row in producer["expected"]]
+        self.assertEqual(report.receipt(artifact, digest, source, targets)["status"], "PASS")
+        for sha256, commit, labels, message in (
+            ("0" * 64, source, targets, "Artifact SHA256"),
+            (digest, "0" * 40, targets, "Producer sources"),
+            (digest, source, ["//wrong:target"], "Producer target labels"),
+        ):
+            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+                report.receipt(artifact, sha256, commit, labels)
+
     def test_bundle_command_logs_recoverable_archive_identity(self) -> None:
         invocation = self.fixture()
         self.capture(invocation)

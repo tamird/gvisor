@@ -78,6 +78,25 @@ separate timestamps. Interrupted report collection can be resumed with
 copies matching the previous manifest are reused. The report tool does not
 rerun tests.
 
+Authenticate a downloaded GitHub Actions artifact using its digest from the
+GitHub API and the source and optional exact target labels from the submission:
+
+```sh
+python3 test/rbe/qualification_report.py receipt \
+  --artifact "$artifact_zip" --sha256 "$github_artifact_digest" \
+  --expected-source "$source_commit" --target //pkg/sync:sync_test \
+  --output "$receipt_json"
+```
+
+This reads the existing `qualification/verdict.json` directly from the ZIP;
+it does not unpack the evidence archive or reconcile reports again. The receipt
+retains the producer's status, failures, skips and coverage gaps, including
+zero-case and all-skipped owners. Its `consumer_verified_at` is separate from
+the producer's `verdict_available_at` and each invocation's original
+`execution_finished_at` and `bep_finish` timestamps. A verified FAIL or
+INCOMPLETE result writes a receipt and exits nonzero; an identity mismatch
+rejects the artifact.
+
 Benchmark-only Go runs use an explicit opt-in, rather than named-test coverage.
 For `actions.sh` with the explicit `test` lane, set
 `QUALIFICATION_BENCHMARK_MANIFEST` to a JSON file and select the exact owner
