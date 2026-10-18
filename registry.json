@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T07:52:51.940904+00:00",
+    "updatedAt": "2026-10-18T08:03:48.843129+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5217,8 +5217,8 @@
         "owner": "root",
         "disposition": "Current core netip, PGO and release checks complete; image/GPU gaps remain",
         "sourceHead": "d1632be77d0f61cdeb46fba7144248eda6451b3a",
-        "observedAt": "2026-10-18T07:18:30.622976+00:00",
-        "nextAction": "Hostinet owns the corrected Ollama export failure diagnosis. Preserve the separate Triton provider and physical GPU gaps plus original intermittent RC failures. Existing source-bound qualifications remain distinct; contributor review and upstream prerequisite decisions are unchanged.",
+        "observedAt": "2026-10-18T08:03:48.843129+00:00",
+        "nextAction": "Hostinet owns the small export-failure diagnostic; metric is preparing the OCI model-layer prototype for source review. Preserve separate Triton provider and physical GPU gaps plus original intermittent RC failures. Existing source-bound qualifications and upstream contributor/prerequisite decisions remain unchanged.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39079735870",
           "https://github.com/tamird/gvisor/commit/7c1352a4fdf18933abac496bfa28cd14f97ae9bc",
@@ -10306,13 +10306,14 @@
         "owner": "hostinet_delivery",
         "disposition": "agent-owned export diagnosis",
         "sourceHead": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
-        "observedAt": "2026-10-18T06:45:30.959530+00:00",
-        "nextAction": "Preserve the full image run FAIL and investigate BuildKit cancellation using retained evidence. The independent version correction has passed client/source-model checks; contributor review has not been requested in the available record.",
+        "observedAt": "2026-10-18T08:03:48.843129+00:00",
+        "nextAction": "The independent version correction passes client and source-model checks. Preserve the large-image export failures. Validate the small daemon-capture correction and the separate smallest-model OCI prototype before any larger run; contributor review has not been requested in the available record.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
           "https://github.com/tamird/gvisor/actions/runs/39100061447",
           "https://github.com/tamird/gvisor/actions/runs/39102370765",
-          "https://github.com/tamird/gvisor/actions/runs/39102380735"
+          "https://github.com/tamird/gvisor/actions/runs/39102380735",
+          "https://github.com/tamird/gvisor/actions/runs/39104843051"
         ]
       }
     }
@@ -17612,8 +17613,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T07:52:51.940904+00:00",
-      "summary": "Fresh TPU vLLM source construction and loading pass. Updating Ollama to 0.40.6 resolves the model-registry HTTP 412: all six source model downloads now complete, and client compilation/Nogo pass. The corrected image run then fails during OCI tar export with truncation/context cancellation before archive/load execution. The owner is investigating that separate export failure. Original timeout and 0.5.1 failures remain retained; Triton recovery and physical GPU execution remain separate gaps.",
+      "updatedAt": "2026-10-18T08:03:48.843129+00:00",
+      "summary": "Fresh TPU source construction and loading pass. Ollama 0.40.6 fixes the model-registry rejection, but its diagnostic run still fails during OCI export after all six pulls and compression; no archive/load case executes. The owner is validating corrected daemon capture with a small deliberate failure. A separate remote model-layer prototype is authorized, starting with the smallest model and measured storage use. Triton recovery and physical GPU execution remain separate gaps.",
       "findings": [
         {
           "text": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
@@ -17674,9 +17675,26 @@
               "url": "https://github.com/tamird/gvisor/commit/ce36fa1723339982b07d8df332c60be918150cc8"
             }
           ]
+        },
+        {
+          "text": "The ce36fa1723 diagnostic ended FAIL at 07:52:33 UTC on October 18 after all six model pulls and compression completed. The OCI stream was canceled before archive/load execution. Daemon capture looked for a mixed-case container name, whereas Buildx lowercased it; the missed lookup does not establish that the builder was absent. A separate lowercase-name correction is being checked with a deliberately failing Redis build, which must retain its original failure. No new full-image retry is running.",
+          "evidence": [
+            {
+              "label": "Ollama export diagnostic (failed)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39104843051"
+            },
+            {
+              "label": "Small deliberate-failure diagnostic",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39109921201"
+            },
+            {
+              "label": "Canonical builder identity and bounded diagnostics",
+              "url": "https://github.com/tamird/gvisor/commit/894473a714067ed1317176b2c6f18a899b648200"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate the corrected Ollama image’s export cancellation through retained BuildKit evidence. Do not claim archive/load or GPU execution. For Triton, follow existing BuildBuddy #13789; no new full retry is justified by the current evidence.",
+      "nextStep": "Complete the small builder-failure diagnostic, then review and validate the smallest-model OCI prototype using SHA-verified remote downloads, canonical manifests and existing pkg_tar/oci_image rules. A six-model run depends on measured storage headroom. Preserve the failed large exports; no third full BuildKit run is planned. Follow existing BuildBuddy #13789 for Triton; physical GPU inference remains unverified.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
