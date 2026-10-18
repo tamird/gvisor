@@ -19,8 +19,12 @@ _RUNTIMES = {
     "java21": dict(
         batch = 100,
         exclude_file = "exclude/java21.csv",
+        ipv6 = True,
         lang = "java",
+        native_reference = True,
         partitions = 40,
+        proctor_privileged = False,
+        proctor_user = "",
         shard_count = most_shards,
         source_archive = "//test/docker:java_source_amd64",
     ),

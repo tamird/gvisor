@@ -26,7 +26,7 @@ import (
 var javaExclDirs = regexp.MustCompile(`(^(sun\/security)|(java\/util\/stream)|(java\/time)| )`)
 
 // Location of java tests.
-const javaTestDir = "/root/jdk/test/jdk"
+const javaTestDir = "/opt/jdk/test/jdk"
 
 // javaRunner implements TestRunner for Java.
 type javaRunner struct{}
@@ -37,6 +37,7 @@ var _ TestRunner = javaRunner{}
 func (javaRunner) ListTests() ([]string, error) {
 	args := []string{
 		"-dir:" + javaTestDir,
+		"-nativepath:/opt/jdk-native",
 		"-ignore:quiet",
 		"-a",
 		"-listtests",
@@ -64,12 +65,13 @@ func (javaRunner) ListTests() ([]string, error) {
 func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
 	args := append(
 		[]string{
-			"-agentvm",            // Execute each action using a pool of reusable JVMs.
-			"-dir:" + javaTestDir, // Base directory for test files and directories.
-			"-noreport",           // Do not generate /root/JTreport/html/report.html.
-			"-timeoutFactor:5",    // Extend the default timeout (2 min) of all tests by this factor.
-			"-verbose:all",        // Verbose output.
-			"-tl:200",             // Do not run tests which specify a timeout longer than 200s.
+			"-agentvm",                    // Execute each action using a pool of reusable JVMs.
+			"-dir:" + javaTestDir,         // Base directory for test files and directories.
+			"-nativepath:/opt/jdk-native", // Matching installed JDK native test libraries.
+			"-noreport",                   // Do not generate the HTML report.
+			"-timeoutFactor:5",            // Extend the default timeout (2 min) of all tests by this factor.
+			"-verbose:all",                // Verbose output.
+			"-tl:200",                     // Do not run tests which specify a timeout longer than 200s.
 		},
 		tests...,
 	)

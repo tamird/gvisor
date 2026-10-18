@@ -39,6 +39,8 @@ import (
 type ProctorSettings struct {
 	// Runner is the host runfiles path to the proctor binary to copy into the container.
 	Runner string
+	// ExecOpts controls the identity and working directory of discovery and tests.
+	ExecOpts dockerutil.ExecOpts
 	// Privileged enables privileged mode for the container.
 	Privileged bool
 	// CapAdd is the list of capabilities to add to the container.
@@ -178,7 +180,7 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 		panic("TIMEOUT: Unable to get a list of tests")
 	}()
 	// Get a list of all tests in the image.
-	list, err := d.Exec(ctx, dockerutil.ExecOpts{Privileged: true, User: "0"}, containerProctor, "--runtime", lang, "--list")
+	list, err := d.Exec(ctx, proctorSettings.ExecOpts, containerProctor, "--runtime", lang, "--list")
 	if err != nil {
 		return nil, fmt.Errorf("docker exec failed: %w\n%s", err, list)
 	}
@@ -250,7 +252,7 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 						fmt.Sprintf("--timeout=%s", timeout-time.Since(startTime)),
 					}
 					argv = append(argv, proctorSettings.ToArgs()...)
-					output, err = d.Exec(ctx, dockerutil.ExecOpts{Privileged: true, User: "0"}, argv...)
+					output, err = d.Exec(ctx, proctorSettings.ExecOpts, argv...)
 					close(done)
 				}()
 

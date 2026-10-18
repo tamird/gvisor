@@ -29,6 +29,8 @@ import (
 
 var (
 	proctorPath       = flag.String("proctor", "", "declared path to the language proctor executable")
+	proctorUser       = flag.String("proctor_user", "0", "container user for discovery and tests")
+	proctorPrivileged = flag.Bool("proctor_privileged", true, "enable privileged container execution for discovery and tests")
 	lang              = flag.String("lang", "", "language runtime to test")
 	image             = flag.String("image", "", "docker image with runtime tests")
 	excludeFile       = flag.String("exclude_file", "", "file containing list of tests to exclude, in CSV format with fields: test name, bug id, comment")
@@ -52,7 +54,11 @@ func run() int {
 		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
-		Runner:            *proctorPath,
+		Runner: *proctorPath,
+		ExecOpts: dockerutil.ExecOpts{
+			Privileged: *proctorPrivileged,
+			User:       *proctorUser,
+		},
 		PerTestTimeout:    *perTestTimeout,
 		RunsPerTest:       *runsPerTest,
 		FlakyIsError:      *flakyIsError,

@@ -99,7 +99,8 @@ func run() int {
 		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
-		Runner: *proctorPath,
+		Runner:   *proctorPath,
+		ExecOpts: dockerutil.ExecOpts{Privileged: true, User: "0"},
 		// Docker in Docker requires privileged mode.
 		Privileged:        !isGVisor,
 		CapAdd:            dockerInGvisorCapabilities(),
