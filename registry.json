@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T07:18:30.622976+00:00",
+    "updatedAt": "2026-10-18T07:30:06.229518+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -18340,10 +18340,10 @@
     {
       "id": "investigation:buildkite-excluded-unit-tests",
       "title": "Restore excluded Buildkite unit tests (#10045)",
-      "status": "active",
-      "owner": "Codex — qualification backlog and active fixture work",
-      "updatedAt": "2026-10-18T01:17:40.184107+00:00",
-      "summary": "Metric, tracereplay, trace and coretag corrections are published as #15930 and #15934–#15937. The full-unit trace failure was a fixture assertion applied to unrelated libc reads; its approved amendment is published and both full architecture owners plus analyzers pass. Strict coretag and KVM pinring adapters provide positive coverage on both architectures; unsupported raw-worker results remain explicit.",
+      "status": "concluded",
+      "owner": "Codex — findings complete; upstream PR follow-through",
+      "updatedAt": "2026-10-18T07:30:06.229518+00:00",
+      "summary": "The investigation and qualification are complete; upstream delivery is still pending in the linked PRs. Metric, tracereplay, trace and coretag corrections are published as #15930 and #15934–#15937. The full-unit trace failure was a fixture assertion applied to unrelated libc reads; its approved amendment is published and both full architecture owners plus analyzers pass. Strict coretag and KVM pinring adapters provide positive coverage on both architectures; unsupported raw-worker results remain explicit.",
       "findings": [
         {
           "text": "At upstream master 9e9495997, Makefile retains the issue #10045 TODO and four explicit target exclusions. This confirms the remaining coverage gap; it does not establish that all of the original failures still reproduce.",
@@ -18514,7 +18514,7 @@
           ]
         }
       ],
-      "nextStep": "Follow upstream review and imports for the delivered fixes. Preserve the original full-unit failure and skipped native capability owners alongside the verified corrected and capability-specific results.",
+      "nextStep": "Follow upstream review and imports for #15930 and #15934–#15937. This does not establish that issue #10045 is resolved upstream. Preserve the original full-unit failure and skipped native capability owners alongside the verified corrected and capability-specific results.",
       "evidence": [
         {
           "label": "Issue #10045 and reported failures",
