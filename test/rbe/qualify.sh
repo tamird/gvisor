@@ -1217,6 +1217,7 @@ run_lane() (
       ;;
     release-artifacts)
       command=build
+      options+=(-c opt)
       targets=(//debian:debian //debian:gvisor-release-tar-bz2 //debian:gvisor-release-tar-zstd)
       ;;
     release-repository)
