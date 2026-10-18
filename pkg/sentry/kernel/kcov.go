@@ -15,12 +15,13 @@
 package kernel
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sync"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
-	"gvisor.dev/gvisor/pkg/context"
+	pkgcontext "gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/coverage"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
@@ -40,11 +41,13 @@ const kcovAreaSizeMax = 10 * 1024 * 1024
 //
 // To give the illusion that the data is always up to date, we update the shared
 // memory every time before we return to userspace.
+//
+// +stateify savable
 type Kcov struct {
 	// mf stores application memory. It is immutable after creation.
-	mf *pgalloc.MemoryFile
+	mf *pgalloc.MemoryFile `state:"nosave"`
 
-	mu sync.RWMutex
+	mu sync.RWMutex `state:"nosave"`
 
 	// mode is the current kcov mode.
 	//
@@ -77,6 +80,11 @@ type Kcov struct {
 
 	// +checklocks:mu
 	mappable *mm.SpecialMappable
+}
+
+// afterLoad is invoked by stateify.
+func (kcov *Kcov) afterLoad(ctx context.Context) {
+	kcov.mf = pgalloc.MemoryFileFromContext(ctx)
 }
 
 // NewKcov creates and returns a Kcov instance.
@@ -155,7 +163,7 @@ func (kcov *Kcov) InitTrace(size uint64) error {
 // EnableTrace performs the KCOV_ENABLE_TRACE ioctl.
 //
 // +checklocksexclude:kcov.mu
-func (kcov *Kcov) EnableTrace(ctx context.Context, traceKind uint8) error {
+func (kcov *Kcov) EnableTrace(ctx pkgcontext.Context, traceKind uint8) error {
 	t := TaskFromContext(ctx)
 	if t == nil {
 		panic("kcovInode.EnableTrace() cannot be used outside of a task goroutine")
@@ -196,7 +204,7 @@ func (kcov *Kcov) EnableTrace(ctx context.Context, traceKind uint8) error {
 // DisableTrace performs the KCOV_DISABLE_TRACE ioctl.
 //
 // +checklocksexclude:kcov.mu
-func (kcov *Kcov) DisableTrace(ctx context.Context) error {
+func (kcov *Kcov) DisableTrace(ctx pkgcontext.Context) error {
 	kcov.mu.Lock()
 	defer kcov.mu.Unlock()
 
@@ -222,7 +230,7 @@ func (kcov *Kcov) DisableTrace(ctx context.Context) error {
 // needs to be set so that the next call to kcov.TaskWork() will exit early.
 //
 // +checklocksexclude:kcov.mu
-func (kcov *Kcov) Clear(ctx context.Context) {
+func (kcov *Kcov) Clear(ctx pkgcontext.Context) {
 	kcov.mu.Lock()
 	kcov.mode = linux.KCOV_MODE_INIT
 	kcov.owningTask = nil
@@ -249,7 +257,7 @@ func (kcov *Kcov) OnTaskExit() {
 // implement vfs.FileDescription.ConfigureMMap.
 //
 // +checklocksexclude:kcov.mu
-func (kcov *Kcov) ConfigureMMap(ctx context.Context, opts *memmap.MMapOpts) error {
+func (kcov *Kcov) ConfigureMMap(ctx pkgcontext.Context, opts *memmap.MMapOpts) error {
 	kcov.mu.Lock()
 	defer kcov.mu.Unlock()
 
