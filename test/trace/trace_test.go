@@ -352,7 +352,7 @@ func checkSyscallRead(msg test.Message) error {
 	if p.HasOffset {
 		// Workload always uses 20 for read offsets (account for partial reads).
 		if lower, upper := int64(20), int64(120); p.Offset < lower || p.Offset > upper {
-			return fmt.Errorf("invalid offset, got: %d, want: [%d, %d]", p.Offset, lower, upper)
+			return fmt.Errorf("invalid offset for %q (syscall %d), got: %d, want: [%d, %d]", p.FdPath, p.Sysno, p.Offset, lower, upper)
 		}
 	} else if p.Offset != 0 {
 		return fmt.Errorf("offset should be 0: %+v", &p)
