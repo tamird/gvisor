@@ -58,6 +58,12 @@ results apply to the recorded source, selected tests and actual workers.
 Declaring a lane does not establish that its tests pass, and failures remain
 part of the qualification result.
 
+For explicit `build` or `test` lanes, pass additional Bazel options through
+`actions.sh --bazel-option=--config=plugin-tldk` (or directly to `qualify.sh`).
+Repeat `--bazel-option` for multiple options, using `--FLAG=VALUE` for values.
+These arguments retain command-line precedence and literal characters such as
+`#`; hosted runner `extra_bazel_args` are instead interpreted as rc-file entries.
+
 ## Qualification reports
 
 `actions.sh` captures reports for both hosted Bazel and Actions coordinators.

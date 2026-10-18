@@ -18,6 +18,13 @@ set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
 
+for argument in "$@"; do
+  if [[ $argument != --bazel-option=--?* ]]; then
+    printf 'Expected --bazel-option=--FLAG, got: %s\n' "$argument" >&2
+    exit 2
+  fi
+done
+
 # read consumes one line. Reject extra lines rather than losing selected lanes.
 if [[ $QUALIFICATION_LANES == *$'\n'* ]]; then
   printf 'Supply qualification lanes on one line.\n' >&2
@@ -576,4 +583,4 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
 fi
 
-test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+test/rbe/qualify.sh "${options[@]}" "$@" "${lanes[@]}"

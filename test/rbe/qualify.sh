@@ -23,8 +23,8 @@ lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 conta
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
-       test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] build
-       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] test
+       test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] [--bazel-option=--FLAG ...] build
+       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] [--bazel-option=--FLAG ...] test
        test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=N[,N...]] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
@@ -73,6 +73,8 @@ their original workloads and timeouts. Other suite members remain unexecuted.
 The test lane runs explicitly selected tests on remote workers, or on the
 matching Actions host with --test-execution=local and architecture frontends.
 The build lane builds explicitly selected targets without running tests.
+Repeat --bazel-option to pass long-form options directly to Bazel in either
+explicit lane. Use --FLAG=VALUE to keep each option and its value together.
 Use build-all for the complete recursive build selection.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -105,6 +107,7 @@ syscall_bucket=
 benchmark_targets=()
 build_targets=()
 test_targets=()
+bazel_options=()
 test_filter=
 header_options=()
 header_base=
@@ -118,12 +121,17 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --benchmark-target=*) benchmark_targets+=("${1#--benchmark-target=}") ;;
     --build-target=*) build_targets+=("${1#--build-target=}") ;;
     --test-target=*) test_targets+=("${1#--test-target=}") ;;
+    --bazel-option=--?*) bazel_options+=("${1#--bazel-option=}") ;;
     --test-filter=*) test_filter=${1#--test-filter=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
   shift
 done
+if (( ${#bazel_options[@]} )) && [[ $# != 1 || ( $1 != build && $1 != test ) ]]; then
+  printf 'Bazel options require the explicit build or test lane.\n' >&2
+  exit 2
+fi
 case "$arch" in
   amd64) architecture_config=x86_64 ;;
   arm64) architecture_config=aarch64 ;;
@@ -1095,6 +1103,7 @@ run_lane() (
       return "$status"
       ;;
     test)
+      options=("${bazel_options[@]}")
       targets=("${test_targets[@]}")
       if [[ -n $test_filter ]]; then
         options+=("--test_filter=$test_filter")
@@ -1110,6 +1119,7 @@ run_lane() (
       ;;
     build)
       command=build
+      options=("${bazel_options[@]}")
       targets=("${build_targets[@]}")
       ;;
     build-all)

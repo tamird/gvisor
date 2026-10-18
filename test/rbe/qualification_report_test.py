@@ -1038,6 +1038,7 @@ class QualificationReportTest(unittest.TestCase):
     def test_work_deadline_reaches_capture_and_bundle(self) -> None:
         # Run the actual shell entry point and reporter. Only Git identity and
         # Bazel are fixtures; the real timeout interrupts a waiting child.
+        bazel_options = ["--config=plugin-tldk", "--define=literal=before#after with spaces"]
         for phase in ("preflight", "execution"):
             with self.subTest(phase=phase):
                 workspace = self.root / phase
@@ -1076,10 +1077,13 @@ elif args[:1] not in (['status'], ['diff']):
                 git.chmod(0o755)
                 bazel = binary / "bazel"
                 bazel.write_text("""#!/usr/bin/env python3
+import json
 import os
 from pathlib import Path
 import signal
 import sys
+with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
+    stream.write(json.dumps(sys.argv[1:]) + '\\n')
 events = Path(next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--build_event_json_file=')))
 events.write_text(Path(os.environ['TEST_ANALYSIS']).read_text())
 if '--nobuild' in sys.argv:
@@ -1112,11 +1116,20 @@ signal.pause()
                     "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
                     "TEST_ANALYSIS": str(FIXTURES / "analysis-no-build/events.jsonl"),
                     "TEST_WORK_STARTED": str(started),
+                    "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
-                result = subprocess.run(["bash", "test/rbe/actions.sh"], cwd=workspace,
-                                        env=environment, capture_output=True, text=True, timeout=30, check=False)
+                result = subprocess.run(
+                    ["bash", "test/rbe/actions.sh", *[f"--bazel-option={option}" for option in bazel_options]],
+                    cwd=workspace, env=environment, capture_output=True, text=True, timeout=30, check=False,
+                )
                 self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertEqual(started.exists(), phase == "execution", result.stdout + result.stderr)
+                if phase == "execution":
+                    commands = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
+                    self.assertEqual(len(commands), 2, commands)
+                    for command in commands:
+                        for option in bazel_options:
+                            self.assertIn(option, command)
                 artifact = runner_temp / "qualification.tar.gz"
                 self.assertTrue(artifact.is_file(), result.stdout + result.stderr)
                 value = report.read_json(runner_temp / "qualification/verdict.json")
