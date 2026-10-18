@@ -16,6 +16,7 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     deps = [
+        "//tools/bazeldefs:cgroup_test_bzl",
         "@platforms//host:constraints_lib",
         "@rules_python//python:defs_bzl",
         "@with_cfg.bzl//:with_cfg",

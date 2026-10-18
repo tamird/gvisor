@@ -35,7 +35,7 @@ cgroup_v1_transition = transition(
     ],
 )
 
-_cgroup_v1_frontend_test = rule(
+cgroup_v1_frontend_test = rule(
     implementation = lambda ctx: ctx.super(),
     parent = frontend_test,
     cfg = cgroup_v1_transition,
@@ -45,7 +45,7 @@ def with_cgroup_v1(test_rule, extra_providers = [], implicit_targets = None):
     """Reuses with_cfg's complete test forwarding with cgroup setup outside it."""
     return with_cfg(
         test_rule,
-        test_frontend = _cgroup_v1_frontend_test,
+        test_frontend = cgroup_v1_frontend_test,
         extra_providers = extra_providers,
         implicit_targets = implicit_targets,
     ).build()
