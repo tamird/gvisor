@@ -198,8 +198,10 @@ amd64_image_archive(
         ],
         exec_properties = docker_test_exec_properties(
             exec_group = "",
-            # The large model producer retains its builder cache.
+            # Producers retain the builder cache and two OCI layout copies.
             free_disk = {
+                "gpu/ollama": "128GB",
+                "gpu/ollama/singlemodel": "160GB",
                 "gpu/stable-diffusion-xl": "256GB",
             }.get(image, "80GB"),
             memory = "12GB",
