@@ -23,6 +23,7 @@ import (
 	"math"
 	"math/rand"
 	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path"
@@ -579,8 +580,15 @@ func TestGetNetworkConfig(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error calling GetNetworkConfig: %v", err)
 			}
-			if len(networkArgs.LoopbackLinks) == 0 {
-				t.Error("network config loopback links is empty, want not empty")
+			if got, want := len(networkArgs.LoopbackLinks), 1; got != want {
+				t.Fatalf("network config loopback links: got %d, want %d", got, want)
+			}
+			want := []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
+				netip.PrefixFrom(netip.IPv6Loopback(), 128),
+			}
+			if got := networkArgs.LoopbackLinks[0].Addresses; !slices.Equal(got, want) {
+				t.Errorf("network config loopback addresses: got %v, want %v", got, want)
 			}
 		})
 	}

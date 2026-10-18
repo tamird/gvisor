@@ -15,42 +15,35 @@
 package sentryapi
 
 import (
-	"fmt"
 	"net"
-	"strings"
+	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/urpc"
 	"gvisor.dev/gvisor/runsc/config"
 )
 
 // DefaultLoopbackLink contains IP addresses and routes of "127.0.0.1/8" and
-// "::1/8" on "lo" interface.
+// "::1/128" on "lo" interface.
 var DefaultLoopbackLink = LoopbackLink{
 	Name: "lo",
-	Addresses: []IPWithPrefix{
-		{Address: net.IP("\x7f\x00\x00\x01"), PrefixLen: 8},
-		{Address: net.IPv6loopback, PrefixLen: 128},
+	Addresses: []netip.Prefix{
+		netip.MustParsePrefix("127.0.0.1/8"),
+		netip.PrefixFrom(netip.IPv6Loopback(), 128),
 	},
 	Routes: []Route{
 		{
-			Destination: net.IPNet{
-				IP:   net.IPv4(0x7f, 0, 0, 0),
-				Mask: net.IPv4Mask(0xff, 0, 0, 0),
-			},
+			Destination: netip.MustParsePrefix("127.0.0.0/8"),
 		},
 		{
-			Destination: net.IPNet{
-				IP:   net.IPv6loopback,
-				Mask: net.IPMask(strings.Repeat("\xff", net.IPv6len)),
-			},
+			Destination: netip.PrefixFrom(netip.IPv6Loopback(), 128),
 		},
 	},
 }
 
 // Route represents a route in the network stack.
 type Route struct {
-	Destination net.IPNet
-	Gateway     net.IP
+	Destination netip.Prefix
+	Gateway     netip.Addr
 	MTU         uint32
 }
 
@@ -62,7 +55,7 @@ type DefaultRoute struct {
 
 // Neighbor represents an ARP/NDP neighbor entry to be added to the stack.
 type Neighbor struct {
-	IP           net.IP
+	IP           netip.Addr
 	HardwareAddr net.HardwareAddr
 }
 
@@ -71,7 +64,7 @@ type FDBasedLink struct {
 	Name              string
 	InterfaceIndex    int
 	MTU               int
-	Addresses         []IPWithPrefix
+	Addresses         []netip.Prefix
 	Routes            []Route
 	GSOMaxSize        uint32
 	GVisorGSOEnabled  bool
@@ -123,7 +116,7 @@ type XDPLink struct {
 	Name              string
 	InterfaceIndex    int
 	MTU               int
-	Addresses         []IPWithPrefix
+	Addresses         []netip.Prefix
 	Routes            []Route
 	TXChecksumOffload bool
 	RXChecksumOffload bool
@@ -143,7 +136,7 @@ type XDPLink struct {
 // LoopbackLink configures a loopback link.
 type LoopbackLink struct {
 	Name      string
-	Addresses []IPWithPrefix
+	Addresses []netip.Prefix
 	Routes    []Route
 	GVisorGRO bool
 }
@@ -197,20 +190,7 @@ type InitPluginStackArgs struct {
 	InitStr string
 }
 
-// IPWithPrefix is an address with its subnet prefix length.
-type IPWithPrefix struct {
-	// Address is a network address.
-	Address net.IP
-
-	// PrefixLen is the subnet prefix length.
-	PrefixLen int
-}
-
-func (ip IPWithPrefix) String() string {
-	return fmt.Sprintf("%s/%d", ip.Address, ip.PrefixLen)
-}
-
 // Empty returns true if route hasn't been set.
 func (r *Route) Empty() bool {
-	return r.Destination.IP == nil && r.Destination.Mask == nil && r.Gateway == nil
+	return !r.Destination.IsValid() && !r.Gateway.IsValid()
 }
