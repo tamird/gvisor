@@ -26,11 +26,21 @@ image="docker.io/moby/buildkit@$(cat "${image_digest}")"
 work=$(mktemp -d "${TMPDIR:-/tmp}/source-image-builder.XXXXXX")
 export BUILDX_CONFIG="${work}"
 builder="gvisor-source-${work##*.}"
+# Buildx lowercases the node name used for its Docker container.
+builder=${builder,,}
 created=false
 cleanup() {
   local result=$? cleanup_status=0
   set +e
   if [[ ${created} == true ]]; then
+    if (( result != 0 )); then
+      # Removing the builder also removes the daemon's failure logs.
+      timeout --kill-after=5s 10s docker inspect --format \
+        'running={{.State.Running}} oom_killed={{.State.OOMKilled}} exit_code={{.State.ExitCode}} error={{.State.Error}}' \
+        "buildx_buildkit_${builder}0" >&2
+      timeout --kill-after=5s 10s docker logs --timestamps --tail 200 \
+        "buildx_buildkit_${builder}0" >&2
+    fi
     "${buildx}" rm --force "${builder}"
     cleanup_status=$?
   fi
