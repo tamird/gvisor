@@ -310,7 +310,8 @@ else:
                         cwd=root, env=environment, capture_output=True, text=True, check=False, timeout=30,
                     )
                     if selected[-1] == "//outside:missing":
-                        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                        self.assertIn("Not a continuous benchmark target: //outside:missing", result.stderr)
                         self.assertFalse(arguments_path.exists())
                     else:
                         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
