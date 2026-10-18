@@ -6,6 +6,7 @@ load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE")
 
 _COREUTILS_TOOLCHAIN = "@bazel_lib//lib:coreutils_toolchain_type"
+_COMPRESSION_CPUS = 4
 
 def _blob_impl(ctx):
     coreutils = ctx.toolchains[_COREUTILS_TOOLCHAIN]
@@ -48,12 +49,14 @@ _blob = rule(
     toolchains = [_COREUTILS_TOOLCHAIN],
 )
 
-def _execution_properties(disk_bytes, network = False):
+def _execution_properties(disk_bytes, network = False, cpus = None):
     properties = {
         "EstimatedFreeDiskBytes": str(disk_bytes + 4000000000),
         "EstimatedMemory": "2GB",
         "workload-isolation-type": "oci",
     }
+    if cpus != None:
+        properties["EstimatedComputeUnits"] = str(cpus)
     if network:
         properties.update({
             "container-image": RBE_NETWORK_TOOLS_IMAGE,
@@ -111,10 +114,12 @@ def model_layers(name, models):
         pkg_tar(
             name = layer,
             srcs = [":" + layer + "_files"],
-            # rules_pkg writes gzip directly, without staging an uncompressed
-            # tar beside the raw blobs and compressed output.
+            # Stream tar directly into parallel gzip. Fix its worker count and
+            # omit the filename and timestamp for reproducible output.
+            compressor = "@pigz//:pigz",
+            compressor_args = "-c -n -6 -p %d" % _COMPRESSION_CPUS,
             extension = "tar.gz",
-            exec_properties = _execution_properties(2 * raw_size),
+            exec_properties = _execution_properties(2 * raw_size, cpus = _COMPRESSION_CPUS),
             mode = "0755",
             tags = ["manual"],
             visibility = ["//images/gpu/ollama/bench:__subpackages__"],
