@@ -1667,9 +1667,10 @@ test/rbe/qualify.sh --arch=all unit language-directfs language-goferfs
 ```
 
 Each action starts the shared private Docker daemon and loads its language's
-declared archive. PHP and Node use the shared source-image producer so their
-current patches are included; the other archives are pinned to their existing
-`tools/images.mk` source-hash images.
+declared archive. Each language uses the shared source-image producer and
+canonical `tools/images.mk rebuild-*` recipe. The producer builds one archive
+for both filesystem modes instead of exporting a published image. Mutable base
+tags and package mirrors retain the existing uncached producer action policy.
 The original image entrypoint is retained, including Node's `dumb-init`.
 The declared release and proctor run the existing tests with systrap and
 `--watchdog-action=panic`. Installed `make %-runtime-tests` entrypoints still

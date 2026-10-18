@@ -14,6 +14,7 @@ _RUNTIMES = {
         lang = "go",
         partitions = 10,
         shard_count = more_shards,
+        source_archive = "//test/docker:go_source_amd64",
     ),
     "java21": dict(
         batch = 100,
@@ -21,6 +22,7 @@ _RUNTIMES = {
         lang = "java",
         partitions = 40,
         shard_count = most_shards,
+        source_archive = "//test/docker:java_source_amd64",
     ),
     "nodejs22.2.0": dict(
         exclude_file = "exclude/nodejs22.2.0.csv",
@@ -44,6 +46,7 @@ _RUNTIMES = {
         lang = "python",
         partitions = 2,
         shard_count = more_shards,
+        source_archive = "//test/docker:python_source_amd64",
     ),
 }
 
