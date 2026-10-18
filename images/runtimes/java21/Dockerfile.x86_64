@@ -39,4 +39,6 @@ RUN set -ex \
  && bash jtreg/make/build.sh --jdk /usr/lib/jvm/java-21-openjdk-* \
  && rm -f jtreg.tar.gz
 
+# The jtreg launcher checks this path before executing Java.
+ENV JTREG_JAVA=/usr/bin/java
 ENV PATH="/root/jtreg/build/images/jtreg/bin:$PATH"
