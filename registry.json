@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T05:01:30.972092+00:00",
+    "updatedAt": "2026-10-18T05:12:12.273579+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -10229,6 +10229,41 @@
           "url": "https://app.buildbuddy.io/invocation/c62fd167-b006-4ba7-a7eb-b24cca309d05"
         }
       ]
+    },
+    {
+      "id": "external-pr:buildbuddy:13850",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "ref": "clamp-disk-to-selected-limit",
+      "head": "2aa3f015f27e6c89cd5408d455a1afa6187efc5c",
+      "number": 13850,
+      "title": "BuildBuddy: clamp disk requests against the selected limit",
+      "group": "rbe",
+      "status": "open",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13850",
+      "updatedAt": "2026-10-18T05:12:12.273579+00:00",
+      "summary": "Select the applicable disk cap before comparing a request. The regression reproduces a non-recycled 150 GB request being inflated to 200 GB; the corrected full task-size race suite passes 36 cases without skips. Both caps and the provider override remain unchanged, so this does not enable requests above 200 GB. The PR is open and mergeable, awaiting maintainer review. Three Darwin ERROR statuses require approving review before execution; remaining checks are queued.",
+      "followup": {
+        "owner": "Codex",
+        "disposition": "open",
+        "sourceHead": "2aa3f015f27e6c89cd5408d455a1afa6187efc5c",
+        "observedAt": "2026-10-18T05:12:12.273579+00:00",
+        "nextAction": "Follow maintainer review, execution approval and actual public CI results. No contributor decision is pending.",
+        "evidence": [
+          "https://github.com/tamird/buildbuddy/commit/2aa3f015f27e6c89cd5408d455a1afa6187efc5c",
+          "https://app.buildbuddy.io/invocation/c4c5628e-8084-47b1-b04f-50bfcb7729d0"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published PR",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13850"
+        },
+        {
+          "label": "Before/after remote race validation",
+          "url": "https://app.buildbuddy.io/invocation/c4c5628e-8084-47b1-b04f-50bfcb7729d0"
+        }
+      ]
     }
   ],
   "edges": [
@@ -17363,8 +17398,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T05:01:30.972092+00:00",
-      "summary": "The default-branch workflow now requests full refreshes every ten minutes. The unchanged collector uses 19 requests and 112 GraphQL points per sweep; six runs per hour fit the conservative 1,000-point workflow-token budget. The revised workflow passed all 29 JavaScript and 33 Python checks and published a live-verified snapshot. GitHub had not created the first revised scheduled run by 04:59 UTC, so unattended scheduling reliability remains unverified. Active ownership now checks for ten-minute staleness and an existing queued or running refresh before using the same manual dispatch.\n\nBefore the correction, the active default-branch workflow requested runs at minutes 18 and 48, but the eight observed scheduled runs were created two to four hours apart. Their creation and start timestamps matched, which locates the observed gap before job execution. No disabled workflow, inactive repository, wrong default branch or inactive actor was found; the provider cause remains unknown. GitHub documents that scheduled events can be delayed or dropped. Manual refreshes do not establish a scheduler repair.",
+      "updatedAt": "2026-10-18T05:12:12.273579+00:00",
+      "summary": "The default-branch workflow now requests full refreshes every ten minutes. The unchanged collector uses 19 requests and 112 GraphQL points per sweep; six runs per hour fit the conservative 1,000-point workflow-token budget. The revised workflow passed all 29 JavaScript and 33 Python checks and published a live-verified snapshot. GitHub had not created runs for the first two revised slots by 05:10 UTC, so unattended scheduling reliability remains unverified. Active ownership now checks for ten-minute staleness and an existing queued or running refresh before using the same manual dispatch.\n\nBefore the correction, the active default-branch workflow requested runs at minutes 18 and 48, but the eight observed scheduled runs were created two to four hours apart. Their creation and start timestamps matched, which locates the observed gap before job execution. No disabled workflow, inactive repository, wrong default branch or inactive actor was found; the provider cause remains unknown. GitHub documents that scheduled events can be delayed or dropped. Manual refreshes do not establish a scheduler repair.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -17539,6 +17574,10 @@
         {
           "label": "Ten-minute stale-snapshot recovery",
           "url": "https://github.com/tamird/gvisor/actions/runs/39098984398"
+        },
+        {
+          "label": "Second ten-minute stale-snapshot recovery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39099661673"
         }
       ]
     },
