@@ -11,16 +11,18 @@ RUN apt-get update && apt-get install -y \
   unzip \
   zip
 
-# Download the JDK source which contains the tests.
+# Match the JDK tests to the installed package, including security updates.
 # Proctor expects this to be in /root/jdk.
 WORKDIR /root
 RUN set -ex \
- && curl -fsSL --retry 10 -o /tmp/jdk.tar.gz https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-21.0.3-ga.tar.gz \
- && tar -zxzf /tmp/jdk.tar.gz \
- && mv jdk21u-jdk-21.0.3-ga /root/jdk \
+ && jdk_version="$(dpkg-query --show --showformat='${source:Upstream-Version}' openjdk-21-jdk)" \
+ && test -n "$jdk_version" \
+ && curl -fsSL --retry 10 -o /tmp/jdk.tar.gz "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-${jdk_version}.tar.gz" \
+ && mkdir /root/jdk \
+ && tar -zxzf /tmp/jdk.tar.gz --strip-components=1 -C /root/jdk \
  && rm -f /tmp/jdk.tar.gz
 
-# Install jtreg 7.4 and add to PATH.
+# Install jtreg 7.5.2+1, the minimum required by the matching JDK tests.
 #
 # NOTE: While upgrading jdk version, if this jtreg version does not build
 # openjdk correctly, try using a recent version of jtreg that does work.
@@ -29,7 +31,7 @@ RUN set -ex \
 # and is "/usr/lib/jvm/java-21-openjdk-amd64" on x86_64 but "-aarch64" on
 # ARM64. The `build.sh` step below uses a wildcard to work around the fact that
 # we don't know the full path.
-ARG COMMIT=c40e6ea6d47dcdabba8715a6f70c55d89bdce693
+ARG COMMIT=05c67a77fa8ae98cacbba0f8012df8bdf04105a7
 RUN set -ex \
  && curl -fsSL --retry 10 -o jtreg.tar.gz https://github.com/openjdk/jtreg/archive/${COMMIT}.tar.gz \
  && tar -zxvf jtreg.tar.gz \
@@ -37,4 +39,6 @@ RUN set -ex \
  && bash jtreg/make/build.sh --jdk /usr/lib/jvm/java-21-openjdk-* \
  && rm -f jtreg.tar.gz
 
+# The jtreg launcher checks this path before executing Java.
+ENV JTREG_JAVA=/usr/bin/java
 ENV PATH="/root/jtreg/build/images/jtreg/bin:$PATH"
