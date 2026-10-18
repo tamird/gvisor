@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T09:33:14.424634+00:00",
+    "updatedAt": "2026-10-18T09:45:08.524681+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -17673,8 +17673,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T09:33:14.424634+00:00",
-      "summary": "Fresh TPU source construction and loading pass. The corrected smallest-model Ollama package passes archive/runtime and analyzer checks. The six-layer measurement exposed a truncated largest-blob download; that failure remains recorded. A targeted retry now uses the independently reviewed standard curl retry correction while the original compression actions continue. Full-model qualification, the original large export, Triton and physical GPU gaps remain open.",
+      "updatedAt": "2026-10-18T09:45:08.524681+00:00",
+      "summary": "Fresh TPU source construction and loading pass. The corrected smallest-model Ollama package passes archive/runtime and analyzer checks. A truncated largest-blob download remains recorded while the targeted transfer retry and original compression actions run. A separate parallel-gzip experiment has passed source review and is being prepared. Full-model qualification, the original large export, Triton and physical GPU gaps remain open.",
       "findings": [
         {
           "text": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
@@ -17806,7 +17806,7 @@
           ]
         }
       ],
-      "nextStep": "Collect the targeted missing llama2 layer at 33ff47a5e7 and the original compression actions. Verify their results and measured storage headroom before full-model archive/load qualification. Preserve the partial-transfer failure and small-model pass separately; no GPU inference has been established.",
+      "nextStep": "Collect the targeted missing llama2 layer and original compression actions, and validate the separately reviewed parallel-gzip experiment. Use measured results and storage headroom to decide the full-model archive/load path. Preserve partial-transfer failures and small-model evidence separately; no full-model or GPU inference pass is established.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
