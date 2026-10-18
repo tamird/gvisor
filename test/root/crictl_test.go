@@ -556,6 +556,9 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 			<-drainDone
 		}
 		startupR.Close()
+		if t.Failed() {
+			t.Logf("containerd stderr:\n%s", stderr.Bytes())
+		}
 		_ = os.MkdirAll("/tmp/shim-logs", 0755)
 		logFile := fmt.Sprintf("/tmp/shim-logs/containerd-%s.log", strings.ReplaceAll(t.Name(), "/", "_"))
 		_ = os.WriteFile(logFile, stderr.Bytes(), 0644)
