@@ -35,6 +35,7 @@ py_test(
         "license.bazelrc",
         "qualification.bazelrc",
         "qualify.sh",
+        "//test/benchmarks:lifecycle.json",
     ] + glob(["testdata/qualification_report/**"]),
     imports = ["."],
     main = "qualification_report_test.py",

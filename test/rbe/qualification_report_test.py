@@ -39,6 +39,7 @@ import qualification_report as report
 
 
 FIXTURES = Path(__file__).with_name("testdata") / "qualification_report"
+LIFECYCLE_MANIFEST = Path(__file__).parent.parent / "benchmarks" / "lifecycle.json"
 
 
 class QualificationReportTest(unittest.TestCase):
@@ -60,10 +61,11 @@ class QualificationReportTest(unittest.TestCase):
         return report.capture(invocation / "events.jsonl", invocation / "captured.jsonl",
                               invocation, invocation / "reports", retain_outputs)
 
-    def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None) -> dict[str, object]:
+    def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None,
+                declared_benchmarks: Path | None = None) -> dict[str, object]:
         events = invocation / "captured.jsonl"
         value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
-                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks)
+                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks, declared_benchmarks)
         report.write_json(invocation / "verdict.json", value)
         return value
 
@@ -356,6 +358,109 @@ class QualificationReportTest(unittest.TestCase):
                 report.write_json(path, value)
                 with self.assertRaises(ValueError):
                     report.benchmark_manifest(path)
+
+    def lifecycle_fixture(self, package: str = "runsc") -> Path:
+        invocation = self.mixed_fixture("<testsuites/>")
+        owner = f'//{"runsc/container" if package == "runsc" else "shim/tests"}:lifecycle_benchmark_systrap_test'
+        events = json.loads(json.dumps(self.events(invocation)).replace("//another:test", owner))
+        for event in events:
+            if event.get("id", {}).get("targetConfigured", {}).get("label") == owner:
+                event["configured"]["tag"].append("go-benchmark-contract")
+        self.write_events(invocation, events)
+        expected = invocation / "expected.txt"
+        expected.write_text(expected.read_text().replace("//another:test", owner))
+        shutil.copyfile(FIXTURES / "lifecycle" / f"{package}.log", invocation / "another/test.log")
+        return invocation
+
+    def lifecycle_verdict(self, invocation: Path) -> dict[str, object]:
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        return self.verdict(invocation, analysis=self.analysis(invocation), declared_benchmarks=LIFECYCLE_MANIFEST)
+
+    def test_declared_benchmarks_in_mixed_invocation(self) -> None:
+        for package, rows in (("runsc", 16), ("shim", 22)):
+            with self.subTest(package=package):
+                invocation = self.lifecycle_fixture(package)
+                value = self.lifecycle_verdict(invocation)
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": 4})
+                self.assertEqual(len(value["zero_case_owners"]), 1)
+                measured = [item for item in value["executed"] if "benchmarks" in item]
+                self.assertEqual(len(measured), 1)
+                self.assertEqual(len(measured[0]["benchmarks"]), rows)
+                self.assertTrue(all(row["iterations"] == 30 for row in measured[0]["benchmarks"]))
+                shutil.rmtree(invocation)
+
+    def test_declared_benchmarks_reject_incomplete_or_failed_execution(self) -> None:
+        for change in ("missing", "duplicate", "unexpected", "iterations", "metrics", "malformed", "missing-pass",
+                       "untagged", "missing-manifest", "ordinary-zero", "result-failure", "summary-failure", "xml-failure"):
+            with self.subTest(change=change):
+                invocation = self.lifecycle_fixture()
+                path = invocation / "another/test.log"
+                lines = path.read_text().splitlines(keepends=True)
+                row = next(line for line in lines if "ns/op" in line)
+                replacements = {
+                    "missing": "", "duplicate": row + row,
+                    "unexpected": row.replace("/systrap", "/unexpected"),
+                    "iterations": row.replace("30\t", "29\t"),
+                    "metrics": row.replace("p50.ns", "other.ns"),
+                    "malformed": row.replace("30\t", "invalid\t"),
+                }
+                if change in replacements:
+                    self.assertNotEqual(replacements[change], row)
+                    path.write_text("".join(replacements[change] if line == row else line for line in lines))
+                elif change == "missing-pass":
+                    path.write_text(path.read_text().replace("PASS\n", ""))
+                elif change == "ordinary-zero":
+                    (invocation / "test.xml").write_text("<testsuites/>")
+                elif change == "xml-failure":
+                    (invocation / "another/test.xml").write_text('<testsuite><testcase name="BenchmarkOCICreate/systrap"><failure/></testcase></testsuite>')
+                else:
+                    events = self.events(invocation)
+                    for event in events:
+                        if change == "untagged" and "configured" in event:
+                            event["configured"]["tag"] = [tag for tag in event["configured"]["tag"] if tag != "go-benchmark-contract"]
+                        if "lifecycle_benchmark" in json.dumps(event.get("id")):
+                            if change == "result-failure" and "testResult" in event:
+                                event["testResult"]["status"] = "FAILED"
+                            if change == "summary-failure" and "testSummary" in event:
+                                event["testSummary"]["overallStatus"] = "FAILED"
+                    self.write_events(invocation, events)
+                if change == "missing-manifest":
+                    self.capture(invocation)
+                    value = self.verdict(invocation, analysis=self.analysis(invocation))
+                else:
+                    value = self.lifecycle_verdict(invocation)
+                self.assertEqual(value["status"], "FAIL" if change.endswith("failure") else "INCOMPLETE", value)
+                shutil.rmtree(invocation)
+
+    def test_declared_benchmark_tag_does_not_change_other_command_kinds(self) -> None:
+        for kind in ("build", "analysis", "benchmark"):
+            with self.subTest(kind=kind):
+                invocation = self.benchmark_fixture() if kind == "benchmark" else self.fixture()
+                if kind == "analysis":
+                    (invocation / "events.jsonl").write_bytes((FIXTURES / "analysis-no-build/events.jsonl").read_bytes())
+                    (invocation / "expected.txt").write_text("")
+                    (invocation / "native-exit").write_text("1\n")
+                    (invocation / "executed-arguments.txt").write_text("test\n--nobuild\n")
+                events = self.events(invocation)
+                if kind == "build":
+                    events = [event for event in events if "testResult" not in event and "testSummary" not in event]
+                    for event in events:
+                        if "children" in event:
+                            event["children"] = [child for child in event["children"] if "testResult" not in child and "testSummary" not in child]
+                    (invocation / "executed-arguments.txt").write_text("build\n//...\n")
+                for event in events:
+                    if "configured" in event:
+                        event["configured"].setdefault("tag", []).append("go-benchmark-contract")
+                self.write_events(invocation, events)
+                context = report.read_json(invocation / "context.json")
+                context["command_kind"] = kind
+                report.write_json(invocation / "context.json", context)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=invocation / "events.jsonl",
+                                     benchmarks=invocation / "benchmarks.json" if kind == "benchmark" else None)
+                self.assertEqual(value["status"], "PASS", value)
+                shutil.rmtree(invocation)
 
     def test_rfc3339_timestamp_precision(self) -> None:
         expected = datetime.datetime(2026, 10, 16, 17, 39, 9, 185849, datetime.timezone.utc)
@@ -946,6 +1051,8 @@ class QualificationReportTest(unittest.TestCase):
                     "unit_matrix.py",
                 ):
                     shutil.copy2(Path(__file__).with_name(name), scripts / name)
+                (workspace / "test/benchmarks").mkdir()
+                shutil.copyfile(LIFECYCLE_MANIFEST, workspace / "test/benchmarks/lifecycle.json")
                 (workspace / "MODULE.bazel.lock").write_text("fixture lock\n")
                 binary = workspace / "bin"
                 binary.mkdir()

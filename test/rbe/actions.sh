@@ -64,11 +64,9 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
       done
       ;;
     benchmarks)
-      if (( ${#selected_targets[@]} != 1 )); then
-        printf 'Select exactly one continuous benchmark target.\n' >&2
-        exit 2
-      fi
-      options+=("--benchmark-target=${selected_targets[0]}")
+      for target in "${selected_targets[@]}"; do
+        options+=("--benchmark-target=$target")
+      done
       ;;
     *)
       printf 'Explicit targets require the build, test, syscall, KVM syscall, RC syscall or benchmarks lane.\n' >&2
@@ -172,7 +170,12 @@ if [[ -n ${QUALIFICATION_BENCHMARK_MANIFEST:-} ]]; then
     "${benchmark_target_options[@]}" "${benchmark_manifest_options[@]}"
   sha256sum "$qualification_benchmark_manifest" > "$qualification_artifacts/benchmark-manifest.sha256"
 fi
-export qualification_benchmark_manifest qualification_benchmark_arguments qualification_retain_outputs
+# Mixed suites retain their source-declared benchmark obligations without
+# changing arguments for ordinary tests in the same invocation.
+qualification_declared_benchmarks=$qualification_artifacts/declared-benchmarks.json
+cp test/benchmarks/lifecycle.json "$qualification_declared_benchmarks"
+sha256sum "$qualification_declared_benchmarks" > "$qualification_artifacts/declared-benchmarks.sha256"
+export qualification_benchmark_manifest qualification_benchmark_arguments qualification_retain_outputs qualification_declared_benchmarks
 
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) qualification_bazel_binary=$(type -P bazel) ;;
@@ -501,12 +504,15 @@ bazel() {
   if [[ -n $qualification_benchmark_manifest ]]; then
     sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" || capture_status=1
   fi
+  sha256sum --check "$qualification_artifacts/declared-benchmarks.sha256" || capture_status=1
   printf '%s\n' "$capture_status" > "$directory/capture-exit.txt" || capture_status=1
   if [[ $analysis_only == true ]]; then
     command_kind=analysis
   elif [[ $command_kind == test && -n $qualification_benchmark_manifest ]]; then
     command_kind=benchmark
     verdict_options+=(--expected-benchmarks "$qualification_benchmark_manifest")
+  elif [[ $command_kind == test ]]; then
+    verdict_options+=(--declared-benchmarks "$qualification_declared_benchmarks")
   fi
   python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" <<'CONTEXT' || capture_status=$?
 import json

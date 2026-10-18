@@ -1,0 +1,43 @@
+goos: linux
+goarch: amd64
+BenchmarkOCICreate
+BenchmarkOCICreate/systrap
+BenchmarkOCICreate/systrap-4         	      30	  40183457 ns/op	  34977642 p50.ns	  47054609 p90.ns
+BenchmarkOCICreate/systrap_overlay
+BenchmarkOCICreate/systrap_overlay-4 	      30	  34580049 ns/op	  33531481 p50.ns	  38835874 p90.ns
+BenchmarkOCIStart
+BenchmarkOCIStart/systrap
+BenchmarkOCIStart/systrap-4          	      30	  20985767 ns/op	  19803177 p50.ns	  25897147 p90.ns
+BenchmarkOCIStart/systrap_overlay
+BenchmarkOCIStart/systrap_overlay-4  	      30	  21250517 ns/op	  19066088 p50.ns	  28853821 p90.ns
+BenchmarkOCIPause
+BenchmarkOCIPause/systrap
+BenchmarkOCIPause/systrap-4          	      30	   1276399 ns/op	    828760 p50.ns	   1805702 p90.ns
+BenchmarkOCIPause/systrap_overlay
+BenchmarkOCIPause/systrap_overlay-4  	      30	   1248495 ns/op	    673311 p50.ns	   1165071 p90.ns
+BenchmarkOCIResume
+BenchmarkOCIResume/systrap
+BenchmarkOCIResume/systrap-4         	      30	    568164 ns/op	    503500 p50.ns	    827979 p90.ns
+BenchmarkOCIResume/systrap_overlay
+BenchmarkOCIResume/systrap_overlay-4 	      30	    580744 ns/op	    561341 p50.ns	    780690 p90.ns
+BenchmarkOCIKill
+BenchmarkOCIKill/systrap
+BenchmarkOCIKill/systrap-4           	      30	    798092 ns/op	    472004 p50.ns	   1111180 p90.ns
+BenchmarkOCIKill/systrap_overlay
+BenchmarkOCIKill/systrap_overlay-4   	      30	   1081045 ns/op	    671410 p50.ns	   1921450 p90.ns
+BenchmarkOCIDestroy
+BenchmarkOCIDestroy/systrap
+BenchmarkOCIDestroy/systrap-4        	      30	    104900 ns/op	     94620 p50.ns	    143791 p90.ns
+BenchmarkOCIDestroy/systrap_overlay
+BenchmarkOCIDestroy/systrap_overlay-4         	      30	    102411 ns/op	     85720 p50.ns	    160131 p90.ns
+BenchmarkTimeToReady
+BenchmarkTimeToReady/systrap
+BenchmarkTimeToReady/systrap-4                	      30	  63875062 ns/op	  63079494 p50.ns	  73990067 p90.ns
+BenchmarkTimeToReady/systrap_overlay
+BenchmarkTimeToReady/systrap_overlay-4        	      30	  63269175 ns/op	  62737094 p50.ns	  69750625 p90.ns
+BenchmarkEndToEnd
+BenchmarkEndToEnd/systrap
+BenchmarkEndToEnd/systrap-4                   	      30	  71383029 ns/op	  69101855 p50.ns	  82660819 p90.ns
+BenchmarkEndToEnd/systrap_overlay
+BenchmarkEndToEnd/systrap_overlay-4           	      30	  67639191 ns/op	  67823355 p50.ns	  74619678 p90.ns
+PASS

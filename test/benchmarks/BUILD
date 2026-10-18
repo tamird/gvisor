@@ -5,6 +5,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    ["lifecycle.json"],
+    visibility = ["//test/rbe:__pkg__"],
+)
+
 bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],

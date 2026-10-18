@@ -236,6 +236,7 @@ go_test(
         nogo = False,
         tags = [
             "continuous-benchmark",
+            "go-benchmark-contract",
             "manual",
         ] + (["requires-kvm"] if platform == "kvm" else []),
         visibility = ["//test/benchmarks:__pkg__"],
