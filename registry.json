@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T07:30:06.229518+00:00",
+    "updatedAt": "2026-10-18T07:52:51.940904+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -17612,9 +17612,13 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T06:45:30.959530+00:00",
-      "summary": "Fresh TPU vLLM source construction and loading pass. Updating Ollama to 0.40.6 resolves the model-registry HTTP 412: all six source model downloads now complete, and client compilation/Nogo pass. The corrected image run then fails during OCI tar export with truncation/context cancellation before archive/load execution. The owner is investigating that separate export failure. Original timeout and 0.5.1 failures remain retained; Triton recovery and physical GPU execution remain separate gaps.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
+      "updatedAt": "2026-10-18T07:52:51.940904+00:00",
+      "summary": "Fresh TPU vLLM source construction and loading pass. Updating Ollama to 0.40.6 resolves the model-registry HTTP 412: all six source model downloads now complete, and client compilation/Nogo pass. The corrected image run then fails during OCI tar export with truncation/context cancellation before archive/load execution. The owner is investigating that separate export failure. Original timeout and 0.5.1 failures remain retained; Triton recovery and physical GPU execution remain separate gaps.",
       "findings": [
+        {
+          "text": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
+          "evidence": []
+        },
         {
           "text": "The October 18 provider check still finds issue #13789 open with no comments. Related lease/reconnect PRs #13769, #13778 and #13779 are all open and report approval. No merge, deployed-worker change or successful Triton source run is established by those review states; they do not justify repeating the two-hour workload.",
           "evidence": [
@@ -17659,6 +17663,15 @@
             {
               "label": "Ollama client compilation pass",
               "url": "https://github.com/tamird/gvisor/actions/runs/39102370765"
+            }
+          ]
+        },
+        {
+          "text": "A read-only assessment at ce36fa1723 found that standard pkg_tar and oci_image can assemble the benchmark image, but downloading its 85.84 GiB of raw model blobs through http_file does not leave the required headroom within the Actions coordinator’s recorded 86 GiB free. The native Remote Bazel coordinator requests 40 GB. The existing source has no general SHA-verified RBE download action. A declared remote blob-download action and peak-storage accounting would be required; that route has not been implemented or validated. The ongoing Ollama export diagnosis remains the next action.",
+          "evidence": [
+            {
+              "label": "Source used for OCI construction and coordinator assessment",
+              "url": "https://github.com/tamird/gvisor/commit/ce36fa1723339982b07d8df332c60be918150cc8"
             }
           ]
         }
