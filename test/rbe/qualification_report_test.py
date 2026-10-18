@@ -528,6 +528,121 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(len(value["zero_case_owners"]), 1)
         self.assertEqual(value["case_counts"], {"passed": 0, "failed": 0, "skipped": 0})
 
+    def marshal_fixture(self, contract: object, xml: str = "", *, declared: bool = True) -> Path:
+        invocation = self.fixture()
+        events = self.events(invocation)
+        for event in events:
+            if declared and "configured" in event:
+                event["configured"]["tag"].append("go-marshal-test-contract")
+        self.write_events(invocation, events)
+        (invocation / "test.xml").write_text("<testsuite>" + xml + "</testsuite>")
+        (invocation / "test.log").write_text("\x16gvisor-go-marshal-test: " + json.dumps(contract) + "\nPASS\n")
+        return invocation
+
+    def test_generated_abi_applicability_retains_zero_case_evidence(self) -> None:
+        for count, matches in ((0, True), (0, False), (3, False)):
+            with self.subTest(runtime_types=count, constraints_match=matches):
+                contract = {"schema_version": 1, "runtime_types": count, "constraints_match": matches}
+                invocation = self.marshal_fixture(contract)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["case_counts"], {"passed": 0, "failed": 0, "skipped": 0})
+                self.assertEqual(len(value["zero_case_owners"]), 1)
+                self.assertEqual(value["non_runtime_owners"], [{**value["zero_case_owners"][0], **contract}])
+                artifact = self.root / "bundle.tar.gz"
+                report.bundle(self.evidence, 0, 0, artifact)
+                receipt = report.receipt(artifact, report.file_record(artifact)["sha256"], value["source"])
+                self.assertEqual(receipt["non_runtime_owners"], value["non_runtime_owners"])
+                shutil.rmtree(invocation)
+
+    def test_generated_abi_contract_cannot_hide_runtime_coverage(self) -> None:
+        for count, matches, declared, xml, status in (
+            (2, True, True, "", "INCOMPLETE"),
+            (2, True, True, '<testcase name="TestABI"><skipped/></testcase>', "INCOMPLETE"),
+            (2, True, True, '<testcase name="TestABI"/>', "PASS"),
+            (0, True, False, "", "INCOMPLETE"),
+            (0, True, True, '<testcase name="TestABI"/>', "INCOMPLETE"),
+            (2, False, True, '<testcase name="TestABI"><skipped/></testcase>', "INCOMPLETE"),
+        ):
+            with self.subTest(runtime_types=count, matches=matches, declared=declared, xml=xml):
+                invocation = self.marshal_fixture(
+                    {"schema_version": 1, "runtime_types": count, "constraints_match": matches}, xml, declared=declared)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], status, value)
+                self.assertEqual(value["non_runtime_owners"], [])
+                shutil.rmtree(invocation)
+
+    def test_generated_abi_contract_requires_one_typed_record(self) -> None:
+        valid = {"schema_version": 1, "runtime_types": 0, "constraints_match": True}
+        variants = [None, {}, {**valid, "schema_version": True}, {**valid, "schema_version": 2},
+                    {**valid, "runtime_types": True}, {**valid, "runtime_types": -1},
+                    {**valid, "runtime_types": "0"}, {**valid, "constraints_match": 1}]
+        for contract in variants + ["missing", "malformed", "duplicate"]:
+            with self.subTest(contract=contract):
+                invocation = self.marshal_fixture(contract, '<testcase name="TestABI"/>')
+                log = invocation / "test.log"
+                if contract == "missing":
+                    log.write_text("PASS\n")
+                elif contract == "malformed":
+                    log.write_text("gvisor-go-marshal-test: {\n")
+                elif contract == "duplicate":
+                    log.write_text(("gvisor-go-marshal-test: " + json.dumps(valid) + "\n") * 2)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "INCOMPLETE", value)
+                self.assertEqual(value["non_runtime_owners"], [])
+                shutil.rmtree(invocation)
+
+    def test_generated_abi_contract_preserves_native_and_xml_failures(self) -> None:
+        for failure in ("attempt", "summary", "xml-with-invalid-contract"):
+            with self.subTest(failure=failure):
+                invocation = self.marshal_fixture({"schema_version": 1, "runtime_types": 0, "constraints_match": True})
+                events = self.events(invocation)
+                for event in events:
+                    if failure == "attempt" and "testResult" in event:
+                        event["testResult"]["status"] = "FAILED"
+                    if failure == "summary" and "testSummary" in event:
+                        event["testSummary"]["overallStatus"] = "FAILED"
+                self.write_events(invocation, events)
+                if failure == "xml-with-invalid-contract":
+                    (invocation / "test.log").write_text("FAIL\n")
+                    (invocation / "test.xml").write_text('<testsuite><testcase name="TestABI"><failure/></testcase></testsuite>')
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "FAIL", value)
+                self.assertEqual(value["non_runtime_owners"], [])
+                shutil.rmtree(invocation)
+
+    def test_generated_abi_contract_must_cover_every_attempt_consistently(self) -> None:
+        for second_count in (0, 2, None):
+            with self.subTest(second_runtime_types=second_count):
+                contract = {"schema_version": 1, "runtime_types": 0, "constraints_match": False}
+                invocation = self.marshal_fixture(contract)
+                second = invocation / "second"
+                second.mkdir()
+                shutil.copyfile(invocation / "test.xml", second / "test.xml")
+                (second / "test.log").write_text("PASS\n" if second_count is None else
+                                               "gvisor-go-marshal-test: " + json.dumps({**contract, "runtime_types": second_count}) + "\n")
+                events = self.events(invocation)
+                extra = json.loads(json.dumps(next(event for event in events if "testResult" in event)))
+                extra["id"]["testResult"]["attempt"] = 2
+                for output in extra["testResult"]["testActionOutput"]:
+                    output["uri"] = (second / output["name"]).as_uri()
+                for event in events:
+                    if "completed" in event:
+                        event["children"].append(extra["id"])
+                    if "testSummary" in event:
+                        event["testSummary"]["totalRunCount"] = 2
+                        event["testSummary"]["attemptCount"] = 2
+                self.write_events(invocation, events + [extra])
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS" if second_count == 0 else "INCOMPLETE", value)
+                self.assertEqual(len(value["non_runtime_owners"]), int(second_count == 0))
+                shutil.rmtree(invocation)
+
     def test_changed_configuration_is_not_same_owner(self) -> None:
         invocation = self.fixture()
         analysis = self.analysis(invocation)

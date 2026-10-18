@@ -156,8 +156,14 @@ complete attempts and matching original output with a terminal Go `PASS`
 before any appended spawn stderr. XML errors remain failures.
 `-test.v=false` overrides rules_go's injected test verbosity:
 benchmark RUN markers otherwise become unfinished XML testcases. An empty XML
-suite is expected here, and benchmark observations are reported separately;
-ordinary test mode still requires executed named cases for every owner.
+suite is expected here, and benchmark observations are reported separately.
+Ordinary test mode requires executed named cases. Generated ABI tests carry a
+generator-owned applicability record: groups with no non-dynamic types, or whose
+source constraints exclude this configuration, remain in `zero_case_owners` and
+are reported separately as `non_runtime_owners`. They add no passing cases. Every
+tagged attempt must retain one consistent, typed record and pass natively;
+missing eligible tests, all-skipped tests, and unexpected empty owners remain
+incomplete.
 
 ## GitHub Actions frontend
 

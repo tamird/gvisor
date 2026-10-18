@@ -314,6 +314,7 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
 
         # See above.
         marshal_sets = calculate_sets(srcs)
+        test_kwargs = dict(kwargs, tags = kwargs.get("tags", []) + ["go-marshal-test-contract"])
         for (suffix, _) in marshal_sets.items():
             _go_test(
                 name = name + suffix + "_abi_autogen_test",
@@ -323,7 +324,7 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
                 ],
                 library = ":" + name,
                 deps = marshal_test_deps,
-                **kwargs
+                **test_kwargs
             )
 
 def go_test(name, nogo = True, **kwargs):

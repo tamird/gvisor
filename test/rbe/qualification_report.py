@@ -535,6 +535,23 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
             "expected": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())]}
 
 
+def marshal_test_contract(log: Path) -> dict[str, object]:
+    """Read the generator's runtime applicability record from an original log."""
+    prefix = "gvisor-go-marshal-test: "
+    with log.open() as stream:
+        records = [line.removeprefix("\x16")[len(prefix):] for line in stream
+                   if line.removeprefix("\x16").startswith(prefix)]
+    if len(records) != 1:
+        raise ValueError("Generated ABI test requires exactly one applicability record")
+    value = mapping(json.loads(records[0]))
+    if (set(value) != {"schema_version", "runtime_types", "constraints_match"}
+            or type(value["schema_version"]) is not int or value["schema_version"] != 1
+            or type(value["runtime_types"]) is not int or value["runtime_types"] < 0
+            or type(value["constraints_match"]) is not bool):
+        raise ValueError("Invalid generated ABI test applicability record")
+    return value
+
+
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
             expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
@@ -638,6 +655,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     expected: set[Owner] = set()
     expected_aspects: set[Aspect] = set()
     negative_tests: set[Owner] = set()
+    marshal_tests: set[Owner] = set()
     for analysis in expected_analysis:
         try:
             targets = unit_matrix.configured_targets(
@@ -647,6 +665,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             expected.update(Owner(label, target.configuration) for label, target in targets.items())
             negative_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                   if "expected-failure" in target.tags)
+            marshal_tests.update(Owner(label, target.configuration) for label, target in targets.items()
+                                 if "go-marshal-test-contract" in target.tags)
             expected_aspects.update(Aspect(Owner(label, target.configuration), name)
                                     for label, target in targets.items() for name in target.aspects)
         except (OSError, ValueError) as error:
@@ -706,6 +726,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     owner_executed: Counter[Owner] = Counter()
     skips: list[dict[str, object]] = []
     expected_failures: list[dict[str, object]] = []
+    marshal_contracts: dict[Attempt, dict[str, object]] = {}
+    non_runtime_owners: list[dict[str, object]] = []
     if testing:
         missing.extend({**asdict(attempt), "reason": "announced result missing"} for attempt in sorted(announced - results.keys()))
         if results.keys() - announced:
@@ -743,6 +765,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                         failures.append(failure)
                 elif attempt.owner in negative_tests:
                     errors.append(f"Expected-failure owner has no failing named cases: {attempt}")
+                if attempt.owner in marshal_tests:
+                    contract = marshal_test_contract(log)
+                    marshal_contracts[attempt] = contract
+                    observation["marshal_test_contract"] = contract
+                    if (not contract["runtime_types"] or not contract["constraints_match"]) and owner_cases[attempt.owner]:
+                        errors.append(f"Generated ABI test declares no applicable runtime tests but has named cases: {attempt}")
                 if benchmark_mode:
                     rows = benchmark_rows(log, pgo=pgo_expected is not None)
                     observation["benchmarks"] = rows
@@ -795,7 +823,18 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if summary.get("overallStatus") != "PASSED":
                 failures.append({**asdict(owner), "reason": "test summary", "status": summary.get("overallStatus")})
         for owner in sorted(expected | result_owners):
-            if not benchmark_mode and owner_executed[owner] == 0:
+            attempts = [attempt for attempt in results if attempt.owner == owner]
+            contracts = [marshal_contracts[attempt] for attempt in attempts if attempt in marshal_contracts]
+            consistent = bool(contracts) and len(contracts) == len(attempts) and all(contract == contracts[0] for contract in contracts)
+            if contracts and not consistent:
+                errors.append(f"Generated ABI test applicability differs or is missing across attempts: {owner}")
+            non_runtime = (consistent and owner_cases[owner] == 0
+                           and (not contracts[0]["runtime_types"] or not contracts[0]["constraints_match"])
+                           and all(results[attempt].get("status") == "PASSED" for attempt in attempts)
+                           and summaries.get(owner, {}).get("overallStatus") == "PASSED")
+            if non_runtime:
+                non_runtime_owners.append({**asdict(owner), **contracts[0]})
+            if not benchmark_mode and not non_runtime and owner_executed[owner] == 0:
                 errors.append(f"Test owner has no executed named cases; zero-case/all-skipped success is not coverage: {owner}")
     elif results or summaries:
         errors.append("Build/analysis invocation unexpectedly contains test execution")
@@ -812,6 +851,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                   for aspect, ok in sorted(completed_aspects.items())],
             "missing": missing, "skips": skips, "case_counts": dict(cases),
             "expected_failures": expected_failures,
+            "non_runtime_owners": non_runtime_owners,
             "benchmark_manifest": benchmark_evidence,
             "zero_case_owners": [asdict(owner) for owner, count in sorted(owner_cases.items()) if count == 0],
             "all_skipped_owners": [asdict(owner) for owner, count in sorted(owner_executed.items()) if count == 0 and owner_cases[owner] > 0],
@@ -865,6 +905,7 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
               "executed": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("executed", []))],
               "case_counts": dict(sum((Counter({key: number(value) for key, value in mapping(row.get("case_counts", {})).items()}) for row in verdicts), Counter())),
               "zero_case_owners": [item for row in verdicts for item in sequence(row.get("zero_case_owners", []))],
+              "non_runtime_owners": [item for row in verdicts for item in sequence(row.get("non_runtime_owners", []))],
               "all_skipped_owners": [item for row in verdicts for item in sequence(row.get("all_skipped_owners", []))],
               "failures": [item for row in verdicts for item in sequence(row.get("failures", []))],
               "expected_failures": [item for row in verdicts for item in sequence(row.get("expected_failures", []))],
