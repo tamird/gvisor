@@ -79,6 +79,8 @@ PACKETIMPACT_TAGS = [
     "packetimpact",
 ]
 
+# Negative variants also advertise expected-failure so report consumers can
+# distinguish a successful wrapper from its deliberately failing child.
 def packetimpact_native_test(
         name,
         testbench_binary,
@@ -100,7 +102,7 @@ def packetimpact_native_test(
         testbench_binary = testbench_binary,
         flags = expect_failure_flag + ["--variant", "native"],
         dut_binary = "//test/packetimpact/dut/native",
-        tags = PACKETIMPACT_TAGS,
+        tags = PACKETIMPACT_TAGS + (["expected-failure"] if expect_failure else []),
         **kwargs
     )
 
@@ -127,7 +129,7 @@ def packetimpact_netstack_test(
         testbench_binary = testbench_binary,
         flags = expect_failure_flag + ["--variant", "gvisor"],
         dut_binary = "//test/packetimpact/dut/runsc",
-        tags = PACKETIMPACT_TAGS,
+        tags = PACKETIMPACT_TAGS + (["expected-failure"] if expect_failure else []),
         **kwargs
     )
 

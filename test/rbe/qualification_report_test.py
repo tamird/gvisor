@@ -466,6 +466,50 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(sum(item.get("reason") == "announced result missing" for item in value["missing"]), 7)
         self.assertEqual(any(item["reason"] == "XML test failures" for item in value["failures"]), True)
 
+    def test_expected_failure_requires_declared_passing_wrapper(self) -> None:
+        for declared, wrapper_passes, child in (
+            (True, True, "failed"),
+            (False, True, "failed"),
+            (True, False, "failed"),
+            (True, True, "unnamed"),
+            (True, True, "passed"),
+            (True, True, "skipped"),
+            (True, True, "zero"),
+        ):
+            with self.subTest(declared=declared, wrapper_passes=wrapper_passes, child=child):
+                invocation = self.fixture()
+                events = self.events(invocation)
+                for event in events:
+                    if declared and "configured" in event:
+                        event["configured"]["tag"].append("expected-failure")
+                    if not wrapper_passes:
+                        if "testResult" in event:
+                            event["testResult"]["status"] = "FAILED"
+                        if "testSummary" in event:
+                            event["testSummary"]["overallStatus"] = "FAILED"
+                self.write_events(invocation, events)
+                xml = {
+                    "failed": '<testcase name="Unsupported"><failure message="known defect"/></testcase>',
+                    "unnamed": '<testcase><failure message="setup error"/></testcase>',
+                    "passed": '<testcase name="Unsupported"/>',
+                    "skipped": '<testcase name="Unsupported"><skipped/></testcase>',
+                    "zero": "",
+                }[child]
+                (invocation / "test.xml").write_text("<testsuite>" + xml + "</testsuite>")
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                accepted = declared and wrapper_passes and child == "failed"
+                failed = child in ("failed", "unnamed")
+                status = "PASS" if accepted else "FAIL" if failed else "INCOMPLETE"
+                self.assertEqual(value["status"], status, value)
+                self.assertEqual(value["case_counts"]["failed"], int(failed))
+                self.assertEqual(len(value["expected_failures"]), int(accepted))
+                if accepted:
+                    self.assertEqual(value["case_counts"]["passed"], 0)
+                    combined = report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")
+                    self.assertEqual(combined["expected_failures"], value["expected_failures"])
+                shutil.rmtree(invocation)
+
     def test_retained_absent_results(self) -> None:
         invocation = self.fixture("incomplete")
         self.assertEqual(self.capture(invocation)["errors"], ["No complete build events"])

@@ -637,6 +637,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
     expected: set[Owner] = set()
     expected_aspects: set[Aspect] = set()
+    negative_tests: set[Owner] = set()
     for analysis in expected_analysis:
         try:
             targets = unit_matrix.configured_targets(
@@ -644,6 +645,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 allow_test_no_build=info["bazel_command"] == "test",
             )
             expected.update(Owner(label, target.configuration) for label, target in targets.items())
+            negative_tests.update(Owner(label, target.configuration) for label, target in targets.items()
+                                  if "expected-failure" in target.tags)
             expected_aspects.update(Aspect(Owner(label, target.configuration), name)
                                     for label, target in targets.items() for name in target.aspects)
         except (OSError, ValueError) as error:
@@ -702,6 +705,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     owner_cases: Counter[Owner] = Counter()
     owner_executed: Counter[Owner] = Counter()
     skips: list[dict[str, object]] = []
+    expected_failures: list[dict[str, object]] = []
     if testing:
         missing.extend({**asdict(attempt), "reason": "announced result missing"} for attempt in sorted(announced - results.keys()))
         if results.keys() - announced:
@@ -727,7 +731,18 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 owner_executed[attempt.owner] += number(counts["passed"]) + number(counts["failed"])
                 skips.extend({**asdict(attempt), **mapping(item)} for item in sequence(counts["skips"]))
                 if counts["failed"]:
-                    failures.append({**asdict(attempt), "reason": "XML test failures", "cases": counts["failures"]})
+                    failure = {**asdict(attempt), "reason": "XML test failures", "cases": counts["failures"]}
+                    # A negative-test wrapper can pass precisely because its
+                    # child failed. Retain those failures as unsupported cases,
+                    # without treating them as successful child coverage.
+                    if (attempt.owner in negative_tests and result.get("status") == "PASSED"
+                            and summaries.get(attempt.owner, {}).get("overallStatus") == "PASSED"
+                            and all(string(name).strip() for name in sequence(counts["failures"]))):
+                        expected_failures.append(failure)
+                    else:
+                        failures.append(failure)
+                elif attempt.owner in negative_tests:
+                    errors.append(f"Expected-failure owner has no failing named cases: {attempt}")
                 if benchmark_mode:
                     rows = benchmark_rows(log, pgo=pgo_expected is not None)
                     observation["benchmarks"] = rows
@@ -796,6 +811,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "completed_aspects": [{**asdict(aspect.owner), "aspect": aspect.name, "success": ok}
                                   for aspect, ok in sorted(completed_aspects.items())],
             "missing": missing, "skips": skips, "case_counts": dict(cases),
+            "expected_failures": expected_failures,
             "benchmark_manifest": benchmark_evidence,
             "zero_case_owners": [asdict(owner) for owner, count in sorted(owner_cases.items()) if count == 0],
             "all_skipped_owners": [asdict(owner) for owner, count in sorted(owner_executed.items()) if count == 0 and owner_cases[owner] > 0],
@@ -851,6 +867,7 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
               "zero_case_owners": [item for row in verdicts for item in sequence(row.get("zero_case_owners", []))],
               "all_skipped_owners": [item for row in verdicts for item in sequence(row.get("all_skipped_owners", []))],
               "failures": [item for row in verdicts for item in sequence(row.get("failures", []))],
+              "expected_failures": [item for row in verdicts for item in sequence(row.get("expected_failures", []))],
               "missing": [item for row in verdicts for item in sequence(row.get("missing", []))],
               "skips": [item for row in verdicts for item in sequence(row.get("skips", []))],
               "verdict_available_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}

@@ -1636,6 +1636,12 @@ remain owned by `test/packetimpact/runner/defs.bzl`. The runner declares its
 testbench, POSIX server and source-built release with sidecars, and creates its
 own user and network namespaces, veth links and packet captures.
 
+For declared negative tests, a passing wrapper requires a failing child.
+The qualification verdict retains those child failures in `case_counts` and
+`expected_failures`, separately from unexpected `failures`. They establish the
+negative-test contract, not support for the failing behavior. Missing cases,
+unexpected child success and failed wrappers still prevent qualification.
+
 Remote wrappers request root Firecracker workers with IPv6 and the existing
 pinned networking image, which supplies `iptables-nft` and `ip6tables-nft` for
 the runner's TCP filtering. Worker namespace and nftables support remain runtime
