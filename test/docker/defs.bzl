@@ -426,7 +426,7 @@ def _source_image_layout_impl(ctx):
 
 _source_image_layout = rule(
     implementation = _source_image_layout_impl,
-    doc = "Exports the Make-selected cached image or builds its Dockerfile into an OCI layout.",
+    doc = "Builds the Make-selected Dockerfile into an OCI layout.",
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
@@ -446,7 +446,7 @@ _source_image_layout = rule(
 )
 
 def source_image_archive(name, architecture, image, archive_exec_properties = {}, **kwargs):
-    """Exports a cached image or its source build through the same OCI archive.
+    """Builds the canonical image source and exposes its Docker archive.
 
     Args:
       name: Public Docker archive target.

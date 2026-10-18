@@ -72,9 +72,8 @@ else
   mapfile -t references < references
   test "${#references[@]}" -eq 3
 
-  # Keep the transport used for the qualified concurrent OCI exports local to
-  # the cache read. A miss uses the declared Buildx client and BuildKit image.
-  printf -v crane_command 'env GODEBUG=http2client=0 %q' "${crane}"
+  # Source archives use the canonical rebuild target and pinned BuildKit image.
+  # A published image with the same context hash is not source-build evidence.
   printf -v build_command '/bin/bash %q %q %q %q %q' \
     "${builder}" "${buildx}" "${buildkit_digest}" "${bsdtar}" "${layout}"
   # Some executors create empty output directories before invoking the action.
@@ -83,12 +82,12 @@ else
     rmdir "${layout}"
   fi
   "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
-    CRANE="${crane_command}" OCI_BUILD="${build_command}" \
+    OCI_BUILD="${build_command}" \
     _IMAGE_OCI_OUTPUT="${layout}" _IMAGE_OCI_PLATFORM="${platform}" \
-    "export-oci-${target}"
+    "rebuild-${target}"
 
-  # Both standard exporters produce the declared layout before this action
-  # succeeds. Bazel then exposes it to downstream conversion.
+  # The builder produces the declared layout before this action succeeds.
+  # Bazel then exposes it to downstream conversion.
   printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
   printf 'Source OCI tags: %s %s\n' "${references[1]}" "${references[2]}"
 fi
