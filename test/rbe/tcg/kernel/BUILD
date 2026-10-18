@@ -1,3 +1,4 @@
+load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_python//python:defs.bzl", "py_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load(":build.bzl", "linux_kernel", "linux_selftest")
@@ -42,6 +43,17 @@ linux_kernel(
     exec_properties = _EXEC_PROPERTIES,
     release = "7.3.0-rc3-gvisor-kcov",
     visibility = ["//test/rbe/tcg:__pkg__"],
+)
+
+# The upstream x86 selftest library also builds VFIO helpers. Reuse the
+# declared UUID headers and static library without changing its object list.
+flatten(
+    name = "selftest_sysroot",
+    testonly = True,
+    tars = [
+        "@kernel_build_deps//:flat",
+        "@qemu_build_deps//uuid-dev/amd64:data",
+    ],
 )
 
 linux_selftest(
