@@ -22,6 +22,18 @@ def _runtime_test_impl(ctx):
         "--batch",
         str(ctx.attr.batch),
     ]
+    # Retry every currently excluded PHP case without changing its deadline.
+    if ctx.attr.lang == "php":
+        args += [
+            "--tests",
+            ",".join([
+                "tests/output/stream_isatty_err.phpt",
+                "tests/output/stream_isatty_in-err.phpt",
+                "tests/output/stream_isatty_in-out.phpt",
+                "tests/output/stream_isatty_out-err.phpt",
+                "tests/output/stream_isatty_out.phpt",
+            ]),
+        ]
     files = [ctx.executable._runner, ctx.executable._proctor] + ctx.files._runsc
     if ctx.file.exclude_file:
         args += [
