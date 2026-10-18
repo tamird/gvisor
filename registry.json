@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T06:00:23.132563+00:00",
+    "updatedAt": "2026-10-18T06:45:30.959530+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2592,11 +2592,11 @@
       "group": "runtime",
       "status": "open",
       "summary": "Source #15499 remains at 728f546af. The matching import #15910 at de72f3161e failed public Buildkite 51218 while its internal check passed. Authenticated shard-two logs show TestUIDMap/kvm and TestUIDMap/systrap failing in both cgroup modes with client-sync EOF and empty mounts JSON; the other seven shards were cached. The public hook uploads only *.boot.txt, so absent gofer artifacts do not establish a failure before logging. The producing gofer diagnostic is missing and the public /home cause remains unresolved. A separate reviewed proposal extends the existing failed-test upload loop to retain gofer logs alongside boot logs; it is now delivered as #15927 and awaits maintainer review. Independent fixture fix #15920 is qualified for the demonstrated /tmp shadowing defect: failing V4 becomes passing V5 with the fix, and original source passes V7 in /var/tmp. Those results do not establish whether it resolves the public /home failures or exonerates #15499. The user's comment6233198945 asks maintainers whether the PR can advance; no agent reply or causal affirmation is implied.\n\nEarlier observations:\n\nThe current approved head 73b3b7655 conflicts with upstream. Rebase and review of the conflict are agent work; the separate Copybara migration error still has no public diagnostic. Exact-head approval is retained as historical review evidence for any replacement head.\n\nEarlier observations:\n\nThe author already requested importer help. The ready-to-pull label is present, but Copybara reports a generic migration error with no log URL. Current-head approval remains separate from this failed import attempt.\n\nEarlier observations:\n\nContributor-approved PR #15499 is published at 73b3b7655 on master a926. The requested checkErr-to-err rename and source-preserving seven-path refresh are independently verified; the exact description, one-commit head and publication were read back. No contributor hold remains. Existing validation is retained with its original limitations.\n\nEarlier preparation and validation:\n\nContributor approved after renaming checkErr to err; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained.",
-      "updatedAt": "2026-10-17T11:39:21.004426+00:00",
+      "updatedAt": "2026-10-18T06:45:30.959530+00:00",
       "followup": {
         "disposition": "Public failure unresolved; gofer capture change delivered as #15927",
-        "owner": "restore_integration_review",
-        "nextAction": "Follow the delivered capture change and the maintainer response. Use a retained gofer diagnostic from a future authorized run to investigate the public /home failure; do not infer causality from the /tmp fix.",
+        "owner": "root",
+        "nextAction": "Await the maintainer response to the user’s existing request and usable gofer diagnostics from #15927 or a future Buildkite failure capture. Keep the public import failure visible. The independent #15920 /tmp fixture correction does not establish the cause of the /home failure; no new source fix or duplicate outreach is justified.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5be0d814fd650cf2cbc33238fb92ab2cf9555943",
           "https://github.com/google/gvisor/pull/15499",
@@ -2621,7 +2621,7 @@
         "reviewedAt": "2026-10-17T11:22:54.391522+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-17T11:39:21.004426+00:00"
+        "observedAt": "2026-10-18T06:45:30.959530+00:00"
       },
       "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
       "number": 15499,
@@ -3490,22 +3490,26 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T19:43:41.973695+00:00",
-      "summary": "GitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
+      "updatedAt": "2026-10-18T06:45:30.959530+00:00",
+      "summary": "Rebased onto current upstream after Nayana’s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. The generation job remains in progress in this snapshot; the other applicable public checks pass.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
       "number": 15315,
       "followup": {
-        "disposition": "Maintainer restoration hold; diagnosed old workflow failure",
-        "owner": "root",
-        "nextAction": "Preserve the explicit restoration replacement hold and current fbb source. The 11 shared workflow findings are understood and fixed on current master, but this held PR is not rebased. The author has asked for the replacement PR link; no duplicate outreach.",
+        "disposition": "Rebase published; fresh maintainer approval requested",
+        "owner": "metric_exclusion_baseline",
+        "nextAction": "Seal the remaining public generation check, then follow fresh approval of the rebased head. Nayana was tagged in the existing comment; the native reviewer-request API returned 404, so do not claim a new native request. The prior restoration hold is no longer active.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
-          "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539"
+          "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
+          "https://github.com/tamird/gvisor/commit/3c90764766edd626609fd79836d82c6e1e28ad99",
+          "https://github.com/google/gvisor/pull/15315#issuecomment-6246633240"
         ],
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
-        "sourceHead": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185",
+        "sourceHead": "3c90764766edd626609fd79836d82c6e1e28ad99",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
-      }
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-18T06:45:30.959530+00:00"
+      },
+      "head": "3c90764766edd626609fd79836d82c6e1e28ad99"
     },
     {
       "id": "pr:15388",
@@ -10274,15 +10278,15 @@
       "title": "Update Ollama images to 0.40.6",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
-      "status": "validation in progress",
-      "updatedAt": "2026-10-18T06:00:23.132563+00:00",
-      "summary": "Ollama 0.5.1 can no longer download the benchmark vision model: the registry requires a newer client. The independent correction updates all three image pins to 0.40.6 and recognizes its uppercase CUDA backend log name. Source review passed; remote client compilation and source-build/archive/load plus Nogo checks are running on integration 3636f2ed9d. The implementation owner retains result collection. No GPU inference or COS/Kubernetes driver compatibility is claimed.",
+      "status": "client checks pass; image export diagnosis",
+      "updatedAt": "2026-10-18T06:45:30.959530+00:00",
+      "summary": "Ollama 0.40.6 completes all six model downloads, including the vision model rejected by 0.5.1. The existing clients compile and owning Nogo passes. The same source-image run later fails during OCI tar export with truncation/context cancellation before archive/load execution. The independent pin/log-case correction is source-reviewed; full export remains agent-owned diagnosis. No GPU inference or COS/Kubernetes driver compatibility is claimed.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "validation in progress",
+        "disposition": "agent-owned export diagnosis",
         "sourceHead": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
-        "observedAt": "2026-10-18T06:00:23.132563+00:00",
-        "nextAction": "Complete the existing remote qualification before requesting contributor review. Preserve the original zero-test failure and report actual archive/load execution.",
+        "observedAt": "2026-10-18T06:45:30.959530+00:00",
+        "nextAction": "Preserve the full image run FAIL and investigate BuildKit cancellation using retained evidence. The independent version correction has passed client/source-model checks; contributor review has not been requested in the available record.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
           "https://github.com/tamird/gvisor/actions/runs/39100061447",
@@ -11407,17 +11411,6 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/e5c4013efc560d176bfdec23206d68a5190be211",
         "https://app.buildbuddy.io/invocation/b9a16d7f-2629-4434-9406-c828a16fbe76"
-      ]
-    },
-    {
-      "from": "upstream:tun-ndp-restore-rollback",
-      "to": "pr:15315",
-      "type": "blocked_by",
-      "reason": "Required NIC and restore-job interfaces are still absent through master 6c6e9fd61. The maintainer will review after the promised upstream restoration lands; a source-preserving rebase is currently unavailable.",
-      "evidence": [
-        "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
-        "https://github.com/google/gvisor/pull/15315",
-        "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539"
       ]
     },
     {
@@ -17612,8 +17605,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T06:00:23.132563+00:00",
-      "summary": "Fresh TPU vLLM source construction and OCI loading pass. Ollama's fresh-source attempt failed before export: version 0.5.1 received HTTP 412 for llama3.2-vision:11b-instruct-fp16 because the registry requires a newer client. No archive/load case executed. The independent 0.40.6 correction updates all three image pins and the CUDA log check; source review is complete and remote validation is running on integration 3636f2ed9d. The earlier 7,200-second timeout remains a separate retained failure. Triton provider recovery and physical GPU execution remain separate gaps.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
+      "updatedAt": "2026-10-18T06:45:30.959530+00:00",
+      "summary": "Fresh TPU vLLM source construction and loading pass. Updating Ollama to 0.40.6 resolves the model-registry HTTP 412: all six source model downloads now complete, and client compilation/Nogo pass. The corrected image run then fails during OCI tar export with truncation/context cancellation before archive/load execution. The owner is investigating that separate export failure. Original timeout and 0.5.1 failures remain retained; Triton recovery and physical GPU execution remain separate gaps.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
       "findings": [
         {
           "text": "The October 18 provider check still finds issue #13789 open with no comments. Related lease/reconnect PRs #13769, #13778 and #13779 are all open and report approval. No merge, deployed-worker change or successful Triton source run is established by those review states; they do not justify repeating the two-hour workload.",
@@ -17648,9 +17641,22 @@
               "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9"
             }
           ]
+        },
+        {
+          "text": "At 3636f2ed9d, all six model pulls complete with 0.40.6 and owning Nogo passes. The source action later fails during OCI tar export; archive/load does not execute. The original producer remains FAIL. Its authenticated receipt was available 86.188 seconds after execution. Client compilation passes separately; these outcomes do not establish image load or physical GPU inference.",
+          "evidence": [
+            {
+              "label": "Corrected downloads; later OCI export failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39102380735"
+            },
+            {
+              "label": "Ollama client compilation pass",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39102370765"
+            }
+          ]
         }
       ],
-      "nextStep": "Validate the Ollama 0.40.6 correction through the existing source-build/archive/load owners. Physical GPU inference and COS/Kubernetes driver compatibility remain unverified. Follow BuildBuddy issue #13789 for Triton worker evidence; no new full Triton retry is justified.",
+      "nextStep": "Investigate the corrected Ollama image’s export cancellation through retained BuildKit evidence. Do not claim archive/load or GPU execution. For Triton, follow existing BuildBuddy #13789; no new full retry is justified by the current evidence.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
