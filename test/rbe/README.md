@@ -420,20 +420,23 @@ gh workflow run build.yml --repo tamird/gvisor \
 
 The local AMD64 `kvm` lane preserves public `make kvm-tests`: the pure
 `//pkg/sentry/platform/kvm:kvm_test` package test and the complete
-`//test/docker:kvm_tests` integration/image suite. The owning Docker variants
-register both `--platform=kvm` and the `-docker` runtime with
+`//test/docker:kvm_tests` integration/image suite. It also selects the declared
+coretag SMT, pinring KVM and boot-posture host fixtures. All 20 owners run in one
+invocation with remote compilation and per-owner test placement. The owning
+Docker variants register both `--platform=kvm` and the `-docker` runtime with
 `--net-raw --allow-packet-socket-write`. Original arguments, test deadlines
 and source-defined skips remain in effect.
 
 The package runs once; the integration and image suites each retain the public
 job's eight `PARTITION`/`TOTAL_PARTITIONS` name-hash partitions and their
-individual deadlines. All TestRunners use the existing privileged Docker fixture and pinned
-Docker-tools image. The fixture supplies private cgroup/PID/network namespaces
-and disk-backed scratch; its job bridge permits the suites' image downloads.
-The host must expose readable and writable `/dev/kvm` to root. Compilation
-remains remote, and non-RBE execution properties of the package test remain
-unchanged. This lane is selected explicitly rather than by the remote AMD64
-aggregate. Its work/job bounds are 45/50 minutes; incomplete work stays failed.
+individual deadlines. These 17 TestRunners use the existing privileged Docker
+fixture and pinned Docker-tools image. The fixture supplies private
+cgroup/PID/network namespaces and disk-backed scratch; its job bridge permits
+the suites' image downloads. The three host fixtures use the local-root helper
+in a private mount namespace. The host must expose readable and writable
+`/dev/kvm` to root. This lane is selected explicitly rather than by the remote
+AMD64 aggregate. Its work/job bounds are 45/50 minutes. Empty partitions remain
+explicit all-skipped owners and produce an incomplete qualification verdict.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
