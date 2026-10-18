@@ -95,6 +95,8 @@ func TestEnable(t *testing.T) {
 		t.Skipf("Running on Linux kernel: %s < 5.14. Core tagging not available. Skipping test.", version)
 		return
 	}
+	initialTag, queryErr := getCoreTag(0)
+	t.Logf("Current-thread PR_SCHED_CORE_GET: tag=%d, err=%v", initialTag, queryErr)
 	tag, err := Enable()
 	// Linux requires active SMT for core scheduling.
 	// https://github.com/torvalds/linux/blob/fd73f4a66/kernel/sched/core_sched.c#L139-L140
