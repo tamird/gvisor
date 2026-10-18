@@ -279,7 +279,10 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
         emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
         tags = tags + ["no-local"],
         exec_properties = {
-            "test.EstimatedCPU": "2",
+            # Compute units prevent predicted task sizes from overriding CPUs.
+            # EstimatedMemory below still controls the memory allocation.
+            # https://github.com/buildbuddy-io/buildbuddy/blob/171043b63/enterprise/server/tasksize_model/tasksize_model.go#L190-L198
+            "test.EstimatedComputeUnits": "2",
             "test.EstimatedMemory": "6GB",
             "test.EstimatedFreeDiskBytes": "8GB",
             # Bazel's undeclared-output collection requires file and zip.
