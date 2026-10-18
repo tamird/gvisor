@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T04:34:29.079696+00:00",
+    "updatedAt": "2026-10-18T05:01:30.972092+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -10194,6 +10194,41 @@
           "url": "https://github.com/php/php-src/commit/831597748"
         }
       ]
+    },
+    {
+      "id": "external-pr:buildbuddy:13849",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "ref": "preserve-upload-failure-logs",
+      "head": "c4c33abb4657319113eff015bf5c69671a3a437a",
+      "number": 13849,
+      "title": "BuildBuddy: preserve logs when output uploads fail",
+      "group": "rbe",
+      "status": "open",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849",
+      "updatedAt": "2026-10-18T05:01:30.972092+00:00",
+      "summary": "Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip. The public PR is open and mergeable, awaiting maintainer review. Three Darwin ERROR statuses explicitly require an approving review before execution; other checks are queued. This repairs diagnostic loss and does not establish the cause of the Ollama timeout.",
+      "followup": {
+        "owner": "Codex",
+        "disposition": "open",
+        "sourceHead": "c4c33abb4657319113eff015bf5c69671a3a437a",
+        "observedAt": "2026-10-18T05:01:30.972092+00:00",
+        "nextAction": "Follow maintainer review, execution approval and actual public CI results. No contributor decision is pending.",
+        "evidence": [
+          "https://github.com/tamird/buildbuddy/commit/c4c33abb4657319113eff015bf5c69671a3a437a",
+          "https://app.buildbuddy.io/invocation/c62fd167-b006-4ba7-a7eb-b24cca309d05"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published PR",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849"
+        },
+        {
+          "label": "Before/after remote race validation",
+          "url": "https://app.buildbuddy.io/invocation/c62fd167-b006-4ba7-a7eb-b24cca309d05"
+        }
+      ]
     }
   ],
   "edges": [
@@ -17328,8 +17363,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T01:46:00.958361+00:00",
-      "summary": "The actual default-branch workflow remains enabled with its minutes-18-and-48 schedule. Scheduled run 39086958437 started at 01:33:58 UTC on October 18 and published a complete snapshot at 01:34:48. Its previous scheduled run began at 23:28:29 on October 17, leaving a gap of more than two hours despite the nominal half-hour cadence. The reason for missing dispatches remains unknown. Existing manual and owner-driven metadata batches preserve complete current snapshots; they do not establish a scheduler repair.",
+      "updatedAt": "2026-10-18T05:01:30.972092+00:00",
+      "summary": "The default-branch workflow now requests full refreshes every ten minutes. The unchanged collector uses 19 requests and 112 GraphQL points per sweep; six runs per hour fit the conservative 1,000-point workflow-token budget. The revised workflow passed all 29 JavaScript and 33 Python checks and published a live-verified snapshot. GitHub had not created the first revised scheduled run by 04:59 UTC, so unattended scheduling reliability remains unverified. Active ownership now checks for ten-minute staleness and an existing queued or running refresh before using the same manual dispatch.\n\nBefore the correction, the active default-branch workflow requested runs at minutes 18 and 48, but the eight observed scheduled runs were created two to four hours apart. Their creation and start timestamps matched, which locates the observed gap before job execution. No disabled workflow, inactive repository, wrong default branch or inactive actor was found; the provider cause remains unknown. GitHub documents that scheduled events can be delayed or dropped. Manual refreshes do not establish a scheduler repair.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -17471,7 +17506,7 @@
           ]
         }
       ],
-      "nextStep": "Use the existing scheduled workflow and inspect its actual dispatch times. While work is active, submit one existing-workflow refresh only when complete coverage is over 45 minutes old and no equivalent run is active. Preserve snapshot clocks and failed attempts; do not add another watcher.",
+      "nextStep": "Verify an actual schedule event at revision 444b1f24c9 and its published full snapshot. While work is active, recover only after ten-minute staleness and only when no equivalent refresh is queued or running. Report observed dispatch latency; the configured cadence is not a hard freshness guarantee.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -17492,6 +17527,18 @@
         {
           "label": "Authorized existing-workflow refresh; full snapshot restored",
           "url": "https://github.com/tamird/gvisor/actions/runs/39009543031"
+        },
+        {
+          "label": "Ten-minute workflow cadence",
+          "url": "https://github.com/tamird/gvisor/commit/444b1f24c96954067d4a0d503b6e76dbdc0d0278"
+        },
+        {
+          "label": "Revised workflow checks and full refresh",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39098361336"
+        },
+        {
+          "label": "Ten-minute stale-snapshot recovery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39098984398"
         }
       ]
     },
@@ -17500,8 +17547,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T04:34:29.079696+00:00",
-      "summary": "Fresh TPU vLLM source construction and OCI loading now pass at eee03d6d55. The original action only exported a cached canonical image; the bounded retry records a registry miss, fresh BuildKit execution, the actual Qwen download and successful export/load. Its authenticated receipt arrived 96.666 seconds after execution, with one passing owner and no skips or missing results. This qualifies source construction and loading, not TPU application execution. The diagnostic context marker is not part of the canonical integration. The original Ollama prerequisite exhausted the 7,200-second coordinator budget before its archive/load test; the original FAIL is retained. Worker phase/resource evidence was unavailable after cancellation, so the cause is unresolved. A bounded export diagnostic is being prepared. The earlier Triton provider gap remains separate.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
+      "updatedAt": "2026-10-18T05:01:30.972092+00:00",
+      "summary": "Fresh TPU vLLM source construction and OCI loading now pass at eee03d6d55. The original action only exported a cached canonical image; the bounded retry records a registry miss, fresh BuildKit execution, the actual Qwen download and successful export/load. Its authenticated receipt arrived 96.666 seconds after execution, with one passing owner and no skips or missing results. This qualifies source construction and loading, not TPU application execution. The diagnostic context marker is not part of the canonical integration. The original Ollama prerequisite exhausted the 7,200-second coordinator budget before its archive/load test; the original FAIL is retained. Worker phase/resource evidence was unavailable after cancellation, so the cause is unresolved. The bounded export diagnostic was submitted as run 39097670615; its owner is collecting the result. The earlier Triton provider gap remains separate.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
       "findings": [
         {
           "text": "The October 18 provider check still finds issue #13789 open with no comments. Related lease/reconnect PRs #13769, #13778 and #13779 are all open and report approval. No merge, deployed-worker change or successful Triton source run is established by those review states; they do not justify repeating the two-hour workload.",
@@ -17574,6 +17621,10 @@
         {
           "label": "Ollama prerequisite interrupted at coordinator budget; test not executed",
           "url": "https://github.com/tamird/gvisor/actions/runs/39089621336"
+        },
+        {
+          "label": "Bounded Ollama export diagnostic",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39097670615"
         }
       ]
     },
