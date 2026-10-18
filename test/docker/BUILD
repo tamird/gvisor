@@ -166,6 +166,16 @@ amd64_image_archive(
     tags = ["manual"],
 )
 
+# Change the TPU context hash so qualification exercises the source builder
+# instead of exporting the already-published image. The Dockerfile and files
+# it consumes are unchanged.
+pkg_tar(
+    name = "tpu_source_miss_context",
+    empty_files = ["images/tpu/vllm/.qualification-miss"],
+    tags = ["manual"],
+    deps = ["//images:source_contexts"],
+)
+
 # GPU/TPU model images use the source/archive producer for CUDA images.
 # Source builds require a disposable namespace-capable worker; no GPU test runs.
 [
@@ -174,6 +184,7 @@ amd64_image_archive(
         testonly = True,
         architecture = "x86_64",
         archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["512GB" if image == "gpu/ollama/bench" else "80GB"],
+        contexts = ":tpu_source_miss_context" if image == "tpu/vllm" else "//images:source_contexts",
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
