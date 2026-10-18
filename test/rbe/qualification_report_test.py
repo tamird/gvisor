@@ -133,7 +133,8 @@ class QualificationReportTest(unittest.TestCase):
         (invocation / "arguments.txt").write_text("\n".join(
             [arg for arg in arguments if not arg.startswith("--test_arg=")]
             + ["--test_arg=" + argument for argument in manifest["arguments"]]) + "\n")
-        log = (invocation / "test.log").read_text().replace("PASS\n", "--- SKIP: BenchmarkExcluded (0.00s)\nPASS\n")
+        # Go benchmark skips omit the duration printed for ordinary tests.
+        log = (invocation / "test.log").read_text().replace("PASS\n", "--- SKIP: BenchmarkExcluded\nPASS\n")
         (invocation / "test.log").write_text(log)
         (invocation / "test.xml").write_text(
             '<testsuites><testsuite><testcase name="BenchmarkFirstRestore"/>'
@@ -181,7 +182,7 @@ class QualificationReportTest(unittest.TestCase):
                 shutil.rmtree(invocation)
 
     def test_pgo_partial_zero_and_all_skipped_are_incomplete(self) -> None:
-        for kind in ("partial", "zero", "all-skipped", "unexpected-skip"):
+        for kind in ("partial", "zero", "all-skipped", "unexpected-skip", "missing-skip", "duplicate-skip"):
             with self.subTest(kind=kind):
                 invocation = self.pgo_fixture()
                 if kind == "partial":
@@ -190,12 +191,15 @@ class QualificationReportTest(unittest.TestCase):
                     manifest["owners"][owner].append({"name": "BenchmarkMissing", "count": 1, "units": ["ns/op"]})
                     report.write_json(invocation / "benchmarks.json", manifest)
                 elif kind in ("zero", "all-skipped"):
-                    (invocation / "test.log").write_text("--- SKIP: BenchmarkExcluded (0.00s)\nPASS\n")
+                    (invocation / "test.log").write_text("--- SKIP: BenchmarkExcluded\nPASS\n")
                     if kind == "all-skipped":
                         (invocation / "test.xml").write_text('<testsuites><testsuite><testcase name="BenchmarkExcluded"><skipped/></testcase></testsuite></testsuites>')
                 else:
-                    log = invocation / "test.log"
-                    log.write_text(log.read_text().replace("BenchmarkExcluded", "BenchmarkUnexpected"))
+                    xml = invocation / "test.xml"
+                    skipped = '<testcase name="BenchmarkExcluded"><skipped/></testcase>'
+                    replacement = {"unexpected-skip": skipped.replace("BenchmarkExcluded", "BenchmarkUnexpected"),
+                                   "missing-skip": "", "duplicate-skip": skipped * 2}[kind]
+                    xml.write_text(xml.read_text().replace(skipped, replacement))
                 self.assertEqual(self.pgo_verdict(invocation)["status"], "INCOMPLETE")
                 shutil.rmtree(invocation)
 

@@ -665,14 +665,16 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     if pgo_expected is not None:
                         profile = pgo_expected[attempt.owner.label]
                         excluded = profile.excluded
-                        observed_skips = re.findall(r"^\x16?\s*--- SKIP: (Benchmark\S+) \(", log.read_text(), re.MULTILINE)
+                        benchmark_cases = list(ET.parse(xml).getroot().iter("testcase"))
+                        observed_skips = [case.get("name", "") for case in benchmark_cases
+                                          if case.find("skipped") is not None]
                         observation["pgo_excluded"] = observed_skips
                         observation["pgo"] = pgo_result(attempt, reports, profile)
                         if Counter(observed_skips) != Counter(excluded):
                             errors.append(f"PGO exclusions differ for {attempt}: got {observed_skips}, expected {excluded}")
                         # Verbose Go wrappers may emit benchmark testcase XML.
                         # Coverage still requires every active measurement row.
-                        for case in ET.parse(xml).getroot().iter("testcase"):
+                        for case in benchmark_cases:
                             if not case.get("name", "").startswith("Benchmark"):
                                 errors.append(f"PGO invocation contains a named test: {attempt}: {case.get('name')}")
                     elif counts["passed"] or counts["skipped"]:
