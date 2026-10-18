@@ -493,9 +493,10 @@ sh_test(
 
 # Checks of the source exports. Each action owns a disposable daemon;
 # no container or GPU workload is executed.
-# Stable/Triton archives are 21.7/48.3GB compressed; a prior 80GB worker
-# exhausted disk. Ollama adds about 92.2GB of models, with compressed archive
-# inputs and expanded Docker layers coexisting during load and verification.
+# Stable Diffusion/native Triton archives measure 21.7/48.5GB compressed.
+# A historical Dockerfile-based load exhausted an 80GB worker. Ollama adds
+# about 92.2GB of models, with compressed archive inputs and expanded Docker
+# layers coexisting during load and verification.
 _SOURCE_ARCHIVES = {
     "ollama_bench": ("gpu/ollama/bench", "gpu_ollama_bench_source_amd64", "512GB"),
     "stable_diffusion": ("gpu/stable-diffusion-xl", "gpu_stable_diffusion_source_amd64", "256GB"),

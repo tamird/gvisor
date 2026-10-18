@@ -1265,11 +1265,12 @@ small-model pass or by the provider's roughly 200GB root cap. TPU vLLM uses the
 ordinary 80GB source/conversion allowance and requests 80GB for its load
 check. These are requests, not guaranteed capacity or measured source-build
 requirements.
-Prior large load workers supplied about 198GB on the root filesystem;
-Triton had a separate 49GB workspace and used about 119.5GB at peak on the
-root filesystem. BuildKit cache,
-snapshots and the exported layout coexist; their source-build peak remains a
-separate qualification result.
+Native Triton's 48.5GB archive expands to 70.0GB of layer tar streams,
+including tar metadata and historical layers. Its full load check reports a
+69.9GB expanded Docker image and peaked at 119.7GB used on a 198.3GB root
+filesystem. For images built with Dockerfiles, BuildKit cache, snapshots and
+the exported layout coexist; their source-build peak remains a separate
+qualification result.
 
 The existing-driver GPU smoke suite can run on a dedicated Linux AMD64 host
 with an installed NVIDIA driver and Container Toolkit:
