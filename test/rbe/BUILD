@@ -315,10 +315,7 @@ go_test(
             "manual",
             "no-local",
         ],
-        target_compatible_with = [
-            "@platforms//os:linux",
-            "@platforms//cpu:x86_64",
-        ],
+        target_compatible_with = ["@platforms//os:linux"],
     )
     for name, image, archive, free_disk, size, timeout in [
         ("source", "containerd/harness", "containerd_harness_source_amd64", "20GB", "medium", "moderate"),
