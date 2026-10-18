@@ -20,7 +20,7 @@ def triton_assets(name, files, source_prefix, destination):
         downloaded_file(
             name = target,
             url = "https://storage.googleapis.com/gvisor/" + source_prefix + path + "?generation=" + metadata.generation,
-            md5 = metadata.md5,
+            sha256 = metadata.sha256,
             size_bytes = metadata.size,
         )
         label = ":" + target

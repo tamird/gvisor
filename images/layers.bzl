@@ -9,8 +9,6 @@ _COMPRESSION_CPUS = 4
 def _downloaded_file_impl(ctx):
     coreutils = ctx.toolchains[_COREUTILS_TOOLCHAIN]
     output = ctx.actions.declare_file(ctx.label.name)
-    if bool(ctx.attr.sha256) == bool(ctx.attr.md5):
-        fail("Specify exactly one content checksum")
 
     # Fetch direct immutable URLs without requiring a registry /v2/ endpoint.
     # The pinned network image supplies curl; verify the complete response
@@ -19,13 +17,13 @@ def _downloaded_file_impl(ctx):
     ctx.actions.run_shell(
         outputs = [output],
         tools = [coreutils.default.files],
-        arguments = [ctx.attr.url, ctx.attr.sha256 or ctx.attr.md5, ctx.attr.size_bytes, output.path, coreutils.coreutils_info.bin.path, "sha256sum" if ctx.attr.sha256 else "md5sum"],
+        arguments = [ctx.attr.url, ctx.attr.sha256, ctx.attr.size_bytes, output.path, coreutils.coreutils_info.bin.path],
         command = """set -euo pipefail
 trap 'result=$?; if (( result != 0 )); then "$5" rm -f -- "$4" || :; fi; exit "$result"' EXIT
 # Include partial transfers (curl 18) in the bounded retries. Each retry starts
 # from zero; retry-max-time limits retry starts, not the entire transfer.
 /usr/bin/curl --fail --silent --show-error --location --retry 2 --retry-all-errors --retry-max-time 1800 --output "$4" "$1"
-printf '%s  %s\\n' "$2" "$4" | "$5" "$6" --check
+printf '%s  %s\\n' "$2" "$4" | "$5" sha256sum --check
 actual_size=$("$5" stat --format=%s "$4")
 if [[ $actual_size != "$3" ]]; then
   printf 'Blob size mismatch: expected %s bytes, got %s\\n' "$3" "$actual_size" >&2
@@ -41,9 +39,7 @@ fi
 _downloaded_file = rule(
     implementation = _downloaded_file_impl,
     attrs = {
-        "sha256": attr.string(),
-        # Temporary capture input; replace GCS MD5 checks with measured SHA256.
-        "md5": attr.string(),
+        "sha256": attr.string(mandatory = True),
         # attr.int is limited to signed 32-bit values; model blobs exceed 2 GiB.
         "size_bytes": attr.string(mandatory = True),
         "url": attr.string(mandatory = True),
@@ -69,7 +65,7 @@ def _execution_properties(disk_bytes, network = False, cpus = None):
         "//conditions:default": {},
     })
 
-def downloaded_file(name, url, size_bytes, sha256 = "", md5 = ""):
+def downloaded_file(name, url, size_bytes, sha256):
     """Downloads one immutable image input on the execution platform.
 
     Args:
@@ -77,13 +73,11 @@ def downloaded_file(name, url, size_bytes, sha256 = "", md5 = ""):
       url: Immutable HTTPS download URL.
       size_bytes: Expected uncompressed response size.
       sha256: Expected SHA256 digest.
-      md5: Temporary transfer check while capturing missing SHA256 pins.
     """
     _downloaded_file(
         name = name,
         url = url,
         sha256 = sha256,
-        md5 = md5,
         size_bytes = str(size_bytes),
         exec_compatible_with = ["@platforms//os:linux"],
         exec_properties = _execution_properties(size_bytes, network = True),
