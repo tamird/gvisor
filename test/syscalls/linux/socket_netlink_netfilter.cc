@@ -29,6 +29,7 @@
 #include <endian.h>
 #include <sched.h>
 #include <linux/capability.h>
+#include <linux/netfilter/nfnetlink.h>
 #include <linux/netfilter/nfnetlink_compat.h>
 // clang-format on
 

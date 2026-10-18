@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cerrno>
+#include <cstddef>
 #include <cstdint>
 
 #include "gmock/gmock.h"

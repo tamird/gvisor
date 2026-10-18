@@ -12,10 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// The libc interface declarations must precede the Linux compatibility header.
+#include <net/if.h>
+
 #include <arpa/inet.h>
 #include <linux/capability.h>
+#include <linux/if.h>
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 #include <linux/sockios.h>
-#include <net/if.h>
+#include <netinet/in.h>
 #include <sched.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
