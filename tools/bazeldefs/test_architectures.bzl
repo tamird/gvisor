@@ -56,6 +56,10 @@ def _route_test(ctx, providers, original_executable):
     if user not in ["root", "nobody"]:
         fail("unsupported local namespace test identity: %s" % user)
     docker = ctx.attr._local_test_backend[BuildSettingInfo].value == "docker"
+    if local_kvm:
+        # Native KVM frontends acquire root on the host. Only owners declaring
+        # a Docker fixture use the Docker backend in a mixed invocation.
+        docker = docker and _HOST_REQUIREMENT_PREFIX + "docker" in ctx.attr.tags
     if docker and user != "root":
         fail("the Docker namespace fixture requires a root test identity")
     if initial_cgroup:
@@ -72,9 +76,9 @@ def _route_test(ctx, providers, original_executable):
     if "no-local" in requirements:
         fail("local namespace test requires no-local")
     requirements["no-remote-exec"] = ""
-    if initial_cgroup:
-        # Docker's private cgroup namespace cannot create v1 hierarchies. Keep
-        # this restriction on the TestRunner, independent of compilation.
+    if initial_cgroup or (local_kvm and not docker):
+        # Host fixtures must not enter Docker's namespaces. Keep this on the
+        # TestRunner, independent of compilation.
         requirements["no-sandbox"] = ""
 
     result = []
