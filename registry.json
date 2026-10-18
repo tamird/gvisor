@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T08:26:21.809863+00:00",
+    "updatedAt": "2026-10-18T08:38:05.008495+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5219,8 +5219,8 @@
         "owner": "root",
         "disposition": "Current core netip, PGO and release checks complete; image/GPU gaps remain",
         "sourceHead": "02a45f2b7ac3933b844e33d59656e1fb2ccac4b2",
-        "observedAt": "2026-10-18T08:16:49.996790+00:00",
-        "nextAction": "Collect the smallest-model OCI prototype result and measured storage headroom before considering six models. The small failure-diagnostic correction is integrated; its intentional FAIL and older source-bound qualifications remain explicit. Preserve separate Triton, physical GPU, intermittent RC and upstream review/prerequisite holds.",
+        "observedAt": "2026-10-18T08:38:05.008495+00:00",
+        "nextAction": "Collect the corrected smallest-model prototype result and underlying base-layer upload error before considering six models. Preserve failed prototypes, source-bound qualifications, Triton/GPU gaps, RC intermittents and upstream review/prerequisite holds.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39079735870",
           "https://github.com/tamird/gvisor/commit/7c1352a4fdf18933abac496bfa28cd14f97ae9bc",
@@ -10310,8 +10310,8 @@
         "owner": "hostinet_delivery",
         "disposition": "agent-owned export diagnosis",
         "sourceHead": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
-        "observedAt": "2026-10-18T08:16:49.996790+00:00",
-        "nextAction": "The independent version correction passes client and source-model checks. Preserve the large-image export failures. The small daemon-capture check is complete; collect the separate smallest-model OCI prototype result before considering a larger run. Contributor review has not been requested in the available record.",
+        "observedAt": "2026-10-18T08:38:05.008495+00:00",
+        "nextAction": "The independent version correction passes client and source-model checks. Preserve large-export and smallest-model prototype failures. The owner is correcting verified downloads and upload diagnostics before the same bounded small check; contributor review has not been requested in the available record.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
           "https://github.com/tamird/gvisor/actions/runs/39100061447",
@@ -17617,8 +17617,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T08:16:49.996790+00:00",
-      "summary": "Fresh TPU source construction and loading pass. Ollama 0.40.6 fixes the model-registry rejection, but its large-image export still fails before archive/load. A small intentional failure now verifies retained daemon diagnostics without changing the failure result. The separate OCI model-layer prototype is running its smallest-model check; a six-model submission awaits measured storage headroom. Triton recovery and physical GPU execution remain separate gaps.",
+      "updatedAt": "2026-10-18T08:38:05.008495+00:00",
+      "summary": "Fresh TPU source construction and loading pass. The Ollama version correction fixes model downloads, but the large export remains failed. The smallest-model OCI prototype also failed before archive/runtime execution: its registry probe returned 404, and a base-layer CAS upload failed separately. Nogo passed. The owner is correcting verified downloads and improving error visibility before the same bounded check; six-model validation still requires measured storage headroom. Triton and physical GPU gaps remain separate.",
       "findings": [
         {
           "text": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
@@ -17713,9 +17713,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/39110415508"
             }
           ]
+        },
+        {
+          "text": "Smallest-model run 39110415508 failed before archive/runtime execution. Its Nogo owner passed. The Ollama registry rejects crane’s /v2/ probe with 404; a separate coordinator-to-CAS base-layer upload also failed with its underlying status hidden. The corrected design uses curl with explicit SHA-256 and byte-count verification and removes partial output on failure; verbose errors are being added for the upload diagnosis. The same small check remains bounded by its original deadlines, and six-model validation remains gated on actual storage measurements.",
+          "evidence": [
+            {
+              "label": "Original smallest-model prototype (failed)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39110415508"
+            }
+          ]
         }
       ],
-      "nextStep": "Collect the smallest-model archive/runtime and analyzer result from the OCI prototype, then assess actual storage headroom before any six-model submission. The canonical builder now retains bounded daemon diagnostics on failure; its small validation deliberately remained FAIL. Preserve the failed large exports. Follow existing BuildBuddy #13789 for Triton; physical GPU inference remains unverified.",
+      "nextStep": "Validate the corrected smallest-model download/archive/runtime path and obtain the underlying base-layer upload error. Keep both failed prototype and large-export results visible. Do not submit all six models until measured storage headroom supports it. Canonical daemon capture is qualified by an intentional failure; it does not establish an image-build pass.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
