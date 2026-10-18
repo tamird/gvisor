@@ -33,6 +33,7 @@ python_distribution(
     srcs = ["README.md"] + glob(["gvisor/*.py"]),
     pyproject = "pyproject.toml",
     version = ":release_version",
+    visibility = ["//test/release:__pkg__"],
 )
 
 py_test(

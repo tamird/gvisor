@@ -17,23 +17,32 @@
 set -euo pipefail
 manifest=$1
 shift
-work=$(mktemp -d "$TEST_TMPDIR/release.XXXXXX")
+# Firecracker applies the requested disk capacity to its root filesystem;
+# TEST_TMPDIR is in the action workspace, which has fixed writable slack.
+work=$(mktemp -d /tmp/gvisor-release.XXXXXX)
 trap 'rm -rf "$work"' EXIT
+df -B1 "$work" "$TEST_TMPDIR"
 mounts=(--volume="$work:/work"
   --volume="$(realpath "$TEST_UNDECLARED_OUTPUTS_DIR"):/reports")
 while IFS= read -r artifact; do
   case "$artifact" in
-    test/release/artifacts/amd64/*|test/release/artifacts/arm64/*) ;;
+    test/release/artifacts/amd64/*|test/release/artifacts/arm64/*)
+      destination=${artifact#test/release/}
+      ;;
+    sandboxexec/sandbox/python/dist)
+      destination=artifacts/python
+      ;;
     *) printf 'Unexpected release artifact path: %s\n' "$artifact" >&2; exit 1 ;;
   esac
-  mounts+=(--volume="$(realpath "$artifact"):/input/${artifact#test/release/}:ro")
+  mounts+=(--volume="$(realpath "$artifact"):/input/$destination:ro")
 done < "$manifest"
 for script in "$@"; do
   mounts+=(--volume="$(realpath "$script"):/workspace/tools/$(basename "$script"):ro")
 done
 
 # Only declared scripts and packages enter this container. In particular, there
-# is no Git metadata or publishing script; the test covers master and nightly.
+# is no Git metadata or Python uploader; release tags are explicit test inputs.
 docker run --rm --runtime=runc --network=none --user=0:0 --read-only \
   --tmpfs=/tmp "${mounts[@]}" gvisor.dev/images/release-tools:latest \
   tools/repository_test_inner.sh
+du -sb "$work"

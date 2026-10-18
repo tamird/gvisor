@@ -3,7 +3,7 @@ load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//tools:arch.bzl", "arch_genrule")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
-load(":defs.bzl", "release_artifacts", "repository_test")
+load(":defs.bzl", "python_release_artifacts", "release_artifacts", "repository_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -88,11 +88,20 @@ release_artifacts(
     tags = ["manual"],
 )
 
+python_release_artifacts(
+    name = "python_artifacts",
+    srcs = ["//sandboxexec/sandbox/python:dist"],
+    tags = ["manual"],
+)
+
 genrule(
     name = "artifacts_manifest",
-    srcs = [":artifacts"],
+    srcs = [
+        ":artifacts",
+        ":python_artifacts",
+    ],
     outs = ["artifacts.txt"],
-    cmd = "printf '%s\\n' $(rootpaths :artifacts) > $@",
+    cmd = "printf '%s\\n' $(rootpaths :artifacts) $(rootpath :python_artifacts) > $@",
     tags = ["manual"],
 )
 
@@ -112,15 +121,18 @@ repository_test(
         "$(rootpath //tools:make_test_key.sh)",
         "$(rootpath //tools:make_release.sh)",
         "$(rootpath //tools:make_apt.sh)",
+        "$(rootpath //tools:release_repository.sh)",
         "$(rootpath :repository_test_inner.sh)",
     ],
     data = [
         "repository_test_inner.sh",
         ":artifacts",
         ":artifacts_manifest",
+        ":python_artifacts",
         "//tools:make_apt.sh",
         "//tools:make_release.sh",
         "//tools:make_test_key.sh",
+        "//tools:release_repository.sh",
     ],
     docker_config = ":docker_config",
     exec_properties = docker_test_exec_properties(free_disk = "20GB"),
