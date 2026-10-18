@@ -1687,7 +1687,7 @@ http_file(
     name = "kcov_linux_source",
     downloaded_file_path = "linux.tar.gz",
     sha256 = "1846a6d56bda7798cdff7b743d54975f1e96cbcf89cb48d5f92b2b863cdf262f",
-    urls = ["https://github.com/torvalds/linux/archive/fd73f4a6659897191fa0d40695fe370925dd3780.tar.gz"],
+    urls = ["https://codeload.github.com/torvalds/linux/tar.gz/fd73f4a6659897191fa0d40695fe370925dd3780"],
 )
 
 # Invoke the declared Buildx client directly; no worker plugin installation.
