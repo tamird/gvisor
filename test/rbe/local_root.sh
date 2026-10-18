@@ -20,12 +20,17 @@ private_mount=false
 if [[ ${1:-} == --initial-cgroup-namespace ]]; then
   initial_cgroup=true
   shift
-elif [[ ${1:-} == --private-mount-namespace ]]; then
+fi
+if [[ ${1:-} == --private-mount-namespace ]]; then
   private_mount=true
   shift
 fi
-if (( EUID != 0 )); then
-  [[ $initial_cgroup == false && $private_mount == false ]]
+if (( EUID != 0 )) || [[ $initial_cgroup == true && $private_mount == false ]]; then
+  [[ $private_mount == false ]]
+  namespace_args=(--private-mount-namespace)
+  if [[ $initial_cgroup == true ]]; then
+    namespace_args=(--initial-cgroup-namespace "${namespace_args[@]}")
+  fi
   # sudo-rs supports named preservation, but ignores -E. Keep exported test
   # inputs while letting sudo establish its own caller identity.
   preserve_env=
@@ -33,7 +38,7 @@ if (( EUID != 0 )); then
     case $name in SUDO_*) continue ;; esac
     preserve_env+=${preserve_env:+,}$name
   done < <(compgen -e)
-  exec sudo -n --preserve-env="$preserve_env" -- unshare --mount --propagation private -- "$0" --private-mount-namespace "$@"
+  exec sudo -n --preserve-env="$preserve_env" -- unshare --mount --propagation private -- "$0" "${namespace_args[@]}" "$@"
 fi
 if [[ $initial_cgroup == false ]]; then
   if [[ $private_mount == false ]]; then
@@ -42,7 +47,7 @@ if [[ $initial_cgroup == false ]]; then
   [[ $(readlink /proc/self/ns/mnt) != "$(readlink "/proc/$PPID/ns/mnt")" ]]
 fi
 if [[ $initial_cgroup == true ]]; then
-  # The frontend acquires root with sudo, retaining its Bazel coordinator's
+  # The fixture acquires root with sudo, retaining its Bazel coordinator's
   # output identity and the hosted VM's original PID and cgroup namespaces.
   [[ $(readlink /proc/self/ns/pid) == "${GVISOR_HOST_PID_NS:?}" ]]
   [[ $(readlink /proc/self/ns/cgroup) == "${GVISOR_HOST_CGROUP_NS:?}" ]]
