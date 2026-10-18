@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T05:35:01.009362+00:00",
+    "updatedAt": "2026-10-18T06:00:23.132563+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -10264,6 +10264,32 @@
           "url": "https://app.buildbuddy.io/invocation/c4c5628e-8084-47b1-b04f-50bfcb7729d0"
         }
       ]
+    },
+    {
+      "id": "branch:ollama-release",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "ollama-release",
+      "head": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
+      "title": "Update Ollama images to 0.40.6",
+      "group": "rbe",
+      "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
+      "status": "validation in progress",
+      "updatedAt": "2026-10-18T06:00:23.132563+00:00",
+      "summary": "Ollama 0.5.1 can no longer download the benchmark vision model: the registry requires a newer client. The independent correction updates all three image pins to 0.40.6 and recognizes its uppercase CUDA backend log name. Source review passed; remote client compilation and source-build/archive/load plus Nogo checks are running on integration 3636f2ed9d. The implementation owner retains result collection. No GPU inference or COS/Kubernetes driver compatibility is claimed.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "validation in progress",
+        "sourceHead": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
+        "observedAt": "2026-10-18T06:00:23.132563+00:00",
+        "nextAction": "Complete the existing remote qualification before requesting contributor review. Preserve the original zero-test failure and report actual archive/load execution.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
+          "https://github.com/tamird/gvisor/actions/runs/39100061447",
+          "https://github.com/tamird/gvisor/actions/runs/39102370765",
+          "https://github.com/tamird/gvisor/actions/runs/39102380735"
+        ]
+      }
     }
   ],
   "edges": [
@@ -17586,8 +17612,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T05:01:30.972092+00:00",
-      "summary": "Fresh TPU vLLM source construction and OCI loading now pass at eee03d6d55. The original action only exported a cached canonical image; the bounded retry records a registry miss, fresh BuildKit execution, the actual Qwen download and successful export/load. Its authenticated receipt arrived 96.666 seconds after execution, with one passing owner and no skips or missing results. This qualifies source construction and loading, not TPU application execution. The diagnostic context marker is not part of the canonical integration. The original Ollama prerequisite exhausted the 7,200-second coordinator budget before its archive/load test; the original FAIL is retained. Worker phase/resource evidence was unavailable after cancellation, so the cause is unresolved. The bounded export diagnostic was submitted as run 39097670615; its owner is collecting the result. The earlier Triton provider gap remains separate.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
+      "updatedAt": "2026-10-18T06:00:23.132563+00:00",
+      "summary": "Fresh TPU vLLM source construction and OCI loading pass. Ollama's fresh-source attempt failed before export: version 0.5.1 received HTTP 412 for llama3.2-vision:11b-instruct-fp16 because the registry requires a newer client. No archive/load case executed. The independent 0.40.6 correction updates all three image pins and the CUDA log check; source review is complete and remote validation is running on integration 3636f2ed9d. The earlier 7,200-second timeout remains a separate retained failure. Triton provider recovery and physical GPU execution remain separate gaps.\n\nCached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
       "findings": [
         {
           "text": "The October 18 provider check still finds issue #13789 open with no comments. Related lease/reconnect PRs #13769, #13778 and #13779 are all open and report approval. No merge, deployed-worker change or successful Triton source run is established by those review states; they do not justify repeating the two-hour workload.",
@@ -17609,9 +17635,22 @@
               "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13779"
             }
           ]
+        },
+        {
+          "text": "The fresh Ollama run at a1afd4258c completed five model-download steps, then failed on the vision model with HTTP 412. It did not reach OCI export or execute its archive/load test. The authenticated failure receipt was available 117.791 seconds after execution; diagnosis required the original large stderr through the existing API. This attempt establishes a client-version defect, not a disk or coordinator timeout.",
+          "evidence": [
+            {
+              "label": "Fresh-source dependency failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39100061447"
+            },
+            {
+              "label": "Consistent Ollama 0.40.6 correction; validation pending",
+              "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9"
+            }
+          ]
         }
       ],
-      "nextStep": "Diagnose Ollama export using the authorized bounded run with the same source context and resources. For Triton, follow BuildBuddy issue #13789 for provider attempt/lease evidence; no additional full Triton retry is justified by the current missing worker result. Triton disk fit and underlying cause remain unproved.",
+      "nextStep": "Validate the Ollama 0.40.6 correction through the existing source-build/archive/load owners. Physical GPU inference and COS/Kubernetes driver compatibility remain unverified. Follow BuildBuddy issue #13789 for Triton worker evidence; no new full Triton retry is justified.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
@@ -17664,6 +17703,22 @@
         {
           "label": "Bounded Ollama export diagnostic",
           "url": "https://github.com/tamird/gvisor/actions/runs/39097670615"
+        },
+        {
+          "label": "Fresh Ollama source failure: registry requires newer client",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39100061447"
+        },
+        {
+          "label": "Ollama 0.40.6 correction under validation",
+          "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9"
+        },
+        {
+          "label": "Ollama client compilation under validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39102370765"
+        },
+        {
+          "label": "Ollama source/archive/load and Nogo under validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39102380735"
         }
       ]
     },
