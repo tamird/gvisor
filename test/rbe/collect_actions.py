@@ -30,7 +30,8 @@ import zipfile
 import qualification_report as report
 
 
-def collect_actions(run: int, source: str, architecture: str, prefix: Path) -> dict[str, object]:
+def collect_actions(run: int, source: str, architecture: str, prefix: Path,
+                    poll_interval: int = 10) -> dict[str, object]:
     """Reuse gh watch/download and the canonical authenticated bundle receipt."""
     def output(suffix: str) -> Path:
         return Path(str(prefix) + suffix)
@@ -43,6 +44,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path) -> d
     attached_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     report.write_json(output("-collector.json"), {
         "run": run, "source": source, "collector_attached_at": attached_at,
+        "poll_interval_seconds": poll_interval,
     })
 
     def observe(metadata: dict[str, object]) -> None:
@@ -62,6 +64,8 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path) -> d
             raise ValueError("Expected a positive workflow run ID and full source SHA")
         if architecture not in ("amd64", "arm64", "all"):
             raise ValueError("Unknown qualification architecture")
+        if type(poll_interval) is not int or poll_interval <= 0:
+            raise ValueError("Expected a positive polling interval")
         path = f"repos/tamird/gvisor/actions/runs/{run}"
         metadata = api(path)
         observe(metadata)
@@ -69,7 +73,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path) -> d
             with output("-watch.log").open("w") as log:
                 watch = subprocess.run(
                     ["gh", "run", "watch", str(run), "--repo", "tamird/gvisor",
-                     "--interval", "10", "--exit-status"],
+                     "--interval", str(poll_interval), "--exit-status"],
                     stdout=log, stderr=subprocess.STDOUT, timeout=10000,
                 )
             watch_exit = watch.returncode
@@ -117,6 +121,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path) -> d
                    "source_verified": type(workflow.get("id")) is int and workflow["id"] == run
                    and workflow.get("head_sha") == source,
                    "watch_exit": watch_exit, "collector_attached_at": attached_at,
+                   "poll_interval_seconds": poll_interval,
                    "collection_finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat()})
     report.write_json(output("-receipt.json"), result)
     return result
@@ -128,8 +133,11 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--architecture", choices=("amd64", "arm64", "all"), required=True)
     parser.add_argument("--prefix", type=Path, required=True)
+    parser.add_argument("--poll-interval", type=int, default=10,
+                        help="Seconds between status checks; increase for concurrent runs to conserve API quota")
     args = parser.parse_args()
-    result = collect_actions(args.run, args.source, args.architecture, args.prefix)
+    result = collect_actions(args.run, args.source, args.architecture, args.prefix,
+                             args.poll_interval)
     print(f"{result['status']}: {args.prefix}-receipt.json", flush=True)
     return int(result["status"] != "PASS")
 
