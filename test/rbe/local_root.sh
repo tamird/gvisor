@@ -22,7 +22,14 @@ if [[ ${1:-} == --initial-cgroup-namespace ]]; then
 fi
 if (( EUID != 0 )); then
   [[ $initial_cgroup == false ]]
-  exec sudo -n -E -- unshare --mount --propagation private -- "$0" "$@"
+  # sudo-rs supports named preservation, but ignores -E. Keep exported test
+  # inputs while letting sudo establish its own caller identity.
+  preserve_env=
+  while IFS= read -r name; do
+    case $name in SUDO_*) continue ;; esac
+    preserve_env+=${preserve_env:+,}$name
+  done < <(compgen -e)
+  exec sudo -n --preserve-env="$preserve_env" -- unshare --mount --propagation private -- "$0" "$@"
 fi
 if [[ $initial_cgroup == true ]]; then
   # The frontend acquires root with sudo, retaining its Bazel coordinator's
