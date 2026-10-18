@@ -26,6 +26,11 @@ go_library(
 go_test(
     name = "tests_test",
     size = "small",
+    # Qualification-only coverage of verbose benchmark XML alongside tests.
+    args = [
+        "-test.bench=^BenchmarkEncoding$/^slice$/^state$",
+        "-test.benchtime=1x",
+    ],
     srcs = [
         "array_test.go",
         "bench_test.go",
