@@ -36,6 +36,20 @@ INTEGRATION_VARIANTS = [
     ),
 ]
 
+# Eleven image tests leave two of the eight name-hash partitions empty. Bazel's
+# Go test sharding assigns test indices round-robin, retaining eight shards
+# without empty execution owners or a hand-maintained test-name list.
+# https://github.com/bazel-contrib/rules_go/blob/v0.63.0/go/tools/builders/generate_test_main.go#L126-L146
+IMAGE_VARIANTS = [
+    struct(
+        name = variant.name,
+        args = variant.args,
+        tags = variant.tags,
+        shard_count = variant.partition_count,
+    ) if variant.name == "kvm" else variant
+    for variant in INTEGRATION_VARIANTS
+]
+
 # The public plugin lane uses its own runtime and only ConnectToSelf cases.
 PLUGIN_NETWORK_VARIANT = struct(
     name = "plugin_network",

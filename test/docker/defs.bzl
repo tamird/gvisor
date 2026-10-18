@@ -174,7 +174,8 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
       data: Other existing runtime inputs.
       args: Arguments shared by all variants.
       runtime_variants: Optional runtime label, arguments, cohort, test_args, data, tags
-        and partition_count. Partitions use the existing Docker test name hash.
+        and partition_count or shard_count. Partitions use the existing Docker
+        test name hash; shards use standard Bazel Go test sharding.
         An empty name preserves the default owned test instead of an aggregate suite.
       ipv6: Whether the owned daemon provides IPv6 on its default bridge.
       memory: Optional test VM memory budget; defaults to the fixture's 4GB.
@@ -215,6 +216,10 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
                 arm64 = ["@platforms//:incompatible"],
             )
         partition_count = getattr(variant, "partition_count", 1)
+        if hasattr(variant, "shard_count"):
+            if partition_count != 1:
+                fail("choose partition_count or shard_count for %s" % prefix)
+            owned_kwargs["shard_count"] = variant.shard_count
         if partition_count < 1:
             fail("partition_count must be positive for %s" % prefix)
         partition_tests = []
