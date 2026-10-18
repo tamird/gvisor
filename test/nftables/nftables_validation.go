@@ -995,18 +995,23 @@ func (t *ctTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) erro
 		}
 		d := net.Dialer{
 			Control: func(network, address string, c syscall.RawConn) error {
-				var sockErr error
+				var err error
 				if err := c.Control(func(fd uintptr) {
-					sockErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
+					err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
 				}); err != nil {
 					return err
 				}
-				return sockErr
+				return err
 			},
 		}
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		conn, err := d.DialTCP(ctx, netutils.TCPNetwork(ipv6), netip.AddrPortFrom(localIP, 29007), netip.AddrPortFrom(ip, 29008))
+		conn, err := d.DialTCP(
+			ctx,
+			netutils.TCPNetwork(ipv6),
+			netip.AddrPortFrom(localIP, 29007),
+			netip.AddrPortFrom(ip, 29008),
+		)
 		if err != nil {
 			return fmt.Errorf("positive TCP dial failed: %v", err)
 		}

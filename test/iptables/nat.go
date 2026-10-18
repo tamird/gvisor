@@ -1186,7 +1186,11 @@ func (*NATPostMasqueradeUDP) ContainerAction(ctx context.Context, ip netip.Addr,
 	if err != nil {
 		return err
 	}
-	conn, err := net.DialUDP(netutils.UDPNetwork(ipv6), net.UDPAddrFromAddrPort(netip.AddrPortFrom(secondary, 0)), net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, acceptPort)))
+	conn, err := net.DialUDP(
+		netutils.UDPNetwork(ipv6),
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(secondary, 0)),
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, acceptPort)),
+	)
 	if err != nil {
 		return err
 	}
@@ -1224,7 +1228,12 @@ func (*NATPostMasqueradeTCP) ContainerAction(ctx context.Context, ip netip.Addr,
 	}
 	var dialer net.Dialer
 	return testutil.PollContext(ctx, func() error {
-		conn, err := dialer.DialTCP(ctx, netutils.TCPNetwork(ipv6), netip.AddrPortFrom(secondary, 0), netip.AddrPortFrom(ip, acceptPort))
+		conn, err := dialer.DialTCP(
+			ctx,
+			netutils.TCPNetwork(ipv6),
+			netip.AddrPortFrom(secondary, 0),
+			netip.AddrPortFrom(ip, acceptPort),
+		)
 		if conn != nil {
 			conn.Close()
 		}
@@ -1266,7 +1275,11 @@ func (*NATPostMasqueradeToPortsUDP) ContainerAction(ctx context.Context, ip neti
 	if err != nil {
 		return err
 	}
-	conn, err := net.DialUDP(netutils.UDPNetwork(ipv6), net.UDPAddrFromAddrPort(netip.AddrPortFrom(secondary, masqueradeOriginalPort)), net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, acceptPort)))
+	conn, err := net.DialUDP(
+		netutils.UDPNetwork(ipv6),
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(secondary, masqueradeOriginalPort)),
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, acceptPort)),
+	)
 	if err != nil {
 		return err
 	}
