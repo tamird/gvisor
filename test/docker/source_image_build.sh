@@ -57,6 +57,7 @@ chmod 0555 "${work}/buildx"
 buildx="${work}/buildx"
 staged_layout="${work}/oci-layout"
 
+printf 'Source OCI build started at %s\n' "$(date -u +%FT%TZ)" >&2
 "${buildx}" version
 "${bsdtar}" --version
 # The public digest file comes from the MODULE pin. The stock driver fetches

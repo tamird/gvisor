@@ -82,10 +82,25 @@ else
   if [[ -e ${layout} ]]; then
     rmdir "${layout}"
   fi
-  "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
+  # Return the diagnostic before the coordinator cancels the invocation, so
+  # the worker can upload the phase logs and execution metadata.
+  set +e
+  timeout --kill-after=30s 900s \
+    "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
     CRANE="${crane_command}" OCI_BUILD="${build_command}" \
     _IMAGE_OCI_OUTPUT="${layout}" _IMAGE_OCI_PLATFORM="${platform}" \
     "export-oci-${target}"
+  status=$?
+  set -e
+  printf 'Source OCI export returned at %s: status=%s\n' \
+    "$(date -u +%FT%TZ)" "${status}" >&2
+  if (( status != 0 )); then
+    # Uploading a partial image can hide the failure logs behind another
+    # transfer timeout. This action owns the previously absent output path.
+    rm -rf -- "${layout}" || \
+      printf 'Cannot remove partial OCI layout %s\n' "${layout}" >&2
+    exit "${status}"
+  fi
 
   # Both standard exporters produce the declared layout before this action
   # succeeds. Bazel then exposes it to downstream conversion.

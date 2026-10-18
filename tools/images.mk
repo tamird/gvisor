@@ -245,6 +245,8 @@ export-oci-%:
 	@if [ "$(SKIP_IMAGE_LOAD)" == true ]; then \
 	  echo 'Cannot export a fresh OCI layout with SKIP_IMAGE_LOAD set.' >&2; exit 1; \
 	fi
+	@printf 'Source OCI cache export started at %s for %s\n' \
+	  "$$(date -u +%FT%TZ)" "$(call remote_image,$*):$(call tag,$*)" >&2
 	@($(CRANE) pull --format=oci --platform="$(_IMAGE_OCI_PLATFORM)" \
 	  "$(call remote_image,$*):$(call tag,$*)" "$(_IMAGE_OCI_OUTPUT)") || \
 	  (rm -rf "$(_IMAGE_OCI_OUTPUT)" && $(call rebuild,$*))
