@@ -516,21 +516,99 @@ oci.pull(
 )
 use_repo(oci, "triton_server", "triton_server_linux_amd64")
 
-# This is the triton_backend tree of TensorRT-LLM commit 796891ba2, the
-# recipe's existing pin. Fetch the small backend subtree and its root license.
+# Fetch only the Triton templates used by the image, pinned to the recipe's
+# existing TensorRT-LLM commit. Keep individual content hashes so unrelated
+# source archives and Git LFS objects are not required.
 # https://github.com/NVIDIA/TensorRT-LLM/tree/796891ba2/triton_backend
-http_archive(
-    name = "triton_templates",
-    build_file = "//images/gpu/triton:templates.BUILD",
-    remote_file_integrity = {
-        "LICENSE": "sha256-z8d0m5b2O9McPEK1xHG/dWgUBT6EfBDz6wA0F7xSPTA=",
-    },
-    remote_file_urls = {
-        "LICENSE": ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/LICENSE"],
-    },
-    sha256 = "df9a1ce04a738f002b54fd802f6011b64c30c4176c6ba91000c888927eca88f1",
-    strip_prefix = "TensorRT-LLM-f09590342e3062ff2fa04407170f339ab658edc2",
-    urls = ["https://github.com/NVIDIA/TensorRT-LLM/archive/f09590342e3062ff2fa04407170f339ab658edc2.tar.gz"],
+http_file(
+    name = "triton_template_ensemble_placeholder",
+    downloaded_file_path = ".tmp",
+    sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/ensemble/1/.tmp"],
+)
+
+http_file(
+    name = "triton_template_ensemble_config",
+    downloaded_file_path = "config.pbtxt",
+    sha256 = "ca08a6fb5bc3a0d579712c181e8a25656828adf2db713c5d6dfc61468ecb953d",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/ensemble/config.pbtxt"],
+)
+
+http_file(
+    name = "triton_template_postprocessing_model",
+    downloaded_file_path = "model.py",
+    sha256 = "d2a67ccc5857ec97d08215c89a1cee965f3cd05c0f31fc37a6cc4f2f00e1f350",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/postprocessing/1/model.py"],
+)
+
+http_file(
+    name = "triton_template_postprocessing_config",
+    downloaded_file_path = "config.pbtxt",
+    sha256 = "ae10b46991c43c75bd2680d5efe091197da024beca8e448b6fbb98fc093f3c16",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/postprocessing/config.pbtxt"],
+)
+
+http_file(
+    name = "triton_template_preprocessing_model",
+    downloaded_file_path = "model.py",
+    sha256 = "26620be0894aa7c7803c3522f4604ae54687c59ce529fbc73f7aea95b281d9a9",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/preprocessing/1/model.py"],
+)
+
+http_file(
+    name = "triton_template_preprocessing_config",
+    downloaded_file_path = "config.pbtxt",
+    sha256 = "2a7579698ffee26a3ad288d0f096b706d004e54ec6827c087e3fda285295433b",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/preprocessing/config.pbtxt"],
+)
+
+http_file(
+    name = "triton_template_tensorrt_llm_model",
+    downloaded_file_path = "model.py",
+    sha256 = "9940a67b824c4be0470c7db643f71f5c85330ba4386c49c562a9a15364fb35fc",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/tensorrt_llm/1/model.py"],
+)
+
+http_file(
+    name = "triton_template_tensorrt_llm_config",
+    downloaded_file_path = "config.pbtxt",
+    sha256 = "317ead77d4c0bedc5589a7ead27706200729dc2d76c549fff8c177739b00ef02",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/tensorrt_llm/config.pbtxt"],
+)
+
+http_file(
+    name = "triton_template_tensorrt_llm_bls_decode",
+    downloaded_file_path = "decode.py",
+    sha256 = "622398de1aed2c80b949bc891c817823e29c09efe5c85232d43f82dfa674e5dd",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/tensorrt_llm_bls/1/lib/decode.py"],
+)
+
+http_file(
+    name = "triton_template_tensorrt_llm_bls_triton_decoder",
+    downloaded_file_path = "triton_decoder.py",
+    sha256 = "f39d38a9460ffdcba68d87e2f8a18bc73680e8032bbd258e1a39dcd74174a8d8",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/tensorrt_llm_bls/1/lib/triton_decoder.py"],
+)
+
+http_file(
+    name = "triton_template_tensorrt_llm_bls_model",
+    downloaded_file_path = "model.py",
+    sha256 = "347063f164b57e69034456713822212e63c1c2401d6bea55033062d948196d81",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/tensorrt_llm_bls/1/model.py"],
+)
+
+http_file(
+    name = "triton_template_tensorrt_llm_bls_config",
+    downloaded_file_path = "config.pbtxt",
+    sha256 = "61ccd029506a3f775b6c9c6fe233e0aa44514d63f98f93099ead2c46c9f96a67",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/all_models/inflight_batcher_llm/tensorrt_llm_bls/config.pbtxt"],
+)
+
+http_file(
+    name = "triton_template_fill_template",
+    downloaded_file_path = "fill_template.py",
+    sha256 = "9d3a17fe0b701444cc64a587e6c894c8b810d8e861d4966f49c0951c8cfc1b3e",
+    urls = ["https://raw.githubusercontent.com/NVIDIA/TensorRT-LLM/796891ba2a6959bad58c0da9645416c7264349e9/triton_backend/tools/fill_template.py"],
 )
 
 # Only these small checked-in manifests are read on Bazel's host. Their blobs

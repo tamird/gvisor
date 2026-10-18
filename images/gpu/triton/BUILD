@@ -1,4 +1,5 @@
 load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_python//python:defs.bzl", "py_binary")
 load("//images:oci.bzl", "image_outputs")
 load("//tools:defs.bzl", "bzl_library")
 load(":assets.bzl", "ENGINE_FILES", "MODEL_FILES")
@@ -8,8 +9,6 @@ package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
-
-exports_files(["templates.BUILD"])
 
 # Keep the separate GPU engine-generation recipe in existing source contexts.
 filegroup(
@@ -52,6 +51,12 @@ filegroup(
         ":engine_layer_assets",
         ":model_layer_assets",
     ],
+    tags = ["manual"],
+)
+
+py_binary(
+    name = "fill_template",
+    srcs = ["@triton_template_fill_template//file"],
     tags = ["manual"],
 )
 

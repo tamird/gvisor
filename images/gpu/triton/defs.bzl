@@ -55,14 +55,14 @@ def triton_templates(name):
     }
     configs = []
     for model, values in substitutions.items():
-        source = "@triton_templates//:all_models/inflight_batcher_llm/" + model + "/config.pbtxt"
+        source = "@triton_template_" + model + "_config//file"
         target = name + "_" + model
         native.genrule(
             name = target,
             srcs = [source],
             outs = [model + "/config.pbtxt"],
-            tools = ["@triton_templates//:fill_template"],
-            cmd = "cp $(location %s) $@ && $(location @triton_templates//:fill_template) -i $@ '%s'" % (source, values),
+            tools = [":fill_template"],
+            cmd = "cp $(location %s) $@ && $(location :fill_template) -i $@ '%s'" % (source, values),
             tags = ["manual"],
         )
         pkg_files(
@@ -74,16 +74,36 @@ def triton_templates(name):
         configs.append(":" + target + "_file")
     pkg_files(
         name = name + "_script",
-        srcs = ["@triton_templates//:tools/fill_template.py"],
+        srcs = ["@triton_template_fill_template//file"],
         attributes = pkg_attributes(mode = "0644"),
-        renames = {"@triton_templates//:tools/fill_template.py": "usr/local/bin/fill_template.py"},
+        renames = {"@triton_template_fill_template//file": "usr/local/bin/fill_template.py"},
     )
+
+    # Preserve the executable bits from the original Git checkout.
+    model_files = []
+    for group, mode, paths in [
+        ("models", "0644", {
+            "ensemble/1/.tmp": "@triton_template_ensemble_placeholder//file",
+            "postprocessing/1/model.py": "@triton_template_postprocessing_model//file",
+            "tensorrt_llm_bls/1/lib/decode.py": "@triton_template_tensorrt_llm_bls_decode//file",
+            "tensorrt_llm_bls/1/lib/triton_decoder.py": "@triton_template_tensorrt_llm_bls_triton_decoder//file",
+            "tensorrt_llm_bls/1/model.py": "@triton_template_tensorrt_llm_bls_model//file",
+        }),
+        ("executables", "0755", {
+            "preprocessing/1/model.py": "@triton_template_preprocessing_model//file",
+            "tensorrt_llm/1/model.py": "@triton_template_tensorrt_llm_model//file",
+        }),
+    ]:
+        target = name + "_" + group
+        pkg_files(
+            name = target,
+            srcs = paths.values(),
+            attributes = pkg_attributes(mode = mode),
+            renames = {label: "models/" + path for path, label in paths.items()},
+        )
+        model_files.append(":" + target)
     compressed_layer(
         name = name,
-        srcs = configs + [
-            ":" + name + "_script",
-            "@triton_templates//:model_files",
-            "@triton_templates//:executable_model_files",
-        ],
+        srcs = configs + model_files + [":" + name + "_script"],
         raw_size = 250000,
     )
