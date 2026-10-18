@@ -531,6 +531,138 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["status"], "INCOMPLETE")
         self.assertEqual(any(item["label"] == "//another:binary" for item in value["missing"]), True)
 
+    def aspect_fixture(self) -> Path:
+        invocation = self.fixture()
+        events = [json.loads(line) for line in (FIXTURES / "aspect-analysis/events.jsonl").read_text().splitlines()]
+        for event in events:
+            if "aborted" in event:
+                del event["aborted"]
+                event["completed"] = {"success": True}
+        self.write_events(invocation, events)
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "build"
+        report.write_json(invocation / "context.json", context)
+        (invocation / "executed-arguments.txt").write_text("build\n--config=lint-cc\n")
+        (invocation / "expected.txt").write_text("//test/syscalls/linux:tuntap_test\n")
+        return invocation
+
+    def test_aspect_analysis_selects_only_the_ordinary_root(self) -> None:
+        analysis = FIXTURES / "aspect-analysis/events.jsonl"
+        value = report.preflight(analysis, 0, "build")
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual([owner["label"] for owner in value["expected"]], ["//test/syscalls/linux:tuntap_test"])
+        # Ordinary roots in multiple configurations are still ambiguous.
+        events = [json.loads(line) for line in analysis.read_text().splitlines()]
+        ordinary = next(event for event in events if "configured" in event)
+        extra = json.loads(json.dumps(ordinary))
+        extra["children"][0]["targetCompleted"]["configuration"]["id"] = "another-configuration"
+        path = self.root / "ambiguous.jsonl"
+        path.write_text("".join(json.dumps(event) + "\n" for event in events + [extra]))
+        self.assertEqual(report.preflight(path, 0, "build")["status"], "INCOMPLETE")
+
+    def test_preflight_rejects_orphaned_aspect_identity(self) -> None:
+        original = [json.loads(line) for line in (FIXTURES / "aspect-analysis/events.jsonl").read_text().splitlines()]
+        for mismatch in ("label", "configuration"):
+            with self.subTest(mismatch=mismatch):
+                events = json.loads(json.dumps(original))
+                aspect = next(event for event in events if event.get("id", {}).get("targetConfigured", {}).get("aspect"))
+                if mismatch == "label":
+                    aspect["id"]["targetConfigured"]["label"] = "//orphan:target"
+                    aspect["children"][0]["targetCompleted"]["label"] = "//orphan:target"
+                else:
+                    aspect["children"][0]["targetCompleted"]["configuration"]["id"] = "another-configuration"
+                path = self.root / "orphaned-aspect.jsonl"
+                path.write_text("".join(json.dumps(event) + "\n" for event in events))
+                value = report.preflight(path, 0, "build")
+                self.assertEqual(value["status"], "INCOMPLETE", value)
+                self.assertIn("no matching ordinary root", value["errors"][0])
+
+    def test_aspect_abort_does_not_replace_the_ordinary_root(self) -> None:
+        original = [json.loads(line) for line in (FIXTURES / "aspect-analysis/events.jsonl").read_text().splitlines()]
+        for missing_root in (False, True):
+            with self.subTest(missing_root=missing_root):
+                events = json.loads(json.dumps(original))
+                for event in events:
+                    if "configured" in event and not event["id"]["targetConfigured"].get("aspect"):
+                        event["configured"]["testSize"] = "SMALL"
+                    if "finished" in event:
+                        event["finished"]["overallSuccess"] = False
+                        event["finished"]["exitCode"] = {"name": "BUILD_FAILURE", "code": 1}
+                    if not missing_root and event.get("id", {}).get("targetCompleted", {}).get("aspect"):
+                        event["aborted"]["reason"] = "SKIPPED"
+                if missing_root:
+                    events = [event for event in events if not ("aborted" in event and not event["id"]["targetCompleted"].get("aspect"))]
+                path = self.root / "aspect-abort.jsonl"
+                path.write_text("".join(json.dumps(event) + "\n" for event in events))
+                value = report.preflight(path, 1, "test")
+                self.assertEqual(value["status"], "INCOMPLETE" if missing_root else "PASS", value)
+                if not missing_root:
+                    self.assertEqual([owner["label"] for owner in value["expected"]], ["//test/syscalls/linux:tuntap_test"])
+
+    def test_aspect_completions_are_independent_of_target_completions(self) -> None:
+        invocation = self.aspect_fixture()
+        original = self.events(invocation)
+        analysis = FIXTURES / "aspect-analysis/events.jsonl"
+        for failed in (None, "aspect", "target"):
+            for reverse in (False, True):
+                with self.subTest(failed=failed, reverse=reverse):
+                    events = json.loads(json.dumps(original))
+                    for event in events:
+                        if "completed" in event:
+                            kind = "aspect" if event["id"]["targetCompleted"].get("aspect") else "target"
+                            event["completed"]["success"] = kind != failed
+                        if "finished" in event and failed:
+                            event["finished"]["overallSuccess"] = False
+                            event["finished"]["exitCode"] = {"name": "BUILD_FAILURE", "code": 1}
+                    if reverse:
+                        events.reverse()
+                    self.write_events(invocation, events)
+                    (invocation / "native-exit").write_text("1\n" if failed else "0\n")
+                    self.assertEqual(self.capture(invocation)["errors"], [])
+                    value = self.verdict(invocation, analysis=analysis)
+                    self.assertEqual(value["status"], "FAIL" if failed else "PASS", value)
+                    self.assertEqual(value["missing"], [])
+                    self.assertEqual([row["reason"] for row in value["failures"]], [failed + " build failed"] if failed else [])
+                    self.assertEqual(value["completed_aspects"], [{**value["expected_aspects"][0], "success": failed != "aspect"}])
+                    if failed is None and not reverse:
+                        archive = self.root / "aspects.tar.gz"
+                        report.bundle(self.evidence, 0, 0, archive)
+                        receipt = report.receipt(archive, report.file_record(archive)["sha256"], value["source"])
+                        for field in ("expected_aspects", "completed_aspects"):
+                            self.assertEqual(receipt["invocations"][0][field], value[field])
+
+    def test_missing_or_wrong_aspect_completion_is_incomplete(self) -> None:
+        invocation = self.aspect_fixture()
+        original = self.events(invocation)
+        for mutation in ("missing-completion", "wrong-configuration", "missing-aspect"):
+            with self.subTest(mutation=mutation):
+                events = json.loads(json.dumps(original))
+                aspect = next(event for event in events if "completed" in event and event["id"]["targetCompleted"].get("aspect"))
+                if mutation == "wrong-configuration":
+                    aspect["id"]["targetCompleted"]["configuration"]["id"] = "another-configuration"
+                else:
+                    events.remove(aspect)
+                if mutation == "missing-aspect":
+                    events = [event for event in events if not event.get("id", {}).get("targetConfigured", {}).get("aspect")]
+                self.write_events(invocation, events)
+                self.capture(invocation)
+                value = self.verdict(invocation, analysis=FIXTURES / "aspect-analysis/events.jsonl")
+                self.assertEqual(value["status"], "INCOMPLETE", value)
+                self.assertEqual([row["reason"] for row in value["missing"]], ["aspect completion missing"])
+
+    def test_analysis_only_does_not_require_aspect_execution(self) -> None:
+        invocation = self.aspect_fixture()
+        (invocation / "events.jsonl").write_bytes((FIXTURES / "aspect-analysis/events.jsonl").read_bytes())
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "analysis"
+        report.write_json(invocation / "context.json", context)
+        (invocation / "executed-arguments.txt").write_text("build\n--config=lint-cc\n--nobuild\n")
+        self.capture(invocation)
+        value = self.verdict(invocation)
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["missing"], [])
+        self.assertTrue(value["accepted_analysis_exit"])
+
     def test_execution_without_expected_selection_is_incomplete(self) -> None:
         invocation = self.fixture()
         self.capture(invocation)
