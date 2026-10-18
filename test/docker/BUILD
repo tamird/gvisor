@@ -67,6 +67,7 @@ source_image_archive(
         free_disk = "40GB",
         memory = "8GB",
         start_daemon = True,
+        vfs = True,
     ),
     image = "basic/redis",
     tags = ["manual"],
@@ -166,6 +167,15 @@ amd64_image_archive(
     tags = ["manual"],
 )
 
+# Force the Ollama Dockerfile build instead of exporting the canonical image
+# cache. The marker does not change the Dockerfile or files it consumes.
+pkg_tar(
+    name = "ollama_source_miss_context",
+    empty_files = ["images/gpu/ollama/bench/.qualification-miss"],
+    tags = ["manual"],
+    deps = ["//images:source_contexts"],
+)
+
 # GPU/TPU model images use the source/archive producer for CUDA images.
 # Source builds require a disposable namespace-capable worker; no GPU test runs.
 [
@@ -174,6 +184,7 @@ amd64_image_archive(
         testonly = True,
         architecture = "x86_64",
         archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["512GB" if image == "gpu/ollama/bench" else "80GB"],
+        contexts = ":ollama_source_miss_context" if image == "gpu/ollama/bench" else "//images:source_contexts",
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
@@ -181,8 +192,8 @@ amd64_image_archive(
         exec_properties = docker_test_exec_properties(
             exec_group = "",
             # The measured Triton load used 119.5GB before a builder cache.
-            # Ollama's benchmark models alone occupy about 96GiB. Source builds
-            # retain snapshots, the staged OCI layout and its final output.
+            # Ollama's large model set also needs room for build snapshots and
+            # compressed content while the output is streamed.
             free_disk = {
                 "gpu/ollama/bench": "512GB",
                 "gpu/stable-diffusion-xl": "256GB",

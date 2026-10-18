@@ -27,6 +27,7 @@ work=$(mktemp -d "${TMPDIR:-/tmp}/source-image-builder.XXXXXX")
 export BUILDX_CONFIG="${work}"
 builder="gvisor-source-${work##*.}"
 created=false
+layout_created=false
 cleanup() {
   local result=$? cleanup_status=0
   set +e
@@ -44,6 +45,10 @@ cleanup() {
   if (( result == 0 && cleanup_status != 0 )); then
     result=${cleanup_status}
   fi
+  if (( result != 0 )) && [[ ${layout_created} == true ]]; then
+    rm -rf -- "${layout}" || \
+      printf 'Cannot remove partial OCI layout %s\n' "${layout}" >&2
+  fi
   exit "${result}"
 }
 trap cleanup EXIT
@@ -55,7 +60,6 @@ trap 'exit 143' TERM
 cp -- "${buildx}" "${work}/buildx"
 chmod 0555 "${work}/buildx"
 buildx="${work}/buildx"
-staged_layout="${work}/oci-layout"
 
 "${buildx}" version
 "${bsdtar}" --version
@@ -65,13 +69,14 @@ staged_layout="${work}/oci-layout"
   --driver-opt "image=${image}"
 created=true
 # Stock oci_load expects one image manifest, not an attestation index.
-# BuildKit's health checks stay active during export. Finish that session before
-# copying the layout to remotely served outputs.
-mkdir -- "${layout}" "${staged_layout}"
+# BuildKit retains compressed layers until export completes. Writing directly
+# to remotely backed outputs avoids another OCI copy on the root disk.
+mkdir -- "${layout}"
+layout_created=true
 set +e
 "${buildx}" build --builder "${builder}" --provenance=false --progress=plain \
   --output=type=oci,tar=true,compression=gzip,force-compression=true,dest=- "$@" | \
-  "${bsdtar}" --extract -b 2048 --file - --directory "${staged_layout}" --no-same-owner
+  "${bsdtar}" --extract -b 2048 --file - --directory "${layout}" --no-same-owner
 statuses=("${PIPESTATUS[@]}")
 set -e
 printf 'Source OCI export status: buildx=%s tar=%s\n' "${statuses[0]}" "${statuses[1]}" >&2
@@ -83,4 +88,3 @@ if (( statuses[1] != 0 )); then
 fi
 printf 'Source builder image %s: ' "${image}"
 docker image inspect --format '{{.Id}}' "${image}"
-cp -R -- "${staged_layout}/." "${layout}/"
