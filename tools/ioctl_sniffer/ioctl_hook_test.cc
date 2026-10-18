@@ -15,6 +15,7 @@
 #include "tools/ioctl_sniffer/ioctl_hook.h"
 
 #include <dlfcn.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
@@ -22,15 +23,18 @@
 
 #include <array>
 #include <cerrno>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <optional>
 #include <string>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
 #include "test/util/memory_util.h"
+#include "test/util/posix_error.h"
 #include "test/util/socket_util.h"
 #include "test/util/test_util.h"
 #include "tools/ioctl_sniffer/ioctl.pb.h"
