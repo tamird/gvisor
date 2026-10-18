@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T14:23:19.370026+00:00",
+    "updatedAt": "2026-10-18T14:36:28.027631+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9963,15 +9963,15 @@
       "title": "BuildBuddy: retry canceled OCI initialization",
       "group": "rbe",
       "status": "open",
-      "summary": "BuildBuddy #13848 remains open and mergeable at 715688f5d. At October 18 13:28:06 UTC, sluongng left LGTM feedback as a COMMENTED review and asked for dan-stowell to review before merge; GitHub still reports REVIEW_REQUIRED, with bduffany and dan-stowell requested. At 13:49:15 UTC, sluongng linked their separate open PR #13851, which upgrades go-containerregistry to v0.22.1 and related dependencies; its current head is bf1f85f2e and review is required. No dependency change has been added to this branch. Public PR/build failed with a missing API key before any tests executed (exit 34). The Linux ARM64 lane passed both test targets, then failed its build-event upload with a missing API key (exit 38). Why the key was absent is unknown; these failures do not establish a source regression. CodeQL passed. The completed Windows executor job ran all five test targets: four passed and filecache_test timed out in both 60-second attempts (exit 1). This is an executed test failure, separate from the missing-key failures; the timeout cause and relationship to this PR are not established. Three Darwin ERROR statuses remain maintainer execution-approval gates, while hosted Linux/style/bare-metal/release statuses remain queued. The prepared real-registry regression fails before the correction and the corrected race suite passes 79 cases without skips; its connection to the hosted image-preparation incident remains unproved. Root reviewed the suggested go-containerregistry cleanup: later calls can reinitialize after a failure, while concurrent callers can still hold the canceled reader. That distinction is source-derived, not a new executed regression; the separate upgrade remains in sluongng’s PR #13851.",
+      "summary": "BuildBuddy #13848 remains open and mergeable at 715688f5d. At October 18 13:28:06 UTC, sluongng left LGTM feedback as a COMMENTED review and asked for dan-stowell to review before merge; GitHub still reports REVIEW_REQUIRED, with bduffany and dan-stowell requested. At 13:49:15 UTC, sluongng linked their separate open PR #13851, which upgrades go-containerregistry to v0.22.1 and related dependencies; its current head is bf1f85f2e and review is required. No dependency change has been added to this branch. Public PR/build failed with a missing API key before any tests executed (exit 34). The Linux ARM64 lane passed both test targets, then failed its build-event upload with a missing API key (exit 38). Why the key was absent is unknown; these failures do not establish a source regression. CodeQL passed. The completed Windows executor job ran all five test targets: four passed and filecache_test timed out in both 60-second attempts (exit 1). Root recovered both Windows test logs and verified that filecache_test.go and BUILD match this PR head. Both attempts end during TestScanWithConcurrentAdd after 99 completed directory scans, with progress continuing until the 60-second timeout and no assertion failure. The test performs 100 trials of 100 files; its small size assigns a 60-second suite limit. Root found sluongng’s existing open PR #13781, which addresses this Windows concurrent-scan fixture problem. Its current head, 6867093386, has a passing Windows executor check. The Windows failure is linked to that existing work; no separate test-size proposal is being pursued. This evidence does not establish an OCI regression or a passing Windows result for #13848. Three Darwin ERROR statuses remain maintainer execution-approval gates, while hosted Linux/style/bare-metal/release statuses remain queued. The prepared real-registry regression fails before the correction and the corrected race suite passes 79 cases without skips; its connection to the hosted image-preparation incident remains unproved. Root reviewed the suggested go-containerregistry cleanup: later calls can reinitialize after a failure, while concurrent callers can still hold the canceled reader. That distinction is source-derived, not a new executed regression; the separate upgrade remains in sluongng’s PR #13851.",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13848",
-      "updatedAt": "2026-10-18T14:23:00.857053+00:00",
+      "updatedAt": "2026-10-18T14:36:28.027631+00:00",
       "followup": {
-        "owner": "Codex",
-        "disposition": "Further review, CI authentication and Windows timeout diagnosis pending",
+        "owner": "root",
+        "disposition": "Existing Windows fixture fix, maintainer review and CI authentication pending",
         "sourceHead": "715688f5dda713463b7ce4252ceab32eae3c2b26",
-        "observedAt": "2026-10-18T14:20:29.516014+00:00",
-        "nextAction": "Root has the new Windows filecache_test timeout for owner assignment and the earlier missing-key failures. Diagnose the retained Windows test evidence before proposing a source fix or retry. Await requested maintainer review and CI authentication resolution; sluongng owns separate upgrade PR #13851. No new source edit, retry or public reply has been performed.",
+        "observedAt": "2026-10-18T14:36:28.027631+00:00",
+        "nextAction": "Track sluongng’s existing Windows fixture fix #13781, whose current head has a passing Windows executor check. Root stopped the separate size-classification proposal; no new source-fix task or retry is planned. Await requested maintainer review and CI authentication resolution. The prepared evidence reply still awaits user permission; sluongng also owns separate dependency upgrade PR #13851.",
         "evidence": [
           "https://github.com/tamird/buildbuddy/commit/715688f5dda713463b7ce4252ceab32eae3c2b26",
           "https://app.buildbuddy.io/invocation/d0246e01-16ff-4933-8c33-1a51e5199cfc",
@@ -9981,7 +9981,9 @@
           "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39069097106/job/117687993094",
           "https://github.com/buildbuddy-io/buildbuddy/pull/13848#issuecomment-6250687685",
           "https://github.com/buildbuddy-io/buildbuddy/pull/13851",
-          "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39069097062/job/117687993174"
+          "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39069097062/job/117687993174",
+          "https://app.buildbuddy.io/invocation/e96ac772-115e-46bc-b120-cffe8b033b7a",
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
         ]
       },
       "evidence": [
@@ -10024,6 +10026,18 @@
         {
           "label": "Windows filecache timeout",
           "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39069097062/job/117687993174"
+        },
+        {
+          "label": "Windows test evidence",
+          "url": "https://app.buildbuddy.io/invocation/e96ac772-115e-46bc-b120-cffe8b033b7a"
+        },
+        {
+          "label": "Existing Windows concurrent-scan fixture fix",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
+        },
+        {
+          "label": "Existing fixture fix Windows check passed",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38129447672/job/114440533259"
         }
       ],
       "number": 13848
