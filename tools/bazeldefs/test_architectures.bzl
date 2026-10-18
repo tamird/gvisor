@@ -94,8 +94,7 @@ def _route_test(ctx, providers, original_executable):
             executable = ctx.actions.declare_file(ctx.label.name + (".docker_setup" if docker else ".local_root"))
             ctx.actions.write(
                 executable,
-                "#!/bin/bash\n%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
-                    "exec sudo -n -E -- unshare --mount --propagation private --" if initial_cgroup else "exec",
+                "#!/bin/bash\nexec \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
                     shell.quote("/" + helper_executable.short_path),
                     " --initial-cgroup-namespace" if initial_cgroup else "",
                     shell.quote("/" + original_executable.short_path),
