@@ -56,8 +56,13 @@ type daemonInputs struct {
 // Without --docker_test_config, it retains the installed-daemon interface.
 // Otherwise setup precedes the version check, and cleanup follows all tests,
 // including parallel tests. The run callback may initialize suite state from
-// the selected daemon before calling m.Run. Only TestMain exits the process.
-func RunTests(run func() int) (status int) {
+// the selected daemon before calling m.Run. Extra runtime arguments are scoped
+// to the owned daemon. Only TestMain exits the process.
+func RunTests(run func() int, extraRuntimeArgs ...string) (status int) {
+	if len(extraRuntimeArgs) != 0 && *dockerTestConfig == "" {
+		log.Print("extra runtime arguments require an owned Docker daemon")
+		return 1
+	}
 	if *dockerTestConfig != "" {
 		data, err := os.ReadFile(*dockerTestConfig)
 		if err != nil {
@@ -69,6 +74,7 @@ func RunTests(run func() int) (status int) {
 			log.Printf("decode Docker test configuration: %v", err)
 			return 1
 		}
+		inputs.RuntimeArgs = append(inputs.RuntimeArgs, extraRuntimeArgs...)
 		if inputs.Native && (inputs.Runsc != "" || len(inputs.RuntimeArgs) != 0) {
 			log.Print("Native Docker configuration cannot declare runsc or its arguments")
 			return 1

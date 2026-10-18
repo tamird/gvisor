@@ -54,9 +54,9 @@ class QualificationReportTest(unittest.TestCase):
         raw.write_text(raw.read_text().replace("file:///FIXTURE_OUTPUT/", invocation.as_uri() + "/"))
         return invocation
 
-    def capture(self, invocation: Path) -> dict[str, object]:
+    def capture(self, invocation: Path, retain_outputs: bool = False) -> dict[str, object]:
         return report.capture(invocation / "events.jsonl", invocation / "captured.jsonl",
-                              invocation, invocation / "reports")
+                              invocation, invocation / "reports", retain_outputs)
 
     def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None) -> dict[str, object]:
         events = invocation / "captured.jsonl"
@@ -121,6 +121,118 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(self.capture(invocation)["errors"], [])
         return self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl",
                             benchmarks=invocation / "benchmarks.json")
+
+    def pgo_fixture(self, zipped: bool = False, decision: str = "refresh") -> Path:
+        invocation = self.benchmark_fixture()
+        manifest = report.read_json(invocation / "benchmarks.json")
+        (owner,) = report.mapping(manifest["owners"])
+        manifest["arguments"] = ["-test.v=true", "-test.bench=.", "-test.benchtime=20s"]
+        manifest["pgo"] = {owner: {"excluded": ["BenchmarkExcluded"], "platform": "systrap", "benchmark": "state"}}
+        report.write_json(invocation / "benchmarks.json", manifest)
+        arguments = (invocation / "arguments.txt").read_text().splitlines()
+        (invocation / "arguments.txt").write_text("\n".join(
+            [arg for arg in arguments if not arg.startswith("--test_arg=")]
+            + ["--test_arg=" + argument for argument in manifest["arguments"]]) + "\n")
+        log = (invocation / "test.log").read_text().replace("PASS\n", "--- SKIP: BenchmarkExcluded (0.00s)\nPASS\n")
+        (invocation / "test.log").write_text(log)
+        (invocation / "test.xml").write_text(
+            '<testsuites><testsuite><testcase name="BenchmarkFirstRestore"/>'
+            '<testcase name="BenchmarkFirstRestore/empty"/>'
+            '<testcase name="BenchmarkExcluded"><skipped/></testcase></testsuite></testsuites>')
+        profile = b"retained merged profile"
+        metadata = {"runtime_key": "go1.27.1-linux-amd64", "platform": "systrap", "benchmark": "state",
+                    "generated_sha256": hashlib.sha256(profile).hexdigest(), "cpu_samples": 123,
+                    "decision": decision, "comparison": "" if decision == "add" else "real old/new comparison"}
+        if decision != "add":
+            metadata["baseline_sha256"] = "b" * 64
+        outputs = {"pgo/result.json": json.dumps(metadata).encode(), "pgo/state.pgo.pprof.pb.gz": profile}
+        events = self.events(invocation)
+        result = next(event["testResult"] for event in events if "testResult" in event)
+        if zipped:
+            path = invocation / "outputs.zip"
+            with zipfile.ZipFile(path, "w") as archive:
+                for name, data in outputs.items():
+                    archive.writestr(name, data)
+            result["testActionOutput"].append({"name": "test.outputs__outputs.zip", "uri": path.as_uri()})
+        else:
+            for name, data in outputs.items():
+                path = invocation / "test.outputs" / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+                result["testActionOutput"].append({"name": "test.outputs/" + name, "uri": path.as_uri()})
+        self.write_events(invocation, events)
+        return invocation
+
+    def pgo_verdict(self, invocation: Path) -> dict[str, object]:
+        self.assertEqual(self.capture(invocation, retain_outputs=True)["errors"], [])
+        return self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl",
+                            benchmarks=invocation / "benchmarks.json")
+
+    def test_pgo_generation_is_distinct_from_refresh(self) -> None:
+        for zipped, decision in itertools.product((False, True), ("add", "retain", "refresh")):
+            with self.subTest(zipped=zipped, decision=decision):
+                invocation = self.pgo_fixture(zipped, decision)
+                value = self.pgo_verdict(invocation)
+                self.assertEqual(value["status"], "PASS", value)
+                profile = value["executed"][0]["pgo"]
+                self.assertEqual((profile["generation"], profile["decision"]), ("PASS", decision))
+                self.assertEqual(value["executed"][0]["pgo_excluded"], ["BenchmarkExcluded"])
+                self.assertEqual(report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")["status"], "PASS")
+                shutil.rmtree(invocation)
+
+    def test_pgo_partial_zero_and_all_skipped_are_incomplete(self) -> None:
+        for kind in ("partial", "zero", "all-skipped", "unexpected-skip"):
+            with self.subTest(kind=kind):
+                invocation = self.pgo_fixture()
+                if kind == "partial":
+                    manifest = report.read_json(invocation / "benchmarks.json")
+                    (owner,) = report.mapping(manifest["owners"])
+                    manifest["owners"][owner].append({"name": "BenchmarkMissing", "count": 1, "units": ["ns/op"]})
+                    report.write_json(invocation / "benchmarks.json", manifest)
+                elif kind in ("zero", "all-skipped"):
+                    (invocation / "test.log").write_text("--- SKIP: BenchmarkExcluded (0.00s)\nPASS\n")
+                    if kind == "all-skipped":
+                        (invocation / "test.xml").write_text('<testsuites><testsuite><testcase name="BenchmarkExcluded"><skipped/></testcase></testsuite></testsuites>')
+                else:
+                    log = invocation / "test.log"
+                    log.write_text(log.read_text().replace("BenchmarkExcluded", "BenchmarkUnexpected"))
+                self.assertEqual(self.pgo_verdict(invocation)["status"], "INCOMPLETE")
+                shutil.rmtree(invocation)
+
+    def test_pgo_requires_profile_identity_and_digest(self) -> None:
+        for kind in ("missing-profile", "digest", "platform", "empty-profile", "comparison"):
+            with self.subTest(kind=kind):
+                invocation = self.pgo_fixture()
+                metadata = invocation / "test.outputs/pgo/result.json"
+                value = report.read_json(metadata)
+                profile = invocation / "test.outputs/pgo/state.pgo.pprof.pb.gz"
+                if kind == "missing-profile":
+                    events = self.events(invocation)
+                    result = next(event["testResult"] for event in events if "testResult" in event)
+                    result["testActionOutput"] = [item for item in result["testActionOutput"] if not item["name"].endswith(".pb.gz")]
+                    self.write_events(invocation, events)
+                elif kind == "digest":
+                    value["generated_sha256"] = "0" * 64
+                elif kind == "platform":
+                    value["platform"] = "kvm"
+                elif kind == "empty-profile":
+                    profile.write_bytes(b"")
+                    value["generated_sha256"] = hashlib.sha256(b"").hexdigest()
+                else:
+                    value["comparison"] = ""
+                report.write_json(metadata, value)
+                self.assertEqual(self.pgo_verdict(invocation)["status"], "INCOMPLETE")
+                shutil.rmtree(invocation)
+
+    def test_pgo_preserves_all_xml_failures(self) -> None:
+        for original in (True, False):
+            with self.subTest(original_converter_error=original):
+                invocation = self.pgo_fixture()
+                xml = ((FIXTURES / "benchmark/test.xml").read_text() if original else
+                       '<testsuites><testsuite><testcase name="BenchmarkFirstRestore/empty"><failure message="real benchmark failure"/></testcase></testsuite></testsuites>')
+                (invocation / "test.xml").write_text(xml)
+                self.assertEqual(self.pgo_verdict(invocation)["status"], "FAIL")
+                shutil.rmtree(invocation)
 
     def test_benchmark_observations_are_not_named_tests(self) -> None:
         invocation = self.benchmark_fixture()

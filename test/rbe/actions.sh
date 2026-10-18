@@ -58,7 +58,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
         options+=("--${lanes[0]}-target=$target")
       done
       ;;
-    syscalls|syscalls-kvm|syscalls-rc)
+    syscalls|syscalls-kvm|syscalls-rc|pgo)
       for target in "${selected_targets[@]}"; do
         options+=("--test-target=$target")
       done
@@ -150,21 +150,29 @@ git status --porcelain --untracked-files=no > "$qualification_artifacts/source-b
 # Validate and retain the opt-in before any Bazel command can start.
 qualification_benchmark_manifest=
 qualification_benchmark_arguments=
+benchmark_manifest_options=()
+qualification_retain_outputs=false
+if [[ ${lanes[*]} == pgo ]]; then
+  [[ -n ${QUALIFICATION_TARGETS:-} ]]
+  QUALIFICATION_BENCHMARK_MANIFEST=$qualification_workspace/test/benchmarks/pgo.json
+  benchmark_manifest_options=(--selected-manifest "$qualification_artifacts/benchmark-manifest.json")
+  qualification_retain_outputs=true
+fi
 if [[ -n ${QUALIFICATION_BENCHMARK_MANIFEST:-} ]]; then
-  [[ ${lanes[*]} == test && -n ${QUALIFICATION_TARGETS:-} ]]
+  [[ ( ${lanes[*]} == test || ${lanes[*]} == pgo ) && -n ${QUALIFICATION_TARGETS:-} ]]
   qualification_benchmark_manifest=$qualification_artifacts/benchmark-manifest.json
   qualification_benchmark_arguments=$qualification_artifacts/benchmark-arguments.txt
   cp -- "$QUALIFICATION_BENCHMARK_MANIFEST" "$qualification_benchmark_manifest"
-  sha256sum "$qualification_benchmark_manifest" > "$qualification_artifacts/benchmark-manifest.sha256"
   benchmark_target_options=()
   for target in "${selected_targets[@]}"; do
     benchmark_target_options+=("--target=$target")
   done
   python3 test/rbe/qualification_report.py benchmark-arguments \
     --manifest "$qualification_benchmark_manifest" --output "$qualification_benchmark_arguments" \
-    "${benchmark_target_options[@]}"
+    "${benchmark_target_options[@]}" "${benchmark_manifest_options[@]}"
+  sha256sum "$qualification_benchmark_manifest" > "$qualification_artifacts/benchmark-manifest.sha256"
 fi
-export qualification_benchmark_manifest qualification_benchmark_arguments
+export qualification_benchmark_manifest qualification_benchmark_arguments qualification_retain_outputs
 
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) qualification_bazel_binary=$(type -P bazel) ;;
@@ -185,7 +193,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       # hosted coordinator disconnects. Actions owns coordination; actions
       # retain their remote execution requirements and declared deadlines.
       case "$QUALIFICATION_ARCH:${lanes[*]}" in
-        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test|amd64:build-all) ;;
+        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test|amd64:build-all|amd64:pgo) ;;
         *)
           printf 'The Actions remote coordinator supports ARM64 guest profiles, explicit build/test targets or AMD64 build-all.\n' >&2
           exit 2
@@ -205,7 +213,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|amd64:pgo|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
@@ -226,11 +234,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           ( $QUALIFICATION_EXECUTION == local &&
             ( $qualification_container == true || ${lanes[*]} == test ||
               ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-kvm ||
-              ${lanes[*]} == syscalls-resume ) ) ]]; then
+              ${lanes[*]} == syscalls-resume || ${lanes[*]} == pgo ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
-    if [[ ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
+    if [[ ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == pgo || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
       [[ -S /var/run/docker.sock ]]
@@ -266,6 +274,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # bounded cache size and CPU-sized preparation limit.
         printf '%s\n' 'build:buildbuddy_remote_executor --experimental_remote_merkle_tree_cache'
       fi
+      if [[ ${lanes[*]} == pgo ]]; then
+        printf '%s\n' 'build:buildbuddy_remote_executor --remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$'
+      fi
       # Report retention must not force successful unit tests to run again.
       if [[ $qualification_retain_reports == true && $qualification_full_unit == false ]]; then
         printf '%s\n' \
@@ -282,7 +293,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       fi
     } >> "$qualification_rc"
     qualification_seconds=0
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ${lanes[*]} == pgo ]]; then
       qualification_seconds=7200
     else
       case "${lanes[*]}" in
@@ -365,7 +376,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           sudo -n test -w "$device"
         done
       fi
-      if [[ $qualification_container == true || ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
+      if [[ $qualification_container == true || ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc || ${lanes[*]} == pgo ]]; then
         [[ -c /dev/kvm ]]
         sudo -n test -r /dev/kvm
         sudo -n test -w /dev/kvm
@@ -397,7 +408,8 @@ export -f qualification_bazel
 bazel() {
   local argument command_kind="" result=0 capture_status=0 verdict_status=0 preflight_status=0 analysis_only=false
   local directory raw_events expected_events="" index
-  local -a capture_prefix=() verdict_options=() command_args=("$@") target_args=() selection_options=()
+  local -a capture_prefix=() capture_options=() verdict_options=() command_args=("$@") target_args=() selection_options=()
+  if [[ $qualification_retain_outputs == true ]]; then capture_options=(--retain-outputs); fi
   for argument in "$@"; do
     case "$argument" in
       --nobuild|--nobuild=true|--build=false) analysis_only=true ;;
@@ -453,7 +465,8 @@ bazel() {
     "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
       python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
       --events "$expected_events" --output "$directory/expected.jsonl" \
-      --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" || capture_status=$?
+      --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
+    "${capture_options[@]}" || capture_status=$?
     verdict_options+=(--expected-analysis "$directory/expected.jsonl")
     if (( capture_status == 0 )); then
       if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
@@ -481,7 +494,8 @@ bazel() {
   "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
     python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
     --events "$raw_events" --output "$directory/events.jsonl" \
-    --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" || capture_status=$?
+    --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
+    "${capture_options[@]}" || capture_status=$?
   if [[ -n $qualification_benchmark_manifest ]]; then
     sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" || capture_status=1
   fi

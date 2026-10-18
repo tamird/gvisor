@@ -41,7 +41,24 @@ func Run(run func() int) int {
 		flag.Usage()
 		return 0
 	}
-	return dockerutil.RunTests(run)
+	if *pgoProfiletool == "" {
+		return dockerutil.RunTests(run)
+	}
+	args, finish, err := preparePGO()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "prepare PGO: %v\n", err)
+		return 1
+	}
+	if status := dockerutil.RunTests(run, args...); status != 0 {
+		return status
+	}
+	// All benchmark containers and their daemon have stopped, so every profile
+	// is closed before profiletool reads it.
+	if err := finish(); err != nil {
+		fmt.Fprintf(os.Stderr, "finish PGO: %v\n", err)
+		return 1
+	}
+	return 0
 }
 
 // SetFixedBenchmarks causes all benchmarks to run once.
