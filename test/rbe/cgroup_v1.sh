@@ -22,6 +22,7 @@ controllers=(cpuset cpu cpuacct blkio memory devices freezer net_cls perf_event 
 if [[ ${1:-} != --mounts ]]; then
   test "$#" -gt 0
   test "$(id -u)" -eq 0
+  uname -r | tee "${out}/kernel-release.txt"
   test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
   test "$(cat /proc/self/cgroup)" = '0::/'
   test "$(cat /proc/1/cgroup)" = '0::/'
@@ -128,6 +129,14 @@ cat /sys/fs/cgroup/cpuset/cpuset.cpus /sys/fs/cgroup/cpuset/cpuset.mems
 # Keep the command and its children in one PID view. Namespace-init exit
 # contains even children in other process groups; the caller owns test timeouts.
 # https://github.com/torvalds/linux/blob/830b3c68c/kernel/pid_namespace.c#L166
+if [[ ${GVISOR_CGROUP_TEST_USER:-root} != root ]]; then
+  uid=$(id -u "${GVISOR_CGROUP_TEST_USER}")
+  gid=$(id -g "${GVISOR_CGROUP_TEST_USER}")
+  # Bazel created these writable outputs before the privileged fixture ran.
+  # The payload must retain the same write access under its original identity.
+  chown "${uid}:${gid}" "$out" "${TEST_TMPDIR:?}" "$(dirname "${XML_OUTPUT_FILE:?}")"
+  set -- setpriv --reuid="${uid}" --regid="${gid}" --init-groups -- "$@"
+fi
 unshare --pid --fork --kill-child --mount-proc "$@" &
 child=$!
 status=0
