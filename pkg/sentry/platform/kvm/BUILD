@@ -1,6 +1,7 @@
 load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "cc_objcopy", "cc_objdump", "go_library", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -128,7 +129,7 @@ go_test(
         "manual",
         "nogotsan",
         "requires-kvm",
-    ],
+    ] + host_test_requirement_tags(["docker"]),
     deps = [
         "//pkg/abi/linux",
         "//pkg/cpuid",

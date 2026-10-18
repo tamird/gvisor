@@ -16,12 +16,16 @@
 # Root test fixture for disposable Actions VMs.
 set -euo pipefail
 initial_cgroup=false
+private_mount=false
 if [[ ${1:-} == --initial-cgroup-namespace ]]; then
   initial_cgroup=true
   shift
+elif [[ ${1:-} == --private-mount-namespace ]]; then
+  private_mount=true
+  shift
 fi
 if (( EUID != 0 )); then
-  [[ $initial_cgroup == false ]]
+  [[ $initial_cgroup == false && $private_mount == false ]]
   # sudo-rs supports named preservation, but ignores -E. Keep exported test
   # inputs while letting sudo establish its own caller identity.
   preserve_env=
@@ -29,7 +33,13 @@ if (( EUID != 0 )); then
     case $name in SUDO_*) continue ;; esac
     preserve_env+=${preserve_env:+,}$name
   done < <(compgen -e)
-  exec sudo -n --preserve-env="$preserve_env" -- unshare --mount --propagation private -- "$0" "$@"
+  exec sudo -n --preserve-env="$preserve_env" -- unshare --mount --propagation private -- "$0" --private-mount-namespace "$@"
+fi
+if [[ $initial_cgroup == false ]]; then
+  if [[ $private_mount == false ]]; then
+    exec unshare --mount --propagation private -- "$0" --private-mount-namespace "$@"
+  fi
+  [[ $(readlink /proc/self/ns/mnt) != "$(readlink "/proc/$PPID/ns/mnt")" ]]
 fi
 if [[ $initial_cgroup == true ]]; then
   # The frontend acquires root with sudo, retaining its Bazel coordinator's
@@ -39,18 +49,23 @@ if [[ $initial_cgroup == true ]]; then
   [[ $(readlink /proc/self/ns/mnt) != "${GVISOR_HOST_MOUNT_NS:?}" ]]
   [[ $(stat -f -c %T /sys/fs/cgroup) == cgroup2fs ]]
   [[ ! -e /sys/fs/cgroup/cgroup.type && ! -e /sys/fs/cgroup/test ]]
-else
+  [[ ${SUDO_UID:?} =~ ^[0-9]+$ && ${SUDO_GID:?} =~ ^[0-9]+$ ]]
+elif [[ -n ${SUDO_UID+x} || -n ${SUDO_GID+x} ]]; then
   [[ ${SUDO_UID:?} =~ ^[0-9]+$ && $SUDO_UID != 0 && ${SUDO_GID:?} =~ ^[0-9]+$ ]]
 fi
-[[ ${SUDO_UID:?} =~ ^[0-9]+$ && ${SUDO_GID:?} =~ ^[0-9]+$ ]]
-output_uid=$SUDO_UID
-output_gid=$SUDO_GID
+# A mixed Docker/host lane runs its Bazel coordinator as root. In that case
+# there is no sudo caller to restore; require root-owned test directories.
+output_uid=${SUDO_UID:-0}
+output_gid=${SUDO_GID:-0}
+[[ $output_uid =~ ^[0-9]+$ && $output_gid =~ ^[0-9]+$ ]]
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
 [[ -d $out && ! -L $out ]]
 test_tmp=${TEST_TMPDIR:?}
 [[ -d $test_tmp && ! -L $test_tmp ]]
 if [[ $initial_cgroup == true ]]; then
   [[ $(stat -c %u "$out") == "$output_uid" && $(stat -c %u "$test_tmp") == "$output_uid" ]]
+elif [[ $output_uid == 0 ]]; then
+  [[ $(stat -c %u:%g "$out") == "$output_uid:$output_gid" && $(stat -c %u:%g "$test_tmp") == "$output_uid:$output_gid" ]]
 fi
 scratch_alias_mounted=false
 original_controllers=

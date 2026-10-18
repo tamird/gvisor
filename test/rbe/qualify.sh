@@ -373,12 +373,17 @@ shared_test_targets() {
           //runsc/cmd:boot_posture_kvm_arm64_tcg_test
         )
       else
+        local native_suffix=_amd64
+        if [[ $test_execution == local ]]; then
+          # Map the complete owning profile to its native frontends together.
+          native_suffix=
+        fi
         targets=(
-          //pkg/coretag:coretag_smt_kvm_test_amd64
+          "//pkg/coretag:coretag_smt_kvm_test$native_suffix"
           //pkg/sentry/platform/kvm:kvm_test
           //test/docker:kvm_tests
-          //pkg/pinring:pinring_kvm_test_amd64
-          //runsc/cmd:boot_posture_kvm_test_amd64
+          "//pkg/pinring:pinring_kvm_test$native_suffix"
+          "//runsc/cmd:boot_posture_kvm_test$native_suffix"
         )
       fi
       ;;
@@ -1053,7 +1058,7 @@ run_lane() (
   # The parent records failures and continues with other requested lanes.
   set -e
   local lane=$1
-  local command=test execution_config=rbe
+  local command=test execution_config=rbe mixed_kvm=false
   local -a options=() targets=()
   if [[ $lane == unit-v1 || $lane == container-v1 || $lane == docker-v1 ]]; then
     if [[ $arch != amd64 ]]; then
@@ -1245,7 +1250,35 @@ run_lane() (
         options+=(--run_under='sudo -n -E' --test_arg=-test.v)
       fi
       ;;
-    do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
+    kvm)
+      shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local && $arch == amd64 ]]; then
+        mixed_kvm=true
+        local selection_dir
+        selection_dir=$(mktemp -d)
+        trap 'rm -rf "$selection_dir"' EXIT
+        printf '%s\n' "${targets[@]}" > "$selection_dir/roots"
+        analyze_profile "$selection_dir/roots" "$selection_dir/profile.json" \
+          --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only
+        python3 test/rbe/unit_matrix.py profile-targets \
+          "$selection_dir/profile.json" amd64 --hybrid > "$selection_dir/targets"
+        python3 - "$selection_dir" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+directory = Path(sys.argv[1])
+(directory / "selection.json").write_text(json.dumps({
+    "canonical_roots": directory.joinpath("roots").read_text().splitlines(),
+    "selected_owners": directory.joinpath("targets").read_text().splitlines(),
+    "routing": "Declared native frontends select host or Docker execution.",
+}, indent=2) + "\n")
+PY
+        save_profile_selection "$selection_dir" "$lane"
+        mapfile -t targets < "$selection_dir/targets"
+      fi
+      ;;
+    do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|moby|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
       if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2
@@ -1409,7 +1442,13 @@ run_lane() (
             # Keep CPU-heavy PHP shards from competing on the same host.
             options+=(--local_test_jobs=1)
           fi
-          options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
+          if [[ $mixed_kvm == true ]]; then
+            options+=(--config=rbe-hybrid-tests --strategy=TestRunner=remote,docker,local
+              --//tools/bazeldefs:local_test_architecture=amd64
+              --//tools/bazeldefs:local_test_backend=docker)
+          else
+            options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
+          fi
           if [[ $lane == language-goferfs || $lane == moby || $lane == kvm || $lane == benchmarks || $lane == pgo || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
             options+=(
               --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock

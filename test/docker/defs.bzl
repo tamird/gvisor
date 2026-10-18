@@ -9,7 +9,7 @@ load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "select_arch", "transition_allowlist")
 load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
+load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
 
 # Match the source-context transition: an AMD64 image remains AMD64 even when
@@ -206,7 +206,7 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
         )
         test = prefix + "_owned"
         owned_kwargs = dict(kwargs)
-        owned_kwargs["tags"] = kwargs.get("tags", []) + getattr(variant, "tags", [])
+        owned_kwargs["tags"] = kwargs.get("tags", []) + getattr(variant, "tags", []) + host_test_requirement_tags(["docker"])
         if hasattr(variant, "test_rule"):
             owned_kwargs["test_rule"] = variant.test_rule
         if arm64 != images:
