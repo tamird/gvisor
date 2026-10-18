@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T10:52:05.177854+00:00",
+    "updatedAt": "2026-10-18T12:46:17.948924+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -3506,13 +3506,13 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-18T08:26:21.809863+00:00",
-      "summary": "Rebased onto current upstream after Nayana’s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. All applicable public checks have finished: eight pass and four workflow-change scans are skipped. Fresh maintainer approval is still required.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
+      "updatedAt": "2026-10-18T12:37:50.896801+00:00",
+      "summary": "The contributor-approved direct-header amendment is published at 10e4c37aa, and the prepared explanation is posted. It adds linux/if_link.h for IFLA_NET_NS_FD; exact-source ClangTidy passes, and runtime code is unchanged. Fresh maintainer approval and current public checks remain outstanding.\n\nEarlier observations:\n\nRebased onto current upstream after Nayana’s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. All applicable public checks have finished: eight pass and four workflow-change scans are skipped. Fresh maintainer approval is still required.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
       "number": 15315,
       "followup": {
-        "disposition": "Validated direct-include amendment awaits contributor review",
-        "owner": "root",
-        "nextAction": "Await the requested decision on separate proposal 10e4c37aa; exact-source ClangTidy passes in 39113992309. Keep published head 3c90764766 and its fresh maintainer-approval requirement unchanged. Earlier incomplete and validation-composition failures are retained separately.",
+        "disposition": "Approved amendment published; maintainer review and checks pending",
+        "owner": "work_map_current",
+        "nextAction": "Follow current-head checks and genuine reviewer replies; preserve the existing maintainer-review request and unresolved discussion.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
@@ -3523,15 +3523,24 @@
           "https://github.com/tamird/gvisor/actions/runs/39111747901",
           "https://github.com/tamird/gvisor/actions/runs/39113588076",
           "https://github.com/tamird/gvisor/commit/10e4c37aaf37f2b81b9223df485d9525559ea572",
-          "https://github.com/tamird/gvisor/actions/runs/39113992309"
+          "https://github.com/tamird/gvisor/actions/runs/39113992309",
+          "https://github.com/google/gvisor/pull/15315#issuecomment-6249988776"
         ],
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
-        "sourceHead": "3c90764766edd626609fd79836d82c6e1e28ad99",
+        "sourceHead": "10e4c37aaf37f2b81b9223df485d9525559ea572",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-18T09:10:17.020725+00:00"
+        "observedAt": "2026-10-18T12:37:50.896801+00:00"
       },
-      "head": "3c90764766edd626609fd79836d82c6e1e28ad99"
+      "head": "10e4c37aaf37f2b81b9223df485d9525559ea572",
+      "refinement": {
+        "before": {
+          "head": "3c90764766edd626609fd79836d82c6e1e28ad99"
+        },
+        "after": {
+          "head": "10e4c37aaf37f2b81b9223df485d9525559ea572"
+        }
+      }
     },
     {
       "id": "pr:15388",
@@ -3628,7 +3637,7 @@
       "summary": "The current proposal retains typed Docker/netfilter addresses and shared nftables listeners while adapting the newer conntrack and mangle tests. Both independent source reviews pass. The integration passes all 14 analyzer/stack owners and all 93 selected IPv4/IPv6 runtime cases, with no skips or missing results. The contributor approved this exact source; #15321 must land first. The context and cancellation prerequisites have landed. The core netip migration is not a prerequisite, but combined validation preserves its UDS consumer. The original proposal branch is preserved.\n\nEarlier record:\n\nThe shared context prerequisite #15388 merged on October 8. The typed peer-address prerequisite #15321 remains open; reconcile the retained action proposal with that source and the implemented core netip migration #15730 before delivery. No contributor decision is pending.\n\nEarlier record:\n\nCurrent disposition: source prerequisites remain. Listener cancellation PR #15316 has landed through #15380. The action proposal still needs the peer-address source in #15321 and the shared context source now delivered as #15388, plus root reconciliation against that revised implementation. Preserve the existing source; no new approval question or upstream readiness is inferred.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nPublished amendment 32444be3ffdf845113daf95afbfdacca926ee726 extends the existing unopened action proposal to use the typed listener helpers in nftables. It retains the checked Docker FindIP boundary, action/helper migration and full original-destination checks. The source explicitly carries listener cancellation from PR #15316, in addition to PR #15321 and the complete shared context proposal. These are actual source prerequisites, not review holds. The prior 4e371a5e1 and 0810 refs remain preserved as predecessors; contributor review remains pending and no new PR or independent candidate was created.\n\nExact validation composition 5362ff558 passes parent 1dbd7eb8 in 155.678 seconds: six existing tcpSNAT/mapTest/ctTest IPv4/IPv6 leaves, no skips, one original 900-second AMD64 Firecracker TestRunner. Independent saved peer 07bcd990ea92 closes that scope. The dormant UDP path is compile-only. Prior 621c evidence still records twelve consumer builds and fourteen runtime leaves for the earlier source. No full netfilter, ARM, kernel-rollout or worker-capacity claim.",
       "head": "103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0",
       "followup": {
-        "owner": "work_map_delivery",
+        "owner": "work_map_current",
         "disposition": "Contributor approved; prerequisite remains open",
         "sourceHead": "103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0",
         "observedAt": "2026-10-18T01:17:40.184107+00:00",
@@ -3817,14 +3826,14 @@
       "title": "Use netip for runsc network configuration",
       "url": "https://github.com/tamird/gvisor/tree/runsc-network-netip-current",
       "group": "runtime",
-      "status": "contributor review requested",
+      "status": "Contributor approved; awaiting prerequisite",
       "head": "caa1352090c3936e04d3a9b714f39d5e44c0c53e",
-      "updatedAt": "2026-10-18T04:34:29.079696+00:00",
-      "summary": "Focused AMD64 and ARM64 validation passes on integration dd394e9658: eight AMD64 owners and three ARM64 owners, with no failures, skips or missing results. The existing namespace, direct configuration and RPC checks pass, alongside the owning analyzers on both architectures. Contributor review is requested for exact proposal caa1352090, with opening conditional on core #15730 landing. The original 6592 proposal and refinement command remain available.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent master-b996 migration uses typed addresses and prefixes for runsc network arguments and checked host-netlink conversion. The original hosted parent 516f7f94 remains FAILED after 292.349 seconds: seven namespace cases, both selected cgroup RPC/checkpoint suites, three Nogo owners and the XDP-tagged build pass, while the boot comparison panics on private netip fields. The corrected source uses the existing comparable-value comparison facility; focused parent da9203a0 passes in 115.968 seconds with the boot comparison and both-architecture Nogo, outcome 13b119b23ead and independent peer 8c5bdb5e1786. Earlier passing namespace and real container URPC selections are reused only for their unchanged source; boot TestNetworkConfig itself directly calls manager methods. The tested composition is integrated in the public qualification refresh 3e2d2da60051daa00d259c3ae5daecb82da8eb6a. Contributor review/open-PR permission is pending, with no upstream PR yet. The separate XDP repair is composed only to exercise the already-broken tagged consumer; these source topics have no landing dependency. No full suite, ARM runtime, GNU or AF_XDP hardware/restore qualification is claimed.",
+      "updatedAt": "2026-10-18T12:33:35.778908+00:00",
+      "summary": "The contributor approved this exact proposal on October 18. Open only after core #15730 lands.\n\nPrior source and validation record:\n\nFocused AMD64 and ARM64 validation passes on integration dd394e9658: eight AMD64 owners and three ARM64 owners, with no failures, skips or missing results. The existing namespace, direct configuration and RPC checks pass, alongside the owning analyzers on both architectures. Contributor review is requested for exact proposal caa1352090, with opening conditional on core #15730 landing. The original 6592 proposal and refinement command remain available.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent master-b996 migration uses typed addresses and prefixes for runsc network arguments and checked host-netlink conversion. The original hosted parent 516f7f94 remains FAILED after 292.349 seconds: seven namespace cases, both selected cgroup RPC/checkpoint suites, three Nogo owners and the XDP-tagged build pass, while the boot comparison panics on private netip fields. The corrected source uses the existing comparable-value comparison facility; focused parent da9203a0 passes in 115.968 seconds with the boot comparison and both-architecture Nogo, outcome 13b119b23ead and independent peer 8c5bdb5e1786. Earlier passing namespace and real container URPC selections are reused only for their unchanged source; boot TestNetworkConfig itself directly calls manager methods. The tested composition is integrated in the public qualification refresh 3e2d2da60051daa00d259c3ae5daecb82da8eb6a. Contributor review/open-PR permission is pending, with no upstream PR yet. The separate XDP repair is composed only to exercise the already-broken tagged consumer; these source topics have no landing dependency. No full suite, ARM runtime, GNU or AF_XDP hardware/restore qualification is claimed.",
       "followup": {
-        "disposition": "contributor review requested",
-        "owner": "metric_exclusion_baseline",
-        "nextAction": "Await the requested contributor review; open only after the core migration #15730 lands.",
+        "disposition": "Contributor approved; awaiting prerequisite",
+        "owner": "work_map_current",
+        "nextAction": "Open after #15730 lands; no new contributor decision is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/caa1352090c3936e04d3a9b714f39d5e44c0c53e",
           "https://github.com/tamird/gvisor/actions/runs/39096269837",
@@ -3832,7 +3841,7 @@
         ],
         "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
         "sourceHead": "caa1352090c3936e04d3a9b714f39d5e44c0c53e",
-        "observedAt": "2026-10-18T04:34:29.079696+00:00"
+        "observedAt": "2026-10-18T12:33:35.778908+00:00"
       },
       "refinement": {
         "before": {
@@ -3841,11 +3850,6 @@
         "after": {
           "head": "caa1352090c3936e04d3a9b714f39d5e44c0c53e"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "caa1352090c3936e04d3a9b714f39d5e44c0c53e",
-        "url": "https://github.com/tamird/gvisor/commit/caa1352090c3936e04d3a9b714f39d5e44c0c53e"
       }
     },
     {
@@ -3856,14 +3860,14 @@
       "title": "Use netip for packetimpact fixture and packet addresses",
       "url": "https://github.com/tamird/gvisor/tree/packetimpact-netip-current",
       "group": "tests",
-      "status": "contributor review requested",
+      "status": "Contributor approved; awaiting prerequisite",
       "head": "47c9cbb66f665f2177b9f38d66b2f8805f4ae62e",
-      "updatedAt": "2026-10-18T04:34:29.079696+00:00",
-      "summary": "All 82 wrapper targets compile, and the corrected 30-owner validation passes with 4,818 reported passing cases, twelve existing skips and no gaps. The original validation failure remains recorded: all 24 runtime owners reached PASS but Bazel could not archive their undeclared outputs because the worker lacked file and zip. The corrected route retains the same raw evidence through the existing collector. Contributor review is requested for exact proposal 47c9cbb66, with opening conditional on core #15730 landing. The original 6228 proposal and refinement command remain available.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nOne independent proposal on master 27248 consolidates the reviewed fixture and raw packet-layer migrations. It uses typed fixture/socket addresses and owned layer cloning while preserving mapped-address, wildcard, numeric scope, JSON bootstrap and existing packet semantics. There is no pending source prerequisite. All 82 wrapper owners compile; 18 affected runtime owners plus the complete unit and both-architecture Nogo checks pass, with 2,871 passing leaves and twelve known ICMPv4 skips. Parent 99b26d6f passes in 255.362 seconds, with outcome 018b69ac6ec1 and independent saved peer 4a3827f938e2. Earlier fixture and layer refs remain preserved as superseded predecessors; the original fixture compile failure remains recorded. Contributor review/open-PR decision is pending. No full 82-owner runtime, ARM runtime, GNU or complete public-CI claim.",
+      "updatedAt": "2026-10-18T12:33:35.778908+00:00",
+      "summary": "The contributor approved this exact proposal on October 18. Open only after core #15730 lands.\n\nPrior source and validation record:\n\nAll 82 wrapper targets compile, and the corrected 30-owner validation passes with 4,818 reported passing cases, twelve existing skips and no gaps. The original validation failure remains recorded: all 24 runtime owners reached PASS but Bazel could not archive their undeclared outputs because the worker lacked file and zip. The corrected route retains the same raw evidence through the existing collector. Contributor review is requested for exact proposal 47c9cbb66, with opening conditional on core #15730 landing. The original 6228 proposal and refinement command remain available.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nOne independent proposal on master 27248 consolidates the reviewed fixture and raw packet-layer migrations. It uses typed fixture/socket addresses and owned layer cloning while preserving mapped-address, wildcard, numeric scope, JSON bootstrap and existing packet semantics. There is no pending source prerequisite. All 82 wrapper owners compile; 18 affected runtime owners plus the complete unit and both-architecture Nogo checks pass, with 2,871 passing leaves and twelve known ICMPv4 skips. Parent 99b26d6f passes in 255.362 seconds, with outcome 018b69ac6ec1 and independent saved peer 4a3827f938e2. Earlier fixture and layer refs remain preserved as superseded predecessors; the original fixture compile failure remains recorded. Contributor review/open-PR decision is pending. No full 82-owner runtime, ARM runtime, GNU or complete public-CI claim.",
       "followup": {
-        "disposition": "contributor review requested",
-        "owner": "root",
-        "nextAction": "Await the requested contributor review; open only after the core migration #15730 lands.",
+        "disposition": "Contributor approved; awaiting prerequisite",
+        "owner": "work_map_current",
+        "nextAction": "Open after #15730 lands; no new contributor decision is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/47c9cbb66f665f2177b9f38d66b2f8805f4ae62e",
           "https://github.com/tamird/gvisor/actions/runs/39096563269",
@@ -3872,7 +3876,7 @@
         ],
         "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
         "sourceHead": "47c9cbb66f665f2177b9f38d66b2f8805f4ae62e",
-        "observedAt": "2026-10-18T04:34:29.079696+00:00"
+        "observedAt": "2026-10-18T12:33:35.778908+00:00"
       },
       "refinement": {
         "before": {
@@ -3881,11 +3885,6 @@
         "after": {
           "head": "47c9cbb66f665f2177b9f38d66b2f8805f4ae62e"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "47c9cbb66f665f2177b9f38d66b2f8805f4ae62e",
-        "url": "https://github.com/tamird/gvisor/commit/47c9cbb66f665f2177b9f38d66b2f8805f4ae62e"
       }
     },
     {
@@ -3970,28 +3969,24 @@
       "ref": "benchmark-remove-unused-ip",
       "head": "4cb688aa057d10a82677bc699365edd318de262c",
       "title": "Remove unused benchmark address lookup",
-      "summary": "Contributor review is requested for the refreshed independent removal at 4cb688aa05. It is patch-equivalent to 177c481c4 on current upstream 9e9495997; no benchmark calls Machine.IPAddress, and the resulting file already matches the qualified canonical source. There is no core netip dependency. The original compile evidence is retained without a new execution claim.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent source candidate removes the unused Machine.IPAddress API, host-interface scan and two imports. All 27 original benchmark Go declarations compile in the exact reviewed composition c52c, including manual benchmark owners. No benchmark or Docker variant executes and no performance claim is made. Outcome ac35b8408848 and independent peer 775bdc6b1de0 close the saved proof. Contributor review/open-PR decision is pending; no source prerequisite.",
+      "summary": "The approved exact source is published as #15951. Current-head public checks and maintainer review are pending.\n\nPrior source and validation record:\n\nThe contributor approved this exact proposal on October 18. Publication of the approved proposal is in progress.\n\nPrior source and validation record:\n\nContributor review is requested for the refreshed independent removal at 4cb688aa05. It is patch-equivalent to 177c481c4 on current upstream 9e9495997; no benchmark calls Machine.IPAddress, and the resulting file already matches the qualified canonical source. There is no core netip dependency. The original compile evidence is retained without a new execution claim.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent source candidate removes the unused Machine.IPAddress API, host-interface scan and two imports. All 27 original benchmark Go declarations compile in the exact reviewed composition c52c, including manual benchmark owners. No benchmark or Docker variant executes and no performance claim is made. Outcome ac35b8408848 and independent peer 775bdc6b1de0 close the saved proof. Contributor review/open-PR decision is pending; no source prerequisite.",
       "type": "branch",
       "repo": "tamird/gvisor",
       "url": "https://github.com/tamird/gvisor/tree/benchmark-remove-unused-ip",
       "group": "tests",
-      "status": "contributor review requested",
-      "updatedAt": "2026-10-18T04:12:37.132359+00:00",
+      "status": "published; maintainer review and checks pending",
+      "updatedAt": "2026-10-18T12:37:50.896801+00:00",
       "followup": {
-        "disposition": "contributor review requested",
-        "owner": "root",
-        "nextAction": "Await the requested contributor review of the independent cleanup; no source prerequisite remains.",
+        "disposition": "Approved PR published",
+        "owner": "work_map_current",
+        "nextAction": "Follow #15951 current-head checks, review feedback and mergeability.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4cb688aa057d10a82677bc699365edd318de262c"
+          "https://github.com/tamird/gvisor/commit/4cb688aa057d10a82677bc699365edd318de262c",
+          "https://github.com/google/gvisor/pull/15951"
         ],
         "reviewedAt": "2026-10-06T16:10:23.448669+00:00",
         "sourceHead": "4cb688aa057d10a82677bc699365edd318de262c",
-        "observedAt": "2026-10-18T04:12:37.132359+00:00"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "4cb688aa057d10a82677bc699365edd318de262c",
-        "url": "https://github.com/tamird/gvisor/commit/4cb688aa057d10a82677bc699365edd318de262c"
+        "observedAt": "2026-10-18T12:37:50.896801+00:00"
       },
       "refinement": {
         "before": {
@@ -10088,32 +10083,33 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/php-8-5-11-current",
-      "head": "f0af5cf0ced0771aeedfeaca499eb6aa26592d1b",
+      "head": "86d8fdafd1c655385cec92f65f19a0aadfe15645",
       "title": "Update PHP runtime tests to 8.5.11",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15941",
       "status": "open",
       "number": 15941,
-      "updatedAt": "2026-10-18T04:12:37.132359+00:00",
-      "summary": "Ayush requested a fresh check of the exclusions. Both filesystem modes confirm PHP now skips all five cases itself without a terminal. The linked seven-line amendment removes the redundant CSV and BUILD reference; contributor review is pending. The live PR head remains f0af5cf0c.\n\nEarlier delivery:\n\nPublished after the requested build-mount and reference-formatting corrections. The rebase preserves the qualified patch; exact head, one-commit scope, master base, ready state and wrapped description are verified. Earlier full PHP qualification and the focused revised-image check remain source-specific evidence. No contributor decision remains.\n\nA separate contributor comment asks whether runtime exclusions should become expected failures and invites broader discussion. The validated seven-deletion PHP amendment remains pending contributor review; no broader harness change is committed by that discussion.",
+      "updatedAt": "2026-10-18T12:37:50.896801+00:00",
+      "summary": "The contributor-approved exclusion amendment is published at 86d8fdafd1, with the PR description and prepared inline reply updated. Both filesystem modes show five PHP self-skips each, with no PHPT passes or failures; the redundant CSV and BUILD reference are removed. The broader expected-failure discussion remains open without a harness-change commitment. Native review re-request to ayushr2 returned HTTP 404; existing reviewer requests are unchanged.\n\nEarlier observations:\n\nAyush requested a fresh check of the exclusions. Both filesystem modes confirm PHP now skips all five cases itself without a terminal. The linked seven-line amendment removes the redundant CSV and BUILD reference; contributor review is pending. The live PR head remains f0af5cf0c.\n\nEarlier delivery:\n\nPublished after the requested build-mount and reference-formatting corrections. The rebase preserves the qualified patch; exact head, one-commit scope, master base, ready state and wrapped description are verified. Earlier full PHP qualification and the focused revised-image check remain source-specific evidence. No contributor decision remains.\n\nA separate contributor comment asks whether runtime exclusions should become expected failures and invites broader discussion. The validated seven-deletion PHP amendment remains pending contributor review; no broader harness change is committed by that discussion.",
       "followup": {
-        "owner": "work_map_delivery",
-        "disposition": "Validated exclusion cleanup awaits contributor approval",
-        "sourceHead": "f0af5cf0ced0771aeedfeaca499eb6aa26592d1b",
-        "observedAt": "2026-10-18T03:06:00.741464+00:00",
-        "nextAction": "Publish the linked amendment and prepared reply after contributor approval.",
+        "owner": "work_map_current",
+        "disposition": "Approved amendment published; maintainer review and checks pending",
+        "sourceHead": "86d8fdafd1c655385cec92f65f19a0aadfe15645",
+        "observedAt": "2026-10-18T12:37:50.896801+00:00",
+        "nextAction": "Follow current-head checks and genuine reviewer replies; preserve the existing maintainer-review request and unresolved discussion.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/86d8fdafd1c655385cec92f65f19a0aadfe15645",
           "https://github.com/google/gvisor/pull/15941#discussion_r4305385192",
-          "https://github.com/tamird/gvisor/actions/runs/39091482142"
+          "https://github.com/tamird/gvisor/actions/runs/39091482142",
+          "https://github.com/google/gvisor/pull/15941#discussion_r4307035760"
         ]
       },
       "refinement": {
         "before": {
-          "head": "2f58cb2f952bbba32c6b6ac82574d9a0e01cc3f1"
+          "head": "f0af5cf0ced0771aeedfeaca499eb6aa26592d1b"
         },
         "after": {
-          "head": "f0af5cf0ced0771aeedfeaca499eb6aa26592d1b"
+          "head": "86d8fdafd1c655385cec92f65f19a0aadfe15645"
         }
       }
     },
@@ -10126,17 +10122,18 @@
       "title": "Run close_range CLOEXEC tests on supported kernels",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/351c9da4969e0f2e640edb25a4982821e79cf9ff",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-18T02:30:32.183742+00:00",
-      "summary": "Use a valid descriptor range when probing CLOSE_RANGE_CLOEXEC so supported kernels execute the cases. Independent source review and the six complete native, ptrace and systrap owners pass at a2e2d58aca: 1,656 cases pass with 24 retained skips. Original XML confirms the previously skipped cases execute. This standalone candidate is ready for the contributor review requested by root.",
+      "status": "published; maintainer review and checks pending",
+      "updatedAt": "2026-10-18T12:37:50.896801+00:00",
+      "summary": "The approved exact source is published as #15950. Current-head public checks and maintainer review are pending.\n\nPrior source and validation record:\n\nThe contributor approved this exact proposal on October 18. Publication of the approved proposal is in progress.\n\nPrior source and validation record:\n\nUse a valid descriptor range when probing CLOSE_RANGE_CLOEXEC so supported kernels execute the cases. Independent source review and the six complete native, ptrace and systrap owners pass at a2e2d58aca: 1,656 cases pass with 24 retained skips. Original XML confirms the previously skipped cases execute. This standalone candidate is ready for the contributor review requested by root.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Validated; contributor review requested",
+        "owner": "work_map_current",
+        "disposition": "Approved PR published",
         "sourceHead": "351c9da4969e0f2e640edb25a4982821e79cf9ff",
-        "observedAt": "2026-10-18T02:30:32.183742+00:00",
-        "nextAction": "Await the contributor decision on this exact standalone commit, then publish the authorized PR.",
+        "observedAt": "2026-10-18T12:37:50.896801+00:00",
+        "nextAction": "Follow #15950 current-head checks, review feedback and mergeability.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/39088709610"
+          "https://github.com/tamird/gvisor/actions/runs/39088709610",
+          "https://github.com/google/gvisor/pull/15950"
         ]
       },
       "evidence": [
@@ -10144,12 +10141,7 @@
           "label": "Combined native, ptrace and systrap validation",
           "url": "https://github.com/tamird/gvisor/actions/runs/39088709610"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "351c9da4969e0f2e640edb25a4982821e79cf9ff",
-        "url": "https://github.com/tamird/gvisor/commit/351c9da4969e0f2e640edb25a4982821e79cf9ff"
-      }
+      ]
     },
     {
       "id": "branch:udp-tclass-mismatch-test",
@@ -10184,55 +10176,6 @@
         "head": "c80dd9d7f5fd2d3cafdd5108d3393fc3027a97f2",
         "url": "https://github.com/tamird/gvisor/commit/c80dd9d7f5fd2d3cafdd5108d3393fc3027a97f2"
       }
-    },
-    {
-      "id": "branch:review/php-8-5-11-exclusions",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "review/php-8-5-11-exclusions",
-      "head": "86d8fdafd1c655385cec92f65f19a0aadfe15645",
-      "title": "Remove redundant PHP terminal-test exclusions",
-      "url": "https://github.com/tamird/gvisor/commit/86d8fdafd1c655385cec92f65f19a0aadfe15645",
-      "group": "tests",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-18T03:06:00.741464+00:00",
-      "summary": "Remove the five PHP terminal-test exclusions and their BUILD reference. PHP 8.5.11 detects non-terminal standard streams and skips these tests itself. Both directfs and goferfs retries confirm exactly five PHPT self-skips each, with no PHPT passes or failures. The two wrapper owners pass; this adds no terminal coverage. Validation used the current qualification integration rooted in upstream 9e9495997, with the exact published PHP image inputs. The live PR remains unchanged pending contributor review.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "86d8fdafd1c655385cec92f65f19a0aadfe15645",
-        "url": "https://github.com/tamird/gvisor/commit/86d8fdafd1c655385cec92f65f19a0aadfe15645"
-      },
-      "refinement": {
-        "before": {
-          "head": "f0af5cf0ced0771aeedfeaca499eb6aa26592d1b"
-        },
-        "after": {
-          "head": "86d8fdafd1c655385cec92f65f19a0aadfe15645"
-        }
-      },
-      "followup": {
-        "owner": "work_map_delivery",
-        "disposition": "Validated amendment awaiting requested contributor review",
-        "sourceHead": "86d8fdafd1c655385cec92f65f19a0aadfe15645",
-        "observedAt": "2026-10-18T03:06:00.741464+00:00",
-        "nextAction": "After contributor approval, amend #15941 and post the prepared reply explaining PHP self-skips.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/86d8fdafd1c655385cec92f65f19a0aadfe15645",
-          "https://github.com/google/gvisor/pull/15941#discussion_r4305385192",
-          "https://github.com/tamird/gvisor/actions/runs/39091482142",
-          "https://github.com/php/php-src/commit/831597748"
-        ]
-      },
-      "evidence": [
-        {
-          "label": "Both filesystem modes: five PHP self-skips each",
-          "url": "https://github.com/tamird/gvisor/actions/runs/39091482142"
-        },
-        {
-          "label": "PHP detects missing terminal streams",
-          "url": "https://github.com/php/php-src/commit/831597748"
-        }
-      ]
     },
     {
       "id": "external-pr:buildbuddy:13849",
@@ -10313,60 +10256,30 @@
       "title": "Update Ollama images to 0.40.6",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
-      "status": "client checks pass; image export diagnosis",
-      "updatedAt": "2026-10-18T06:45:30.959530+00:00",
-      "summary": "Ollama 0.40.6 completes all six model downloads, including the vision model rejected by 0.5.1. The existing clients compile and owning Nogo passes. The same source-image run later fails during OCI tar export with truncation/context cancellation before archive/load execution. The independent pin/log-case correction is source-reviewed; full export remains agent-owned diagnosis. No GPU inference or COS/Kubernetes driver compatibility is claimed.",
+      "status": "contributor decision pending; native archive/load pass",
+      "updatedAt": "2026-10-18T12:31:03.946243+00:00",
+      "summary": "Ollama 0.40.6 completes all six model downloads, including the vision model rejected by 0.5.1; the existing clients compile and owning Nogo passes. The native counterpart at f265932d8c now passes full six-model archive construction and a fresh Docker integrity/load check. The earlier Dockerfile-based source export still failed with truncation/context cancellation and remains recorded. Contributor approval remains outstanding; request delivery is unverified. No six-model inference, physical GPU, COS or Kubernetes compatibility is claimed.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "agent-owned export diagnosis",
+        "owner": "root",
+        "disposition": "contributor decision pending; request delivery unverified",
         "sourceHead": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
-        "observedAt": "2026-10-18T08:38:05.008495+00:00",
-        "nextAction": "The independent version correction passes client and source-model checks. Preserve large-export and smallest-model prototype failures. The owner is correcting verified downloads and upload diagnostics before the same bounded small check; contributor review has not been requested in the available record.",
+        "observedAt": "2026-10-18T12:31:03.946243+00:00",
+        "nextAction": "Retain the exact 75aa7adbbd candidate and reviewed description for the outstanding contributor decision. Full native archive/load validation at f265932d8c clears that validation hold; it does not establish contributor approval or authorize submission. Original Dockerfile-export failures and the physical GPU qualification gap remain separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9",
           "https://github.com/tamird/gvisor/actions/runs/39100061447",
           "https://github.com/tamird/gvisor/actions/runs/39102370765",
           "https://github.com/tamird/gvisor/actions/runs/39102380735",
-          "https://github.com/tamird/gvisor/actions/runs/39104843051"
+          "https://github.com/tamird/gvisor/actions/runs/39104843051",
+          "https://github.com/tamird/gvisor/commit/f265932d8c63fca4dc206ae8da66524ade2d7350",
+          "https://github.com/tamird/gvisor/actions/runs/39118238644",
+          "https://github.com/tamird/gvisor/actions/runs/39120760150"
         ]
-      }
-    },
-    {
-      "id": "branch:tun-restore-direct-include",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "tun-restore-direct-include",
-      "head": "10e4c37aaf37f2b81b9223df485d9525559ea572",
-      "title": "Include the TUN restore test’s netlink attribute header",
-      "url": "https://github.com/tamird/gvisor/commit/10e4c37aaf37f2b81b9223df485d9525559ea572",
-      "group": "tests",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-18T09:10:17.020725+00:00",
-      "summary": "Add linux/if_link.h for IFLA_NET_NS_FD, as the public import lint requires. The exact standalone source and utility files pass the existing ClangTidy aspect. The earlier reporter-identity INCOMPLETE and mixed-source composition failure remain retained evidence; neither describes the current proposal. Published #15315 remains at 3c90764766.",
+      },
       "contributorReview": {
         "status": "pending",
-        "head": "10e4c37aaf37f2b81b9223df485d9525559ea572",
-        "url": "https://github.com/tamird/gvisor/commit/10e4c37aaf37f2b81b9223df485d9525559ea572"
-      },
-      "refinement": {
-        "before": {
-          "head": "3c90764766edd626609fd79836d82c6e1e28ad99"
-        },
-        "after": {
-          "head": "10e4c37aaf37f2b81b9223df485d9525559ea572"
-        }
-      },
-      "followup": {
-        "owner": "root",
-        "disposition": "Validated amendment awaiting requested contributor review",
-        "sourceHead": "10e4c37aaf37f2b81b9223df485d9525559ea572",
-        "observedAt": "2026-10-18T09:10:17.020725+00:00",
-        "nextAction": "After contributor approval, publish the one-line amendment to #15315 and post the prepared reply. Preserve the request for fresh maintainer approval.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/10e4c37aaf37f2b81b9223df485d9525559ea572",
-          "https://github.com/tamird/gvisor/actions/runs/39113992309",
-          "https://buildkite.com/gvisor/pipeline/builds/51250"
-        ]
+        "head": "75aa7adbbd76da225715f851e66d94d3240ab0e9",
+        "url": "https://github.com/tamird/gvisor/commit/75aa7adbbd76da225715f851e66d94d3240ab0e9"
       }
     }
   ],
@@ -11905,17 +11818,6 @@
       "evidence": "https://github.com/tamird/gvisor/commit/1bf0d4257bc118af562006dbf14a0dece4eb4225"
     },
     {
-      "from": "branch:review/php-8-5-11-exclusions",
-      "to": "pr:15941",
-      "type": "includes",
-      "role": "proposed_update",
-      "reason": "Unpublished amendment removes redundant exclusions after both filesystem modes confirmed PHP owns the environmental skips.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/86d8fdafd1c655385cec92f65f19a0aadfe15645",
-        "https://github.com/google/gvisor/pull/15941#discussion_r4305385192"
-      ]
-    },
-    {
       "from": "pr:15730",
       "to": "branch:runsc-network-netip",
       "type": "depends_on",
@@ -11928,17 +11830,6 @@
       "type": "depends_on",
       "reason": "The refreshed proposal uses the core netip migration.",
       "evidence": "https://github.com/tamird/gvisor/commit/47c9cbb66f665f2177b9f38d66b2f8805f4ae62e"
-    },
-    {
-      "from": "branch:tun-restore-direct-include",
-      "to": "pr:15315",
-      "type": "includes",
-      "role": "proposed_update",
-      "reason": "Unpublished one-line direct-header correction, qualified against the exact standalone source.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/10e4c37aaf37f2b81b9223df485d9525559ea572",
-        "https://github.com/tamird/gvisor/actions/runs/39113992309"
-      ]
     }
   ],
   "investigations": [
@@ -17676,8 +17567,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-18T10:52:05.177854+00:00",
-      "summary": "Fresh TPU construction/loading and the smallest-model Ollama package pass. The full six-model Ollama archive now passes source qualification: 84,629,102,080 bytes at f265932d8c. Its measured size passed independent capacity review, and the existing Docker-load check is running. Full-image loading and physical GPU qualification remain unverified; original failures remain recorded.",
+      "updatedAt": "2026-10-18T12:46:17.948924+00:00",
+      "summary": "The full six-model native Ollama archive and fresh Docker integrity/load check pass at exact source f265932d8c. The 84,629,102,080-byte archive expands to a verified 97,737,975,301-byte image; the load has one fresh owner, attempt and passing case, with no skips or gaps. Native Triton asset/template preparation is active. Original Dockerfile-export and provider failures remain recorded; physical GPU and six-model inference remain unverified.",
       "findings": [
         {
           "text": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
@@ -17833,9 +17724,68 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/39120760150"
             }
           ]
+        },
+        {
+          "text": "At exact f265932d8c, Docker-load run 39120760150 passes one fresh owner, attempt and case with no skips or qualification gaps. It consumes the 84,629,102,080-byte archive (SHA-256 24333b430ad726c3faf164ff6754a5b2f7036a3907c459d9a0b7c1dd989e2931) and verifies both aliases, config identity, ordered uncompressed DiffIDs and all 10 compressed layers. The expanded image is 97,737,975,301 bytes. Sampled root usage peaks at 183,403,941,888 of 198,258,896,896 bytes. Docker load takes about 34m04s; the named integrity case takes 815.06 seconds. Authenticated consumption follows BEP completion by 68.637 seconds. This clears native source archive/load validation holds without claiming model application or GPU execution.",
+          "evidence": [
+            {
+              "label": "Full native archive qualification",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39118238644"
+            },
+            {
+              "label": "Fresh full-image Docker load and integrity pass",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39120760150"
+            },
+            {
+              "label": "Exact qualified native source",
+              "url": "https://github.com/tamird/gvisor/commit/f265932d8c63fca4dc206ae8da66524ade2d7350"
+            }
+          ]
+        },
+        {
+          "text": "Native Triton preparation at d43d134800 covers 17 public GCS assets (33,965,677,558 bytes) and 13 pinned templates, without GPU compilation. Dependency generation passes with the lockfile and license catalog unchanged. The unallocated Actions asset run was canceled; its native replacement failed before executing actions because the Git tree archive has generation-time timestamps and an unstable checksum. Required file hashes and modes remain unchanged. The fetch-only full-commit archive capture also failed before model actions with a standard-fetch read timeout; no LFS cause is established. The owner is now preparing 13 individually SHA-pinned standard http_file inputs, with the exact source/catalog correction in final review. No source archive/load or GPU qualification is claimed; the original provider issue #13789 and its unknown failure cause remain unresolved. The separate archive-only verifier at 16262d7098 also failed before executing tests in native invocation a08897cd; its wrapper PATH and scanner architecture constraint required correction. The earlier Actions verifier run was canceled before allocation.",
+          "evidence": [
+            {
+              "label": "Current native Triton preparation source",
+              "url": "https://github.com/tamird/gvisor/commit/d43d13480038c1d7e0a9eb9fdaac398f0933b823"
+            },
+            {
+              "label": "Unallocated Actions submission (canceled)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/39126185640"
+            },
+            {
+              "label": "Original native configured-selection failure",
+              "url": "https://app.buildbuddy.io/invocation/bce62d9d-8a55-4b3e-add6-c90b0d8ac575"
+            },
+            {
+              "label": "Fetch-only full-commit archive capture",
+              "url": "https://app.buildbuddy.io/invocation/c2a6a031-530b-40ca-a623-bb44c00c24eb"
+            },
+            {
+              "label": "Original provider investigation",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789"
+            },
+            {
+              "label": "Separate archive verifier failure before tests",
+              "url": "https://app.buildbuddy.io/invocation/a08897cd-4762-45af-95d7-2236bfc08e60"
+            }
+          ]
+        },
+        {
+          "text": "The corrected shared archive verifier passes at 3fdcc3517b in native invocation bd99ff03: four owners, four executed attempts and four passing cases, with no skips or gaps. The scanner and Docker load both execute uncached remotely; the owning Nogo checks include AMD64 and ARM64. The containerd harness archive reports eight layers, 343,402,807 compressed bytes and 854,598,144 unpacked tar-stream bytes, with scanner/load totals equal. Tar-stream size does not measure Docker filesystem usage, and this small qualification does not qualify the pending Triton archive. Root integration is pending. Authenticated verification follows BEP completion by 42.687 seconds. The original zero-execution native failure and unallocated canceled Actions run remain recorded.",
+          "evidence": [
+            {
+              "label": "Corrected shared archive verifier source",
+              "url": "https://github.com/tamird/gvisor/commit/3fdcc3517be91cd4354697b23bfd110581564b22"
+            },
+            {
+              "label": "Four-owner native scanner/load/analyzer qualification",
+              "url": "https://app.buildbuddy.io/invocation/bd99ff03-14db-49e4-8d50-1771cc18ee5f"
+            }
+          ]
         }
       ],
-      "nextStep": "Collect Docker-load check 39120760150 at the same f265932d8c source and preserve its actual archive identity and runtime outcome. Keep archive construction, loading, physical GPU inference and the separate Triton/provider gap distinct.",
+      "nextStep": "Complete and independently review native Triton asset/template preparation, then qualify its archive and load through the existing workflow. Preserve original provider/export failures and the separate physical GPU gap. Ollama archive/load validation is complete; its contributor decision remains outstanding with request delivery unverified.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
@@ -17918,7 +17868,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/39118238644"
         },
         {
-          "label": "Existing Docker-load check",
+          "label": "Full-image Docker load and integrity pass",
           "url": "https://github.com/tamird/gvisor/actions/runs/39120760150"
         }
       ]
