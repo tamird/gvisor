@@ -891,7 +891,7 @@ syscall_test(
 
 syscall_test(
     size = "medium",
-    tcg_cpus = 4,
+    tcg_cpus = 2,
     test = "//test/syscalls/linux:sigstop_test",
 )
 
