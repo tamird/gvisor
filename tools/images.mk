@@ -51,7 +51,7 @@ REMOTE_IMAGE_PREFIX ?= us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presub
 LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
 # These images expose //images/<path>:make_context instead of a Dockerfile.
 # Their contexts contain the complete Bazel-built image as image.tar.
-BAZEL_IMAGES        := benchmarks_profile-helper gpu_ollama_bench gpu_ollama_client
+BAZEL_IMAGES        := benchmarks_profile-helper gpu_ollama_bench gpu_ollama_client gpu_triton
 DOCKER_IMAGES       := $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | sed 's,/[^/]*$$,,' | sort -u)))
 ALL_IMAGES          := $(sort $(DOCKER_IMAGES) $(BAZEL_IMAGES))
 NON_TEST_IMAGES     := gpu_ollama_bench% gpu_vllm% gpu_triton% tpu_vllm%

@@ -7,6 +7,16 @@ package(
 )
 
 bzl_library(
+    name = "layers_bzl",
+    srcs = ["layers.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        "//tools:defs_bzl",
+        "//tools/bazeldefs:platforms_bzl",
+    ],
+)
+
+bzl_library(
     name = "oci_bzl",
     srcs = ["oci.bzl"],
     visibility = ["//images:__subpackages__"],
@@ -22,6 +32,7 @@ bzl_library(
 filegroup(
     name = "sources",
     srcs = glob(["**"]) + [
+        "//images/gpu/triton:sources",
         "//images/jekyll:sources",
     ],
 )

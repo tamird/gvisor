@@ -20,8 +20,7 @@ bzl_library(
     srcs = ["layers.bzl"],
     visibility = ["//images/gpu/ollama/bench:__subpackages__"],
     deps = [
-        "//tools:defs_bzl",
-        "//tools/bazeldefs:platforms_bzl",
+        "//images:layers_bzl",
         "@rules_oci//oci:defs",
         "@rules_pkg//pkg:bzl_srcs",
     ],
