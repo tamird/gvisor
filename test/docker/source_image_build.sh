@@ -32,6 +32,14 @@ cleanup() {
   local result=$? cleanup_status=0
   set +e
   if [[ ${created} == true ]]; then
+    if (( result != 0 )); then
+      # Removing the builder also removes the daemon's cancellation reason.
+      docker inspect --format \
+        'running={{.State.Running}} oom_killed={{.State.OOMKilled}} exit_code={{.State.ExitCode}} error={{.State.Error}}' \
+        "buildx_buildkit_${builder}0" >&2
+      docker logs --timestamps --tail 200 \
+        "buildx_buildkit_${builder}0" >&2
+    fi
     "${buildx}" rm --force "${builder}"
     cleanup_status=$?
   fi
