@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -79,15 +80,15 @@ type DUTTestNet struct {
 	// RemoteMAC is the DUT's MAC address on the test network.
 	RemoteMAC net.HardwareAddr
 	// LocalIPv4 is the local IPv4 address on the test network.
-	LocalIPv4 net.IP
+	LocalIPv4 netip.Addr
 	// RemoteIPv4 is the DUT's IPv4 address on the test network.
-	RemoteIPv4 net.IP
+	RemoteIPv4 netip.Addr
 	// IPv4PrefixLength is the network prefix length of the IPv4 test network.
 	IPv4PrefixLength int
 	// LocalIPv6 is the local IPv6 address on the test network.
-	LocalIPv6 net.IP
+	LocalIPv6 netip.Addr
 	// RemoteIPv6 is the DUT's IPv6 address on the test network.
-	RemoteIPv6 net.IP
+	RemoteIPv6 netip.Addr
 	// LocalDevID is the ID of the local interface on the test network.
 	LocalDevID uint32
 	// RemoteDevID is the ID of the remote interface on the test network.
@@ -102,20 +103,20 @@ type DUTTestNet struct {
 	// of the test network, including them for convenience.
 
 	// POSIXServerIP is the POSIX server's IP address on the control network.
-	POSIXServerIP net.IP
+	POSIXServerIP netip.Addr
 	// POSIXServerPort is the UDP port the POSIX server is bound to on the
 	// control network.
 	POSIXServerPort uint16
 }
 
 // SubnetBroadcast returns the test network's subnet broadcast address.
-func (n *DUTTestNet) SubnetBroadcast() net.IP {
-	addr := append([]byte(nil), n.RemoteIPv4...)
+func (n *DUTTestNet) SubnetBroadcast() netip.Addr {
+	addr := n.RemoteIPv4.As4()
 	mask := net.CIDRMask(n.IPv4PrefixLength, net.IPv4len*8)
 	for i := range addr {
 		addr[i] |= ^mask[i]
 	}
-	return addr
+	return netip.AddrFrom4(addr)
 }
 
 // registerFlags defines flags and associates them with the package-level
@@ -151,8 +152,37 @@ func loadDUTInfos() error {
 	// Using a buffered channel as semaphore
 	dutInfo = make(chan *DUTInfo, len(dutInfos))
 	for i := range dutInfos {
-		dutInfos[i].Net.LocalIPv4 = dutInfos[i].Net.LocalIPv4.To4()
-		dutInfos[i].Net.RemoteIPv4 = dutInfos[i].Net.RemoteIPv4.To4()
+		n := dutInfos[i].Net
+		if n == nil {
+			return fmt.Errorf("DUT %d has no network configuration", i)
+		}
+		// The runner fills local addresses after receiving the DUT's initial
+		// JSON response. Validate only this completed fixture.
+		for _, field := range []struct {
+			name string
+			addr *netip.Addr
+			ipv4 bool
+		}{
+			{"LocalIPv4", &n.LocalIPv4, true},
+			{"RemoteIPv4", &n.RemoteIPv4, true},
+			{"LocalIPv6", &n.LocalIPv6, false},
+			{"RemoteIPv6", &n.RemoteIPv6, false},
+		} {
+			if field.addr.Zone() != "" {
+				return fmt.Errorf("DUT %d has zoned %s address %s", i, field.name, field.addr)
+			}
+			*field.addr = field.addr.Unmap()
+			if !field.addr.IsValid() || field.addr.Is4() != field.ipv4 {
+				return fmt.Errorf("DUT %d has invalid %s address %s", i, field.name, field.addr)
+			}
+		}
+		if !n.POSIXServerIP.IsValid() || n.POSIXServerIP.Zone() != "" {
+			return fmt.Errorf("DUT %d has invalid POSIX server address %s", i, n.POSIXServerIP)
+		}
+		n.POSIXServerIP = n.POSIXServerIP.Unmap()
+		if n.IPv4PrefixLength < 0 || n.IPv4PrefixLength > 32 {
+			return fmt.Errorf("DUT %d has invalid IPv4 prefix length %d", i, n.IPv4PrefixLength)
+		}
 		dutInfo <- &dutInfos[i]
 	}
 	return nil
