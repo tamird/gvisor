@@ -1246,8 +1246,8 @@ run_lane() (
       shared_test_targets "$lane" "$arch"
       if [[ $test_execution == local ]]; then
         targets=("${targets[0]}_$arch")
-        # Match make bwrap-tests: only the test process needs root.
-        options+=(--run_under='sudo -n -E' --test_arg=-test.v)
+        # Return root-owned test outputs to Bazel before it validates them.
+        options+=(--run_under=//test/rbe:local_root --test_arg=-test.v)
       fi
       ;;
     kvm)
