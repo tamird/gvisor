@@ -386,6 +386,18 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         sudo -n test -r /dev/kvm
         sudo -n test -w /dev/kvm
       fi
+      if [[ ${lanes[*]} == syscalls-rc ]]; then
+        # The measured shared inputs and serial private guest disks fit within
+        # this allowance. Check the workspace, reports and root Bazel storage.
+        rc_disk_available=$(sudo -n df --block-size=1 --output=avail "$qualification_workspace" "$RUNNER_TEMP" /root | tail -n +2)
+        printf 'Available bytes (workspace, reports, root Bazel storage):\n%s\n' "$rc_disk_available" | tee "$qualification_artifacts/rc-disk-capacity.txt"
+        while read -r available; do
+          if [[ ! $available =~ ^[0-9]+$ ]] || (( available < 80 * 1024 * 1024 * 1024 )); then
+            printf 'RC qualification requires at least 80 GiB available on each storage filesystem.\n' >&2
+            exit 1
+          fi
+        done <<< "$rc_disk_available"
+      fi
     fi
     ;;
   *) printf 'Unknown qualification execution mode.\n' >&2; exit 2 ;;
