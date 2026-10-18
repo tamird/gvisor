@@ -303,6 +303,9 @@ def _tcg_test_impl(ctx):
         runfiles = runfiles.merge(ctx.attr.payload_builder[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(executable = executable, runfiles = runfiles),
+        # A build-only invocation can measure the shared input closure from BEP
+        # file metadata without downloading or executing every guest payload.
+        OutputGroupInfo(guest_inputs = depset([executable], transitive = [runfiles.files])),
         RunEnvironmentInfo(environment = {}, inherited_environment = inherited_environment),
     ]
 
