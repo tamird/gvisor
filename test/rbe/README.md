@@ -1236,7 +1236,8 @@ with the daemon socket's group, private writable state and no effective
 capabilities. This checks Docker-user compatibility, not Docker isolation.
 The ordinary
 `source_archive_load_test`, `stable_diffusion_archive_load_test`,
-`triton_archive_load_test`, `ollama_bench_archive_load_test` and
+`triton_archive_load_test`, `ollama_archive_load_test`,
+`ollama_singlemodel_archive_load_test`, `ollama_bench_archive_load_test` and
 `tpu_vllm_archive_load_test` check the loaded tags, config and ordered layer
 identities without starting application containers. The Ollama benchmark and
 TPU vLLM archives have explicit source targets because Make excludes them from
