@@ -28,14 +28,14 @@ var DefaultLoopbackLink = LoopbackLink{
 	Name: "lo",
 	Addresses: []netip.Prefix{
 		netip.MustParsePrefix("127.0.0.1/8"),
-		netip.MustParsePrefix("::1/128"),
+		netip.PrefixFrom(netip.IPv6Loopback(), 128),
 	},
 	Routes: []Route{
 		{
 			Destination: netip.MustParsePrefix("127.0.0.0/8"),
 		},
 		{
-			Destination: netip.MustParsePrefix("::1/128"),
+			Destination: netip.PrefixFrom(netip.IPv6Loopback(), 128),
 		},
 	},
 }

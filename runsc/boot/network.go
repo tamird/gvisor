@@ -53,16 +53,15 @@ type Network struct {
 }
 
 func toTcpipRoute(r *sentryapi.Route, id tcpip.NICID) (tcpip.Route, error) {
-	if !r.Destination.IsValid() || r.Destination != r.Destination.Masked() {
-		return tcpip.Route{}, fmt.Errorf("invalid route destination: %v", r.Destination)
+	if !r.Destination.IsValid() {
+		return tcpip.Route{}, fmt.Errorf("invalid route destination %s", r.Destination)
 	}
-	subnet := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice(r.Destination.Addr().AsSlice()),
-		PrefixLen: r.Destination.Bits(),
-	}.Subnet()
+	if r.Destination != r.Destination.Masked() {
+		return tcpip.Route{}, fmt.Errorf("route destination %s has host bits set", r.Destination)
+	}
 	return tcpip.Route{
-		Destination: subnet,
-		Gateway:     tcpip.AddrFromSlice(r.Gateway.AsSlice()),
+		Destination: r.Destination,
+		Gateway:     r.Gateway,
 		NIC:         id,
 		MTU:         r.MTU,
 	}, nil
@@ -264,8 +263,7 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 
 			if !link.IsProxy {
 				for _, neigh := range link.Neighbors {
-					proto, tcpipAddr := ipToAddressAndProto(neigh.IP)
-					n.Stack.AddStaticNeighbor(nicID, proto, tcpipAddr, tcpip.LinkAddress(neigh.HardwareAddr))
+					n.Stack.AddStaticNeighbor(nicID, networkProtocol(neigh.IP), neigh.IP, tcpip.LinkAddress(neigh.HardwareAddr))
 				}
 			}
 		}
@@ -364,8 +362,7 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 		}
 
 		for _, neigh := range link.Neighbors {
-			proto, tcpipAddr := ipToAddressAndProto(neigh.IP)
-			n.Stack.AddStaticNeighbor(nicID, proto, tcpipAddr, tcpip.LinkAddress(neigh.HardwareAddr))
+			n.Stack.AddStaticNeighbor(nicID, networkProtocol(neigh.IP), neigh.IP, tcpip.LinkAddress(neigh.HardwareAddr))
 		}
 	}
 
@@ -425,13 +422,9 @@ func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts
 	}
 
 	for _, addr := range addrs {
-		proto, tcpipAddr := ipToAddressAndProto(addr.Addr())
 		protocolAddr := tcpip.ProtocolAddress{
-			Protocol: proto,
-			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpipAddr,
-				PrefixLen: addr.Bits(),
-			},
+			Protocol:          networkProtocol(addr.Addr()),
+			AddressWithPrefix: addr,
 		}
 		if err := n.Stack.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
 			return fmt.Errorf("AddProtocolAddress(%d, %+v, {}) failed: %s", id, protocolAddr, err)
@@ -440,10 +433,10 @@ func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts
 	return nil
 }
 
-// ipToAddressAndProto converts IP to tcpip.Address and a protocol number.
-func ipToAddressAndProto(ip netip.Addr) (tcpip.NetworkProtocolNumber, tcpip.Address) {
-	if ip.Is4() {
-		return ipv4.ProtocolNumber, tcpip.AddrFrom4(ip.As4())
+// networkProtocol returns the network protocol for addr.
+func networkProtocol(addr netip.Addr) tcpip.NetworkProtocolNumber {
+	if addr.Is4() {
+		return ipv4.ProtocolNumber
 	}
-	return ipv6.ProtocolNumber, tcpip.AddrFromSlice(ip.AsSlice())
+	return ipv6.ProtocolNumber
 }

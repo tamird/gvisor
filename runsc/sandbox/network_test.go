@@ -249,14 +249,14 @@ func defaultLoopbackLinks() []sentryapi.LoopbackLink {
 			Name: "lo",
 			Addresses: []netip.Prefix{
 				netip.MustParsePrefix("127.0.0.1/8"),
-				netip.MustParsePrefix("::1/128"),
+				netip.PrefixFrom(netip.IPv6Loopback(), 128),
 			},
 			Routes: []sentryapi.Route{
 				{
 					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 				{
-					Destination: netip.MustParsePrefix("::1/128"),
+					Destination: netip.PrefixFrom(netip.IPv6Loopback(), 128),
 				},
 			},
 		},
@@ -311,7 +311,7 @@ func TestCollectLinksAndRoutes_SingleInterface(t *testing.T) {
 	wantGW := sentryapi.DefaultRoute{
 		Name: "testveth0",
 		Route: sentryapi.Route{
-			Destination: netip.MustParsePrefix("0.0.0.0/0"),
+			Destination: netip.PrefixFrom(netip.IPv4Unspecified(), 0),
 			Gateway:     netip.MustParseAddr("10.0.0.254"),
 		},
 	}
@@ -351,14 +351,14 @@ func TestCollectLinksAndRoutes_LoopbackOnly(t *testing.T) {
 			Name: "lo",
 			Addresses: []netip.Prefix{
 				netip.MustParsePrefix("127.0.0.1/8"),
-				netip.MustParsePrefix("::1/128"),
+				netip.PrefixFrom(netip.IPv6Loopback(), 128),
 			},
 			Routes: []sentryapi.Route{
 				{
 					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 				{
-					Destination: netip.MustParsePrefix("::1/128"),
+					Destination: netip.PrefixFrom(netip.IPv6Loopback(), 128),
 				},
 			},
 		},
@@ -444,7 +444,7 @@ func TestCollectLinksAndRoutes_MultipleInterfaces(t *testing.T) {
 	wantGW := sentryapi.DefaultRoute{
 		Name: "testveth0",
 		Route: sentryapi.Route{
-			Destination: netip.MustParsePrefix("0.0.0.0/0"),
+			Destination: netip.PrefixFrom(netip.IPv4Unspecified(), 0),
 			Gateway:     netip.MustParseAddr("10.0.0.254"),
 		},
 	}
@@ -630,14 +630,14 @@ func TestCollectLinksAndRoutes_LoopbackExtraRoutes(t *testing.T) {
 			Name: "lo",
 			Addresses: []netip.Prefix{
 				netip.MustParsePrefix("127.0.0.1/8"),
-				netip.MustParsePrefix("::1/128"),
+				netip.PrefixFrom(netip.IPv6Loopback(), 128),
 			},
 			Routes: []sentryapi.Route{
 				{
 					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 				{
-					Destination: netip.MustParsePrefix("::1/128"),
+					Destination: netip.PrefixFrom(netip.IPv6Loopback(), 128),
 				},
 				{
 					Destination: netip.MustParsePrefix("10.88.0.0/16"),

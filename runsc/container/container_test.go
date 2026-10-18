@@ -647,12 +647,12 @@ func TestGetNetworkConfig(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error calling GetNetworkConfig: %v", err)
 			}
-			if got := len(networkArgs.LoopbackLinks); got != 1 {
-				t.Fatalf("network config has %d loopback links, want 1", got)
+			if got, want := len(networkArgs.LoopbackLinks), 1; got != want {
+				t.Fatalf("network config loopback links: got %d, want %d", got, want)
 			}
 			want := []netip.Prefix{
 				netip.MustParsePrefix("127.0.0.1/8"),
-				netip.MustParsePrefix("::1/128"),
+				netip.PrefixFrom(netip.IPv6Loopback(), 128),
 			}
 			if got := networkArgs.LoopbackLinks[0].Addresses; !slices.Equal(got, want) {
 				t.Errorf("network config loopback addresses: got %v, want %v", got, want)

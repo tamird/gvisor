@@ -752,7 +752,7 @@ func loopbackLink(conf *config.Config, iface net.Interface, addrs []net.Addr, di
 }
 
 // routesForIface iterates over all routes for the given interface and converts
-// them to sentryapi.Routes. It also returns the a default v4/v6 route if found.
+// them to sentryapi.Routes. It also returns a default v4/v6 route if found.
 func routesForIface(iface net.Interface, disableIPv6 bool) ([]sentryapi.Route, *sentryapi.Route, *sentryapi.Route, error) {
 	link, err := netlink.LinkByIndex(iface.Index)
 	if err != nil {
