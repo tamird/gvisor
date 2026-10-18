@@ -5,30 +5,45 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE")
 
-_CRANE_TOOLCHAIN = "@rules_oci//oci:crane_toolchain_type"
+_COREUTILS_TOOLCHAIN = "@bazel_lib//lib:coreutils_toolchain_type"
 
 def _blob_impl(ctx):
-    crane = ctx.toolchains[_CRANE_TOOLCHAIN].crane_info.binary
+    coreutils = ctx.toolchains[_COREUTILS_TOOLCHAIN]
     output = ctx.actions.declare_file(ctx.label.name)
 
-    # crane blob drains a SHA256-verifying reader. Its output is registry bytes,
-    # which are raw model data here, not a gzip-compressed container layer.
-    # https://github.com/google/go-containerregistry/blob/a0658aa1d/internal/verify/verify.go#L54-L99
+    # Ollama serves immutable blob URLs but returns 404 for the registry /v2/
+    # probe required by crane. The pinned network image supplies curl; verify
+    # its raw response against the checked-in manifest before publishing it.
+    # https://github.com/istio/istio/blob/1d6649895/docker/Dockerfile.base#L11-L15
     ctx.actions.run_shell(
         outputs = [output],
-        tools = [crane],
-        arguments = [crane.path, ctx.attr.reference, output.path],
-        command = 'exec "$1" blob "$2" > "$3"',
+        tools = [coreutils.default.files],
+        arguments = [ctx.attr.url, ctx.attr.sha256, ctx.attr.size_bytes, output.path, coreutils.coreutils_info.bin.path],
+        command = """set -euo pipefail
+trap 'result=$?; if (( result != 0 )); then "$5" rm -f -- "$4" || :; fi; exit "$result"' EXIT
+/usr/bin/curl --fail --silent --show-error --location --output "$4" "$1"
+printf '%s  %s\\n' "$2" "$4" | "$5" sha256sum --check
+actual_size=$("$5" stat --format=%s "$4")
+if [[ $actual_size != "$3" ]]; then
+  printf 'Blob size mismatch: expected %s bytes, got %s\\n' "$3" "$actual_size" >&2
+  exit 1
+fi
+""",
         mnemonic = "OllamaBlob",
         progress_message = "Fetching immutable Ollama blob %s" % ctx.label.name,
-        toolchain = _CRANE_TOOLCHAIN,
+        toolchain = _COREUTILS_TOOLCHAIN,
     )
     return [DefaultInfo(files = depset([output]))]
 
 _blob = rule(
     implementation = _blob_impl,
-    attrs = {"reference": attr.string(mandatory = True)},
-    toolchains = [_CRANE_TOOLCHAIN],
+    attrs = {
+        "sha256": attr.string(mandatory = True),
+        # attr.int is limited to signed 32-bit values; model blobs exceed 2 GiB.
+        "size_bytes": attr.string(mandatory = True),
+        "url": attr.string(mandatory = True),
+    },
+    toolchains = [_COREUTILS_TOOLCHAIN],
 )
 
 def _execution_properties(disk_bytes, network = False):
@@ -70,7 +85,9 @@ def model_layers(name, models):
             if digest not in declared:
                 _blob(
                     name = target,
-                    reference = metadata.repository + "@" + digest,
+                    url = "https://" + metadata.repository.replace("/library/", "/v2/library/", 1) + "/blobs/" + digest,
+                    sha256 = digest[7:],
+                    size_bytes = str(blob["size"]),
                     exec_compatible_with = ["@platforms//os:linux"],
                     exec_properties = _execution_properties(blob["size"], network = True),
                     tags = ["manual"],

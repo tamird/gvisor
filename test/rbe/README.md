@@ -1217,11 +1217,12 @@ its routine image checks.
 
 The Ollama benchmark image instead packages its six checked-in raw model
 manifests with their immutable blobs and the pinned Ollama 0.40.6 server. A
-small repository rule reads only manifest metadata; `crane blob` downloads
-the digest-verified bytes in declared remote actions. Each model is packaged
-by `pkg_tar` directly into a gzip layer, and `oci_image`/`oci_load` supply the
-same archive interface, with an image-digest tag and `latest`. No server runs
-during construction, so the image does not include a generated private key.
+small repository rule reads only manifest metadata; curl downloads the blobs
+in declared remote actions, which verify their SHA-256 and byte size. Each
+model is packaged by `pkg_tar` directly into a gzip layer. `oci_image` and
+`oci_load` supply the same archive interface, with an image-digest tag and
+`latest`. No server runs during construction, so the image does not include
+a generated private key.
 The manual `ollama_small_archive_load_test` uses the smallest existing model,
 checks archive identity, and runs the actual server's list/show commands
 without network access. It qualifies packaging and model discovery, not GPU

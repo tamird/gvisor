@@ -13,5 +13,7 @@
 # limitations under the License.
 
 common --lockfile_mode=error
+# Include underlying remote upload errors, not just the outer artifact digest.
+build:buildbuddy_remote_executor --verbose_failures
 build:buildbuddy_remote_executor --remote_download_outputs=minimal
 build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$
