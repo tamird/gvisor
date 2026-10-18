@@ -291,7 +291,8 @@ unchanged coretag test in a two-thread SMT guest on each architecture:
 AMD64 uses local KVM, and ARM64 uses remote TCG on an AMD64 worker. These
 frontends retain the original 60-second deadline and require
 `CONFIG_SCHED_CORE=y` with both guest CPUs sharing a thread-sibling mask.
-The native coretag exclusion remains because bare workers may lack SMT.
+Ordinary coretag unit tests skip when the worker lacks active SMT; the guest
+frontends provide coverage on supported configurations.
 A skipped required case remains unqualified even when its owner exits
 successfully.
 
