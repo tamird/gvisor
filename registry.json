@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T00:02:10.306236+00:00",
+    "updatedAt": "2026-10-18T00:34:01.901163+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -101,23 +101,24 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-13T18:15:44.204101+00:00",
-      "summary": "Etienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
+      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
+      "summary": "The conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain; no new public reply was posted.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
       "followup": {
-        "disposition": "Requested week elapsed; review status unchanged",
+        "disposition": "Rebase complete; maintainer hold unresolved",
         "owner": "root",
-        "nextAction": "Root to prepare the independent conflict rebase. The requested week elapsed; the internal exception status and changes-requested review remain unresolved for upstream delivery. No new public comment is authorized.",
+        "nextAction": "Follow current-head checks and the existing internal exception hold. The independent conflict rebase is complete; no contributor review decision is pending.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
-          "https://github.com/tamird/gvisor/commit/44d3ce3bc"
+          "https://github.com/tamird/gvisor/commit/44d3ce3bc",
+          "https://github.com/tamird/gvisor/commit/b4e336c68c3672fa7e25b29f86f321da09774fde"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
-        "sourceHead": "a2cedf231febabdf8a96ce764330c78be7543e54",
+        "sourceHead": "b4e336c68c3672fa7e25b29f86f321da09774fde",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-10-18T00:03:00.235375+00:00"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-18T00:34:01.901163+00:00"
       },
-      "head": "a2cedf231febabdf8a96ce764330c78be7543e54"
+      "head": "b4e336c68c3672fa7e25b29f86f321da09774fde"
     },
     {
       "id": "pr:15145",
@@ -3602,23 +3603,35 @@
       "id": "branch:netfilter-action-netip",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "netfilter-action-findip-nft-review",
-      "title": "Use netip in Docker and netfilter tests",
-      "url": "https://github.com/tamird/gvisor/tree/netfilter-action-findip-nft-review",
+      "ref": "netfilter-action-netip-current",
+      "title": "Use typed addresses throughout netfilter tests",
+      "url": "https://github.com/tamird/gvisor/commit/103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0",
       "group": "tests",
-      "status": "code dependency",
-      "updatedAt": "2026-10-18T00:02:10.306236+00:00",
-      "summary": "The shared context prerequisite #15388 merged on October 8. The typed peer-address prerequisite #15321 remains open; reconcile the retained action proposal with that source and the implemented core netip migration #15730 before delivery. No contributor decision is pending.\n\nEarlier record:\n\nCurrent disposition: source prerequisites remain. Listener cancellation PR #15316 has landed through #15380. The action proposal still needs the peer-address source in #15321 and the shared context source now delivered as #15388, plus root reconciliation against that revised implementation. Preserve the existing source; no new approval question or upstream readiness is inferred.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nPublished amendment 32444be3ffdf845113daf95afbfdacca926ee726 extends the existing unopened action proposal to use the typed listener helpers in nftables. It retains the checked Docker FindIP boundary, action/helper migration and full original-destination checks. The source explicitly carries listener cancellation from PR #15316, in addition to PR #15321 and the complete shared context proposal. These are actual source prerequisites, not review holds. The prior 4e371a5e1 and 0810 refs remain preserved as predecessors; contributor review remains pending and no new PR or independent candidate was created.\n\nExact validation composition 5362ff558 passes parent 1dbd7eb8 in 155.678 seconds: six existing tcpSNAT/mapTest/ctTest IPv4/IPv6 leaves, no skips, one original 900-second AMD64 Firecracker TestRunner. Independent saved peer 07bcd990ea92 closes that scope. The dormant UDP path is compile-only. Prior 621c evidence still records twelve consumer builds and fourteen runtime leaves for the earlier source. No full netfilter, ARM, kernel-rollout or worker-capacity claim.",
-      "head": "32444be3ffdf845113daf95afbfdacca926ee726",
+      "status": "remote validation active",
+      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
+      "summary": "The current proposal retains typed Docker/netfilter addresses and shared nftables listeners while adapting the newer conntrack and mangle tests. Both independent source reviews pass. PR #15321 supplies the typed peer-address helpers; the context and cancellation prerequisites have landed. The core netip migration is not a prerequisite, but combined validation preserves its UDS consumer. Two remote checks are active at integration 52563723e0; no contributor review request is pending. The original proposal branch is preserved.\n\nEarlier record:\n\nThe shared context prerequisite #15388 merged on October 8. The typed peer-address prerequisite #15321 remains open; reconcile the retained action proposal with that source and the implemented core netip migration #15730 before delivery. No contributor decision is pending.\n\nEarlier record:\n\nCurrent disposition: source prerequisites remain. Listener cancellation PR #15316 has landed through #15380. The action proposal still needs the peer-address source in #15321 and the shared context source now delivered as #15388, plus root reconciliation against that revised implementation. Preserve the existing source; no new approval question or upstream readiness is inferred.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nPublished amendment 32444be3ffdf845113daf95afbfdacca926ee726 extends the existing unopened action proposal to use the typed listener helpers in nftables. It retains the checked Docker FindIP boundary, action/helper migration and full original-destination checks. The source explicitly carries listener cancellation from PR #15316, in addition to PR #15321 and the complete shared context proposal. These are actual source prerequisites, not review holds. The prior 4e371a5e1 and 0810 refs remain preserved as predecessors; contributor review remains pending and no new PR or independent candidate was created.\n\nExact validation composition 5362ff558 passes parent 1dbd7eb8 in 155.678 seconds: six existing tcpSNAT/mapTest/ctTest IPv4/IPv6 leaves, no skips, one original 900-second AMD64 Firecracker TestRunner. Independent saved peer 07bcd990ea92 closes that scope. The dormant UDP path is compile-only. Prior 621c evidence still records twelve consumer builds and fourteen runtime leaves for the earlier source. No full netfilter, ARM, kernel-rollout or worker-capacity claim.",
+      "head": "103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0",
       "followup": {
-        "disposition": "code dependency",
-        "owner": "root",
-        "nextAction": "Reconcile the retained action source with #15321 and core migration #15730; #15388 and #15316 are already landed.",
+        "owner": "work_map_delivery",
+        "disposition": "remote validation active",
+        "sourceHead": "103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0",
+        "observedAt": "2026-10-18T00:34:01.901163+00:00",
+        "nextAction": "Consume the owning analyzer/stack and focused IPv4/IPv6 Docker runtime verdicts. Preserve failures or missing results before preparing contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/tree/netfilter-action-findip-nft-review"
-        ],
-        "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
-        "sourceHead": "32444be3ffdf845113daf95afbfdacca926ee726"
+          "https://github.com/tamird/gvisor/actions/runs/39083014657",
+          "https://github.com/tamird/gvisor/actions/runs/39083028129",
+          "https://github.com/tamird/gvisor/commit/52563723e0c68ff528be476a9ba3375e0900062c"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "base": "cfce8a938ed9e4ad2385dbb4eddb94e0c28df883",
+          "head": "32444be3ffdf845113daf95afbfdacca926ee726"
+        },
+        "after": {
+          "base": "b715a4dcd9e37ffa5bc787ddc5731b89fd1d45b9",
+          "head": "103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0"
+        }
       }
     },
     {
@@ -3931,22 +3944,23 @@
       "ref": "netstack-testutil-netip",
       "head": "97b26c63bd39fbf386180b2b4b396d00fe0a97ce",
       "title": "Use netip in netstack test address parsers",
-      "summary": "The remaining parser and TUN echo changes are reconciled on netip-parser-followups at 1bf0d4257b, based on #15730. The connect sample is already migrated in #15730. Remote validation of the combined current harness is pending; preserve this predecessor branch until delivery is complete. No contributor decision is pending.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent source candidate preserves mapped IPv4 acceptance and IPv4-to-IPv6 promotion while rejecting zoned addresses before conversion; subnet parsing is unchanged. The complete existing parser owner passes two roots and ten subcases, including both zone negatives, on one actual uncached AMD64 OCI action at c52c. Its unchanged timeout is 300 seconds; earlier plan/review text incorrectly said 60 and is explicitly corrected in saved peer 775bdc6b1de0. No ARM or benchmark runtime claim. Contributor review/open-PR decision is pending; no source dependency on benchmark cleanup.",
+      "summary": "The remaining changes are now validated in netip-parser-followups at 1bf0d4257b, whose contributor review is pending. That replacement depends on #15730; the connect sample is already in the core migration. Preserve this predecessor for source history until delivery completes. The replacement node links both prior-proposal range-diff commands.\n\nEarlier record:\n\nThe remaining parser and TUN echo changes are reconciled on netip-parser-followups at 1bf0d4257b, based on #15730. The connect sample is already migrated in #15730. Remote validation of the combined current harness is pending; preserve this predecessor branch until delivery is complete. No contributor decision is pending.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent source candidate preserves mapped IPv4 acceptance and IPv4-to-IPv6 promotion while rejecting zoned addresses before conversion; subnet parsing is unchanged. The complete existing parser owner passes two roots and ten subcases, including both zone negatives, on one actual uncached AMD64 OCI action at c52c. Its unchanged timeout is 300 seconds; earlier plan/review text incorrectly said 60 and is explicitly corrected in saved peer 775bdc6b1de0. No ARM or benchmark runtime claim. Contributor review/open-PR decision is pending; no source dependency on benchmark cleanup.",
       "type": "branch",
       "repo": "tamird/gvisor",
       "url": "https://github.com/tamird/gvisor/tree/netstack-testutil-netip",
       "group": "tests",
-      "status": "reconciled source; validation pending",
-      "updatedAt": "2026-10-18T00:02:10.306236+00:00",
+      "status": "reconciled into netip-parser-followups",
+      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
       "followup": {
-        "disposition": "source reconciled",
+        "disposition": "reconciled into replacement",
         "owner": "root",
-        "nextAction": "Validate netip-parser-followups and retain this predecessor until delivery completes.",
+        "nextAction": "Follow the exact replacement proposal netip-parser-followups; no separate review question is pending for this predecessor.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/97b26c63bd39fbf386180b2b4b396d00fe0a97ce"
         ],
         "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
-        "sourceHead": "97b26c63bd39fbf386180b2b4b396d00fe0a97ce"
+        "sourceHead": "97b26c63bd39fbf386180b2b4b396d00fe0a97ce",
+        "observedAt": "2026-10-18T00:34:01.901163+00:00"
       }
     },
     {
@@ -4000,22 +4014,23 @@
       "ref": "tun-samples-netip",
       "head": "945eb349a1524e36cf027881e720a13e386b7551",
       "title": "Use netip for TUN sample addresses",
-      "summary": "The remaining parser and TUN echo changes are reconciled on netip-parser-followups at 1bf0d4257b, based on #15730. The connect sample is already migrated in #15730. Remote validation of the combined current harness is pending; preserve this predecessor branch until delivery is complete. No contributor decision is pending.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent migration of the two TUN TCP samples to checked netip address parsing, retaining the IPv4 contract and mapped-address behavior. Both binary roots compile and eight real CLI cases run on the hosted coordinator, with expected argument diagnostics before TUN device access. Parent b4a0f994 passes in 53.032 seconds; outcome 90f1305288f4 and independent peer 21db57c49236 close this build/CLI evidence. These are not TestRunner actions or packet-networking, TUN hardware, ARM or GNU qualification. Contributor review/open-PR decision is pending; no code prerequisite.",
+      "summary": "The remaining changes are now validated in netip-parser-followups at 1bf0d4257b, whose contributor review is pending. That replacement depends on #15730; the connect sample is already in the core migration. Preserve this predecessor for source history until delivery completes. The replacement node links both prior-proposal range-diff commands.\n\nEarlier record:\n\nThe remaining parser and TUN echo changes are reconciled on netip-parser-followups at 1bf0d4257b, based on #15730. The connect sample is already migrated in #15730. Remote validation of the combined current harness is pending; preserve this predecessor branch until delivery is complete. No contributor decision is pending.\n\nEarlier record:\n\nThe user has paused this seven-candidate netip/cleanup batch to assess an inside-out migration starting with tcpip.Address. Its review request is superseded by that architecture question; this is not awaiting PR-opening approval. Preserve the reviewed source and validation while the core representation, serialization and packet-path contracts are assessed. No upstream PR will be opened during that assessment.\n\nRetained candidate evidence:\n\nContributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent migration of the two TUN TCP samples to checked netip address parsing, retaining the IPv4 contract and mapped-address behavior. Both binary roots compile and eight real CLI cases run on the hosted coordinator, with expected argument diagnostics before TUN device access. Parent b4a0f994 passes in 53.032 seconds; outcome 90f1305288f4 and independent peer 21db57c49236 close this build/CLI evidence. These are not TestRunner actions or packet-networking, TUN hardware, ARM or GNU qualification. Contributor review/open-PR decision is pending; no code prerequisite.",
       "type": "branch",
       "repo": "tamird/gvisor",
       "url": "https://github.com/tamird/gvisor/tree/tun-samples-netip",
       "group": "tests",
-      "status": "reconciled source; validation pending",
-      "updatedAt": "2026-10-18T00:02:10.306236+00:00",
+      "status": "reconciled into netip-parser-followups",
+      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
       "followup": {
-        "disposition": "source reconciled",
+        "disposition": "reconciled into replacement",
         "owner": "root",
-        "nextAction": "Validate netip-parser-followups and retain this predecessor until delivery completes.",
+        "nextAction": "Follow the exact replacement proposal netip-parser-followups; no separate review question is pending for this predecessor.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/945eb349a1524e36cf027881e720a13e386b7551"
         ],
         "reviewedAt": "2026-10-18T00:02:10.306236+00:00",
-        "sourceHead": "945eb349a1524e36cf027881e720a13e386b7551"
+        "sourceHead": "945eb349a1524e36cf027881e720a13e386b7551",
+        "observedAt": "2026-10-18T00:34:01.901163+00:00"
       }
     },
     {
@@ -9800,13 +9815,32 @@
       "title": "Keep parsed netstack addresses as netip values",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/1bf0d4257bc118af562006dbf14a0dece4eb4225",
-      "status": "remote validation pending",
-      "updatedAt": "2026-10-18T00:02:10.306236+00:00",
-      "summary": "Use direct netip parsing in the test address helpers and TUN echo sample after the core migration. Preserve IPv4-mapped behavior and reject zones in test address helpers. Independent source review passes; current integration validation is pending. This reconciles the earlier testutil and sample proposals. No contributor review request is pending.",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
+      "summary": "Direct netip parsing preserves mapped-address behavior and rejects zones in test address helpers. Current integration validation passes: the first run covers seven owners and 1,183 reported cases plus the echo binary; the corrected integration continuation covers three remaining owners and 1,605 reported cases, with no skips or missing results. Contributor review of exact 1bf0d4257b is pending; #15730 must land first.\n\nEarlier testutil comparison: git range-diff 97b26c63bd39fbf386180b2b4b396d00fe0a97ce^! 1bf0d4257bc118af562006dbf14a0dece4eb4225^!\nEarlier TUN sample comparison: git range-diff 945eb349a1524e36cf027881e720a13e386b7551^! 1bf0d4257bc118af562006dbf14a0dece4eb4225^!\n\nEarlier record:\n\nUse direct netip parsing in the test address helpers and TUN echo sample after the core migration. Preserve IPv4-mapped behavior and reject zones in test address helpers. Independent source review passes; current integration validation is pending. This reconciles the earlier testutil and sample proposals. No contributor review request is pending.",
       "followup": {
-        "owner": "Codex",
-        "disposition": "remote validation pending",
-        "nextAction": "Complete existing testutil/stack, echo build and owning analyzer checks on the current integration."
+        "owner": "root",
+        "disposition": "Contributor review pending; core prerequisite remains",
+        "sourceHead": "1bf0d4257bc118af562006dbf14a0dece4eb4225",
+        "observedAt": "2026-10-18T00:34:01.901163+00:00",
+        "nextAction": "Await the already-requested contributor decision and landing of #15730. Retain the two predecessor branches until delivery completes.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/39081093365",
+          "https://github.com/tamird/gvisor/actions/runs/39081745256"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "1bf0d4257bc118af562006dbf14a0dece4eb4225",
+        "url": "https://github.com/tamird/gvisor/commit/1bf0d4257bc118af562006dbf14a0dece4eb4225"
+      },
+      "refinement": {
+        "before": {
+          "head": "97b26c63bd39fbf386180b2b4b396d00fe0a97ce"
+        },
+        "after": {
+          "head": "1bf0d4257bc118af562006dbf14a0dece4eb4225"
+        }
       }
     },
     {
@@ -9832,6 +9866,29 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/39071579843"
         }
       ]
+    },
+    {
+      "id": "branch:llvm-parser-targets",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "llvm-parser-targets",
+      "head": "4f6cc7693cbad7e9a6f220f6d64fd893c9355213",
+      "title": "Limit LLVM parser targets to supported architectures",
+      "group": "bazel",
+      "url": "https://github.com/tamird/gvisor/commit/4f6cc7693cbad7e9a6f220f6d64fd893c9355213",
+      "status": "remote validation active",
+      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
+      "summary": "The independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier. Dependency versions and license records are unchanged. Four existing parser/ABI owners are being checked across both architectures at integration c5ec864087. No contributor review request is pending; this does not replace the separate compiler migration.",
+      "followup": {
+        "owner": "root",
+        "disposition": "remote validation active",
+        "sourceHead": "4f6cc7693cbad7e9a6f220f6d64fd893c9355213",
+        "observedAt": "2026-10-18T00:34:01.901163+00:00",
+        "nextAction": "Consume the focused parser/ABI qualification before preparing contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/39083076451"
+        ]
+      }
     }
   ],
   "edges": [
@@ -11020,7 +11077,7 @@
       "reason": "The action migration consumes the typed netfilter peer-address APIs from PR #15321.",
       "evidence": [
         "https://github.com/google/gvisor/pull/15321",
-        "https://github.com/tamird/gvisor/tree/netfilter-action-findip-nft-review"
+        "https://github.com/tamird/gvisor/commit/103d7ea24ccdcd419bdc811acaaa1f8acc46a5f0"
       ]
     },
     {
@@ -11046,8 +11103,8 @@
     {
       "from": "pr:15316",
       "to": "branch:netfilter-action-netip",
-      "type": "depends_on",
-      "reason": "The nftables amendment reuses the typed listener helpers and carries the listener-cancellation fix from PR #15316 as an explicit prerequisite.",
+      "type": "includes",
+      "reason": "The shared listener cancellation fix has landed. The current proposal reuses it without replaying the obsolete prerequisite commit.",
       "evidence": [
         "https://github.com/google/gvisor/pull/15316",
         "https://github.com/tamird/gvisor/tree/netfilter-action-findip-nft-review"
