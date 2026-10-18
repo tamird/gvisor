@@ -1074,8 +1074,10 @@ Each invocation runs `bazel build` for `//debian:debian`,
 The existing package rules own the Debian metadata, compression and sidecar
 layout. Both invocations use `--config=rbe` for AMD64 execution, paired with
 `--config=x86_64` or `--config=aarch64` for the selected target architecture.
-The lane preserves the public release test's default compilation mode; it
-does not execute the ARM64 binaries or qualify native ARM64 runtime tests.
+The lane uses `-c opt`, matching `.buildkite/release.yaml`. The mixed-platform
+artifact and repository targets also select optimized dependencies, so their
+configuration is independent of other tests in the invocation. Building the
+ARM64 packages does not execute their binaries or qualify ARM64 runtime tests.
 
 Building these artifacts is only part of the public release test. The release
 repository lane also exercises its `make release` scripts:
