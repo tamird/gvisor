@@ -4,6 +4,7 @@
 # benchmark and Triton images use OCI targets with existing consumer labels.
 GPU_SOURCE_IMAGES = {
     "gpu_nccl_source_amd64": "gpu/nccl-tests",
+    "gpu_ollama_singlemodel_source_amd64": "gpu/ollama/singlemodel",
     "gpu_ollama_source_amd64": "gpu/ollama",
     "gpu_pytorch_source_amd64": "gpu/pytorch",
     "gpu_sglang_source_amd64": "gpu/sglang",
