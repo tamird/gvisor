@@ -18,5 +18,10 @@ build:buildbuddy_remote_executor --verbose_failures
 # Large OCI inputs exceed the default 60-second cache-write deadline.
 # https://www.buildbuddy.io/docs/troubleshooting-rbe/
 build:buildbuddy_remote_executor --remote_timeout=10m
+# Reuse checksum-addressed repository assets instead of repeating upstream
+# downloads. Keep local fallback for authenticated URLs the service cannot fetch.
+# https://www.buildbuddy.io/docs/remote-runner-introduction/#reducing-disk-snapshot-size
+build:buildbuddy_remote_executor --experimental_remote_downloader=grpcs://remote.buildbuddy.io
+build:buildbuddy_remote_executor --experimental_remote_downloader_local_fallback
 build:buildbuddy_remote_executor --remote_download_outputs=minimal
 build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$
