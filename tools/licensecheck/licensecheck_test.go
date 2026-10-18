@@ -354,23 +354,37 @@ func TestPinnedManualEntries(t *testing.T) {
 		Retrieved: "2026-10-02", SHA256: "cafe",
 		License: Licenses{"LicenseRef-CodeQL", "MIT"},
 	}
-	for _, test := range []struct {
-		name, url, hash string
-		wantErr         bool
+	for _, audit := range []struct {
+		name     string
+		licenses Licenses
+		manual   bool
 	}{
-		{"unchanged", entry.Version, entry.SHA256, false},
-		{"new version", "https://example.com/v2.tar.gz", entry.SHA256, true},
-		{"changed contents", entry.Version, "beef", true},
-		{"removed pin", entry.Version, "", true},
+		{"custom identifier", entry.License, false},
+		{"standard identifiers", Licenses{"Apache-2.0", "BSD-3-Clause"}, true},
 	} {
-		t.Run(test.name, func(t *testing.T) {
-			deps := []dep{{name: entry.Dependency, kind: kindArchive, url: test.url, sha256: test.hash}, {name: "new-dependency"}}
-			got, err := pinnedManualEntries(deps, map[string]Entry{entry.Dependency: entry})
-			if (err != nil) != test.wantErr {
-				t.Fatalf("pinnedManualEntries = %v, want error=%t", err, test.wantErr)
-			}
-			if !test.wantErr && (len(got) != 1 || !slices.Equal(got[entry.Dependency].License, entry.License) || got[entry.Dependency].Retrieved != entry.Retrieved) {
-				t.Errorf("pinnedManualEntries = %v, want the original license set and audit date", got)
+		t.Run(audit.name, func(t *testing.T) {
+			entry := entry
+			entry.License = audit.licenses
+			entry.ManuallyAudited = audit.manual
+			for _, test := range []struct {
+				name, url, hash string
+				wantErr         bool
+			}{
+				{"unchanged", entry.Version, entry.SHA256, false},
+				{"new version", "https://example.com/v2.tar.gz", entry.SHA256, true},
+				{"changed contents", entry.Version, "beef", true},
+				{"removed pin", entry.Version, "", true},
+			} {
+				t.Run(test.name, func(t *testing.T) {
+					deps := []dep{{name: entry.Dependency, kind: kindArchive, url: test.url, sha256: test.hash}, {name: "new-dependency"}}
+					got, err := pinnedManualEntries(deps, map[string]Entry{entry.Dependency: entry})
+					if (err != nil) != test.wantErr {
+						t.Fatalf("pinnedManualEntries = %v, want error=%t", err, test.wantErr)
+					}
+					if !test.wantErr && (len(got) != 1 || !slices.Equal(got[entry.Dependency].License, entry.License) || got[entry.Dependency].Retrieved != entry.Retrieved) {
+						t.Errorf("pinnedManualEntries = %v, want the original license set and audit date", got)
+					}
+				})
 			}
 		})
 	}
