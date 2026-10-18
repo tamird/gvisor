@@ -30,6 +30,7 @@ import sys
 import tarfile
 import tempfile
 import time
+from typing import BinaryIO, TextIO
 import unittest
 from unittest import mock
 import zipfile
@@ -1142,14 +1143,14 @@ signal.pause()
         self.assertNotIn("test-secret", json.dumps(value))
         return value
 
-    def native_response(self, data: bytes, status: int = 200) -> object:
+    def native_response(self, data: bytes, status: int = 200) -> mock.MagicMock:
         response = mock.MagicMock(wraps=io.BytesIO(data))
         response.__enter__.return_value = response
         response.__exit__.side_effect = lambda *_: response.close()
         response.status = status
         return response
 
-    def metadata_response(self, metadata: dict[str, object]) -> object:
+    def metadata_response(self, metadata: dict[str, object]) -> mock.MagicMock:
         return self.native_response(json.dumps({"invocation": [metadata]}).encode())
 
     def test_native_collection_preserves_retained_outcomes(self) -> None:
@@ -1239,11 +1240,79 @@ signal.pause()
         artifact, producer = self.artifact(self.fixture(), native=True)
         metadata = self.native_metadata(artifact, producer)
         pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
-        with mock.patch.object(report.time, "monotonic", side_effect=[0, 0, 31]):
+        clock = [0]
+
+        def expire(_: float) -> None:
+            clock[0] = 31
+
+        with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
+             mock.patch.object(report.time, "sleep", side_effect=expire):
             value = self.native_collect(metadata, [self.metadata_response(pending)])
         self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
         self.assertIn("deadline", value["collection_error"])
         self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
+        self.assertNotIn("consumer_verified_at", value)
+
+    def test_native_collection_deadline_covers_verification(self) -> None:
+        original_open = Path.open
+        original_receipt = report.receipt
+        for name, phase in itertools.product(("pass", "fail"), ("hash", "archive", "verified")):
+            with self.subTest(name=name, phase=phase):
+                invocation = self.fixture(name)
+                artifact, producer = self.artifact(invocation, native=True)
+                metadata = self.native_metadata(artifact, producer)
+                downloaded = self.root / "download.tar.gz"
+                shutil.copyfile(artifact, downloaded)
+                data = artifact.read_bytes()
+                clock = [0]
+                opens = [0]
+
+                class SlowReader(io.BytesIO):
+                    def read(self, size: int = -1) -> bytes:
+                        chunk = super().read(size)
+                        clock[0] = 31
+                        return chunk
+
+                def open_file(path: Path, mode: str = "r", *args: object, **kwargs: object) -> BinaryIO | TextIO:
+                    if path == downloaded and mode == "rb":
+                        opens[0] += 1
+                        if (phase, opens[0]) in (("hash", 1), ("archive", 2)):
+                            return SlowReader(data)
+                    return original_open(path, mode, *args, **kwargs)
+
+                def verify(path: Path, sha256: str, source: str, targets: list[str] | None = None,
+                           *, deadline: float | None = None) -> dict[str, object]:
+                    value = original_receipt(path, sha256, source, targets, deadline=deadline)
+                    if phase == "verified":
+                        clock[0] = 31
+                    return value
+
+                with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
+                     mock.patch.object(Path, "open", open_file), mock.patch.object(report, "receipt", verify):
+                    value = self.native_collect(metadata, [self.metadata_response(metadata)])
+                self.assertEqual((value["status"], value["collection_status"]),
+                                 ("FAIL" if name == "fail" else "INCOMPLETE", "ERROR"))
+                self.assertIn("deadline", value["collection_error"])
+                self.assertEqual(value["native_invocation"]["success"], name == "pass")
+                self.assertNotIn("consumer_verified_at", value)
+                downloaded.unlink()
+                shutil.rmtree(invocation)
+
+    def test_native_collection_deadline_covers_metadata_reads(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        response = self.metadata_response(metadata)
+        clock = [0]
+
+        def read1(size: int) -> bytes:
+            clock[0] += 10
+            return b" "
+
+        response.read1.side_effect = read1
+        with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]):
+            value = self.native_collect(metadata, [response])
+        self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
+        self.assertIn("deadline", value["collection_error"])
         self.assertNotIn("consumer_verified_at", value)
 
     def test_bundle_command_logs_recoverable_archive_identity(self) -> None:

@@ -43,6 +43,7 @@ import re
 import shutil
 import tarfile
 import time
+from typing import BinaryIO
 import uuid
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
@@ -91,11 +92,32 @@ def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
 
-def file_record(path: Path) -> dict[str, object]:
+def check_deadline(deadline: float | None) -> None:
+    if deadline is not None and time.monotonic() >= deadline:
+        raise TimeoutError("Receipt collection exceeded its deadline; attach again to resume")
+
+
+class DeadlineReader:
+    """Check the deadline around each bounded file or archive input read."""
+
+    def __init__(self, stream: BinaryIO, deadline: float | None):
+        self.stream = stream
+        self.deadline = deadline
+
+    def read(self, size: int) -> bytes:
+        check_deadline(self.deadline)
+        chunk = self.stream.read(size)
+        check_deadline(self.deadline)
+        return chunk
+
+
+def file_record(path: Path, *, deadline: float | None = None) -> dict[str, object]:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+        reader = DeadlineReader(stream, deadline)
+        for chunk in iter(lambda: reader.read(1024 * 1024), b""):
             digest.update(chunk)
+    check_deadline(deadline)
     return {"sha256": digest.hexdigest(), "bytes": path.stat().st_size}
 
 
@@ -851,21 +873,28 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
 
 
 def receipt(artifact: Path, sha256: str, expected_source: str,
-            targets: list[str] | None = None) -> dict[str, object]:
+            targets: list[str] | None = None, *, deadline: float | None = None) -> dict[str, object]:
     """Authenticate a downloaded artifact and retain its producer verdict."""
-    identity = file_record(artifact)
+    identity = file_record(artifact, deadline=deadline)
     if identity["sha256"] != sha256.removeprefix("sha256:"):
         raise ValueError("Artifact SHA256 differs from the expected digest")
     # Reconciliation already happened on the coordinator. Read only its
     # verdict, from either the Actions upload or the native Remote Bazel bundle.
+    def read_producer(stream: BinaryIO) -> dict[str, object]:
+        reader = DeadlineReader(stream, deadline)
+        value = mapping(json.loads(b"".join(iter(lambda: reader.read(1024 * 1024), b""))))
+        check_deadline(deadline)
+        return value
+
     if zipfile.is_zipfile(artifact):
         with zipfile.ZipFile(artifact) as archive:
             member = archive.getinfo("qualification/verdict.json")
             if member.file_size > MAX_REPORT_BYTES:
                 raise ValueError("Producer verdict exceeds the report size bound")
-            producer = mapping(json.loads(archive.read(member)))
+            with archive.open(member) as stream:
+                producer = read_producer(stream)
     else:
-        with tarfile.open(artifact, "r|gz") as archive:
+        with artifact.open("rb") as source, tarfile.open(fileobj=DeadlineReader(source, deadline), mode="r|gz") as archive:
             for member in archive:
                 if member.name != "verdict.json":
                     continue
@@ -874,7 +903,7 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
                 if member.size > MAX_REPORT_BYTES:
                     raise ValueError("Producer verdict exceeds the report size bound")
                 with archive.extractfile(member) as stream:
-                    producer = mapping(json.load(stream))
+                    producer = read_producer(stream)
                 break
             else:
                 raise ValueError("Producer verdict is missing from the bundle")
@@ -901,6 +930,7 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             if key in verdict:
                 invocation[key] = verdict[key]
         invocations.append(invocation)
+    check_deadline(deadline)
     return {**result, "artifact": {"path": str(artifact), **identity},
             "expected_labels": labels, "expected_owner_count": len(expected),
             "executed_attempt_count": len(sequence(producer["executed"])), "invocations": invocations,
@@ -951,9 +981,16 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         while True:
             with request("GetInvocation", {"selector": {"invocation_id": invocation_id},
                                            "include_artifacts": True}) as response:
-                raw = response.read(4 * 1024 * 1024 + 1)
-            if len(raw) > 4 * 1024 * 1024:
-                raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
+                raw = bytearray()
+                while True:
+                    remaining()
+                    chunk = response.read1(64 * 1024)
+                    remaining()
+                    if not chunk:
+                        break
+                    raw.extend(chunk)
+                    if len(raw) > 4 * 1024 * 1024:
+                        raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
             match sequence(mapping(json.loads(raw)).get("invocation", [])):
                 case []:
                     invocation = {}
@@ -1014,12 +1051,13 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         if artifact.stat().st_size != size:
             raise ValueError("Existing artifact differs from its advertised size")
         remaining()
-        result = receipt(artifact, sha256, expected_source, targets)
+        result = receipt(artifact, sha256, expected_source, targets, deadline=deadline)
         result["producer_status"] = result["status"]
         if execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False:
             result["status"] = "FAIL"
         elif execution.get("invocationStatus") != "COMPLETE_INVOCATION_STATUS" and result["status"] != "FAIL":
             result["status"] = "INCOMPLETE"
+        remaining()
         result["collection_status"] = "COMPLETE"
     except (OSError, HTTPException, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
         failed = execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False
