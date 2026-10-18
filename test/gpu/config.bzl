@@ -1,14 +1,13 @@
 """Declared GPU/TPU source images and public GPU runtime cohorts."""
 
 # Dockerfile contexts retain images.mk's source hashing. The Ollama client and
-# benchmark image use OCI targets and keep their existing consumer labels.
+# benchmark and Triton images use OCI targets with existing consumer labels.
 GPU_SOURCE_IMAGES = {
     "gpu_nccl_source_amd64": "gpu/nccl-tests",
     "gpu_ollama_source_amd64": "gpu/ollama",
     "gpu_pytorch_source_amd64": "gpu/pytorch",
     "gpu_sglang_source_amd64": "gpu/sglang",
     "gpu_stable_diffusion_source_amd64": "gpu/stable-diffusion-xl",
-    "gpu_triton_source_amd64": "gpu/triton",
     "gpu_vllm_source_amd64": "gpu/vllm",
     "tpu_vllm_source_amd64": "tpu/vllm",
 }

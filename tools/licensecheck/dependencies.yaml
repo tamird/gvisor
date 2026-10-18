@@ -17218,6 +17218,14 @@
   commit: ""
   sha256: f53cf3cae52f0773cca517f77b8ec94f4437971e90ba0e5e75e14f5d0bac9822
   license: GPL-2.0-only
+- dependency: triton_templates
+  version: https://github.com/NVIDIA/TensorRT-LLM/archive/f09590342e3062ff2fa04407170f339ab658edc2.tar.gz
+  retrieved: "2026-10-18"
+  commit: 796891ba2a6959bad58c0da9645416c7264349e9
+  sha256: df9a1ce04a738f002b54fd802f6011b64c30c4176c6ba91000c888927eca88f1
+  license:
+    - Apache-2.0
+    - BSD-3-Clause
 - dependency: with_cfg.bzl
   version: https://github.com/fmeum/with_cfg.bzl/releases/download/v1.0.0/with_cfg.bzl-v1.0.0.tar.gz
   retrieved: "2026-09-29"

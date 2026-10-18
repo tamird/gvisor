@@ -171,6 +171,13 @@ amd64_image_archive(
 )
 
 amd64_image_archive(
+    name = "gpu_triton_source_amd64",
+    testonly = True,
+    srcs = ["//images/gpu/triton:image_archive"],
+    tags = ["manual"],
+)
+
+amd64_image_archive(
     name = "gpu_ollama_small_source_amd64",
     testonly = True,
     srcs = ["//images/gpu/ollama/bench/small:image_archive"],
@@ -191,10 +198,9 @@ amd64_image_archive(
         ],
         exec_properties = docker_test_exec_properties(
             exec_group = "",
-            # The measured Triton load used 119.5GB before a builder cache.
+            # The large model producer retains its builder cache.
             free_disk = {
                 "gpu/stable-diffusion-xl": "256GB",
-                "gpu/triton": "256GB",
             }.get(image, "80GB"),
             memory = "12GB",
             start_daemon = True,
