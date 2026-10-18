@@ -8,6 +8,7 @@ package(
 benchmark_test(
     name = "vllm_test",
     srcs = ["vllm_test.go"],
+    use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",

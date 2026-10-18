@@ -45,7 +45,11 @@ def triton_assets(name, files, source_prefix, destination):
     )
 
 def triton_templates(name):
-    """Fills the five original configs with the pinned upstream script."""
+    """Fills the five original configs with the pinned upstream script.
+
+    Args:
+      name: Prefix for generated configuration and package targets.
+    """
     substitutions = {
         "preprocessing": "tokenizer_dir:/llama-2-7b-chat-hf,triton_max_batch_size:1,preprocessing_instance_count:1",
         "postprocessing": "tokenizer_dir:/llama-2-7b-chat-hf,triton_max_batch_size:1,postprocessing_instance_count:1",
