@@ -35,6 +35,10 @@ RUN set -ex \
 RUN --mount=type=bind,source=private-keystore.patch,target=/tmp/private-keystore.patch \
   patch -d /opt/jdk -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/private-keystore.patch
 
+# Match the privileged helper's result without colliding with Java exceptions.
+RUN --mount=type=bind,source=accomplice-output.patch,target=/tmp/accomplice-output.patch \
+  patch -d /opt/jdk -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/accomplice-output.patch
+
 # Install jtreg 7.5.2+1, the minimum required by the matching JDK tests.
 #
 # NOTE: While upgrading jdk version, if this jtreg version does not build

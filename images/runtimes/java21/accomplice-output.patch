@@ -1,0 +1,30 @@
+# Match DoPrivTest's complete result in both privilege checks.
+# The username "java" also appears in the required AccessControlException text.
+# Source: openjdk/jdk21u eac07229cf6cacc8a22eb79f4929e7fed61338b7.
+--- a/test/jdk/java/security/AccessController/DoPrivAccompliceTest.java
++++ b/test/jdk/java/security/AccessController/DoPrivAccompliceTest.java
+@@ -95,20 +95,21 @@
+                 TEST_SOURCE
+         };
+
+-        String userName = System.getProperty("user.name");
++        // A username such as "java" also occurs in the expected exception text.
++        String expectedOutput = "Received Name : " + System.getProperty("user.name");
+
+         createPolicyFile(jarFile1, policy);
+         System.out.println("Created policy for " + jarFile1);
+         ProcessTools.executeTestJava(commands)
+                     .shouldHaveExitValue(0)
+-                    .shouldContain(userName)
++                    .shouldContain(expectedOutput)
+                     .stderrShouldBeEmptyIgnoreWarnings();
+
+         createPolicyFile(jarFile2, policy);
+         System.out.println("Created policy for " + jarFile2);
+         ProcessTools.executeTestJava(commands)
+                     .shouldNotHaveExitValue(0)
+-                    .shouldNotContain(userName)
++                    .shouldNotContain(expectedOutput)
+                     .stderrShouldContain("java.security.AccessControlException");
+
+         System.out.println("Test PASSES");
