@@ -2014,6 +2014,13 @@ go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
 go_deps.config(export_module_metadata = True)
 go_deps.from_file(go_mod = "//:go.mod")
 
+# Preserve loaded package provenance in the representative CodeQL experiment.
+go_deps.module_override(
+    patch_strip = 1,
+    patches = ["//tools:go-packages-provenance.patch"],
+    path = "golang.org/x/tools",
+)
+
 module_proxy(
     name = "codeql_go_modules",
     cgo_enabled = "1",

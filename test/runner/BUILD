@@ -44,6 +44,7 @@ go_test(
         "xml.go",
         "xml_test.go",
     ],
+    visibility = ["//tools/codeql:__pkg__"],
 )
 
 bzl_library(

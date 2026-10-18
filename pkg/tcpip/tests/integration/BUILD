@@ -9,6 +9,7 @@ go_test(
     name = "forward_test",
     size = "small",
     srcs = ["forward_test.go"],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/buffer",
         "//pkg/tcpip",
@@ -33,6 +34,7 @@ go_test(
     name = "iptables_test",
     size = "small",
     srcs = ["iptables_test.go"],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/buffer",
         "//pkg/tcpip",

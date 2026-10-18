@@ -40,6 +40,7 @@ package_probe(
         "//pkg/tcpip/header:header_x_test",
         "//pkg/segment/test:segment_test",
         "//tools/go_generics/rules_tests:template_test",
+        "//tools/licensecheck:licensecheck_test",
         "//test/runner:xml_test",
         "//external/tools/plugin-stack:backtrace_test",
     ],

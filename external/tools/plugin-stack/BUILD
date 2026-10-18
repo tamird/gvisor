@@ -48,4 +48,5 @@ go_test(
         ],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
+    visibility = ["//tools/codeql:__pkg__"],
 )

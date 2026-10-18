@@ -105,6 +105,7 @@ bzl_library(
 
 exports_files([
     "gazelle-module-metadata.patch",
+    "go-packages-provenance.patch",
     "llvm-linux-header-default.patch",
     "rules_go_benchmark_xml.patch",
     "rules_go_package_provenance.patch",

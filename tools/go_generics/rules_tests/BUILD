@@ -43,4 +43,5 @@ go_test(
         "instance_test.go",
         "template_test.go",
     ],
+    visibility = ["//tools/codeql:__pkg__"],
 )

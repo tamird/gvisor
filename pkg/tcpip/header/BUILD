@@ -55,6 +55,7 @@ go_test(
         "ipversion_test.go",
         "tcp_test.go",
     ],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         ":header",
         "//pkg/buffer",
@@ -77,6 +78,7 @@ go_test(
         "ndp_test.go",
     ],
     embed = [":header"],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/buffer",
         "//pkg/tcpip",
