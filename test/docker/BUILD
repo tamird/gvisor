@@ -21,17 +21,20 @@ filegroup(
 
 # Conversion only reads OCI content and writes a compressed Docker archive.
 # Keep it on the ordinary executor used by the completed large-image exports.
-SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
-    "//tools/bazeldefs:rbe": dict(
-        docker_exec_properties(
-            exec_group = "",
-            free_disk = "80GB",
-            memory = "12GB",
-            vfs = True,
-        ).items() + [("workload-isolation-type", "oci")],
-    ),
-    "//conditions:default": {},
-})
+SOURCE_ARCHIVE_EXEC_PROPERTIES = {
+    free_disk: select({
+        "//tools/bazeldefs:rbe": dict(
+            docker_exec_properties(
+                exec_group = "",
+                free_disk = free_disk,
+                memory = "12GB",
+                vfs = True,
+            ).items() + [("workload-isolation-type", "oci")],
+        ),
+        "//conditions:default": {},
+    })
+    for free_disk in ["80GB", "512GB"]
+}
 
 # A context-only marker changes the canonical directory hash without changing
 # the Redis Dockerfile. Its apt RUN exercises the source build on a cache miss.
@@ -53,7 +56,7 @@ source_image_archive(
     name = "redis_source_miss_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
     contexts = ":source_image_miss_context",
     exec_compatible_with = [
         "@platforms//os:linux",
@@ -84,7 +87,7 @@ source_image_archive(
     name = "containerd_harness_source_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -104,7 +107,7 @@ source_image_archive(
     name = "moby_source_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -126,7 +129,7 @@ source_image_archive(
         name = name,
         testonly = True,
         architecture = "x86_64",
-        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
@@ -163,14 +166,14 @@ amd64_image_archive(
     tags = ["manual"],
 )
 
-# Other runtime GPU images use the source/archive producer for CUDA images.
+# GPU/TPU model images use the source/archive producer for CUDA images.
 # Source builds require a disposable namespace-capable worker; no GPU test runs.
 [
     source_image_archive(
         name = name,
         testonly = True,
         architecture = "x86_64",
-        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["512GB" if image == "gpu/ollama/bench" else "80GB"],
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
@@ -178,11 +181,13 @@ amd64_image_archive(
         exec_properties = docker_test_exec_properties(
             exec_group = "",
             # The measured Triton load used 119.5GB before a builder cache.
-            # Large source builds also retain compressed content and snapshots.
-            free_disk = "256GB" if image in [
-                "gpu/stable-diffusion-xl",
-                "gpu/triton",
-            ] else "80GB",
+            # Ollama's benchmark models alone occupy about 96GiB. Source builds
+            # retain snapshots, the staged OCI layout and its final output.
+            free_disk = {
+                "gpu/ollama/bench": "512GB",
+                "gpu/stable-diffusion-xl": "256GB",
+                "gpu/triton": "256GB",
+            }.get(image, "80GB"),
             memory = "12GB",
             start_daemon = True,
             vfs = True,
@@ -415,7 +420,7 @@ source_image_archive(
     name = "php_source_amd64",
     testonly = True,
     architecture = "x86_64",
-    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES["80GB"],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",

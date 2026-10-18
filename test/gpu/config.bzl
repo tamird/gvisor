@@ -1,15 +1,17 @@
-"""Declared image inputs for the existing public GPU test cohorts."""
+"""Declared GPU/TPU source images and public GPU runtime cohorts."""
 
 # Dockerfile contexts retain images.mk's source hashing. The Ollama client
 # is assembled directly by its OCI target and keeps the same consumer label.
 GPU_SOURCE_IMAGES = {
     "gpu_nccl_source_amd64": "gpu/nccl-tests",
+    "gpu_ollama_bench_source_amd64": "gpu/ollama/bench",
     "gpu_ollama_source_amd64": "gpu/ollama",
     "gpu_pytorch_source_amd64": "gpu/pytorch",
     "gpu_sglang_source_amd64": "gpu/sglang",
     "gpu_stable_diffusion_source_amd64": "gpu/stable-diffusion-xl",
     "gpu_triton_source_amd64": "gpu/triton",
     "gpu_vllm_source_amd64": "gpu/vllm",
+    "tpu_vllm_source_amd64": "tpu/vllm",
 }
 
 GPU_SMOKE_IMAGES = [
