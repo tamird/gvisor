@@ -1,7 +1,6 @@
-load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
-load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
+load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test", "write_source_files")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "SIDECARS", "race_smoke_test", "release_files")
 load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE")

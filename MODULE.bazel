@@ -54,6 +54,13 @@ single_version_override(
     patches = ["//tools:with_cfg-test-frontend.patch"],
 )
 
+# Keep generated-source checks in the same test environment frontends.
+single_version_override(
+    module_name = "bazel_lib",
+    patch_strip = 1,
+    patches = ["//tools:bazel-lib-generated-tests.patch"],
+)
+
 single_version_override(
     module_name = "rules_go",
     patch_strip = 1,

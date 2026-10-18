@@ -17,6 +17,7 @@
 load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_frontend_test", "cgroup_v1_tags", "cgroup_v1_variant")
 
 _LINUX_AMD64 = [Label("@platforms//os:linux"), Label("@platforms//cpu:x86_64")]
 _GO_TOOLCHAIN = Label("@io_bazel_rules_go//go:toolchain")
@@ -52,6 +53,13 @@ _minimum_gofmt, _minimum_gofmt_transition = with_cfg(_gofmt).set(Label("@io_baze
 
 # buildifier: disable=unused-variable
 _lint_test, _lint_transition = with_cfg(py_test).set("platforms", [Label("@io_bazel_rules_go//go/toolchain:linux_amd64")]).build()
+
+# Keep the cgroup transition outside the formatter's target configuration.
+# buildifier: disable=unused-variable
+_lint_cgroup_v1_test, _lint_cgroup_v1_transition = with_cfg(
+    py_test,
+    test_frontend = cgroup_v1_frontend_test,
+).set("platforms", [Label("@io_bazel_rules_go//go/toolchain:linux_amd64")]).build()
 
 # buildifier: disable=unused-variable
 _fix_binary, _fix_transition = with_cfg(py_binary).set("platforms", [Label("@platforms//host")]).build()
@@ -97,15 +105,17 @@ def source_lint(name, tool, groups, configs = [], fix_tool = None):
         main = "runner.py",
         deps = ["@rules_python//python/runfiles"],
     )
-    _lint_test(
-        name = name,
+    check = dict(
         size = "medium",
         args = args + ["--tool=$(rlocationpath %s)" % tool],
         data = data + [tool],
         exec_compatible_with = _LINUX_AMD64,
         timeout = "long",
+        tags = cgroup_v1_tags([]),
         **common
     )
+    _lint_test(name = name, **check)
+    cgroup_v1_variant(name, _lint_cgroup_v1_test, check)
     if fix_tool:
         _fix_binary(
             name = name + "_fix",

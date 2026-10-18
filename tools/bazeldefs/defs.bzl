@@ -1,5 +1,6 @@
 """Meta and miscellaneous rules."""
 
+load("@bazel_lib//lib:write_source_files.bzl", _diff_test = "diff_test", _missing_file_test = "fail_with_message_test", _write_source_files = "write_source_files")
 load("@bazel_skylib//:bzl_library.bzl", _bzl_library = "bzl_library")
 load("@bazel_skylib//rules:build_test.bzl", _build_test = "build_test")
 load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _string_flag = "string_flag", _string_list_flag = "string_list_flag")
@@ -19,6 +20,33 @@ string_flag = _string_flag
 string_list_flag = _string_list_flag
 BuildSettingInfo = _BuildSettingInfo
 expand_template = _expand_template
+
+source_diff_cgroup_v1_test, _source_diff_cgroup_v1_transition = with_cgroup_v1(_diff_test)
+missing_source_cgroup_v1_test, _missing_source_cgroup_v1_transition = with_cgroup_v1(_missing_file_test)
+
+def _source_diff_test(name, **kwargs):
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags") or [])
+    _diff_test(name = name, **kwargs)
+    cgroup_v1_variant(name, source_diff_cgroup_v1_test, kwargs)
+
+def _missing_source_test(name, **kwargs):
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags") or [])
+    _missing_file_test(name = name, **kwargs)
+    cgroup_v1_variant(name, missing_source_cgroup_v1_test, kwargs)
+
+def write_source_files(name, **kwargs):
+    """Preserves generated-source checks and adds their cgroup-v1 frontends.
+
+    Args:
+        name: Original generated-source updater target name.
+        **kwargs: Attributes forwarded to the underlying writer macro.
+    """
+    _write_source_files(
+        name = name,
+        diff_test_rule = _source_diff_test,
+        missing_file_test_rule = _missing_source_test,
+        **kwargs
+    )
 
 build_amd64_test, _build_amd64_transition = with_test_architecture(_build_test, "amd64").build()
 build_arm64_test, _build_arm64_transition = with_test_architecture(_build_test, "arm64").build()
