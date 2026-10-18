@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"golang.org/x/sys/unix"
-	"gvisor.dev/gvisor/pkg/hostos"
 )
 
 // getAllCoreTags returns the core tag of all the threads in the thread group.
@@ -85,22 +84,18 @@ func getTids(pid int) (map[int]struct{}, error) {
 }
 
 func TestEnable(t *testing.T) {
-	version, err := hostos.KernelVersion()
-	if err != nil {
-		t.Fatalf("Unable to parse kernel version: %v", err)
+	// Query the current thread with valid arguments before testing CREATE.
+	// PR_SCHED_CORE requires CONFIG_SCHED_CORE and active SMT.
+	// https://github.com/torvalds/linux/blob/fd73f4a66/kernel/sys.c#L2806-L2810
+	// https://github.com/torvalds/linux/blob/fd73f4a66/kernel/sched/core_sched.c#L139-L140
+	_, err := getCoreTag(0)
+	if errors.Is(err, unix.EINVAL) || errors.Is(err, unix.ENODEV) {
+		t.Skipf("Core tagging is unavailable: %v", err)
 	}
-	// Skip running test when running on Linux kernel < 5.14 because core tagging
-	// is not available.
-	if version.LessThan(5, 14) {
-		t.Skipf("Running on Linux kernel: %s < 5.14. Core tagging not available. Skipping test.", version)
-		return
+	if err != nil {
+		t.Fatalf("getCoreTag(0) got error %v, wanted nil", err)
 	}
 	tag, err := Enable()
-	// Linux requires active SMT for core scheduling.
-	// https://github.com/torvalds/linux/blob/fd73f4a66/kernel/sched/core_sched.c#L139-L140
-	if errors.Is(err, unix.ENODEV) {
-		t.Skipf("Core tagging requires active SMT: %v", err)
-	}
 	if err != nil {
 		t.Fatalf("Enable() got error %v, wanted nil", err)
 	}
