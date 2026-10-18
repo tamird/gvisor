@@ -1089,14 +1089,15 @@ runs `tools/make_release.sh` and `tools/make_apt.sh` with an ephemeral test key.
 Make and the test share the key-generation script. The test verifies both Debian
 package signatures, signed APT metadata and raw archive checksums; only public
 verification metadata is retained as test output. The packages keep the public
-build's default compilation and stripping settings.
+build's default stripping settings.
 
 A declared OCI image supplies the release tools from an immutable Ubuntu Jammy
 APT snapshot. The existing private Docker fixture owns the daemon, and native
 runc executes the scripts with networking disabled. Only the declared scripts
 and packages are mounted: no Git metadata or publishing script is present, so
-the canonical release script generates its master repository. The test neither
-publishes artifacts nor exercises tagged or nightly publication. Qualification
+the canonical release script generates its master and nightly repositories.
+The test checks both dated and latest nightly archives against the inputs. It
+neither publishes artifacts nor exercises tagged publication. Qualification
 covers outputs built from source on RBE; externally produced staged release
 bundles are outside its scope. Make's separate staged-binary support remains
 available.
