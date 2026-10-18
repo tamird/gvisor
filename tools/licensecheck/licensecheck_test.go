@@ -49,6 +49,7 @@ func TestAuditedExtensionRepos(t *testing.T) {
     {"key": "@@rules_python+//python/extensions:pip.bzl%pip", "used_repos": ["python_packages"]},
     {"key": "@@//:MODULE.bazel%_repo_rules http_archive", "used_repos": ["archive"]},
     {"key": "@@//:MODULE.bazel%_repo_rules http_file", "used_repos": ["file"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules go_repository", "used_repos": ["go_archive"]},
     {"key": "@@//:MODULE.bazel%_repo_rules module_proxy", "used_repos": ["proxy"]},
     {"key": "@@rules_go+//go:extensions.bzl%go_sdk", "used_repos": ["go_sdk"]},
     {"key": "@@rules_go+//go:extensions.bzl%go_sdk%<root>+apt", "used_repos": ["isolated_sdk"]}
@@ -58,7 +59,7 @@ func TestAuditedExtensionRepos(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := graph.auditedRepos()
-	want := []string{"release_tools", "container_test_tools", "go_dependency", "python_packages", "archive", "file", "proxy"}
+	want := []string{"release_tools", "container_test_tools", "go_dependency", "python_packages", "archive", "file", "go_archive", "proxy"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("audited repositories = %v, want %v", got, want)
 	}

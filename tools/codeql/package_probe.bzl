@@ -1,0 +1,81 @@
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""A bounded extraction experiment over declared rules_go package records."""
+
+load("@io_bazel_rules_go//go:def.bzl", "go_context")
+load("@io_bazel_rules_go//go/tools/gopackagesdriver:aspect.bzl", "GoPkgInfo", "go_pkg_info_aspect")
+load("//tools/bazeldefs:go.bzl", "go_rule")
+
+def _package_probe_impl(ctx):
+    go = go_context(ctx)
+    if go.mode.pure:
+        fail("The package probe requires the existing plugin-tldk cgo configuration")
+    output = ctx.actions.declare_directory(ctx.label.name)
+    outcome = ctx.actions.declare_file(ctx.label.name + "-outcome.json")
+    manifest = ctx.actions.declare_file(ctx.label.name + ".json")
+    packages = [dep[GoPkgInfo] for dep in ctx.attr.roots]
+    json_files = depset(transitive = [pkg.pkg_json_files for pkg in packages])
+    stdlib_json = depset([pkg.stdlib_json_file for pkg in packages])
+    ctx.actions.write(manifest, json.encode({
+        "labels": [str(dep.label) for dep in ctx.attr.roots],
+        "package_json": [f.path for f in json_files.to_list()],
+        "stdlib_json": [f.path for f in stdlib_json.to_list()],
+        "go_mod": ctx.file._go_mod.path,
+        "goarch": go.mode.goarch,
+        "goos": go.mode.goos,
+        "bazel_version_file": ctx.file._bazel_version.path,
+    }))
+    args = ctx.actions.args()
+    args.add("--manifest", manifest)
+    args.add("--codeql", ctx.file._codeql)
+    args.add("--extractor", ctx.executable._extractor)
+    args.add("--driver", ctx.executable._driver)
+    args.add("--output", output.path)
+    args.add("--outcome", outcome)
+    args.add("--go", go.sdk.go)
+    args.add("--goroot", go.sdk.root_file.dirname)
+    inputs = [ctx.attr._bundle[DefaultInfo].files, json_files, stdlib_json]
+    inputs.extend([go.sdk.srcs, go.sdk.headers, go.sdk.tools])
+    for pkg in packages:
+        inputs.extend([pkg.compiled_go_files, pkg.export_files, pkg.stdlib_cache_dir])
+    ctx.actions.run(
+        executable = ctx.executable._runner,
+        arguments = [args],
+        inputs = depset([manifest, ctx.file._go_mod, ctx.file._bazel_version, go.sdk.go], transitive = inputs),
+        tools = [ctx.attr._extractor[DefaultInfo].files_to_run, ctx.attr._driver[DefaultInfo].files_to_run],
+        outputs = [output, outcome],
+        env = go.env,
+        mnemonic = "CodeQLPackageProbe",
+        progress_message = "Extracting the declared Go package probe with CodeQL",
+    )
+    return [
+        DefaultInfo(files = depset([outcome])),
+        OutputGroupInfo(codeql_diagnostics = depset([output])),
+    ]
+
+package_probe = go_rule(
+    rule,
+    implementation = _package_probe_impl,
+    attrs = {
+        "roots": attr.label_list(aspects = [go_pkg_info_aspect], mandatory = True),
+        "_bazel_version": attr.label(default = "//:.bazelversion", allow_single_file = True),
+        "_bundle": attr.label(default = "@codeql_bundle//:files"),
+        "_codeql": attr.label(default = "@codeql_bundle//:codeql", allow_single_file = True),
+        "_driver": attr.label(default = "@io_bazel_rules_go//go/tools/gopackagesdriver", executable = True, cfg = "exec"),
+        "_extractor": attr.label(default = "@codeql_go_extractor//cli/go-extractor", executable = True, cfg = "exec"),
+        "_go_mod": attr.label(default = "//:go.mod", allow_single_file = True),
+        "_runner": attr.label(default = "//tools/codeql:package_probe_runner", executable = True, cfg = "exec"),
+    },
+)

@@ -107,6 +107,7 @@ exports_files([
     "gazelle-module-metadata.patch",
     "llvm-linux-header-default.patch",
     "rules_go_benchmark_xml.patch",
+    "rules_go_package_provenance.patch",
     "with_cfg-test-frontend.patch",
 ])
 

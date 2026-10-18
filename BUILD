@@ -19,6 +19,7 @@ license(
 )
 
 exports_files([
+    ".bazelversion",
     ".clang-tidy",
     "CODEOWNERS",
     "LICENSE",

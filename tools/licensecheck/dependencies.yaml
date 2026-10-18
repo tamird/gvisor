@@ -10109,6 +10109,12 @@
   commit: ""
   sha256: 1d380f79896ededc654c7b21fafb3360136f1aeb678ad4df4df9af3910c6b815
   license: LicenseRef-CodeQL-Bundle-2.27.1
+- dependency: codeql_go_extractor
+  version: https://codeload.github.com/github/codeql/tar.gz/6e9f9e38390175c41b99070a423c875f450759ca
+  retrieved: "2026-10-18"
+  commit: 6e9f9e38390175c41b99070a423c875f450759ca
+  sha256: e12c5f5d28c443b98836d29e9905eb8dd7073de5b0b498ddee96b9593ca0ae52
+  license: MIT
 - dependency: com_github_bazelbuild_buildtools
   version: https://github.com/bazelbuild/buildtools/archive/v8.5.1.tar.gz
   retrieved: "2026-10-06"

@@ -69,6 +69,7 @@ single_version_override(
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
         "//tools:rules_go_benchmark_xml.patch",
+        "//tools:rules_go_package_provenance.patch",
     ],
     version = "0.63.0",
 )
@@ -1727,6 +1728,22 @@ filegroup(name = "files", srcs = glob(["**"], exclude = ["BUILD.bazel"]))
     sha256 = "1d380f79896ededc654c7b21fafb3360136f1aeb678ad4df4df9af3910c6b815",
     strip_prefix = "codeql",
     urls = ["https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.1/codeql-bundle-linux64.tar.gz"],
+)
+
+# Build the extractor's package-loader experiment from the matching CLI source.
+# Gazelle replaces upstream BUILD files that depend on CodeQL's monorepo rules.
+go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
+
+go_repository(
+    name = "codeql_go_extractor",
+    build_config = "@bazel_gazelle_go_repository_config//:WORKSPACE",
+    build_file_generation = "clean",
+    importpath = "github.com/github/codeql-go/extractor",
+    patch_args = ["-p1"],
+    patches = ["//tools/codeql:loaded-package-info.patch"],
+    sha256 = "e12c5f5d28c443b98836d29e9905eb8dd7073de5b0b498ddee96b9593ca0ae52",
+    strip_prefix = "codeql-6e9f9e38390175c41b99070a423c875f450759ca/go/extractor",
+    urls = ["https://codeload.github.com/github/codeql/tar.gz/6e9f9e38390175c41b99070a423c875f450759ca"],
 )
 
 analysis_sources = use_repo_rule("//tools/source_inputs:repositories.bzl", "analysis_sources")

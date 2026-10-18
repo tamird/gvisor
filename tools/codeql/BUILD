@@ -1,16 +1,49 @@
 load("@rules_python//python:defs.bzl", "py_binary")
 load("//tools:defs.bzl", "go_path")
 load(":defs.bzl", "codeql_analysis")
+load(":package_probe.bzl", "package_probe")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
+exports_files(["loaded-package-info.patch"])
+
 py_binary(
     name = "analyze",
     srcs = ["analyze.py"],
     deps = ["//tools/go_export:compiler"],
+)
+
+py_binary(
+    name = "package_probe_runner",
+    srcs = ["package_probe.py"],
+)
+
+# Investigate the existing package-loader contract before replacing full analysis.
+package_probe(
+    name = "package_probe",
+    testonly = True,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = {
+        "EstimatedCPU": "4",
+        "EstimatedMemory": "16GB",
+    },
+    roots = [
+        "//pkg/tcpip/tests/integration:forward_test",
+        "//pkg/tcpip/tests/integration:iptables_test",
+        "//pkg/tcpip/header:header_test",
+        "//pkg/tcpip/header:header_x_test",
+        "//pkg/segment/test:segment_test",
+        "//tools/go_generics/rules_tests:template_test",
+        "//test/runner:xml_test",
+        "//external/tools/plugin-stack:backtrace_test",
+    ],
+    tags = ["manual"],
 )
 
 # Private analysis roots supplement the public Go export with real helper
