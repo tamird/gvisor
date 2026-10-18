@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T13:05:58.588241+00:00",
+    "updatedAt": "2026-10-18T13:10:42.443300+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -101,22 +101,23 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-18T00:34:01.901163+00:00",
-      "summary": "The conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain; no new public reply was posted.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
+      "updatedAt": "2026-10-18T13:10:42.443300+00:00",
+      "summary": "The conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
-        "disposition": "Rebase complete; maintainer hold unresolved",
+        "disposition": "Authorized follow-up delivered; maintainer exception response pending",
         "owner": "root",
-        "nextAction": "Follow current-head checks and the existing internal exception hold. The independent conflict rebase is complete; no contributor review decision is pending.",
+        "nextAction": "Await Etienne’s response to the delivered #15146 follow-up about both internal exceptions. Preserve existing changes-requested reviews and maintainer holds; no new source-change request or contributor decision is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
           "https://github.com/tamird/gvisor/commit/44d3ce3bc",
-          "https://github.com/tamird/gvisor/commit/b4e336c68c3672fa7e25b29f86f321da09774fde"
+          "https://github.com/tamird/gvisor/commit/b4e336c68c3672fa7e25b29f86f321da09774fde",
+          "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "b4e336c68c3672fa7e25b29f86f321da09774fde",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-18T00:34:01.901163+00:00"
+        "observedAt": "2026-10-18T13:10:42.443300+00:00"
       },
       "head": "b4e336c68c3672fa7e25b29f86f321da09774fde"
     },
@@ -131,20 +132,23 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
-      "summary": "Etienne’s requested one-week hold elapsed on October 10 at 07:23:09 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
+      "updatedAt": "2026-10-18T13:10:42.443300+00:00",
+      "summary": "Etienne’s requested one-week hold elapsed on October 10 at 07:23:09 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
-        "disposition": "Requested week elapsed; review status unchanged",
+        "disposition": "Authorized follow-up delivered; maintainer exception response pending",
         "owner": "root",
-        "nextAction": "Reconcile the existing changes-requested review with the elapsed interval. The follow-up is drafted but not posted; no new source work or release-confirmation prerequisite is inferred.",
+        "nextAction": "Await Etienne’s response to the delivered #15146 follow-up about both internal exceptions. Preserve existing changes-requested reviews and maintainer holds; no new source-change request or contributor decision is inferred.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825"
+          "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825",
+          "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
-        "sourceHead": "a9429cd833940fd776a4c44e792e322069b7bc6f",
+        "sourceHead": "a835611e24b08cfad5909d2a21885a2a705169cb",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "MERGEABLE"
-      }
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-18T13:10:42.443300+00:00"
+      },
+      "head": "a835611e24b08cfad5909d2a21885a2a705169cb"
     },
     {
       "id": "pr:15142",
