@@ -33,7 +33,8 @@ benchmark_test(
         },
     ],
     owned_args = [
-        "-test.v",
+        # Preserve benchmark identities in the Go wrapper's XML report.
+        "-test.v=test2json",
         "-test.bench=BenchmarkStartupEmpty",
         "-test.benchtime=1ns",
     ],

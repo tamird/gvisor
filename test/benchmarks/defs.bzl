@@ -67,7 +67,8 @@ def benchmark_test(name, tags = [], use_for_pgo = True, continuous = [], cohort 
                     cohort = case["cohort"],
                     args = runtime.args,
                     test_args = [
-                        "-test.v",
+                        # Preserve the wrapper's benchmark event framing.
+                        "-test.v=test2json",
                         "-test.bench=" + case["filter"],
                         "-test.benchtime=" + case["benchtime"],
                     ] + runtime.test_args,
@@ -107,7 +108,7 @@ def benchmark_test(name, tags = [], use_for_pgo = True, continuous = [], cohort 
                         "-pgo-profiletool=$(rootpath //tools/profiletool)",
                         "-pgo-platform=" + runtime.name,
                         "-pgo-benchmark=" + name.removesuffix("_test"),
-                        "-test.v",
+                        "-test.v=test2json",
                         "-test.bench=.",
                         "-test.benchtime=20s",
                     ],
