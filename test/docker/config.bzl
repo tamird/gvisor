@@ -39,7 +39,7 @@ INTEGRATION_VARIANTS = [
 # Eleven image tests leave two of the eight name-hash partitions empty. Bazel's
 # Go test sharding assigns test indices round-robin, retaining eight shards
 # without empty execution owners or a hand-maintained test-name list.
-# https://github.com/bazel-contrib/rules_go/blob/v0.63.0/go/tools/builders/generate_test_main.go#L126-L146
+# https://github.com/bazel-contrib/rules_go/blob/9792f1c07/go/tools/builders/generate_test_main.go#L135-L155
 IMAGE_VARIANTS = [
     struct(
         name = variant.name,
