@@ -41,6 +41,7 @@ import tarfile
 import time
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
+import zipfile
 
 import unit_matrix
 
@@ -700,6 +701,45 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
     return result
 
 
+def receipt(artifact: Path, sha256: str, expected_source: str,
+            targets: list[str] | None = None) -> dict[str, object]:
+    """Authenticate a downloaded Actions artifact and retain its producer verdict."""
+    identity = file_record(artifact)
+    if identity["sha256"] != sha256.removeprefix("sha256:"):
+        raise ValueError("Artifact SHA256 differs from the expected GitHub digest")
+    # This is the workflow's existing upload layout. The digest authenticates
+    # the entire ZIP; reconciliation already happened on the coordinator, so
+    # consuming its small verdict does not require unpacking the report tar.
+    with zipfile.ZipFile(artifact) as archive:
+        member = archive.getinfo("qualification/verdict.json")
+        if member.file_size > MAX_REPORT_BYTES:
+            raise ValueError("Producer verdict exceeds the report size bound")
+        producer = mapping(json.loads(archive.read(member)))
+    if producer.get("schema_version") != 1 or producer.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
+        raise ValueError("Unsupported producer verdict")
+    if producer.get("sources") != [expected_source]:
+        raise ValueError(f"Producer sources {producer.get('sources')} differ from {expected_source}")
+    expected = sequence(producer["expected"])
+    labels = sorted({string(mapping(owner)["label"]) for owner in expected})
+    if targets is not None and set(targets) != set(labels):
+        raise ValueError(f"Producer target labels differ: expected {sorted(set(targets))}, got {labels}")
+    # Keep outcome and coverage fields verbatim. Summarize only the large
+    # attempt records; callers can inspect those in the authenticated bundle.
+    result = {key: value for key, value in producer.items() if key not in ("expected", "executed", "invocations")}
+    invocations = []
+    for raw in sequence(producer["invocations"]):
+        row = mapping(raw)
+        verdict = mapping(row["verdict"])
+        invocations.append({"path": row["path"], **{key: verdict[key] for key in (
+            "source", "status", "command_kind", "native_exit", "capture_exit", "accepted_analysis_exit",
+            "errors", "execution_finished_at", "bep_finish", "verdict_available_at",
+        )}})
+    return {**result, "artifact": {"path": str(artifact), **identity},
+            "expected_labels": labels, "expected_owner_count": len(expected),
+            "executed_attempt_count": len(sequence(producer["executed"])), "invocations": invocations,
+            "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -727,7 +767,21 @@ def main() -> int:
         pack.add_argument("--" + name, type=Path, required=True)
     for name in ("runner-exit", "capture-exit"):
         pack.add_argument("--" + name, type=int, required=True)
+    consume = commands.add_parser("receipt")
+    for name in ("artifact", "output"):
+        consume.add_argument("--" + name, type=Path, required=True)
+    for name in ("sha256", "expected-source"):
+        consume.add_argument("--" + name, required=True)
+    consume.add_argument("--target", action="append")
     args = parser.parse_args()
+    if args.command == "receipt":
+        try:
+            result = receipt(args.artifact, args.sha256, args.expected_source, args.target)
+        except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+            parser.error(str(error))
+        write_json(args.output, result)
+        print(f"{result['status']}: {args.output}")
+        return int(result["status"] != "PASS")
     if args.command == "benchmark-arguments":
         arguments, owners = benchmark_manifest(args.manifest)
         if set(args.target) != set(owners):
@@ -751,11 +805,11 @@ def main() -> int:
     # The coordinator can upload the archive and then lose its build-event
     # stream. Retain its CAS identity in the execution log for recovery.
     try:
-        receipt = (json.dumps({"qualification_archive": file_record(args.output),
-                               "sources": result["sources"], "status": result["status"]}) + "\n").encode()
+        archive_identity = (json.dumps({"qualification_archive": file_record(args.output),
+                                       "sources": result["sources"], "status": result["status"]}) + "\n").encode()
         # A buffered write to a closed pipe can override the original exit
         # during Python's shutdown flush, even after catching BrokenPipeError.
-        if os.write(1, receipt) != len(receipt):
+        if os.write(1, archive_identity) != len(archive_identity):
             raise OSError("Incomplete archive identity write")
     except OSError:
         if not exit_code:
