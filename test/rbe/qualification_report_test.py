@@ -869,11 +869,13 @@ signal.pause()
         self.assertEqual(value["invocations"], [])
         self.assertEqual((value["native_exit"], value["runner_exit"]), (None, 19))
 
-    def artifact(self, invocation: Path) -> tuple[Path, dict[str, object]]:
+    def artifact(self, invocation: Path, *, native: bool = False) -> tuple[Path, dict[str, object]]:
         self.capture(invocation)
         value = self.verdict(invocation)
         bundle = self.root / "qualification.tar.gz"
         producer = report.bundle(self.evidence, value["native_exit"], value["capture_exit"], bundle)
+        if native:
+            return bundle, producer
         artifact = self.root / "artifact.zip"
         with zipfile.ZipFile(artifact, "w") as archive:
             archive.write(bundle, "qualification.tar.gz")
@@ -881,14 +883,15 @@ signal.pause()
         return artifact, producer
 
     def test_receipt_preserves_retained_outcomes(self) -> None:
-        for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"),
-                             ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):
-            with self.subTest(name=name):
+        outcomes = (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"),
+                    ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE"))
+        for (name, status), native in itertools.product(outcomes, (False, True)):
+            with self.subTest(name=name, native=native):
                 invocation = self.fixture("pass" if name == "all-skipped" else name)
                 if name == "all-skipped":
                     (invocation / "test.xml").write_text(
                         '<testsuite><testcase name="unavailable"><skipped>environment</skipped></testcase></testsuite>')
-                artifact, producer = self.artifact(invocation)
+                artifact, producer = self.artifact(invocation, native=native)
                 digest = report.file_record(artifact)["sha256"]
                 output = self.root / "receipt.json"
                 command = subprocess.run(
@@ -911,18 +914,55 @@ signal.pause()
                 shutil.rmtree(invocation)
 
     def test_receipt_rejects_wrong_artifact_source_and_targets(self) -> None:
-        artifact, producer = self.artifact(self.fixture())
+        invocation = self.fixture()
+        for native in (False, True):
+            artifact, producer = self.artifact(invocation, native=native)
+            digest = report.file_record(artifact)["sha256"]
+            source = producer["sources"][0]
+            targets = [row["label"] for row in producer["expected"]]
+            self.assertEqual(report.receipt(artifact, digest, source, targets)["status"], "PASS")
+            for sha256, commit, labels, message in (
+                ("0" * 64, source, targets, "Artifact SHA256"),
+                (digest, "0" * 40, targets, "Producer sources"),
+                (digest, source, ["//wrong:target"], "Producer target labels"),
+            ):
+                with self.subTest(native=native, message=message), self.assertRaisesRegex(ValueError, message):
+                    report.receipt(artifact, sha256, commit, labels)
+
+    def test_receipt_rejects_oversized_verdict(self) -> None:
+        invocation = self.fixture()
+        for native in (False, True):
+            artifact, producer = self.artifact(invocation, native=native)
+            digest = report.file_record(artifact)["sha256"]
+            with self.subTest(native=native), mock.patch.object(report, "MAX_REPORT_BYTES", 1):
+                with self.assertRaisesRegex(ValueError, "report size bound"):
+                    report.receipt(artifact, digest, producer["sources"][0])
+
+    def test_receipt_rejects_missing_or_linked_native_verdict(self) -> None:
+        artifact = self.root / "bundle.tar.gz"
+        for linked in (False, True):
+            with tarfile.open(artifact, "w:gz") as archive:
+                if linked:
+                    member = tarfile.TarInfo("verdict.json")
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = str(FIXTURES / "pass/context.json")
+                    archive.addfile(member)
+            digest = report.file_record(artifact)["sha256"]
+            with self.subTest(linked=linked), self.assertRaisesRegex(ValueError, "regular file" if linked else "missing"):
+                report.receipt(artifact, digest, "0" * 40)
+
+    def test_receipt_command_rejects_corrupt_native_bundle(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        artifact.write_bytes(artifact.read_bytes()[:32])
         digest = report.file_record(artifact)["sha256"]
-        source = producer["sources"][0]
-        targets = [row["label"] for row in producer["expected"]]
-        self.assertEqual(report.receipt(artifact, digest, source, targets)["status"], "PASS")
-        for sha256, commit, labels, message in (
-            ("0" * 64, source, targets, "Artifact SHA256"),
-            (digest, "0" * 40, targets, "Producer sources"),
-            (digest, source, ["//wrong:target"], "Producer target labels"),
-        ):
-            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
-                report.receipt(artifact, sha256, commit, labels)
+        output = self.root / "receipt.json"
+        command = subprocess.run(
+            [sys.executable, report.__file__, "receipt", "--artifact", str(artifact),
+             "--sha256", digest, "--expected-source", producer["sources"][0],
+             "--output", str(output)], capture_output=True, text=True, check=False)
+        self.assertNotEqual(command.returncode, 0)
+        self.assertNotIn("Traceback", command.stderr)
+        self.assertFalse(output.exists())
 
     def test_bundle_command_logs_recoverable_archive_identity(self) -> None:
         invocation = self.fixture()

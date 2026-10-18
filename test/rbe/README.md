@@ -78,20 +78,21 @@ separate timestamps. Interrupted report collection can be resumed with
 copies matching the previous manifest are reused. The report tool does not
 rerun tests.
 
-Authenticate a downloaded GitHub Actions artifact using its digest from the
-GitHub API and the source and optional exact target labels from the submission:
+Authenticate a downloaded Actions ZIP or native Remote Bazel tar.gz bundle
+using its digest from the GitHub or BuildBuddy API and the source and optional
+exact target labels from the submission:
 
 ```sh
 python3 test/rbe/qualification_report.py receipt \
-  --artifact "$artifact_zip" --sha256 "$github_artifact_digest" \
+  --artifact "$artifact" --sha256 "$artifact_digest" \
   --expected-source "$source_commit" --target //pkg/sync:sync_test \
   --output "$receipt_json"
 ```
 
-This reads the existing `qualification/verdict.json` directly from the ZIP;
-it does not unpack the evidence archive or reconcile reports again. The receipt
-retains the producer's status, failures, skips and coverage gaps, including
-zero-case and all-skipped owners. Its `consumer_verified_at` is separate from
+This reads `qualification/verdict.json` from an Actions ZIP or `verdict.json`
+from a native bundle; it does not extract files or reconcile reports again.
+The receipt retains the producer's status, failures, skips and coverage gaps,
+including zero-case and all-skipped owners. Its `consumer_verified_at` is separate from
 the producer's `verdict_available_at` and each invocation's original
 `execution_finished_at` and `bep_finish` timestamps. A verified FAIL or
 INCOMPLETE result writes a receipt and exits nonzero; an identity mismatch
