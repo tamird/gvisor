@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-18T04:11:05.482626+00:00",
-  "registryDate": "2026-10-18T04:14:40.662897+00:00",
+  "registryDate": "2026-10-18T04:34:29.079696+00:00",
   "prs": [
     {
       "number": 12470,
@@ -101675,13 +101675,31 @@
         "observedAt": "2026-10-18T04:11:05.482626+00:00"
       }
     },
+    "branch:runsc-network-netip": {
+      "contributor-review": {
+        "scope": "caa1352090c3936e04d3a9b714f39d5e44c0c53e",
+        "since": "2026-10-18T04:34:29.079696+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
+      }
+    },
+    "branch:packetimpact-fixture-netip": {
+      "contributor-review": {
+        "scope": "47c9cbb66f665f2177b9f38d66b2f8805f4ae62e",
+        "since": "2026-10-18T04:34:29.079696+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
+      }
+    },
     "branch:benchmark-remove-unused-ip": {
       "contributor-review": {
         "scope": "4cb688aa057d10a82677bc699365edd318de262c",
         "since": "2026-10-18T04:12:37.132359+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:state-primitive-array-storage": {
@@ -101690,7 +101708,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -101699,7 +101717,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -101708,7 +101726,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:diagnostics/state-integrated-array-proposal": {
@@ -101717,7 +101735,7 @@
         "since": "2026-10-17T02:45:40.196371+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:close-range-cloexec-probe": {
@@ -101726,7 +101744,7 @@
         "since": "2026-10-18T02:32:40.762991+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:udp-tclass-mismatch-test": {
@@ -101735,7 +101753,7 @@
         "since": "2026-10-18T02:32:40.762991+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     },
     "branch:review/php-8-5-11-exclusions": {
@@ -101744,7 +101762,7 @@
         "since": "2026-10-18T03:06:00.741464+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-18T04:14:40.662897+00:00"
+        "observedAt": "2026-10-18T04:34:29.079696+00:00"
       }
     }
   },
