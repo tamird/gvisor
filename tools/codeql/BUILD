@@ -19,6 +19,7 @@ py_binary(
 py_binary(
     name = "package_probe_runner",
     srcs = ["package_probe.py"],
+    main = "package_probe.py",
 )
 
 # Investigate the existing package-loader contract before replacing full analysis.

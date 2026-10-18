@@ -1743,6 +1743,7 @@ go_repository(
     patches = ["//tools/codeql:loaded-package-info.patch"],
     sha256 = "e12c5f5d28c443b98836d29e9905eb8dd7073de5b0b498ddee96b9593ca0ae52",
     strip_prefix = "codeql-6e9f9e38390175c41b99070a423c875f450759ca/go/extractor",
+    type = "tar.gz",
     urls = ["https://codeload.github.com/github/codeql/tar.gz/6e9f9e38390175c41b99070a423c875f450759ca"],
 )
 
