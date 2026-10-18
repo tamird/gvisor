@@ -135,6 +135,8 @@ case "$clock_source" in
   *) printf 'Unknown clock source: %s\n' "$clock_source" >&2; exit 2 ;;
 esac
 runtime_options=(
+  # Passing Go tests otherwise omit named cases from their XML reports.
+  --test_env=GO_TEST_WRAP_TESTV=1
   "--test_env=GVISOR_TEST_CLOCK_SOURCE=$clock_source"
   "--define=gvisor_test_clock_source=$clock_source"
 )
@@ -417,7 +419,6 @@ docker_test_options() {
     --noexperimental_docker_use_customized_images
     --noincompatible_legacy_local_fallback
     --sandbox_default_allow_network=false
-    --test_env=GO_TEST_WRAP_TESTV=1
     "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
     "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
   )
@@ -725,7 +726,7 @@ PY
     "--//tools/bazeldefs:local_test_architecture=$local_arch" \
     "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
     --strip=never --sandbox_add_mount_pair=/tmp --test_output=errors \
-    --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
+    "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
 )
 
 select_cgroup_profile() {
@@ -802,7 +803,7 @@ run_platform_matrix() (
     if [[ $1 == container-v1 ]]; then
       # Only the declared KVM guest is local. Other cgroup-v1 owners retain
       # their disposable remote VM and its rule-owned run_under fixture.
-      options+=(--config=rbe-hybrid-tests --local_test_jobs=1 --test_env=GO_TEST_WRAP_TESTV=1)
+      options+=(--config=rbe-hybrid-tests --local_test_jobs=1)
     else
       options+=(--config=rbe-hybrid-tests "--strategy=TestRunner=remote,docker,local"
         --//tools/bazeldefs:local_test_architecture=amd64
@@ -1090,7 +1091,6 @@ run_lane() (
       ;;
     test)
       targets=("${test_targets[@]}")
-      options=(--test_env=GO_TEST_WRAP_TESTV=1)
       if [[ -n $test_filter ]]; then
         options+=("--test_filter=$test_filter")
       fi
@@ -1194,7 +1194,7 @@ run_lane() (
         return 2
       fi
       targets=(//pkg/sentry/platform/kvm:cgroup_v1_guest_probe)
-      options=(--config=rbe-hybrid-tests --local_test_jobs=1 --test_env=GO_TEST_WRAP_TESTV=1)
+      options=(--config=rbe-hybrid-tests --local_test_jobs=1)
       ;;
     container|container-v1)
       if [[ $arch != amd64 ]]; then
