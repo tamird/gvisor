@@ -11061,7 +11061,6 @@
   commit: fd73f4a6659897191fa0d40695fe370925dd3780
   sha256: 1846a6d56bda7798cdff7b743d54975f1e96cbcf89cb48d5f92b2b863cdf262f
   license: GPL-2.0-only
-
 - dependency: kind_linux_amd64
   version: https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64
   retrieved: "2026-09-28"
@@ -17024,6 +17023,14 @@
   license:
     - GPL-2.0
     - MIT
+- dependency: pigz
+  version: https://zlib.net/pigz/pigz-2.8.tar.gz
+  retrieved: "2026-10-18"
+  commit: ""
+  sha256: eb872b4f0e1f0ebe59c9f7bd8c506c4204893ba6a8492de31df416f0d5170fd0
+  license:
+    - Apache-2.0
+    - Zlib
 - dependency: platforms
   version: https://github.com/bazelbuild/platforms/releases/download/1.1.0/platforms-1.1.0.tar.gz
   retrieved: "2026-09-25"
