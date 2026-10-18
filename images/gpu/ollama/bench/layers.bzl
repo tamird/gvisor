@@ -21,7 +21,9 @@ def _blob_impl(ctx):
         arguments = [ctx.attr.url, ctx.attr.sha256, ctx.attr.size_bytes, output.path, coreutils.coreutils_info.bin.path],
         command = """set -euo pipefail
 trap 'result=$?; if (( result != 0 )); then "$5" rm -f -- "$4" || :; fi; exit "$result"' EXIT
-/usr/bin/curl --fail --silent --show-error --location --output "$4" "$1"
+# Include partial transfers (curl 18) in the bounded retries. Each retry starts
+# from zero; retry-max-time limits retry starts, not the entire transfer.
+/usr/bin/curl --fail --silent --show-error --location --retry 2 --retry-all-errors --retry-max-time 1800 --output "$4" "$1"
 printf '%s  %s\\n' "$2" "$4" | "$5" sha256sum --check
 actual_size=$("$5" stat --format=%s "$4")
 if [[ $actual_size != "$3" ]]; then
