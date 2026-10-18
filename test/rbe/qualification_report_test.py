@@ -35,6 +35,7 @@ import unittest
 from unittest import mock
 import zipfile
 
+import collect_actions
 import qualification_report as report
 
 
@@ -1389,6 +1390,85 @@ signal.pause()
         self.assertNotEqual(command.returncode, 0)
         self.assertNotIn("Traceback", command.stderr)
         self.assertFalse(output.exists())
+
+    def test_actions_collection_retains_missing_artifact_failure(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")
+        original = retained["workflow"]
+        for conclusion, status in (("failure", "FAIL"), ("success", "INCOMPLETE")):
+            with self.subTest(conclusion=conclusion):
+                metadata = {**original, "conclusion": conclusion}
+                pending = {**metadata, "status": "in_progress", "conclusion": None}
+                responses = [json.dumps(value).encode() for value in (pending, metadata, retained["artifacts"])]
+                with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                      mock.patch.object(collect_actions.subprocess, "run", return_value=subprocess.CompletedProcess([], 1))):
+                    value = collect_actions.collect_actions(original["id"], original["head_sha"], "amd64", self.root / "actions")
+                self.assertEqual((value["status"], value["collection_status"]), (status, "INCOMPLETE"))
+                self.assertIn("got 0", value["collection_error"])
+                self.assertEqual((value["workflow"]["conclusion"], value["watch_exit"]), (conclusion, 1))
+                self.assertTrue(value["source_verified"])
+                self.assertEqual(value["submitted_source"], original["head_sha"])
+                self.assertNotIn("case_counts", value)
+                self.assertNotIn("consumer_verified_at", value)
+                self.assertEqual(report.read_json(self.root / "actions-receipt.json"), value)
+                self.assertGreaterEqual(report.timestamp(value["collection_finished_at"]),
+                                        report.timestamp(value["workflow"]["terminal_observed_at"]))
+
+    def test_actions_collection_preserves_source_and_collection_errors(self) -> None:
+        metadata = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        for fault in ("source", "run", "download", "digest", "corrupt"):
+            with self.subTest(fault=fault):
+                current = dict(metadata)
+                if fault == "source":
+                    current["head_sha"] = "0" * 40
+                if fault == "run":
+                    current["id"] += 1
+                artifacts = {"artifacts": [{"id": 1, "name": "qualification-amd64", "expired": False,
+                                            "digest": "sha256:" + "0" * 64}]}
+                if fault == "digest":
+                    artifacts["artifacts"][0].pop("digest")
+                responses = [json.dumps(value).encode() for value in (current, artifacts)]
+                def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                    if fault == "download":
+                        raise OSError("retained transfer failure")
+                    stdout.write(b"corrupt artifact")
+                    return subprocess.CompletedProcess(command, 0)
+                with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                      mock.patch.object(collect_actions.subprocess, "run", side_effect=download)):
+                    value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64", self.root / "actions")
+                self.assertEqual((value["status"], value["collection_status"]), ("FAIL", "INCOMPLETE"))
+                self.assertEqual(value["workflow"]["head_sha"], current["head_sha"])
+                self.assertEqual(value["source_verified"], fault not in ("source", "run"))
+                self.assertEqual(value["submitted_source"], metadata["head_sha"])
+                self.assertEqual(value["requested_run"], metadata["id"])
+                self.assertNotIn("case_counts", value)
+                self.assertNotIn("consumer_verified_at", value)
+                self.assertTrue(value["collection_error"])
+                if fault == "download":
+                    self.assertIn("retained transfer failure", value["collection_error"])
+
+    def test_actions_collection_preserves_authenticated_producer_outcomes(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        for name, conclusion, status in (("pass", "success", "PASS"), ("fail", "success", "FAIL"),
+                                         ("zero", "success", "INCOMPLETE"), ("pass", "failure", "FAIL")):
+            with self.subTest(fixture=name, conclusion=conclusion):
+                invocation = self.fixture(name)
+                artifact, producer = self.artifact(invocation)
+                metadata = {**retained, "head_sha": producer["sources"][0], "conclusion": conclusion}
+                artifacts = {"artifacts": [{"id": 1, "name": "qualification-amd64", "expired": False,
+                                            "digest": "sha256:" + report.file_record(artifact)["sha256"]}]}
+                responses = [json.dumps(value).encode() for value in (metadata, artifacts)]
+                def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                    stdout.write(artifact.read_bytes())
+                    return subprocess.CompletedProcess(command, 0)
+                with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                      mock.patch.object(collect_actions.subprocess, "run", side_effect=download)):
+                    value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64", self.root / "actions")
+                self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
+                                 (status, producer["status"], "COMPLETE"))
+                for field in ("case_counts", "failures", "missing", "zero_case_owners", "native_exits"):
+                    self.assertEqual(value[field], producer[field])
+                self.assertTrue(value["source_verified"])
+                shutil.rmtree(invocation)
 
     def native_metadata(self, artifact: Path, producer: dict[str, object]) -> dict[str, object]:
         identity = report.file_record(artifact)
