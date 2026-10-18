@@ -392,15 +392,22 @@ def benchmark_rows(path: Path, pgo: bool = False) -> list[dict[str, object]]:
     https://pkg.go.dev/golang.org/x/perf/benchfmt#Reader
     """
     rows = []
-    last = ""
+    completed = False
     with path.open() as stream:
         for line in stream:
             text = (line.removeprefix("\x16") if pgo else line).strip()
-            if text:
-                last = text
+            if text == "PASS":
+                if completed:
+                    raise ValueError("Benchmark log has multiple Go package PASS markers")
+                completed = True
+                continue
+            if text == "FAIL":
+                raise ValueError("Benchmark log has a Go package FAIL marker")
             fields = text.split()
             if not fields or not fields[0].startswith("Benchmark") or len(fields) == 1:
                 continue
+            if completed:
+                raise ValueError("Benchmark measurement follows the Go package PASS marker")
             name, iterations, *measurements = fields
             if not iterations.isdecimal() or int(iterations) < 1 or not measurements or len(measurements) % 2:
                 raise ValueError(f"Malformed benchmark row: {text}")
@@ -412,8 +419,10 @@ def benchmark_rows(path: Path, pgo: bool = False) -> list[dict[str, object]]:
                 metrics[unit] = value
             rows.append({"name": re.sub(r"-\d+$", "", name) if pgo else name,
                          "iterations": int(iterations), "metrics": metrics})
-    if last != "PASS":
-        raise ValueError("Benchmark log does not end with the Go package PASS marker")
+    # Bazel appends spawn stderr after stdout, including Docker image-pull logs.
+    # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L835-L839
+    if not completed:
+        raise ValueError("Benchmark log has no Go package PASS marker")
     return rows
 
 

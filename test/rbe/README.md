@@ -125,8 +125,9 @@ metrics. Optional `iterations` checks fixed-iteration runs. Numeric values are
 retained without a performance comparison or significance claim.
 
 Benchmark mode requires successful native/BEP outcomes, unchanged source,
-complete attempts and matching original output ending in `PASS`. XML errors
-remain failures. `-test.v=false` overrides rules_go's injected test verbosity:
+complete attempts and matching original output with a terminal Go `PASS`
+before any appended spawn stderr. XML errors remain failures.
+`-test.v=false` overrides rules_go's injected test verbosity:
 benchmark RUN markers otherwise become unfinished XML testcases. An empty XML
 suite is expected here, and benchmark observations are reported separately;
 ordinary test mode still requires executed named cases for every owner.

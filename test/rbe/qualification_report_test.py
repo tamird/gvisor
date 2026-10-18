@@ -274,6 +274,28 @@ class QualificationReportTest(unittest.TestCase):
                 self.assertEqual(self.benchmark_verdict(invocation)["status"], "INCOMPLETE")
                 shutil.rmtree(invocation)
 
+    def test_benchmark_completion_with_appended_stderr(self) -> None:
+        tail = (FIXTURES / "benchmark/docker-stderr.txt").read_text()
+        for pgo, kind in itertools.product((False, True),
+                                           ("stderr", "missing-pass", "substring", "duplicate", "failure", "after-pass")):
+            with self.subTest(pgo=pgo, kind=kind):
+                invocation = self.pgo_fixture() if pgo else self.benchmark_fixture()
+                path = invocation / "test.log"
+                original = path.read_text()
+                row = next(line for line in original.splitlines(keepends=True) if "ns/op" in line)
+                logs = {
+                    "stderr": original,
+                    "missing-pass": original.replace("PASS\n", ""),
+                    "substring": original.replace("PASS\n", "prefix PASS suffix\n"),
+                    "duplicate": original + "PASS\n",
+                    "failure": original + "FAIL\n",
+                    "after-pass": original + row,
+                }
+                path.write_text(logs[kind] + tail)
+                value = self.pgo_verdict(invocation) if pgo else self.benchmark_verdict(invocation)
+                self.assertEqual(value["status"], "PASS" if kind == "stderr" else "INCOMPLETE", value)
+                shutil.rmtree(invocation)
+
     def test_benchmark_failure_remains_primary(self) -> None:
         invocation = self.benchmark_fixture()
         (invocation / "native-exit.txt").write_text("3\n")

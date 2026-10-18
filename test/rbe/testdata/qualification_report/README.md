@@ -1,6 +1,6 @@
 # Retained qualification report fixtures
 
-These are small projections of original Actions artifacts from October 16, 2026.
+These are small projections of original Actions artifacts.
 Each `provenance.json` records the source commit, run/archive identities, original
 body hashes, projection rule, and retained log offsets. XML is unchanged. BEP
 report URIs are relocated by the test; summary URI lists are omitted because the
@@ -34,6 +34,9 @@ capture owner uses each `testResult`'s original reports.
   Tests explicitly project nonverbose output, empty XML and future arguments
   to exercise benchmark reporting; this projection is not another measurement
   or proof of the real wrapper behavior.
+  `docker-stderr.txt` is the unchanged stderr suffix from PGO KVM run
+  39092637450's ffmpeg owner. Bazel appended the Docker image-pull messages
+  after the benchmark's stdout; its separate provenance records that artifact.
 
 Other tests deliberately mutate these inputs to exercise source/configuration
 mismatches, missing results, report corruption, resumable capture, wrapper errors,
