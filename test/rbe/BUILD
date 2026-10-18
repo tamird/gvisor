@@ -276,10 +276,55 @@ docker_command_test(
 # CPU compatibility check of the actual source archive.
 go_test(
     name = "source_archive_test",
-    srcs = ["source_archive_test.go"],
+    srcs = [
+        "source_archive_common_test.go",
+        "source_archive_test.go",
+    ],
     rundir = ".",
     tags = ["manual"],
 )
+
+# Measure and verify the same archive before allocating Docker's expanded image.
+# Test actions stream the archive without extraction; compilation keeps its
+# normal execution properties. The Triton owner is used after native assembly.
+[
+    go_test(
+        name = name + "_archive_integrity_test",
+        size = size,
+        timeout = timeout,
+        srcs = [
+            "source_archive_common_test.go",
+            "source_archive_integrity_test.go",
+        ],
+        architectures = ["amd64"],
+        args = [
+            "--archive=$(rootpath //test/docker:" + archive + ")",
+            "--image=" + image,
+        ],
+        data = ["//test/docker:" + archive],
+        exec_properties = select({
+            "//tools/bazeldefs:rbe": {
+                "test.EstimatedFreeDiskBytes": free_disk,
+                "test.EstimatedMemory": "2GB",
+                "test.workload-isolation-type": "oci",
+            },
+            "//conditions:default": {},
+        }),
+        rundir = ".",
+        tags = [
+            "manual",
+            "no-local",
+        ],
+        target_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    )
+    for name, image, archive, free_disk, size, timeout in [
+        ("source", "containerd/harness", "containerd_harness_source_amd64", "20GB", "medium", "moderate"),
+        ("triton", "gpu/triton", "gpu_triton_source_amd64", "80GB", "enormous", "eternal"),
+    ]
+]
 
 docker_daemon_config(
     name = "ollama_small_archive_config",
@@ -295,6 +340,7 @@ go_test(
     name = "ollama_model_test",
     srcs = [
         "ollama_model_test.go",
+        "source_archive_common_test.go",
         "source_archive_test.go",
     ],
     rundir = ".",
