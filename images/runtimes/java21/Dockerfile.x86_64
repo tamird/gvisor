@@ -12,14 +12,22 @@ RUN apt-get update && apt-get install -y \
   zip
 
 # Match the JDK tests to the installed package, including security updates.
-# Proctor expects this to be in /root/jdk.
-WORKDIR /root
+# Proctor reads these tests from /opt/jdk.
+WORKDIR /opt
 RUN set -ex \
+ && jdk_package_version="$(dpkg-query --show --showformat='${Version}' openjdk-21-jdk)" \
+ && apt-get install -y "openjdk-21-source=${jdk_package_version}" "openjdk-21-testsupport=${jdk_package_version}" \
+ && test "$(dpkg-query --show --showformat='${Version}' openjdk-21-source)" = "$jdk_package_version" \
+ && test "$(dpkg-query --show --showformat='${Version}' openjdk-21-testsupport)" = "$jdk_package_version" \
+ && java_home="$(dirname "$(dirname "$(readlink -f /usr/bin/java)")")" \
+ && test -r "$java_home/lib/src.zip" \
+ && ln -s "$java_home/testsuite/jdk/jtreg/native" /opt/jdk-native \
+ && test -r /opt/jdk-native/libCreationTimeHelper.so \
  && jdk_version="$(dpkg-query --show --showformat='${source:Upstream-Version}' openjdk-21-jdk)" \
  && test -n "$jdk_version" \
  && curl -fsSL --retry 10 -o /tmp/jdk.tar.gz "https://github.com/openjdk/jdk21u/archive/refs/tags/jdk-${jdk_version}.tar.gz" \
- && mkdir /root/jdk \
- && tar -zxzf /tmp/jdk.tar.gz --strip-components=1 -C /root/jdk \
+ && mkdir /opt/jdk \
+ && tar -zxzf /tmp/jdk.tar.gz --strip-components=1 -C /opt/jdk \
  && rm -f /tmp/jdk.tar.gz
 
 # Install jtreg 7.5.2+1, the minimum required by the matching JDK tests.
@@ -41,4 +49,10 @@ RUN set -ex \
 
 # The jtreg launcher checks this path before executing Java.
 ENV JTREG_JAVA=/usr/bin/java
-ENV PATH="/root/jtreg/build/images/jtreg/bin:$PATH"
+ENV PATH="/opt/jtreg/build/images/jtreg/bin:$PATH"
+
+# Permission-sensitive JDK tests require an ordinary user and writable cwd.
+RUN useradd --create-home --uid 1000 --user-group java
+ENV HOME=/home/java
+USER java
+WORKDIR /home/java

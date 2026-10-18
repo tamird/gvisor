@@ -21,6 +21,9 @@ def _runtime_test_impl(ctx):
         ctx.executable._proctor.short_path,
         "--batch",
         str(ctx.attr.batch),
+        "--proctor_user",
+        ctx.attr.proctor_user,
+        "--proctor_privileged=" + ("true" if ctx.attr.proctor_privileged else "false"),
     ]
     files = [ctx.executable._runner, ctx.executable._proctor] + ctx.files._runsc
     if ctx.file.exclude_file:
@@ -68,6 +71,8 @@ _runtime_test = rule(
             default = 50,
             mandatory = False,
         ),
+        "proctor_user": attr.string(default = "0"),
+        "proctor_privileged": attr.bool(default = True),
         "docker_config": attr.label(allow_single_file = True),
         "_runner": attr.label(
             default = "//test/runtimes/runner:runner",
@@ -88,7 +93,7 @@ _runtime_test = rule(
     test = True,
 )
 
-def runtime_test(name, partitions, memory = None, source_archive = None, **kwargs):
+def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = False, native_reference = False, **kwargs):
     """Declares installed and owned entrypoints for a language runtime.
 
     Args:
@@ -96,6 +101,8 @@ def runtime_test(name, partitions, memory = None, source_archive = None, **kwarg
       partitions: Number of public CI partitions, each retaining its Bazel shards.
       memory: Optional memory budget for each owned test VM.
       source_archive: Optional source-built archive replacing the image registry pin.
+      ipv6: Whether the owned Docker daemon provides IPv6 on its default bridge.
+      native_reference: Whether to expose a manual runc owner sharing the image.
       **kwargs: Existing language, batch, exclusion and shard settings.
     """
     if partitions < 1:
@@ -117,6 +124,30 @@ def runtime_test(name, partitions, memory = None, source_archive = None, **kwarg
         architecture = "amd64",
         source = source_archive,
     )
+    if native_reference:
+        config = name + "_native_reference_docker_config"
+        docker_daemon_config(
+            name = config,
+            testonly = True,
+            runtime = None,
+            images = [":" + archive + "_tar"],
+            ipv6 = ipv6,
+            tags = ["manual"],
+        )
+        # Explicit comparison only; public suites below retain their owners.
+        _runtime_test(
+            name = name + "_native_reference_owned",
+            image = name,
+            docker_config = ":" + config,
+            args = ["--runtime=runc", "--partition=1", "--total_partitions=1"],
+            exec_properties = docker_test_exec_properties(
+                free_disk = "20GB",
+                memory = memory,
+            ),
+            target_compatible_with = ["@platforms//cpu:x86_64"],
+            tags = ["manual"],
+            **kwargs
+        )
     for mode, directfs in _RUNTIME_MODES.items():
         prefix = name + "_" + mode
         config = prefix + "_docker_config"
@@ -124,6 +155,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, **kwarg
             name = config,
             testonly = True,
             images = [":" + archive + "_tar"],
+            ipv6 = ipv6,
             runtime_args = [
                 "--platform=systrap",
                 "--watchdog-action=panic",
