@@ -276,6 +276,54 @@ class SyscallBucketsTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 2, result.stderr)
                 self.assertNotIn("bazel: command not found", result.stderr)
 
+    @unittest.skipUnless(sys.platform == "linux", "The local benchmark route requires Linux")
+    def test_continuous_benchmark_subset_keeps_local_docker_route(self):
+        root = Path(__file__).parents[2]
+        owners = [f"//test/benchmarks/fs:fio_test_continuous_{mode}_runc_owned"
+                  for mode in ("randread", "randwrite", "read", "write")]
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            bazel = temporary / "bazel"
+            bazel.write_text(f"""#!{sys.executable}
+import json
+import os
+from pathlib import Path
+import sys
+if sys.argv[1] == 'query':
+    print('\\n'.join(json.loads(os.environ['TEST_OWNERS'])))
+elif sys.argv[1] == 'test':
+    Path(os.environ['TEST_ARGUMENTS']).write_text(json.dumps(sys.argv[1:]))
+else:
+    raise SystemExit('Unexpected Bazel command')
+""")
+            bazel.chmod(0o755)
+            arguments_path = temporary / "arguments.json"
+            environment = {**os.environ, "PATH": str(temporary) + os.pathsep + os.environ["PATH"],
+                           "RUNNER_TEMP": directory, "GVISOR_DOCKER_NETWORK": "fixture-network",
+                           "TEST_OWNERS": json.dumps(owners), "TEST_ARGUMENTS": str(arguments_path)}
+            for selected in (owners[:1], owners, [owners[0], "//outside:missing"]):
+                with self.subTest(selected=selected):
+                    arguments_path.unlink(missing_ok=True)
+                    result = subprocess.run(
+                        ["bash", "test/rbe/qualify.sh", "--arch=amd64", "--test-execution=local",
+                         *["--benchmark-target=" + owner for owner in selected], "benchmarks"],
+                        cwd=root, env=environment, capture_output=True, text=True, check=False, timeout=30,
+                    )
+                    if selected[-1] == "//outside:missing":
+                        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                        self.assertFalse(arguments_path.exists())
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                        arguments = json.loads(arguments_path.read_text())
+                        self.assertEqual([arg for arg in arguments if arg.startswith("//")], selected)
+                        self.assertIn("--strategy=TestRunner=docker", arguments)
+                        self.assertIn("--run_under=//test/rbe:docker_setup", arguments)
+                        self.assertIn("--test_env=GVISOR_DOCKER_NETWORK=fixture-network", arguments)
+                        self.assertNotIn("--test_timeout", " ".join(arguments))
+                        report = temporary / "qualification/benchmarks-selection"
+                        self.assertEqual((report / "canonical-targets").read_text().splitlines(), owners)
+                        self.assertEqual((report / "selected-targets").read_text().splitlines(), selected)
+
 
 if __name__ == "__main__":
     unittest.main()

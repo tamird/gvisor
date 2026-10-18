@@ -497,23 +497,29 @@ Each lane gets a 70-minute step and 75-minute job so both original one-hour
 shards can finish, with at most two local tests and remote compilation unchanged.
 
 Continuous benchmarks can exceed one Actions job when queued together. To
-qualify individual owners concurrently, pass `benchmark_target` with one label
+qualify selected owners together, pass `targets` with space-separated labels
 from `tests(//test/benchmarks:continuous_tests)`:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
   --ref qualification/current-upstream-refresh \
   -f lanes=benchmarks -f architecture=amd64 -f execution=local \
-  -f benchmark_target=//test/benchmarks/fs:bazel_test_continuous_grpc_kvm_owned
+  -f targets=//test/benchmarks/fs:bazel_test_continuous_grpc_kvm_owned
 ```
 
 The dispatcher checks suite membership and records the complete suite and the
-selected target. Distinct targets have separate workflow concurrency keys.
+selected targets. Explicit selections have separate workflow concurrency keys.
 Each keeps its original benchmark arguments and one-hour test timeout; the
 Actions step allows 70 minutes for compilation and execution, with another
-five minutes for setup and artifact upload. A passing target covers only that
-owner. Direct callers use `--benchmark-target=LABEL` with local AMD64
+five minutes for setup and artifact upload. A passing invocation covers only
+the selected owners. Direct callers repeat `--benchmark-target=LABEL` with local AMD64
 benchmarks and provide `RUNNER_TEMP` for the selection report.
+
+The lifecycle Go benchmarks retain their declared 30 iterations and platform
+arguments within mixed continuous suites. Their configured contract tag binds
+the expected leaves in `test/benchmarks/lifecycle.json`; the reporter requires
+every measurement, its metrics and package completion, while retaining empty
+test XML separately. Other owners still require executed named test cases.
 
 The local ARM64 `docker` lane runs the unchanged `//test/docker:owned_tests`
 suite using the same Docker sandbox described below. The existing `rbe-arm64`

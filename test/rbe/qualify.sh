@@ -68,8 +68,8 @@ existing KVM and initial-cgroup local routes. Test selection remains complete.
 The clock source is an explicit runtime qualification setting, defaulting to
 calibrated. Reference mode uses host clocks across the maintained runtime
 fixtures; it does not change production defaults or select different tests.
-A benchmark target selects one member of the continuous suite, retaining its
-original workload and timeout. Other suite members remain unexecuted.
+Repeat --benchmark-target to select members of the continuous suite, retaining
+their original workloads and timeouts. Other suite members remain unexecuted.
 The test lane runs explicitly selected tests on remote workers, or on the
 matching Actions host with --test-execution=local and architecture frontends.
 The build lane builds explicitly selected targets without running tests.
@@ -102,7 +102,7 @@ clock_source=calibrated
 local_test_requirements=namespace
 local_requirements_set=false
 syscall_bucket=
-benchmark_target=
+benchmark_targets=()
 build_targets=()
 test_targets=()
 test_filter=
@@ -115,7 +115,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --clock-source=*) clock_source=${1#--clock-source=} ;;
     --local-test-requirements=*) local_test_requirements=${1#--local-test-requirements=}; local_requirements_set=true ;;
     --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
-    --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
+    --benchmark-target=*) benchmark_targets+=("${1#--benchmark-target=}") ;;
     --build-target=*) build_targets+=("${1#--build-target=}") ;;
     --test-target=*) test_targets+=("${1#--test-target=}") ;;
     --test-filter=*) test_filter=${1#--test-filter=} ;;
@@ -181,7 +181,7 @@ if [[ -n $syscall_bucket ]]; then
     exit 2
   fi
 fi
-if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $# != 1 || ${1:-} != benchmarks ) ]]; then
+if (( ${#benchmark_targets[@]} )) && [[ $arch != amd64 || $test_execution != local || $# != 1 || ${1:-} != benchmarks ]]; then
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
   exit 2
 fi
@@ -1319,18 +1319,20 @@ PY
         options=(--test_tag_filters=-requires-kvm)
       fi
       shared_test_targets "$lane" "$arch"
-      if [[ -n $benchmark_target ]]; then
-        local selection_dir=${RUNNER_TEMP:?}/qualification/benchmarks-selection
+      if (( ${#benchmark_targets[@]} )); then
+        local target selection_dir=${RUNNER_TEMP:?}/qualification/benchmarks-selection
         mkdir -p "$selection_dir"
         # Query the owning suite rather than maintaining a second target list.
         bazel query 'tests(//test/benchmarks:continuous_tests)' --output=label \
           > "$selection_dir/canonical-targets"
-        if ! grep -Fxq -- "$benchmark_target" "$selection_dir/canonical-targets"; then
-          printf 'Not a continuous benchmark target: %s\n' "$benchmark_target" >&2
-          return 2
-        fi
-        printf '%s\n' "$benchmark_target" > "$selection_dir/selected-targets"
-        targets=("$benchmark_target")
+        for target in "${benchmark_targets[@]}"; do
+          if ! grep -Fxq -- "$target" "$selection_dir/canonical-targets"; then
+            printf 'Not a continuous benchmark target: %s\n' "$target" >&2
+            return 2
+          fi
+        done
+        printf '%s\n' "${benchmark_targets[@]}" | sort -u > "$selection_dir/selected-targets"
+        mapfile -t targets < "$selection_dir/selected-targets"
       fi
       ;;
     language-directfs|language-goferfs)

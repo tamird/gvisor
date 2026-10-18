@@ -335,8 +335,21 @@ def benchmark_manifest(path: Path) -> tuple[list[str], dict[str, list[Benchmark]
         raise ValueError("PGO requires the public verbose, whole-benchmark, 20-second arguments")
     if not pgo and (flags.get("run") != "^$" or flags.get("v") != "false" or not flags.get("bench")):
         raise ValueError("Benchmark arguments require -test.run=^$, -test.v=false and -test.bench=PATTERN")
+    owners = benchmark_expectations(value.get("owners"))
+    if pgo:
+        profiles = pgo_expectations(value)
+        if set(profiles) != set(owners):
+            raise ValueError("PGO exclusions must name every selected owner")
+        for owner, leaves in owners.items():
+            if set(profiles[owner].excluded) & {leaf.name for leaf in leaves}:
+                raise ValueError(f"PGO active and excluded leaves overlap for {owner}")
+    return arguments, owners
+
+
+def benchmark_expectations(value: object) -> dict[str, list[Benchmark]]:
+    """Read exact measurement obligations shared by both benchmark routes."""
     owners: dict[str, list[Benchmark]] = {}
-    for label, rows in mapping(value.get("owners")).items():
+    for label, rows in mapping(value).items():
         if not label.startswith(("//", "@")):
             raise ValueError(f"Invalid benchmark owner: {label}")
         leaves = []
@@ -358,14 +371,7 @@ def benchmark_manifest(path: Path) -> tuple[list[str], dict[str, list[Benchmark]
         owners[label] = leaves
     if not owners:
         raise ValueError("No expected benchmark owners")
-    if pgo:
-        profiles = pgo_expectations(value)
-        if set(profiles) != set(owners):
-            raise ValueError("PGO exclusions must name every selected owner")
-        for owner, leaves in owners.items():
-            if set(profiles[owner].excluded) & {leaf.name for leaf in leaves}:
-                raise ValueError(f"PGO active and excluded leaves overlap for {owner}")
-    return arguments, owners
+    return owners
 
 
 @dataclass(frozen=True)
@@ -433,7 +439,7 @@ def benchmark_rows(path: Path, pgo: bool = False) -> list[dict[str, object]]:
     completed = False
     with path.open() as stream:
         for line in stream:
-            text = (line.removeprefix("\x16") if pgo else line).strip()
+            text = line.removeprefix("\x16").strip()
             if text == "PASS":
                 if completed:
                     raise ValueError("Benchmark log has multiple Go package PASS markers")
@@ -553,7 +559,8 @@ def marshal_test_contract(log: Path) -> dict[str, object]:
 
 
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
-            expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None) -> dict[str, object]:
+            expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None,
+            declared_benchmarks: Path | None = None) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
     started = time.monotonic()
     errors: list[str] = []
@@ -581,6 +588,19 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 errors.append("Original benchmark arguments differ from the manifest")
         except (OSError, ValueError) as error:
             errors.append(f"Benchmark manifest: {error}")
+    declared_expected: dict[str, list[Benchmark]] = {}
+    declared_evidence: dict[str, object] = {}
+    if declared_benchmarks is not None:
+        try:
+            if info["command_kind"] != "test":
+                raise ValueError("Declared benchmark expectations require a mixed test invocation")
+            value = read_json(declared_benchmarks)
+            if set(value) != {"owners"}:
+                raise ValueError("Declared benchmark manifest requires exactly owners")
+            declared_expected = benchmark_expectations(value["owners"])
+            declared_evidence = {"path": str(declared_benchmarks), **file_record(declared_benchmarks)}
+        except (OSError, ValueError) as error:
+            errors.append(f"Declared benchmark manifest: {error}")
     retained = read_json(manifest)
     errors.extend(string(item) for item in sequence(retained.get("errors")))
     if retained.get("events") != file_record(events):
@@ -656,6 +676,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     expected_aspects: set[Aspect] = set()
     negative_tests: set[Owner] = set()
     marshal_tests: set[Owner] = set()
+    declared_benchmark_tests: set[Owner] = set()
     for analysis in expected_analysis:
         try:
             targets = unit_matrix.configured_targets(
@@ -667,6 +688,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                   if "expected-failure" in target.tags)
             marshal_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                  if "go-marshal-test-contract" in target.tags)
+            if info["command_kind"] == "test":
+                declared_benchmark_tests.update(Owner(label, target.configuration) for label, target in targets.items()
+                                                if "go-benchmark-contract" in target.tags)
             expected_aspects.update(Aspect(Owner(label, target.configuration), name)
                                     for label, target in targets.items() for name in target.aspects)
         except (OSError, ValueError) as error:
@@ -691,6 +715,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append(f"Configured owners differ from expected: {sorted(different)}")
     if benchmark_mode and set(benchmark_expected) != {owner.label for owner in expected}:
         errors.append("Benchmark manifest must cover every selected owner, and no others")
+    selected_declared = set(declared_expected) & {owner.label for owner in expected}
+    if selected_declared != {owner.label for owner in declared_benchmark_tests}:
+        errors.append("Declared benchmark expectations differ from tagged configured owners")
+    if declared_benchmarks is not None:
+        declared_evidence["owners"] = {label: [asdict(leaf) for leaf in declared_expected[label]]
+                                      for label in sorted(selected_declared)}
     if not finished:
         errors.append("Missing invocation finish event")
     accepted_analysis_exit = False
@@ -771,15 +801,21 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     observation["marshal_test_contract"] = contract
                     if (not contract["runtime_types"] or not contract["constraints_match"]) and owner_cases[attempt.owner]:
                         errors.append(f"Generated ABI test declares no applicable runtime tests but has named cases: {attempt}")
-                if benchmark_mode:
+                declared_benchmark = attempt.owner in declared_benchmark_tests
+                if benchmark_mode or declared_benchmark:
                     rows = benchmark_rows(log, pgo=pgo_expected is not None)
                     observation["benchmarks"] = rows
-                    wanted = {leaf.name: leaf for leaf in benchmark_expected.get(attempt.owner.label, [])}
-                    actual = Counter(string(row["name"]) for row in rows)
+                    expectations = declared_expected if declared_benchmark else benchmark_expected
+                    wanted = {leaf.name: leaf for leaf in expectations.get(attempt.owner.label, [])}
+                    # These declarations use Go's default CPU setting. Retain
+                    # its observed suffix while matching the declared leaves.
+                    names = [re.sub(r"-\d+$", "", string(row["name"])) if declared_benchmark else string(row["name"])
+                             for row in rows]
+                    actual = Counter(names)
                     if actual != Counter({name: leaf.count for name, leaf in wanted.items()}):
                         errors.append(f"Benchmark rows differ for {attempt}: got {dict(actual)}, expected {wanted}")
-                    for row in rows:
-                        if (leaf := wanted.get(string(row["name"]))) is not None:
+                    for name, row in zip(names, rows):
+                        if (leaf := wanted.get(name)) is not None:
                             units = set(mapping(row["metrics"]))
                             units_match = set(leaf.units) <= units if pgo_expected is not None else set(leaf.units) == units
                             if not units_match or leaf.iterations is not None and row["iterations"] != leaf.iterations:
@@ -834,7 +870,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                            and summaries.get(owner, {}).get("overallStatus") == "PASSED")
             if non_runtime:
                 non_runtime_owners.append({**asdict(owner), **contracts[0]})
-            if not benchmark_mode and not non_runtime and owner_executed[owner] == 0:
+            if (not benchmark_mode and owner not in declared_benchmark_tests
+                    and not non_runtime and owner_executed[owner] == 0):
                 errors.append(f"Test owner has no executed named cases; zero-case/all-skipped success is not coverage: {owner}")
     elif results or summaries:
         errors.append("Build/analysis invocation unexpectedly contains test execution")
@@ -853,6 +890,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "expected_failures": expected_failures,
             "non_runtime_owners": non_runtime_owners,
             "benchmark_manifest": benchmark_evidence,
+            "declared_benchmark_manifest": declared_evidence,
             "zero_case_owners": [asdict(owner) for owner, count in sorted(owner_cases.items()) if count == 0],
             "all_skipped_owners": [asdict(owner) for owner, count in sorted(owner_executed.items()) if count == 0 and owner_cases[owner] > 0],
             "skipped_owners": [asdict(owner) for owner in sorted(skipped_owners)],
@@ -1147,6 +1185,7 @@ def main() -> int:
     check.add_argument("--expected-targets", type=Path)
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
     check.add_argument("--expected-benchmarks", type=Path)
+    check.add_argument("--declared-benchmarks", type=Path)
     benchmarks = commands.add_parser("benchmark-arguments")
     benchmarks.add_argument("--manifest", type=Path, required=True)
     benchmarks.add_argument("--output", type=Path, required=True)
@@ -1209,7 +1248,8 @@ def main() -> int:
         return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
-                         args.expected_targets, tuple(args.expected_analysis), args.expected_benchmarks)
+                         args.expected_targets, tuple(args.expected_analysis), args.expected_benchmarks,
+                         args.declared_benchmarks)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
