@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T08:16:49.996790+00:00",
+    "updatedAt": "2026-10-18T08:26:21.809863+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -3506,13 +3506,13 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-18T08:16:49.996790+00:00",
+      "updatedAt": "2026-10-18T08:26:21.809863+00:00",
       "summary": "Rebased onto current upstream after Nayana’s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. All applicable public checks have finished: eight pass and four workflow-change scans are skipped. Fresh maintainer approval is still required.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
       "number": 15315,
       "followup": {
-        "disposition": "Fresh maintainer approval pending; older import failure under diagnosis",
+        "disposition": "Direct-include lint correction and exact-source validation in progress",
         "owner": "hostinet_delivery",
-        "nextAction": "Diagnose public Buildkite build 51250 on import #15942. It imports intermediate 2d386d8517, not final 3c90764766; the difference is formatting only. Keep that failure distinct from the final head’s completed public checks and pending fresh maintainer approval. No new source change or approval is inferred.",
+        "nextAction": "Add the owning linux/if_link.h header for IFLA_NET_NS_FD and validate the exact standalone source. Import #15942’s tuntap.cc is byte-identical to final 3c90764766 despite its older source footer, so this finding affects the current C++ source. Canonical already had the include and masked the standalone omission. Preserve final-head approval state; no new human approval is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
@@ -3525,7 +3525,7 @@
         "sourceHead": "3c90764766edd626609fd79836d82c6e1e28ad99",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-18T08:16:49.996790+00:00"
+        "observedAt": "2026-10-18T08:26:21.809863+00:00"
       },
       "head": "3c90764766edd626609fd79836d82c6e1e28ad99"
     },
