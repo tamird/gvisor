@@ -17031,6 +17031,12 @@
   license:
     - GPL-2.0
     - MIT
+- dependency: package_metadata
+  version: https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.7/supply-chain-v0.0.7.tar.gz
+  retrieved: "2026-10-18"
+  commit: 0025d6abf888945fd2e14d62b92ada5c6d958fbf
+  sha256: 8f27dc7393e3f3bdc793bdc4ba36d67a63c22cc9d38cc65d3204654974ea4563
+  license: Apache-2.0
 - dependency: pigz
   version: https://zlib.net/pigz/pigz-2.8.tar.gz
   retrieved: "2026-10-18"
