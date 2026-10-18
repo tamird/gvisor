@@ -164,13 +164,13 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      test:amd64|test:arm64|smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64|pgo:amd64) ;;
-      *) printf 'Local tests support explicit test targets, smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      test:amd64|test:arm64|smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-save:amd64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64|pgo:amd64) ;;
+      *) printf 'Local tests support explicit test targets, smoke, bwrap, ordinary syscalls, AMD64 save/restore, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
-if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 || ( ${1:-} != unit && ${1:-} != container && ${1:-} != syscalls && ${1:-} != syscalls-resume && ${1:-} != syscalls-kvm ) ) ]]; then
+if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 || ( ${1:-} != unit && ${1:-} != container && ${1:-} != syscalls && ${1:-} != syscalls-save && ${1:-} != syscalls-resume && ${1:-} != syscalls-kvm ) ) ]]; then
   printf 'Local test requirements apply only to hybrid unit/container/syscall lanes.\n' >&2
   exit 2
 fi
@@ -197,9 +197,9 @@ if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1
   case "$1" in
     build) explicit_targets=("${build_targets[@]}"); conflicting_targets=${#test_targets[@]} ;;
     test|pgo) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
-    syscalls|syscalls-kvm|syscalls-rc)
+    syscalls|syscalls-save|syscalls-kvm|syscalls-rc)
       if [[ -n $syscall_bucket || ( $1 != syscalls-rc && $test_execution != local ) ]]; then
-        printf 'Explicit syscall owners require a local ordinary or RC profile without buckets.\n' >&2
+        printf 'Explicit syscall owners require a local syscall or RC profile without buckets.\n' >&2
         exit 2
       fi
       explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]}

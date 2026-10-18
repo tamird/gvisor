@@ -58,7 +58,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
         options+=("--${lanes[0]}-target=$target")
       done
       ;;
-    syscalls|syscalls-kvm|syscalls-rc|pgo)
+    syscalls|syscalls-save|syscalls-kvm|syscalls-rc|pgo)
       for target in "${selected_targets[@]}"; do
         options+=("--test-target=$target")
       done
@@ -187,7 +187,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       options+=(--test-execution=local)
       case "${lanes[*]}" in
-        unit|container|syscalls|syscalls-resume|syscalls-kvm)
+        unit|container|syscalls|syscalls-save|syscalls-resume|syscalls-kvm)
           options+=("--local-test-requirements=${QUALIFICATION_LOCAL_TEST_REQUIREMENTS-namespace}")
           ;;
       esac
@@ -216,7 +216,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|amd64:pgo|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:syscalls-save|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|amd64:pgo|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
@@ -237,7 +237,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           ( $QUALIFICATION_EXECUTION == local &&
             ( $qualification_container == true || ${lanes[*]} == test ||
               ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-kvm ||
-              ${lanes[*]} == syscalls-resume || ${lanes[*]} == pgo ) ) ]]; then
+              ${lanes[*]} == syscalls-save || ${lanes[*]} == syscalls-resume || ${lanes[*]} == pgo ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
@@ -356,7 +356,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         sudo -n modprobe iptable_filter
         sudo -n modprobe iptable_nat
       fi
-      if [[ ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-resume || ${lanes[*]} == syscalls-kvm ]]; then
+      if [[ ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-save || ${lanes[*]} == syscalls-resume || ${lanes[*]} == syscalls-kvm ]]; then
         # The maintained rtnetlink syscall owners invoke ip and OpenBSD nc.
         sudo -n apt-get update
         sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
