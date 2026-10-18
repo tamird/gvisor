@@ -257,6 +257,7 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 				select {
 				case <-done:
 					if err == nil {
+						fmt.Print(output)
 						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
 						return
 					}
