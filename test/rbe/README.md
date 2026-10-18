@@ -1208,9 +1208,11 @@ its recorded producer log must show the miss and build.
 with the daemon socket's group, private writable state and no effective
 capabilities. This checks Docker-user compatibility, not Docker isolation.
 The ordinary
-`source_archive_load_test`, `stable_diffusion_archive_load_test` and
-`triton_archive_load_test` check the loaded tags, config and ordered layer
-identities without starting application containers.
+`source_archive_load_test`, `stable_diffusion_archive_load_test`,
+`triton_archive_load_test` and `tpu_vllm_archive_load_test` check the loaded
+tags, config and ordered layer identities without starting application
+containers. The TPU archive has an explicit source target because Make
+excludes it from routine image checks.
 
 Large source builds request 256GB disk and 12GB memory; conversion requests
 80GB disk and 12GB memory. These are requests, not guaranteed capacity or

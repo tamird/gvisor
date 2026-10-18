@@ -393,20 +393,21 @@ sh_test(
 
 # Checks of the source exports. Each action owns a disposable daemon;
 # no container or GPU workload is executed.
-_LARGE_ARCHIVES = {
-    "stable_diffusion": "gpu/stable-diffusion-xl",
-    "triton": "gpu/triton",
+_SOURCE_ARCHIVES = {
+    "stable_diffusion": ("gpu/stable-diffusion-xl", "gpu_stable_diffusion_source_amd64", "256GB"),
+    "tpu_vllm": ("tpu/vllm", "tpu_vllm_source_amd64", "80GB"),
+    "triton": ("gpu/triton", "gpu_triton_source_amd64", "256GB"),
 }
 
 [
     docker_daemon_config(
         name = name + "_archive_config",
         testonly = True,
-        images = ["//test/docker:gpu_" + name + "_source_amd64"],
+        images = ["//test/docker:" + archive],
         runtime = None,
         tags = ["manual"],
     )
-    for name in _LARGE_ARCHIVES
+    for name, (_, archive, _) in _SOURCE_ARCHIVES.items()
 ]
 
 [
@@ -417,20 +418,20 @@ _LARGE_ARCHIVES = {
         command = ":source_archive_test",
         command_args = [
             "-test.v",
-            "--archive=$(rootpath //test/docker:gpu_" + name + "_source_amd64)",
+            "--archive=$(rootpath //test/docker:" + archive + ")",
             "--image=" + image,
         ],
-        data = ["//test/docker:gpu_" + name + "_source_amd64"],
+        data = ["//test/docker:" + archive],
         docker_config = ":" + name + "_archive_config",
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
         # The prior 80GB source worker ran out of disk while exporting Stable.
-        # These archives are 21.7/48.3GB compressed; expanded sizes remain an
-        # observed result, not an assumed equality with compressed bytes.
+        # Stable/Triton archives are 21.7/48.3GB compressed; expanded sizes
+        # remain measured separately from compressed bytes.
         exec_properties = docker_test_exec_properties(
-            free_disk = "256GB",
+            free_disk = free_disk,
             memory = "12GB",
             vfs = True,
         ),
@@ -444,7 +445,7 @@ _LARGE_ARCHIVES = {
             "@platforms//cpu:x86_64",
         ],
     )
-    for name, image in _LARGE_ARCHIVES.items()
+    for name, (image, archive, free_disk) in _SOURCE_ARCHIVES.items()
 ]
 
 # The ordinary unit owners retain portable environment skips. Qualification
