@@ -283,13 +283,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           'test:buildbuddy_remote_executor --nocache_test_results' \
           'test:buildbuddy_remote_executor --runs_per_test=1' \
           'test:buildbuddy_remote_executor --flaky_test_attempts=1'
-        if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
-          printf '%s\n' 'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
-        else
-          # Bazel retains each undeclared file and its manifest directly. The
-          # container worker has no zip; collection format is not test scope.
-          printf '%s\n' 'test:buildbuddy_remote_executor --nozip_undeclared_test_outputs'
-        fi
+        # Minimal test workers need not contain zip. Bazel retains the files
+        # directly, and the qualification collector accepts either format.
+        printf '%s\n' 'test:buildbuddy_remote_executor --nozip_undeclared_test_outputs'
       fi
     } >> "$qualification_rc"
     qualification_seconds=0
