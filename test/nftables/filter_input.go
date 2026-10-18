@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/test/netutils"
@@ -46,7 +46,7 @@ func (*FilterInputDropAll) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*FilterInputDropAll) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputDropAll) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := createDropAllTable(ipv6, "filterTab"); err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (*FilterInputDropAll) ContainerAction(ctx context.Context, ip net.IP, ipv6 
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*FilterInputDropAll) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputDropAll) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.SendUDPLoop(ctx, ip, dropPort, ipv6)
 }
 

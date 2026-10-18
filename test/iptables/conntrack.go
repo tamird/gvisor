@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"syscall"
 	"time"
 
@@ -47,7 +48,7 @@ func (*FilterInputConntrackNewDrop) Name() string {
 	return "FilterInputConntrackNewDrop"
 }
 
-func (*FilterInputConntrackNewDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackNewDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "INPUT", "-p", "tcp", "-m", "conntrack", "--ctstate", "NEW", "--destination-port", fmt.Sprintf("%d", dropPort), "-j", "DROP"); err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func (*FilterInputConntrackNewDrop) ContainerAction(ctx context.Context, ip net.
 	return nil
 }
 
-func (*FilterInputConntrackNewDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackNewDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ConnectTCP(timedCtx, ip, dropPort, ipv6); err == nil {
@@ -81,7 +82,7 @@ func (*FilterInputConntrackEstablishedAccept) Name() string {
 	return "FilterInputConntrackEstablishedAccept"
 }
 
-func (*FilterInputConntrackEstablishedAccept) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackEstablishedAccept) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Accept established connections, drop everything else.
 	if err := filterTable(ipv6, "-A", "INPUT", "-m", "conntrack", "--ctstate", "ESTABLISHED", "-j", "ACCEPT"); err != nil {
 		return err
@@ -92,7 +93,7 @@ func (*FilterInputConntrackEstablishedAccept) ContainerAction(ctx context.Contex
 	return netutils.ListenTCP(ctx, acceptPort, ipv6)
 }
 
-func (*FilterInputConntrackEstablishedAccept) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackEstablishedAccept) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
@@ -105,7 +106,7 @@ func (*FilterInputConntrackInvertNewDrop) Name() string {
 	return "FilterInputConntrackInvertNewDrop"
 }
 
-func (*FilterInputConntrackInvertNewDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackInvertNewDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Drop anything that is NOT new, accept new.
 	if err := filterTable(ipv6, "-A", "INPUT", "-p", "tcp", "-m", "conntrack", "!", "--ctstate", "NEW", "--destination-port", fmt.Sprintf("%d", dropPort), "-j", "DROP"); err != nil {
 		return err
@@ -113,7 +114,7 @@ func (*FilterInputConntrackInvertNewDrop) ContainerAction(ctx context.Context, i
 	return nil
 }
 
-func (*FilterInputConntrackInvertNewDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackInvertNewDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -126,7 +127,7 @@ func (*FilterInputConntrackUDPNewDrop) Name() string {
 	return "FilterInputConntrackUDPNewDrop"
 }
 
-func (*FilterInputConntrackUDPNewDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackUDPNewDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "INPUT", "-p", "udp", "-m", "conntrack", "--ctstate", "NEW", "--destination-port", fmt.Sprintf("%d", dropPort), "-j", "DROP"); err != nil {
 		return err
 	}
@@ -142,7 +143,7 @@ func (*FilterInputConntrackUDPNewDrop) ContainerAction(ctx context.Context, ip n
 	return nil
 }
 
-func (*FilterInputConntrackUDPNewDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackUDPNewDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.SendUDPLoop(ctx, ip, dropPort, ipv6)
 }
 
@@ -155,14 +156,14 @@ func (*FilterInputConntrackUDPEstablishedAccept) Name() string {
 	return "FilterInputConntrackUDPEstablishedAccept"
 }
 
-func (*FilterInputConntrackUDPEstablishedAccept) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackUDPEstablishedAccept) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "INPUT", "-p", "udp", "-m", "conntrack", "--ctstate", "ESTABLISHED", "-j", "ACCEPT"); err != nil {
 		return err
 	}
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
 
-func (*FilterInputConntrackUDPEstablishedAccept) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackUDPEstablishedAccept) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.SendUDPLoop(ctx, ip, acceptPort, ipv6)
 }
 
@@ -175,7 +176,7 @@ func (*FilterInputConntrackICMPEcho) Name() string {
 	return "FilterInputConntrackICMPEcho"
 }
 
-func (*FilterInputConntrackICMPEcho) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackICMPEcho) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	proto := "icmp"
 	if ipv6 {
 		proto = "icmpv6"
@@ -186,7 +187,7 @@ func (*FilterInputConntrackICMPEcho) ContainerAction(ctx context.Context, ip net
 	return nil
 }
 
-func (*FilterInputConntrackICMPEcho) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackICMPEcho) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -200,7 +201,7 @@ func (*FilterInputConntrackRelated) Name() string {
 	return "FilterInputConntrackRelated"
 }
 
-func (*FilterInputConntrackRelated) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackRelated) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	proto := "icmp"
 	if ipv6 {
 		proto = "icmpv6"
@@ -216,7 +217,11 @@ func (*FilterInputConntrackRelated) ContainerAction(ctx context.Context, ip net.
 
 	// Nothing listens on dropPort on the peer, which answers with an ICMP port
 	// unreachable. A connected UDP socket reports it as ECONNREFUSED.
-	conn, err := net.DialUDP(netutils.UDPNetwork(ipv6), nil, &net.UDPAddr{IP: ip, Port: dropPort})
+	conn, err := net.DialUDP(
+		netutils.UDPNetwork(ipv6),
+		nil,
+		net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, dropPort)),
+	)
 	if err != nil {
 		return err
 	}
@@ -240,7 +245,7 @@ func (*FilterInputConntrackRelated) ContainerAction(ctx context.Context, ip net.
 	}
 }
 
-func (*FilterInputConntrackRelated) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackRelated) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -253,7 +258,7 @@ func (*FilterOutputConntrackDNAT) Name() string {
 	return "FilterOutputConntrackDNAT"
 }
 
-func (*FilterOutputConntrackDNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputConntrackDNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-m", "conntrack", "!", "--ctstate", "DNAT", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -262,14 +267,14 @@ func (*FilterOutputConntrackDNAT) ContainerAction(ctx context.Context, ip net.IP
 	if ipv6 {
 		target = fmt.Sprintf("[::1]:%d", acceptPort)
 	}
-	return loopbackTest(ctx, ipv6, net.ParseIP(dst),
+	return loopbackTest(ctx, ipv6, netip.MustParseAddr(dst),
 		"-A", "OUTPUT",
 		"-d", dst,
 		"-p", "udp", "-m", "udp",
 		"-j", "DNAT", "--to-destination", target)
 }
 
-func (*FilterOutputConntrackDNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputConntrackDNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -283,7 +288,7 @@ func (*FilterOutputConntrackNoDNAT) Name() string {
 	return "FilterOutputConntrackNoDNAT"
 }
 
-func (*FilterOutputConntrackNoDNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputConntrackNoDNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "OUTPUT", "-p", "udp", "-m", "conntrack", "--ctstate", "DNAT", "-j", "DROP"); err != nil {
 		return err
 	}
@@ -294,7 +299,7 @@ func (*FilterOutputConntrackNoDNAT) ContainerAction(ctx context.Context, ip net.
 	sendCh := make(chan error, 1)
 	listenCh := make(chan error, 1)
 	go func() {
-		sendCh <- netutils.SendUDPLoop(ctx, net.ParseIP(dst), acceptPort, ipv6)
+		sendCh <- netutils.SendUDPLoop(ctx, netip.MustParseAddr(dst), acceptPort, ipv6)
 	}()
 	go func() {
 		listenCh <- netutils.ListenUDP(ctx, acceptPort, ipv6)
@@ -307,7 +312,7 @@ func (*FilterOutputConntrackNoDNAT) ContainerAction(ctx context.Context, ip net.
 	}
 }
 
-func (*FilterOutputConntrackNoDNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterOutputConntrackNoDNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -321,13 +326,13 @@ func (*FilterInputConntrackNoSNAT) Name() string {
 	return "FilterInputConntrackNoSNAT"
 }
 
-func (*FilterInputConntrackNoSNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackNoSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := filterTable(ipv6, "-A", "INPUT", "-p", "tcp", "-m", "conntrack", "--ctstate", "SNAT", "-j", "DROP"); err != nil {
 		return err
 	}
 	return netutils.ConnectTCP(ctx, ip, acceptPort, ipv6)
 }
 
-func (*FilterInputConntrackNoSNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*FilterInputConntrackNoSNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ListenTCP(ctx, acceptPort, ipv6)
 }

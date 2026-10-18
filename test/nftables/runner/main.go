@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 
 	"gvisor.dev/gvisor/test/nftables"
 )
@@ -59,21 +60,21 @@ func main() {
 
 // getIP listens for a connection from the local process and returns the source
 // IP of that connection.
-func getIP() (net.IP, error) {
+func getIP() (netip.Addr, error) {
 	localAddr := net.TCPAddr{
 		Port: nftables.IPExchangePort,
 	}
 	listener, err := net.ListenTCP("tcp", &localAddr)
 	if err != nil {
-		return net.IP{}, fmt.Errorf("failed listening for IP: %v", err)
+		return netip.Addr{}, fmt.Errorf("failed listening for IP: %v", err)
 	}
 	defer listener.Close()
 	conn, err := listener.AcceptTCP()
 	if err != nil {
-		return net.IP{}, fmt.Errorf("failed accepting IP: %v", err)
+		return netip.Addr{}, fmt.Errorf("failed accepting IP: %v", err)
 	}
 	defer conn.Close()
 	log.Printf("Connected to %v", conn.RemoteAddr())
 
-	return conn.RemoteAddr().(*net.TCPAddr).IP, nil
+	return conn.RemoteAddr().(*net.TCPAddr).AddrPort().Addr().Unmap(), nil
 }

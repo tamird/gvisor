@@ -1404,8 +1404,7 @@ func testCheckpointRestoreTCPConnection(t *testing.T, fName string, numConn int,
 	}
 	d.RestoreInTest(ctx, t, checkpointFile)
 
-	var newIP net.IP
-	newIP, err = d.FindIP(ctx, false)
+	newIP, err := d.FindIP(ctx, false)
 	if err != nil {
 		t.Fatalf("docker.FindIP failed: %v", err)
 	}
