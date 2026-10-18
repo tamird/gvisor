@@ -7,6 +7,12 @@ package(
 )
 
 filegroup(
+    name = "pgo_profiles",
+    srcs = glob(["profiles/data/**"]),
+    visibility = ["//test/benchmarks:__subpackages__"],
+)
+
+filegroup(
     name = "go_export_sources",
     srcs = glob(
         ["*.go"],

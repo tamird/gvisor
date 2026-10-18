@@ -80,3 +80,44 @@ def benchmark_test(name, tags = [], use_for_pgo = True, continuous = [], cohort 
             features = ["fully_static_link"],
             **continuous_kwargs
         )
+
+    if use_for_pgo:
+        # The public PGO selector runs the whole tagged benchmark, not the
+        # continuous filter. Each current PGO benchmark has one image cohort.
+        if len(continuous) != 1:
+            fail("PGO benchmark %s requires one declared image cohort" % name)
+        pgo_kwargs = dict(kwargs)
+        pgo_kwargs.update(size = "large", timeout = "eternal")
+        owned_docker_test(
+            name = name + "_pgo",
+            architectures = ["amd64"],
+            cohort = continuous[0]["cohort"],
+            data = [
+                "//runsc:pgo_profiles",
+                "//tools/profiletool",
+            ],
+            memory = "8GB",
+            free_disk = "40GB",
+            runtime_variants = [
+                struct(
+                    name = runtime.name,
+                    args = runtime.args,
+                    test_args = [
+                        "-pgo-benchmarks=true",
+                        "-pgo-profiletool=$(rootpath //tools/profiletool)",
+                        "-pgo-platform=" + runtime.name,
+                        "-pgo-benchmark=" + name.removesuffix("_test"),
+                        "-test.v",
+                        "-test.bench=.",
+                        "-test.benchtime=20s",
+                    ],
+                    tags = runtime.tags,
+                )
+                for runtime in _CONTINUOUS_RUNTIMES
+                if runtime.name != "runc"
+            ],
+            tags = ["manual", "pgo-benchmark"],
+            features = ["fully_static_link"],
+            target_compatible_with = ["@platforms//cpu:x86_64"],
+            **pgo_kwargs
+        )

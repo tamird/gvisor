@@ -140,7 +140,7 @@ class Attempt:
         return result
 
 
-def capture(events: Path, output: Path, output_root: Path, report_dir: Path) -> dict[str, object]:
+def capture(events: Path, output: Path, output_root: Path, report_dir: Path, retain_outputs: bool = False) -> dict[str, object]:
     """Copy all advertised original reports before returning capture failures."""
     errors: list[str] = []
     reports: list[dict[str, object]] = []
@@ -182,7 +182,7 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path) -> 
                         # Guest logs can survive only in undeclared outputs when
                         # the wrapper times out before printing them to test.log.
                         # Bazel may publish a ZIP or the individual files.
-                        if result.get("status") != "PASSED":
+                        if retain_outputs or result.get("status") != "PASSED":
                             names.extend(name for name in advertised
                                          if name == "test.outputs__outputs.zip" or name.startswith("test.outputs/"))
                         for name in names:
@@ -280,7 +280,8 @@ class Benchmark:
 def benchmark_manifest(path: Path) -> tuple[list[str], dict[str, list[Benchmark]]]:
     """Read the explicit benchmark-only Go invocation contract, before Bazel."""
     value = read_json(path)
-    if set(value) != {"arguments", "owners"}:
+    pgo = "pgo" in value
+    if set(value) != {"arguments", "owners"} | ({"pgo"} if pgo else set()):
         raise ValueError("Benchmark manifest requires exactly arguments and owners")
     arguments = [string(item) for item in sequence(value.get("arguments"))]
     flags: dict[str, str] = {}
@@ -289,10 +290,12 @@ def benchmark_manifest(path: Path) -> tuple[list[str], dict[str, list[Benchmark]
         if match is None:
             raise ValueError(f"Unsupported benchmark argument: {argument}")
         name, setting = match.groups()
-        if name in flags or setting is None and name != "benchmem":
+        if name in flags or setting is None and name not in ("benchmem", "v"):
             raise ValueError(f"Duplicate or missing benchmark flag value: {argument}")
         flags[name] = "true" if setting is None else setting
-    if flags.get("run") != "^$" or flags.get("v") != "false" or not flags.get("bench"):
+    if pgo and flags != {"v": "true", "bench": ".", "benchtime": "20s"}:
+        raise ValueError("PGO requires the public verbose, whole-benchmark, 20-second arguments")
+    if not pgo and (flags.get("run") != "^$" or flags.get("v") != "false" or not flags.get("bench")):
         raise ValueError("Benchmark arguments require -test.run=^$, -test.v=false and -test.bench=PATTERN")
     owners: dict[str, list[Benchmark]] = {}
     for label, rows in mapping(value.get("owners")).items():
@@ -317,25 +320,94 @@ def benchmark_manifest(path: Path) -> tuple[list[str], dict[str, list[Benchmark]
         owners[label] = leaves
     if not owners:
         raise ValueError("No expected benchmark owners")
+    if pgo:
+        profiles = pgo_expectations(value)
+        if set(profiles) != set(owners):
+            raise ValueError("PGO exclusions must name every selected owner")
+        for owner, leaves in owners.items():
+            if set(profiles[owner].excluded) & {leaf.name for leaf in leaves}:
+                raise ValueError(f"PGO active and excluded leaves overlap for {owner}")
     return arguments, owners
 
 
-def benchmark_rows(path: Path) -> list[dict[str, object]]:
+@dataclass(frozen=True)
+class PGO:
+    excluded: tuple[str, ...]
+    platform: str
+    benchmark: str
+
+
+def pgo_expectations(value: dict[str, object]) -> dict[str, PGO]:
+    """Read source-selected profile identities and deliberate PGO exclusions."""
+    profiles = {}
+    for owner, raw in mapping(value["pgo"]).items():
+        row = mapping(raw)
+        if set(row) != {"excluded", "platform", "benchmark"}:
+            raise ValueError(f"Invalid PGO fields for {owner}")
+        leaves = tuple(string(name) for name in sequence(row["excluded"]))
+        platform, benchmark = string(row["platform"]), string(row["benchmark"])
+        if (len(set(leaves)) != len(leaves)
+                or any(not name.startswith("Benchmark") or any(c.isspace() for c in name) for name in leaves)
+                or platform not in ("systrap", "kvm") or re.fullmatch(r"[a-z0-9_]+", benchmark) is None):
+            raise ValueError(f"Invalid PGO expectation for {owner}")
+        profiles[owner] = PGO(leaves, platform, benchmark)
+    return profiles
+
+
+def pgo_result(attempt: Attempt, reports: dict[tuple[Attempt, str], Path], expected: PGO) -> dict[str, object]:
+    """Verify the generated profile and refresh decision from retained outputs."""
+    names = ("pgo/result.json", f"pgo/{expected.benchmark}.pgo.pprof.pb.gz")
+    if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
+        with zipfile.ZipFile(archive_path) as archive:
+            for name in names:
+                if archive.namelist().count(name) != 1 or archive.getinfo(name).file_size > MAX_REPORT_BYTES:
+                    raise ValueError(f"Expected one bounded PGO output: {name}")
+            metadata, profile = (archive.read(name) for name in names)
+    else:
+        metadata, profile = (reports[(attempt, "test.outputs/" + name)].read_bytes() for name in names)
+    value = mapping(json.loads(metadata))
+    fields = {"runtime_key", "platform", "benchmark", "generated_sha256", "cpu_samples", "decision", "comparison"}
+    if set(value) not in (fields, fields | {"baseline_sha256"}):
+        raise ValueError("Invalid PGO result fields")
+    if (value["platform"] != expected.platform or value["benchmark"] != expected.benchmark
+            or not string(value["runtime_key"]).endswith("-linux-amd64") or number(value["cpu_samples"]) <= 0
+            or not profile or hashlib.sha256(profile).hexdigest() != value["generated_sha256"]):
+        raise ValueError("PGO profile identity, CPU samples or digest differ")
+    decision, comparison = string(value["decision"]), string(value["comparison"])
+    if decision == "add":
+        if "baseline_sha256" in value or comparison:
+            raise ValueError("New PGO baseline unexpectedly has a comparison")
+    elif decision in ("retain", "refresh"):
+        if not comparison or re.fullmatch(r"[0-9a-f]{64}", string(value.get("baseline_sha256"))) is None:
+            raise ValueError("PGO comparison requires the existing baseline digest and result")
+    else:
+        raise ValueError(f"Invalid PGO refresh decision: {decision}")
+    return {"generation": "PASS", **value, "bytes": len(profile)}
+
+
+def benchmark_rows(path: Path, pgo: bool = False) -> list[dict[str, object]]:
     """Read Go's benchmark name/iteration/(value unit)+ output, not test events.
 
     Accept finite numeric metrics; neither aggregate nor compare values.
     https://pkg.go.dev/golang.org/x/perf/benchfmt#Reader
     """
     rows = []
-    last = ""
+    completed = False
     with path.open() as stream:
         for line in stream:
-            text = line.strip()
-            if text:
-                last = text
+            text = (line.removeprefix("\x16") if pgo else line).strip()
+            if text == "PASS":
+                if completed:
+                    raise ValueError("Benchmark log has multiple Go package PASS markers")
+                completed = True
+                continue
+            if text == "FAIL":
+                raise ValueError("Benchmark log has a Go package FAIL marker")
             fields = text.split()
             if not fields or not fields[0].startswith("Benchmark") or len(fields) == 1:
                 continue
+            if completed:
+                raise ValueError("Benchmark measurement follows the Go package PASS marker")
             name, iterations, *measurements = fields
             if not iterations.isdecimal() or int(iterations) < 1 or not measurements or len(measurements) % 2:
                 raise ValueError(f"Malformed benchmark row: {text}")
@@ -345,9 +417,12 @@ def benchmark_rows(path: Path) -> list[dict[str, object]]:
                 if not math.isfinite(value) or unit in metrics:
                     raise ValueError(f"Invalid or duplicate benchmark metric: {text}")
                 metrics[unit] = value
-            rows.append({"name": name, "iterations": int(iterations), "metrics": metrics})
-    if last != "PASS":
-        raise ValueError("Benchmark log does not end with the Go package PASS marker")
+            rows.append({"name": re.sub(r"-\d+$", "", name) if pgo else name,
+                         "iterations": int(iterations), "metrics": metrics})
+    # Bazel appends spawn stderr after stdout, including Docker image-pull logs.
+    # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/exec/StandaloneTestStrategy.java#L835-L839
+    if not completed:
+        raise ValueError("Benchmark log has no Go package PASS marker")
     return rows
 
 
@@ -433,13 +508,19 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     testing = info["command_kind"] in ("test", "benchmark")
     benchmark_expected: dict[str, list[Benchmark]] = {}
     benchmark_evidence: dict[str, object] = {}
+    pgo_expected: dict[str, PGO] | None = None
     if benchmark_mode != (expected_benchmarks is not None):
         errors.append("Benchmark mode requires its explicit manifest; ordinary commands cannot use one")
     if expected_benchmarks is not None:
         try:
             arguments, benchmark_expected = benchmark_manifest(expected_benchmarks)
+            raw_manifest = read_json(expected_benchmarks)
+            if "pgo" in raw_manifest:
+                pgo_expected = pgo_expectations(raw_manifest)
             benchmark_evidence = {"path": str(expected_benchmarks), **file_record(expected_benchmarks),
                                   "owners": {label: [asdict(leaf) for leaf in leaves] for label, leaves in benchmark_expected.items()}}
+            if pgo_expected is not None:
+                benchmark_evidence["pgo"] = {label: asdict(profile) for label, profile in pgo_expected.items()}
             original = [arg[len("--test_arg="):] for arg in info["arguments"] if arg.startswith("--test_arg=")]
             if original != arguments:
                 errors.append("Original benchmark arguments differ from the manifest")
@@ -578,7 +659,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 if counts["failed"]:
                     failures.append({**asdict(attempt), "reason": "XML test failures", "cases": counts["failures"]})
                 if benchmark_mode:
-                    rows = benchmark_rows(log)
+                    rows = benchmark_rows(log, pgo=pgo_expected is not None)
                     observation["benchmarks"] = rows
                     wanted = {leaf.name: leaf for leaf in benchmark_expected.get(attempt.owner.label, [])}
                     actual = Counter(string(row["name"]) for row in rows)
@@ -586,11 +667,28 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                         errors.append(f"Benchmark rows differ for {attempt}: got {dict(actual)}, expected {wanted}")
                     for row in rows:
                         if (leaf := wanted.get(string(row["name"]))) is not None:
-                            if set(mapping(row["metrics"])) != set(leaf.units) or leaf.iterations is not None and row["iterations"] != leaf.iterations:
+                            units = set(mapping(row["metrics"]))
+                            units_match = set(leaf.units) <= units if pgo_expected is not None else set(leaf.units) == units
+                            if not units_match or leaf.iterations is not None and row["iterations"] != leaf.iterations:
                                 errors.append(f"Benchmark metrics/iterations differ for {attempt}: {row}")
-                    if counts["passed"] or counts["skipped"]:
+                    if pgo_expected is not None:
+                        profile = pgo_expected[attempt.owner.label]
+                        excluded = profile.excluded
+                        benchmark_cases = list(ET.parse(xml).getroot().iter("testcase"))
+                        observed_skips = [case.get("name", "") for case in benchmark_cases
+                                          if case.find("skipped") is not None]
+                        observation["pgo_excluded"] = observed_skips
+                        observation["pgo"] = pgo_result(attempt, reports, profile)
+                        if Counter(observed_skips) != Counter(excluded):
+                            errors.append(f"PGO exclusions differ for {attempt}: got {observed_skips}, expected {excluded}")
+                        # Verbose Go wrappers may emit benchmark testcase XML.
+                        # Coverage still requires every active measurement row.
+                        for case in benchmark_cases:
+                            if not case.get("name", "").startswith("Benchmark"):
+                                errors.append(f"PGO invocation contains a named test: {attempt}: {case.get('name')}")
+                    elif counts["passed"] or counts["skipped"]:
                         errors.append(f"Benchmark-only invocation contains named tests: {attempt}")
-            except (OSError, ValueError, KeyError, ET.ParseError) as error:
+            except (OSError, ValueError, KeyError, ET.ParseError, zipfile.BadZipFile) as error:
                 errors.append(f"{attempt}: {error}")
             if result.get("status") != "PASSED":
                 failures.append({**asdict(attempt), "reason": "test result", "status": result.get("status")})
@@ -760,6 +858,7 @@ def main() -> int:
     copy = commands.add_parser("capture")
     for name in ("events", "output", "output-root", "report-dir"):
         copy.add_argument("--" + name, type=Path, required=True)
+    copy.add_argument("--retain-outputs", action="store_true")
     analyze = commands.add_parser("preflight")
     for name in ("events", "output"):
         analyze.add_argument("--" + name, type=Path, required=True)
@@ -776,6 +875,7 @@ def main() -> int:
     benchmarks.add_argument("--manifest", type=Path, required=True)
     benchmarks.add_argument("--output", type=Path, required=True)
     benchmarks.add_argument("--target", action="append", required=True)
+    benchmarks.add_argument("--selected-manifest", type=Path)
     pack = commands.add_parser("bundle")
     for name in ("directory", "output"):
         pack.add_argument("--" + name, type=Path, required=True)
@@ -798,12 +898,19 @@ def main() -> int:
         return int(result["status"] != "PASS")
     if args.command == "benchmark-arguments":
         arguments, owners = benchmark_manifest(args.manifest)
-        if set(args.target) != set(owners):
+        raw = read_json(args.manifest)
+        if args.selected_manifest is not None:
+            if "pgo" not in raw or len(set(args.target)) != len(args.target) or not set(args.target) <= set(owners):
+                parser.error("PGO selection must contain unique declared owners")
+            raw["owners"] = {owner: mapping(raw["owners"])[owner] for owner in args.target}
+            raw["pgo"] = {owner: mapping(raw["pgo"])[owner] for owner in args.target}
+            write_json(args.selected_manifest, raw)
+        elif set(args.target) != set(owners):
             parser.error("Benchmark manifest owners differ from selected targets")
         args.output.write_text("".join(argument + "\n" for argument in arguments))
         return 0
     if args.command == "capture":
-        result = capture(args.events, args.output, args.output_root, args.report_dir)
+        result = capture(args.events, args.output, args.output_root, args.report_dir, args.retain_outputs)
         return int(bool(result["errors"]))
     if args.command == "preflight":
         result = preflight(args.events, args.native_exit, args.kind)

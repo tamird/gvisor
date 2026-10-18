@@ -64,5 +64,16 @@
       "sha256": "6ae6f5bffe5d32d763f981eee76a025b11d8ee369ff6463afa579d005624f4b3",
       "bytes": 9036
     }
-  ]
+  ],
+  "docker_stderr": {
+    "source": "f0391ef6ded34398e30edaa469877f8e8dcb1c88",
+    "run_id": 39092637450,
+    "artifact_id": 12124020893,
+    "artifact_sha256": "dd8e79728c7bdb75cff95bc8ef23f443047e8d797d829a479dd9780c96d4f4ee",
+    "original_log": "invocation-6QH3ax/reports/k8-fastbuild/testlogs/test/benchmarks/media/ffmpeg_test_pgo_kvm_owned/test.log",
+    "original_log_sha256": "08475895a66e6b97dfc78108fd9271ac78dc669b855b97c9248252cab44ecf87",
+    "suffix_offset": 2208,
+    "suffix_sha256": "9695d3f35cb3c84ccf8d1940b4ae5c8189282acd9df692d8fa0308de675f99aa",
+    "projection": "Unchanged stderr suffix appended by Bazel after the Go package PASS marker."
+  }
 }

@@ -11,6 +11,7 @@ go_library(
     srcs = [
         "harness.go",
         "machine.go",
+        "pgo.go",
         "util.go",
     ],
     importpath = "gvisor.dev/gvisor/test/benchmarks/harness",
@@ -20,5 +21,6 @@ go_library(
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/mount:go_default_library",
+        "@com_github_google_pprof//profile:go_default_library",
     ],
 )

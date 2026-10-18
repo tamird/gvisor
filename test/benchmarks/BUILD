@@ -43,3 +43,17 @@ test_suite(
     ],
     visibility = ["//:sandbox"],
 )
+
+test_suite(
+    name = "pgo_tests",
+    tags = ["manual"],
+    tests = [
+        "//test/benchmarks/base:sysbench_test_pgo_owned",
+        "//test/benchmarks/database:redis_test_pgo_owned",
+        "//test/benchmarks/fs:rubydev_test_pgo_owned",
+        "//test/benchmarks/media:ffmpeg_test_pgo_owned",
+        "//test/benchmarks/network:iperf_test_pgo_owned",
+        "//test/benchmarks/network:nginx_test_pgo_owned",
+    ],
+    visibility = ["//:sandbox"],
+)

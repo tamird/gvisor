@@ -125,8 +125,9 @@ metrics. Optional `iterations` checks fixed-iteration runs. Numeric values are
 retained without a performance comparison or significance claim.
 
 Benchmark mode requires successful native/BEP outcomes, unchanged source,
-complete attempts and matching original output ending in `PASS`. XML errors
-remain failures. `-test.v=false` overrides rules_go's injected test verbosity:
+complete attempts and matching original output with a terminal Go `PASS`
+before any appended spawn stderr. XML errors remain failures.
+`-test.v=false` overrides rules_go's injected test verbosity:
 benchmark RUN markers otherwise become unfinished XML testcases. An empty XML
 suite is expected here, and benchmark observations are reported separately;
 ordinary test mode still requires executed named cases for every owner.
@@ -549,6 +550,36 @@ This fork frontend skips the legacy builder and `runsc` artifact upload on its
 qualification and local-test pilot branches. Other pushes retain that job;
 release artifacts remain owned by the existing release lanes. A smoke result
 does not establish full public qualification.
+
+## PGO profile generation
+
+The `pgo` lane runs the six benchmark sources selected by public
+`benchmark-refresh-pgo`, with its verbose whole-benchmark `20s` flags and
+`-pgo-benchmarks=true`. The existing benchmark wrapper and owned Docker daemon
+collect profiles with the public three-second GC interval and filename pattern.
+The existing Ruby workload retains its own fixed-iteration override.
+
+Select the six `*_pgo_systrap_owned` owners with `architecture=amd64` and
+`execution=remote`; select their `*_pgo_kvm_owned` counterparts with
+`execution=local`. Both use remote compilation. The KVM lane reuses the Actions
+Docker bridge and serial local test execution. Each action keeps the existing
+eternal benchmark timeout; the coordinator has a 120-minute work deadline,
+145-minute step limit and 155-minute job limit.
+
+`test/benchmarks/pgo.json` records all 23 active leaves and deliberate PGO
+exclusions per platform. The producer requires every active measurement and the
+exact exclusions, retains XML failures, and rejects partial or empty runs.
+After containers and the daemon stop, `profiletool merge` produces a profile
+with positive CPU samples. `check-similar` compares it with the committed
+profile for the same Go runtime key, benchmark and platform at the public 0.7
+threshold. Ordinary drift records `refresh`; it is not a generation failure.
+A separate threshold-zero comparison validates both inputs before interpreting
+that shared exit status. A missing matching baseline records `add`.
+
+Each owner retains its merged profile and `pgo/result.json` in the normal
+qualification bundle. The producer verifies the generated digest, profile
+identity and comparison decision. The lane does not apply the 28-day/source-age
+publication gates, replace repository profiles, or commit them to master.
 
 ## Linux kernel coverage
 

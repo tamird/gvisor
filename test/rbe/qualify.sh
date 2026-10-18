@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-fetch license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
+lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks pgo containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-fetch license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -162,7 +162,7 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      test:amd64|test:arm64|smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      test:amd64|test:arm64|smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64|pgo:amd64) ;;
       *) printf 'Local tests support explicit test targets, smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
@@ -194,7 +194,7 @@ if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1
   fi
   case "$1" in
     build) explicit_targets=("${build_targets[@]}"); conflicting_targets=${#test_targets[@]} ;;
-    test) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
+    test|pgo) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
     syscalls|syscalls-kvm|syscalls-rc)
       if [[ -n $syscall_bucket || ( $1 != syscalls-rc && $test_execution != local ) ]]; then
         printf 'Explicit syscall owners require a local ordinary or RC profile without buckets.\n' >&2
@@ -269,7 +269,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    test|build|build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-fetch|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
+    test|build|build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|pgo|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-fetch|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -1258,6 +1258,23 @@ run_lane() (
         options=(--test_tag_filters=-requires-kvm)
       fi
       ;;
+    pgo)
+      if [[ $arch != amd64 || ${#test_targets[@]} == 0 ]]; then
+        printf 'PGO requires explicit AMD64 owners.\n' >&2
+        return 2
+      fi
+      targets=("${test_targets[@]}")
+      for target in "${targets[@]}"; do
+        if [[ ( $test_execution == local && $target != *_pgo_kvm_owned ) ||
+              ( $test_execution == remote && $target != *_pgo_systrap_owned ) ]]; then
+          printf 'PGO selects local KVM or remote systrap owners: %s\n' "$target" >&2
+          return 2
+        fi
+      done
+      if [[ $test_execution == local ]]; then
+        options+=(--local_test_jobs=1)
+      fi
+      ;;
     benchmarks)
       if [[ $arch != amd64 ]]; then
         printf 'Continuous CI benchmarks are declared for AMD64; ARM64 workers remain unqualified.\n' >&2
@@ -1384,7 +1401,7 @@ run_lane() (
     options+=(--sandbox_add_mount_pair=/tmp --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
-        plugin-network|nftables|moby|kvm|language-goferfs|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
+        plugin-network|nftables|moby|kvm|language-goferfs|startup|posture|portforward|root|benchmarks|pgo|docker|cpu-images|gpu-images)
           # Each owned daemon needs separate firewall state. The fixture
           # can attach this private namespace to the job's bridge.
           docker_test_options
@@ -1393,7 +1410,7 @@ run_lane() (
             options+=(--local_test_jobs=1)
           fi
           options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
-          if [[ $lane == language-goferfs || $lane == moby || $lane == kvm || $lane == benchmarks || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
+          if [[ $lane == language-goferfs || $lane == moby || $lane == kvm || $lane == benchmarks || $lane == pgo || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
             options+=(
               --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
               "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local Docker tests through test/rbe/actions.sh}"
