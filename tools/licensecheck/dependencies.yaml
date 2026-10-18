@@ -5,7 +5,8 @@
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
-# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
+# Entries marked manually_audited or containing LicenseRef identifiers require
+# re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"

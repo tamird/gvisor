@@ -27,9 +27,9 @@
 // Entries that cannot be fetched or classified automatically can be maintained
 // by hand. Fetch preserves an existing entry for the same source and declared
 // archive hash, reporting the fetch error. Retention does not establish that
-// current notices were available or classified successfully. LicenseRef entries
-// are always maintained by hand and require a new audit when their artifact pin
-// changes.
+// current notices were available or classified successfully. Entries marked
+// manually_audited, and entries containing LicenseRef identifiers, always retain
+// their reviewed terms and require a new audit when their artifact pin changes.
 package licensecheck
 
 import (
@@ -75,6 +75,15 @@ type Entry struct {
 	Commit     string   `yaml:"commit"`
 	SHA256     string   `yaml:"sha256"`
 	License    Licenses `yaml:"license"`
+
+	// ManuallyAudited preserves reviewed terms that automatic discovery misses.
+	ManuallyAudited bool `yaml:"manually_audited,omitempty"`
+}
+
+func (e Entry) manuallyAudited() bool {
+	return e.ManuallyAudited || slices.ContainsFunc(e.License, func(l License) bool {
+		return strings.HasPrefix(string(l), "LicenseRef-")
+	})
 }
 
 // License identifies terms recognized by the configured scanner, an explicit
@@ -181,7 +190,8 @@ const (
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
-# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
+# Entries marked manually_audited or containing LicenseRef identifiers require
+# re-audit when their artifact pin changes.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -285,7 +295,7 @@ func Fetch(p Paths) error {
 }
 
 // pinnedManualEntries prevents a repository's license from replacing manually
-// audited release-asset terms. For example, github/codeql-action is MIT, but its
+// audited terms. For example, github/codeql-action is MIT, but its
 // CodeQL CLI bundles have separate terms. A changed pin must not fall back to
 // repository classification, even when that classification would succeed.
 // https://github.com/github/codeql-cli-binaries/blob/778dd2254/LICENSE.md
@@ -293,7 +303,7 @@ func pinnedManualEntries(deps []dep, byName map[string]Entry) (map[string]Entry,
 	manual := make(map[string]Entry)
 	for _, d := range deps {
 		e := byName[d.name]
-		if !slices.ContainsFunc(e.License, func(l License) bool { return strings.HasPrefix(string(l), "LicenseRef-") }) {
+		if !e.manuallyAudited() {
 			continue
 		}
 		if problems := verifyProblems([]dep{d}, []Entry{e}); len(problems) != 0 {
@@ -372,13 +382,13 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 			if d.sha256 != "" && e.SHA256 != d.sha256 {
 				problems = append(problems, fmt.Sprintf("%s was audited with sha256 %q, but is now pinned to %q", d.name, e.SHA256, d.sha256))
 			}
+			if e.manuallyAudited() && d.sha256 == "" {
+				problems = append(problems, fmt.Sprintf("%s has manually audited terms without an artifact checksum pin", d.name))
+			}
 			for i, license := range e.License {
 				custom := licenseRefRE.MatchString(string(license))
 				if _, ok := registry.ids[license]; !ok && !custom {
 					problems = append(problems, fmt.Sprintf("%s has unknown license %q", d.name, license))
-				}
-				if custom && d.sha256 == "" {
-					problems = append(problems, fmt.Sprintf("%s has manually audited terms without an artifact checksum pin", d.name))
 				}
 				if i > 0 && e.License[i-1] >= license {
 					problems = append(problems, fmt.Sprintf("licenses of %s are not sorted and unique", d.name))
