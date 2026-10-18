@@ -1095,10 +1095,12 @@ build's default stripping settings.
 A declared OCI image supplies the release tools from an immutable Ubuntu Jammy
 APT snapshot. The existing private Docker fixture owns the daemon, and native
 runc executes the scripts with networking disabled. Only the declared scripts
-and packages are mounted: no Git metadata or publishing script is present, so
-the canonical release script generates its master and nightly repositories.
-The test checks both dated and latest nightly archives against the inputs. It
-neither publishes artifacts nor exercises tagged publication. Qualification
+and packages are mounted. The canonical wrapper generates master and nightly
+repositories; its shared generator consumes explicit tag inventories for tagged
+repositories. The test checks dated, point-release and latest archives against
+the source-built inputs, including Python distributions, and verifies that an
+older point release leaves latest untouched. No Git metadata or publishing
+script is present, and networking is disabled. Qualification
 covers outputs built from source on RBE; externally produced staged release
 bundles are outside its scope. Make's separate staged-binary support remains
 available.

@@ -28,10 +28,30 @@ test ! -e .git
 test ! -e tools/make_python_release.sh
 
 tools/make_test_key.sh /work/repo.key
-artifacts=(/input/artifacts/{amd64,arm64}/*)
-test "${#artifacts[@]}" -eq 6
+artifacts=(/input/artifacts/{amd64,arm64,python}/*)
+test "${#artifacts[@]}" -eq 8
 NIGHTLY=false tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
 NIGHTLY=true tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
+
+# Exercise the same generator with declared tag inventories. Neither Git nor
+# the uploader is present in this container.
+source tools/release_repository.sh
+make_release_repository /work/repo.key /work/repo release \
+  release-20261018.1 $'release-20261017.7\nrelease-20261019.0-staging' "${artifacts[@]}"
+
+# The older point release uses identical inputs, so byte comparisons alone
+# would miss an erroneous overwrite of latest. Require its mtimes to survive.
+latest_files=(/work/repo/release/latest/{x86_64,aarch64}/*
+  /work/repo/dists/release/{Release,Release.gpg,InRelease})
+touch -d @946684800 "${latest_files[@]}"
+make_release_repository /work/repo.key /work/repo release \
+  release-20261017.8 release-20261018.1 "${artifacts[@]}"
+for file in "${latest_files[@]}"; do
+  test "$(stat -c%Y "$file")" -eq 946684800
+done
+make_release_repository /work/repo.key /work/ignored release \
+  $'buildkite-test-branch\nrelease-20261019.0-staging' "" "${artifacts[@]}"
+test ! -e /work/ignored
 
 verify_home=$(mktemp -d)
 cleanup() {
@@ -43,17 +63,21 @@ cleanup() {
 trap cleanup EXIT
 gpg --homedir "$verify_home" --batch --import /work/repo.key
 gpg --homedir "$verify_home" --armor --export > /reports/test-public-key.asc
-for channel in master nightly; do
+for channel in master nightly release 20261018 20261017; do
   reports=/reports/$channel
   mkdir -p "$reports"
-  raw_roots=(/work/repo/$channel/latest)
-  if [[ $channel == nightly ]]; then
-    # Use the generated date so crossing midnight cannot invalidate the check.
-    dated=(/work/repo/nightly/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
-    test "${#dated[@]}" -eq 1
-    test -d "${dated[0]}"
-    raw_roots+=("${dated[0]}")
-  fi
+  case "$channel" in
+    master|release) raw_roots=(/work/repo/$channel/latest) ;;
+    nightly)
+      # Use the generated date so crossing midnight cannot invalidate the check.
+      dated=(/work/repo/nightly/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+      test "${#dated[@]}" -eq 1
+      test -d "${dated[0]}"
+      raw_roots=(/work/repo/nightly/latest "${dated[0]}")
+      ;;
+    20261018) raw_roots=(/work/repo/release/20261018{,.1}) ;;
+    20261017) raw_roots=(/work/repo/release/20261017{,.8}) ;;
+  esac
   release=/work/repo/dists/$channel
   gpg --homedir "$verify_home" --verify "$release/Release.gpg" "$release/Release"
   gpg --homedir "$verify_home" --output "/work/$channel-inrelease-content" \
@@ -100,5 +124,18 @@ for channel in master nightly; do
       )
     done
   done
+  for raw_root in "${raw_roots[@]}"; do
+    case "$channel" in
+      20261018|20261017)
+        python_files=("$raw_root"/python/*.whl "$raw_root"/python/*.tar.gz)
+        test "${#python_files[@]}" -eq 2
+        for file in "${python_files[@]}"; do
+          cmp "$file" "/input/artifacts/python/$(basename "$file")"
+          (cd "$raw_root/python"; sha512sum --check "$(basename "$file").sha512")
+        done
+        ;;
+      *) test ! -e "$raw_root/python" ;;
+    esac
+  done
 done
-echo 'Master and nightly repositories: both package signatures, signed APT metadata and raw archive checksums verified.'
+echo 'Master, nightly and tagged repositories: package signatures, signed APT metadata and source-built archives verified.'

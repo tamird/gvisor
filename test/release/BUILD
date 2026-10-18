@@ -90,9 +90,12 @@ release_artifacts(
 
 genrule(
     name = "artifacts_manifest",
-    srcs = [":artifacts"],
+    srcs = [
+        ":artifacts",
+        "//sandboxexec/sandbox/python:dist",
+    ],
     outs = ["artifacts.txt"],
-    cmd = "printf '%s\\n' $(rootpaths :artifacts) > $@",
+    cmd = "printf '%s\\n' $(rootpaths :artifacts) $(rootpath //sandboxexec/sandbox/python:dist) > $@",
     tags = ["manual"],
 )
 
@@ -112,15 +115,18 @@ repository_test(
         "$(rootpath //tools:make_test_key.sh)",
         "$(rootpath //tools:make_release.sh)",
         "$(rootpath //tools:make_apt.sh)",
+        "$(rootpath //tools:release_repository.sh)",
         "$(rootpath :repository_test_inner.sh)",
     ],
     data = [
         "repository_test_inner.sh",
         ":artifacts",
         ":artifacts_manifest",
+        "//sandboxexec/sandbox/python:dist",
         "//tools:make_apt.sh",
         "//tools:make_release.sh",
         "//tools:make_test_key.sh",
+        "//tools:release_repository.sh",
     ],
     docker_config = ":docker_config",
     exec_properties = docker_test_exec_properties(free_disk = "20GB"),

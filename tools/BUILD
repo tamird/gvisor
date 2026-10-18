@@ -118,6 +118,7 @@ exports_files([
     "make_apt.sh",
     "make_release.sh",
     "make_test_key.sh",
+    "release_repository.sh",
 ])
 
 py_test(

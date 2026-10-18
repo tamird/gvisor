@@ -23,17 +23,22 @@ mounts=(--volume="$work:/work"
   --volume="$(realpath "$TEST_UNDECLARED_OUTPUTS_DIR"):/reports")
 while IFS= read -r artifact; do
   case "$artifact" in
-    test/release/artifacts/amd64/*|test/release/artifacts/arm64/*) ;;
+    test/release/artifacts/amd64/*|test/release/artifacts/arm64/*)
+      destination=${artifact#test/release/}
+      ;;
+    sandboxexec/sandbox/python/dist)
+      destination=artifacts/python
+      ;;
     *) printf 'Unexpected release artifact path: %s\n' "$artifact" >&2; exit 1 ;;
   esac
-  mounts+=(--volume="$(realpath "$artifact"):/input/${artifact#test/release/}:ro")
+  mounts+=(--volume="$(realpath "$artifact"):/input/$destination:ro")
 done < "$manifest"
 for script in "$@"; do
   mounts+=(--volume="$(realpath "$script"):/workspace/tools/$(basename "$script"):ro")
 done
 
 # Only declared scripts and packages enter this container. In particular, there
-# is no Git metadata or publishing script; the test covers master and nightly.
+# is no Git metadata or publishing script; release tags are explicit test inputs.
 docker run --rm --runtime=runc --network=none --user=0:0 --read-only \
   --tmpfs=/tmp "${mounts[@]}" gvisor.dev/images/release-tools:latest \
   tools/repository_test_inner.sh

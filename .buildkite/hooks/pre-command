@@ -77,7 +77,7 @@ if [[ "${BUILDKITE_BRANCH}" =~ ^test/ ]]; then
 
   # LINT.IfChange
   git tag -f buildkite-test-branch
-  # LINT.ThenChange(../../tools/make_release.sh)
+  # LINT.ThenChange(../../tools/release_repository.sh)
 fi
 
 # LINT.IfChange
