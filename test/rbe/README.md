@@ -1208,15 +1208,22 @@ its recorded producer log must show the miss and build.
 with the daemon socket's group, private writable state and no effective
 capabilities. This checks Docker-user compatibility, not Docker isolation.
 The ordinary
-`source_archive_load_test`, `stable_diffusion_archive_load_test` and
-`triton_archive_load_test` check the loaded tags, config and ordered layer
-identities without starting application containers.
+`source_archive_load_test`, `stable_diffusion_archive_load_test`,
+`triton_archive_load_test`, `ollama_bench_archive_load_test` and
+`tpu_vllm_archive_load_test` check the loaded tags, config and ordered layer
+identities without starting application containers. The Ollama benchmark and
+TPU vLLM archives have explicit source targets because Make excludes them from
+its routine image checks.
 
 Large source builds request 256GB disk and 12GB memory; conversion requests
-80GB disk and 12GB memory. These are requests, not guaranteed capacity or
-measured source-build requirements. Prior large load workers supplied about
-198GB on the root filesystem; Triton had a separate 49GB workspace and used
-about 119.5GB at peak on the root filesystem. BuildKit cache,
+80GB disk and 12GB memory. The Ollama benchmark image's models alone occupy
+about 96GiB, so its producer, conversion and load check request 512GB disk for
+coexisting snapshots, archives and expanded layers. TPU vLLM uses the ordinary
+80GB source/conversion allowance and requests 80GB for its load check. These
+are requests, not guaranteed capacity or measured source-build requirements.
+Prior large load workers supplied about 198GB on the root filesystem;
+Triton had a separate 49GB workspace and used about 119.5GB at peak on the
+root filesystem. BuildKit cache,
 snapshots and the exported layout coexist; their source-build peak remains a
 separate qualification result.
 
