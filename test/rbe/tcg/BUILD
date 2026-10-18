@@ -79,6 +79,14 @@ guest_host_tools(
     testonly = True,
     archive = "@kvm_host_tools//:flat",
     members = _HOST_TOOL_MEMBERS + [
+        # Construct each local guest's private payload filesystem after its
+        # test acquires an execution slot, using these shared declared tools.
+        "bin/mkdir",
+        "usr/bin/cut",
+        "usr/bin/du",
+        "usr/bin/faked-sysv",
+        "usr/bin/fakeroot-sysv",
+        "usr/bin/getopt",
         "usr/bin/qemu-system-x86_64",
         # The launcher selects this BIOS explicitly. The unused optionrom
         # directory contains dangling compatibility links in the package.
@@ -250,7 +258,9 @@ bzl_library(
         "//tools:arch_bzl",
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
+        "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:shell",
+        "@rules_pkg//pkg:path.bzl",
         "@tar.bzl//tar",
     ],
 )

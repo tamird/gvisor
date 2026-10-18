@@ -31,7 +31,7 @@ host_phase launcher_start
 host="$(realpath "$1")"
 kernel="$(realpath "$2")"
 rootfs="$(realpath "$3")"
-payload_image="$(realpath "$4")"
+payload_input="$(realpath "$4")"
 payload="$5"
 payload_label="$6"
 machine="$7"
@@ -71,6 +71,64 @@ case "$machine" in
 esac
 scratch="$(mktemp -d "${TEST_TMPDIR}/tcg.XXXXXX")"
 result="${TEST_UNDECLARED_OUTPUTS_DIR}/guest"
+loader="$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+libraries="$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu"
+host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "${@:2}"; }
+qemu_pid=""
+guest_started=false
+cleanup() {
+  local status=$?
+  # The executor and test harness may both signal the launcher. Keep a later
+  # TERM or INT from interrupting recovery; the executor's KILL is authoritative.
+  trap '' TERM INT
+  trap - EXIT
+  set +e
+  host_phase cleanup_start "$status"
+  if [[ -n "$qemu_pid" ]]; then
+    # Reap the writer before inspecting its disk, even if it is unresponsive.
+    kill -KILL "$qemu_pid" 2>/dev/null || true
+    wait "$qemu_pid" 2>/dev/null || true
+    host_phase cleanup_qemu_reaped
+  fi
+  if [[ "$guest_started" == true && "$status" != 0 && ! -f "$result/exit_status" ]]; then
+    local recovery="${TEST_UNDECLARED_OUTPUTS_DIR}/guest-recovery"
+    mkdir -p "$recovery"
+    printf '%s\n' \
+      "Original host exit status: $status" \
+      'Incomplete guest disk recovery after bounded journal replay; no completion claim.' \
+      'Guest memory and uncommitted filesystem writes may be absent.' \
+      > "$recovery/README.txt"
+    # Replay committed metadata on this stopped, disposable disk before reading
+    # its allocation bitmaps. journal_only excludes a full filesystem check;
+    # -p makes journal recovery noninteractive. Retain failures as diagnostics.
+    E2FSCK_CONFIG=/dev/null host_tool usr/bin/timeout --signal=KILL 5 \
+      "$loader" --inhibit-cache --library-path "$libraries" \
+      "$host/sbin/e2fsck" -p -E journal_only "$scratch/scratch.ext4" \
+      </dev/null > "$recovery/journal.log" 2>&1
+    printf '%s\n' "$?" > "$recovery/journal_exit_status"
+    # The existing e2fsprogs input supplies debugfs. Without -w it only reads
+    # the stopped guest disk. Keep partial files and diagnostics if extraction
+    # fails or exhausts this bounded cleanup window; never promote recovered
+    # XML or shard status into a completed outer test result.
+    (
+      cd "$recovery" || exit
+      host_tool usr/bin/timeout --signal=KILL 5 \
+        "$loader" --inhibit-cache --library-path "$libraries" \
+        "$host/sbin/debugfs" -R 'rdump /outputs /harness /test.xml /shard_status .' \
+        "$scratch/scratch.ext4"
+    ) > "$recovery/debugfs.log" 2>&1
+    printf '%s\n' "$?" > "$recovery/debugfs_exit_status"
+    host_phase recovery_complete
+  fi
+  host_phase scratch_remove_start
+  rm -rf "$scratch"
+  host_phase scratch_remove_return "$?"
+  host_phase launcher_return "$status"
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'host_phase signal_TERM 143; exit 143' TERM
+trap 'host_phase signal_INT 130; exit 130' INT
 mkdir -p "$scratch/input" "$result"
 host_phase host_tools_ready
 if [[ "$machine" == amd64_kvm ]]; then
@@ -80,20 +138,26 @@ if [[ "$machine" == amd64_kvm ]]; then
   [[ -r "$host/usr/share/seabios/bios-256k.bin" ]]
   machine_options+=(-bios "$host/usr/share/seabios/bios-256k.bin")
 fi
-loader="$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
-libraries="$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu"
-host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "${@:2}"; }
 cp "$test_setup" "$scratch/input/test-setup.sh"
-# Preserve the existing shared payload/scratch capacity and recovery disk.
-# Copy sparsely (or reflink when supported) so guest writes cannot modify the
-# declared template; extending it does not cache a full scratch disk per test.
+# Preserve the existing payload/scratch capacity and recovery disk.
+if [[ "$machine" == amd64_kvm ]]; then
+  # Shared runfiles are materialized once. Only the running test creates its
+  # staged files and private ext4 disk; cleanup removes both on every exit.
+  TMPDIR="$scratch" "$payload_input" "$scratch/scratch.ext4"
+  payload_image="$scratch/scratch.ext4"
+else
+  payload_image="$payload_input"
+fi
 image_bytes="$(host_tool usr/bin/stat -c %s "$payload_image")"
 if (( image_bytes > guest_scratch_gib * 1024 * 1024 * 1024 )); then
   printf 'Payload image (%s bytes) exceeds scratch capacity (%s GiB)\n' "$image_bytes" "$guest_scratch_gib" >&2
   exit 1
 fi
 printf 'Payload filesystem template: %s bytes; scratch capacity: %s GiB\n' "$image_bytes" "$guest_scratch_gib"
-host_tool bin/cp --reflink=auto --sparse=always "$payload_image" "$scratch/scratch.ext4"
+# Copy the remote template sparsely; guest writes cannot modify declared inputs.
+if [[ "$machine" == arm64_tcg ]]; then
+  host_tool bin/cp --reflink=auto --sparse=always "$payload_image" "$scratch/scratch.ext4"
+fi
 # Materialized Bazel outputs may have write permission removed.
 host_tool bin/chmod u+w "$scratch/scratch.ext4"
 host_phase payload_copy_ready
@@ -155,60 +219,6 @@ host_phase scratch_ready
   printf '\n'
 } > "$scratch/input/launch.sh"
 host_phase launch_ready
-qemu_pid=""
-cleanup() {
-  local status=$?
-  # The executor and test harness may both signal the launcher. Keep a later
-  # TERM or INT from interrupting recovery; the executor's KILL is authoritative.
-  trap '' TERM INT
-  trap - EXIT
-  set +e
-  host_phase cleanup_start "$status"
-  if [[ -n "$qemu_pid" ]]; then
-    # Reap the writer before inspecting its disk, even if it is unresponsive.
-    kill -KILL "$qemu_pid" 2>/dev/null || true
-    wait "$qemu_pid" 2>/dev/null || true
-    host_phase cleanup_qemu_reaped
-  fi
-  if [[ "$status" != 0 && ! -f "$result/exit_status" ]]; then
-    local recovery="${TEST_UNDECLARED_OUTPUTS_DIR}/guest-recovery"
-    mkdir -p "$recovery"
-    printf '%s\n' \
-      "Original host exit status: $status" \
-      'Incomplete guest disk recovery after bounded journal replay; no completion claim.' \
-      'Guest memory and uncommitted filesystem writes may be absent.' \
-      > "$recovery/README.txt"
-    # Replay committed metadata on this stopped, disposable disk before reading
-    # its allocation bitmaps. journal_only excludes a full filesystem check;
-    # -p makes journal recovery noninteractive. Retain failures as diagnostics.
-    E2FSCK_CONFIG=/dev/null host_tool usr/bin/timeout --signal=KILL 5 \
-      "$loader" --inhibit-cache --library-path "$libraries" \
-      "$host/sbin/e2fsck" -p -E journal_only "$scratch/scratch.ext4" \
-      </dev/null > "$recovery/journal.log" 2>&1
-    printf '%s\n' "$?" > "$recovery/journal_exit_status"
-    # The existing e2fsprogs input supplies debugfs. Without -w it only reads
-    # the stopped guest disk. Keep partial files and diagnostics if extraction
-    # fails or exhausts this bounded cleanup window; never promote recovered
-    # XML or shard status into a completed outer test result.
-    (
-      cd "$recovery" || exit
-      host_tool usr/bin/timeout --signal=KILL 5 \
-        "$loader" --inhibit-cache --library-path "$libraries" \
-        "$host/sbin/debugfs" -R 'rdump /outputs /harness /test.xml /shard_status .' \
-        "$scratch/scratch.ext4"
-    ) > "$recovery/debugfs.log" 2>&1
-    printf '%s\n' "$?" > "$recovery/debugfs_exit_status"
-    host_phase recovery_complete
-  fi
-  host_phase scratch_remove_start
-  rm -rf "$scratch"
-  host_phase scratch_remove_return "$?"
-  host_phase launcher_return "$status"
-  exit "$status"
-}
-trap cleanup EXIT
-trap 'host_phase signal_TERM 143; exit 143' TERM
-trap 'host_phase signal_INT 130; exit 130' INT
 # ARM TCG supplies its source-built emulator. Guest preparation, recovery,
 # shared libraries and firmware use the immutable declared host-tool directory.
 emulator_path="${guest_emulator:-$host/usr/bin/$emulator}"
@@ -233,6 +243,7 @@ TMPDIR="$scratch" QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   -fsdev "local,id=result,path=$result,security_model=none" \
   -device virtio-9p-pci,fsdev=result,mount_tag=result &
 qemu_pid=$!
+guest_started=true
 host_phase qemu_started
 qemu_status=0
 wait "$qemu_pid" || qemu_status=$?

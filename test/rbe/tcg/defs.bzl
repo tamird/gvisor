@@ -14,7 +14,9 @@
 
 """Full-system tests with declared QEMU and guest inputs."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@rules_pkg//pkg:path.bzl", "safe_short_path")
 load("@tar.bzl//tar:tar.bzl", "tar_lib")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools:defs.bzl", "pkg_tar")
@@ -149,14 +151,99 @@ _payload_image = rule(
     toolchains = [tar_lib.toolchain_type],
 )
 
+def _add_payload_file(entries, destination, file, mode):
+    destination = paths.normalize(destination)
+    if paths.is_absolute(destination) or destination in [".", ".."] or destination.startswith("../"):
+        fail("Guest payload destination escapes its root: %s" % destination)
+    if destination in entries:
+        previous = entries[destination]
+        if previous.file != file or previous.mode != mode:
+            fail("Conflicting guest payload destination %s: %s and %s" % (destination, previous.file.path, file.path))
+    entries[destination] = struct(file = file, mode = mode)
+
+def _guest_executables(ctx):
+    targets = [ctx.attr.payload] + ([ctx.attr.run_under] if ctx.attr.run_under else [])
+    for target in targets:
+        info = target[DefaultInfo]
+        if info.files_to_run.executable.short_path.startswith("../"):
+            fail("Guest executable %s must belong to the main repository; external runfile dependencies are supported" % target.label)
+
+        # Both the remote pkg_tar path and local staging use file-based runfiles,
+        # including release sidecars. Neither reconstructs custom aliases.
+        if info.default_runfiles.symlinks.to_list() or info.default_runfiles.root_symlinks.to_list():
+            fail("Guest executable %s requires unsupported runfiles aliases" % target.label)
+    return targets
+
+def _runtime_payload_image_impl(ctx):
+    entries = {}
+    files = []
+    targets = _guest_executables(ctx)
+    for target in targets:
+        info = target[DefaultInfo]
+        executable = info.files_to_run.executable
+        files.extend([info.files, info.default_runfiles.files])
+        for file in depset([executable], transitive = [info.files]).to_list():
+            _add_payload_file(entries, safe_short_path(file), file, "0755" if file == executable else "0555")
+        runfiles_root = safe_short_path(executable) + ".runfiles/" + ctx.workspace_name
+        for file in info.default_runfiles.files.to_list():
+            _add_payload_file(entries, runfiles_root + "/" + file.short_path, file, "0755" if file == executable else "0555")
+
+        # The harness invokes this path even when the executable is absent from
+        # DefaultInfo.files or default_runfiles.files.
+        _add_payload_file(entries, runfiles_root + "/" + executable.short_path, executable, "0755")
+        files.append(depset([executable]))
+    for destination in entries:
+        parts = destination.split("/")
+        for end in range(1, len(parts)):
+            ancestor = "/".join(parts[:end])
+            if ancestor in entries:
+                fail("Overlapping guest payload destinations: %s and %s" % (ancestor, destination))
+    manifest = ctx.actions.declare_file(ctx.label.name + ".manifest.sh")
+    ctx.actions.write(
+        manifest,
+        "\n".join([
+            "stage_payload %s %s %s %s" % (
+                shell.quote(entry.file.short_path),
+                shell.quote(destination),
+                shell.quote(entry.mode),
+                "directory" if entry.file.is_directory else "file",
+            )
+            for destination, entry in sorted(entries.items())
+        ]) + "\n",
+    )
+    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
+    ctx.actions.write(
+        executable,
+        "#!/bin/bash\nset -euo pipefail\n" +
+        "exec %s --runfiles %s %s \"$1\" %s %s\n" % (
+            shell.quote(ctx.executable._payload_builder.short_path),
+            shell.quote(ctx.file.host_tools.short_path),
+            shell.quote(manifest.short_path),
+            shell.quote(ctx.file._ext4.short_path),
+            shell.quote("%s.runfiles/%s/%s" % (safe_short_path(ctx.executable.payload), ctx.workspace_name, ctx.executable.payload.short_path)),
+        ),
+        is_executable = True,
+    )
+    runfiles = ctx.runfiles(
+        files = [manifest, ctx.file.host_tools, ctx.file._ext4, ctx.executable._payload_builder],
+        transitive_files = depset(transitive = files),
+    ).merge(ctx.attr._payload_builder[DefaultInfo].default_runfiles)
+    return [DefaultInfo(executable = executable, runfiles = runfiles)]
+
+_runtime_payload_image = rule(
+    implementation = _runtime_payload_image_impl,
+    executable = True,
+    attrs = {
+        "payload": attr.label(executable = True, cfg = "target", mandatory = True),
+        "run_under": attr.label(executable = True, cfg = "target"),
+        "host_tools": attr.label(allow_single_file = True, cfg = "exec", mandatory = True),
+        "_payload_builder": attr.label(default = Label(":build_payload"), executable = True, cfg = "exec"),
+        "_ext4": attr.label(default = Label(":ext4.sh"), allow_single_file = True),
+    },
+)
+
 def _tcg_test_impl(ctx):
-    # rules_pkg 1.0.1 packages runfiles.files, not custom runfiles aliases.
-    # The syscall runner uses file-based runfiles, including release sidecars.
-    executables = [ctx.attr.payload] + ([ctx.attr.run_under] if ctx.attr.run_under else [])
-    for dependency in executables:
-        runfiles = dependency[DefaultInfo].default_runfiles
-        if runfiles.symlinks.to_list() or runfiles.root_symlinks.to_list():
-            fail("Guest executable %s requires runfiles aliases unsupported by pkg_tar" % dependency.label)
+    _guest_executables(ctx)
     image = ctx.attr.image[TcgImageInfo]
     architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
     if image.architecture != architecture:
@@ -189,14 +276,15 @@ def _tcg_test_impl(ctx):
             " ".join([shell.quote(key) for key in inherited_environment]),
         ),
     )
-    inputs = [ctx.file.payload_image, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
+    payload_input = ctx.file.payload_image if ctx.attr.machine == "arm64_tcg" else ctx.executable.payload_builder
+    inputs = [payload_input, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
     if ctx.file.emulator != None:
         inputs.append(ctx.file.emulator)
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
         image.rootfs.short_path,
-        ctx.file.payload_image.short_path,
+        payload_input.short_path,
         ctx.executable.payload.short_path,
         str(ctx.attr.payload.label),
         ctx.attr.machine,
@@ -211,6 +299,8 @@ def _tcg_test_impl(ctx):
         is_executable = True,
     )
     runfiles = ctx.runfiles(files = inputs).merge(ctx.attr._launcher[DefaultInfo].default_runfiles)
+    if ctx.attr.payload_builder:
+        runfiles = runfiles.merge(ctx.attr.payload_builder[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(executable = executable, runfiles = runfiles),
         RunEnvironmentInfo(environment = {}, inherited_environment = inherited_environment),
@@ -221,7 +311,8 @@ _tcg_test = rule(
     test = True,
     attrs = {
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
-        "payload_image": attr.label(allow_single_file = True, mandatory = True),
+        "payload_image": attr.label(allow_single_file = True),
+        "payload_builder": attr.label(executable = True, cfg = "target"),
         "host_tools": attr.label(default = Label(":host_tools"), allow_single_file = True, cfg = "exec"),
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
@@ -297,16 +388,32 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
         **kwargs
     )
 
-def amd64_kvm_test(name, payload, tags, image, **kwargs):
+def amd64_kvm_test(name, payload, tags, image, run_under = None, **kwargs):
     """Wraps an AMD64 payload for a host with nested KVM, keeping builds remote."""
-    _guest_test(
+
+    # Bazel downloads local spawn inputs before acquiring local test resources.
+    # Shared runfiles avoid materializing a separate ext4 image for every queued
+    # owner; each running test constructs and removes only its private disk.
+    # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/exec/local/LocalSpawnRunner.java#L125-L155
+    _runtime_payload_image(
+        name = name + "_payload_builder",
+        testonly = True,
+        payload = payload,
+        run_under = run_under,
+        host_tools = Label(":kvm_host_tools"),
+        exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+        tags = ["manual"],
+    )
+    _tcg_test(
         name = name,
         payload = payload,
         image = image,
         machine = "amd64_kvm",
         host_tools = Label(":kvm_host_tools"),
-        # Only the VM process needs the host device. Its declared inputs and
-        # payload remain ordinary remotely executable build actions.
-        tags = tags + ["no-remote-exec", "no-sandbox"],
+        run_under = run_under,
+        payload_builder = ":" + name + "_payload_builder",
+        exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+        # Compilation remains remote; disk preparation and QEMU run locally.
+        tags = tags + ["manual", "no-remote-exec", "no-sandbox"],
         **kwargs
     )
