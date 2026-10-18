@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-18T13:36:15.745277+00:00",
+    "updatedAt": "2026-10-18T13:42:02.485081+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9925,9 +9925,9 @@
       "title": "BuildBuddy: retry canceled OCI initialization",
       "group": "rbe",
       "status": "open",
-      "summary": "BuildBuddy #13848 remains open and mergeable at 715688f5d. At October 18 13:28:06 UTC, sluongng left LGTM feedback as a COMMENTED review and asked for dan-stowell to review before merge; GitHub still reports REVIEW_REQUIRED, with bduffany and dan-stowell requested. The suggested go-containerregistry upgrade has not been adopted as new work. Public PR/build failed with a missing API key before any tests executed (exit 34). The Linux ARM64 lane passed both test targets, then failed its build-event upload with a missing API key (exit 38). Why the key was absent is unknown; these failures do not establish a source regression. CodeQL passed; Windows was still running at this observation. Three Darwin ERROR statuses remain maintainer execution-approval gates, while hosted Linux/style/bare-metal/release statuses remain queued. The prepared real-registry regression fails before the correction and the corrected race suite passes 79 cases without skips; its connection to the hosted image-preparation incident remains unproved.",
+      "summary": "BuildBuddy #13848 remains open and mergeable at 715688f5d. At October 18 13:28:06 UTC, sluongng left LGTM feedback as a COMMENTED review and asked for dan-stowell to review before merge; GitHub still reports REVIEW_REQUIRED, with bduffany and dan-stowell requested. The suggested go-containerregistry upgrade has not been adopted as new work. Public PR/build failed with a missing API key before any tests executed (exit 34). The Linux ARM64 lane passed both test targets, then failed its build-event upload with a missing API key (exit 38). Why the key was absent is unknown; these failures do not establish a source regression. CodeQL passed; Windows was still running at this observation. Three Darwin ERROR statuses remain maintainer execution-approval gates, while hosted Linux/style/bare-metal/release statuses remain queued. The prepared real-registry regression fails before the correction and the corrected race suite passes 79 cases without skips; its connection to the hosted image-preparation incident remains unproved. Root reviewed the suggested go-containerregistry cleanup: later calls can reinitialize after a failure, while concurrent callers can still hold the canceled reader. That distinction is source-derived, not a new executed regression; no dependency upgrade has been adopted.",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13848",
-      "updatedAt": "2026-10-18T13:36:15.745277+00:00",
+      "updatedAt": "2026-10-18T13:42:02.485081+00:00",
       "followup": {
         "owner": "Codex",
         "disposition": "COMMENTED LGTM; further review and CI authentication follow-up pending",
@@ -9967,6 +9967,10 @@
         {
           "label": "ARM64 tests passed; build-event upload failed",
           "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39069097106/job/117687993094"
+        },
+        {
+          "label": "Suggested go-containerregistry cleanup, source reviewed",
+          "url": "https://github.com/google/go-containerregistry/pull/2406"
         }
       ],
       "number": 13848
