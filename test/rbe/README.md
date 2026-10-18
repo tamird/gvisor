@@ -1099,11 +1099,10 @@ and packages are mounted. The canonical wrapper generates master and nightly
 repositories; its shared generator consumes explicit tag inventories for tagged
 repositories. The test checks dated, point-release and latest archives against
 the source-built inputs, including Python distributions, and verifies that an
-older point release leaves latest untouched. No Git metadata or publishing
-script is present, and networking is disabled. Qualification
-covers outputs built from source on RBE; externally produced staged release
-bundles are outside its scope. Make's separate staged-binary support remains
-available.
+older point release leaves latest untouched. No Git metadata or Python uploader
+is present. Qualification covers outputs built from source on RBE;
+externally produced staged release bundles are outside its scope. Make's
+separate staged-binary support remains available.
 
 The CPU and GPU/ML image-source lanes retain the public manifest-or-build checks:
 

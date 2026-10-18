@@ -38,7 +38,7 @@ for script in "$@"; do
 done
 
 # Only declared scripts and packages enter this container. In particular, there
-# is no Git metadata or publishing script; release tags are explicit test inputs.
+# is no Git metadata or Python uploader; release tags are explicit test inputs.
 docker run --rm --runtime=runc --network=none --user=0:0 --read-only \
   --tmpfs=/tmp "${mounts[@]}" gvisor.dev/images/release-tools:latest \
   tools/repository_test_inner.sh
