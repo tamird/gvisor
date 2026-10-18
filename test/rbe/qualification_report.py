@@ -703,18 +703,32 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
 
 def receipt(artifact: Path, sha256: str, expected_source: str,
             targets: list[str] | None = None) -> dict[str, object]:
-    """Authenticate a downloaded Actions artifact and retain its producer verdict."""
+    """Authenticate a downloaded artifact and retain its producer verdict."""
     identity = file_record(artifact)
     if identity["sha256"] != sha256.removeprefix("sha256:"):
-        raise ValueError("Artifact SHA256 differs from the expected GitHub digest")
-    # This is the workflow's existing upload layout. The digest authenticates
-    # the entire ZIP; reconciliation already happened on the coordinator, so
-    # consuming its small verdict does not require unpacking the report tar.
-    with zipfile.ZipFile(artifact) as archive:
-        member = archive.getinfo("qualification/verdict.json")
-        if member.file_size > MAX_REPORT_BYTES:
-            raise ValueError("Producer verdict exceeds the report size bound")
-        producer = mapping(json.loads(archive.read(member)))
+        raise ValueError("Artifact SHA256 differs from the expected digest")
+    # Reconciliation already happened on the coordinator. Read only its
+    # verdict, from either the Actions upload or the native Remote Bazel bundle.
+    if zipfile.is_zipfile(artifact):
+        with zipfile.ZipFile(artifact) as archive:
+            member = archive.getinfo("qualification/verdict.json")
+            if member.file_size > MAX_REPORT_BYTES:
+                raise ValueError("Producer verdict exceeds the report size bound")
+            producer = mapping(json.loads(archive.read(member)))
+    else:
+        with tarfile.open(artifact, "r|gz") as archive:
+            for member in archive:
+                if member.name != "verdict.json":
+                    continue
+                if not member.isfile():
+                    raise ValueError("Producer verdict is not a regular file")
+                if member.size > MAX_REPORT_BYTES:
+                    raise ValueError("Producer verdict exceeds the report size bound")
+                with archive.extractfile(member) as stream:
+                    producer = mapping(json.load(stream))
+                break
+            else:
+                raise ValueError("Producer verdict is missing from the bundle")
     if producer.get("schema_version") != 1 or producer.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
         raise ValueError("Unsupported producer verdict")
     if producer.get("sources") != [expected_source]:
@@ -777,7 +791,7 @@ def main() -> int:
     if args.command == "receipt":
         try:
             result = receipt(args.artifact, args.sha256, args.expected_source, args.target)
-        except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+        except (OSError, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
             parser.error(str(error))
         write_json(args.output, result)
         print(f"{result['status']}: {args.output}")
