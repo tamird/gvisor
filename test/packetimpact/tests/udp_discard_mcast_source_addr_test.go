@@ -71,8 +71,8 @@ func TestDiscardsUDPPacketsWithMcastSourceAddressV6(t *testing.T) {
 
 	for _, mcastAddr := range []netip.Addr{
 		netip.MustParseAddr("ff01::1"),
-		netip.MustParseAddr("ff02::1"),
-		netip.MustParseAddr("ff02::2"),
+		netip.IPv6LinkLocalAllNodes(),
+		netip.IPv6LinkLocalAllRouters(),
 		netip.MustParseAddr("ff01::42"),
 		netip.MustParseAddr("ff02::4242"),
 	} {

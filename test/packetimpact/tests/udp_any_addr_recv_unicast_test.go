@@ -36,10 +36,9 @@ func TestAnyRecvUnicastUDP(t *testing.T) {
 	defer conn.Close(t)
 
 	payload := testbench.GenerateRandomPayload(t, 1<<10 /* 1 KiB */)
-	remoteIPv4 := dut.Net.RemoteIPv4
 	conn.SendIP(
 		t,
-		testbench.IPv4{DstAddr: &remoteIPv4},
+		testbench.IPv4{DstAddr: &dut.Net.RemoteIPv4},
 		testbench.UDP{},
 		&testbench.Payload{Bytes: payload},
 	)

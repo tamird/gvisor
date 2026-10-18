@@ -356,8 +356,8 @@ func TestLayerStringFormat(t *testing.T) {
 				TTL:            Uint8(64),
 				Protocol:       Uint8(6),
 				Checksum:       Uint16(0x2e2b),
-				SrcAddr:        Address(netip.MustParseAddr("197.34.63.10")),
-				DstAddr:        Address(netip.MustParseAddr("197.34.63.20")),
+				SrcAddr:        Address(netip.AddrFrom4([4]byte{197, 34, 63, 10})),
+				DstAddr:        Address(netip.AddrFrom4([4]byte{197, 34, 63, 20})),
 			},
 			want: "&testbench.IPv4{" +
 				"IHL:5 " +
@@ -891,8 +891,8 @@ func TestEthernetPadding(t *testing.T) {
 			TTL:            Uint8(64),
 			Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
 			Checksum:       Uint16(0x2dba),
-			SrcAddr:        Address(netip.MustParseAddr("172.0.0.2")),
-			DstAddr:        Address(netip.MustParseAddr("172.0.0.1")),
+			SrcAddr:        Address(netip.AddrFrom4([4]byte{172, 0, 0, 2})),
+			DstAddr:        Address(netip.AddrFrom4([4]byte{172, 0, 0, 1})),
 		},
 		&TCP{
 			SrcPort:       Uint16(31806),

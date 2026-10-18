@@ -144,7 +144,7 @@ func TestIPv6UnknownOptionAction(t *testing.T) {
 
 			outgoingOverride := testbench.Layers{}
 			if tt.multicastDst {
-				ip := netip.MustParseAddr("ff02::1")
+				ip := netip.IPv6LinkLocalAllNodes()
 				outgoingOverride = testbench.Layers{&testbench.IPv6{
 					DstAddr: &ip,
 				}}

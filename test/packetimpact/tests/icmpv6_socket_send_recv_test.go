@@ -170,7 +170,7 @@ func (test *icmpV6Test) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo 
 	switch {
 	case bindTo == dut.Net.RemoteIPv6 && sendTo == dut.Net.RemoteIPv6:
 	case bindTo == netip.IPv6Unspecified() && sendTo == dut.Net.RemoteIPv6:
-	case bindTo == netip.IPv6Unspecified() && sendTo == netip.MustParseAddr("ff02::1"):
+	case bindTo == netip.IPv6Unspecified() && sendTo == netip.IPv6LinkLocalAllNodes():
 	default:
 		expectPacket = false
 	}

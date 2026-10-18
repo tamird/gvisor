@@ -512,8 +512,8 @@ func parseIPv4(b []byte) (Layer, bodySizeHint, layerParser) {
 		TTL:            Uint8(h.TTL()),
 		Protocol:       Uint8(h.Protocol()),
 		Checksum:       Uint16(h.Checksum()),
-		SrcAddr:        Address(netip.AddrFrom4(h.SourceAddress().As4())),
-		DstAddr:        Address(netip.AddrFrom4(h.DestinationAddress().As4())),
+		SrcAddr:        Address(h.SourceAddress()),
+		DstAddr:        Address(h.DestinationAddress()),
 		Options:        &options,
 	}
 	var nextParser layerParser
@@ -642,8 +642,8 @@ func parseIPv6(b []byte) (Layer, bodySizeHint, layerParser) {
 		PayloadLength: Uint16(h.PayloadLength()),
 		NextHeader:    Uint8(h.NextHeader()),
 		HopLimit:      Uint8(h.HopLimit()),
-		SrcAddr:       Address(netip.AddrFrom16(h.SourceAddress().As16())),
-		DstAddr:       Address(netip.AddrFrom16(h.DestinationAddress().As16())),
+		SrcAddr:       Address(h.SourceAddress()),
+		DstAddr:       Address(h.DestinationAddress()),
 	}
 	nextParser := nextIPv6PayloadParser(h.NextHeader())
 	return &ipv6, bodySizeHint(h.PayloadLength()), nextParser
@@ -953,6 +953,9 @@ func (l *ICMPv6) ToBytes() ([]byte, error) {
 				if err != nil {
 					return nil, err
 				}
+				if !src.IsValid() || !dst.IsValid() {
+					return nil, fmt.Errorf("ICMPv6 checksum requires IPv6 source and destination addresses")
+				}
 				h.SetChecksum(header.ICMPv6Checksum(header.ICMPv6ChecksumParams{
 					Header:      h[:header.ICMPv6PayloadOffset],
 					Src:         src,
@@ -1216,6 +1219,9 @@ func layerChecksum(l Layer, protoNumber tcpip.TransportProtocolNumber) (uint16, 
 		if err != nil {
 			return 0, err
 		}
+		if !src.IsValid() || !dst.IsValid() {
+			return 0, fmt.Errorf("IPv4 checksum requires IPv4 source and destination addresses")
+		}
 		xsum = header.PseudoHeaderChecksum(protoNumber, src, dst, totalLength)
 	case *IPv6:
 		src, err := ipv6Address(p.SrcAddr)
@@ -1225,6 +1231,9 @@ func layerChecksum(l Layer, protoNumber tcpip.TransportProtocolNumber) (uint16, 
 		dst, err := ipv6Address(p.DstAddr)
 		if err != nil {
 			return 0, err
+		}
+		if !src.IsValid() || !dst.IsValid() {
+			return 0, fmt.Errorf("IPv6 checksum requires IPv6 source and destination addresses")
 		}
 		xsum = header.PseudoHeaderChecksum(protoNumber, src, dst, totalLength)
 	default:
