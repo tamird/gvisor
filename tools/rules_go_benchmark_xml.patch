@@ -1,0 +1,202 @@
+Recognize completed verbose Go benchmarks in JUnit XML. Benchmark result rows
+replace absent pass events, including their parents, without hiding explicit
+failures or unfinished siblings. The pinned v0.63.0 and latest v0.64.2 converters
+still report completed benchmarks as "No pass/skip/fail event found for test".
+This local candidate can be removed once rules_go releases an equivalent fix.
+Source: https://github.com/bazel-contrib/rules_go/blob/v0.64.2/go/tools/bzltestutil/xml.go
+
+--- a/go/tools/bzltestutil/xml.go
++++ b/go/tools/bzltestutil/xml.go
+@@ -21,6 +21,7 @@
+ 	"io"
+ 	"path"
+ 	"sort"
++	"strconv"
+ 	"strings"
+ 	"time"
+ )
+@@ -69,11 +70,13 @@
+ }
+ 
+ type testCase struct {
+-	state    string
+-	output   strings.Builder
+-	duration *float64
+-	start *time.Time
+-	end *time.Time
++	state           string
++	output          strings.Builder
++	benchmarkLine   string
++	benchmarkFailed bool
++	duration        *float64
++	start           *time.Time
++	end             *time.Time
+ }
+ 
+ const (
+@@ -107,9 +110,31 @@
+ 		case "run":
+ 			if c := testCaseByName(e.Test); c != nil {
+ 				c.state = s
++				c.benchmarkLine = ""
+ 				c.start = e.Time
+ 			}
+ 		case "output":
++			if c := testCaseByName(e.Test); c != nil && isBenchmarkName([]byte(e.Test)) {
++				// test2json can split a result across output events.
++				c.benchmarkLine += e.Output
++				for {
++					line, rest, complete := strings.Cut(c.benchmarkLine, "\n")
++					if !complete {
++						break
++					}
++					c.benchmarkLine = rest
++					if !benchmarkResult(e.Test, line) {
++						continue
++					}
++					// Successful benchmarks and their parents do not emit pass
++					// events. Unfinished siblings and explicit failures remain.
++					for name := e.Test; name != "."; name = path.Dir(name) {
++						if parent := testCaseByName(name); parent.state == "" || parent.state == "run" {
++							parent.state = "pass"
++						}
++					}
++				}
++			}
+ 			trimmedOutput := strings.TrimSpace(e.Output)
+ 			if strings.HasPrefix(trimmedOutput, timeoutPanicPrefix) {
+ 				inTimeoutSection = true
+@@ -149,6 +174,7 @@
+ 			}
+ 		case "fail":
+ 			if c := testCaseByName(e.Test); c != nil {
++				c.benchmarkFailed = isBenchmarkName([]byte(e.Test))
+ 				c.state = s
+ 				c.duration = e.Elapsed
+ 				c.end = e.Time
+@@ -163,6 +189,33 @@
+ 	}
+ 
+ 	return xml.MarshalIndent(toXML(pkgName, testcases), "", "\t")
++}
++
++// benchmarkResult recognizes the measurement row for the current benchmark.
++// Ordinary output, benchmark headers, and zero-iteration rows are not results.
++func benchmarkResult(name, line string) bool {
++	fields := strings.Fields(line)
++	if len(fields) < 4 || len(fields)%2 != 0 {
++		return false
++	}
++	if fields[0] != name {
++		cpu, ok := strings.CutPrefix(fields[0], name+"-")
++		if !ok {
++			return false
++		}
++		if n, err := strconv.ParseUint(cpu, 10, 64); err != nil || n == 0 {
++			return false
++		}
++	}
++	if n, err := strconv.ParseUint(fields[1], 10, 64); err != nil || n == 0 {
++		return false
++	}
++	for i := 2; i < len(fields); i += 2 {
++		if _, err := strconv.ParseFloat(fields[i], 64); err != nil {
++			return false
++		}
++	}
++	return true
+ }
+ 
+ func toXML(pkgName string, testcases map[string]*testCase) *xmlTestSuites {
+@@ -213,6 +266,10 @@
+ 		if c.duration != nil {
+ 			newCase.Time = fmt.Sprintf("%.3f", *c.duration)
+ 		}
++		// A later successful repetition must not hide an explicit benchmark failure.
++		if c.benchmarkFailed {
++			c.state = "fail"
++		}
+ 		switch c.state {
+ 		case "skip":
+ 			suite.Skipped++
+--- a/go/tools/bzltestutil/xml_test.go
++++ b/go/tools/bzltestutil/xml_test.go
+@@ -16,6 +16,8 @@
+ 
+ import (
+ 	"bytes"
++	"encoding/json"
++	"encoding/xml"
+ 	"io/ioutil"
+ 	"os"
+ 	"path/filepath"
+@@ -53,3 +55,69 @@
+ 		})
+ 	}
+ }
++
++// A benchmark result closes its own XML case and its parents, without hiding
++// interrupted siblings, explicit failures, or ordinary unfinished tests.
++func TestBenchmarkResults(t *testing.T) {
++	for _, tc := range []struct {
++		name         string
++		row          string
++		prefix       []jsonEvent
++		tail         []jsonEvent
++		wantErrors   int
++		wantFailures int
++	}{
++		{name: "result", row: "BenchmarkParent/leaf 1 7090 ns/op 15 wire-B/op\n"},
++		{name: "cpu-suffix", row: "BenchmarkParent/leaf-4 1 7090 ns/op\n"},
++		{name: "split-result", row: "1 7090 ns/op\n",
++			prefix: []jsonEvent{{Action: "output", Test: "BenchmarkParent/leaf", Output: "BenchmarkParent/leaf\t"}}},
++		{name: "header", row: "BenchmarkParent/leaf\n", wantErrors: 2},
++		{name: "zero", row: "BenchmarkParent/leaf 0 7090 ns/op\n", wantErrors: 2},
++		{name: "other-name", row: "BenchmarkOther 1 7090 ns/op\n", wantErrors: 2},
++		{name: "invalid-metric", row: "BenchmarkParent/leaf 1 invalid ns/op\n", wantErrors: 2},
++		{name: "failure-before-result", row: "BenchmarkParent/leaf 1 7090 ns/op\n",
++			prefix: []jsonEvent{{Action: "fail", Test: "BenchmarkParent/leaf"}}, wantFailures: 1},
++		{name: "failed-repetition", row: "BenchmarkParent/leaf 1 7090 ns/op\n",
++			prefix: []jsonEvent{{Action: "fail", Test: "BenchmarkParent/leaf"}, {Action: "run", Test: "BenchmarkParent/leaf"}}, wantFailures: 1},
++		{name: "failure-after-result", row: "BenchmarkParent/leaf 1 7090 ns/op\n",
++			tail: []jsonEvent{{Action: "fail", Test: "BenchmarkParent/leaf"}}, wantFailures: 1},
++		{name: "interrupted-sibling", row: "BenchmarkParent/leaf 1 7090 ns/op\n",
++			tail: []jsonEvent{{Action: "run", Test: "BenchmarkParent/interrupted"}}, wantErrors: 1},
++		{name: "interrupted-repeat", row: "BenchmarkParent/leaf 1 7090 ns/op\n",
++			tail: []jsonEvent{{Action: "run", Test: "BenchmarkParent/leaf"}}, wantErrors: 1},
++		{name: "ordinary-test", row: "BenchmarkParent/leaf 1 7090 ns/op\n",
++			tail: []jsonEvent{{Action: "run", Test: "TestUnfinished"}}, wantErrors: 1},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			var input bytes.Buffer
++			enc := json.NewEncoder(&input)
++			events := []jsonEvent{
++				{Action: "run", Test: "BenchmarkParent"},
++				{Action: "run", Test: "BenchmarkParent/leaf"},
++			}
++			events = append(events, tc.prefix...)
++			events = append(events, jsonEvent{Action: "output", Test: "BenchmarkParent/leaf", Output: tc.row})
++			for _, event := range append(events, tc.tail...) {
++				if err := enc.Encode(event); err != nil {
++					t.Fatal(err)
++				}
++			}
++			output, err := json2xml(&input, "benchmark")
++			if err != nil {
++				t.Fatal(err)
++			}
++			var result xmlTestSuites
++			if err := xml.Unmarshal(output, &result); err != nil {
++				t.Fatal(err)
++			}
++			var errors, failures int
++			for _, suite := range result.Suites {
++				errors += suite.Errors
++				failures += suite.Failures
++			}
++			if errors != tc.wantErrors || failures != tc.wantFailures {
++				t.Fatalf("errors/failures = %d/%d, want %d/%d; XML: %s", errors, failures, tc.wantErrors, tc.wantFailures, output)
++			}
++		})
++	}
++}
