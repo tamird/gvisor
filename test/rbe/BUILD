@@ -26,6 +26,7 @@ package(
 py_test(
     name = "qualification_report_test",
     srcs = [
+        "collect_actions.py",
         "qualification_report.py",
         "qualification_report_test.py",
         "unit_matrix.py",

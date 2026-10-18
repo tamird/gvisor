@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Collect one existing Actions qualification without losing workflow failures."""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import json
+from pathlib import Path
+import re
+import subprocess
+import tarfile
+import time
+import zipfile
+
+import qualification_report as report
+
+
+def collect_actions(run: int, source: str, architecture: str, prefix: Path) -> dict[str, object]:
+    """Reuse gh watch/download and the canonical authenticated bundle receipt."""
+    def output(suffix: str) -> Path:
+        return Path(str(prefix) + suffix)
+
+    def api(path: str) -> dict[str, object]:
+        return report.mapping(json.loads(subprocess.check_output(["gh", "api", path], timeout=60)))
+
+    workflow: dict[str, object] = {}
+    watch_exit = None
+    attached_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    report.write_json(output("-collector.json"), {
+        "run": run, "source": source, "collector_attached_at": attached_at,
+    })
+
+    def observe(metadata: dict[str, object]) -> None:
+        workflow.clear()
+        workflow.update({key: metadata[key] for key in (
+            "id", "head_sha", "status", "conclusion", "html_url", "run_attempt",
+            "created_at", "updated_at",
+        ) if key in metadata})
+        report.write_json(output("-actions.json"), metadata)
+        if type(metadata.get("id")) is not int or metadata["id"] != run:
+            raise ValueError("Actions returned a different or malformed workflow run")
+        if metadata.get("head_sha") != source:
+            raise ValueError("Workflow source differs from the requested source")
+
+    try:
+        if type(run) is not int or run <= 0 or re.fullmatch(r"[0-9a-f]{40}", source) is None:
+            raise ValueError("Expected a positive workflow run ID and full source SHA")
+        if architecture not in ("amd64", "arm64", "all"):
+            raise ValueError("Unknown qualification architecture")
+        path = f"repos/tamird/gvisor/actions/runs/{run}"
+        metadata = api(path)
+        observe(metadata)
+        if metadata.get("status") != "completed":
+            with output("-watch.log").open("w") as log:
+                watch = subprocess.run(
+                    ["gh", "run", "watch", str(run), "--repo", "tamird/gvisor",
+                     "--interval", "10", "--exit-status"],
+                    stdout=log, stderr=subprocess.STDOUT, timeout=10000,
+                )
+            watch_exit = watch.returncode
+            metadata = api(path)
+            observe(metadata)
+        if metadata.get("status") != "completed":
+            raise ValueError("Workflow is still live; retain its handle rather than restarting")
+        workflow["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        artifacts = api(path + "/artifacts")
+        report.write_json(output("-artifacts.json"), artifacts)
+        rows = [report.mapping(item) for item in report.sequence(artifacts["artifacts"])
+                if report.mapping(item).get("name") == "qualification-" + architecture
+                and report.mapping(item).get("expired") is False]
+        match rows:
+            case [artifact]:
+                pass
+            case _:
+                raise ValueError(f"Expected one authenticated qualification artifact, got {len(rows)}")
+        if not artifact.get("digest"):
+            raise ValueError("Qualification artifact is missing its SHA256 digest")
+        if type(artifact.get("id")) is not int or artifact["id"] <= 0:
+            raise ValueError("Qualification artifact has an invalid ID")
+        with output("-actions.zip").open("wb") as stream:
+            subprocess.run(
+                ["gh", "api", f"repos/tamird/gvisor/actions/artifacts/{artifact['id']}/zip"],
+                stdout=stream, check=True, timeout=600,
+            )
+        result = report.receipt(output("-actions.zip"), report.string(artifact["digest"]),
+                                source, None, deadline=time.monotonic() + 180)
+        result["producer_status"] = result["status"]
+        result["collection_status"] = "COMPLETE"
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, EOFError,
+            zipfile.BadZipFile, tarfile.TarError) as error:
+        result = {"schema_version": 1, "status": "INCOMPLETE",
+                  "collection_status": "INCOMPLETE", "collection_error": str(error)}
+    if workflow.get("status") == "completed":
+        conclusion = workflow.get("conclusion")
+        if conclusion in ("failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"):
+            result["status"] = "FAIL"
+        elif conclusion != "success" and result["status"] != "FAIL":
+            result["status"] = "INCOMPLETE"
+    elif result["status"] != "FAIL":
+        result["status"] = "INCOMPLETE"
+    result.update({"workflow": workflow, "submitted_source": source, "requested_run": run,
+                   "source_verified": type(workflow.get("id")) is int and workflow["id"] == run
+                   and workflow.get("head_sha") == source,
+                   "watch_exit": watch_exit, "collector_attached_at": attached_at,
+                   "collection_finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat()})
+    report.write_json(output("-receipt.json"), result)
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run", type=int, required=True)
+    parser.add_argument("--source", required=True)
+    parser.add_argument("--architecture", choices=("amd64", "arm64", "all"), required=True)
+    parser.add_argument("--prefix", type=Path, required=True)
+    args = parser.parse_args()
+    result = collect_actions(args.run, args.source, args.architecture, args.prefix)
+    print(f"{result['status']}: {args.prefix}-receipt.json", flush=True)
+    return int(result["status"] != "PASS")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
