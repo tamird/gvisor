@@ -134,6 +134,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
             ipv6 = ipv6,
             tags = ["manual"],
         )
+
         # Explicit comparison only; public suites below retain their owners.
         _runtime_test(
             name = name + "_native_reference_owned",
