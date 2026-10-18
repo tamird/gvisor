@@ -1,5 +1,6 @@
 load("@rules_python//python:defs.bzl", "py_binary")
-load(":build.bzl", "linux_kernel")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load(":build.bzl", "linux_kernel", "linux_selftest")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -41,4 +42,36 @@ linux_kernel(
     exec_properties = _EXEC_PROPERTIES,
     release = "7.3.0-rc3-gvisor-kcov",
     visibility = ["//test/rbe/tcg:__pkg__"],
+)
+
+linux_selftest(
+    name = "save_restore_pf_stress",
+    testonly = True,
+    exec_compatible_with = _EXEC_COMPATIBLE_WITH,
+    exec_properties = {
+        "EstimatedComputeUnits": "4",
+        "EstimatedMemory": "8GB",
+        "EstimatedFreeDiskBytes": "10GB",
+        "default-timeout": "15m",
+    },
+    selftest = "x86/save_restore_pf_stress_test",
+    tags = ["manual"],
+    target_compatible_with = _EXEC_COMPATIBLE_WITH,
+)
+
+# Run on the Actions coordinator: the outer kernel implements the nested SVM
+# path under investigation, regardless of the kernel running in the test VM.
+sh_test(
+    name = "nested_cr2_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["nested_cr2_test.sh"],
+    args = ["$(rootpath :save_restore_pf_stress)"],
+    data = [":save_restore_pf_stress"],
+    local = True,
+    tags = [
+        "manual",
+        "requires-kvm",
+    ],
+    target_compatible_with = _EXEC_COMPATIBLE_WITH,
 )

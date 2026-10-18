@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Compile an instrumented Linux kernel for the existing native syscall tests."""
+"""Compile Linux kernels or selftests using the declared build toolchain."""
 
 import json
 import os
@@ -117,6 +117,22 @@ def main() -> None:
                 sys.stderr.write(log.read_text(errors="replace"))
                 raise subprocess.CalledProcessError(result.returncode, command)
 
+        if "selftest" in config:
+            # Use the kernel's UAPI headers and selftest build rules. Static
+            # linking lets the result run on the hosted coordinator without
+            # depending on its userspace libraries.
+            run([*make, "headers"], "headers")
+            executable = source / "tools/testing/selftests/kvm" / config["selftest"]
+            run([
+                str(root / config["make"]), "-C", str(executable.parent.parent),
+                "-j4", "ARCH=x86", "LLVM=1", "CC=" + str(tools / "hostcc"),
+                "KHDR_INCLUDES=-I" + str(build / "usr/include"),
+                "USERLDFLAGS=-static --ld-path=" + str(root / config["llvm"]["ld.lld"]),
+                str(executable),
+            ], "selftest")
+            shutil.copy2(executable, root / config["output"])
+            return
+
         run([*make, defconfig], "defconfig")
         configure = [str(source / "scripts/config"), "--file", str(build / ".config")]
         # KCOV needs compiler instrumentation and a mounted debugfs. The other
@@ -164,7 +180,7 @@ def main() -> None:
         shutil.copyfile(build / image_path, boot / ("vmlinuz-" + release))
         shutil.copyfile(build / ".config", boot / ("config-" + release))
         shutil.copyfile(build / ".config", evidence / "kernel.config")
-        archive = root / config["archive"]
+        archive = root / config["output"]
         archive.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run([str(root / config["tar"]), "-cf", str(archive), "-C", str(staging), "."],
                        env=config["tar_env"], check=True)
