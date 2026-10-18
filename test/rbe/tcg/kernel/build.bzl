@@ -104,10 +104,7 @@ linux_kernel = rule(
 
 linux_selftest = rule(
     implementation = _selftest_impl,
-    attrs = _TOOL_ATTRS | {
-        "selftest": attr.string(mandatory = True),
-        "_sysroot": attr.label(default = ":selftest_sysroot", allow_single_file = True, cfg = "exec"),
-    },
+    attrs = _TOOL_ATTRS | {"selftest": attr.string(mandatory = True)},
     executable = True,
     toolchains = _TOOLCHAINS,
 )

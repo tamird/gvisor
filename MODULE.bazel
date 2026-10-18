@@ -435,6 +435,7 @@ release_apt.install(
         "libssl-dev:amd64",  # Kernel certificate and module-signing helpers.
         "perl:amd64",  # Kbuild generators.
         "pkg-config:amd64",  # Locate declared host-helper libraries.
+        "uuid-dev:amd64",  # The x86 selftest library includes VFIO helpers.
     ],
     suites = [
         "jammy",
