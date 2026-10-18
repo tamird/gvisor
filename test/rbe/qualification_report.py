@@ -16,7 +16,8 @@
 """Retain and reconcile one qualification invocation, then bundle its evidence.
 
 The caller owns selection, source checkout and process execution. This module
-reads those original records; it does not query services or rerun workloads.
+reads those original records; native-receipt collects an already submitted
+BuildBuddy invocation without submitting or rerunning workloads.
 Context paths are relative to the context JSON, or absolute. The context names
 expected_source, commit_file, source_before, source_after, final_head,
 executed_arguments, native_exit, capture_exit, execution_finished_at (UTC), and
@@ -28,9 +29,12 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 import datetime
 import hashlib
+from http.client import HTTPException, HTTPResponse, HTTPSConnection
 import json
 import math
 import os
@@ -39,6 +43,7 @@ import re
 import shutil
 import tarfile
 import time
+import uuid
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 import zipfile
@@ -902,6 +907,131 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
 
+def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, output: Path,
+                   expected_source: str, targets: list[str] | None, timeout_seconds: float) -> dict[str, object]:
+    """Wait for one native invocation and authenticate its qualification bundle."""
+    partial = artifact.with_name(artifact.name + ".partial")
+    if output.resolve() in (artifact.resolve(), partial.resolve()):
+        raise ValueError("Artifact, partial download and receipt paths must differ")
+    execution: dict[str, object] = {"invocationId": invocation_id}
+    result: dict[str, object]
+    deadline = time.monotonic() + timeout_seconds
+
+    def remaining() -> float:
+        seconds = deadline - time.monotonic()
+        if seconds <= 0:
+            raise TimeoutError("Native receipt collection exceeded its deadline; attach again to resume")
+        return seconds
+
+    @contextmanager
+    def request(method: str, body: dict[str, object]) -> Iterator[HTTPResponse]:
+        # A fixed origin and direct HTTPS connection never forward the key on
+        # redirects. Response bodies and credentials are not included in errors.
+        connection = HTTPSConnection("app.buildbuddy.io", timeout=min(30, remaining()))
+        try:
+            connection.request("POST", "/api/v1/" + method, json.dumps(body),
+                               {"Content-Type": "application/json", "x-buildbuddy-api-key": api_key})
+            with connection.getresponse() as response:
+                if response.status != 200:
+                    raise ValueError(f"BuildBuddy {method} returned HTTP {response.status}")
+                yield response
+        finally:
+            connection.close()
+
+    try:
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+            raise ValueError("Collection timeout must be positive and finite")
+        if str(uuid.UUID(invocation_id)) != invocation_id:
+            raise ValueError("Expected a canonical invocation UUID")
+        if re.fullmatch(r"[0-9a-f]{40}", expected_source) is None:
+            raise ValueError("Expected a full source commit SHA")
+        api_key = api_key_file.read_text().strip()
+        if not api_key or any(not 33 <= ord(character) <= 126 for character in api_key):
+            raise ValueError("BuildBuddy API key file must contain one nonempty ASCII token")
+        while True:
+            with request("GetInvocation", {"selector": {"invocation_id": invocation_id},
+                                           "include_artifacts": True}) as response:
+                raw = response.read(4 * 1024 * 1024 + 1)
+            if len(raw) > 4 * 1024 * 1024:
+                raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
+            match sequence(mapping(json.loads(raw)).get("invocation", [])):
+                case []:
+                    invocation = {}
+                case [dict() as invocation]:
+                    if mapping(invocation.get("id")).get("invocationId") != invocation_id:
+                        raise ValueError("BuildBuddy returned a different invocation")
+                    execution = {"invocationId": invocation_id, **{key: invocation[key] for key in (
+                        "invocationStatus", "success", "bazelExitCode", "commitSha", "createdAtUsec",
+                        "updatedAtUsec", "durationUsec",
+                    ) if key in invocation}}
+                    if invocation.get("commitSha") and invocation["commitSha"] != expected_source:
+                        raise ValueError("BuildBuddy invocation source differs from the submitted source")
+                case _:
+                    raise ValueError("BuildBuddy returned multiple or malformed invocations")
+            if invocation.get("invocationStatus") in ("COMPLETE_INVOCATION_STATUS", "DISCONNECTED_INVOCATION_STATUS"):
+                # Proto JSON may omit false; other JSON types are not booleans.
+                if not isinstance(invocation.get("success", False), bool):
+                    raise ValueError("Terminal invocation success is not a boolean")
+                break
+            time.sleep(min(5, remaining()))
+        execution["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        if invocation.get("commitSha") != expected_source:
+            raise ValueError("Terminal invocation is missing the submitted source")
+        matches = [mapping(item) for item in sequence(invocation.get("artifacts", []))
+                   if mapping(item).get("name") == "qualification.tar.gz"]
+        match matches:
+            case [bundle_record]:
+                uri = string(bundle_record.get("uri"))
+            case _:
+                raise ValueError(f"Expected exactly one qualification.tar.gz artifact, got {len(matches)}")
+        parsed = urlsplit(uri)
+        identity = re.search(r"/blobs/([0-9a-f]{64})/([0-9]+)$", parsed.path)
+        if parsed.scheme != "bytestream" or not parsed.netloc or identity is None:
+            raise ValueError("Qualification artifact is missing its SHA256 CAS identity")
+        sha256, size_text = identity.groups()
+        size = int(size_text)
+        expected_identity = {"sha256": sha256, "bytes": size}
+        execution["artifact"] = {"uri": uri, **expected_identity}
+        if not artifact.exists():
+            # GetFile returns raw bytes over HTTP. Interrupted transfers are
+            # restarted, never appended without provider-supported ranges.
+            with request("GetFile", {"uri": uri}) as response, partial.open("wb") as stream:
+                downloaded = 0
+                digest = hashlib.sha256()
+                while True:
+                    remaining()
+                    chunk = response.read1(1024 * 1024)
+                    if not chunk:
+                        break
+                    downloaded += len(chunk)
+                    if downloaded > size:
+                        raise ValueError("Downloaded artifact exceeds its advertised size")
+                    digest.update(chunk)
+                    stream.write(chunk)
+            if {"sha256": digest.hexdigest(), "bytes": downloaded} != expected_identity:
+                raise ValueError("Downloaded artifact differs from its advertised SHA256 or size")
+            partial.replace(artifact)
+        if artifact.stat().st_size != size:
+            raise ValueError("Existing artifact differs from its advertised size")
+        remaining()
+        result = receipt(artifact, sha256, expected_source, targets)
+        result["producer_status"] = result["status"]
+        if execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False:
+            result["status"] = "FAIL"
+        elif execution.get("invocationStatus") != "COMPLETE_INVOCATION_STATUS" and result["status"] != "FAIL":
+            result["status"] = "INCOMPLETE"
+        result["collection_status"] = "COMPLETE"
+    except (OSError, HTTPException, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
+        failed = execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False
+        result = {"schema_version": 1, "status": "FAIL" if failed else "INCOMPLETE",
+                  "collection_status": "ERROR", "collection_error": str(error)}
+    result["native_invocation"] = execution
+    result["submitted_source"] = expected_source
+    result["collection_finished_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    write_json(output, result)
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -937,7 +1067,22 @@ def main() -> int:
     for name in ("sha256", "expected-source"):
         consume.add_argument("--" + name, required=True)
     consume.add_argument("--target", action="append")
+    native = commands.add_parser("native-receipt")
+    for name in ("api-key-file", "artifact", "output"):
+        native.add_argument("--" + name, type=Path, required=True)
+    for name in ("invocation-id", "expected-source"):
+        native.add_argument("--" + name, required=True)
+    native.add_argument("--target", action="append")
+    native.add_argument("--timeout-seconds", type=float, required=True)
     args = parser.parse_args()
+    if args.command == "native-receipt":
+        try:
+            result = native_receipt(args.invocation_id, args.api_key_file, args.artifact, args.output,
+                                    args.expected_source, args.target, args.timeout_seconds)
+        except (OSError, ValueError) as error:
+            parser.error(str(error))
+        print(f"{result['status']}: {args.output}")
+        return int(result["status"] != "PASS")
     if args.command == "receipt":
         try:
             result = receipt(args.artifact, args.sha256, args.expected_source, args.target)

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+import io
 import itertools
 import json
 import os
@@ -1121,6 +1122,129 @@ signal.pause()
         self.assertNotEqual(command.returncode, 0)
         self.assertNotIn("Traceback", command.stderr)
         self.assertFalse(output.exists())
+
+    def native_metadata(self, artifact: Path, producer: dict[str, object]) -> dict[str, object]:
+        identity = report.file_record(artifact)
+        return {"id": {"invocationId": "12345678-1234-1234-1234-123456789abc"},
+                "invocationStatus": "COMPLETE_INVOCATION_STATUS", "success": producer["status"] == "PASS",
+                "bazelExitCode": "OK" if producer["status"] == "PASS" else "BUILD_FAILURE",
+                "commitSha": producer["sources"][0], "updatedAtUsec": "1792329302885000",
+                "artifacts": [{"name": "qualification.tar.gz",
+                               "uri": f"bytestream://remote.buildbuddy.io/blobs/{identity['sha256']}/{identity['bytes']}"}]}
+
+    def native_collect(self, metadata: dict[str, object], responses: list[object]) -> dict[str, object]:
+        key = self.root / "api-key"
+        key.write_text("test-secret")
+        with mock.patch.object(report, "HTTPSConnection") as connection:
+            connection.return_value.getresponse.side_effect = responses
+            value = report.native_receipt(metadata["id"]["invocationId"], key, self.root / "download.tar.gz",
+                                          self.root / "native-receipt.json", metadata["commitSha"], None, 30)
+        self.assertNotIn("test-secret", json.dumps(value))
+        return value
+
+    def native_response(self, data: bytes, status: int = 200) -> object:
+        response = mock.MagicMock(wraps=io.BytesIO(data))
+        response.__enter__.return_value = response
+        response.__exit__.side_effect = lambda *_: response.close()
+        response.status = status
+        return response
+
+    def metadata_response(self, metadata: dict[str, object]) -> object:
+        return self.native_response(json.dumps({"invocation": [metadata]}).encode())
+
+    def test_native_collection_preserves_retained_outcomes(self) -> None:
+        for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"),
+                             ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):
+            with self.subTest(name=name):
+                invocation = self.fixture("pass" if name == "all-skipped" else name)
+                if name == "all-skipped":
+                    (invocation / "test.xml").write_text(
+                        '<testsuite><testcase name="unavailable"><skipped>environment</skipped></testcase></testsuite>')
+                artifact, producer = self.artifact(invocation, native=True)
+                metadata = self.native_metadata(artifact, producer)
+                # A successful coordinator can still publish incomplete test
+                # coverage. Preserve that producer result independently.
+                metadata["success"] = status != "FAIL"
+                pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
+                with mock.patch.object(report.time, "sleep") as sleep:
+                    value = self.native_collect(metadata, [self.metadata_response(pending),
+                                                           self.metadata_response(metadata),
+                                                           self.native_response(artifact.read_bytes())])
+                sleep.assert_called_once()
+                self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
+                                 (status, status, "COMPLETE"))
+                for field in ("case_counts", "failures", "missing", "skips", "zero_case_owners",
+                              "all_skipped_owners", "native_exits"):
+                    self.assertEqual(value[field], producer[field], field)
+                self.assertEqual(value["native_invocation"]["updatedAtUsec"], metadata["updatedAtUsec"])
+                self.assertEqual(report.read_json(self.root / "native-receipt.json"), value)
+                # Reattachment reuses the authenticated blob; a second download
+                # would exhaust these responses and fail the test.
+                resumed = self.native_collect(metadata, [self.metadata_response(metadata)])
+                self.assertEqual((resumed["status"], resumed["collection_status"]), (status, "COMPLETE"))
+                (self.root / "download.tar.gz").unlink()
+                shutil.rmtree(invocation)
+
+    def test_native_collection_retains_failure_when_bundle_is_missing_or_invalid(self) -> None:
+        artifact, producer = self.artifact(self.fixture("fail"), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        for fault in ("missing", "duplicate", "corrupt", "truncated", "redirect", "source",
+                      "omitted-success", "string-success", "integer-success"):
+            with self.subTest(fault=fault):
+                current = dict(metadata)
+                data = artifact.read_bytes()
+                status = 200
+                if fault == "missing":
+                    current["artifacts"] = []
+                elif fault == "duplicate":
+                    current["artifacts"] = metadata["artifacts"] * 2
+                elif fault == "corrupt":
+                    data = b"x" * len(data)
+                elif fault == "truncated":
+                    data = data[:32]
+                elif fault == "redirect":
+                    status = 302
+                elif fault == "source":
+                    current["commitSha"] = "0" * 40
+                elif fault == "omitted-success":
+                    current.pop("success")
+                    current["artifacts"] = []
+                else:
+                    current["success"] = "false" if fault == "string-success" else 0
+                responses = [self.metadata_response(current)]
+                if fault in ("corrupt", "truncated", "redirect"):
+                    responses.append(self.native_response(data, status))
+                value = self.native_collect(metadata, responses)
+                expected = "INCOMPLETE" if fault in ("string-success", "integer-success") else "FAIL"
+                self.assertEqual((value["status"], value["collection_status"]), (expected, "ERROR"))
+                self.assertEqual(value["native_invocation"]["bazelExitCode"], "BUILD_FAILURE")
+                self.assertNotIn("consumer_verified_at", value)
+                self.assertFalse((self.root / "download.tar.gz").exists())
+
+    def test_native_collection_distinguishes_coordinator_failure_and_disconnection(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        for state, expected in (("COMPLETE_INVOCATION_STATUS", "FAIL"),
+                                ("DISCONNECTED_INVOCATION_STATUS", "INCOMPLETE")):
+            with self.subTest(state=state):
+                metadata.update(invocationStatus=state, success=False, bazelExitCode="INTERRUPTED")
+                responses = [self.metadata_response(metadata)]
+                if not (self.root / "download.tar.gz").exists():
+                    responses.append(self.native_response(artifact.read_bytes()))
+                value = self.native_collect(metadata, responses)
+                self.assertEqual((value["status"], value["producer_status"]), (expected, "PASS"))
+                self.assertEqual(value["native_invocation"]["bazelExitCode"], "INTERRUPTED")
+
+    def test_native_collection_timeout_is_not_an_execution_verdict(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
+        with mock.patch.object(report.time, "monotonic", side_effect=[0, 0, 31]):
+            value = self.native_collect(metadata, [self.metadata_response(pending)])
+        self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
+        self.assertIn("deadline", value["collection_error"])
+        self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
+        self.assertNotIn("consumer_verified_at", value)
 
     def test_bundle_command_logs_recoverable_archive_identity(self) -> None:
         invocation = self.fixture()

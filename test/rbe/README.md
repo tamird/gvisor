@@ -98,6 +98,33 @@ the producer's `verdict_available_at` and each invocation's original
 INCOMPLETE result writes a receipt and exits nonzero; an identity mismatch
 rejects the artifact.
 
+For an already submitted native BuildBuddy invocation, attach collection
+immediately and leave this bounded command running through receipt creation:
+
+```sh
+python3 test/rbe/qualification_report.py native-receipt \
+  --invocation-id "$invocation_id" --api-key-file "$api_key_file" \
+  --expected-source "$source_commit" --target //pkg/sync:sync_test \
+  --artifact "$artifact" --output "$receipt_json" --timeout-seconds 7200
+```
+
+This polls only that invocation, checks its source and single
+`qualification.tar.gz` artifact, downloads the blob from BuildBuddy, and checks
+the advertised SHA256 and size before using the same receipt verifier. It never
+submits, retries, or cancels remote work. The key is read from the named file and
+sent only to the fixed HTTPS API endpoint; redirects are rejected. The timeout
+covers polling and collection, with individual network operations capped at
+30 seconds. A complete matching local blob is reused when attaching again.
+An interrupted download stays at `$artifact.partial` and is restarted on the
+next attachment; it is never treated as a verified artifact.
+
+The receipt includes the native invocation's exit description and timestamps.
+A collection error writes an error receipt without claiming verification;
+a known failed execution remains FAIL even when its bundle is unavailable.
+Producer failures, incomplete coverage, zero-case owners and skips remain in
+verified receipts. Native coordinator failure also fails the overall receipt,
+while `producer_status` retains the bundle's original verdict.
+
 Benchmark-only Go runs use an explicit opt-in, rather than named-test coverage.
 For `actions.sh` with the explicit `test` lane, set
 `QUALIFICATION_BENCHMARK_MANIFEST` to a JSON file and select the exact owner
