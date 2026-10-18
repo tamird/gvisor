@@ -33,7 +33,7 @@ for script in "$@"; do
 done
 
 # Only declared scripts and packages enter this container. In particular, there
-# is no Git metadata or publishing script, so make_release takes its master path.
+# is no Git metadata or publishing script; the test covers master and nightly.
 docker run --rm --runtime=runc --network=none --user=0:0 --read-only \
   --tmpfs=/tmp "${mounts[@]}" gvisor.dev/images/release-tools:latest \
   tools/repository_test_inner.sh

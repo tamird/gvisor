@@ -31,6 +31,7 @@ tools/make_test_key.sh /work/repo.key
 artifacts=(/input/artifacts/{amd64,arm64}/*)
 test "${#artifacts[@]}" -eq 6
 NIGHTLY=false tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
+NIGHTLY=true tools/make_release.sh /work/repo.key /work/repo "${artifacts[@]}"
 
 verify_home=$(mktemp -d)
 cleanup() {
@@ -42,45 +43,62 @@ cleanup() {
 trap cleanup EXIT
 gpg --homedir "$verify_home" --batch --import /work/repo.key
 gpg --homedir "$verify_home" --armor --export > /reports/test-public-key.asc
-release=/work/repo/dists/master
-gpg --homedir "$verify_home" --verify "$release/Release.gpg" "$release/Release"
-gpg --homedir "$verify_home" --output /work/inrelease-content --decrypt "$release/InRelease"
-cmp /work/inrelease-content "$release/Release"
-cp "$release/Release" "$release/Release.gpg" "$release/InRelease" /reports/
+for channel in master nightly; do
+  reports=/reports/$channel
+  mkdir -p "$reports"
+  raw_roots=(/work/repo/$channel/latest)
+  if [[ $channel == nightly ]]; then
+    # Use the generated date so crossing midnight cannot invalidate the check.
+    dated=(/work/repo/nightly/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+    test "${#dated[@]}" -eq 1
+    test -d "${dated[0]}"
+    raw_roots+=("${dated[0]}")
+  fi
+  release=/work/repo/dists/$channel
+  gpg --homedir "$verify_home" --verify "$release/Release.gpg" "$release/Release"
+  gpg --homedir "$verify_home" --output "/work/$channel-inrelease-content" \
+    --decrypt "$release/InRelease"
+  cmp "/work/$channel-inrelease-content" "$release/Release"
+  cp "$release/Release" "$release/Release.gpg" "$release/InRelease" "$reports/"
 
-# Follow the signed metadata's digest links, including compressed indexes.
-awk '/^SHA256:$/ { hashes=1; next } /^[^ ]/ { hashes=0 } hashes { print }' \
-  "$release/Release" > /reports/index-sha256.txt
-test -s /reports/index-sha256.txt
-while read -r digest size path; do
-  test "$(stat -c%s "$release/$path")" = "$size"
-  (cd "$release"; printf '%s  %s\n' "$digest" "$path" | sha256sum --check --strict)
-done < /reports/index-sha256.txt
+  # Follow the signed metadata's digest links, including compressed indexes.
+  awk '/^SHA256:$/ { hashes=1; next } /^[^ ]/ { hashes=0 } hashes { print }' \
+    "$release/Release" > "$reports/index-sha256.txt"
+  test -s "$reports/index-sha256.txt"
+  while read -r digest size path; do
+    test "$(stat -c%s "$release/$path")" = "$size"
+    (cd "$release"; printf '%s  %s\n' "$digest" "$path" | sha256sum --check --strict)
+  done < "$reports/index-sha256.txt"
 
-for arch in amd64 arm64; do
-  package=/input/artifacts/$arch/runsc.deb
-  version=$(dpkg --field "$package" Version)
-  signed=/work/repo/pool/$version/binary-$arch/runsc.deb
-  GNUPGHOME="$verify_home" dpkg-sig --verify "$signed" | tee "/reports/$arch-signature.txt"
-  grep -q '^GOODSIG ' "/reports/$arch-signature.txt"
-  packages=$release/main/binary-$arch/Packages
-  test "$(grep -c '^Package:' "$packages")" -eq 1
-  grep -qx "Architecture: $arch" "$packages"
-  grep -Fqx "Version: $version" "$packages"
-  filename=$(awk '$1 == "Filename:" { print $2 }' "$packages")
-  size=$(awk '$1 == "Size:" { print $2 }' "$packages")
-  digest=$(awk '$1 == "SHA256:" { print $2 }' "$packages")
-  test "/work/repo/$filename" = "$signed"
-  test "$(stat -c%s "$signed")" = "$size"
-  printf '%s  %s\n' "$digest" "$signed" | sha256sum --check --strict
-  cp "$packages" "/reports/$arch-Packages"
-  case "$arch" in
-    amd64) raw_arch=x86_64 ;;
-    arm64) raw_arch=aarch64 ;;
-  esac
-  (
-    cd "/work/repo/master/latest/$raw_arch"
-    sha512sum --check gvisor.tar.bz2.sha512 gvisor.tar.zstd.sha512
-  )
+  for arch in amd64 arm64; do
+    package=/input/artifacts/$arch/runsc.deb
+    version=$(dpkg --field "$package" Version)
+    signed=/work/repo/pool/$version/binary-$arch/runsc.deb
+    GNUPGHOME="$verify_home" dpkg-sig --verify "$signed" | tee "$reports/$arch-signature.txt"
+    grep -q '^GOODSIG ' "$reports/$arch-signature.txt"
+    packages=$release/main/binary-$arch/Packages
+    test "$(grep -c '^Package:' "$packages")" -eq 1
+    grep -qx "Architecture: $arch" "$packages"
+    grep -Fqx "Version: $version" "$packages"
+    filename=$(awk '$1 == "Filename:" { print $2 }' "$packages")
+    size=$(awk '$1 == "Size:" { print $2 }' "$packages")
+    digest=$(awk '$1 == "SHA256:" { print $2 }' "$packages")
+    test "/work/repo/$filename" = "$signed"
+    test "$(stat -c%s "$signed")" = "$size"
+    printf '%s  %s\n' "$digest" "$signed" | sha256sum --check --strict
+    cp "$packages" "$reports/$arch-Packages"
+    case "$arch" in
+      amd64) raw_arch=x86_64 ;;
+      arm64) raw_arch=aarch64 ;;
+    esac
+    for raw_root in "${raw_roots[@]}"; do
+      (
+        cd "$raw_root/$raw_arch"
+        sha512sum --check gvisor.tar.bz2.sha512 gvisor.tar.zstd.sha512
+        cmp gvisor.tar.bz2 "/input/artifacts/$arch/gvisor.tar.bz2"
+        cmp gvisor.tar.zstd "/input/artifacts/$arch/gvisor.tar.zstd"
+      )
+    done
+  done
 done
-echo 'Release repository: both package signatures, signed APT metadata and raw archive checksums verified.'
+echo 'Master and nightly repositories: both package signatures, signed APT metadata and raw archive checksums verified.'
