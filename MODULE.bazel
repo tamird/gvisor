@@ -92,6 +92,8 @@ single_version_override(
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
@@ -1679,7 +1681,6 @@ kernel_headers.configure(default_version = "6.18")
 use_repo(kernel_headers, "kernel_headers")
 
 ### Repo rules
-http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 # Match the RC guest's upstream source while enabling native KCOV coverage.
 http_file(
