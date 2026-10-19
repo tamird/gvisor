@@ -48,6 +48,7 @@ go_test(
         "//pkg/abi/linux",
         "//pkg/bpf",
         "//pkg/seccomp",
+        "//pkg/seccomp/precompiledseccomp",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )

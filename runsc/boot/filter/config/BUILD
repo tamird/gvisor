@@ -58,6 +58,7 @@ go_test(
         "//pkg/abi/linux",
         "//pkg/bpf",
         "//pkg/seccomp",
+        "//pkg/seccomp/precompiledseccomp",
         "//pkg/sentry/devices/nvproxy/nvconf",
         "//pkg/sentry/platform/kvm",
         "//pkg/sentry/platform/systrap",

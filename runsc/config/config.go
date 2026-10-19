@@ -1730,8 +1730,6 @@ const (
 	xdpModeStrTunnel   = "tunnel"
 )
 
-var xdpConfig XDP
-
 // Get implements flag.Getter.
 func (xd *XDP) Get() any {
 	return *xd

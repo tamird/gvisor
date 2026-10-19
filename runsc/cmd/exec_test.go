@@ -24,7 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"gvisor.dev/gvisor/pkg/abi/linux"
-	"gvisor.dev/gvisor/pkg/sentry/control"
+	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 )
 
@@ -66,7 +66,7 @@ func TestCLIArgs(t *testing.T) {
 		ex       Exec
 		spec     specs.Process
 		argv     []string
-		expected control.ExecArgs
+		expected controlapi.ExecArgs
 		wantErr  error
 	}{
 		{
@@ -79,7 +79,7 @@ func TestCLIArgs(t *testing.T) {
 				Env:          []string{"FOO=bar"},
 			},
 			argv: []string{"ls", "/"},
-			expected: control.ExecArgs{
+			expected: controlapi.ExecArgs{
 				Argv:             []string{"ls", "/"},
 				Envv:             []string{"FOO=bar"},
 				WorkingDirectory: "/foo/bar",
@@ -109,7 +109,7 @@ func TestCLIArgs(t *testing.T) {
 				Env:          []string{"FOO=bar"},
 			},
 			argv: []string{"ls", "/"},
-			expected: control.ExecArgs{
+			expected: controlapi.ExecArgs{
 				Argv:             []string{"ls", "/"},
 				Envv:             []string{"FOO=bar", "BAZ=new", "XYZ=xyz,BAZ=new"},
 				WorkingDirectory: "/baz",
@@ -160,7 +160,7 @@ func TestJSONArgs(t *testing.T) {
 		ex       Exec
 		spec     specs.Process
 		p        specs.Process
-		expected control.ExecArgs
+		expected controlapi.ExecArgs
 	}{
 		{
 			name: "flags overridden by process file",
@@ -185,7 +185,7 @@ func TestJSONArgs(t *testing.T) {
 					Permitted:   []string{"CAP_DAC_OVERRIDE"},
 				},
 			},
-			expected: control.ExecArgs{
+			expected: controlapi.ExecArgs{
 				Argv:             []string{"ls", "/"},
 				WorkingDirectory: "/foo/bar",
 				KUID:             0,
@@ -213,7 +213,7 @@ func TestJSONArgs(t *testing.T) {
 				Cwd:  "/foo/bar",
 				// Does not specify capabilities.
 			},
-			expected: control.ExecArgs{
+			expected: controlapi.ExecArgs{
 				Argv:             []string{"ls", "/"},
 				WorkingDirectory: "/foo/bar",
 				KUID:             0,

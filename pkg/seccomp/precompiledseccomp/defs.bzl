@@ -1,6 +1,6 @@
 """Macro for precompiling seccomp-bpf programs."""
 
-load("//tools:defs.bzl", "go_binary", "select_arch")
+load("//tools:defs.bzl", "go_binary", "select_arch", "target_emulator")
 
 def precompiled_seccomp_rules(
         name,
@@ -13,7 +13,7 @@ def precompiled_seccomp_rules(
     """Generates a Go source file containing precompiled seccomp-bpf programs.
 
     Args:
-        name: Name of the generated source target.
+        name: Name of the final genrule.
         programs_to_compile_go_library: go_library target which describes the
             set of seccomp-bpf programs that you wish to precompile. This must
             define the following package-level function:
@@ -116,6 +116,9 @@ def precompiled_seccomp_rules(
         embedsrcs = [
             ":" + out + ".gen.lib.tmpl",
         ],
+        pure = True,
+        noasan = True,
+        race = "off",
     )
     if exclude_in_fastbuild:
         go_binary(
@@ -129,46 +132,69 @@ def precompiled_seccomp_rules(
             ],
         )
 
-    # Syscall numbers and the audit architecture are compiled into the generator.
-    # Run it on the target architecture so its exec-configured Go binary embeds
-    # the right constants. Execution constraints cannot be configurable, so each
-    # architecture needs its own action; select only the required output below.
-    out_cmd = "$(location :" + name + "_gen_bin) --package='" + out_package_name + "' --out=$@"
-    for arch, cpu in {
-        "amd64": "@platforms//cpu:x86_64",
-        "arm64": "@platforms//cpu:aarch64",
-    }.items():
-        native.genrule(
-            name = name + "_compile_" + arch,
-            outs = [name + "/" + arch + "/" + out],
-            cmd = out_cmd,
-            tools = [":" + name + "_gen_bin"],
-            exec_compatible_with = ["@platforms//os:linux", cpu],
-            tags = tags + ["manual", "requires-mem:16g"],
-        )
-    native.alias(
-        name = name + "_compiled",
-        actual = select_arch(
-            amd64 = ":" + name + "_compile_amd64",
-            arm64 = ":" + name + "_compile_arm64",
-        ),
-        tags = tags + ["manual"],
+    # This genrule actually runs the go_binary we just declared, and writes
+    # its output (containing the precompiled rules) to the desired `out` file.
+    #
+    # The generator is a source (rather than a tool) of this genrule, so that
+    # it is built for the target platform rather than for the execution
+    # platform. If the execution platform's architecture differs from the
+    # target's (i.e. when cross-compiling), it is run under a user-mode
+    # emulator. If no emulator is configured for the target architecture, it
+    # is run directly, which works if the kernel is configured to run foreign
+    # binaries (binfmt_misc) and fails otherwise.
+    #
+    # Execution platform constraints are deliberately not used here: they would
+    # make cross-architecture configurations fail analysis wherever no
+    # execution platform for the target architecture is available.
+    emulator = target_emulator()
+    out_args = " --package='" + out_package_name + "' --out=$@"
+    run_gen_cmd = (
+        "GEN=$(location :" + name + "_gen_bin); " +
+        "RUN=; " +
+        "if [ -n \"$$TARGET_ARCH\" ] && [ \"$$(uname -m)\" != \"$$TARGET_ARCH\" ]; then " +
+        "  RUN=\"$$EMULATOR\"; " +
+        "fi; " +
+        "$$RUN \"$$GEN\"" + out_args + " || { " +
+        "  echo \"Failed to run $$GEN (built for $$TARGET_ARCH) on $$(uname -m)" +
+        " (emulator: $${RUN:-none}).\" >&2; " +
+        "  exit 1; " +
+        "}"
     )
-    actual = ":" + name + "_compiled"
+    run_gen_env = (
+        "TARGET_ARCH=" + select_arch(
+            amd64 = "x86_64",
+            arm64 = "aarch64",
+            riscv64 = "riscv64",
+            default = "",
+        ) + "; " +
+        "EMULATOR='" + emulator.cmd + "'; "
+    )
     if exclude_in_fastbuild:
-        # The empty stub is architecture-independent and needs no native worker.
         native.genrule(
-            name = name + "_compile_stubbed",
-            outs = [name + "/stubbed/" + out],
-            cmd = "$(location :" + name + "_gen_stubbed_bin) --package='" + out_package_name + "' --out=$@",
-            tools = [":" + name + "_gen_stubbed_bin"],
-            tags = tags + ["manual", "requires-mem:16g"],
+            name = name,
+            outs = [out],
+            srcs = select({
+                ":" + name + "_fastbuild_cond": [],
+                "//conditions:default": [":" + name + "_gen_bin"],
+            }),
+            # The stubbed generator's output does not depend on the
+            # architecture, so it is built for the execution platform.
+            cmd = run_gen_env + select({
+                ":" + name + "_fastbuild_cond": "$(location :" + name + "_gen_stubbed_bin)" + out_args,
+                "//conditions:default": run_gen_cmd,
+            }),
+            tools = select({
+                ":" + name + "_fastbuild_cond": [":" + name + "_gen_stubbed_bin"],
+                "//conditions:default": [],
+            }) + emulator.tools,
+            tags = tags + ["requires-mem:16g"],
         )
-        actual = select({
-            ":" + name + "_fastbuild_cond": ":" + name + "_compile_stubbed",
-            "//conditions:default": actual,
-        })
-    native.alias(name = name, actual = actual, tags = tags + ["requires-mem:16g"])
-
-    # Keep both labels accepted by existing callers, without a copy action.
-    native.alias(name = out, actual = ":" + name, tags = tags + ["manual"])
+    else:
+        native.genrule(
+            name = name,
+            outs = [out],
+            srcs = [":" + name + "_gen_bin"],
+            cmd = run_gen_env + run_gen_cmd,
+            tools = emulator.tools,
+            tags = tags + ["requires-mem:16g"],
+        )

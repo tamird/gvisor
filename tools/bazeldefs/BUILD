@@ -1,6 +1,6 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
-load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag", "target_emulators")
 load(":platforms.bzl", "docker_exec_properties")
 
 package(
@@ -170,6 +170,12 @@ bzl_library(
     ],
 )
 
+bzl_library(
+    name = "deb_data_bzl",
+    srcs = ["extensions/deb_data.bzl"],
+    visibility = ["//visibility:private"],
+)
+
 # Keep Go's pure/cgo mode in its build settings, not the target platform:
 # Bazel 9 also uses target constraints to select a test execution platform.
 platform(
@@ -210,6 +216,10 @@ config_setting(
         "@platforms//cpu:riscv64",
     ],
 )
+
+# User-mode emulators for each target architecture (qemu_*).
+# See target_emulator in defs.bzl.
+target_emulators(name = "qemu")
 
 genrule(
     name = "version",
