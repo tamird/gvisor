@@ -33,7 +33,23 @@ diff --git a/go/tools/gopackagesdriver/flatpackage.go b/go/tools/gopackagesdrive
  	resolvePathsInPlace(prf, pak.CompiledGoFiles)
  	resolvePathsInPlace(prf, pak.GoFiles)
  	resolvePathsInPlace(prf, pak.OtherFiles)
-@@ -164,6 +177,8 @@
+@@ -112,8 +125,13 @@
+-func FilterFilesForBuildTags(pak *packages.Package) {
+-	pak.CompiledGoFiles = filterSourceFilesForTags(pak.CompiledGoFiles)
++func FilterFilesForBuildTags(pak *packages.Package) error {
++	files, err := filterSourceFilesForTags(pak.CompiledGoFiles)
++	if err != nil {
++		return err
++	}
++	pak.CompiledGoFiles = files
++	return nil
+ }
+ 
+ func filterTestSuffix(pkg *packages.Package, files []string) (err error, testFiles []string, xTestFiles, nonTestFiles []string) {
+ 	for _, filename := range files {
+ 		if strings.HasSuffix(filename, "_test.go") {
+ 			fset := token.NewFileSet()
+@@ -164,6 +181,8 @@
  	// Clone package, only xtgf files
  	return &packages.Package{
  		ID:              pkg.ID + "_xtest",
@@ -54,6 +70,17 @@ diff --git a/go/tools/gopackagesdriver/packageregistry.go b/go/tools/gopackagesd
  			Name:            flatPkg.Name,
  			PkgPath:         flatPkg.PkgPath,
  			GoFiles:         flatPkg.GoFiles,
+@@ -75,7 +77,9 @@
+ 		ResolvePaths(pkg, prf)
+-		FilterFilesForBuildTags(pkg)
++		if err := FilterFilesForBuildTags(pkg); err != nil {
++			return err
++		}
+ 	}
+ 	return nil
+ }
+ 
+ // ResolveImports adds stdlib imports to packages. This is required because
 diff --git a/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl b/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
 --- a/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
 +++ b/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
@@ -294,7 +321,7 @@ diff --git a/go/tools/gopackagesdriver/json_manifest_test.go b/go/tools/gopackag
 new file mode 100644
 --- /dev/null
 +++ b/go/tools/gopackagesdriver/json_manifest_test.go
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,181 @@
 +// Copyright 2026 The Bazel Authors. All rights reserved.
 +//
 +// Licensed under the Apache License, Version 2.0 (the "License");
@@ -408,3 +435,117 @@ new file mode 100644
 +		})
 +	}
 +}
++
++func TestJSONManifestSourceFiltering(t *testing.T) {
++	t.Setenv("GOTAGS", "")
++	previous := buildContext
++	buildContext = makeBuildContext()
++	defer func() { buildContext = previous }()
++	for _, tc := range []struct {
++		name, filename, source         string
++		missing, wantError, wantSource bool
++	}{
++		{name: "default fallback", filename: "fallback.go", source: "//go:build !custom\n\npackage p\n", wantSource: true},
++		{name: "tag excluded", filename: "tagged.go", source: "//go:build custom\n\npackage p\n"},
++		{name: "invalid constraint", filename: "invalid.go", source: "//go:build (\n\npackage p\n", wantError: true},
++		{name: "missing source", filename: "missing.go", missing: true, wantError: true},
++		{name: "cgo generated", filename: "_cgo_gotypes.go", source: "package p\n", wantSource: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			dir := t.TempDir()
++			path := filepath.Join(dir, tc.filename)
++			if !tc.missing {
++				if err := os.WriteFile(path, []byte(tc.source), 0600); err != nil {
++					t.Fatal(err)
++				}
++			}
++			const label = "@@//example:p"
++			record := FlatPackage{ID: label, Name: "p", PkgPath: "example/p", Dir: dir, GoFiles: []string{path}, CompiledGoFiles: []string{path}}
++			data, err := json.Marshal(record)
++			if err != nil {
++				t.Fatal(err)
++			}
++			metadata := filepath.Join(dir, "package.json")
++			if err := os.WriteFile(metadata, data, 0600); err != nil {
++				t.Fatal(err)
++			}
++			manifest := jsonManifest{JSONFiles: []string{metadata}, Labels: []string{label}, BazelVersion: "8.8.1", Workspace: dir, ExecRoot: dir, OutputBase: dir, Arch: "amd64"}
++			data, err = json.Marshal(manifest)
++			if err != nil {
++				t.Fatal(err)
++			}
++			manifestPath := filepath.Join(dir, "manifest.json")
++			if err := os.WriteFile(manifestPath, data, 0600); err != nil {
++				t.Fatal(err)
++			}
++			var output bytes.Buffer
++			err = runJSONManifest(manifestPath, &packages.DriverRequest{}, []string{label}, &output)
++			if tc.wantError {
++				if err == nil || output.Len() != 0 {
++					t.Fatalf("invalid source returned error %v and output %q", err, output.String())
++				}
++				return
++			}
++			if err != nil {
++				t.Fatal(err)
++			}
++			var response packages.DriverResponse
++			if err := json.Unmarshal(output.Bytes(), &response); err != nil {
++				t.Fatal(err)
++			}
++			if len(response.Roots) != 1 || response.Roots[0] != label || len(response.Packages) != 1 {
++				t.Fatalf("unexpected response: %+v", response)
++			}
++			files := response.Packages[0].CompiledGoFiles
++			if tc.wantSource && !slices.Equal(files, []string{path}) || !tc.wantSource && len(files) != 0 {
++				t.Fatalf("filtered files %v, want source %v", files, tc.wantSource)
++			}
++		})
++	}
++}
+diff --git a/go/tools/gopackagesdriver/build_context.go b/go/tools/gopackagesdriver/build_context.go
+--- a/go/tools/gopackagesdriver/build_context.go
++++ b/go/tools/gopackagesdriver/build_context.go
+@@ -1,6 +1,7 @@
+ package main
+ 
+ import (
++	"fmt"
+ 	"go/build"
+ 	"path/filepath"
+ 	"strings"
+@@ -15,23 +16,30 @@
+ 	return &bctx
+ }
+ 
+-func filterSourceFilesForTags(files []string) []string {
++func filterSourceFilesForTags(files []string) ([]string, error) {
+ 	ret := make([]string, 0, len(files))
+ 
+ 	for _, f := range files {
+ 		dir, filename := filepath.Split(f)
+ 		ext := filepath.Ext(f)
+ 
+-		match, _ := buildContext.MatchFile(dir, filename)
+ 		// MatchFile filters out anything without a file extension. In the
+ 		// case of CompiledGoFiles (in particular cgo processed files from
+ 		// the cache), we want them. We also want to keep cgo processed files
+ 		// with known naming conventions.
+-		if match || ext == "" || isCgoProcessed(filename) {
++		if ext == "" || isCgoProcessed(filename) {
++			ret = append(ret, f)
++			continue
++		}
++		match, err := buildContext.MatchFile(dir, filename)
++		if err != nil {
++			return nil, fmt.Errorf("match source %s: %w", f, err)
++		}
++		if match {
+ 			ret = append(ret, f)
+ 		}
+ 	}
+-	return ret
++	return ret, nil
+ }
+ 
+ // isCgoProcessed returns true if the file is a cgo processed file.

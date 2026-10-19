@@ -37,10 +37,27 @@ def _analysis_impl(ctx):
         args.add("--go-summary", summary)
         summaries.append(summary)
         go = go_context(ctx)
+        if go.mode.race or go.mode.msan or go.mode.tags or go.coverage_enabled:
+            fail("Production Go analysis requires default tags without race or coverage instrumentation")
         packages = [dep[GoPkgInfo] for dep in ctx.attr.roots]
         json_files = depset(transitive = [pkg.pkg_json_files for pkg in packages])
-        stdlib_json = depset([pkg.stdlib_json_file for pkg in packages])
-        compiled_inputs = depset(transitive = [pkg.compiled_go_files for pkg in packages])
+
+        # A dependency may have inherited a race stdlib. Bind metadata and
+        # cache directly to this analysis configuration, never registry order.
+        # _list_json is the same pinned GoStdLib field used by the upstream
+        # package aspect; its inherited GoPkgInfo cannot identify this mode.
+        stdlib_json = depset([go.stdlib._list_json])
+        excluded = []
+        excluded_inputs = []
+        if sorted(ctx.attr.excluded_modes.keys()) != sorted(ctx.attr.excluded_roots.values()):
+            fail("Configured Go dispositions differ from declared excluded owners")
+        for dep, owner in ctx.attr.excluded_roots.items():
+            files = dep[DefaultInfo].files.to_list()
+            if not files or any([not file.is_source or not file.path.endswith(".go") for file in files]):
+                fail("Configured Go disposition requires original Go sources: " + owner)
+            excluded.append({"owner": owner, "modes": ctx.attr.excluded_modes[owner], "sources": [file.path for file in files]})
+            excluded_inputs.extend(files)
+        compiled_inputs = depset(excluded_inputs, transitive = [pkg.compiled_go_files for pkg in packages])
         owners = []
         for dep, owner in ctx.attr.roots.items():
             if GoArchive not in dep:
@@ -57,6 +74,8 @@ def _analysis_impl(ctx):
                 "package_id": str(archive.data.label),
                 "goos": archive.source.mode.goos,
                 "goarch": archive.source.mode.goarch,
+                "cgo": archive.source.cgo,
+                "original_sources": [file.path for file in archive.source.srcs if file.is_source and file.path.endswith(".go")],
             })
         if not owners:
             fail("Go analysis requires a generated nonempty production root manifest")
@@ -64,6 +83,7 @@ def _analysis_impl(ctx):
         ctx.actions.write(manifest, json.encode({
             "labels": sorted({owner["package_id"]: True for owner in owners}.keys()),
             "owners": owners,
+            "excluded_owners": excluded,
             "package_json": [file.path for file in json_files.to_list()],
             "stdlib_json": [file.path for file in stdlib_json.to_list()],
             "declared_inputs": [{
@@ -85,11 +105,10 @@ def _analysis_impl(ctx):
         args.add("--extractor", ctx.executable._extractor)
         direct.extend([manifest, ctx.file._go_mod, ctx.file._bazel_version, go.sdk.go])
         inputs.extend([json_files, stdlib_json, compiled_inputs, go.sdk.srcs, go.sdk.headers, go.sdk.tools])
-        for pkg in packages:
-            # CodeQL loads dependency syntax, so the effective go/packages
-            # mode does not request export archives. Retain the driver's
-            # standard-library cache and its source paths.
-            inputs.append(pkg.stdlib_cache_dir)
+
+        # CodeQL loads dependency syntax, not export archives. The standard
+        # library cache must match the single metadata input above.
+        inputs.append(go.stdlib.cache_dir)
         tools.extend([ctx.attr._driver[DefaultInfo].files_to_run, ctx.attr._extractor[DefaultInfo].files_to_run])
         env.update(go.env)
     else:
@@ -143,6 +162,8 @@ _go_analysis = go_rule(
     implementation = _analysis_impl,
     attrs = dict(_ATTRS, **{
         "roots": attr.label_keyed_string_dict(aspects = [go_pkg_info_aspect], mandatory = True),
+        "excluded_roots": attr.label_keyed_string_dict(),
+        "excluded_modes": attr.string_list_dict(),
         "_bazel_version": attr.label(default = "//:.bazelversion", allow_single_file = True),
         "_driver": attr.label(default = "@io_bazel_rules_go//go/tools/gopackagesdriver", executable = True, cfg = "exec"),
         "_extractor": attr.label(default = "@codeql_go_extractor//cli/go-extractor", executable = True, cfg = "exec"),
@@ -156,18 +177,20 @@ _cgo_analysis, _cgo_transition = _with_analysis_platform(_go_analysis).set(
     False,
 ).build()
 
-def codeql_analysis(name, language, roots = None, **kwargs):
+def codeql_analysis(name, language, roots = None, excluded_roots = None, excluded_modes = None, **kwargs):
     """Declare one Linux/AMD64 analysis using the public workflow's language.
 
     Args:
         name: Analysis target name.
         language: Language selected by the public workflow.
         roots: Go analysis aliases mapped to their declared logical owners.
+        excluded_roots: Source-only facades for configured binary variants.
+        excluded_modes: Owning race/coverage declarations for those variants.
         **kwargs: Common attributes forwarded to the analysis rule.
     """
     if language == "go":
-        _cgo_analysis(name = name, language = language, roots = roots, **kwargs)
+        _cgo_analysis(name = name, language = language, roots = roots, excluded_roots = excluded_roots or {}, excluded_modes = excluded_modes or {}, **kwargs)
     else:
-        if roots != None:
+        if roots != None or excluded_roots != None or excluded_modes != None:
             fail("Only Go analysis accepts declared package roots")
         _analysis(name = name, language = language, **kwargs)

@@ -1,6 +1,6 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 load(":defs.bzl", "codeql_analysis")
-load(":go_roots.bzl", "GO_ANALYSIS_ROOTS")
+load(":go_roots.bzl", "GO_ANALYSIS_EXCLUDED_MODES", "GO_ANALYSIS_EXCLUDED_ROOTS", "GO_ANALYSIS_ROOTS")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -28,16 +28,27 @@ py_test(
     srcs = [
         "go_analysis.py",
         "go_analysis_test.py",
+        "update_go_roots.py",
     ],
     main = "go_analysis_test.py",
 )
 
 # Bounded provider-forwarding proof; the complete analyzer uses the generated
-# manifest below. These are existing production declarations, including a
-# testonly helper, generated proto, and configured static binary.
+# manifest below. Include default/tag-excluded roots and source-only configured
+# dispositions alongside the helper, generated proto and static binary proof.
 codeql_analysis(
     name = "go_inputs_check",
     testonly = True,
+    excluded_modes = {
+        "//runsc:runsc-race": ["race"],
+        "//runsc:runsc_coverage": ["coverage"],
+        "//tools/checkescape/test3:test3-race": ["race"],
+    },
+    excluded_roots = {
+        "//runsc:runsc-race_codeql": "//runsc:runsc-race",
+        "//runsc:runsc_coverage_codeql": "//runsc:runsc_coverage",
+        "//tools/checkescape/test3:test3-race_codeql": "//tools/checkescape/test3:test3-race",
+    },
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -50,8 +61,11 @@ codeql_analysis(
     roots = {
         "//images:cuda_run_sample_codeql": "//images:cuda_run_sample",
         "//pkg/test/dockerutil:dockerutil_codeql": "//pkg/test/dockerutil:dockerutil",
+        "//runsc:runsc-plugin-stack_codeql": "//runsc:runsc-plugin-stack",
+        "//runsc:runsc_codeql": "//runsc:runsc",
         "//test/gpu:gpu_driver_versions_go_proto_codeql": "//test/gpu:gpu_driver_versions_go_proto",
         "//test/runtimes/proctor:proctor_bin_codeql": "//test/runtimes/proctor:proctor_bin",
+        "//tools/checkescape/test3:test3_codeql": "//tools/checkescape/test3:test3",
         "//tools/licensecheck:licensecheck_codeql": "//tools/licensecheck:licensecheck",
     },
     tags = ["manual"],
@@ -68,6 +82,8 @@ _LANGUAGES = [
     codeql_analysis(
         name = language,
         testonly = language == "go",
+        excluded_modes = GO_ANALYSIS_EXCLUDED_MODES if language == "go" else None,
+        excluded_roots = GO_ANALYSIS_EXCLUDED_ROOTS if language == "go" else None,
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",

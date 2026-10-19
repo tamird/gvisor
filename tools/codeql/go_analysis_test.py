@@ -18,8 +18,48 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 
 from tools.codeql import go_analysis
+from tools.codeql import update_go_roots
+
+
+class SourceInventoryTest(unittest.TestCase):
+    def query(self) -> ET.Element:
+        return ET.fromstring('''<query>
+          <rule class="alias" name="//pkg:ordinary_codeql">
+            <label name="actual" value="//pkg:ordinary"/>
+            <list name="tags"><string value="manual"/><string value="codeql-go-owner://pkg:ordinary"/></list>
+          </rule>
+          <rule class="filegroup" name="//pkg:configured_codeql">
+            <list name="srcs"><label value="//pkg:main.go"/></list>
+            <list name="tags"><string value="manual"/><string value="codeql-go-owner://pkg:configured"/>
+              <string value="codeql-go-excluded:coverage"/><string value="codeql-go-excluded:race"/></list>
+          </rule>
+        </query>''')
+
+    def test_inventory_preserves_configured_owners(self) -> None:
+        self.assertEqual(update_go_roots.roots_from_query(self.query()), (
+            {"//pkg:ordinary_codeql": "//pkg:ordinary"},
+            {"//pkg:configured_codeql": "//pkg:configured"},
+            {"//pkg:configured": ["coverage", "race"]},
+        ))
+
+    def test_disposition_requires_known_mode_and_sources(self) -> None:
+        for mutation in ("unknown mode", "missing sources", "alias mode", "wrong owner"):
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                query = self.query()
+                configured = query.findall("rule")[1]
+                if mutation == "unknown mode":
+                    configured.find("list[@name='tags']/string[@value='codeql-go-excluded:race']").set(
+                        "value", "codeql-go-excluded:unknown")
+                elif mutation == "missing sources":
+                    configured.find("list[@name='srcs']").clear()
+                elif mutation == "alias mode":
+                    configured.set("class", "alias")
+                else:
+                    query.find("rule/label[@name='actual']").set("value", "//pkg:other")
+                update_go_roots.roots_from_query(query)
 
 
 class ConfiguredPackagesTest(unittest.TestCase):
@@ -42,6 +82,88 @@ class ConfiguredPackagesTest(unittest.TestCase):
     def record(self, files: list[str], *, identity: str = "@@//pkg:p") -> go_analysis.Package:
         return {"ID": identity, "PkgPath": "example.test/pkg", "Dir": "__BAZEL_WORKSPACE__/pkg",
                 "GoFiles": files, "CompiledGoFiles": files, "OtherFiles": []}
+
+    def original(self, name: str, content: str = "package main\n") -> str:
+        path = self.root / "pkg" / name
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(content)
+        self.inputs.append({"path": str(path.relative_to(self.root)), "owner": "@@//pkg:" + name,
+                            "short_path": "pkg/" + name, "is_source": True, "is_directory": False})
+        return str(path)
+
+    def test_default_tag_fallback_keeps_unique_sources(self) -> None:
+        main = self.original("main.go")
+        tagged = self.original("tagged.go", "//go:build feature\n\npackage main\n")
+        fallback = self.original("untagged.go", "//go:build !feature\n\npackage main\n")
+        raw = self.record([main, tagged, fallback])
+        filtered = self.record([main, fallback])
+        owner = {"owner": "//pkg:tagged", "package_id": raw["ID"], "cgo": False, "original_sources": [main, tagged, fallback]}
+        inputs = go_analysis.source_files(self.inputs, self.root)
+        labels, empty = go_analysis.default_roots([owner], {raw["ID"]: raw}, [filtered], inputs, self.root)
+        self.assertEqual((labels, empty), ([raw["ID"]], []))
+        excluded = [{"owner": "//pkg:race", "modes": ["race"], "sources": [main, tagged, fallback]}]
+        parity = go_analysis.configured_source_parity(excluded, {raw["ID"]: raw}, {main, fallback}, inputs, self.root)
+        self.assertEqual([item["default_eligible"] for item in parity[0]["sources"]], [True, False, True])
+
+    def test_configured_owner_cannot_lose_unique_original(self) -> None:
+        common, unique = self.original("common.go"), self.original("unique.go")
+        raw = self.record([common])
+        excluded = [{"owner": "//pkg:race", "modes": ["race"], "sources": [common, unique]}]
+        with self.assertRaisesRegex(ValueError, "loses a baseline source.*unique.go"):
+            go_analysis.configured_source_parity(excluded, {raw["ID"]: raw}, {common},
+                                                go_analysis.source_files(self.inputs, self.root), self.root)
+
+    def test_empty_default_root_requires_complete_original_membership(self) -> None:
+        main = self.original("main.go")
+        plugin = self.original("plugin.go", "//go:build network_plugins\n\npackage main\n")
+        normal = self.record([main])
+        raw = self.record([plugin], identity="@@//pkg:plugin")
+        empty = self.record([], identity=raw["ID"])
+        normal_owner = {"owner": "//pkg:main", "package_id": normal["ID"], "cgo": False, "original_sources": [main]}
+        owner = {"owner": "//pkg:plugin", "package_id": raw["ID"], "cgo": False, "original_sources": [plugin]}
+        inputs = go_analysis.source_files(self.inputs, self.root)
+        labels, excluded = go_analysis.default_roots([normal_owner, owner], {normal["ID"]: normal, raw["ID"]: raw},
+                                                    [normal, empty], inputs, self.root)
+        self.assertEqual(labels, [normal["ID"]])
+        self.assertEqual(excluded, [{"owner": owner, "reason": "no-default-sources", "sources": [plugin],
+                                     "raw_go_files": [plugin], "raw_compiled_go_files": [plugin],
+                                     "constraints": {plugin: ["//go:build network_plugins"]}}])
+        for originals, raw_files in [([], []), ([plugin], []), ([plugin], [plugin, main])]:
+            with self.subTest(originals=originals, raw_files=raw_files), self.assertRaises(ValueError):
+                go_analysis.default_roots([normal_owner, {**owner, "original_sources": originals}],
+                                          {normal["ID"]: normal, raw["ID"]: self.record(raw_files, identity=raw["ID"])},
+                                          [normal, empty], inputs, self.root)
+        for compiled in ([], [plugin]):
+            with self.subTest(compiled=compiled), self.assertRaisesRegex(ValueError, "prefilter metadata omitted original sources"):
+                go_analysis.default_roots([normal_owner, {**owner, "original_sources": [plugin, main]}],
+                                          {normal["ID"]: normal, raw["ID"]: {
+                                              **self.record([plugin, main], identity=raw["ID"]), "CompiledGoFiles": compiled}},
+                                          [normal, empty], inputs, self.root)
+
+    def test_root_metadata_cannot_drop_default_source(self) -> None:
+        main, fallback = self.original("main.go"), self.original("untagged.go")
+        raw = self.record([main])
+        owner = {"owner": "//pkg:tagged", "package_id": raw["ID"], "cgo": False, "original_sources": [main, fallback]}
+        with self.assertRaisesRegex(ValueError, "omitted original sources.*untagged.go"):
+            go_analysis.default_roots([owner], {raw["ID"]: raw}, [raw],
+                                      go_analysis.source_files(self.inputs, self.root), self.root)
+
+    def test_nonempty_root_requires_original_prefilter_sources(self) -> None:
+        main, other = self.original("main.go"), self.original("other.go")
+        raw = {**self.record([main, other]), "CompiledGoFiles": [main]}
+        owner = {"owner": "//pkg:main", "package_id": raw["ID"], "cgo": False, "original_sources": [main, other]}
+        with self.assertRaisesRegex(ValueError, "prefilter metadata omitted original sources.*other.go"):
+            go_analysis.default_roots([owner], {raw["ID"]: raw}, [self.record([main])],
+                                      go_analysis.source_files(self.inputs, self.root), self.root)
+
+    def test_cgo_root_retains_transformed_source_contract(self) -> None:
+        original = self.original("cgo.go", 'package p\nimport "C"\n')
+        generated = self.source("cgo", "_cgo_gotypes.go")
+        raw = {**self.record([original]), "CompiledGoFiles": [generated]}
+        owner = {"owner": "//pkg:cgo", "package_id": raw["ID"], "cgo": True, "original_sources": [original]}
+        labels, excluded = go_analysis.default_roots([owner], {raw["ID"]: raw}, [raw],
+                                                     go_analysis.source_files(self.inputs, self.root), self.root)
+        self.assertEqual((labels, excluded), ([raw["ID"]], []))
 
     def select(self, first: go_analysis.Package, second: go_analysis.Package) -> go_analysis.PackageSelection:
         paths = []

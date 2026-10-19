@@ -72,6 +72,26 @@ class PackageSelection:
     equivalents: dict[str, str]
 
 
+class Owner(TypedDict):
+    owner: str
+    package_id: str
+    goos: str
+    goarch: str
+    cgo: bool
+    original_sources: list[str]
+
+
+class ConfiguredOwner(TypedDict):
+    owner: str
+    modes: list[str]
+    sources: list[str]
+
+
+class DriverResponse(TypedDict):
+    Roots: list[str]
+    Packages: list[Package]
+
+
 class Manifest(TypedDict):
     labels: list[str]
     package_json: list[str]
@@ -80,8 +100,9 @@ class Manifest(TypedDict):
     goarch: str
     goos: str
     bazel_version_file: str
-    owners: list[dict[str, str]]
+    owners: list[Owner]
     declared_inputs: list[DeclaredInput]
+    excluded_owners: list[ConfiguredOwner]
 
 
 def json_records(path: Path) -> list[Package]:
@@ -256,6 +277,90 @@ def archive_coverage(expected: dict[str, str], actual: dict[str, str], equivalen
                            sorted(mismatched), sorted(actual_classes.keys() - expected_classes.keys()))
 
 
+def default_roots(owners: list[Owner], records: dict[str, Package], packages: list[Package],
+                  inputs: dict[str, SourceFile], root: Path) -> tuple[list[str], list[dict[str, object]]]:
+    """Retain default-filtered roots, accounting for every original root source."""
+    filtered = {record["ID"]: record for record in packages}
+    if len(filtered) != len(packages):
+        raise ValueError("Driver duplicated package identity")
+    labels = set()
+    excluded = []
+    for owner in owners:
+        identity = owner["package_id"]
+        raw, loaded = records[identity], filtered[identity]
+        originals = {str((root / name).resolve()) for name in owner["original_sources"]}
+        raw_files = {str(resolve_input(name, root)) for name in raw.get("GoFiles", [])}
+        prefilter_files = {str(resolve_input(name, root)) for name in raw.get("CompiledGoFiles", [])}
+        if missing := originals - raw_files:
+            raise ValueError(f"Root metadata omitted original sources: {owner['owner']}: {sorted(missing)}")
+        if not owner["cgo"] and (missing := originals - prefilter_files):
+            raise ValueError(f"Root prefilter metadata omitted original sources: {owner['owner']}: {sorted(missing)}")
+        files = loaded.get("CompiledGoFiles")
+        if not isinstance(files, list) or any(not isinstance(name, str) for name in files):
+            raise ValueError(f"Driver returned invalid root source paths: {identity}")
+        if files:
+            labels.add(identity)
+            continue
+        # An initially empty or generated-only declaration is not evidence of
+        # a package excluded by the canonical architecture/build-tag filter.
+        if (not originals or raw_files != originals or prefilter_files != originals
+                or any(name not in inputs or inputs[name].generated for name in originals)):
+            raise ValueError(f"Empty root lacks complete original source exclusion evidence: {identity}")
+        excluded.append({"owner": owner, "reason": "no-default-sources", "sources": sorted(originals),
+                         "raw_go_files": raw["GoFiles"], "raw_compiled_go_files": raw["CompiledGoFiles"],
+                         "constraints": {name: [line for line in Path(name).read_text().splitlines()
+                                                if line.startswith(("//go:build ", "// +build "))]
+                                         for name in sorted(originals)}})
+    if not labels:
+        raise ValueError("Default source selection has no roots")
+    return sorted(labels), excluded
+
+
+def configured_source_parity(excluded: list[ConfiguredOwner], loaded_records: dict[str, Package],
+                             eligible: set[str], inputs: dict[str, SourceFile], root: Path) -> list[dict[str, object]]:
+    """Account for configured originals through actual loaded default packages."""
+    membership: dict[str, list[str]] = {}
+    for identity, record in loaded_records.items():
+        for name in record.get("GoFiles", []):
+            membership.setdefault(str(resolve_input(name, root)), []).append(identity)
+    dispositions = []
+    for owner in excluded:
+        modes = owner["modes"]
+        if not modes or len(modes) != len(set(modes)) or set(modes) - {"race", "coverage"}:
+            raise ValueError(f"Invalid configured source disposition: {owner}")
+        sources = owner["sources"]
+        if not sources or len(sources) != len(set(sources)):
+            raise ValueError(f"Configured owner has no unique original source membership: {owner}")
+        evidence = []
+        for name in sources:
+            path = str((root / name).resolve())
+            facts = inputs.get(path)
+            if facts is None or facts.generated or path not in membership:
+                raise ValueError(f"Configured owner loses a baseline source: {owner['owner']}: {name}")
+            evidence.append({"path": path, "facts": asdict(facts), "packages": sorted(membership[path]),
+                             "default_eligible": path in eligible})
+        dispositions.append({**owner, "sources": evidence})
+    return dispositions
+
+
+def driver_response(driver: Path, labels: list[str], environment: dict[str, str], path: Path) -> DriverResponse:
+    with path.open("w") as response_file:
+        subprocess.run([str(driver.absolute()), *labels], input=json.dumps({"Mode": 0, "Tests": False}),
+                       text=True, env=environment, stdout=response_file, check=True)
+    match json.loads(path.read_text()):
+        case {"Compiler": "gc", "Arch": "amd64", "Roots": list() as roots, "Packages": list() as packages} as response:
+            if not all(isinstance(label, str) for label in roots):
+                raise ValueError("Driver returned a non-string root identity")
+        case _:
+            raise ValueError("Driver did not return its declared graph and gc/amd64 type-size identity")
+    if set(roots) != set(labels) or len(roots) != len(labels):
+        raise ValueError("Driver roots differ from the exact production selection: " + json.dumps({
+            "missing": sorted(set(labels) - set(roots)), "unexpected": sorted(set(roots) - set(labels)),
+            "duplicates": len(roots) != len(set(roots)),
+        }))
+    return cast(DriverResponse, response)
+
+
 def extract(args: argparse.Namespace) -> Path:
     root = Path.cwd()
     output = args.output.absolute()
@@ -298,6 +403,8 @@ def extract(args: argparse.Namespace) -> Path:
     packages_path = output / "packages.json"
     packages_path.write_text("\n".join(json.dumps(record) for record in augmented_records) + "\n")
     stdlib_paths = [Path(name).absolute() for name in manifest["stdlib_json"]]
+    if len(stdlib_paths) != 1:
+        raise ValueError("Expected one analysis-configured standard-library metadata input")
     stdlib_ids = set()
     for path in stdlib_paths:
         for record in json_records(path):
@@ -305,7 +412,7 @@ def extract(args: argparse.Namespace) -> Path:
             if not record.get("Dir"):
                 raise ValueError(f"Standard package lacks its source directory: {record['ID']}")
     driver_manifest = output / "driver.json"
-    driver_manifest.write_text(json.dumps({
+    driver_configuration = {
         "JSONFiles": [str(path) for path in stdlib_paths] + [str(packages_path)],
         "Labels": manifest["labels"],
         "BazelVersion": Path(manifest["bazel_version_file"]).read_text().strip(),
@@ -314,7 +421,8 @@ def extract(args: argparse.Namespace) -> Path:
         "OutputBase": str(root),
         "Arch": manifest["goarch"],
         "Tests": False,
-    }, indent=2) + "\n")
+    }
+    driver_manifest.write_text(json.dumps(driver_configuration, indent=2) + "\n")
     environment = dict(os.environ)
     environment.update(
         GOPACKAGESDRIVER=str(args.driver.absolute()),
@@ -331,26 +439,18 @@ def extract(args: argparse.Namespace) -> Path:
         GOTAGS="",
     )
     # Reuse the driver's architecture and tag filtering with public CI defaults.
-    # The manifest returns its complete declared graph for every requested mode.
+    # The first response proves source filtering for every declared candidate.
     response_path = output / "driver-response.json"
-    with response_path.open("w") as response_file:
-        subprocess.run(
-            [str(args.driver.absolute()), *manifest["labels"]],
-            input=json.dumps({"Mode": 0, "Tests": False}), text=True,
-            env=environment, stdout=response_file, check=True,
-        )
-    match json.loads(response_path.read_text()):
-        case {"Compiler": "gc", "Arch": "amd64", "Roots": list() as roots, "Packages": list() as packages}:
-            if not all(isinstance(label, str) for label in roots):
-                raise ValueError("Driver returned a non-string root identity")
-        case _:
-            raise ValueError("Driver did not return its declared graph and gc/amd64 type-size identity")
-    if set(roots) != set(manifest["labels"]) or len(roots) != len(manifest["labels"]):
-        raise ValueError("Driver roots differ from the exact production selection: " + json.dumps({
-            "missing": sorted(set(manifest["labels"]) - set(roots)),
-            "unexpected": sorted(set(roots) - set(manifest["labels"])),
-            "duplicates": len(roots) != len(set(roots)),
-        }))
+    response = driver_response(args.driver, manifest["labels"], environment, output / "candidate-response.json")
+    labels, empty_roots = default_roots(manifest["owners"], selected, response["Packages"], inputs, root)
+    driver_configuration["Labels"] = labels
+    driver_manifest.write_text(json.dumps(driver_configuration, indent=2) + "\n")
+    # Reuse canonical import reachability after removing proved empty roots.
+    if empty_roots:
+        response = driver_response(args.driver, labels, environment, response_path)
+    else:
+        response_path.write_text(json.dumps(response) + "\n")
+    roots, packages = response["Roots"], response["Packages"]
     eligible: dict[str, set[str]] = {}
     loaded_ids = set()
     for record in packages:
@@ -380,6 +480,8 @@ def extract(args: argparse.Namespace) -> Path:
     excluded_records = [{"metadata": name, "record": record} for name, record in records
                         if record["ID"] not in loaded_ids]
     eligible_sources = set().union(*eligible.values())
+    configured_dispositions = configured_source_parity(manifest["excluded_owners"], loaded.records,
+                                                       eligible_sources, inputs, root)
     if introduced := eligible_sources - raw_sources:
         raise ValueError(f"Driver introduced undeclared source files: {sorted(introduced)}")
     expected = {name: hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in eligible_sources}
@@ -394,7 +496,7 @@ def extract(args: argparse.Namespace) -> Path:
     database = output / "database"
     # CodeQL removes one leading @ from each @@ command argument. Escape the
     # canonical labels once so the strict driver receives their original bytes.
-    command = [str(args.extractor.absolute()), "--source-root", str(root), *("@" + label for label in manifest["labels"])]
+    command = [str(args.extractor.absolute()), "--source-root", str(root), *("@" + label for label in labels)]
     with (output / "extraction.log").open("w") as log:
         result = subprocess.run([
             str(args.codeql.absolute()), "database", "create", str(database),
@@ -441,8 +543,13 @@ def extract(args: argparse.Namespace) -> Path:
             actual[path] = hashlib.sha256(archive.read(entry)).hexdigest()
     coverage = archive_coverage(expected, actual, loaded.equivalents)
     outcome = {
-        "requested_roots": manifest["labels"],
+        "requested_roots": labels,
+        "candidate_roots": manifest["labels"],
         "owners": manifest["owners"],
+        "configured_dispositions": configured_dispositions,
+        "empty_default_roots": empty_roots,
+        "stdlib_json": str(stdlib_paths[0]),
+        "stdlib_sha256": hashlib.sha256(stdlib_paths[0].read_bytes()).hexdigest(),
         "extract_tests": False,
         "package_records": len(selected),
         "driver_roots": roots,
@@ -478,6 +585,10 @@ def extract(args: argparse.Namespace) -> Path:
     (output / "outcome.json").write_text(json.dumps(outcome, indent=2) + "\n")
     print(json.dumps({
         "owners": len(manifest["owners"]),
+        "declared_owners": len(manifest["owners"]) + len(configured_dispositions),
+        "configured_dispositions": len(configured_dispositions),
+        "empty_default_roots": len(empty_roots),
+        "analyzed_roots": len(labels),
         "package_records": len(selected),
         "expected_files": len(coverage.expected),
         "actual_files": len(coverage.actual),

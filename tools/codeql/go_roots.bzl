@@ -1,5 +1,9 @@
 """Generated production Go roots; update with //tools/codeql:update_go_roots."""
 
+# Bootstrap declarations; the canonical query generator fills dispositions.
+GO_ANALYSIS_EXCLUDED_ROOTS = {}
+GO_ANALYSIS_EXCLUDED_MODES = {}
+
 GO_ANALYSIS_ROOTS = {
     "//examples/sandboxexec/go/docprocessor:docprocessor_codeql": "//examples/sandboxexec/go/docprocessor:docprocessor",
     "//examples/sandboxexec/go:doc_processor_codeql": "//examples/sandboxexec/go:doc_processor",

@@ -24,14 +24,28 @@ _DEFAULT_STATIC = select({
     "//conditions:default": "auto",
 })
 
-def _codeql_source(name, testonly):
+def _codeql_source(name, testonly, srcs = None, excluded_modes = None):
     # An alias in the same package preserves the owner's visibility (including
     # package defaults) and configuration. It adds no compilation or runfiles.
+    tags = ["manual", "codeql-go-owner:" + str(Label("//%s:%s" % (native.package_name(), name)))]
+    if excluded_modes:
+        # Instrumented/race compilations are not the default source analysis.
+        # Retain their original inputs for parity without analyzing that graph.
+        if not srcs:
+            fail("Configured Go analysis disposition requires original sources: " + name)
+        native.filegroup(
+            name = name + "_codeql",
+            srcs = srcs,
+            testonly = testonly,
+            tags = tags + ["codeql-go-excluded:" + mode for mode in excluded_modes],
+            visibility = ["//tools/codeql:__pkg__"],
+        )
+        return
     native.alias(
         name = name + "_codeql",
         actual = ":" + name,
         testonly = testonly,
-        tags = ["manual", "codeql-go-owner:" + str(Label("//%s:%s" % (native.package_name(), name)))],
+        tags = tags,
         visibility = ["//tools/codeql:__pkg__"],
     )
 
@@ -99,10 +113,11 @@ def go_cov(name, static = False, **kwargs):
         _static_go_cov if static else _go_cov,
         name = name,
         static = static,
+        coverage = True,
         **kwargs
     )
 
-def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs = None, **kwargs):
+def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs = None, coverage = False, **kwargs):
     if "noasan" in kwargs:
         # no-op option, will need to do transitions when sanitizer configs are defined.
         kwargs.pop("noasan")
@@ -129,7 +144,13 @@ def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs
         gc_goopts = gc_goopts,
         **kwargs
     )
-    _codeql_source(name, kwargs.get("testonly"))
+    excluded_modes = ["coverage"] if coverage else []
+    race = kwargs.get("race", "auto")
+    if race not in ["auto", "on", "off"]:
+        fail("Go analysis requires an explicit race-mode disposition: " + name)
+    if race == "on":
+        excluded_modes.append("race")
+    _codeql_source(name, kwargs.get("testonly"), kwargs.get("srcs"), excluded_modes)
 
 def go_importpath(target):
     """Returns the importpath for the target."""
