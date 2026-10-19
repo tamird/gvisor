@@ -186,9 +186,11 @@ labels with `QUALIFICATION_TARGETS`. For example:
 
 The manifest is validated and retained before Bazel starts. Its quoted arguments
 apply identically to independent selection and execution. Every selected owner
-must have expectations: `name` is the exact output name, including any CPU
-suffix; `count` is the number of rows per attempt; `units` is the exact set of
-metrics. Optional `iterations` checks fixed-iteration runs. Numeric values are
+must have expectations: `name` is the leaf name without Go's `-GOMAXPROCS`
+suffix when using the default CPU setting. With explicit `-test.cpu`, it is the
+exact output name, including any CPU suffix. Raw observed names are retained;
+row counts still reject unexpected or duplicate CPU variants. `count` is the
+number of rows per attempt; `units` is the exact set of metrics. Optional `iterations` checks fixed-iteration runs. Numeric values are
 retained without a performance comparison or significance claim.
 
 Benchmark mode requires successful native/BEP outcomes, unchanged source,

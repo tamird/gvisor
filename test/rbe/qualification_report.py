@@ -843,6 +843,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     benchmark_mode = info["command_kind"] == "benchmark"
     testing = info["command_kind"] in ("test", "benchmark")
     benchmark_expected: dict[str, list[Benchmark]] = {}
+    benchmark_default_cpu = True
     benchmark_evidence: dict[str, object] = {}
     pgo_expected: dict[str, PGO] | None = None
     if benchmark_mode != (expected_benchmarks is not None):
@@ -850,6 +851,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     if expected_benchmarks is not None:
         try:
             arguments, benchmark_expected = benchmark_manifest(expected_benchmarks)
+            benchmark_default_cpu = not any(argument.startswith("-test.cpu=") for argument in arguments)
             raw_manifest = read_json(expected_benchmarks)
             if "pgo" in raw_manifest:
                 pgo_expected = pgo_expectations(raw_manifest)
@@ -1120,9 +1122,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     observation["benchmarks"] = rows
                     expectations = declared_expected if declared_benchmark else benchmark_expected
                     wanted = {leaf.name: leaf for leaf in expectations.get(attempt.owner.label, [])}
-                    # These declarations use Go's default CPU setting. Retain
-                    # its observed suffix while matching the declared leaves.
-                    names = [re.sub(r"-\d+$", "", string(row["name"])) if declared_benchmark else string(row["name"])
+                    # Go appends -GOMAXPROCS to benchmark names. Retain the
+                    # observed suffix, but match default-CPU runs by leaf name.
+                    # Explicit -test.cpu contracts still require exact names.
+                    # https://pkg.go.dev/golang.org/x/perf/benchfmt#Name.Parts
+                    names = [re.sub(r"-\d+$", "", string(row["name"]))
+                             if declared_benchmark or benchmark_default_cpu and pgo_expected is None else string(row["name"])
                              for row in rows]
                     actual = Counter(names)
                     if actual != Counter({name: leaf.count for name, leaf in wanted.items()}):
