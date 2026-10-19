@@ -430,6 +430,11 @@ exports_files([
 ])
 
 exports_files(
+    [".bazelversion"],
+    visibility = ["//tools/codeql:__pkg__"],
+)
+
+exports_files(
     [".clang-format"],
     visibility = ["//tools:__pkg__"],
 )
