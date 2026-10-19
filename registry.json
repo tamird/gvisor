@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+    "updatedAt": "2026-10-19T23:48:16.485224+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2749,7 +2749,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "The complete audit of current import15910 at445d/build51366 finds three cgroupv1 attempts that actually fail TestUIDMap on systrap and KVM. The current boot artifact shows empty mounts JSON; available public artifacts do not establish the gofer writer error or exit status. Root owns that concrete startup diagnosis. Remaining failures are separately classified as checkout authorization, cancellation or one Docker cleanup failure; they do not explain away the executed test failures. Internal33076 failure details remain unavailable.",
-      "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
@@ -4690,7 +4690,7 @@
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
       "summary": "The complete bounded audit of import15718/build51374 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
       "followup": {
         "owner": "root",
@@ -5626,7 +5626,7 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
       "summary": "Hostinet now owns the bounded discovery-test diagnosis for older import15687/build50720. The exact subprocess error remains hidden by the existing fallback; no source correction or retry is yet qualified. WorkMap retains sole periodic monitoring.\n\nThe older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
         "disposition": "Owning discovery test diagnosis active",
@@ -5679,7 +5679,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-19T22:52:13.814602+00:00",
+        "observedAt": "2026-10-19T23:44:56.870445+00:00",
         "disposition": "All currently executable unit-runtime cases and owner obligations complete; external NVIDIA comparisons remain",
         "nextAction": "Retain the18 NVIDIA comparison instances until their exact public sources become available; root owns the pending contributor decision for qualified RACK proposal8643925c. Preserve raw failures, all84 skips and original execution-source bindings.",
         "evidence": [
@@ -8416,18 +8416,18 @@
       "group": "analysis",
       "url": "https://github.com/google/gvisor/pull/15740",
       "status": "open",
-      "updatedAt": "2026-10-13T16:27:19.752664+00:00",
-      "summary": "The contributor-approved allocation-guard proposal is delivered as PR #15740 at 152315bede. It is a source-identical signed rebase of cb095 onto current master; all four bodies and the commit message match the approved proposal. Six hosted owning actions qualified the hard heap/builtin contract, including a temporary helper-allocation sensitivity witness absent from the final source. The original5a proposal remains historical; no performance or historical all-reasons enforcement claim is made. Current review and CI state come from the GitHub snapshot.",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
+      "summary": "Matching import #16030 at bb054193 fails final disposable-clone removal after its Go export succeeds: generate job 118364968131 reports Directory not empty. Its source lacks the maintenance settings already proposed in #15598. That existing candidate mitigation awaits upstream progress; writer identity remains unknown and no new source amendment or replay is justified.\n\nThe contributor-approved allocation-guard proposal is delivered as PR #15740 at 152315bede. It is a source-identical signed rebase of cb095 onto current master; all four bodies and the commit message match the approved proposal. Six hosted owning actions qualified the hard heap/builtin contract, including a temporary helper-allocation sensitivity witness absent from the final source. The original5a proposal remains historical; no performance or historical all-reasons enforcement claim is made. Current review and CI state come from the GitHub snapshot.",
       "followup": {
-        "owner": "restore_integration_review",
-        "disposition": "Delivered; awaiting maintainer review",
+        "owner": "work_map_current",
+        "disposition": "Existing clone-cleanup mitigation awaiting upstream progress; no new source investigation",
         "sourceHead": "152315bedef75d0410639c9382cf27db9befb4d4",
-        "nextAction": "Follow current public checks and maintainer review on PR #15740.",
+        "observedAt": "2026-10-19T23:47:18.116358+00:00",
+        "nextAction": "Follow #15598 and the matching import through the ordinary sweep; retain this exact failure and do not treat the mitigation as a proven cause.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15740",
-          "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86"
-        ],
-        "observedAt": "2026-10-13T16:27:19.752664+00:00"
+          "https://github.com/google/gvisor/actions/runs/39341827452/job/118364968131",
+          "https://github.com/google/gvisor/pull/15598"
+        ]
       },
       "number": 15740
     },
@@ -10501,19 +10501,16 @@
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
-      "summary": "Read the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
+      "summary": "Root assigned the existing #15931 conflict/rebase action to Hostinet in the released pr14353 checkout. The current public head remains 194f76d696; exact source and any conflict resolution require review before publication.\n\nRead the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
       "followup": {
-        "owner": "work_map_delivery",
-        "disposition": "Delivered as #15931",
+        "owner": "hostinet_delivery",
+        "disposition": "Assigned current conflict/rebase source work",
         "sourceHead": "194f76d6969a39915bf9caaddfdaf35642da2644",
-        "observedAt": "2026-10-17T20:19:52.132311+00:00",
-        "nextAction": "Follow current-head checks, review and import status on #15931.",
+        "observedAt": "2026-10-19T23:48:16.084697+00:00",
+        "nextAction": "Resolve the current rebase against fresh upstream, preserve semantics and obtain independent review of any nontrivial resolution before exact-lease publication.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/688cb1e12cc6825a7c40263ccc5dece9d5911aae",
-          "https://github.com/tamird/gvisor/actions/runs/39053728306",
-          "https://github.com/google/gvisor/pull/15931",
-          "https://github.com/google/gvisor/actions/runs/39065023551/job/117490737042"
+          "https://github.com/google/gvisor/pull/15931"
         ]
       },
       "evidence": [
@@ -10555,7 +10552,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "The complete bounded audit of import16016/build51371 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
-      "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Checkout authorization failure needs identified external owner/report",
@@ -11030,7 +11027,7 @@
       "url": "https://github.com/google/gvisor/pull/15941",
       "status": "open",
       "number": 15941,
-      "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
       "summary": "EtiennePerot submitted a fresh APPROVED review5578692176 on exact currentfa1d at22:50:11 UTC, after the substantive COPY amendment. The stale-approval review hold is now cleared by that actual review. No further ping is needed; ordinary import monitoring continues. The source export-cleanup failure remains separate.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nAt current head fa1d285ec590, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at fa1d285ec590 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved legacy-builder amendment is published on PR #15941 at dc4d23d300ebc3e1e17b59f682ecaee0ec42a64b. The single commit uses COPY with the unchanged strict patch and cleanup, and its Dockerfile explains why public CI cannot use RUN --mount. The requested explanatory paragraph was removed from the commit message and PR body; the approved concise reply is posted and verified. No contributor decision remains.\n\nThe complete image built with BuildKit explicitly disabled in native8936f740-8d8e-4ff8-bdea-f080adb058fc atfc4. The final amendment adds only a Dockerfile comment beyond that executable recipe; its changed context hash was not rebuilt. This remains source-image build evidence, not a PHP runtime-suite pass. Original public51257 failures are retained; inaccessible internal32962 remains unexplained.",
       "followup": {
         "owner": "maintainer",
@@ -12160,7 +12157,7 @@
       "group": "runtime",
       "summary": "The bounded audit of all485 failed public Buildkite attempts is complete with exact source/import bindings. For import16011, the Node attempt fails Brotli0!=4 and a separate HTTP end-cork timeout; later checkout403 retries do not replace those observations. Root owns the source follow-up. Generate job118286913482 independently failed a dependency ZIP download; its single authorized retry was denied403 admin rights before any new run. A repository-authorized maintainer must retry that exact job. No public retry report has been posted, and no clone-cleanup linkage remains.",
       "status": "Upstream PR open; qualified correction delivered",
-      "updatedAt": "2026-10-19T23:01:12.028075+00:00",
+      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Node runtime source work plus maintainer-only generate retry",
