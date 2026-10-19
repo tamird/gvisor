@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T14:10:00.724850+00:00",
+    "updatedAt": "2026-10-19T14:19:12.443712+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5281,7 +5281,7 @@
         "disposition": "Complete current-source build and Go analysis",
         "sourceHead": "e34fcbf68e10e7b0dcd241317c02073d88ae9331",
         "nextAction": "Collect the live c948 whole build and resolve the separately owned Go package diagnostics before advancing canonical qualification.",
-        "observedAt": "2026-10-19T14:10:00.477715+00:00"
+        "observedAt": "2026-10-19T14:17:36.351977+00:00"
       },
       "evidence": [
         {
@@ -11138,16 +11138,16 @@
       "head": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
       "title": "Attribute Remote Bazel builds to the API-key user",
       "group": "buildbuddy",
-      "status": "Upstream PR amended; remote validation running",
+      "status": "Upstream PR open; current-head remote validation passed",
       "url": "https://github.com/tamird/buildbuddy/tree/remote-bazel-authenticated-attribution",
-      "summary": "The authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
-      "updatedAt": "2026-10-19T14:10:00.724850+00:00",
+      "summary": "The cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
       "followup": {
         "owner": "Root",
-        "disposition": "Agent validation and upstream review",
+        "disposition": "Maintainer review",
         "sourceHead": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
-        "observedAt": "2026-10-19T14:09:21.898434+00:00",
-        "nextAction": "Reconcile the running remote validation and follow current-head upstream review/checks; the user authorized this amendment."
+        "observedAt": "2026-10-19T14:15:21.653714+00:00",
+        "nextAction": "Follow upstream review and public checks for the validated current amendment; no contributor decision is pending."
       },
       "evidence": [
         {
@@ -11159,7 +11159,7 @@
           "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855"
         },
         {
-          "label": "Current attribution cleanup validation",
+          "label": "Current attribution cleanup validation PASS",
           "url": "https://app.buildbuddy.io/invocation/0449dba2-d697-4c28-84f5-bd4639255941"
         }
       ]
@@ -11173,19 +11173,19 @@
       "title": "Select the BuildBuddy guest kernel explicitly",
       "group": "buildbuddy",
       "url": "https://github.com/tamird/buildbuddy/tree/guest-kernel-execution-property",
-      "status": "Agent validation",
-      "summary": "The guest-kernel execution-property proposal is validating at 8c704d5324518b02f430a3f5f0f9388549c65eab. The current remote retry is live under its sole collector; prior fixture failures remain preserved. No successful validation or upstream PR is claimed yet. The user has already authorized upstream delivery after the owning validation passes.\n\nThe reviewed proposal is published at 7d9c40b2d0ef22245aa74e0ab0538d08ac513691; remote validation 31731912 is running. Upstream PR publication is already authorized after the required validation passes. No contributor decision is pending.",
-      "updatedAt": "2026-10-19T14:10:00.724850+00:00",
+      "status": "Upstream PR open; remote validation passed",
+      "summary": "The guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.\n\nThe guest-kernel execution-property proposal is validating at 8c704d5324518b02f430a3f5f0f9388549c65eab. The current remote retry is live under its sole collector; prior fixture failures remain preserved. No successful validation or upstream PR is claimed yet. The user has already authorized upstream delivery after the owning validation passes.\n\nThe reviewed proposal is published at 7d9c40b2d0ef22245aa74e0ab0538d08ac513691; remote validation 31731912 is running. Upstream PR publication is already authorized after the required validation passes. No contributor decision is pending.",
+      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
       "followup": {
-        "owner": "Hostinet",
-        "disposition": "agent-validation",
+        "owner": "Root",
+        "disposition": "Maintainer review",
         "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "observedAt": "2026-10-19T14:09:21.898434+00:00",
-        "nextAction": "Reconcile the current remote validation, then deliver the authorized upstream PR."
+        "observedAt": "2026-10-19T14:16:10.857331+00:00",
+        "nextAction": "Follow upstream review and current-head checks for #13858; any deployed-worker or actual VM qualification remains separate."
       },
       "evidence": [
         {
-          "label": "Guest-kernel proposal validation",
+          "label": "Guest-kernel selection validation PASS",
           "url": "https://app.buildbuddy.io/invocation/295fbd6a-7d07-4d25-a56d-d9c216d1bb1b"
         }
       ]
@@ -11200,14 +11200,14 @@
       "title": "Attribute Remote Bazel builds to the API-key user",
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
-      "status": "Upstream PR amended; remote validation running",
-      "summary": "The authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "status": "Upstream PR open; current-head remote validation passed",
+      "summary": "The cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
       "followup": {
         "owner": "Root",
-        "disposition": "Agent validation and upstream review",
+        "disposition": "Maintainer review",
         "sourceHead": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
-        "observedAt": "2026-10-19T14:09:21.898434+00:00",
-        "nextAction": "Reconcile the running remote validation and follow current-head upstream review/checks; the user authorized this amendment."
+        "observedAt": "2026-10-19T14:15:21.653714+00:00",
+        "nextAction": "Follow upstream review and public checks for the validated current amendment; no contributor decision is pending."
       },
       "evidence": [
         {
@@ -11219,11 +11219,38 @@
           "url": "https://app.buildbuddy.io/invocation/ca110e6e-b807-4d8f-a3ba-87027f52bee5"
         },
         {
-          "label": "Current attribution cleanup validation",
+          "label": "Current attribution cleanup validation PASS",
           "url": "https://app.buildbuddy.io/invocation/0449dba2-d697-4c28-84f5-bd4639255941"
         }
       ],
-      "updatedAt": "2026-10-19T14:10:00.724850+00:00"
+      "updatedAt": "2026-10-19T14:19:12.443712+00:00"
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:13858",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13858,
+      "ref": "guest-kernel-execution-property",
+      "head": "8c704d5324518b02f430a3f5f0f9388549c65eab",
+      "title": "Select the BuildBuddy guest kernel explicitly",
+      "group": "buildbuddy",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858",
+      "status": "Upstream PR open; remote validation passed",
+      "summary": "The guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
+      "followup": {
+        "owner": "Root",
+        "disposition": "Maintainer review",
+        "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
+        "observedAt": "2026-10-19T14:16:10.857331+00:00",
+        "nextAction": "Follow upstream review and current-head checks for #13858; any deployed-worker or actual VM qualification remains separate."
+      },
+      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+      "evidence": [
+        {
+          "label": "Guest-kernel selection validation PASS",
+          "url": "https://app.buildbuddy.io/invocation/295fbd6a-7d07-4d25-a56d-d9c216d1bb1b"
+        }
+      ]
     }
   ],
   "edges": [
@@ -19882,9 +19909,9 @@
       "title": "Select the BuildBuddy guest kernel explicitly",
       "status": "active",
       "owner": "Hostinet (Codex)",
-      "updatedAt": "2026-10-19T13:38:37.490254+00:00",
-      "summary": "The reviewed proposal is published at 7d9c40b2d0ef22245aa74e0ab0538d08ac513691; remote validation 31731912 is running. Upstream PR publication is already authorized after the required validation passes. No contributor decision is pending.",
-      "nextStep": "Complete the owning remote validation, then open the authorized upstream PR.",
+      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+      "summary": "The guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
+      "nextStep": "Follow upstream review and current-head checks for #13858; any deployed-worker or actual VM qualification remains separate.",
       "evidence": [
         {
           "label": "Existing kernel selection request",
@@ -19893,6 +19920,10 @@
         {
           "label": "Published proposal",
           "url": "https://github.com/tamird/buildbuddy/tree/guest-kernel-execution-property"
+        },
+        {
+          "label": "Published proposal",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858"
         }
       ],
       "findings": []
@@ -19902,13 +19933,17 @@
       "title": "Attribute Remote Bazel builds to the API-key user",
       "status": "active",
       "owner": "Root (Codex)",
-      "updatedAt": "2026-10-19T13:14:58.863080+00:00",
-      "summary": "The reviewed attribution correction is now published. Remote Bazel build attribution uses the authenticated API-key user instead of the worker OS username. Remote validation is pending; upstream publication is already authorized.",
-      "nextStep": "Complete remote validation and open the authorized BuildBuddy PR.",
+      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+      "summary": "The cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.",
+      "nextStep": "Follow upstream review and public checks for the validated current amendment; no contributor decision is pending.",
       "evidence": [
         {
           "label": "Published attribution proposal",
           "url": "https://github.com/tamird/buildbuddy/tree/remote-bazel-authenticated-attribution"
+        },
+        {
+          "label": "Published proposal",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855"
         }
       ],
       "findings": []
