@@ -11,7 +11,10 @@ For authentication and individual remote build/test commands, see the
 See [stress testing](stress.md) to repeat selected Go, C++ or syscall tests
 with the same remote configuration.
 
-The CI-neutral entry point runs the implemented AMD64 lanes on that coordinator:
+The CI-neutral entry point selects target architectures with
+`--arch=amd64|arm64|all`, subject to each lane's worker requirements. AMD64 is
+the default; the target selection is separate from the coordinator architecture.
+For the AMD64 profile:
 
 ```sh
 test/rbe/qualify.sh --header-base="$BASE_COMMIT" amd64
@@ -209,9 +212,14 @@ incomplete.
 
 ## GitHub Actions frontend
 
-Use `qualification/current-upstream-refresh` on `tamird/gvisor` for the
-integrated qualification source. The workflow runs only when manually
-dispatched on this branch and records its immutable triggering commit.
+Choose a published `qualification/<name>` branch on `tamird/gvisor` that
+contains this workflow, and set `QUALIFICATION_REF` to that branch before
+running the examples below. The workflow accepts the `qualification/` prefix
+for manual dispatch; pushes to these branches do not start qualification.
+The job checks out the immutable triggering commit (`github.sha`) and uses
+that same SHA for hosted execution and report source checks. Moving the branch
+after dispatch does not change the source of that run.
+
 Compilation uses BuildBuddy RBE; the `execution` input chooses remote or
 local tests as described below.
 
@@ -223,8 +231,9 @@ Pass space-separated `lanes` and an `architecture` selection; the qualification
 script owns their meaning and test selection. For example:
 
 ```sh
+: "${QUALIFICATION_REF:?Set QUALIFICATION_REF to a published qualification/ branch}"
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes='smoke workflows' -f architecture=all
 ```
 
@@ -234,7 +243,7 @@ the same configured-output and test-report retention as the named lanes:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=build -f architecture=amd64 -f execution=remote \
   -f targets='//test/docker:gpu_triton_source_amd64'
 ```
@@ -275,7 +284,7 @@ For a captured catalog at `$COS_IMAGES_JSON`:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes='cos-metadata workflows' -f architecture=all \
   -f "cos_catalog_gzip_base64=$(gzip -n -c "$COS_IMAGES_JSON" | base64 | tr -d '\n')" \
   -f "cos_catalog_sha256=$(sha256sum "$COS_IMAGES_JSON" | cut -d ' ' -f 1)"
@@ -310,7 +319,7 @@ downloaded to the coordinator.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=syscalls-64k -f architecture=arm64 -f execution=remote
 ```
 
@@ -449,7 +458,7 @@ macro's existing `hash15` buckets:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=syscalls -f architecture=arm64 -f execution=local \
   -f syscall_bucket=0
 ```
@@ -461,7 +470,7 @@ timeouts. It uses the same native frontend, host tools and hash buckets:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=syscalls-resume -f architecture=arm64 -f execution=local \
   -f syscall_bucket=0
 ```
@@ -491,7 +500,7 @@ owners still produce an incomplete qualification verdict.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=kvm -f architecture=amd64 -f execution=local
 ```
 
@@ -507,7 +516,7 @@ and hash buckets apply:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=syscalls-kvm -f architecture=amd64 -f execution=local \
   -f syscall_bucket=0
 ```
@@ -544,7 +553,7 @@ from `tests(//test/benchmarks:continuous_tests)`:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=benchmarks -f architecture=amd64 -f execution=local \
   -f targets=//test/benchmarks/fs:bazel_test_continuous_grpc_kvm_owned
 ```
@@ -573,7 +582,7 @@ ARM64 Firecracker capacity.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=docker -f architecture=arm64 -f execution=local
 ```
 
@@ -609,7 +618,7 @@ establish comparative performance.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=startup -f architecture=amd64 -f execution=local
 ```
 
@@ -1876,7 +1885,7 @@ privileged Docker fixture, while compilation stays on RBE:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/current-upstream-refresh \
+  --ref "$QUALIFICATION_REF" \
   -f lanes=nftables -f architecture=amd64 -f execution=local
 ```
 
