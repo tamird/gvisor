@@ -148,7 +148,7 @@ func (rc *rackControl) detectReorder(seg *segment) {
 	}
 
 	if endSeq.LessThan(rc.FACK) && seg.xmitCount == 1 {
-		rc.Reord = true
+		rc.Reord = false
 	}
 }
 
