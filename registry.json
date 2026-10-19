@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+    "updatedAt": "2026-10-19T14:32:49.798580+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4278,27 +4278,19 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-16T18:39:11.185330+00:00",
-      "summary": "The netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach\u2019s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach\u2019s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach\u2019s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach\u2019s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-19T14:32:49.798580+00:00",
+      "summary": "The remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach\u2019s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach\u2019s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach\u2019s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach\u2019s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Focused validation passed; awaiting maintainer review",
+        "owner": "WorkMap",
+        "disposition": "Awaiting maintainer re-review",
         "sourceHead": "15a46f6871e7957989c770ee4544a7c975933f18",
-        "nextAction": "Follow current-head public CI and existing maintainer requests; retain the focused checksum/DNAT validation and its stated limits.",
+        "observedAt": "2026-10-19T14:22:49.599930+00:00",
+        "nextAction": "Continue the existing current-head review/check sweep; no repeat reviewer request or source amendment is pending.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
-          "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158",
-          "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb",
-          "https://github.com/tamird/gvisor/commit/50b6766a62177f9bf594f536737497f62dbbf810",
-          "https://github.com/tamird/gvisor/commit/39b9cc707c614c80f1a399661d28e892dda61a6c",
-          "https://github.com/tamird/gvisor/commit/6a2ed65623cc37d6596183679021bb284980d11d",
-          "https://github.com/tamird/gvisor/commit/8e81b47946d87cfcdaa98aa7b6fbff53a3976f45",
-          "https://github.com/tamird/gvisor/commit/15a46f6871e7957989c770ee4544a7c975933f18"
-        ],
-        "observedAt": "2026-10-16T18:39:11.185330+00:00",
-        "mergeable": "MERGEABLE"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6255243662",
+          "https://github.com/google/gvisor/pull/15730#discussion_r4269557939",
+          "https://github.com/google/gvisor/pull/15730#discussion_r4269558530"
+        ]
       },
       "evidence": [
         {
@@ -5281,7 +5273,7 @@
         "disposition": "Complete current-source build and Go analysis",
         "sourceHead": "e34fcbf68e10e7b0dcd241317c02073d88ae9331",
         "nextAction": "Collect the live c948 whole build and resolve the separately owned Go package diagnostics before advancing canonical qualification.",
-        "observedAt": "2026-10-19T14:17:36.351977+00:00"
+        "observedAt": "2026-10-19T14:29:51.020721+00:00"
       },
       "evidence": [
         {
@@ -11235,16 +11227,19 @@
       "title": "Select the BuildBuddy guest kernel explicitly",
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858",
-      "status": "Upstream PR open; remote validation passed",
-      "summary": "The guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
+      "status": "Maintainer design feedback needs response",
+      "summary": "The maintainer asks why kernel 5.15 selection is needed and questions whether a version-selection property should become a supported public API. The current-head review is COMMENTED; rationale and possible alternatives need an owner response. No new support commitment or external reply has been made. Existing 143-case validation remains source-bound and does not resolve this design feedback.\n\nThe guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
       "followup": {
         "owner": "Root",
-        "disposition": "Maintainer review",
+        "disposition": "Review rationale and API scope",
         "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "observedAt": "2026-10-19T14:16:10.857331+00:00",
-        "nextAction": "Follow upstream review and current-head checks for #13858; any deployed-worker or actual VM qualification remains separate."
+        "observedAt": "2026-10-19T14:31:10.162492+00:00",
+        "nextAction": "Assess the stated kernel-selection need and alternatives with Hostinet, then prepare a response within the authorized PR scope; do not infer a new long-term support commitment.",
+        "evidence": [
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13858#pullrequestreview-5572972935"
+        ]
       },
-      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+      "updatedAt": "2026-10-19T14:32:49.798580+00:00",
       "evidence": [
         {
           "label": "Guest-kernel selection validation PASS",
