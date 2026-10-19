@@ -510,6 +510,47 @@ func TestGetExecUIDGIDFromUser(t *testing.T) {
 			fileMode:       linux.S_IFREG | 0666,
 			wantErr:        strconv.ErrSyntax,
 		},
+		"selected_passwd_record_four_fields": {
+			user:           "user0",
+			passwdContents: "user0::1000:1111",
+			fileMode:       linux.S_IFREG | 0666,
+			wantErr:        strconv.ErrSyntax,
+		},
+		"selected_passwd_record_six_fields": {
+			user:           "user0",
+			passwdContents: "user0::1000:1111::/home/user0",
+			fileMode:       linux.S_IFREG | 0666,
+			wantErr:        strconv.ErrSyntax,
+		},
+		"selected_passwd_record_extra_fields": {
+			user:           "user0",
+			passwdContents: "user0::1000:1111::/home/user0:/bin/sh:extra",
+			fileMode:       linux.S_IFREG | 0666,
+			wantErr:        strconv.ErrSyntax,
+		},
+		"selected_passwd_record_empty_home": {
+			user:           "user0",
+			passwdContents: "user0::1000:1111:::/bin/sh",
+			fileMode:       linux.S_IFREG | 0666,
+			wantErr:        strconv.ErrSyntax,
+		},
+		"selected_passwd_record_empty_name": {
+			user:           "1000",
+			passwdContents: "::1000:1111::/home/user0:/bin/sh",
+			fileMode:       linux.S_IFREG | 0666,
+			wantErr:        strconv.ErrSyntax,
+		},
+		"group_override_does_not_mask_empty_home": {
+			user:           "user0:2000",
+			passwdContents: "user0::1000:1111:::/bin/sh",
+			fileMode:       linux.S_IFREG | 0666,
+			wantErr:        strconv.ErrSyntax,
+		},
+		"unselected_empty_home": {
+			user:           "user0",
+			passwdContents: "other::1001:1111:::/bin/sh\nuser0::1000:1111::/home/user0:/bin/sh",
+			fileMode:       linux.S_IFREG | 0666,
+		},
 		"group_override_does_not_mask_invalid_passwd_gid": {
 			user:           "user0:2000",
 			passwdContents: "user0::1000:invalid::/home/user0:/bin/sh",
