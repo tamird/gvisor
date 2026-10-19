@@ -177,6 +177,8 @@ def main() -> None:
         GOPROXY="off",
         GOSUMDB="off",
         CODEQL_EXTRACTOR_GO_OPTION_EXTRACT_TESTS="true",
+        # This probe checks declared Go inputs, not HTML in the toolchain tree.
+        CODEQL_EXTRACTOR_GO_EXTRACT_HTML="no",
         GOTAGS="network_plugins",
     )
     # Reuse the driver's own architecture/tag filtering and test-package split.
@@ -252,20 +254,29 @@ def main() -> None:
     extraction_log = (output / "extraction.log").read_text()
     print(extraction_log, end="", flush=True)
     result.check_returncode()
-    diagnostics = output / "diagnostics.sarif"
+    # SARIF export describes a failed analysis even when database creation
+    # succeeded. Assess the raw diagnostic records and the actual process exit.
+    diagnostics = output / "diagnostics.json"
     subprocess.run([
         str(args.codeql.absolute()), "database", "export-diagnostics",
-        "--format=sarif-latest", "--output=" + str(diagnostics), str(database),
+        "--format=raw", "--output=" + str(diagnostics), str(database),
     ], env=environment, check=True)
     diagnostic_report = json.loads(diagnostics.read_text())
+    if not isinstance(diagnostic_report, list):
+        raise ValueError("CodeQL raw diagnostics must be a JSON list")
     extraction_errors = []
-    for run in diagnostic_report["runs"]:
-        extraction_errors.extend(result for result in run.get("results", []) if result.get("level") == "error")
-        for invocation in run.get("invocations", []):
-            if invocation.get("executionSuccessful") is False:
-                extraction_errors.append(invocation)
-            for kind in ("toolExecutionNotifications", "toolConfigurationNotifications"):
-                extraction_errors.extend(note for note in invocation.get(kind, []) if note.get("level") == "error")
+    for diagnostic in diagnostic_report:
+        match diagnostic:
+            case {"source": {"id": str() as identity, "name": str() as name}, "timestamp": str() as timestamp} if identity and name and timestamp:
+                pass
+            case _:
+                raise ValueError("CodeQL returned an invalid raw diagnostic")
+        # CLI telemetry can omit severity; the Go extractor always supplies it.
+        severity = diagnostic.get("severity")
+        if severity not in ("error", "warning", "note") and not ("severity" not in diagnostic and identity.startswith("cli/")):
+            raise ValueError(f"CodeQL returned an invalid diagnostic severity: {identity}")
+        if severity == "error":
+            extraction_errors.append(diagnostic)
     # The pinned extractor also logs package-loading/type errors while continuing
     # extraction; those can be database diagnostics rather than CLI notifications.
     # Do not mistake a complete source archive for a complete typed extraction.
