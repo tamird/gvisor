@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T18:51:31.332864+00:00",
+    "updatedAt": "2026-10-19T19:02:46.588257+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -147,28 +147,34 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-19T18:51:31.070963+00:00",
-      "summary": "The published mechanical rebase is at 4c675e4a3aac on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:23:09 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
+      "updatedAt": "2026-10-19T19:02:46.588257+00:00",
+      "summary": "At current head 4c675e4a3aac, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d; status publication also returned HTTP 403. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at 4c675e4a3aac on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:23:09 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
-        "disposition": "Mechanical rebase delivered; existing internal-exception hold remains",
+        "disposition": "Current public Go-generate cleanup failure; existing #15598 mitigation tracked; license hold remains",
         "owner": "root",
-        "nextAction": "Await maintainer confirmation that the existing internal license-exception hold is cleared. The mechanical rebase does not clear that hold.",
+        "nextAction": "Track the shared disposable-clone cleanup failure through existing #15598 and current public checks; no topic source change or rerun is justified by this log. Separately await maintainer confirmation of the internal license-exception hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825",
           "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913",
-          "https://github.com/tamird/gvisor/commit/4c675e4a3aac60e689e496f2d60c2f65a4199f7f"
+          "https://github.com/tamird/gvisor/commit/4c675e4a3aac60e689e496f2d60c2f65a4199f7f",
+          "https://github.com/google/gvisor/actions/runs/39303620983/job/118234918420",
+          "https://github.com/google/gvisor/pull/15598"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "4c675e4a3aac60e689e496f2d60c2f65a4199f7f",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-19T18:51:31.070963+00:00"
+        "observedAt": "2026-10-19T19:00:10.993646+00:00"
       },
       "head": "4c675e4a3aac60e689e496f2d60c2f65a4199f7f",
       "evidence": [
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/4c675e4a3aac60e689e496f2d60c2f65a4199f7f"
+        },
+        {
+          "label": "Exact current-head cleanup failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39303620983/job/118234918420"
         }
       ]
     },
@@ -1073,22 +1079,24 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-19T18:51:31.070963+00:00",
-      "summary": "The published mechanical rebase is at f21fe6e2120b on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. A fresh approval was submitted after this rebase, so duplicate outreach was avoided.\n\nEarlier source-specific record:\n\nThe current source head has a fresh Etienne approval. Its import/copybara status reports an error without a public diagnostic URL; no source-check failure is established. Maintainer import attention remains necessary.\n\nEarlier source and review evidence:\n\nThe October 14 conflict repair is published at e89261aa2. The 04:01 UTC complete GitHub observation confirms it is mergeable and all applicable public checks pass; maintainer review is pending. The existing nybidari review request is retained, with no new comment or mention. Fresh hosted qualification passes the checklocks analyzer wrapper using both CPU fixture findings. The earlier 1d029eafd conflict and source-specific qualification remain historical.\n\nThe authorized October 2/3 rebase is published at 0943d0f425c80d8a1b9372fcaba1b87711d51a92 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14503#issuecomment-5963494160. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published rebase 06ad0ffc9 preserves alias-aware lock-state diagnostics and current ignored-field behavior. The maintained checklocks fixture Nogo owner passes ARM64 and AMD64 analysis on the hosted GNU coordinator. The former separate strict owner and anchors are unnecessary under the landed all-fixture policy. That standalone qualification did not claim a runtime or production-wide result.",
+      "updatedAt": "2026-10-19T19:02:46.588257+00:00",
+      "summary": "At current head f21fe6e2120b, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d; status publication also returned HTTP 403. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at f21fe6e2120b on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. A fresh approval was submitted after this rebase, so duplicate outreach was avoided.\n\nEarlier source-specific record:\n\nThe current source head has a fresh Etienne approval. Its import/copybara status reports an error without a public diagnostic URL; no source-check failure is established. Maintainer import attention remains necessary.\n\nEarlier source and review evidence:\n\nThe October 14 conflict repair is published at e89261aa2. The 04:01 UTC complete GitHub observation confirms it is mergeable and all applicable public checks pass; maintainer review is pending. The existing nybidari review request is retained, with no new comment or mention. Fresh hosted qualification passes the checklocks analyzer wrapper using both CPU fixture findings. The earlier 1d029eafd conflict and source-specific qualification remain historical.\n\nThe authorized October 2/3 rebase is published at 0943d0f425c80d8a1b9372fcaba1b87711d51a92 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14503#issuecomment-5963494160. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published rebase 06ad0ffc9 preserves alias-aware lock-state diagnostics and current ignored-field behavior. The maintained checklocks fixture Nogo owner passes ARM64 and AMD64 analysis on the hosted GNU coordinator. The former separate strict owner and anchors are unnecessary under the landed all-fixture policy. That standalone qualification did not claim a runtime or production-wide result.",
       "followup": {
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
+        "disposition": "Current public Go-generate cleanup failure; existing #15598 mitigation tracked",
         "owner": "external_sweeps",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice.",
+        "nextAction": "Track the shared disposable-clone cleanup failure through existing #15598 and current public checks; no topic source change or rerun is justified by this log.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14503",
           "https://github.com/tamird/gvisor/commit/e89261aa229816d6e6a2fc86c76178245ab927c3",
           "https://app.buildbuddy.io/invocation/23a1adfb-1a29-41fb-b949-eade2dc264c5",
-          "https://github.com/tamird/gvisor/commit/f21fe6e2120ba7b69f25bf340a88e34a477aca63"
+          "https://github.com/tamird/gvisor/commit/f21fe6e2120ba7b69f25bf340a88e34a477aca63",
+          "https://github.com/google/gvisor/actions/runs/39303534813/job/118234625263",
+          "https://github.com/google/gvisor/pull/15598"
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f21fe6e2120ba7b69f25bf340a88e34a477aca63",
         "reviewDecision": "APPROVED",
-        "observedAt": "2026-10-19T18:51:31.070963+00:00",
+        "observedAt": "2026-10-19T19:00:10.993646+00:00",
         "mergeable": "MERGEABLE"
       },
       "head": "f21fe6e2120ba7b69f25bf340a88e34a477aca63",
@@ -1096,6 +1104,10 @@
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/f21fe6e2120ba7b69f25bf340a88e34a477aca63"
+        },
+        {
+          "label": "Exact current-head cleanup failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39303534813/job/118234625263"
         }
       ]
     },
@@ -5482,7 +5494,7 @@
         "owner": "root / node_tls_sni",
         "disposition": "Full build recovered; Java coverage and reporting reconciliation pending",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-19T18:47:23.699932+00:00",
+        "observedAt": "2026-10-19T18:58:16.133622+00:00",
         "nextAction": "Node reconciles current Java producer identity, framed jtreg output and exact time-limit exclusions from retained evidence. Preserve raw Java FAIL, first build-attempt TLS FAIL, original attempt2 INCOMPLETE and one manual artifact recovery. Existing ARM/runtime gaps remain separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39299248716/attempts/2",
@@ -6754,23 +6766,25 @@
       "url": "https://github.com/google/gvisor/pull/15575",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-19T18:51:31.070963+00:00",
-      "summary": "The published mechanical rebase is at 7c8d7811aa66 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe user-approved sender-cursor repair is now PR #15575. Original duplicate-send failures and passing standalone/integrated recovery checks remain retained. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
+      "updatedAt": "2026-10-19T19:02:46.588257+00:00",
+      "summary": "At current head 7c8d7811aa66, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at 7c8d7811aa66 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe user-approved sender-cursor repair is now PR #15575. Original duplicate-send failures and passing standalone/integrated recovery checks remain retained. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
       "number": 15575,
       "followup": {
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
+        "disposition": "Current public Go-generate cleanup failure; existing #15598 mitigation tracked",
         "owner": "external_sweeps",
         "sourceHead": "7c8d7811aa6641b5a77ea43ee5d10ffe3e87c462",
         "reviewedAt": "2026-10-09T15:00:39.047132+00:00",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice.",
+        "nextAction": "Track the shared disposable-clone cleanup failure through existing #15598 and current public/import checks. No topic source change or blind rerun is justified by this log.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15575",
           "https://github.com/tamird/gvisor/commit/7c8d7811aa6641b5a77ea43ee5d10ffe3e87c462",
-          "https://github.com/google/gvisor/pull/15575#issuecomment-6274682572"
+          "https://github.com/google/gvisor/pull/15575#issuecomment-6274682572",
+          "https://github.com/google/gvisor/actions/runs/39303719742/job/118235243163",
+          "https://github.com/google/gvisor/pull/15598"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-19T18:51:31.070963+00:00"
+        "observedAt": "2026-10-19T19:02:46.253173+00:00"
       },
       "evidence": [
         {
@@ -6780,6 +6794,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15575#issuecomment-6274682572"
+        },
+        {
+          "label": "Exact current-head cleanup failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39303719742/job/118235243163"
         }
       ]
     },
@@ -10514,20 +10532,22 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15935",
       "status": "open",
-      "summary": "The published mechanical rebase is at 27c9b041327c on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nPublished as ready PR #15935 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nfchdir takes only a file descriptor, but its trace producer read an unused argument register as a pathname. Stop reading that register and check the resolved descriptor path instead. The existing workload supplies a readable ignored argument: both architectures fail twice before the fix and pass their full TestAll afterward, with no skips or missing results. Compilation stays remote; native namespace tests run uncached on Actions.",
-      "updatedAt": "2026-10-19T18:51:31.070963+00:00",
+      "summary": "At current head 27c9b041327c, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at 27c9b041327c on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nPublished as ready PR #15935 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nfchdir takes only a file descriptor, but its trace producer read an unused argument register as a pathname. Stop reading that register and check the resolved descriptor path instead. The existing workload supplies a readable ignored argument: both architectures fail twice before the fix and pass their full TestAll afterward, with no skips or missing results. Compilation stays remote; native namespace tests run uncached on Actions.",
+      "updatedAt": "2026-10-19T19:02:46.588257+00:00",
       "followup": {
-        "owner": "Codex",
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
+        "owner": "external_sweeps",
+        "disposition": "Current public Go-generate cleanup failure; existing #15598 mitigation tracked",
         "next": "Follow actionable upstream feedback and checks through the existing status workflow.",
         "sourceHead": "27c9b041327c8c2dd21c837f460d8ee619b39762",
-        "observedAt": "2026-10-19T18:51:31.070963+00:00",
+        "observedAt": "2026-10-19T19:02:46.253173+00:00",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice.",
+        "nextAction": "Track the shared disposable-clone cleanup failure through existing #15598 and current public/import checks. No topic source change or blind rerun is justified by this log.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/27c9b041327c8c2dd21c837f460d8ee619b39762",
-          "https://github.com/google/gvisor/pull/15935#issuecomment-6274692893"
+          "https://github.com/google/gvisor/pull/15935#issuecomment-6274692893",
+          "https://github.com/google/gvisor/actions/runs/39304145556/job/118236703806",
+          "https://github.com/google/gvisor/pull/15598"
         ]
       },
       "evidence": [
@@ -10558,6 +10578,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15935#issuecomment-6274692893"
+        },
+        {
+          "label": "Exact current-head cleanup failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39304145556/job/118236703806"
         }
       ],
       "number": 15935
@@ -10685,19 +10709,21 @@
       "url": "https://github.com/google/gvisor/pull/15941",
       "status": "open",
       "number": 15941,
-      "updatedAt": "2026-10-19T18:51:31.070963+00:00",
-      "summary": "The published mechanical rebase is at fa1d285ec590 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved legacy-builder amendment is published on PR #15941 at dc4d23d300ebc3e1e17b59f682ecaee0ec42a64b. The single commit uses COPY with the unchanged strict patch and cleanup, and its Dockerfile explains why public CI cannot use RUN --mount. The requested explanatory paragraph was removed from the commit message and PR body; the approved concise reply is posted and verified. No contributor decision remains.\n\nThe complete image built with BuildKit explicitly disabled in native8936f740-8d8e-4ff8-bdea-f080adb058fc atfc4. The final amendment adds only a Dockerfile comment beyond that executable recipe; its changed context hash was not rebuilt. This remains source-image build evidence, not a PHP runtime-suite pass. Original public51257 failures are retained; inaccessible internal32962 remains unexplained.",
+      "updatedAt": "2026-10-19T19:02:46.588257+00:00",
+      "summary": "At current head fa1d285ec590, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at fa1d285ec590 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved legacy-builder amendment is published on PR #15941 at dc4d23d300ebc3e1e17b59f682ecaee0ec42a64b. The single commit uses COPY with the unchanged strict patch and cleanup, and its Dockerfile explains why public CI cannot use RUN --mount. The requested explanatory paragraph was removed from the commit message and PR body; the approved concise reply is posted and verified. No contributor decision remains.\n\nThe complete image built with BuildKit explicitly disabled in native8936f740-8d8e-4ff8-bdea-f080adb058fc atfc4. The final amendment adds only a Dockerfile comment beyond that executable recipe; its changed context hash was not rebuilt. This remains source-image build evidence, not a PHP runtime-suite pass. Original public51257 failures are retained; inaccessible internal32962 remains unexplained.",
       "followup": {
-        "owner": "maintainer",
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
+        "owner": "external_sweeps",
+        "disposition": "Current public Go-generate cleanup failure; existing #15598 mitigation tracked",
         "sourceHead": "fa1d285ec59078532c856fc616cc996e1f242062",
-        "observedAt": "2026-10-19T18:51:31.070963+00:00",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice.",
+        "observedAt": "2026-10-19T19:02:46.253173+00:00",
+        "nextAction": "Track the shared disposable-clone cleanup failure through existing #15598 and current public/import checks. No topic source change or blind rerun is justified by this log.",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fa1d285ec59078532c856fc616cc996e1f242062",
-          "https://github.com/google/gvisor/pull/15941#issuecomment-6274694098"
+          "https://github.com/google/gvisor/pull/15941#issuecomment-6274694098",
+          "https://github.com/google/gvisor/actions/runs/39304124908/job/118236633996",
+          "https://github.com/google/gvisor/pull/15598"
         ]
       },
       "refinement": {
@@ -10724,6 +10750,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15941#issuecomment-6274694098"
+        },
+        {
+          "label": "Exact current-head cleanup failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39304124908/job/118236633996"
         }
       ]
     },
