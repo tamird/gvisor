@@ -1,0 +1,250 @@
+Preserve declared package directories and module facts through the existing
+JSON driver, including standard and external-test packages. The optional
+manifest path consumes prebuilt metadata without launching nested Bazel.
+Upstream source: https://github.com/bazel-contrib/rules_go/tree/v0.63.0
+
+diff --git a/go/tools/gopackagesdriver/flatpackage.go b/go/tools/gopackagesdriver/flatpackage.go
+--- a/go/tools/gopackagesdriver/flatpackage.go
++++ b/go/tools/gopackagesdriver/flatpackage.go
+@@ -57,6 +57,8 @@
+ // FlatPackage is the JSON form of Package
+ // It drops all the type and syntax fields, and transforms the Imports
+ type FlatPackage struct {
++	Dir             string           `json:",omitempty"`
++	Module          *packages.Module `json:",omitempty"`
+ 	ID              string
+ 	Name            string              `json:",omitempty"`
+ 	PkgPath         string              `json:",omitempty"`
+@@ -100,6 +102,17 @@
+ }
+ 
+ func ResolvePaths(pak *packages.Package, prf PathResolverFunc) error {
++	if pak.Dir != "" {
++		pak.Dir = prf(pak.Dir)
++	}
++	for m := pak.Module; m != nil; m = m.Replace {
++		if m.Dir != "" {
++			m.Dir = prf(m.Dir)
++		}
++		if m.GoMod != "" {
++			m.GoMod = prf(m.GoMod)
++		}
++	}
+ 	resolvePathsInPlace(prf, pak.CompiledGoFiles)
+ 	resolvePathsInPlace(prf, pak.GoFiles)
+ 	resolvePathsInPlace(prf, pak.OtherFiles)
+@@ -164,6 +177,8 @@
+ 	// Clone package, only xtgf files
+ 	return &packages.Package{
+ 		ID:              pkg.ID + "_xtest",
++		Dir:             pkg.Dir,
++		Module:          pkg.Module,
+ 		Name:            pkg.Name + "_test",
+ 		PkgPath:         pkg.PkgPath + "_test",
+ 		Imports:         newImports,
+diff --git a/go/tools/gopackagesdriver/packageregistry.go b/go/tools/gopackagesdriver/packageregistry.go
+--- a/go/tools/gopackagesdriver/packageregistry.go
++++ b/go/tools/gopackagesdriver/packageregistry.go
+@@ -48,6 +48,8 @@
+ 
+ 		pkg := &packages.Package{
+ 			ID:              flatPkg.ID,
++			Dir:             flatPkg.Dir,
++			Module:          flatPkg.Module,
+ 			Name:            flatPkg.Name,
+ 			PkgPath:         flatPkg.PkgPath,
+ 			GoFiles:         flatPkg.GoFiles,
+diff --git a/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl b/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
+--- a/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
++++ b/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
+@@ -43,7 +43,12 @@
+         for src in archive.data.srcs
+         if src.path.endswith(".go")
+     ]
++    label = archive.source.label
++    directory = paths.join("__BAZEL_WORKSPACE__", label.package)
++    if label.workspace_root:
++        directory = paths.join("__BAZEL_OUTPUT_BASE__", label.workspace_root, label.package)
+     return struct(
++        Dir = directory,
+         ID = str(archive.data.label),
+         PkgPath = archive.data.importpath,
+         ExportFile = file_path(archive.data.export_file),
+diff --git a/go/tools/gopackagesdriver/pkgjson/main.go b/go/tools/gopackagesdriver/pkgjson/main.go
+--- a/go/tools/gopackagesdriver/pkgjson/main.go
++++ b/go/tools/gopackagesdriver/pkgjson/main.go
+@@ -33,6 +33,7 @@
+ }
+ 
+ type pkgJson struct {
++	Dir string `json:"Dir,omitempty"`
+ 	ID string `json:"ID"`
+ 	PkgPath string `json:"PkgPath"`
+ 	ExportFile string `json:"ExportFile"`
+@@ -75,6 +76,7 @@
+ 
+ 	data := pkgJson{
+ 		ID: pjson.ID,
++		Dir: pjson.Dir,
+ 		PkgPath: pjson.PkgPath,
+ 		ExportFile: pjson.ExportFile,
+ 		GoFiles: pjson.GoFiles,
+diff --git a/go/tools/gopackagesdriver/aspect.bzl b/go/tools/gopackagesdriver/aspect.bzl
+--- a/go/tools/gopackagesdriver/aspect.bzl
++++ b/go/tools/gopackagesdriver/aspect.bzl
+@@ -32,6 +32,8 @@
+ DEPS_ATTRS = [
+     "deps",
+     "embed",
++    "src",
++    "exports",
+ ]
+ 
+ PROTO_COMPILER_ATTRS = [
+@@ -82,7 +84,9 @@
+             deps = [deps]
+ 
+         for dep in deps:
+-            if GoPkgInfo in dep:
++            # Forwarding attributes can also be scalar strings on unrelated
++            # rules; only label dependencies can carry package providers.
++            if type(dep) == "Target" and GoPkgInfo in dep:
+                 pkg_info = dep[GoPkgInfo]
+                 transitive_json_files.append(pkg_info.pkg_json_files)
+                 transitive_compiled_go_files.append(pkg_info.compiled_go_files)
+@@ -97,6 +97,7 @@
+     if GoArchive in target:
+         archive = target[GoArchive]
+         compiled_go_files.extend(archive.source.srcs)
++        compiled_go_files.extend(archive.source.embedsrcs)
+         if archive.data.cgo_out_dir:
+             compiled_go_files.append(archive.data.cgo_out_dir)
+         export_files.append(archive.data.export_file)
+@@ -108,6 +109,7 @@
+                 if archive.data.label == dep_archive.data.label:
+                     pkg_json_files.append(make_pkg_json_with_archive(ctx, dep_archive.data.name, dep_archive))
+                     compiled_go_files.extend(dep_archive.source.srcs)
++                    compiled_go_files.extend(dep_archive.source.embedsrcs)
+                     if dep_archive.data.cgo_out_dir:
+                         compiled_go_files.append(dep_archive.data.cgo_out_dir)
+                     export_files.append(dep_archive.data.export_file)
+diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.go
+--- a/go/tools/gopackagesdriver/main.go
++++ b/go/tools/gopackagesdriver/main.go
+@@ -21,8 +21,12 @@
+ 	"io"
+ 	"log/slog"
+ 	"os"
++	"path/filepath"
+ 	"runtime"
++	"slices"
+ 	"strings"
++
++	"golang.org/x/tools/go/packages"
+ )
+ 
+ type driverResponse struct {
+@@ -102,6 +106,10 @@
+ 		}
+ 	}()
+ 
++	if manifest := os.Getenv("GOPACKAGESDRIVER_JSON_MANIFEST"); manifest != "" {
++		return runJSONManifest(manifest, request, queries, out)
++	}
++
+ 	bazel, err := NewBazel(ctx, bazelBin, workspaceRoot, buildWorkingDirectory, bazelCommonFlags, bazelStartupFlags)
+ 	if err != nil {
+ 		return fmt.Errorf("unable to create bazel instance: %w", err)
+@@ -142,6 +150,63 @@
+ 	return nil
+ }
+ 
++// jsonManifest supplies the outputs of a completed, explicitly selected Bazel
++// analysis. It is not a query cache: this mode handles only its exact root set.
++type jsonManifest struct {
++	JSONFiles    []string
++	Labels       []string
++	BazelVersion string
++	Workspace    string
++	ExecRoot     string
++	OutputBase   string
++	Arch         string
++	Tests        bool
++}
++
++func runJSONManifest(path string, request *packages.DriverRequest, queries []string, out io.Writer) error {
++	data, err := os.ReadFile(path)
++	if err != nil {
++		return err
++	}
++	var manifest jsonManifest
++	if err := json.Unmarshal(data, &manifest); err != nil {
++		return err
++	}
++	if !slices.Equal(queries, manifest.Labels) || request.Tests != manifest.Tests || len(queries) == 0 {
++		return fmt.Errorf("request differs from declared JSON package roots or test mode")
++	}
++	version, ok := parseBazelVersion(manifest.BazelVersion)
++	if !ok {
++		return fmt.Errorf("invalid manifest Bazel version %q", manifest.BazelVersion)
++	}
++	for _, root := range []string{manifest.Workspace, manifest.ExecRoot, manifest.OutputBase} {
++		if !filepath.IsAbs(root) {
++			return fmt.Errorf("manifest path is not absolute: %q", root)
++		}
++	}
++	if manifest.Arch == "" || len(manifest.JSONFiles) == 0 {
++		return fmt.Errorf("manifest lacks architecture or package JSON")
++	}
++	replacer := strings.NewReplacer(
++		"__BAZEL_WORKSPACE__", manifest.Workspace,
++		"__BAZEL_EXECROOT__", manifest.ExecRoot,
++		"__BAZEL_OUTPUT_BASE__", manifest.OutputBase,
++	)
++	driver, err := NewJSONPackagesDriver(manifest.JSONFiles, replacer.Replace, version, request.Overlay)
++	if err != nil {
++		return err
++	}
++	response := driver.GetResponse(manifest.Labels)
++	response.Compiler = "gc"
++	response.Arch = manifest.Arch
++	for _, label := range manifest.Labels {
++		if !slices.Contains(response.Roots, label) {
++			return fmt.Errorf("declared root missing from package metadata: %s", label)
++		}
++	}
++	return json.NewEncoder(out).Encode(response)
++}
++
+ func main() {
+ 	ctx, cancel := signalContext(context.Background(), os.Interrupt)
+ 	defer cancel()
+@@ -151,6 +216,9 @@
+ 		// gopls will check the packages driver exit code, and if there is an
+ 		// error, it will fall back to go list. Obviously we don't want that,
+ 		// so force a 0 exit code.
++		if os.Getenv("GOPACKAGESDRIVER_JSON_MANIFEST") != "" {
++			os.Exit(1)
++		}
+ 		os.Exit(0)
+ 	}
+ }
+diff --git a/go/tools/builders/stdliblist.go b/go/tools/builders/stdliblist.go
+--- a/go/tools/builders/stdliblist.go
++++ b/go/tools/builders/stdliblist.go
+@@ -52,6 +52,7 @@
+ // flatPackage is the JSON form of Package
+ // It drops all the type and syntax fields, and transforms the Imports
+ type flatPackage struct {
++	Dir             string `json:",omitempty"`
+ 	ID              string
+ 	Name            string              `json:",omitempty"`
+ 	PkgPath         string              `json:",omitempty"`
+@@ -164,6 +165,7 @@
+ 
+ 	newPkg := &flatPackage{
+ 		ID:              stdlibPackageID(pkg.ImportPath),
++		Dir:             outputBasePath(cloneBase, pkg.Dir),
+ 		Name:            pkg.Name,
+ 		PkgPath:         pkg.ImportPath,
+ 		ExportFile:      pathReplaceFn(pkg.Export),

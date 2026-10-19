@@ -480,6 +480,11 @@ func enumerate(p Paths) ([]dep, error) {
 			}
 			deps = append(deps, packages...)
 		case "go_repository":
+			if urls := repo.attrs["urls"]; len(urls) != 0 {
+				// HTTP overrides own an archive, not a module-proxy version.
+				deps = append(deps, dep{name: r.name, kind: kindArchive, url: pickURL(urls), sha256: repoSHA256(repo)})
+				continue
+			}
 			path, version := repo.first("importpath"), repo.first("version")
 			if path == "" || version == "" {
 				return nil, fmt.Errorf("go_repository %s has no importpath or version", r.name)
@@ -560,7 +565,7 @@ func (g *modGraph) auditedRepos() []string {
 		extension, _, _ = strings.Cut(extension, "%")
 		switch {
 		case label == "@@//:MODULE.bazel" &&
-			(strings.HasSuffix(extension, " http_archive") || strings.HasSuffix(extension, " http_file") || strings.HasSuffix(extension, " module_proxy")):
+			(strings.HasSuffix(extension, " http_archive") || strings.HasSuffix(extension, " http_file") || strings.HasSuffix(extension, " module_proxy") || strings.HasSuffix(extension, " go_repository")):
 			// Repository rules declared directly in MODULE.bazel.
 		case extension == "go_deps":
 			// Go repos imported from the gazelle go_deps extension.
@@ -879,6 +884,7 @@ var githubURLRegexps = []*regexp.Regexp{
 	regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/`),
 	regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/archive/refs/tags/(.+?)\.(?:tar\.gz|tar\.xz|tar\.bz2|zip)$`),
 	regexp.MustCompile(`^https://github\.com/([^/]+)/([^/]+)/archive/(.+?)\.(?:tar\.gz|tar\.xz|tar\.bz2|zip)$`),
+	regexp.MustCompile(`^https://codeload\.github\.com/([^/]+)/([^/]+)/(?:tar\.gz|zip)/(.+)$`),
 	regexp.MustCompile(`^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/`),
 }
 

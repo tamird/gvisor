@@ -1148,7 +1148,14 @@ run_lane() (
       ;;
     gazelle)
       # Match the public source-consistency check; it runs once per checkout.
-      bazel run --config=rbe --config=x86_64 //:gazelle_check
+      bazel run --config=rbe --config=x86_64 //:gazelle_check || return "$?"
+      local selection_dir
+      selection_dir=$(mktemp -d)
+      trap 'rm -rf "$selection_dir"' EXIT
+      bazel query 'attr("tags", "codeql-go-owner:", //...)' --output=xml \
+        > "$selection_dir/codeql-roots.xml" || return "$?"
+      bazel run --config=rbe --config=x86_64 //tools/codeql:update_go_roots -- \
+        --input "$selection_dir/codeql-roots.xml" --check
       return "$?"
       ;;
     lint-cc)

@@ -1,0 +1,125 @@
+Prefer go/packages directory and module facts over a second go-list lookup.
+Keep module ownership when dependency directories nest beneath a workspace.
+Upstream source: https://github.com/github/codeql/tree/6e9f9e383/go/extractor
+
+diff --git a/extractor.go b/extractor.go
+--- a/extractor.go
++++ b/extractor.go
+@@ -178,7 +178,7 @@
+ 			packages.NeedCompiledGoFiles |
+ 			packages.NeedImports | packages.NeedDeps |
+ 			packages.NeedTypes | packages.NeedTypesSizes |
+-			packages.NeedTypesInfo | packages.NeedSyntax,
++			packages.NeedTypesInfo | packages.NeedSyntax | packages.NeedModule,
+ 		BuildFlags: buildFlags,
+ 		Tests:      extractTests,
+ 	}
+@@ -209,10 +209,17 @@
+ 
+ 	// a map of package path to source directory and module root directory
+ 	pkgInfos := make(map[string]toolchain.PkgInfo)
++	needPackageInfo := false
++	packages.Visit(pkgs, nil, func(pkg *packages.Package) {
++		if pkg.Dir == "" {
++			needPackageInfo = true
++		}
++	})
+ 	// root directories of packages that we want to extract
+ 	wantedRoots := make(map[string]bool)
+-
+-	if os.Getenv("CODEQL_EXTRACTOR_GO_FAST_PACKAGE_INFO") != "false" {
++	wantedModules := make(map[string]bool)
++
++	if needPackageInfo && os.Getenv("CODEQL_EXTRACTOR_GO_FAST_PACKAGE_INFO") != "false" {
+ 		log.Printf("Running go list to resolve package and module directories.")
+ 		// get all packages information
+ 		pkgInfos, err = toolchain.GetPkgsInfo(patterns, true, extractTests, modFlags...)
+@@ -242,8 +249,21 @@
+ 
+ 		slog.Debug("Processing package", "package", pkg.PkgPath)
+ 
+-		if _, ok := pkgInfos[pkg.PkgPath]; !ok {
+-			pkgInfos[pkg.PkgPath] = toolchain.GetPkgInfo(pkg.PkgPath, modFlags...)
++		// Package loaders may know the source and module directories without
++		// using the Go command. In particular, compiled generated sources need
++		// not be beside the original package or its go.mod.
++		if pkg.Dir != "" {
++			info := toolchain.PkgInfo{PkgDir: pkg.Dir}
++			if pkg.Module != nil {
++				info.ModDir = pkg.Module.Dir
++			}
++			pkgInfos[pkg.ID] = info
++		} else {
++			info, ok := pkgInfos[pkg.PkgPath]
++			if !ok {
++				info = toolchain.GetPkgInfo(pkg.PkgPath, modFlags...)
++			}
++			pkgInfos[pkg.ID] = info
+ 		}
+ 
+ 		slog.Debug("Extracting types for package", "package", pkg.PkgPath)
+@@ -284,13 +304,17 @@
+ 	}
+ 
+ 	for _, pkg := range pkgs {
+-		pkgInfo, ok := pkgInfos[pkg.PkgPath]
++		pkgInfo, ok := pkgInfos[pkg.ID]
+ 		if !ok || pkgInfo.PkgDir == "" {
+ 			log.Fatalf("Unable to get a source directory for input package %s.", pkg.PkgPath)
+ 		}
+-		wantedRoots[pkgInfo.PkgDir] = true
+-		if pkgInfo.ModDir != "" {
+-			wantedRoots[pkgInfo.ModDir] = true
++		if pkg.Module != nil && pkg.Module.Dir != "" {
++			wantedModules[pkg.Module.Dir] = true
++		} else {
++			wantedRoots[pkgInfo.PkgDir] = true
++			if pkgInfo.ModDir != "" {
++				wantedRoots[pkgInfo.ModDir] = true
++			}
+ 		}
+ 	}
+ 
+@@ -326,8 +350,15 @@
+ 			return
+ 		}
+ 
+-		for root := range wantedRoots {
+-			pkgInfo := pkgInfos[pkg.PkgPath]
++		// A dependency module may be physically nested under a source root
++		// (for example in a Bazel execroot). Preserve module ownership instead
++		// of treating that layout as a request to extract the dependency.
++		roots := wantedRoots
++		if pkg.Module != nil && wantedModules[pkg.Module.Dir] {
++			roots = map[string]bool{pkg.Module.Dir: true}
++		}
++		for root := range roots {
++			pkgInfo := pkgInfos[pkg.ID]
+ 			relDir, err := filepath.Rel(root, pkgInfo.PkgDir)
+ 			if err != nil || noExtractRe.MatchString(relDir) {
+ 				// if the path can't be made relative or matches the noExtract regexp skip it
+diff --git a/LICENSE b/LICENSE
+--- /dev/null
++++ b/LICENSE
+@@ -0,0 +1,21 @@
++MIT License
++
++Copyright (c) 2006-2025 GitHub, Inc.
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.

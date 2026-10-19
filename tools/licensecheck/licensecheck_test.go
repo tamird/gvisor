@@ -49,6 +49,7 @@ func TestAuditedExtensionRepos(t *testing.T) {
     {"key": "@@rules_python+//python/extensions:pip.bzl%pip", "used_repos": ["python_packages"]},
     {"key": "@@//:MODULE.bazel%_repo_rules http_archive", "used_repos": ["archive"]},
     {"key": "@@//:MODULE.bazel%_repo_rules http_file", "used_repos": ["file"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules go_repository", "used_repos": ["go_archive"]},
     {"key": "@@//:MODULE.bazel%_repo_rules module_proxy", "used_repos": ["proxy"]},
     {"key": "@@rules_go+//go:extensions.bzl%go_sdk", "used_repos": ["go_sdk"]},
     {"key": "@@rules_go+//go:extensions.bzl%go_sdk%<root>+apt", "used_repos": ["isolated_sdk"]}
@@ -58,7 +59,7 @@ func TestAuditedExtensionRepos(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := graph.auditedRepos()
-	want := []string{"release_tools", "container_test_tools", "go_dependency", "python_packages", "archive", "file", "proxy"}
+	want := []string{"release_tools", "container_test_tools", "go_dependency", "python_packages", "archive", "file", "go_archive", "proxy"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("audited repositories = %v, want %v", got, want)
 	}
@@ -144,6 +145,36 @@ var (
 	//go:embed testdata/udiff-mit.txt
 	udiffMIT string
 )
+
+func TestParseGitHubCodeloadURL(t *testing.T) {
+	for _, test := range []struct {
+		url  string
+		want [3]string
+	}{
+		{
+			url:  "https://codeload.github.com/torvalds/linux/tar.gz/fd73f4a6659897191fa0d40695fe370925dd3780",
+			want: [3]string{"torvalds", "linux", "fd73f4a6659897191fa0d40695fe370925dd3780"},
+		},
+		{
+			url:  "https://codeload.github.com/example/project/tar.gz/refs/heads/release/v1",
+			want: [3]string{"example", "project", "refs/heads/release/v1"},
+		},
+		{
+			url:  "https://codeload.github.com/example/project/zip/refs/tags/v1.0",
+			want: [3]string{"example", "project", "refs/tags/v1.0"},
+		},
+	} {
+		t.Run(test.url, func(t *testing.T) {
+			owner, repo, ref, err := parseGitHubURL(test.url)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := [3]string{owner, repo, ref}; got != test.want {
+				t.Errorf("parseGitHubURL = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
 
 func TestModuleLicenses(t *testing.T) {
 	const prefix = "example.com/module@v1.0.0/"

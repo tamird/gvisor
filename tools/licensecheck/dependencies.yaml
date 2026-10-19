@@ -10109,6 +10109,12 @@
   commit: ""
   sha256: 1d380f79896ededc654c7b21fafb3360136f1aeb678ad4df4df9af3910c6b815
   license: LicenseRef-CodeQL-Bundle-2.27.1
+- dependency: codeql_go_extractor
+  version: https://codeload.github.com/github/codeql/tar.gz/6e9f9e38390175c41b99070a423c875f450759ca
+  retrieved: "2026-10-18"
+  commit: 6e9f9e38390175c41b99070a423c875f450759ca
+  sha256: e12c5f5d28c443b98836d29e9905eb8dd7073de5b0b498ddee96b9593ca0ae52
+  license: MIT
 - dependency: com_github_bazelbuild_buildtools
   version: https://github.com/bazelbuild/buildtools/archive/v8.5.1.tar.gz
   retrieved: "2026-10-06"
@@ -11057,11 +11063,12 @@
   sha256: 3d787d888485d08fda514dcc2c78461f0ad3dc70d489f0d84fb54e45fbf1deff
   license: Apache-2.0
 - dependency: kcov_linux_source
-  version: https://github.com/torvalds/linux/archive/fd73f4a6659897191fa0d40695fe370925dd3780.tar.gz
-  retrieved: "2026-10-17"
+  version: https://codeload.github.com/torvalds/linux/tar.gz/fd73f4a6659897191fa0d40695fe370925dd3780
+  retrieved: "2026-10-18"
   commit: fd73f4a6659897191fa0d40695fe370925dd3780
   sha256: 1846a6d56bda7798cdff7b743d54975f1e96cbcf89cb48d5f92b2b863cdf262f
   license: GPL-2.0-only
+  manually_audited: true
 - dependency: kind_linux_amd64
   version: https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64
   retrieved: "2026-09-28"
@@ -17024,6 +17031,12 @@
   license:
     - GPL-2.0
     - MIT
+- dependency: package_metadata
+  version: https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.7/supply-chain-v0.0.7.tar.gz
+  retrieved: "2026-10-18"
+  commit: 0025d6abf888945fd2e14d62b92ada5c6d958fbf
+  sha256: 8f27dc7393e3f3bdc793bdc4ba36d67a63c22cc9d38cc65d3204654974ea4563
+  license: Apache-2.0
 - dependency: pigz
   version: https://zlib.net/pigz/pigz-2.8.tar.gz
   retrieved: "2026-10-18"

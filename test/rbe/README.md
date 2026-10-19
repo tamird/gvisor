@@ -761,21 +761,32 @@ files with per-file coverage and extraction diagnostics. Build
 `//tools/codeql:diagnostics` to also retrieve the databases and logs.
 Uploading results to GitHub is separate.
 
-CodeQL reads every indexed source path using its current file contents, including
-files outside the Bazel build graph. Stage new paths before analysis; missing
-indexed files and sources resolving outside the checkout are errors. The input
-is for analysis, not a source archive preserving Git modes or symlink metadata.
-Go uses the declared SDK, C toolchain and a separate offline analysis module
-profile. Gazelle supplies resolved archive pins for Go requirements declared
-by the root `MODULE.bazel` and `go.mod`, including indirect requirements. The Go
-SDK resolves their transitive requirements; Gazelle's own tooling dependencies
-are not added as analysis roots.
-The resulting manifests, proxy and license inventory are declared inputs. This
-uses upstream module archives, without Bazel dependency source patches, and
-leaves the source-export module profile unchanged. As in the public workflow,
-`CODEQL_EXTRACTOR_GO_BUILD_COMMAND=:` skips dependency build heuristics without
-restricting module discovery. Generated Go inputs are not overlaid; successful
-extraction still needs its diagnostics and coverage assessed.
+JavaScript, Python and Ruby read every indexed source path using its current
+contents, including files outside the Bazel build graph. Stage new paths before
+analysis; missing indexed files and sources resolving outside the checkout are
+errors. This input does not preserve Git modes or symlink metadata.
+
+Go uses the declared SDK and the existing rules_go package driver over Bazel's
+ordinary library, binary and proto package metadata. Generated sources, cgo
+outputs, embeds and patched dependencies remain declared inputs. Tests are not
+enabled, matching the public workflow; `testonly` helper libraries remain in
+scope. Manual access aliases preserve each owner's visibility and configuration
+without changing public build or test selection. The extractor retains the
+declared package directories and root module identity instead of rediscovering
+them from a copied source tree. Extraction requires exact eligible source hashes
+and no package-loading or extraction errors; SARIF findings remain advisory.
+
+Regenerate the checked-in Go roots after changing declarations, using the
+canonical Bazel query and generator:
+
+```sh
+bazel query 'attr("tags", "codeql-go-owner:", //...)' --output=xml > /tmp/codeql-roots.xml
+bazel run //tools/codeql:update_go_roots -- --input /tmp/codeql-roots.xml
+```
+
+Passing `--check` to the generator checks for drift. Root generation loads
+declarations; it does not analyze or build their runtime data dependencies.
+The Gazelle presubmit and matching qualification lane run this drift check.
 
 Run the mixed-platform units and release repository checks together:
 

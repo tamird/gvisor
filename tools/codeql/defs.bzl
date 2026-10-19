@@ -14,9 +14,8 @@
 
 """Run CodeQL extraction and the bundled default queries as a Bazel action."""
 
-load("@io_bazel_rules_go//go:def.bzl", "GoPath", "go_context")
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
-load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "go_context")
+load("@io_bazel_rules_go//go/tools/gopackagesdriver:aspect.bzl", "GoPkgInfo", "go_pkg_info_aspect")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:go.bzl", "go_rule")
 
@@ -25,58 +24,68 @@ def _analysis_impl(ctx):
     sarif = ctx.actions.declare_file(ctx.label.name + ".sarif")
     args = ctx.actions.args()
     args.add("--codeql", ctx.file._codeql)
-    args.add("--manifest", ctx.file._manifest)
     args.add("--language", ctx.attr.language)
     args.add("--output", output.path)
     args.add("--sarif", sarif.path)
-    inputs = [ctx.attr._bundle[DefaultInfo].files, ctx.attr._sources[DefaultInfo].files]
-    direct = [ctx.file._manifest]
+    inputs = [ctx.attr._bundle[DefaultInfo].files]
+    direct = []
+    tools = []
     env = {}
     if ctx.attr.language == "go":
         go = go_context(ctx)
-        if go.cgo_tools == None:
-            fail("CodeQL Go extraction requires the Linux C toolchain")
-        cc = go.cgo_tools
+        packages = [dep[GoPkgInfo] for dep in ctx.attr.roots]
+        json_files = depset(transitive = [pkg.pkg_json_files for pkg in packages])
+        stdlib_json = depset([pkg.stdlib_json_file for pkg in packages])
+        compiled_inputs = depset(transitive = [pkg.compiled_go_files for pkg in packages])
+        owners = []
+        for dep, owner in ctx.attr.roots.items():
+            if GoArchive not in dep:
+                fail("Declared production owner has no GoArchive: " + owner)
+
+            # Alias and configured frontends keep their logical owner, while
+            # the driver must request the actual archive's package identity.
+            owners.append({
+                "owner": owner,
+                "provider_label": str(dep.label),
+                "package_id": str(dep[GoArchive].data.label),
+            })
+        if not owners:
+            fail("Go analysis requires a generated nonempty production root manifest")
+        manifest = ctx.actions.declare_file(ctx.label.name + "-packages.json")
+        ctx.actions.write(manifest, json.encode({
+            "labels": sorted({owner["package_id"]: True for owner in owners}.keys()),
+            "owners": owners,
+            "package_json": [file.path for file in json_files.to_list()],
+            "stdlib_json": [file.path for file in stdlib_json.to_list()],
+            "declared_inputs": [file.path for file in compiled_inputs.to_list()],
+            "go_mod": ctx.file._go_mod.path,
+            "goarch": go.mode.goarch,
+            "goos": go.mode.goos,
+            "bazel_version_file": ctx.file._bazel_version.path,
+        }))
+        args.add("--manifest", manifest)
         args.add("--go", go.sdk.go)
         args.add("--goroot", go.sdk.root_file.dirname)
-        args.add("--proxy", ctx.file._proxy_root.dirname)
-        args.add("--go-mod", ctx.file._go_mod)
-        args.add("--go-sum", ctx.file._go_sum)
-        args.add_all(ctx.files._go_sources, before_each = "--go-sources")
-
-        # GoPath publishes the same original files and destination directories
-        # used by its archive builder. Retain that ownership when a command's
-        # sources move out of a directory shared with another Go package.
-        prefix = "src/gvisor.dev/gvisor/"
-        source_map = []
-        for package in ctx.attr._go_packages[GoPath].packages:
-            if not package.dir.startswith(prefix):
-                fail("CodeQL package is outside the repository module: " + package.dir)
-            for src in package.srcs:
-                if src.is_source and not src.short_path.startswith("../"):
-                    source_map.append({
-                        "source": src.short_path,
-                        "path": package.dir.removeprefix(prefix) + "/" + src.basename,
-                    })
-        membership = ctx.actions.declare_file(ctx.label.name + "-source-map.json")
-        ctx.actions.write(membership, json.encode(source_map))
-        args.add("--go-source-map", membership)
-        direct.append(membership)
-        args.add("--cc", cc.c_compiler_path)
-        args.add("--cxx", cc_common.get_tool_for_action(
-            feature_configuration = cc.feature_configuration,
-            action_name = ACTION_NAMES.cpp_compile,
-        ))
-        args.add_all(cc.c_compile_options, format_each = "--cflag=%s")
-        args.add_all(cc.cxx_compile_options, format_each = "--cxxflag=%s")
-        args.add_all(cc.ld_executable_options, format_each = "--ldflag=%s")
-        direct.extend([go.sdk.go, ctx.file._proxy_root, ctx.file._go_mod, ctx.file._go_sum] + ctx.files._go_sources)
-        inputs.extend([go.sdk.srcs, go.sdk.headers, go.sdk.tools, go.cc_toolchain_files, ctx.attr._proxy[DefaultInfo].files])
+        args.add("--driver", ctx.executable._driver)
+        args.add("--extractor", ctx.executable._extractor)
+        direct.extend([manifest, ctx.file._go_mod, ctx.file._bazel_version, go.sdk.go])
+        inputs.extend([json_files, stdlib_json, compiled_inputs, go.sdk.srcs, go.sdk.headers, go.sdk.tools])
+        for pkg in packages:
+            # CodeQL loads dependency syntax, so the effective go/packages
+            # mode does not request export archives. Retain the driver's
+            # standard-library cache and its source paths.
+            inputs.append(pkg.stdlib_cache_dir)
+        tools.extend([ctx.attr._driver[DefaultInfo].files_to_run, ctx.attr._extractor[DefaultInfo].files_to_run])
         env.update(go.env)
+    else:
+        args.add("--manifest", ctx.file._manifest)
+        direct.append(ctx.file._manifest)
+        inputs.append(ctx.attr._sources[DefaultInfo].files)
     ctx.actions.run(
         executable = ctx.attr._runner[DefaultInfo].files_to_run,
         arguments = [args],
         inputs = depset(direct, transitive = inputs),
+        tools = tools,
         outputs = [output, sarif],
         env = env,
         mnemonic = "CodeQL",
@@ -91,9 +100,7 @@ _ATTRS = {
     "language": attr.string(mandatory = True, values = ["go", "javascript", "python", "ruby"]),
     "_bundle": attr.label(default = "@codeql_bundle//:files"),
     "_codeql": attr.label(default = "@codeql_bundle//:codeql", allow_single_file = True),
-    "_manifest": attr.label(default = "@analysis_sources//:manifest.json", allow_single_file = True),
     "_runner": attr.label(default = "//tools/codeql:analyze", executable = True, cfg = "exec"),
-    "_sources": attr.label(default = "@analysis_sources//:files"),
 }
 
 def _with_analysis_platform(rule):
@@ -103,21 +110,25 @@ def _with_analysis_platform(rule):
         [Label("@io_bazel_rules_go//go/toolchain:linux_amd64_cgo")],
     )
 
-_analysis_rule = rule(implementation = _analysis_impl, attrs = _ATTRS)
+_analysis_rule = rule(
+    implementation = _analysis_impl,
+    attrs = dict(_ATTRS, **{
+        "_manifest": attr.label(default = "@analysis_sources//:manifest.json", allow_single_file = True),
+        "_sources": attr.label(default = "@analysis_sources//:files"),
+    }),
+)
 
-# with_cfg's generated forwarding rules must be exported from this module.
 _analysis, _analysis_transition = _with_analysis_platform(_analysis_rule).build()  # buildifier: disable=unused-variable
 
 _go_analysis = go_rule(
     rule,
     implementation = _analysis_impl,
     attrs = dict(_ATTRS, **{
-        "_go_mod": attr.label(default = "@codeql_go_modules//:module/go.mod", allow_single_file = True),
-        "_go_sum": attr.label(default = "@codeql_go_modules//:module/go.sum", allow_single_file = True),
-        "_go_packages": attr.label(default = "//tools/codeql:go_packages", providers = [GoPath]),
-        "_go_sources": attr.label_list(default = ["//:go_export", "//tools/codeql:go_package_sources"], allow_files = [".zip"]),
-        "_proxy": attr.label(default = "@codeql_go_modules//:files"),
-        "_proxy_root": attr.label(default = "@codeql_go_modules//:modules/cache/download/ROOT", allow_single_file = True),
+        "roots": attr.label_keyed_string_dict(aspects = [go_pkg_info_aspect], mandatory = True),
+        "_bazel_version": attr.label(default = "//:.bazelversion", allow_single_file = True),
+        "_driver": attr.label(default = "@io_bazel_rules_go//go/tools/gopackagesdriver", executable = True, cfg = "exec"),
+        "_extractor": attr.label(default = "@codeql_go_extractor//cli/go-extractor", executable = True, cfg = "exec"),
+        "_go_mod": attr.label(default = "//:go.mod", allow_single_file = True),
     }),
 )
 

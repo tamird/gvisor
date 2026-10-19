@@ -24,10 +24,22 @@ _DEFAULT_STATIC = select({
     "//conditions:default": "auto",
 })
 
+def _codeql_source(name, testonly):
+    # An alias in the same package preserves the owner's visibility (including
+    # package defaults) and configuration. It adds no compilation or runfiles.
+    native.alias(
+        name = name + "_codeql",
+        actual = ":" + name,
+        testonly = testonly,
+        tags = ["manual", "codeql-go-owner:" + str(Label("//%s:%s" % (native.package_name(), name)))],
+        visibility = ["//tools/codeql:__pkg__"],
+    )
+
 def _go_proto_or_grpc_library(go_library_func, name, **kwargs):
     if "importpath" in kwargs:
         # If importpath is explicit, pass straight through.
         go_library_func(name = name, **kwargs)
+        _codeql_source(name, kwargs.get("testonly"))
         return
     deps = []
     com_google_protobuf = "@com_google_protobuf//"
@@ -54,6 +66,7 @@ def _go_proto_or_grpc_library(go_library_func, name, **kwargs):
         deps = deps,
         **kwargs
     )
+    _codeql_source(name + "_go_proto", kwargs.get("testonly"))
 
 def go_proto_library(name, **kwargs):
     _go_proto_or_grpc_library(_go_proto_library, name, **kwargs)
@@ -116,6 +129,7 @@ def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs
         gc_goopts = gc_goopts,
         **kwargs
     )
+    _codeql_source(name, kwargs.get("testonly"))
 
 def go_importpath(target):
     """Returns the importpath for the target."""
@@ -163,6 +177,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         importpath = importpath,
         **kwargs
     )
+    _codeql_source(name, kwargs.get("testonly"))
 
 def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, **kwargs):
     """Build a go test.

@@ -1,0 +1,34 @@
+Preserve package directories and module provenance across the existing
+packages-driver JSON boundary; omitted facts retain their old zero values.
+Upstream source: https://github.com/golang/tools/blob/v0.51.0/go/packages/packages.go
+
+diff --git a/go/packages/packages.go b/go/packages/packages.go
+--- a/go/packages/packages.go
++++ b/go/packages/packages.go
+@@ -609,6 +609,8 @@
+ // TODO(adonovan): identify this struct with Package, effectively
+ // publishing the JSON protocol.
+ type flatPackage struct {
++	Dir             string            `json:",omitempty"`
++	Module          *Module           `json:",omitempty"`
+ 	ID              string
+ 	Name            string            `json:",omitempty"`
+ 	PkgPath         string            `json:",omitempty"`
+@@ -634,6 +636,8 @@
+ // not intended for use by clients of the API and we may change the format.
+ func (p *Package) MarshalJSON() ([]byte, error) {
+ 	flat := &flatPackage{
++		Dir:             p.Dir,
++		Module:          p.Module,
+ 		ID:              p.ID,
+ 		Name:            p.Name,
+ 		PkgPath:         p.PkgPath,
+@@ -663,6 +667,8 @@
+ 		return err
+ 	}
+ 	*p = Package{
++		Dir:             flat.Dir,
++		Module:          flat.Module,
+ 		ID:              flat.ID,
+ 		Name:            flat.Name,
+ 		PkgPath:         flat.PkgPath,
