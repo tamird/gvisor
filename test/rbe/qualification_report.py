@@ -583,27 +583,79 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     if ("lock_before" in context) != ("lock_after" in context) or bodies.get("lock_before") != bodies.get("lock_after"):
         errors.append("Lock evidence is missing or changed")
     kind = context.get("command_kind")
-    arguments = bodies.get("executed_arguments", b"").decode().splitlines()
-    analysis = any(arg in ("--nobuild", "--nobuild=true", "--build=false") for arg in arguments)
-    if kind not in ("test", "benchmark", "build", "analysis") or (kind == "analysis") != analysis:
+    arguments = []
+    if kind == "command":
+        try:
+            match json.loads(bodies.get("executed_arguments", b"")):
+                case list() as values if all(isinstance(value, str) for value in values):
+                    arguments = values
+                case _:
+                    raise ValueError("Command arguments must be a JSON string array")
+        except ValueError as error:
+            errors.append(f"executed_arguments: {error}")
+    else:
+        arguments = bodies.get("executed_arguments", b"").decode().splitlines()
+    bazel_arguments = arguments[:arguments.index("--")] if "--" in arguments else arguments
+    analysis = any(arg in ("--nobuild", "--nobuild=true", "--build=false") for arg in bazel_arguments)
+    if kind not in ("test", "benchmark", "build", "analysis", "command") or kind != "command" and (kind == "analysis") != analysis:
         errors.append("Command kind does not match original analysis/execution arguments")
     command = next((arg for arg in arguments if not arg.startswith("-")), None)
-    if command not in ("test", "build") or kind in ("test", "build") and command != kind:
+    allowed_commands = ("run", "query") if kind == "command" else ("test", "build")
+    if command not in allowed_commands or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
     if kind == "benchmark" and command != "test":
         errors.append("Benchmark evidence requires a Bazel test command")
+    if kind == "command" and command == "run" and analysis:
+        errors.append("Analysis-only run cannot establish command execution")
     exits = {}
     for key in ("native_exit", "capture_exit"):
         try:
             exits[key] = int(bodies[key].decode().strip())
+            if kind == "command" and not 0 <= exits[key] <= 255:
+                raise ValueError("Invalid shell exit status")
         except (KeyError, ValueError):
             errors.append(f"Missing or invalid {key}")
-            exits[key] = 1
-    finished = timestamp(string(context.get("execution_finished_at")))
-    if finished.utcoffset() != datetime.timedelta(0):
-        raise ValueError("execution_finished_at must be UTC")
+            exits[key] = None if kind == "command" else 1
+    finished = None
+    try:
+        value = timestamp(string(context.get("execution_finished_at")))
+        if value.utcoffset() != datetime.timedelta(0):
+            raise ValueError("execution_finished_at must be UTC")
+        finished = value.isoformat()
+    except ValueError as error:
+        errors.append(f"execution_finished_at: {error}")
     return {"source": source, "source_evidence": evidence, "command_kind": kind, "bazel_command": command,
-            "arguments": arguments, "execution_finished_at": finished.isoformat(), **exits}, errors
+            "arguments": arguments, "execution_finished_at": finished, **exits}, errors
+
+
+def command_verdict(context: Path) -> dict[str, object]:
+    """Retain run/query completion without inventing build or test owners."""
+    started = time.monotonic()
+    info, errors = source_context(context)
+    if info["command_kind"] != "command":
+        errors.append("Command evidence requires a run/query source context")
+    outputs = {}
+    for name in ("stdout", "stderr"):
+        path = context.parent / (name + ".log")
+        try:
+            if path.is_symlink() or not path.is_file():
+                raise ValueError(f"Missing regular command output: {name}")
+            if path.stat().st_size > MAX_REPORT_BYTES:
+                raise ValueError(f"Command output exceeds report size bound: {name}")
+            outputs[name] = {"path": path.name, **file_record(path)}
+        except (OSError, ValueError) as error:
+            errors.append(str(error))
+    if info["capture_exit"] != 0:
+        errors.append("Caller recorded a capture failure")
+    # An absent exit record cannot establish execution failure or success.
+    status = "FAIL" if info["native_exit"] else "INCOMPLETE" if errors else "PASS"
+    now = datetime.datetime.now(datetime.timezone.utc)
+    return {"schema_version": 1, **info, "status": status, "accepted_analysis_exit": False,
+            "errors": errors, "command_outputs": outputs, "expected": [], "executed": [],
+            "case_counts": {}, "bep_finish": None, "verdict_available_at": now.isoformat(),
+            "reporting_elapsed_seconds": time.monotonic() - started,
+            "execution_to_verdict_seconds": (now - timestamp(string(info["execution_finished_at"]))).total_seconds()
+            if info["execution_finished_at"] is not None else None}
 
 
 def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
@@ -1016,7 +1068,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "skipped_owners": [asdict(owner) for owner in sorted(skipped_owners)],
             "bep_finish": finished, "verdict_available_at": now.isoformat(),
             "reporting_elapsed_seconds": time.monotonic() - started,
-            "execution_to_verdict_seconds": (now - timestamp(string(info["execution_finished_at"]))).total_seconds()}
+            "execution_to_verdict_seconds": (now - timestamp(string(info["execution_finished_at"]))).total_seconds()
+            if info["execution_finished_at"] is not None else None}
 
 
 def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
@@ -1061,6 +1114,9 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
               "capture_exit": capture_exit, "invocations": rows, "errors": errors,
               "expected": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("expected", []))],
               "executed": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("executed", []))],
+              "commands": [{"invocation": row["path"], **{key: mapping(row["verdict"])[key] for key in (
+                  "source", "status", "bazel_command", "arguments", "native_exit", "command_outputs", "execution_finished_at",
+              )}} for row in rows if mapping(row["verdict"]).get("command_kind") == "command"],
               "case_counts": dict(sum((Counter({key: number(value) for key, value in mapping(row.get("case_counts", {})).items()}) for row in verdicts), Counter())),
               "zero_case_owners": [item for row in verdicts for item in sequence(row.get("zero_case_owners", []))],
               "non_runtime_owners": [item for row in verdicts for item in sequence(row.get("non_runtime_owners", []))],
@@ -1307,6 +1363,9 @@ def main() -> int:
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
     check.add_argument("--expected-benchmarks", type=Path)
     check.add_argument("--declared-benchmarks", type=Path)
+    command_check = commands.add_parser("command-verdict")
+    for name in ("context", "output"):
+        command_check.add_argument("--" + name, type=Path, required=True)
     benchmarks = commands.add_parser("benchmark-arguments")
     benchmarks.add_argument("--manifest", type=Path, required=True)
     benchmarks.add_argument("--output", type=Path, required=True)
@@ -1375,6 +1434,10 @@ def main() -> int:
                          args.declared_benchmarks)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
+    if args.command == "command-verdict":
+        result = command_verdict(args.context)
+        write_json(args.output, result)
+        return 0 if result["status"] == "PASS" else result["native_exit"] or 1
     result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
     exit_code = number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
     # The coordinator can upload the archive and then lose its build-event
