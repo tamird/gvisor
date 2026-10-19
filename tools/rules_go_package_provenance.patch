@@ -131,20 +131,19 @@ diff --git a/go/tools/gopackagesdriver/aspect.bzl b/go/tools/gopackagesdriver/as
 diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.go
 --- a/go/tools/gopackagesdriver/main.go
 +++ b/go/tools/gopackagesdriver/main.go
-@@ -21,8 +21,12 @@
+@@ -21,8 +21,11 @@
  	"io"
  	"log/slog"
  	"os"
 +	"path/filepath"
  	"runtime"
-+	"slices"
  	"strings"
 +
 +	"golang.org/x/tools/go/packages"
  )
  
  type driverResponse struct {
-@@ -102,6 +106,10 @@
+@@ -102,6 +105,10 @@
  		}
  	}()
  
@@ -155,12 +154,14 @@ diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.
  	bazel, err := NewBazel(ctx, bazelBin, workspaceRoot, buildWorkingDirectory, bazelCommonFlags, bazelStartupFlags)
  	if err != nil {
  		return fmt.Errorf("unable to create bazel instance: %w", err)
-@@ -142,6 +150,63 @@
+@@ -142,6 +149,83 @@
  	return nil
  }
  
 +// jsonManifest supplies the outputs of a completed, explicitly selected Bazel
-+// analysis. It is not a query cache: this mode handles only its exact root set.
++// analysis. Each call may request a subset of its declared roots because
++// packages.Load partitions long requests before invoking the external driver:
++// https://github.com/golang/tools/blob/ea2f152dc/go/packages/packages.go#L297-L318
 +type jsonManifest struct {
 +	JSONFiles    []string
 +	Labels       []string
@@ -181,8 +182,22 @@ diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.
 +	if err := json.Unmarshal(data, &manifest); err != nil {
 +		return err
 +	}
-+	if !slices.Equal(queries, manifest.Labels) || request.Tests != manifest.Tests || len(queries) == 0 {
-+		return fmt.Errorf("request differs from declared JSON package roots or test mode")
++	if request.Tests != manifest.Tests || len(queries) == 0 {
++		return fmt.Errorf("request differs from declared JSON package test mode or has no roots")
++	}
++	allowed := make(map[string]bool, len(manifest.Labels))
++	for _, label := range manifest.Labels {
++		if label == "" || allowed[label] {
++			return fmt.Errorf("empty or duplicate declared package root: %q", label)
++		}
++		allowed[label] = true
++	}
++	requested := make(map[string]bool, len(queries))
++	for _, label := range queries {
++		if !allowed[label] || requested[label] {
++			return fmt.Errorf("undeclared or duplicate requested package root: %q", label)
++		}
++		requested[label] = true
 +	}
 +	version, ok := parseBazelVersion(manifest.BazelVersion)
 +	if !ok {
@@ -205,13 +220,17 @@ diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.
 +	if err != nil {
 +		return err
 +	}
-+	response := driver.GetResponse(manifest.Labels)
++	response := driver.GetResponse(queries)
 +	response.Compiler = "gc"
 +	response.Arch = manifest.Arch
-+	for _, label := range manifest.Labels {
-+		if !slices.Contains(response.Roots, label) {
-+			return fmt.Errorf("declared root missing from package metadata: %s", label)
++	if len(response.Roots) != len(requested) {
++		return fmt.Errorf("package metadata returned %d roots for %d requested roots", len(response.Roots), len(requested))
++	}
++	for _, label := range response.Roots {
++		if !requested[label] {
++			return fmt.Errorf("unexpected or duplicate package metadata root: %q", label)
 +		}
++		delete(requested, label)
 +	}
 +	return json.NewEncoder(out).Encode(response)
 +}
@@ -219,7 +238,7 @@ diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.
  func main() {
  	ctx, cancel := signalContext(context.Background(), os.Interrupt)
  	defer cancel()
-@@ -151,6 +216,9 @@
+@@ -151,6 +235,9 @@
  		// gopls will check the packages driver exit code, and if there is an
  		// error, it will fall back to go list. Obviously we don't want that,
  		// so force a 0 exit code.
@@ -248,3 +267,144 @@ diff --git a/go/tools/builders/stdliblist.go b/go/tools/builders/stdliblist.go
  		Name:            pkg.Name,
  		PkgPath:         pkg.ImportPath,
  		ExportFile:      pathReplaceFn(pkg.Export),
+diff --git a/go/tools/gopackagesdriver/BUILD.bazel b/go/tools/gopackagesdriver/BUILD.bazel
+--- a/go/tools/gopackagesdriver/BUILD.bazel
++++ b/go/tools/gopackagesdriver/BUILD.bazel
+@@ -1,4 +1,4 @@
+-load("//go:def.bzl", "go_binary", "go_library")
++load("//go:def.bzl", "go_binary", "go_library", "go_test")
+ load("//go/private:common.bzl", "RULES_GO_REPO_NAME")
+ load("//go/tools/bazel_testing:def.bzl", "go_bazel_test")
+ 
+@@ -33,6 +33,13 @@
+     },
+ )
+ 
++go_test(
++    name = "json_manifest_test",
++    srcs = ["json_manifest_test.go"],
++    embed = [":gopackagesdriver_lib"],
++    deps = ["@org_golang_x_tools//go/packages"],
++)
++
+ go_bazel_test(
+     name = "gopackagesdriver_test",
+     size = "enormous",
+diff --git a/go/tools/gopackagesdriver/json_manifest_test.go b/go/tools/gopackagesdriver/json_manifest_test.go
+new file mode 100644
+--- /dev/null
++++ b/go/tools/gopackagesdriver/json_manifest_test.go
+@@ -0,0 +1,113 @@
++// Copyright 2026 The Bazel Authors. All rights reserved.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//    http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++package main
++
++import (
++	"bytes"
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"slices"
++	"testing"
++
++	"golang.org/x/tools/go/packages"
++)
++
++func TestJSONManifestRequests(t *testing.T) {
++	const a, b, missing = "@@//example:a", "@@//example:b", "@@//example:missing"
++	for _, tc := range []struct {
++		name      string
++		queries   []string
++		labels    []string
++		tests     bool
++		xTest     bool
++		wantError bool
++	}{
++		{name: "first batch", queries: []string{a}},
++		{name: "last batch", queries: []string{b}},
++		{name: "full request", queries: []string{a, b}},
++		{name: "reordered request", queries: []string{b, a}},
++		{name: "empty request", wantError: true},
++		{name: "unknown root", queries: []string{missing}, wantError: true},
++		{name: "duplicate request", queries: []string{a, a}, wantError: true},
++		{name: "test mode", queries: []string{a}, tests: true, wantError: true},
++		{name: "missing metadata", queries: []string{missing}, labels: []string{a, b, missing}, wantError: true},
++		{name: "unexpected xtest", queries: []string{a}, xTest: true, wantError: true},
++		{name: "duplicate manifest", queries: []string{a}, labels: []string{a, a}, wantError: true},
++		{name: "empty manifest root", queries: []string{a}, labels: []string{a, ""}, wantError: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			dir := t.TempDir()
++			jsonPath := filepath.Join(dir, "packages.json")
++			var metadata bytes.Buffer
++			encoder := json.NewEncoder(&metadata)
++			records := []FlatPackage{
++				{ID: a, Name: "a", PkgPath: "example/a"},
++				{ID: b, Name: "b", PkgPath: "example/b"},
++			}
++			if tc.xTest {
++				records = append(records, FlatPackage{ID: a + "_xtest", Name: "a_test", PkgPath: "example/a_test"})
++			}
++			for _, record := range records {
++				if err := encoder.Encode(record); err != nil {
++					t.Fatal(err)
++				}
++			}
++			if err := os.WriteFile(jsonPath, metadata.Bytes(), 0600); err != nil {
++				t.Fatal(err)
++			}
++			labels := tc.labels
++			if labels == nil {
++				labels = []string{a, b}
++			}
++			manifest := jsonManifest{
++				JSONFiles: []string{jsonPath}, Labels: labels, BazelVersion: "8.8.1",
++				Workspace: dir, ExecRoot: dir, OutputBase: dir, Arch: "amd64",
++			}
++			data, err := json.Marshal(manifest)
++			if err != nil {
++				t.Fatal(err)
++			}
++			manifestPath := filepath.Join(dir, "manifest.json")
++			if err := os.WriteFile(manifestPath, data, 0600); err != nil {
++				t.Fatal(err)
++			}
++			var output bytes.Buffer
++			err = runJSONManifest(manifestPath, &packages.DriverRequest{Tests: tc.tests}, tc.queries, &output)
++			if tc.wantError {
++				if err == nil || output.Len() != 0 {
++					t.Fatalf("invalid request returned error %v and output %q", err, output.String())
++				}
++				return
++			}
++			if err != nil {
++				t.Fatal(err)
++			}
++			var response packages.DriverResponse
++			if err := json.Unmarshal(output.Bytes(), &response); err != nil {
++				t.Fatal(err)
++			}
++			want := slices.Clone(tc.queries)
++			slices.Sort(want)
++			slices.Sort(response.Roots)
++			if !slices.Equal(response.Roots, want) || len(response.Packages) != len(want) {
++				t.Fatalf("response roots %v, packages %d; want only %v", response.Roots, len(response.Packages), want)
++			}
++			if response.NotHandled || response.Compiler != "gc" || response.Arch != "amd64" {
++				t.Fatalf("unexpected driver contract: %+v", response)
++			}
++		})
++	}
++}
