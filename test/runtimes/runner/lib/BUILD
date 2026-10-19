@@ -12,6 +12,7 @@ go_library(
         "go_test_dependency_go118.go",
         "go_test_dependency_not_go118.go",
         "lib.go",
+        "sentry_diagnostics.go",
     ],
     importpath = "gvisor.dev/gvisor/test/runtimes/runner/lib",
     visibility = ["//test:__subpackages__"],
