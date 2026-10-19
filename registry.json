@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T20:49:59.968745+00:00",
+    "updatedAt": "2026-10-19T21:08:04.893425+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1954,18 +1954,18 @@
       "url": "https://github.com/google/gvisor/pull/15169",
       "group": "runtime",
       "status": "open",
-      "summary": "Current matching import #15994 at db9f601e51 completes Go export, commit and the local go-branch push, then fails temporary-clone removal with Directory not empty. This is the cleanup boundary already addressed by #15598; the surviving writer and any topic-specific defect remain unproved. The internal Copybara failure has no public diagnostic, and prior import-head results remain historical.",
+      "summary": "Current matching import #15994 at db9f601e51 has a Buildkite checkout failure. The inspected failed job in build 51364 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. The separate current-head Go-export cleanup failure remains linked to existing #15598.",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-19T20:49:59.968745+00:00",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "bac3659cc12edc23634d905b76fe9f4476940b00",
-        "observedAt": "2026-10-19T20:49:59.516501+00:00",
-        "disposition": "Current import Go-export cleanup failure; existing #15598 mitigation tracked",
-        "nextAction": "Track the existing cleanup mitigation and subsequent exact-head CI; retain raw failures without a blind retry or new topic change.",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
+        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39319805268/job/118290630865",
-          "https://github.com/google/gvisor/pull/15598"
+          "https://buildkite.com/gvisor/pipeline/builds/51364#01a155ef-6079-4bd0-8001-1d697b2ba6f0",
+          "https://github.com/google/gvisor/pull/15994"
         ]
       },
       "head": "bac3659cc12edc23634d905b76fe9f4476940b00",
@@ -1981,6 +1981,10 @@
         {
           "label": "Current import cleanup failure",
           "url": "https://github.com/google/gvisor/actions/runs/39319805268/job/118290630865"
+        },
+        {
+          "label": "Current import checkout failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51364#01a155ef-6079-4bd0-8001-1d697b2ba6f0"
         }
       ]
     },
@@ -2705,17 +2709,17 @@
       "url": "https://github.com/google/gvisor/pull/15499",
       "group": "runtime",
       "status": "open",
-      "summary": "Current matching import #15910 advanced to 445d4451f9; its checks are pending. Earlier import head 211e2dabb852 failed both Buildkite 51341 cgroup jobs in TestUIDMap while boot read empty mounts JSON. Both 40-artifact inventories contain no gofer log. Root owns producer-side source diagnosis; the cause and relationship to the OOM-score change remain unproved. The previous failure stays bound to its actual head.",
-      "updatedAt": "2026-10-19T20:49:59.968745+00:00",
+      "summary": "Current matching import #15910 at 445d4451f9 has a Buildkite checkout failure. The inspected failed job in build 51366 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. Root still owns the separate TestUIDMap startup diagnosis at earlier import head 211e2dabb852/build 51341; that evidence is not reassigned to this head.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
-        "observedAt": "2026-10-19T20:46:19.272897+00:00",
-        "disposition": "TestUIDMap startup fails on empty mounts JSON; producer cause unresolved",
-        "nextAction": "Inspect the exact imported gofer mounts producer and startup path. No gofer failure log was uploaded; preserve the unknown cause and exact current-source failure, with no blind retry or external comment.",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
+        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
         "evidence": [
-          "https://buildkite.com/gvisor/pipeline/builds/51341#01a155cc-0ee3-4305-9f1d-601946fab920",
-          "https://buildkite.com/gvisor/pipeline/builds/51341#01a155d0-0273-4f23-ba88-b96bc9aff49d"
+          "https://buildkite.com/gvisor/pipeline/builds/51366#01a155f1-397a-44ea-99df-48bd72f2fbde",
+          "https://github.com/google/gvisor/pull/15910"
         ]
       },
       "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
@@ -2752,6 +2756,10 @@
         {
           "label": "Import #15910 Go-export cleanup failure",
           "url": "https://github.com/google/gvisor/actions/runs/39307556827/job/118248463055"
+        },
+        {
+          "label": "Current import checkout failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51366#01a155f1-397a-44ea-99df-48bd72f2fbde"
         }
       ]
     },
@@ -4585,17 +4593,17 @@
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-19T20:49:59.968745+00:00",
-      "summary": "Current matching import #15718 at 190574705f completes Go export, commit and the local go-branch push, then fails temporary-clone removal with Directory not empty. This is the cleanup boundary already addressed by #15598; the surviving writer and any topic-specific defect remain unproved. The internal Copybara failure has no public diagnostic, and prior import-head results remain historical.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
+      "summary": "Current matching import #15718 at 2932f91793 has a Buildkite checkout failure. The inspected failed job in build 51374 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. The earlier Go-export cleanup failure is retained at import head 190574705f; it does not describe the new head.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "8ac030121ad00ece8164b31d5c93810ba736eabd",
-        "observedAt": "2026-10-19T20:49:59.516501+00:00",
-        "disposition": "Current import Go-export cleanup failure; existing #15598 mitigation tracked",
-        "nextAction": "Track the existing cleanup mitigation and subsequent exact-head CI; retain raw failures without a blind retry or new topic change.",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
+        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39318944266/job/118287643683",
-          "https://github.com/google/gvisor/pull/15598"
+          "https://buildkite.com/gvisor/pipeline/builds/51374#01a155f1-9e69-496e-8d6a-2b9a91f481de",
+          "https://github.com/google/gvisor/pull/15718"
         ]
       },
       "number": 15498,
@@ -4620,6 +4628,10 @@
         {
           "label": "Current import cleanup failure",
           "url": "https://github.com/google/gvisor/actions/runs/39318944266/job/118287643683"
+        },
+        {
+          "label": "Current import checkout failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51374#01a155f1-9e69-496e-8d6a-2b9a91f481de"
         }
       ]
     },
@@ -4767,16 +4779,16 @@
       "url": "https://github.com/google/gvisor/pull/15453",
       "group": "runtime",
       "status": "open",
-      "summary": "Matching public import #15962 advanced to 2d577e5262; its current checks are pending. The previous import-head PASS remains historical. The source still reports an internal Copybara failure without a public diagnostic; that status alone does not establish a source defect.",
-      "updatedAt": "2026-10-19T20:49:59.968745+00:00",
+      "summary": "Current matching import #15962 at 2d577e5262 has a Buildkite checkout failure. The inspected failed job in build 51361 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "71a39f8405a27fe1f504ac541d942bb0632e4d33",
-        "observedAt": "2026-10-19T20:49:59.516501+00:00",
-        "disposition": "Advanced matching import checks pending; internal failure lacks diagnostics",
-        "nextAction": "Use the existing watcher for the new import head; preserve prior evidence and diagnose an actual terminal public failure if one appears.",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
+        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15453",
+          "https://buildkite.com/gvisor/pipeline/builds/51361#01a155f1-465b-4485-bd7c-6dc359c9e9ee",
           "https://github.com/google/gvisor/pull/15962"
         ]
       },
@@ -4788,6 +4800,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15453#issuecomment-6274674194"
+        },
+        {
+          "label": "Current import checkout failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51361#01a155f1-465b-4485-bd7c-6dc359c9e9ee"
         }
       ]
     },
@@ -5467,14 +5483,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Combined build evidence qualified; unit coverage and CodeQL recovery remain",
-      "summary": "Combined build evidence covers all 7,660 owners: original 7,655 successes at 4a3516 plus exact-configuration five-owner conntrack recovery at 4b784. The original full-build FAIL remains; this is not a new full-run PASS. The focused conntrack runtime also passes 20 IPv4/IPv6 cases. Mixed units retain raw FAIL/producer INCOMPLETE: 723 owners, 743 attempts, 200,358 passes and 84 skips. The eight zero-case owners are source-confirmed benchmark-only; their first benchmark request was rejected before execution because the explicit test frontend does not accept all architectures. A narrowly corrected AMD64 frontend preserves the explicit ARM64 target transitions; the corrected request is now collecting with the same existing 72-row contract, and must verify actual goos/goarch per owner. Four all-skipped coretag/pinring owners remain gaps. Standard Go-only CodeQL recovery is running separately from the three successful non-Go reports; no new aggregate scan PASS is claimed.\n\nLandlock declaration restoration at e51a is independently qualified by exact loading/configured-action evidence: 834 restored nodes, no changed common nodes or removals, 134 common actions/40 bindings and nine restored bindings, plus buildifier. The original failed representative selection and one manual reconciliation remain recorded. This restores coverage selection and establishes no new runtime support. Root owns integration; canonical qualification/current-upstream-refresh remains d7ece726.\n\nEarlier source-profile evidence remains bound to 4a plus generated manifest bffe: 4,438 configured aspects, 11 test owners and canonical 567-owner manifest check. Java source 420 retains per-mode 7,029 body passes, 4 explicit skips and 136 time-policy exclusions, with original raw FAIL and one manual reconciliation. The historical Java hang cause and ARM/KVM runtime gaps remain unresolved.",
-      "updatedAt": "2026-10-19T20:49:59.968745+00:00",
+      "summary": "Combined build evidence covers all 7,660 owners: original 7,655 successes at 4a3516 plus exact-configuration five-owner conntrack recovery at 4b784. The original full-build FAIL remains; this is not a new full-run PASS. The focused conntrack runtime also passes 20 IPv4/IPv6 cases. Mixed units retain raw FAIL/producer INCOMPLETE: 723 owners, 743 attempts, 200,358 passes and 84 skips. The eight benchmark-only zero-case owners now have separate qualified evidence at 770a: eight uncached Linux attempts and 72 metric rows, 36 per architecture. Reporter 6a5e passes 93 methods; canonical retained-evidence replay preserves every raw row and accepts default CPU suffixes. The original benchmark raw FAIL/producer INCOMPLETE and setup failure remain. The automatic incomplete receipt took 2.901 seconds; the corrected seal followed 698.309 seconds later with one manual reconciliation and no reporting-driven runtime rerun. Four all-skipped coretag/pinring owners remain gaps. Go-only CodeQL recovery at 4b784 is PASS/COMPLETE with both declared report groups authenticated: 567 declared owners, 558 actual roots, all 2,745 source classes and physical files, and zero extraction/package errors. The scan retains 35 advisories versus 59 previously, with no new rule/path/message identities and 24 removed occurrences. Remaining advisories are not waived. Three non-Go reports remain separately recovered from cdf29; the original failed aggregate and its manual recovery remain explicit.\n\nLandlock declaration restoration at e51a is independently qualified by exact loading/configured-action evidence: 834 restored nodes, no changed common nodes or removals, 134 common actions/40 bindings and nine restored bindings, plus buildifier. The original failed representative selection and one manual reconciliation remain recorded. This restores coverage selection and establishes no new runtime support. The restoration is integrated on root branch b4baafe204; canonical qualification/current-upstream-refresh remains d7ece726.\n\nEarlier source-profile evidence remains bound to 4a plus generated manifest bffe: 4,438 configured aspects, 11 test owners and canonical 567-owner manifest check. Java source 420 retains per-mode 7,029 body passes, 4 explicit skips and 136 time-policy exclusions, with original raw FAIL and one manual reconciliation. The historical Java hang cause and ARM/KVM runtime gaps remain unresolved.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-19T20:45:43.446469+00:00",
-        "disposition": "Combined build evidence passes; mixed-unit coverage gaps and CodeQL recovery remain",
-        "nextAction": "Root integrates the qualified Landlock restoration. Node seals the existing eight-owner benchmark run and Go-only CodeQL recovery. Preserve exact-source full-build, source-profile and Java evidence plus unresolved runtime gaps.",
+        "observedAt": "2026-10-19T20:56:05.231762+00:00",
+        "disposition": "Combined build, scoped CodeQL and benchmark recovery qualified; remaining coverage gaps retained",
+        "nextAction": "Root integrates qualified benchmark source changes and assesses remaining four all-skipped owners and runtime gaps. Preserve original failures and exact source bounds.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39312774842",
           "https://app.buildbuddy.io/invocation/56891817-628e-464b-a8d3-e8d687886e55",
@@ -9027,8 +9043,8 @@
       "url": "https://github.com/google/gvisor/pull/15859",
       "group": "runtime",
       "status": "open",
-      "summary": "Current-head approval remains valid. The feedback/copybara status reports failed Google internal checks for a run created at18:58:43 UTC, but supplies no public diagnostic URL. Matching import #15861 advanced to eabfe3e795 with public checks pending in the19:30 snapshot; the internal cause remains unknown.\n\nCurrent-head approval remains valid. The feedback/copybara status reports failed Google internal checks for a run created at 18:56:54 UTC, but supplies no public diagnostic URL. Import #15861 advanced to 10484c277d76 with public checks pending in the latest snapshot; the internal cause is unknown.\n\nThe published mechanical rebase is at 7941bdca9889 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nConstruct gofer cgo seccomp rules only when generating a filter with CgoEnabled, following the sentry approach. This avoids eager rule construction in pure-Go binaries and when a precompiled filter is used. Existing config tests and analyzers pass on both architectures, with source and original-output reviews complete. A matched pure-Go AMD64 initialization trace on the qualification branch removes 648 bytes and seven allocations; that branch includes a separate musl clone rule, so this is not a standalone latency measurement. The contributor-approved correction is published upstream.",
-      "updatedAt": "2026-10-19T19:32:31.460465+00:00",
+      "summary": "Current matching import #15861 at 8f006730b8 completes Go export and its local push, then fails temporary-clone cleanup with Directory not empty. Existing #15598 addresses this failure boundary; the surviving writer remains unproved. Internal Copybara failure details remain unavailable, and no topic source defect is established.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "refinement": {
         "before": {
           "head": "78abb01a0ac542aa97f49168b3af698ff1025392"
@@ -9038,16 +9054,14 @@
         }
       },
       "followup": {
-        "sourceHead": "7941bdca9889cc4a27faca6b166c79b5b92b2598",
-        "observedAt": "2026-10-19T19:32:31.071784+00:00",
-        "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE",
         "owner": "work_map_current",
-        "disposition": "Current-head approval; internal Copybara checks failed without public diagnostics",
-        "nextAction": "Follow current import #15861 and maintainer evidence through the existing sweep. Internal status supplies no failure log or cause; no source change or extra public comment is justified.",
+        "sourceHead": "7941bdca9889cc4a27faca6b166c79b5b92b2598",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "disposition": "Current import Go-export cleanup failure; existing mitigation tracked",
+        "nextAction": "Track #15598 and subsequent exact-head CI through the existing sweep; preserve raw failure without a blind retry or new topic changes.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15859",
-          "https://github.com/google/gvisor/pull/15861"
+          "https://github.com/google/gvisor/actions/runs/39321237932/job/118295529189",
+          "https://github.com/google/gvisor/pull/15598"
         ]
       },
       "evidence": [
@@ -9058,6 +9072,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15859#issuecomment-6274689802"
+        },
+        {
+          "label": "Current import cleanup failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39321237932/job/118295529189"
         }
       ]
     },
@@ -10237,17 +10255,17 @@
       "url": "https://github.com/google/gvisor/pull/15932",
       "group": "runtime",
       "status": "open",
-      "summary": "The merge conflict is resolved in published head 3bf1ae0812 on upstream 3f35bca89c. The conflict concerned only the obsolete init-time alignment check that this change removes; final KCOV runtime and syscall-test files are byte-identical to the previously reviewed head, and the owning BUILD dependency is unchanged. Independent source review passed and GitHub reports MERGEABLE. New-head checks remain separate from the reused source-bound KCOV qualification. Existing reviewer requests are preserved.\n\nThe newly confirmed merge conflict is assigned to node_tls_sni for a minimal rebase preserving the reviewed KCOV behavior and regression cases. The independent full Java collector remains separately owned by the same agent; no duplicate collector is started.\n\nGitHub now reports a merge conflict at unchanged head 4c5874f87a, verified 2026-10-19T18:06:10.488155+00:00. The last published observation was mergeable at 2026-10-19T17:43:44.536727+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nMove page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. The contributor-approved change is published as #15932 with GitHub Linux source permalinks.",
-      "updatedAt": "2026-10-19T18:16:42.989830+00:00",
+      "summary": "Current matching import #16016 at 8ce55cd4f3 has a Buildkite checkout failure. The inspected failed job in build 51371 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Mechanical rebase published; current-head checks and maintainer review pending",
+        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
         "sourceHead": "3bf1ae0812bf0c7d0108184ea89724170d5e4a68",
-        "observedAt": "2026-10-19T18:15:37.121260+00:00",
-        "nextAction": "Follow current-head public checks and complete maintainer conversation through the existing sweep. Investigate actual failures; no duplicate reviewer reminder or new runtime pass is claimed.",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15932",
-          "https://github.com/tamird/gvisor/commit/3bf1ae0812bf0c7d0108184ea89724170d5e4a68"
+          "https://buildkite.com/gvisor/pipeline/builds/51371#01a155ef-675a-4a20-bd3f-0bfa7f3ebc63",
+          "https://github.com/google/gvisor/pull/16016"
         ]
       },
       "evidence": [
@@ -10266,6 +10284,10 @@
         {
           "label": "Linux reference and failing-before ABI cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/39064225594"
+        },
+        {
+          "label": "Current import checkout failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51371#01a155ef-675a-4a20-bd3f-0bfa7f3ebc63"
         }
       ],
       "number": 15932
@@ -11822,25 +11844,28 @@
       "title": "Reject out-of-range do ID mappings",
       "url": "https://github.com/google/gvisor/pull/15978",
       "group": "runtime",
-      "summary": "The testing-only runsc do parser now rejects malformed, negative and overflowing ID-map fields while preserving precise syntax and range errors. Before/after validation covers 13 cases: four valid mappings pass both versions, while nine invalid cases fail against the original parser and pass with the correction. The complete corrected package and two analyzers report 148 passing cases and one existing KVM skip, with no missing evidence. Independent source and compact-result reviews tie this evidence to standalone 7ff604b88c. The contributor approved exact 7ff604b88c, and PR #15978 is open against master. Initial public checks are queued; CLA passed. Namespace authorization, overlap and zero-size policy are unchanged.",
+      "summary": "Current matching import #16011 at b880bf29af has a Buildkite checkout failure. The inspected failed job in build 51357 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. The separate Go-export cleanup failure remains related to existing #15598.",
       "status": "Upstream PR open; qualified correction delivered",
-      "updatedAt": "2026-10-19T16:40:35.224648+00:00",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Approved proposal delivered; maintainer review pending",
+        "owner": "work_map_current",
+        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
         "sourceHead": "7ff604b88c766e269f5f71541bafeab0fa9428e4",
-        "observedAt": "2026-10-19T16:11:35.741003+00:00",
-        "nextAction": "Follow current-head public checks and maintainer feedback through the existing sweep. No contributor approval or additional reply is pending.",
+        "observedAt": "2026-10-19T21:07:57.057911+00:00",
+        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15978",
-          "https://app.buildbuddy.io/invocation/20b81d8e-00af-41b7-8a97-876114af578b",
-          "https://app.buildbuddy.io/invocation/74d4ab44-6263-4030-b195-01e67f9568f1"
+          "https://buildkite.com/gvisor/pipeline/builds/51357#01a155f0-8ffc-4a5f-b9b0-38df79a88b4c",
+          "https://github.com/google/gvisor/pull/16011"
         ]
       },
       "evidence": [
         {
           "label": "Full package and analyzers: 148 PASS, one existing skip",
           "url": "https://app.buildbuddy.io/invocation/74d4ab44-6263-4030-b195-01e67f9568f1"
+        },
+        {
+          "label": "Current import checkout failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51357#01a155f0-8ffc-4a5f-b9b0-38df79a88b4c"
         }
       ],
       "number": 15978
@@ -12093,24 +12118,30 @@
       "repo": "google/gvisor",
       "number": 15956,
       "ref": "kcov-save-restore",
-      "head": "5f90385cdcab4b42d4f027dbd54921332c1512e7",
+      "head": "acc355b329144a9c324525f36758fb80eac927d1",
       "title": "Save and restore KCOV state",
       "url": "https://github.com/google/gvisor/pull/15956",
       "group": "tests",
       "status": "open",
-      "summary": "Root is validating the proposed KCOV Save/Load regression and the user-authorized import aliases. The public PR remains at 5f90385cd; proposal 0b449 is separate. Exact-source AMD64/ARM64 positives and an afterLoad-assignment negative control are collecting. The substantive regression will receive contributor review after validation.",
-      "updatedAt": "2026-10-19T20:49:59.968745+00:00",
+      "summary": "The user-authorized alias-only amendment is published at acc355b329, with the requested Go import guidance cited in the verified reply. That request is complete. The separate regression proposal 0b449 passes TestKcovSaveRestore and both owning analyzers on AMD64 and ARM64; its negative control fails specifically because the memory-file reference is not restored. The new regression remains unpublished pending contributor review.",
+      "updatedAt": "2026-10-19T21:08:04.893425+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "5f90385cdcab4b42d4f027dbd54921332c1512e7",
-        "observedAt": "2026-10-19T20:46:19.272897+00:00",
-        "disposition": "Amendment prepared; focused positive and negative-control validation running",
-        "nextAction": "Reconcile both architecture results and the expected negative control, then request contributor review for the regression. Keep public5f903 distinct from proposal0b449.",
+        "sourceHead": "acc355b329144a9c324525f36758fb80eac927d1",
+        "observedAt": "2026-10-19T20:52:19.646441+00:00",
+        "disposition": "Alias amendment delivered; independently validated regression proposal remains separate",
+        "nextAction": "Obtain the contributor decision for unpublished regression proposal0b449. Do not apply that review requirement to the completed public alias amendment.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15956#pullrequestreview-5577151915",
+          "https://github.com/google/gvisor/pull/15956#issuecomment-6277037796",
           "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Delivered alias and import-guidance reply",
+          "url": "https://github.com/google/gvisor/pull/15956#issuecomment-6277037796"
+        }
+      ]
     }
   ],
   "edges": [
