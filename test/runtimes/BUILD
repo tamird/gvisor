@@ -25,6 +25,10 @@ _RUNTIMES = {
         partitions = 40,
         proctor_privileged = False,
         proctor_user = "",
+        runtime_args = [
+            "--debug-pipe-read-after=480s",
+            "--debug-pipe-read-task=DefaultTestRunn",
+        ],
         shard_count = most_shards,
         source_archive = "//test/docker:java_source_amd64",
     ),

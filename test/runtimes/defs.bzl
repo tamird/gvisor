@@ -93,7 +93,7 @@ _runtime_test = rule(
     test = True,
 )
 
-def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = False, native_reference = False, **kwargs):
+def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = False, native_reference = False, runtime_args = [], **kwargs):
     """Declares installed and owned entrypoints for a language runtime.
 
     Args:
@@ -103,6 +103,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
       source_archive: Optional source-built archive replacing the image registry pin.
       ipv6: Whether the owned Docker daemon provides IPv6 on its default bridge.
       native_reference: Whether to expose a manual runc owner sharing the image.
+      runtime_args: Additional arguments for the owned runsc daemon.
       **kwargs: Existing language, batch, exclusion and shard settings.
     """
     if partitions < 1:
@@ -162,7 +163,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
                 "--platform=systrap",
                 "--watchdog-action=panic",
                 "--directfs=" + ("true" if directfs else "false"),
-            ],
+            ] + runtime_args,
             tags = ["manual"],
         )
         tests = []

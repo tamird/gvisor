@@ -156,7 +156,8 @@ git status --porcelain --untracked-files=no > "$qualification_artifacts/source-b
 qualification_benchmark_manifest=
 qualification_benchmark_arguments=
 benchmark_manifest_options=()
-qualification_retain_outputs=false
+qualification_retain_outputs=${QUALIFICATION_RETAIN_OUTPUTS:-false}
+[[ $qualification_retain_outputs == true || $qualification_retain_outputs == false ]]
 if [[ ${lanes[*]} == pgo ]]; then
   [[ -n ${QUALIFICATION_TARGETS:-} ]]
   QUALIFICATION_BENCHMARK_MANIFEST=$qualification_workspace/test/benchmarks/pgo.json

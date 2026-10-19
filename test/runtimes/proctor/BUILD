@@ -7,7 +7,10 @@ package(
 
 go_library(
     name = "proctor",
-    srcs = ["main.go"],
+    srcs = [
+        "java_diagnostics.go",
+        "main.go",
+    ],
     stateify = False,
     visibility = [
         "//test:__subpackages__",
