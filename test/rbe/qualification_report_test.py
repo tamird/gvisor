@@ -1705,6 +1705,78 @@ signal.pause()
                 self.assertTrue(value["source_verified"])
                 shutil.rmtree(invocation)
 
+    def test_actions_collection_rejects_prior_attempt_artifacts(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        artifact, producer = self.artifact(self.fixture())
+        digest = "sha256:" + report.file_record(artifact)["sha256"]
+        for name in ("qualification-amd64", "qualification-amd64-attempt-1"):
+            for conclusion, status in (("success", "INCOMPLETE"), ("failure", "FAIL")):
+                with self.subTest(name=name, conclusion=conclusion):
+                    metadata = {**retained, "head_sha": producer["sources"][0],
+                                "run_attempt": 2, "conclusion": conclusion}
+                    artifacts = {"artifacts": [{"id": 1, "name": name, "expired": False, "digest": digest}]}
+                    responses = [json.dumps(value).encode() for value in (metadata, artifacts)]
+                    with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                          mock.patch.object(collect_actions.subprocess, "run") as download):
+                        value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64",
+                                                                self.root / (name + conclusion))
+                    self.assertEqual((value["status"], value["collection_status"]), (status, "INCOMPLETE"))
+                    self.assertEqual(value["bound_run_attempt"], 2)
+                    self.assertIn("qualification-amd64-attempt-2 artifact, got 0", value["collection_error"])
+                    self.assertIsNone(value["actions_artifact"])
+                    self.assertNotIn("case_counts", value)
+                    download.assert_not_called()
+
+    def test_actions_collection_selects_current_attempt(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        artifact, producer = self.artifact(self.fixture("fail"))
+        digest = "sha256:" + report.file_record(artifact)["sha256"]
+        metadata = {**retained, "head_sha": producer["sources"][0], "run_attempt": 2, "conclusion": "success"}
+        current = {"id": 3, "name": "qualification-amd64-attempt-2", "expired": False, "digest": digest}
+        artifacts = {"artifacts": [
+            {**current, "id": 1, "name": "qualification-amd64"},
+            {**current, "id": 2, "name": "qualification-amd64-attempt-1"},
+            current,
+            {**current, "id": 4, "name": "qualification-arm64-attempt-2"},
+        ]}
+        responses = [json.dumps(value).encode() for value in (metadata, artifacts)]
+        def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+            self.assertEqual(command[-1], "repos/tamird/gvisor/actions/artifacts/3/zip")
+            stdout.write(artifact.read_bytes())
+            return subprocess.CompletedProcess(command, 0)
+        with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+              mock.patch.object(collect_actions.subprocess, "run", side_effect=download)):
+            value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64",
+                                                    self.root / "current", run_attempt=2)
+        self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
+                         ("FAIL", "FAIL", "COMPLETE"))
+        self.assertEqual((value["requested_run_attempt"], value["bound_run_attempt"]), (2, 2))
+        self.assertEqual(value["actions_artifact"], {"id": 3, "name": current["name"], "digest": digest})
+        self.assertEqual(value["case_counts"], producer["case_counts"])
+
+    def test_actions_collection_rejects_changed_or_invalid_attempt(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        for first, last, requested, error in (
+            (1, 2, None, "expected 1, got 2"),
+            (2, 2, 1, "expected 1, got 2"),
+            (None, None, None, "positive integer"),
+            (True, True, None, "positive integer"),
+            (0, 0, None, "positive integer"),
+            (1, 1, 0, "positive workflow run attempt"),
+        ):
+            with self.subTest(first=first, last=last, requested=requested):
+                pending = {**retained, "status": "in_progress", "conclusion": None, "run_attempt": first}
+                completed = {**retained, "conclusion": "success", "run_attempt": last}
+                responses = [json.dumps(value).encode() for value in (pending, completed)]
+                with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                      mock.patch.object(collect_actions.subprocess, "run", return_value=subprocess.CompletedProcess([], 0))):
+                    value = collect_actions.collect_actions(retained["id"], retained["head_sha"], "amd64",
+                                                            self.root / "attempt", run_attempt=requested)
+                self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "INCOMPLETE"))
+                self.assertIn(error, value["collection_error"])
+                self.assertIsNone(value["actions_artifact"])
+                self.assertNotIn("case_counts", value)
+
     def native_metadata(self, artifact: Path, producer: dict[str, object]) -> dict[str, object]:
         identity = report.file_record(artifact)
         return {"id": {"invocationId": "12345678-1234-1234-1234-123456789abc"},

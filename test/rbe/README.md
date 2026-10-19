@@ -115,10 +115,17 @@ the existing `gh run watch` and artifact-download path:
 
 ```sh
 python3 test/rbe/collect_actions.py --run "$run_id" --source "$source_commit" \
-  --architecture amd64 --prefix "$receipt_prefix"
+  --run-attempt "$run_attempt" --architecture amd64 --prefix "$receipt_prefix"
 ```
 
-The collector retains requested and observed source identities and the workflow
+The collector binds the requested positive attempt, or the first observed
+attempt when `--run-attempt` is omitted, and rejects a change while waiting.
+It selects only `qualification-<architecture>-attempt-<attempt>` and records
+the artifact ID, name and digest. Legacy unsuffixed artifacts are accepted only
+for attempt 1; reruns of old workflows require separate producer evidence and
+are rejected by this collector.
+
+The receipt retains requested and observed source identities and the workflow
 conclusion. Missing or invalid artifacts still produce a receipt with
 `collection_status=INCOMPLETE`; a known workflow failure remains `FAIL`.
 Collection failures do not invent test counts or claim artifact verification.
