@@ -16,6 +16,7 @@
 package proctor
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -125,6 +126,11 @@ func Run(customRunners map[string]lib.TestRunner) error {
 
 	// Run tests.
 	cmds := tr.TestCmds(tests)
+	if *runtime == "java" {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go javaDiagnostics(ctx)
+	}
 	done := make(chan struct{})
 	defer close(done)
 	go func() {
