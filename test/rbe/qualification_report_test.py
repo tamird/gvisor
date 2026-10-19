@@ -107,6 +107,85 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
+    def test_command_completion_preserves_streams_and_failure_evidence(self) -> None:
+        for command, exit_code, damage, status in (
+            ("query", 0, None, "PASS"),
+            ("run", 0, "empty", "PASS"),
+            ("run", 23, None, "FAIL"),
+            ("query", 23, "stderr", "FAIL"),
+            ("query", 0, "stdout", "INCOMPLETE"),
+            ("query", 0, "native-exit", "INCOMPLETE"),
+            ("query", 0, "arguments", "INCOMPLETE"),
+            ("query", 0, "source-after", "INCOMPLETE"),
+            ("run", 23, "finish", "FAIL"),
+            ("run", 0, "finish", "INCOMPLETE"),
+            ("run", 23, "capture-exit", "FAIL"),
+            ("run", 0, "analysis", "INCOMPLETE"),
+            ("run", 0, "tool-argument", "PASS"),
+        ):
+            with self.subTest(command=command, exit_code=exit_code, damage=damage):
+                invocation = self.fixture()
+                context = report.read_json(invocation / "context.json")
+                arguments = [command, "--literal=spaces # and\nnewlines", "//:owner"]
+                if damage == "analysis":
+                    arguments.insert(1, "--nobuild")
+                elif damage == "tool-argument":
+                    arguments.extend(["--", "--nobuild"])
+                context.update(command_kind="command", executed_arguments="arguments.json")
+                if damage == "finish":
+                    context["execution_finished_at"] = None
+                report.write_json(invocation / "context.json", context)
+                report.write_json(invocation / "arguments.json", arguments)
+                (invocation / context["native_exit"]).write_text(str(exit_code))
+                (invocation / "stdout.log").write_bytes(b"<query>\x00\nraw</query>")
+                (invocation / "stderr.log").write_bytes(b"diagnostic without final newline")
+                if damage == "empty":
+                    (invocation / "stdout.log").write_bytes(b"")
+                    (invocation / "stderr.log").write_bytes(b"")
+                elif damage == "arguments":
+                    report.write_json(invocation / "arguments.json", ["query", 7])
+                elif damage == "source-after":
+                    (invocation / "source-after.txt").write_text(" M changed.go\n")
+                elif damage == "native-exit":
+                    (invocation / context["native_exit"]).unlink()
+                elif damage == "capture-exit":
+                    (invocation / context["capture_exit"]).unlink()
+                elif damage in ("stdout", "stderr"):
+                    (invocation / (damage + ".log")).unlink()
+                value = report.command_verdict(invocation / "context.json")
+                report.write_json(invocation / "verdict.json", value)
+                self.assertEqual(value["status"], status, value)
+                if damage != "arguments":
+                    self.assertEqual(value["arguments"], arguments)
+                archive = self.root / "commands.tar.gz"
+                combined = report.bundle(self.evidence, exit_code, 0, archive)
+                self.assertEqual(combined["status"], status, combined)
+                receipt = report.receipt(archive, report.file_record(archive)["sha256"], context["expected_source"])
+                self.assertEqual(receipt["status"], status, receipt)
+                self.assertEqual(receipt["expected_owner_count"], 0)
+                self.assertEqual(receipt["executed_attempt_count"], 0)
+                self.assertEqual(receipt["case_counts"], {})
+                [record] = receipt["commands"]
+                self.assertEqual(record["bazel_command"], command)
+                with tarfile.open(archive) as bundle:
+                    for name, identity in record["command_outputs"].items():
+                        retained = bundle.extractfile("invocation-pass/" + identity["path"]).read()
+                        self.assertEqual(retained, (invocation / (name + ".log")).read_bytes())
+                        self.assertEqual(hashlib.sha256(retained).hexdigest(), identity["sha256"])
+                shutil.rmtree(invocation)
+
+    def test_missing_finish_time_preserves_retained_test_failure(self) -> None:
+        invocation = self.fixture("fail")
+        self.capture(invocation)
+        context = report.read_json(invocation / "context.json")
+        context["execution_finished_at"] = "damaged timestamp"
+        report.write_json(invocation / "context.json", context)
+        value = self.verdict(invocation)
+        self.assertEqual(value["status"], "FAIL", value)
+        self.assertIsNone(value["execution_finished_at"])
+        self.assertIsNone(value["execution_to_verdict_seconds"])
+        self.assertTrue(any("execution_finished_at" in error for error in value["errors"]))
+
     def jtreg_fixture(self, output: str, *, zipped: bool, names: str = "First.java,Second.java") -> Path:
         invocation = self.fixture()
         events = self.events(invocation)
@@ -1135,7 +1214,7 @@ class QualificationReportTest(unittest.TestCase):
         # Run the actual shell entry point and reporter. Only Git identity and
         # Bazel are fixtures; the real timeout interrupts a waiting child.
         bazel_options = ["--config=plugin-tldk", "--define=literal=before#after with spaces"]
-        for phase in ("preflight", "execution"):
+        for phase in ("preflight", "execution", "command-pass", "command-fail", "command-timeout"):
             with self.subTest(phase=phase):
                 workspace = self.root / phase
                 scripts = workspace / "test/rbe"
@@ -1180,6 +1259,20 @@ import signal
 import sys
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
     stream.write(json.dumps(sys.argv[1:]) + '\\n')
+if os.environ['TEST_PHASE'].startswith('command-'):
+    Path(os.environ['TEST_WORK_STARTED']).touch()
+    if os.environ['TEST_PHASE'] == 'command-timeout':
+        signal.pause()
+    if 'query' in sys.argv:
+        sys.stdout.buffer.write(b'<query> spaces # and\\nnewlines </query>')
+        sys.stderr.write('query diagnostic\\n')
+    elif '//:gazelle_check' in sys.argv:
+        sys.stdout.write('gazelle check output\\n')
+    else:
+        source = Path(sys.argv[sys.argv.index('--input') + 1])
+        assert source.read_bytes() == b'<query> spaces # and\\nnewlines </query>'
+        raise SystemExit(23 if os.environ['TEST_PHASE'] == 'command-fail' else 0)
+    raise SystemExit(0)
 events = Path(next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--build_event_json_file=')))
 events.write_text(Path(os.environ['TEST_ANALYSIS']).read_text())
 if '--nobuild' in sys.argv:
@@ -1207,13 +1300,16 @@ signal.pause()
                     "QUALIFICATION_COMMIT": source,
                     "QUALIFICATION_EXECUTION": "remote",
                     "QUALIFICATION_ARCH": "amd64",
-                    "QUALIFICATION_LANES": "test",
-                    "QUALIFICATION_TARGETS": "//test/syscalls:exec_binary_test_native_amd64",
+                    "QUALIFICATION_LANES": "gazelle" if phase.startswith("command-") else "test",
+                    "QUALIFICATION_TARGETS": "" if phase.startswith("command-") else "//test/syscalls:exec_binary_test_native_amd64",
                     "QUALIFICATION_HEADER_BASE": "",
                     "QUALIFICATION_BENCHMARK_MANIFEST": "",
                     "QUALIFICATION_COS_GZIP_BASE64": "",
                     "QUALIFICATION_COS_SHA256": "",
-                    "QUALIFICATION_WORK_DEADLINE": str(time.monotonic() + (5 if phase == "execution" else -1)),
+                    "QUALIFICATION_WORK_DEADLINE": str(time.monotonic() + (
+                        -1 if phase == "preflight" else 30 if phase in ("command-pass", "command-fail") else 5
+                    )),
+                    "TEST_PHASE": phase,
                     "TEST_HEAD": source,
                     "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
                     "TEST_ANALYSIS": str(analysis_path),
@@ -1222,10 +1318,10 @@ signal.pause()
                 }
                 result = subprocess.run(
                     ["bash", "test/rbe/actions.sh", *[f"--bazel-option={option}" for option in bazel_options]],
-                    cwd=workspace, env=environment, capture_output=True, text=True, timeout=30, check=False,
+                    cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
-                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertEqual(started.exists(), phase == "execution", result.stdout + result.stderr)
+                self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
+                self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
                 if phase == "execution":
                     commands = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
                     self.assertEqual(len(commands), 2, commands)
@@ -1247,8 +1343,17 @@ signal.pause()
                 artifact = runner_temp / "qualification.tar.gz"
                 self.assertTrue(artifact.is_file(), result.stdout + result.stderr)
                 value = report.read_json(runner_temp / "qualification/verdict.json")
-                self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 124), value)
+                expected_exit = 0 if phase == "command-pass" else 23 if phase == "command-fail" else 124
+                self.assertEqual((value["status"], value["native_exit"]), ("PASS" if expected_exit == 0 else "FAIL", expected_exit), value)
                 self.assertEqual(value["runner_exit"], result.returncode, value)
+                if phase in ("command-pass", "command-fail"):
+                    self.assertEqual([row["bazel_command"] for row in value["commands"]].count("run"), 2)
+                    self.assertEqual([row["bazel_command"] for row in value["commands"]].count("query"), 1)
+                    self.assertEqual(result.stdout.count("gazelle check output\n"), 1)
+                    self.assertEqual(result.stderr.count("query diagnostic\n"), 1)
+                    self.assertNotIn("<query>", result.stdout)
+                    self.assertEqual(value["expected"], [])
+                    self.assertEqual(value["executed"], [])
                 with tarfile.open(artifact) as archive:
                     self.assertIn("verdict.json", archive.getnames())
 

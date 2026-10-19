@@ -419,7 +419,7 @@ export -f qualification_bazel
 
 bazel() {
   local argument command_kind="" result=0 capture_status=0 verdict_status=0 preflight_status=0 analysis_only=false
-  local directory raw_events expected_events="" index
+  local directory raw_events expected_events="" index command_only=false arguments_file=arguments.txt
   local -a capture_prefix=() capture_options=() verdict_options=() command_args=("$@") target_args=() selection_options=()
   if [[ $qualification_retain_outputs == true ]]; then capture_options=(--retain-outputs); fi
   for argument in "$@"; do
@@ -429,7 +429,10 @@ bazel() {
       *) if [[ -z $command_kind ]]; then command_kind=$argument; fi ;;
     esac
   done
-  if [[ $command_kind != build && $command_kind != test ]]; then
+  if [[ $command_kind == run || $command_kind == query ]]; then
+    command_only=true
+    arguments_file=arguments.json
+  elif [[ $command_kind != build && $command_kind != test ]]; then
     qualification_bazel "$@"
     return
   fi
@@ -461,11 +464,15 @@ bazel() {
   }; then
     return 1
   fi
+  if [[ $command_only == true ]]; then
+    # Keep argument boundaries, including literal newlines, in command evidence.
+    python3 -c 'import json,sys; print(json.dumps(sys.argv[1:]))' "$@" > "$directory/$arguments_file" || return 1
+  fi
 
   # Resolve the exact command before starting its actions. Besides catching
   # invalid configuration early, this supplies an independent expected target set
   # so a truncated result stream cannot silently lose selected owners.
-  if [[ $analysis_only == false ]]; then
+  if [[ $command_only == false && $analysis_only == false ]]; then
     expected_events=$(mktemp "$qualification_private/expected-XXXXXX.json")
     # Test filters otherwise leave build-only roots in the analysis result.
     # Keep those builds in the actual command, but not the expected test set.
@@ -492,32 +499,45 @@ bazel() {
     fi
   fi
   if (( result == 0 && capture_status == 0 )); then
-    if [[ $analysis_only == false ]]; then
+    if [[ $command_only == true ]]; then
+      # Queries may redirect stdout into another command's input. Replay each
+      # original stream exactly once, without reporter status text on stdout.
+      qualification_bazel "$@" > "$directory/stdout.log" 2> "$directory/stderr.log" || result=$?
+    elif [[ $analysis_only == false ]]; then
       while IFS= read -r argument; do command_args+=("$argument"); done < "$directory/test-output-options.txt" || return 1
       printf '%s\n' "${command_args[@]}" "${target_args[@]}" > "$directory/arguments.txt" || return 1
     fi
-    qualification_bazel "${command_args[@]}" \
-      "--execution_log_compact_file=$directory/execution.binpb" \
-      "--profile=$directory/profile.json.gz" \
-      "--build_event_json_file=$raw_events" --build_event_json_file_path_conversion=false \
-      "${target_args[@]}" || result=$?
+    if [[ $command_only == false ]]; then
+      qualification_bazel "${command_args[@]}" \
+        "--execution_log_compact_file=$directory/execution.binpb" \
+        "--profile=$directory/profile.json.gz" \
+        "--build_event_json_file=$raw_events" --build_event_json_file_path_conversion=false \
+        "${target_args[@]}" || result=$?
+    fi
   fi
   python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat())' \
     > "$directory/execution-finished.txt" || capture_status=1
   printf '%s\n' "$result" > "$directory/native-exit.txt" || capture_status=1
   git rev-parse HEAD > "$directory/final-head.txt" || capture_status=1
   git status --porcelain --untracked-files=no > "$directory/source-after.txt" || capture_status=1
-  "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
-    python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
-    --events "$raw_events" --output "$directory/events.jsonl" \
-    --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
-    "${capture_options[@]}" || capture_status=$?
-  if [[ -n $qualification_benchmark_manifest ]]; then
-    sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" || capture_status=1
+  if [[ $command_only == true ]]; then
+    cat -- "$directory/stdout.log" || capture_status=$?
+    cat -- "$directory/stderr.log" >&2 || capture_status=$?
+  else
+    "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+      python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
+      --events "$raw_events" --output "$directory/events.jsonl" \
+      --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
+      "${capture_options[@]}" || capture_status=$?
   fi
-  sha256sum --check "$qualification_artifacts/declared-benchmarks.sha256" || capture_status=1
+  if [[ -n $qualification_benchmark_manifest ]]; then
+    sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" >&2 || capture_status=1
+  fi
+  sha256sum --check "$qualification_artifacts/declared-benchmarks.sha256" >&2 || capture_status=1
   printf '%s\n' "$capture_status" > "$directory/capture-exit.txt" || capture_status=1
-  if [[ $analysis_only == true ]]; then
+  if [[ $command_only == true ]]; then
+    command_kind=command
+  elif [[ $analysis_only == true ]]; then
     command_kind=analysis
   elif [[ $command_kind == test && -n $qualification_benchmark_manifest ]]; then
     command_kind=benchmark
@@ -525,32 +545,40 @@ bazel() {
   elif [[ $command_kind == test ]]; then
     verdict_options+=(--declared-benchmarks "$qualification_declared_benchmarks")
   fi
-  python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" <<'CONTEXT' || capture_status=$?
+  python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" "$arguments_file" <<'CONTEXT' || capture_status=$?
 import json
 from pathlib import Path
 import sys
 
 directory = Path(sys.argv[1])
+try:
+    finished = (directory / "execution-finished.txt").read_text().strip()
+except OSError:
+    finished = None
 context = {
     "expected_source": sys.argv[2],
     "command_kind": sys.argv[3],
-    "execution_finished_at": (directory / "execution-finished.txt").read_text().strip(),
+    "execution_finished_at": finished,
     "commit_file": "commit.txt",
     "source_before": "source-before.txt",
     "source_after": "source-after.txt",
     "final_head": "final-head.txt",
-    "executed_arguments": "arguments.txt",
+    "executed_arguments": sys.argv[4],
     "native_exit": "native-exit.txt",
     "capture_exit": "capture-exit.txt",
 }
 (directory / "context.json").write_text(json.dumps(context) + "\n")
 CONTEXT
+  if [[ $command_only == true ]]; then
+    verdict_options=(command-verdict)
+  else
+    verdict_options=(verdict --events "$directory/events.jsonl" --manifest "$directory/events.jsonl.manifest.json" "${verdict_options[@]}")
+  fi
   "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
-    python3 "$qualification_workspace/test/rbe/qualification_report.py" verdict \
-    --events "$directory/events.jsonl" --manifest "$directory/events.jsonl.manifest.json" \
+    python3 "$qualification_workspace/test/rbe/qualification_report.py" "${verdict_options[@]}" \
     --context "$directory/context.json" --output "$directory/verdict.json" \
-    "${verdict_options[@]}" || verdict_status=$?
-  if [[ $analysis_only == true ]] && (( capture_status == 0 && verdict_status == 0 )); then
+    || verdict_status=$?
+  if [[ $command_only == false && $analysis_only == true ]] && (( capture_status == 0 && verdict_status == 0 )); then
     return 0
   fi
   if (( result == 0 )); then

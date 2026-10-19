@@ -75,6 +75,12 @@ their hashes, and sanitized build events. Test failures remain failures when
 report collection or cleanup also fails; missing results cannot produce a
 passing verdict.
 
+The same bundle records `bazel run` and `bazel query` commands, including the
+Gazelle checks, in a separate `commands` list. Each row retains exact arguments,
+source identity, exit status, completion time and hashes of both output streams.
+These commands contribute no test cases or build-aspect counts. Silent success
+is valid; missing output or exit evidence cannot pass.
+
 Collection and reconciliation run on the coordinator. Both coordinator types
 publish the small verdict separately from the evidence archive, compressed for
 transfer. Read the verdict for the result; download the bundle to inspect a
