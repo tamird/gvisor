@@ -362,15 +362,20 @@ def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str]
             names = selection.removeprefix("Batch:\n").splitlines()
             found_batches.append(names)
             current = None
-            for line in body.splitlines():
-                if line.startswith("TEST: "):
+            lines = body.splitlines()
+            # jtreg's VerboseHandler frames each full result with separators.
+            # Section stdout is arbitrary text and can itself start with TEST:.
+            separator = "--------------------------------------------------"
+            for index, line in enumerate(lines):
+                if line.startswith("TEST: ") and index and lines[index - 1] == separator:
                     if current is not None:
                         errors.append("Java test starts before the preceding result")
                     current = line.removeprefix("TEST: ")
                     if current not in names or current in results:
                         errors.append(f"Unexpected or duplicate Java test: {current}")
                         current = None
-                elif line.startswith("TEST RESULT: "):
+                elif (line.startswith("TEST RESULT: ") and index + 1 < len(lines)
+                      and lines[index + 1] == separator):
                     if current is None:
                         errors.append("Java result has no test identity")
                         continue
@@ -384,8 +389,10 @@ def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str]
         errors.append(str(error))
     if Counter(map(tuple, batches)) != Counter(map(tuple, found_batches)):
         errors.append("Retained Java batches differ from the selected batches")
+    skipped = {name: result for name, result in results.items() if result.startswith("Passed. Skipped:")}
     return {"expected": expected, "results": results, "errors": errors,
-            "passed": sum(result.startswith("Passed.") for result in results.values()),
+            "passed": sum(result.startswith("Passed.") for result in results.values()) - len(skipped),
+            "skipped": skipped,
             "failures": [name for name, result in results.items() if not result.startswith("Passed.")],
             "missing": sorted(set(expected) - results.keys())}
 
@@ -939,6 +946,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     errors.extend(f"{attempt}: {error}" for error in runtime["errors"])
                     failures.extend({**asdict(attempt), "reason": "jtreg failure", "name": name}
                                     for name in runtime["failures"])
+                    skips.extend({**asdict(attempt), "reason": reason, "name": name}
+                                 for name, reason in runtime["skipped"].items())
                     missing.extend({**asdict(attempt), "reason": "jtreg result missing", "name": name}
                                    for name in runtime["missing"])
                 except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
