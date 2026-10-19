@@ -31,7 +31,7 @@ import qualification_report as report
 
 
 def collect_actions(run: int, source: str, architecture: str, prefix: Path,
-                    poll_interval: int = 10) -> dict[str, object]:
+                    poll_interval: int = 10, run_attempt: int | None = None) -> dict[str, object]:
     """Reuse gh watch/download and the canonical authenticated bundle receipt."""
     def output(suffix: str) -> Path:
         return Path(str(prefix) + suffix)
@@ -40,14 +40,17 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
         return report.mapping(json.loads(subprocess.check_output(["gh", "api", path], timeout=60)))
 
     workflow: dict[str, object] = {}
+    bound_attempt = run_attempt
+    selected_artifact: dict[str, object] | None = None
     watch_exit = None
     attached_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     report.write_json(output("-collector.json"), {
         "run": run, "source": source, "collector_attached_at": attached_at,
-        "poll_interval_seconds": poll_interval,
+        "poll_interval_seconds": poll_interval, "requested_run_attempt": run_attempt,
     })
 
     def observe(metadata: dict[str, object]) -> None:
+        nonlocal bound_attempt
         workflow.clear()
         workflow.update({key: metadata[key] for key in (
             "id", "head_sha", "status", "conclusion", "html_url", "run_attempt",
@@ -58,6 +61,13 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
             raise ValueError("Actions returned a different or malformed workflow run")
         if metadata.get("head_sha") != source:
             raise ValueError("Workflow source differs from the requested source")
+        attempt = metadata.get("run_attempt")
+        if type(attempt) is not int or attempt <= 0:
+            raise ValueError("Workflow run_attempt must be a positive integer")
+        if bound_attempt is None:
+            bound_attempt = attempt
+        elif attempt != bound_attempt:
+            raise ValueError(f"Workflow attempt changed or differs from the request: expected {bound_attempt}, got {attempt}")
 
     try:
         if type(run) is not int or run <= 0 or re.fullmatch(r"[0-9a-f]{40}", source) is None:
@@ -66,6 +76,8 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
             raise ValueError("Unknown qualification architecture")
         if type(poll_interval) is not int or poll_interval <= 0:
             raise ValueError("Expected a positive polling interval")
+        if run_attempt is not None and (type(run_attempt) is not int or run_attempt <= 0):
+            raise ValueError("Expected a positive workflow run attempt")
         path = f"repos/tamird/gvisor/actions/runs/{run}"
         metadata = api(path)
         observe(metadata)
@@ -84,18 +96,25 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
         workflow["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         artifacts = api(path + "/artifacts")
         report.write_json(output("-artifacts.json"), artifacts)
+        artifact_name = f"qualification-{architecture}-attempt-{bound_attempt}"
+        accepted_names = [artifact_name]
+        # Old workflows did not distinguish attempts. Their artifact is safe
+        # only on the first attempt, before any earlier producer can exist.
+        if bound_attempt == 1:
+            accepted_names.append("qualification-" + architecture)
         rows = [report.mapping(item) for item in report.sequence(artifacts["artifacts"])
-                if report.mapping(item).get("name") == "qualification-" + architecture
+                if report.mapping(item).get("name") in accepted_names
                 and report.mapping(item).get("expired") is False]
         match rows:
             case [artifact]:
                 pass
             case _:
-                raise ValueError(f"Expected one authenticated qualification artifact, got {len(rows)}")
+                raise ValueError(f"Expected one authenticated {artifact_name} artifact, got {len(rows)}")
         if not artifact.get("digest"):
             raise ValueError("Qualification artifact is missing its SHA256 digest")
         if type(artifact.get("id")) is not int or artifact["id"] <= 0:
             raise ValueError("Qualification artifact has an invalid ID")
+        selected_artifact = {key: artifact[key] for key in ("id", "name", "digest")}
         with output("-actions.zip").open("wb") as stream:
             subprocess.run(
                 ["gh", "api", f"repos/tamird/gvisor/actions/artifacts/{artifact['id']}/zip"],
@@ -118,6 +137,8 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
     elif result["status"] != "FAIL":
         result["status"] = "INCOMPLETE"
     result.update({"workflow": workflow, "submitted_source": source, "requested_run": run,
+                   "requested_run_attempt": run_attempt, "bound_run_attempt": bound_attempt,
+                   "actions_artifact": selected_artifact,
                    "source_verified": type(workflow.get("id")) is int and workflow["id"] == run
                    and workflow.get("head_sha") == source,
                    "watch_exit": watch_exit, "collector_attached_at": attached_at,
@@ -133,11 +154,13 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--architecture", choices=("amd64", "arm64", "all"), required=True)
     parser.add_argument("--prefix", type=Path, required=True)
+    parser.add_argument("--run-attempt", type=int,
+                        help="Required workflow attempt; otherwise bind the first observed attempt")
     parser.add_argument("--poll-interval", type=int, default=10,
                         help="Seconds between status checks; increase for concurrent runs to conserve API quota")
     args = parser.parse_args()
     result = collect_actions(args.run, args.source, args.architecture, args.prefix,
-                             args.poll_interval)
+                             args.poll_interval, args.run_attempt)
     print(f"{result['status']}: {args.prefix}-receipt.json", flush=True)
     return int(result["status"] != "PASS")
 

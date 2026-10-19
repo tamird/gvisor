@@ -166,7 +166,7 @@ jobs:
       if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: qualification-${{ inputs.architecture }}
+        name: qualification-${{ inputs.architecture }}-attempt-${{ github.run_attempt }}
         path: |
           ${{ runner.temp }}/qualification.tar.gz
           ${{ runner.temp }}/qualification/verdict.json
