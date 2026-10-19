@@ -45,6 +45,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -105,14 +106,18 @@ func main() {
 	}
 
 	var localPort uint16
-	if v, err := strconv.Atoi(portName); err != nil {
+	if v, err := strconv.ParseInt(portName, 10, 64); err != nil {
 		log.Fatalf("Unable to convert port %v: %v", portName, err)
+	} else if v < 0 || v > math.MaxUint16 {
+		log.Fatalf("Unable to convert port %v: %v", portName, strconv.ErrRange)
 	} else {
 		localPort = uint16(v)
 	}
 
-	if v, err := strconv.Atoi(remotePortName); err != nil {
+	if v, err := strconv.ParseInt(remotePortName, 10, 64); err != nil {
 		log.Fatalf("Unable to convert port %v: %v", remotePortName, err)
+	} else if v < 0 || v > math.MaxUint16 {
+		log.Fatalf("Unable to convert port %v: %v", remotePortName, strconv.ErrRange)
 	} else {
 		remote.Port = uint16(v)
 	}

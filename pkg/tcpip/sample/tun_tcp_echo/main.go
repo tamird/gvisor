@@ -25,6 +25,7 @@ import (
 	"flag"
 	"io"
 	"log"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -135,9 +136,12 @@ func main() {
 		log.Fatalf("Unknown IP type: %v", addrName)
 	}
 
-	localPort, err := strconv.Atoi(portName)
+	localPort, err := strconv.ParseInt(portName, 10, 64)
 	if err != nil {
 		log.Fatalf("Unable to convert port %v: %v", portName, err)
+	}
+	if localPort < 0 || localPort > math.MaxUint16 {
+		log.Fatalf("Unable to convert port %v: %v", portName, strconv.ErrRange)
 	}
 
 	// Create the stack with ip and tcp protocols, then add a tun-based
