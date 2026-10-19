@@ -42,8 +42,8 @@ codeql_analysis(
         "//images:cuda_run_sample_codeql": "//images:cuda_run_sample",
         "//pkg/test/dockerutil:dockerutil_codeql": "//pkg/test/dockerutil:dockerutil",
         "//test/gpu:gpu_driver_versions_go_proto_codeql": "//test/gpu:gpu_driver_versions_go_proto",
+        "//test/runtimes/proctor:proctor_bin_codeql": "//test/runtimes/proctor:proctor_bin",
         "//tools/licensecheck:licensecheck_codeql": "//tools/licensecheck:licensecheck",
-        "//tools/licensecheck/main:licensecheck_codeql": "//tools/licensecheck/main:licensecheck",
     },
     tags = ["manual"],
 )
