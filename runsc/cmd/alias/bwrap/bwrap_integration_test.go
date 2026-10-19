@@ -224,15 +224,21 @@ func TestUserAndGroup(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			runRootDir := newRunRootDir(t)
 			workDir := t.TempDir()
-			hostUID := getEnvInt("SUDO_UID", os.Getuid())
-			hostGID := getEnvInt("SUDO_GID", os.Getgid())
+			hostUID, err := getEnvID("SUDO_UID", uint32(os.Getuid()))
+			if err != nil {
+				t.Fatal(err)
+			}
+			hostGID, err := getEnvID("SUDO_GID", uint32(os.Getgid()))
+			if err != nil {
+				t.Fatal(err)
+			}
 			input := filepath.Join(workDir, "input")
 			const contents = "private caller data\n"
 			if err := os.WriteFile(input, []byte(contents), 0600); err != nil {
 				t.Fatal(err)
 			}
 			for _, path := range []string{workDir, input} {
-				if err := os.Chown(path, hostUID, hostGID); err != nil {
+				if err := os.Chown(path, int(hostUID), int(hostGID)); err != nil {
 					t.Fatalf("chown %q: %v", path, err)
 				}
 			}

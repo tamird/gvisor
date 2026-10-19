@@ -15,6 +15,7 @@
 package bwrap
 
 import (
+	"errors"
 	"os"
 	"strconv"
 	"strings"
@@ -214,6 +215,88 @@ func TestSandboxOptions(t *testing.T) {
 			)
 			if diff != "" {
 				t.Errorf("Specification mismatch (-got +want):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestSandboxOptionsSudoIDs(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		uid     string
+		gid     string
+		unset   bool
+		wantUID uint32
+		wantGID uint32
+		wantErr error
+	}{
+		{
+			name:    "unset",
+			unset:   true,
+			wantUID: uint32(os.Getuid()),
+			wantGID: uint32(os.Getgid()),
+		},
+		{
+			name:    "empty",
+			wantUID: uint32(os.Getuid()),
+			wantGID: uint32(os.Getgid()),
+		},
+		{
+			name:    "sudo_user",
+			uid:     "4242",
+			gid:     "4343",
+			wantUID: 4242,
+			wantGID: 4343,
+		},
+		{
+			name:    "plus_and_leading_zeros",
+			uid:     "+0001",
+			gid:     "+0002",
+			wantUID: 1,
+			wantGID: 2,
+		},
+		{
+			name:    "largest_valid_id",
+			uid:     "4294967294",
+			gid:     "4294967294",
+			wantUID: 4294967294,
+			wantGID: 4294967294,
+		},
+		{name: "negative_uid", uid: "-1", wantErr: strconv.ErrRange},
+		{name: "negative_gid", gid: "-1", wantErr: strconv.ErrRange},
+		{name: "oversized_uid", uid: "4294967296", wantErr: strconv.ErrRange},
+		{name: "oversized_gid", gid: "4294967296", wantErr: strconv.ErrRange},
+		{name: "reserved_uid", uid: "4294967295", wantErr: strconv.ErrRange},
+		{name: "reserved_gid", gid: "4294967295", wantErr: strconv.ErrRange},
+		{name: "malformed_uid", uid: "not-an-id", wantErr: strconv.ErrSyntax},
+		{name: "malformed_gid", gid: "not-an-id", wantErr: strconv.ErrSyntax},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for key, value := range map[string]string{"SUDO_UID": tc.uid, "SUDO_GID": tc.gid} {
+				t.Setenv(key, value)
+				if tc.unset {
+					if err := os.Unsetenv(key); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			cfg := bwrapConfig{UnshareUser: true, runscConfig: &config.Config{}}
+			opts, err := cfg.sandboxOptions()
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("sandboxOptions() error = %v, want %v", err, tc.wantErr)
+			}
+			if tc.wantErr != nil {
+				return
+			}
+			spec, err := sandbox.DebugSpec(opts...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := spec.Linux.UIDMappings, wantIDMappings(0, tc.wantUID); !cmp.Equal(got, want) {
+				t.Errorf("UID mappings = %v, want %v", got, want)
+			}
+			if got, want := spec.Linux.GIDMappings, wantIDMappings(0, tc.wantGID); !cmp.Equal(got, want) {
+				t.Errorf("GID mappings = %v, want %v", got, want)
 			}
 		})
 	}
