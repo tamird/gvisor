@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/usermem"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -175,6 +176,11 @@ type VFSPipeFD struct {
 
 	pipe *Pipe
 
+	// Fork-only read diagnostics are not part of checkpoint state. Callers hold
+	// a syscall reference while installing or ending an observation.
+	readObserverMu sync.Mutex    `state:"nosave"`
+	readObserver   *readObserver `state:"nosave"`
+
 	// lastAddr is the last hostarch.Addr at which a call to a
 	// VFSPipeFD.(usermem.IO) method ended. lastAddr is protected by pipe.mu.
 	lastAddr hostarch.Addr
@@ -187,6 +193,9 @@ func (fd *VFSPipeFD) Pipe() *Pipe {
 
 // Release implements vfs.FileDescriptionImpl.Release.
 func (fd *VFSPipeFD) Release(context.Context) {
+	if fd.readObserver != nil {
+		fd.readObserver.close()
+	}
 	var event waiter.EventMask
 	if fd.vfsfd.IsReadable() {
 		fd.pipe.rClose()

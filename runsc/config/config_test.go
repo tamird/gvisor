@@ -48,6 +48,34 @@ func TestDefault(t *testing.T) {
 	}
 }
 
+func TestPipeReadDiagnosticFlags(t *testing.T) {
+	for _, tc := range []struct {
+		name, delay, prefix string
+		wantError           bool
+	}{
+		{name: "disabled", delay: "0"},
+		{name: "enabled", delay: "480s", prefix: "StreamCopier"},
+		{name: "missing prefix", delay: "480s", wantError: true},
+		{name: "missing delay", delay: "0", prefix: "StreamCopier", wantError: true},
+		{name: "negative delay", delay: "-1s", prefix: "StreamCopier", wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			flags := flag.NewFlagSet("test", flag.ContinueOnError)
+			RegisterFlags(flags)
+			if err := flags.Set("debug-pipe-read-after", tc.delay); err != nil {
+				t.Fatal(err)
+			}
+			if err := flags.Set("debug-pipe-read-task", tc.prefix); err != nil {
+				t.Fatal(err)
+			}
+			_, err := NewFromFlags(flags)
+			if (err != nil) != tc.wantError {
+				t.Fatalf("NewFromFlags error=%v, want error=%t", err, tc.wantError)
+			}
+		})
+	}
+}
+
 func TestFromFlags(t *testing.T) {
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	RegisterFlags(testFlags)

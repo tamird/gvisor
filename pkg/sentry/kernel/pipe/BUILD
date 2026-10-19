@@ -36,6 +36,7 @@ go_library(
         "pipe_mutex.go",
         "pipe_unsafe.go",
         "pipe_util.go",
+        "read_diagnostics.go",
         "save_restore.go",
         "vfs.go",
     ],

@@ -16,7 +16,9 @@ package pipe
 
 import (
 	"bytes"
+	"io"
 	"testing"
+	"time"
 
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
@@ -44,6 +46,207 @@ func runTest(t *testing.T, sizeBytes int64, tester func(ctx context.Context, r, 
 	defer w.DecRef(ctx)
 
 	tester(ctx, r, w)
+}
+
+func TestReadDiagnosticDoesNotConsumePipeOrNotification(t *testing.T) {
+	runTest(t, 65536, func(ctx context.Context, r, w *vfs.FileDescription) {
+		e, ch := waiter.NewChannelEntry(waiter.ReadableEvents | waiter.EventHUp)
+		r.EventRegister(&e)
+		defer r.EventUnregister(&e)
+		p := r.Impl().(*VFSPipeFD)
+		d := NewReadDiagnostics(time.Hour, "copier")
+		id := ReadIdentity{TID: 11, TGID: 10, FD: 26, Name: "copier_1"}
+		buf := make([]byte, 1)
+		if _, err := r.Read(ctx, usermem.BytesIOSequence(buf), vfs.ReadOptions{}); err != linuxerr.ErrWouldBlock {
+			t.Fatalf("empty pipe with writer: %v", err)
+		}
+		observation := p.ObserveRead(d, id, ch)
+		defer observation.End()
+		if _, err := w.Write(ctx, usermem.BytesIOSequence([]byte("x")), vfs.WriteOptions{}); err != nil {
+			t.Fatal(err)
+		}
+		report, ok := observation.observer.sample(observation.due)
+		if !ok || !report.Unchanged || report.Identity != id || !report.State.LockAcquired || report.State.Size != 1 || report.PendingBefore != 1 || report.PendingAfter != 1 {
+			t.Fatalf("unexpected sample: %+v, emitted=%t", report, ok)
+		}
+		select {
+		case <-ch:
+		default:
+			t.Fatal("sample consumed the real waiter notification")
+		}
+		if n, err := r.Read(ctx, usermem.BytesIOSequence(buf), vfs.ReadOptions{}); n != 1 || err != nil || buf[0] != 'x' {
+			t.Fatalf("sample changed pipe data: n=%d err=%v buf=%q", n, err, buf)
+		}
+	})
+}
+
+func TestReadDiagnosticWaitIdentityAndReuse(t *testing.T) {
+	runTest(t, 65536, func(ctx context.Context, r, _ *vfs.FileDescription) {
+		p := r.Impl().(*VFSPipeFD)
+		d := NewReadDiagnostics(time.Hour, "copier")
+		id := ReadIdentity{TID: 11, FD: 26, Name: "copier"}
+		_, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
+		if got := p.ObserveRead(nil, id, ch); got != nil {
+			t.Fatal("disabled observer created a wait")
+		}
+		if got := p.ObserveRead(d, ReadIdentity{Name: "other"}, ch); got != nil || p.readObserver != nil {
+			t.Fatal("unselected task allocated an observer")
+		}
+		first := p.ObserveRead(d, id, ch)
+		timer := first.observer.timer
+		if got := p.ObserveRead(d, ReadIdentity{TID: 12, Name: "copier"}, ch); got != nil || d.skipped.Load() != 1 {
+			t.Fatal("concurrent reader overwrote the selected wait")
+		}
+		first.End()
+		if _, ok := first.observer.sample(first.due); ok {
+			t.Fatal("completed wait was reported as active")
+		}
+		second := p.ObserveRead(d, id, ch)
+		defer second.End()
+		if second.observer.timer != timer || second.generation <= first.generation || d.created.Load() != 1 {
+			t.Fatal("new wait did not reuse timer with a new identity")
+		}
+		if _, ok := second.observer.sample(second.due.Add(-time.Nanosecond)); ok {
+			t.Fatal("old callback sampled a new wait before its due time")
+		}
+		if report, ok := second.observer.sample(second.due); !ok || report.Generation != second.generation {
+			t.Fatalf("new generation was not observed: %+v %t", report, ok)
+		}
+		if _, ok := second.observer.sample(second.due); ok {
+			t.Fatal("generation was reported twice")
+		}
+	})
+}
+
+func TestReadDiagnosticBusyPipe(t *testing.T) {
+	runTest(t, 65536, func(ctx context.Context, r, _ *vfs.FileDescription) {
+		p := r.Impl().(*VFSPipeFD)
+		locked, release, done := make(chan struct{}), make(chan struct{}), make(chan struct{})
+		go func() {
+			p.pipe.mu.Lock()
+			close(locked)
+			<-release
+			p.pipe.mu.Unlock()
+			close(done)
+		}()
+		defer func() { close(release); <-done }()
+		<-locked
+		if got := p.pipe.sampleRead(); got.LockAcquired {
+			t.Fatalf("busy pipe falsely reported a buffer snapshot: %+v", got)
+		}
+	})
+}
+
+func TestReadDiagnosticWriterLifetime(t *testing.T) {
+	ctx := contexttest.Context(t)
+	var vfsObj vfs.VirtualFilesystem
+	if err := vfsObj.Init(ctx); err != nil {
+		t.Fatal(err)
+	}
+	vd := vfsObj.NewAnonVirtualDentry("pipe")
+	defer vd.DecRef(ctx)
+	vp := NewVFSPipe(false, DefaultPipeSize)
+	r, w, err := vp.ReaderWriterPair(ctx, vd.Mount(), vd.Dentry(), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.DecRef(ctx)
+	// Retain a real extra reference, like a reference outside an FD table.
+	w.IncRef()
+	w.DecRef(ctx)
+	defer func() {
+		if w != nil {
+			w.DecRef(ctx)
+		}
+	}()
+	e, ch := waiter.NewChannelEntry(waiter.ReadableEvents | waiter.EventHUp)
+	r.EventRegister(&e)
+	defer r.EventUnregister(&e)
+	if got := vp.Pipe().sampleRead(); got.WritersBefore != 1 || got.WritersAfter != 1 {
+		t.Fatalf("extra writer reference not retained: %+v", got)
+	}
+	buf := usermem.BytesIOSequence(make([]byte, 1))
+	if _, err := r.Read(ctx, buf, vfs.ReadOptions{}); err != linuxerr.ErrWouldBlock {
+		t.Fatalf("live extra writer should prevent EOF: %v", err)
+	}
+	w.DecRef(ctx)
+	w = nil
+	if got := vp.Pipe().sampleRead(); !got.LockAcquired || got.WritersBefore != 0 || got.WritersAfter != 0 || got.Size != 0 {
+		t.Fatalf("final writer release not observed: %+v", got)
+	}
+	select {
+	case <-ch:
+	default:
+		t.Fatal("final writer release did not notify registered reader")
+	}
+	if n, err := r.Read(ctx, buf, vfs.ReadOptions{}); n != 0 || err != io.EOF {
+		t.Fatalf("final writer release should yield EOF: %d %v", n, err)
+	}
+	// A reader registering after close also observes HUP synchronously.
+	e2, ch2 := waiter.NewChannelEntry(waiter.EventHUp)
+	r.EventRegister(&e2)
+	defer r.EventUnregister(&e2)
+	select {
+	case <-ch2:
+	default:
+		t.Fatal("registration after close lost HUP")
+	}
+}
+
+func TestReadDiagnosticTimerBudgetReleasedWithFile(t *testing.T) {
+	runTest(t, 65536, func(ctx context.Context, r, _ *vfs.FileDescription) {
+		d := NewReadDiagnostics(time.Hour, "copier")
+		id := ReadIdentity{Name: "copier"}
+		_, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
+		var files []*vfs.FileDescription
+		defer func() {
+			for _, f := range files {
+				if f != nil {
+					f.DecRef(ctx)
+				}
+			}
+		}()
+		var last *VFSPipeFD
+		var first *ReadObservation
+		for i := 0; i <= maxReadObservers; i++ {
+			vp := NewVFSPipe(false, DefaultPipeSize)
+			reader, writer, err := vp.ReaderWriterPair(ctx, r.Mount(), r.Dentry(), 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			files = append(files, reader, writer)
+			last = reader.Impl().(*VFSPipeFD)
+			observation := last.ObserveRead(d, id, ch)
+			if i == 0 {
+				first = observation
+			}
+			if i < maxReadObservers && observation == nil {
+				t.Fatalf("observer %d rejected within budget", i)
+			}
+			if i == maxReadObservers && observation != nil {
+				t.Fatal("live timer budget exceeded")
+			}
+			if i != 0 {
+				observation.End()
+			}
+		}
+		if d.live.Load() != maxReadObservers || d.skipped.Load() != 1 {
+			t.Fatalf("unexpected budget state: live=%d skipped=%d", d.live.Load(), d.skipped.Load())
+		}
+		// Idle cached timers also consume the budget; releasing their real file
+		// descriptions cancels the timer and makes that capacity available.
+		files[0].DecRef(ctx)
+		files[0] = nil
+		if _, ok := first.observer.sample(first.due); ok {
+			t.Fatal("released file retained an active observation")
+		}
+		first.End() // Closing the file also invalidates a later End.
+		observation := last.ObserveRead(d, id, ch)
+		if observation == nil {
+			t.Fatal("file release did not return timer capacity")
+		}
+		observation.End()
+	})
 }
 
 func TestPipeRW(t *testing.T) {

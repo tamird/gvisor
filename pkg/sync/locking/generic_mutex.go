@@ -48,6 +48,17 @@ func (m *Mutex) Lock() {
 	m.mu.Lock()
 }
 
+// TryLock attempts to lock m without waiting.
+// +checklocksignore
+func (m *Mutex) TryLock() bool {
+	locking.AddGLock(genericMarkIndex, -1)
+	if m.mu.TryLock() {
+		return true
+	}
+	locking.DelGLock(genericMarkIndex, -1)
+	return false
+}
+
 // NestedLock locks m knowing that another lock of the same type is held.
 // +checklocksignore
 func (m *Mutex) NestedLock(i lockNameIndex) {
