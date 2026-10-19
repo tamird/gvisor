@@ -191,19 +191,19 @@ func TestControlSuccess(t *testing.T) {
 		{"restore", tpucontrol.Restore, tpupb.ControlAction_ACTION_RESTORE, tpupb.RuntimeState_STATE_UNSPECIFIED},
 		{"get_state", tpucontrol.GetState, tpupb.ControlAction_ACTION_GETSTATE, tpupb.RuntimeState_STATE_DETACHED},
 	}
-	for i, op := range operations {
+	for _, op := range operations {
 		t.Run(op.name, func(t *testing.T) {
 			for _, tc := range []struct {
-				name    string
-				timeout int32
-				// Expected wire values for checkpoint, restore, and get-state.
-				want [3]int32
+				name           string
+				timeout        int32
+				controlTimeout int32
+				stateTimeout   int32
 			}{
-				{"positive", 10, [3]int32{10, 10, 10}},
-				{"maximum", math.MaxInt32, [3]int32{math.MaxInt32, math.MaxInt32, math.MaxInt32}},
-				{"zero", 0, [3]int32{180, 180, 0}},
-				{"negative", -1, [3]int32{180, 180, -1}},
-				{"minimum", math.MinInt32, [3]int32{180, 180, math.MinInt32}},
+				{"positive", 10, 10, 10},
+				{"maximum", math.MaxInt32, math.MaxInt32, math.MaxInt32},
+				{"zero", 0, 180, 0},
+				{"negative", -1, 180, -1},
+				{"minimum", math.MinInt32, 180, math.MinInt32},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					reqRead, reqWrite, err := os.Pipe()
@@ -240,8 +240,12 @@ func TestControlSuccess(t *testing.T) {
 					if req == nil {
 						t.Fatal("no request received")
 					}
-					if req.GetAction() != op.action || req.GetTimeoutSecs() != tc.want[i] {
-						t.Errorf("request = %v, want action %v and timeout %d", req, op.action, tc.want[i])
+					wantTimeout := tc.controlTimeout
+					if op.action == tpupb.ControlAction_ACTION_GETSTATE {
+						wantTimeout = tc.stateTimeout
+					}
+					if req.GetAction() != op.action || req.GetTimeoutSecs() != wantTimeout {
+						t.Errorf("request = %v, want action %v and timeout %d", req, op.action, wantTimeout)
 					}
 				})
 			}
