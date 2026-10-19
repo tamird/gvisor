@@ -364,9 +364,9 @@ func (ex *Exec) argsFromCLI(p *specs.Process, argv []string, enableRaw bool) (*c
 		extraKGIDs = append(extraKGIDs, auth.KGID(kgid))
 	}
 	for _, s := range ex.extraKGIDs {
-		kgid, err := strconv.ParseUint(s, 10, 32)
+		kgid, err := strconv.Atoi(s)
 		if err != nil {
-			return nil, fmt.Errorf("parsing GID %q: %w", s, err)
+			util.Fatalf("parsing GID: %s, %v", s, err)
 		}
 		extraKGIDs = append(extraKGIDs, auth.KGID(kgid))
 	}
@@ -545,14 +545,14 @@ func (u *user) Get() any {
 // Set implements flag.Value.Set. Set(String()) should be idempotent.
 func (u *user) Set(s string) error {
 	parts := strings.SplitN(s, ":", 2)
-	kuid, err := strconv.ParseUint(parts[0], 10, 32)
+	kuid, err := strconv.Atoi(parts[0])
 	if err != nil {
 		return fmt.Errorf("couldn't parse UID: %s", parts[0])
 	}
 	u.kuid = auth.KUID(kuid)
 	u.kuidSet = true
 	if len(parts) > 1 {
-		kgid, err := strconv.ParseUint(parts[1], 10, 32)
+		kgid, err := strconv.Atoi(parts[1])
 		if err != nil {
 			return fmt.Errorf("couldn't parse GID: %s", parts[1])
 		}
