@@ -55,7 +55,7 @@ go_test(
         "ipversion_test.go",
         "tcp_test.go",
     ],
-    compile_companion = True,
+    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
     deps = [
         ":header",
@@ -78,8 +78,8 @@ go_test(
         "mld_test.go",
         "ndp_test.go",
     ],
-    compile_companion = True,
     embed = [":header"],
+    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/buffer",

@@ -7,7 +7,8 @@ load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "g
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "cgroup_v2_variant")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
-load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "go_cgroup_v1_test", "static_go_amd64_test", "static_go_arm64_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
+load("//tools/bazeldefs:go_runtime.bzl", "go_runtime_test")
+load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "go_cgroup_v1_test", "static_go_amd64_test", "static_go_arm64_test", "static_go_runtime_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants")
 
 gazelle = _gazelle
@@ -164,7 +165,34 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, compile_companion = False, **kwargs):
+# Standard runtime/common test attributes stay on every public frontend. Go
+# source, compiler and linker attributes belong only to its raw compilation.
+_GO_RUNTIME_ATTRIBUTES = [
+    "args",
+    "aspect_hints",
+    "compatible_with",
+    "data",
+    "deprecation",
+    "env",
+    "env_inherit",
+    "exec_compatible_with",
+    "exec_group_compatible_with",
+    "exec_properties",
+    "features",
+    "flaky",
+    "local",
+    "restricted_to",
+    "shard_count",
+    "size",
+    "tags",
+    "target_compatible_with",
+    "testonly",
+    "timeout",
+    "toolchains",
+    "visibility",
+]
+
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, shared_compilation = False, **kwargs):
     """Build a go test.
 
     Args:
@@ -177,9 +205,12 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
             static platform transition. Used by the base and architecture variants.
         cgroup_v2: Declare an explicit cgroup-v2 environment variant for combined
             container qualification, preserving the ordinary target's environment.
-        compile_companion: Experimental manual compilation target with the same
-            Go inputs, without runtime data, arguments or environment.
+        shared_compilation: Share one raw compilation between analysis and the
+            public runtime frontends. Limited to the reviewed initial owners.
         **kwargs: rest of the arguments to pass to _go_test.
+
+    Returns:
+        The label of the raw Go test compilation for analyzers such as Nogo.
     """
     if pure:
         kwargs["pure"] = "on"
@@ -199,13 +230,12 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     if cgroup_v2:
         kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
-    base_rule(
-        name = name,
-        **kwargs
-    )
-    if compile_companion:
-        # This opt-in experiment keeps the original runtime declaration intact.
-        # A final split must make its runtime frontend reuse this compilation.
+    compilation_label = ":" + name
+    if shared_compilation:
+        # Explicit Go OS/architecture attributes also change the runtime data's
+        # platform. Preserve that boundary until the wider migration supports it.
+        if "goos" in kwargs or "goarch" in kwargs or test_rule != None:
+            fail("shared compilation does not yet support explicit Go platforms or test_rule")
         compilation = dict(kwargs)
         for attribute in ["data", "args", "env", "env_inherit"]:
             compilation.pop(attribute, None)
@@ -213,6 +243,15 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         compilation["importpath_owner"] = owner
         compilation["tags"] = kwargs.get("tags", []) + ["manual", "go-compilation-owner:" + owner]
         base_rule(name = name + "_compile", **compilation)
+        compilation_label = ":" + name + "_compile"
+
+        # Keep runtime dependencies inside the configured frontend. Moving them
+        # outside with_cfg would build ARM/static data in the caller's platform.
+        kwargs = {key: value for key, value in kwargs.items() if key in _GO_RUNTIME_ATTRIBUTES}
+        kwargs["src"] = compilation_label
+        base_rule = static_go_runtime_test if static else go_runtime_test
+        test_rule = base_rule
+    base_rule(name = name, **kwargs)
     if cgroup_v2:
         cgroup_attributes = cgroup_v2_variant(name, base_rule, kwargs)
         if test_rule != None:
@@ -234,6 +273,7 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
         dict(kwargs, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
     )
+    return compilation_label
 
 def go_rule(rule, implementation, **kwargs):
     """Wraps a rule definition with Go attributes.

@@ -4,6 +4,7 @@ load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "g
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:cgroup_test.bzl", "with_cgroup_v1")
 load("//tools/bazeldefs:defs.bzl", "select_arch")
+load("//tools/bazeldefs:go_runtime.bzl", "go_runtime_test")
 load("//tools/bazeldefs:test_architectures.bzl", "with_test_architecture")
 
 # LLVM's GNU sysroot contains dynamic linking stubs, not static libc archives.
@@ -49,6 +50,10 @@ static_go_cov, _static_go_cov_transition = _go_binary_variant(static = True, cov
 # it as go_test preserves the rule kind used by the Nogo aspect, together with
 # the original test attributes, providers, and Go configuration transition.
 go_test, _go_test_transition = with_cfg(_go_test).set("platforms", _MUSL_PLATFORMS).build()
+static_go_runtime_test, _static_go_runtime_transition = with_cfg(
+    go_runtime_test,
+    extra_providers = [GoArchive],
+).set("platforms", _MUSL_PLATFORMS).build()
 
 # with_cfg gives native execution constraints to its test frontend. Restore
 # the caller's constraints on the original test so its default and named link

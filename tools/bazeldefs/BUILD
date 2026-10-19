@@ -136,6 +136,7 @@ bzl_library(
     deps = [
         ":cgroup_test_bzl",
         ":defs_bzl",
+        ":go_runtime_bzl",
         ":go_variants_bzl",
         ":test_architectures_bzl",
     ],
@@ -148,8 +149,15 @@ bzl_library(
     deps = [
         ":cgroup_test_bzl",
         ":defs_bzl",
+        ":go_runtime_bzl",
         ":test_architectures_bzl",
     ],
+)
+
+bzl_library(
+    name = "go_runtime_bzl",
+    srcs = ["go_runtime.bzl"],
+    visibility = ["//visibility:private"],
 )
 
 bzl_library(

@@ -51,7 +51,6 @@ class Manifest(TypedDict):
     goos: str
     bazel_version_file: str
     owner_map: dict[str, str]
-    comparison_package_json: list[str]
     compilation_metadata: dict
 
 
@@ -117,93 +116,38 @@ def selected_packages(paths: list[str]) -> tuple[dict[str, Package], list[Packag
     return selected, testmains
 
 
-def compare_compilations(manifest: Manifest, selected: dict[str, Package], resolve: Callable[[str], Path]) -> list[dict]:
-    """Compare logical owners without equating their distinct output labels."""
-    owners = manifest.get("owner_map", {})
-    if not owners:
-        return []
-    originals, _ = selected_packages(manifest["comparison_package_json"])
-    metadata = manifest["compilation_metadata"]
-    comparisons = []
-
-    def logical_label(label: str) -> str:
-        return owners.get(label, label)
-
-    def logical_file(name: str) -> str:
-        path = str(resolve(name).resolve())
-        # Only outputs owned by a declared companion have different names.
-        # Source paths, import paths and arbitrary substrings are never mapped.
-        for companion, owner in owners.items():
-            package, companion_name = companion.removeprefix("@@//").split(":")
-            owner_name = owner.rsplit(":", 1)[1]
-            marker = "/bin/" + package + "/" + companion_name
-            if marker + "_/" in path:
-                prefix, child = path.split(marker + "_/", 1)
-                if child.startswith(companion_name + "."):
-                    child = owner_name + child[len(companion_name):]
-                return prefix + "/bin/" + package + "/" + owner_name + "_/" + child
-            for suffix in (".", "/"):
-                if marker + suffix in path:
-                    return path.replace(marker + suffix, "/bin/" + package + "/" + owner_name + suffix, 1)
-        return path
+def compilation_records(manifest: Manifest, selected: dict[str, Package], resolve: Callable[[str], Path]) -> list[dict]:
+    """Retain source/configuration facts for comparison with qualified evidence."""
+    records = []
 
     def source_hashes(names: list[str]) -> dict[str, str]:
         hashes = {}
         for name in names:
-            path = logical_file(name)
+            path = str(resolve(name).resolve())
             digest = hashlib.sha256(resolve(name).read_bytes()).hexdigest()
             if path in hashes and hashes[path] != digest:
                 raise ValueError(f"Conflicting declared source contents: {path}")
             hashes[path] = digest
         return hashes
 
-    for companion, owner in owners.items():
-        current = metadata[companion]
+    for compilation, owner in manifest["owner_map"].items():
+        current = manifest["compilation_metadata"][compilation]
         if current["owner"] != owner or any(current["runtime_attributes"].values()):
-            raise ValueError(f"Companion retains runtime attributes or loses its owner: {companion}")
-        if owner not in metadata:
-            if owner != "@@//test/rbe:triton_archive_integrity_test":
-                raise ValueError(f"Unexpected unpaired compilation owner: {owner}")
-            comparisons.append({"owner": owner, "companion": companion, "original_runtime_graph_analyzed": False})
-            continue
-        original = metadata[owner]
-        by_role = lambda records: {(record["is_main"], record["testfilter"]): record for record in records}
-        left, right = by_role(original["archives"]), by_role(current["archives"])
-        if len(left) != len(original["archives"]) or len(right) != len(current["archives"]) or left.keys() != right.keys():
-            raise ValueError(f"Different or duplicate compiled archive roles: {owner}")
-        archive_evidence = []
-        for role in left:
-            before, after = dict(left[role]), dict(right[role])
-            identity = {"original_label": before.pop("label"), "companion_label": after.pop("label"), "original_name": before.pop("name"), "companion_name": after.pop("name")}
-            if logical_label(identity["companion_label"]) != identity["original_label"]:
-                raise ValueError(f"Archive owner differs from declared relationship: {owner}")
-            for record in (before, after):
-                record["deps"] = [{"label": logical_label(dep["label"]), "importpath": dep["importpath"]} for dep in record["deps"]]
-            source_evidence = {}
-            for field in ("srcs", "embedsrcs"):
-                a, b = source_hashes(before.pop(field)), source_hashes(after.pop(field))
-                source_evidence[field] = {"original": a, "companion": b, "equal": a == b}
-                if not role[0] and a != b:
-                    raise ValueError(f"Real test archive source contents differ: {owner} {field}")
-            if before != after:
-                raise ValueError(f"Compilation configuration/import metadata differs: {owner} {role}")
-            archive_evidence.append({"identity": identity, "metadata": before, "sources": source_evidence})
-        before, after = dict(originals[owner]), dict(selected[companion])
-        before.pop("ID")
-        after.pop("ID")
-        package_sources = {}
-        for field in ("GoFiles", "CompiledGoFiles", "OtherFiles"):
-            a, b = source_hashes(before.pop(field)), source_hashes(after.pop(field))
-            if a != b:
-                raise ValueError(f"Package source content differs: {owner} {field}")
-            package_sources[field] = a
-        for record in (before, after):
-            record["ExportFile"] = logical_file(record["ExportFile"])
-            record["Imports"] = {path: logical_label(label) for path, label in record["Imports"].items()}
-        if before != after:
-            raise ValueError(f"Package metadata differs: {owner}")
-        comparisons.append({"owner": owner, "companion": companion, "original_runtime_graph_analyzed": True, "archives": archive_evidence, "package_metadata": before, "package_sources": package_sources})
-    return comparisons
+            raise ValueError(f"Compilation retains runtime attributes or loses its owner: {compilation}")
+        roles = set()
+        archives = []
+        for raw in current["archives"]:
+            archive = dict(raw)
+            role = (archive["is_main"], archive["testfilter"])
+            if role in roles:
+                raise ValueError(f"Duplicate compiled archive role: {compilation} {role}")
+            roles.add(role)
+            sources = {field: source_hashes(archive.pop(field)) for field in ("srcs", "embedsrcs")}
+            archives.append({"metadata": archive, "sources": sources})
+        package = dict(selected[compilation])
+        sources = {field: source_hashes(package.pop(field)) for field in ("GoFiles", "CompiledGoFiles", "OtherFiles")}
+        records.append({"owner": owner, "compilation": compilation, "archives": archives, "package_metadata": package, "package_sources": sources})
+    return records
 
 
 def main() -> None:
@@ -238,7 +182,7 @@ def main() -> None:
     selected, testmains = selected_packages(manifest["package_json"])
     if missing := set(manifest["labels"]) - selected.keys():
         raise ValueError(f"Missing requested package records: {sorted(missing)}")
-    compilation_comparisons = compare_compilations(manifest, selected, resolve)
+    compilations = compilation_records(manifest, selected, resolve)
 
     raw_sources = set()
     for record in selected.values():
@@ -404,7 +348,7 @@ def main() -> None:
     outcome = {
         "requested_roots": manifest["labels"],
         "owner_map": owner_map,
-        "compilation_comparisons": compilation_comparisons,
+        "compilations": compilations,
         "package_records": len(selected),
         "driver_roots": roots,
         "driver_package_records": len(packages),

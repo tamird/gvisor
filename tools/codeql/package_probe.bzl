@@ -71,7 +71,6 @@ def _package_probe_impl(ctx):
     outcome = ctx.actions.declare_file(ctx.label.name + "-outcome.json")
     manifest = ctx.actions.declare_file(ctx.label.name + ".json")
     packages = [dep[GoPkgInfo] for dep in ctx.attr.roots]
-    comparisons = [dep[GoPkgInfo] for dep in ctx.attr.comparison_roots]
     json_files = depset(transitive = [pkg.pkg_json_files for pkg in packages])
     stdlib_json = depset([pkg.stdlib_json_file for pkg in packages])
     ctx.actions.write(manifest, json.encode({
@@ -82,16 +81,15 @@ def _package_probe_impl(ctx):
         "goarch": go.mode.goarch,
         "goos": go.mode.goos,
         "bazel_version_file": ctx.file._bazel_version.path,
-        "owner_map": {str(dep.label): dep[_CompilationInfo].owner for dep in ctx.attr.roots} if comparisons else {},
-        "comparison_package_json": [file.path for file in depset(transitive = [pkg.pkg_json_files for pkg in comparisons]).to_list()],
+        "owner_map": {str(dep.label): dep[_CompilationInfo].owner for dep in ctx.attr.roots},
         "compilation_metadata": {
             str(dep.label): {
                 "owner": dep[_CompilationInfo].owner,
                 "archives": dep[_CompilationInfo].archives,
                 "runtime_attributes": dep[_CompilationInfo].runtime_attributes,
             }
-            for dep in ctx.attr.roots + ctx.attr.comparison_roots
-        } if comparisons else {},
+            for dep in ctx.attr.roots
+        },
     }))
     args = ctx.actions.args()
     args.add("--manifest", manifest)
@@ -103,9 +101,8 @@ def _package_probe_impl(ctx):
     args.add("--go", go.sdk.go)
     args.add("--goroot", go.sdk.root_file.dirname)
     inputs = [ctx.attr._bundle[DefaultInfo].files, json_files, stdlib_json]
-    inputs.extend([pkg.pkg_json_files for pkg in comparisons])
     inputs.extend([go.sdk.srcs, go.sdk.headers, go.sdk.tools])
-    for pkg in packages + comparisons:
+    for pkg in packages:
         inputs.extend([pkg.compiled_go_files, pkg.export_files, pkg.stdlib_cache_dir])
     ctx.actions.run(
         executable = ctx.executable._runner,
@@ -127,7 +124,6 @@ package_probe = go_rule(
     implementation = _package_probe_impl,
     attrs = {
         "roots": attr.label_list(aspects = [go_pkg_info_aspect, _compilation_info], mandatory = True),
-        "comparison_roots": attr.label_list(aspects = [go_pkg_info_aspect, _compilation_info]),
         "_bazel_version": attr.label(default = "//:.bazelversion", allow_single_file = True),
         "_bundle": attr.label(default = "@codeql_bundle//:files"),
         "_codeql": attr.label(default = "@codeql_bundle//:codeql", allow_single_file = True),

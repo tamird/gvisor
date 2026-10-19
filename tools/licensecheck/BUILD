@@ -36,12 +36,12 @@ go_test(
         "modules_test.go",
         "wheels_test.go",
     ],
-    compile_companion = True,
     data = [
         "dependencies.yaml",
         "//governance:licensing.yaml",
     ],
     embed = [":licensecheck"],
     embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),  # keep
+    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
 )

@@ -335,7 +335,7 @@ def go_test(name, nogo = True, **kwargs):
       nogo: enable nogo analysis.
       **kwargs: standard go_test arguments.
     """
-    _go_test(
+    compilation = _go_test(
         name = name,
         **kwargs
     )
@@ -344,7 +344,7 @@ def go_test(name, nogo = True, **kwargs):
             name = name + "_nogo",
             config = "//:nogo_config",
             srcs = kwargs.get("srcs", []),
-            deps = [":" + name],
+            deps = [compilation],
             tags = ["nogo"],
         )
 

@@ -34,7 +34,7 @@ _PACKAGE_PROBE_ROOTS = [
     "//external/tools/plugin-stack:backtrace_test",
 ]
 
-# Investigate the existing package-loader contract before replacing full analysis.
+# Analyze the shared compilation without traversing runtime data dependencies.
 package_probe(
     name = "package_probe",
     testonly = True,
@@ -46,23 +46,6 @@ package_probe(
         "EstimatedCPU": "4",
         "EstimatedMemory": "16GB",
     },
-    roots = _PACKAGE_PROBE_ROOTS,
-    tags = ["manual"],
-)
-
-# Compare nine qualified owners and analyze Triton without its runtime archive.
-package_probe(
-    name = "compile_companion_probe",
-    testonly = True,
-    exec_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-    exec_properties = {
-        "EstimatedCPU": "4",
-        "EstimatedMemory": "16GB",
-    },
-    comparison_roots = _PACKAGE_PROBE_ROOTS,
     roots = [label + "_compile" for label in _PACKAGE_PROBE_ROOTS] + [
         "//test/rbe:triton_archive_integrity_test_compile",
     ],

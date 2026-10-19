@@ -303,7 +303,6 @@ go_test(
             "--archive=$(rootpath //test/docker:" + archive + ")",
             "--image=" + image,
         ],
-        compile_companion = name == "triton",
         data = ["//test/docker:" + archive],
         exec_properties = select({
             "//tools/bazeldefs:rbe": {
@@ -314,6 +313,7 @@ go_test(
             "//conditions:default": {},
         }),
         rundir = ".",
+        shared_compilation = name == "triton",
         tags = [
             "manual",
             "no-local",
