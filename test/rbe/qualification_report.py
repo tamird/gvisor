@@ -54,6 +54,7 @@ import unit_matrix
 
 MAX_REPORT_BYTES = 512 * 1024 * 1024
 MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
+JTREG_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 EVENT_KEYS = {
     "id", "children", "started", "finished", "configured", "completed",
     "testResult", "testSummary", "aborted", "namedSetOfFiles",
@@ -233,9 +234,12 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
                         # Guest logs can survive only in undeclared outputs when
                         # the wrapper times out before printing them to test.log.
                         # Bazel may publish a ZIP or the individual files.
-                        if retain_outputs or result.get("status") != "PASSED" or attempt.owner.label in jtreg_labels:
+                        if retain_outputs or result.get("status") != "PASSED":
                             names.extend(name for name in advertised
                                          if name == "test.outputs__outputs.zip" or name.startswith("test.outputs/"))
+                        elif attempt.owner.label in jtreg_labels:
+                            names.extend(name for name in advertised
+                                         if name == "test.outputs__outputs.zip" or re.fullmatch("test.outputs/" + JTREG_OUTPUT_NAME, name))
                         for name in names:
                             try:
                                 matches = advertised.get(name, [])
@@ -606,6 +610,7 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
     """Validate analysis before allowing the caller to start expensive actions."""
     errors: list[str] = []
     targets: dict[str, unit_matrix.ConfiguredTarget] = {}
+    output_options: list[str] = []
     try:
         if kind not in ("test", "build") or native_exit not in ((0, 1) if kind == "test" else (0,)):
             raise ValueError(f"Unexpected {kind} preflight exit: {native_exit}")
@@ -613,10 +618,29 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
             str(events), tests=True if kind == "test" else None,
             allow_test_no_build=kind == "test", expected_exit=native_exit,
         )
+        if kind == "test":
+            paths = []
+            for label, target in sorted(targets.items()):
+                if "jtreg-results" not in target.tags:
+                    continue
+                repository, separator, local = label.partition("//")
+                if not separator or ":" not in local:
+                    raise ValueError(f"Invalid jtreg owner label: {label}")
+                path = local.replace(":", "/", 1).lstrip("/")
+                if repository:
+                    path = "external/" + repository.lstrip("@") + "/" + path
+                paths.append(re.escape(path))
+            if paths:
+                # Minimal remote downloads omit passing undeclared outputs.
+                # Materialize only these owners' batch logs, not runtime images
+                # or successful debug logs. Repeated regex options are additive.
+                pattern = r".*/testlogs/(?:" + "|".join(paths) + r")/(?:[^/]+/)*test\.outputs/" + JTREG_OUTPUT_NAME + "$"
+                output_options = ["--nozip_undeclared_test_outputs", "--remote_download_regex=" + pattern]
     except (OSError, ValueError) as error:
         errors.append(str(error))
     return {"schema_version": 1, "status": "INCOMPLETE" if errors else "PASS",
             "kind": kind, "native_exit": native_exit, "errors": errors,
+            "test_output_options": output_options,
             "expected": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())]}
 
 
@@ -1274,6 +1298,7 @@ def main() -> int:
         analyze.add_argument("--" + name, type=Path, required=True)
     analyze.add_argument("--native-exit", type=int, required=True)
     analyze.add_argument("--kind", choices=("test", "build"), required=True)
+    analyze.add_argument("--test-output-options", type=Path)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
         check.add_argument("--" + name, type=Path, required=True)
@@ -1341,6 +1366,8 @@ def main() -> int:
     if args.command == "preflight":
         result = preflight(args.events, args.native_exit, args.kind)
         write_json(args.output, result)
+        if args.test_output_options is not None and result["status"] == "PASS":
+            args.test_output_options.write_text("".join(option + "\n" for option in result["test_output_options"]))
         return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
