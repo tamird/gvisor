@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -29,17 +30,23 @@
 #include "absl/time/time.h"
 #include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
 #include "test/util/logging.h"
 #include "test/util/multiprocess_util.h"
 #include "test/util/posix_error.h"
+#include "test/util/save_util.h"
 #include "test/util/test_util.h"
 #include "test/util/thread_util.h"
 #include "test/util/time_util.h"
+#include "test/util/timer_util.h"
 
 ABSL_FLAG(bool, test_child, false,
           "If true, run the ExitAllThreads child workload.");
 ABSL_FLAG(int, exit_control_fd, -1,
           "If set, wait for a byte on this socket before the child exits.");
+ABSL_FLAG(
+    int, blocked_pipe_fd, -1,
+    "If set, block a writer on this full pipe until the group is killed.");
 
 namespace gvisor {
 namespace testing {
@@ -111,6 +118,30 @@ void RunChild() {
   if (control >= 0) {
     // Bound the controlled child even if its parent fails before releasing it.
     alarm(30);
+  }
+  const int pipe_fd = absl::GetFlag(FLAGS_blocked_pipe_fd);
+  if (pipe_fd >= 0) {
+    TEST_CHECK(control >= 0);
+    const int capacity = fcntl(pipe_fd, F_GETPIPE_SZ);
+    TEST_CHECK(capacity > 0 && capacity <= 1024 * 1024);
+    const std::string fill(capacity, 'x');
+    TEST_PCHECK(WriteFd(pipe_fd, fill.data(), fill.size()) == capacity);
+    ScopedThread writer([control, pipe_fd] {
+      const pid_t tid = syscall(SYS_gettid);
+      TEST_PCHECK(write(control, &tid, sizeof(tid)) == sizeof(tid));
+      // After announcing this exact TID, the only blocking operation is the
+      // full-pipe write. An unexpected return must not enter another wait.
+      const char byte = 'y';
+      const ssize_t result = write(pipe_fd, &byte, 1);
+      _exit(result < 0 ? 3 : 2);
+    });
+    char token;
+    TEST_PCHECK(RetryEINTR(read)(control, &token, 1) == 1);
+    TEST_CHECK(token == 'C');
+    TEST_PCHECK(close(pipe_fd) == 0);
+    TEST_PCHECK(write(control, &token, 1) == 1);
+    writer.Join();
+    abort();
   }
   ScopedThread t([control] {
     if (control >= 0) {
@@ -230,6 +261,104 @@ TEST(ExitTest, PipeEOFWhenChildReaped) { TestPipeEOFWhenChildReaped(false); }
 
 TEST(ExitTest, PipeEOFWhenLastWriterClosed) {
   TestPipeEOFWhenChildReaped(true);
+}
+
+TEST(ExitTest, PipeEOFAfterBlockedWriterKilled) {
+  // The blocked syscall's FD-table entry is deliberately closed. It cannot be
+  // restarted from that table after save/restore.
+  const DisableSave disable_save;
+  int data[2];
+  ASSERT_THAT(pipe(data), SyscallSucceeds());
+  FileDescriptor read_fd(data[0]);
+  FileDescriptor write_fd(data[1]);
+  const int capacity = fcntl(write_fd.get(), F_GETPIPE_SZ);
+  ASSERT_GT(capacity, 0);
+  ASSERT_LE(capacity, 1024 * 1024);
+  ASSERT_THAT(fcntl(read_fd.get(), F_SETFL, O_NONBLOCK), SyscallSucceeds());
+
+  int control[2];
+  ASSERT_THAT(socketpair(AF_UNIX, SOCK_STREAM, 0, control), SyscallSucceeds());
+  FileDescriptor parent_control(control[0]);
+  FileDescriptor child_control(control[1]);
+  pid_t child = -1;
+  int execve_errno = 0;
+  auto cleanup = ASSERT_NO_ERRNO_AND_VALUE(ForkAndExec(
+      "/proc/self/exe",
+      {"/proc/self/exe", "--test_child",
+       "--exit_control_fd=" + std::to_string(child_control.get()),
+       "--blocked_pipe_fd=" + std::to_string(write_fd.get())},
+      {},
+      [&] {
+        read_fd.CloseSignalSafe();
+        parent_control.CloseSignalSafe();
+      },
+      &child, &execve_errno));
+  ASSERT_EQ(execve_errno, 0);
+  child_control.reset();
+  write_fd.reset();
+
+  struct pollfd ready = {parent_control.get(), POLLIN, 0};
+  ASSERT_THAT(poll(&ready, 1, 10000), SyscallSucceedsWithValue(1));
+  pid_t writer_tid;
+  ASSERT_THAT(ReadFd(parent_control.get(), &writer_tid, sizeof(writer_tid)),
+              SyscallSucceedsWithValue(sizeof(writer_tid)));
+  ASSERT_GT(writer_tid, 0);
+  ASSERT_NE(writer_tid, child);
+  const std::string stat_path = "/proc/" + std::to_string(child) + "/task/" +
+                                std::to_string(writer_tid) + "/stat";
+  MonotonicTimer timer;
+  timer.Start();
+  for (;;) {
+    const std::string stat = ASSERT_NO_ERRNO_AND_VALUE(GetContents(stat_path));
+    // comm may contain spaces and parentheses. S is phase evidence only
+    // because this exact thread has no other blocking path after its token.
+    const size_t end_comm = stat.rfind(')');
+    ASSERT_NE(end_comm, std::string::npos) << stat;
+    ASSERT_LT(end_comm + 2, stat.size()) << stat;
+    ASSERT_LT(timer.Duration(), absl::Seconds(10)) << stat;
+    if (stat[end_comm + 2] == 'S') {
+      break;
+    }
+    ASSERT_EQ(stat[end_comm + 2], 'R') << stat;
+    SleepSafe(absl::Milliseconds(1));
+  }
+
+  char token = 'C';
+  ASSERT_THAT(write(parent_control.get(), &token, 1),
+              SyscallSucceedsWithValue(1));
+  ASSERT_THAT(poll(&ready, 1, 10000), SyscallSucceedsWithValue(1));
+  ASSERT_THAT(read(parent_control.get(), &token, 1),
+              SyscallSucceedsWithValue(1));
+  ASSERT_EQ(token, 'C');  // The sibling closed the shared FD-table entry.
+  struct pollfd pipe_state = {read_fd.get(), POLLIN | POLLHUP, 0};
+  ASSERT_THAT(poll(&pipe_state, 1, 0), SyscallSucceedsWithValue(1));
+  ASSERT_EQ(pipe_state.revents,
+            POLLIN);  // Only the write's private ref remains.
+
+  ASSERT_THAT(kill(child, SIGKILL), SyscallSucceeds());
+  int status;
+  ASSERT_THAT(RetryEINTR(waitpid)(child, &status, 0),
+              SyscallSucceedsWithValue(child));
+  cleanup.Release();
+  ASSERT_TRUE(WIFSIGNALED(status)) << status;
+  ASSERT_EQ(WTERMSIG(status), SIGKILL);
+  ASSERT_THAT(poll(&pipe_state, 1, 0), SyscallSucceedsWithValue(1));
+  ASSERT_EQ(pipe_state.revents, POLLIN | POLLHUP);
+
+  // Reads are nonblocking and the loop is bounded by the measured capacity.
+  // HUP must coexist with the entire original payload before becoming EOF.
+  std::string drained(capacity, '\0');
+  size_t offset = 0;
+  while (offset != drained.size()) {
+    const ssize_t n =
+        read(read_fd.get(), drained.data() + offset, drained.size() - offset);
+    ASSERT_GT(n, 0) << "drain errno=" << errno;
+    offset += n;
+  }
+  EXPECT_EQ(drained, std::string(capacity, 'x'));
+  ASSERT_THAT(read(read_fd.get(), &token, 1), SyscallSucceedsWithValue(0));
+  ASSERT_THAT(poll(&pipe_state, 1, 0), SyscallSucceedsWithValue(1));
+  EXPECT_EQ(pipe_state.revents, POLLHUP);
 }
 
 // SIGKILL of zombied thread group does not change exit status.
