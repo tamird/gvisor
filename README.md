@@ -404,3 +404,10 @@ only from a maintainer review of the current GitHub head.
 The table can group rows by attention needed. Its selectors separate Agent work (conflicts, public source checks, unanswered feedback and public snapshot refreshes), Needs your decision (actual unpublished proposal decisions), and Needs maintainer attention (review or reply follow-up, imports, internal feedback, import checks and unclear internal status). Agent work can be queued; the reason does not imply that it has started. Multiple reasons can apply to a PR. Grouping and explicit reason filters are shareable in the URL; earlier `?view=handoff` links open the grouped table.
 
 Copy visible or Copy group exports plain text with a short introduction, snapshot time, plain headings and one full source PR URL per line. Search, workstream, attention and existing state filters determine the copied scope. Native source/import links and details remain in the table. Clipboard denial exposes the same selected text for manual copying, and a scope or snapshot change invalidates stale fallback text and pending copy confirmations.
+
+
+BuildBuddy status contexts whose exact provider description says
+`Check requires approving review` are maintainer approval gates. The raw
+`ERROR` status remains visible; these contexts establish neither an executed
+test failure nor passing checks. Unknown descriptions and unrelated failures
+retain their normal classification.

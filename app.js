@@ -102,11 +102,16 @@ function completeChecks(pr) {
   return Boolean(checks?.complete && checks.total > 0 && checks.contexts.length === checks.total);
 }
 function isImportStatus(check) { return check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name); }
-function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check)); }
+function isApprovalGate(pr, check) {
+  return pr?.repo === "buildbuddy-io/buildbuddy" && check.kind === "status" && check.state === "ERROR"
+    && check.description === "Check requires approving review"
+    && ["https://app.buildbuddy.io", "https://app.buildbuddy.io/", "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"].includes(check.url);
+}
+function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check) && !isApprovalGate(pr, check)); }
 function codeCheckStates(pr) {
   const result = new Set(validationChecks(pr).map(check => check.state));
   const aggregate = pr?.checks?.state;
-  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check));
+  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check) || isApprovalGate(pr, check));
   const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
   const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && administrative.some(check => FAILURE_STATES.has(check.state))
     || pending.has(aggregate) && administrative.some(check => pending.has(check.state)));
@@ -117,16 +122,18 @@ function checkInfo(pr) {
   const checks = pr?.checks;
   if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
   const states = codeCheckStates(pr), substantive = validationChecks(pr);
+  const approvalGates = checks.contexts.filter(check => isApprovalGate(pr, check));
   const failed = [...states].some(state => FAILURE_STATES.has(state));
   const pending = [...states].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state));
-  const passed = completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
+  const passed = !approvalGates.length && completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
   const assignmentFailures = checks.contexts.filter(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state));
   const importProblems = checks.contexts.filter(check => isImportStatus(check) && (FAILURE_STATES.has(check.state) || ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state)));
   const serviceIssues = [assignmentFailures.length && "assignment", importProblems.length && "import"].filter(Boolean);
   const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
-    : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
+    : approvalGates.length ? { text: "Approval required", tone: "pending", glyph: "○" }
+      : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
       : { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
 const ATTENTION_REASONS = [
@@ -222,6 +229,8 @@ function attentionReasons(node, owner) {
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
   if (publicFailures.length) add("author-public-checks", publicFailures.map(check => `${check.name}: ${check.state}`).join("; "));
+  const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
+  if (approvalGates.length) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   if (review.author) add("author-feedback", "A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
   if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
@@ -354,7 +363,8 @@ function appendChecks(container, pr, heading) {
   section.append(element("p", "detail-meta", info.detail));
   for (const check of pr.checks?.contexts || []) {
     const row = element("div", "check-row");
-    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : ""}`));
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? " · approval required; not run" : ""}`));
+    if (check.description) row.title = check.description;
     if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
     section.append(row);
   }
@@ -1312,6 +1322,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
       for (const check of item.checks?.contexts || []) {
+        if (check.description != null && typeof check.description !== "string") throw new Error("Invalid check description");
         if (check.id !== undefined && (typeof check.id !== "string" || !check.id.trim())) throw new Error("Invalid check identity");
         if (check.purpose !== undefined && !["validation", "reviewer-assignment"].includes(check.purpose)) throw new Error("Invalid check purpose");
         if (check.purpose === "reviewer-assignment" && (check.kind !== "check-run" || check.appSlug !== "github-actions" || check.workflow !== "Auto Assign" || check.name !== "assign")) throw new Error("Unverified administrative check identity");

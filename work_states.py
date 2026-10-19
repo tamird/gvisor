@@ -62,6 +62,14 @@ def is_import_status(check: dict) -> bool:
     return check.get("kind") == "status" and check.get("name") in {"import/copybara", "feedback/copybara"}
 
 
+def is_approval_gate(pr: dict, check: dict) -> bool:
+    """Recognize BuildBuddy's exact provider response before CI can run."""
+    return (pr.get("repo") == "buildbuddy-io/buildbuddy" and check.get("kind") == "status"
+            and check.get("state") == "ERROR" and check.get("description") == "Check requires approving review"
+            and check.get("url") in {"https://app.buildbuddy.io", "https://app.buildbuddy.io/",
+                                     "https://app.buildbuddy.dev", "https://app.buildbuddy.dev/"})
+
+
 def complete_checks(pr: dict) -> bool:
     checks = pr.get("checks") or {}
     return bool(checks.get("complete") and checks.get("total", 0) > 0
@@ -70,7 +78,8 @@ def complete_checks(pr: dict) -> bool:
 
 def validation_checks(pr: dict) -> list[dict]:
     return [item for item in (pr.get("checks") or {}).get("contexts", [])
-            if item.get("purpose") != "reviewer-assignment" and not is_import_status(item)]
+            if item.get("purpose") != "reviewer-assignment" and not is_import_status(item)
+            and not is_approval_gate(pr, item)]
 
 
 def check_states(pr: dict) -> set[str]:
@@ -78,7 +87,7 @@ def check_states(pr: dict) -> set[str]:
     states = {item["state"] for item in validation_checks(pr)}
     aggregate = checks.get("state")
     administrative = {item["state"] for item in checks.get("contexts", [])
-                      if item.get("purpose") == "reviewer-assignment" or is_import_status(item)}
+                      if item.get("purpose") == "reviewer-assignment" or is_import_status(item) or is_approval_gate(pr, item)}
     explained = complete_checks(pr) and (
         aggregate in FAILURES and bool(administrative & FAILURES)
         or aggregate in PENDING and bool(administrative & PENDING))
@@ -215,6 +224,8 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
         states["changes-requested"] = {"scope": head}
     elif decision != "APPROVED":
         states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
+    if pr["status"] == "open" and any(is_approval_gate(pr, item) for item in (pr.get("checks") or {}).get("contexts", [])):
+        states["maintainer-review"] = {"scope": head, "qualifier": "BuildBuddy requires approving review before these checks run"}
     eligible = pr["status"] == "open" and decision == "APPROVED"
     if pr.get("importPolicy", "copybara") == "none":
         if eligible and pr.get("mergeable") == "MERGEABLE" and checks_passed(pr):

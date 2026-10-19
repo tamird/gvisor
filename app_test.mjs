@@ -619,3 +619,36 @@ test('branchless graph endpoints reuse investigation records and reject missing 
   delete investigation.group;
   assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /invalid relationships/);
 });
+
+
+test('BuildBuddy approval gates retain ERROR without claiming executed failure or green checks', () => {
+  const node = attentionNode(); node.github.repo = 'buildbuddy-io/buildbuddy'; node.github.importPolicy = 'none';
+  const gate = { ...serviceStatus('Test (darwin_arm64)', 'ERROR'),
+    description: 'Check requires approving review', url: 'https://app.buildbuddy.io' };
+  node.github.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [gate] };
+  const context = client(); context.nodeInput = node;
+  assert.deepEqual(idsFor(node), ['maintainer-review']);
+  assert.match(reasonsFor(node)[0].detail, /have not run/);
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Approval required');
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).passed', context), false);
+  assert.equal(vm.runInContext('failureSources(nodeInput).length', context), 0);
+  assert.equal(gate.state, 'ERROR');
+  const mixed = structuredClone(node); mixed.github.checks.total = 2;
+  mixed.github.checks.contexts.push(serviceStatus('linux', 'SUCCESS')); context.mixedInput = mixed;
+  assert.equal(vm.runInContext('checkInfo(mixedInput.github).passed', context), false);
+  assert.equal(vm.runInContext('checkInfo(mixedInput.github).text', context), 'Approval required');
+  assert.deepEqual(idsFor(mixed), ['maintainer-review']);
+  for (const change of [{ description: undefined }, { description: 'Check requires approving review later' },
+    { url: 'https://example.com' }, { kind: 'check-run' }, { state: 'FAILURE' }]) {
+    const other = structuredClone(node); Object.assign(other.github.checks.contexts[0], change);
+    assert.ok(idsFor(other).includes('author-public-checks'), JSON.stringify(change));
+  }
+  const otherRepo = structuredClone(node); otherRepo.github.repo = 'google/gvisor';
+  assert.ok(idsFor(otherRepo).includes('author-public-checks'));
+  node.github.checks.complete = false;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).tone', context), 'bad');
+  node.github.checks.complete = true;
+  node.github.checks.contexts.push(serviceStatus('linux', 'FAILURE')); node.github.checks.total = 2;
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  assert.ok(idsFor(node).includes('maintainer-review'));
+});

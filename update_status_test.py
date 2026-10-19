@@ -217,5 +217,20 @@ class ScopedApprovalTest(unittest.TestCase):
                     self.assertEqual(result["reviewDecision"], expected)
 
 
+class ProviderStatusTest(unittest.TestCase):
+    def test_provider_description_survives_collection(self):
+        pr = raw_pr(13855)
+        pr["repository"]["nameWithOwner"] = "buildbuddy-io/buildbuddy"
+        check = {"__typename": "StatusContext", "id": "status", "context": "Test (darwin_arm64)",
+                 "state": "ERROR", "description": "Check requires approving review",
+                 "targetUrl": "https://app.buildbuddy.io"}
+        pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"] = {
+            "state": "FAILURE", "contexts": {"totalCount": 1, "nodes": [check], "pageInfo": {"hasNextPage": False}}}
+        result = updater.normalize(pr)
+        self.assertEqual(result["checks"]["contexts"][0]["description"], check["description"])
+        self.assertEqual(result["checks"]["contexts"][0]["state"], "ERROR")
+        self.assertIn("description", updater.CHECKS.split("... on StatusContext", 1)[1])
+
+
 if __name__ == "__main__":
     unittest.main()

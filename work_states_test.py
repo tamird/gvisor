@@ -426,3 +426,32 @@ class RepositoryStateTest(unittest.TestCase):
         external["checks"]["contexts"][0]["state"] = "FAILURE"
         self.assertNotIn("waiting-merge", pr_states(external))
         self.assertIn("failing", pr_states(external))
+
+
+class ApprovalGateTest(unittest.TestCase):
+    def test_exact_provider_gate_preserves_raw_error_and_blocks_readiness(self):
+        gate = {"name": "Test (darwin_arm64)", "kind": "status", "state": "ERROR",
+                "description": "Check requires approving review", "url": "https://app.buildbuddy.io"}
+        pr = original(repo="buildbuddy-io/buildbuddy", importPolicy="none", reviewDecision="APPROVED",
+                      mergeable="MERGEABLE", checks={"complete": True, "total": 1, "state": "FAILURE", "contexts": [gate]})
+        self.assertEqual(set(pr_states(pr)), {"maintainer-review"})
+        self.assertFalse(checks_passed(pr))
+        self.assertEqual(gate["state"], "ERROR")
+        mixed = copy.deepcopy(pr)
+        mixed["checks"]["total"] = 2
+        mixed["checks"]["contexts"].append({"name": "linux", "state": "SUCCESS"})
+        self.assertFalse(checks_passed(mixed))
+        self.assertEqual(set(pr_states(mixed)), {"maintainer-review"})
+        for changed in ({"description": None}, {"description": "Check requires approving review later"},
+                        {"url": "https://example.com"}, {"kind": "check-run"}, {"state": "FAILURE"}):
+            with self.subTest(changed=changed):
+                other = copy.deepcopy(pr)
+                other["checks"]["contexts"][0].update(changed)
+                self.assertIn("failing", pr_states(other))
+        self.assertIn("failing", pr_states({**pr, "repo": "google/gvisor"}))
+        pr["checks"]["complete"] = False
+        self.assertIn("failing", pr_states(pr))
+        pr["checks"].update(complete=True, total=2)
+        pr["checks"]["contexts"].append({"name": "linux", "state": "FAILURE"})
+        self.assertIn("failing", pr_states(pr))
+        self.assertIn("maintainer-review", pr_states(pr))

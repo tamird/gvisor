@@ -26,7 +26,7 @@ commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
   state contexts(first:100) { totalCount pageInfo { hasNextPage }
     nodes { __typename
       ... on CheckRun { id name status conclusion detailsUrl checkSuite { app { name slug } workflowRun { workflow { name } } } }
-      ... on StatusContext { id context state targetUrl }
+      ... on StatusContext { id context state targetUrl description }
     }
   }
 } } } }
@@ -164,7 +164,8 @@ def normalize(pr: dict) -> dict:
                 contexts.append(context)
             else:
                 contexts.append({"id": item["id"], "name": item["context"], "state": item["state"],
-                                 "url": public_url(item["targetUrl"]), "app": None, "kind": "status",
+                                 "url": public_url(item["targetUrl"]), "description": item.get("description"),
+                                 "app": None, "kind": "status",
                                  "purpose": "validation"})
         checks = {"state": rollup["state"], "total": connection["totalCount"],
                   "complete": not connection["pageInfo"]["hasNextPage"], "contexts": contexts}
