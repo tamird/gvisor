@@ -483,7 +483,7 @@ bazel() {
     if (( capture_status == 0 )); then
       if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
         --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
-        --output "$directory/selection.json"; then
+        --output "$directory/selection.json" --test-output-options "$directory/test-output-options.txt"; then
         result=0
       else
         preflight_status=$?
@@ -492,6 +492,10 @@ bazel() {
     fi
   fi
   if (( result == 0 && capture_status == 0 )); then
+    if [[ $analysis_only == false ]]; then
+      while IFS= read -r argument; do command_args+=("$argument"); done < "$directory/test-output-options.txt" || return 1
+      printf '%s\n' "${command_args[@]}" "${target_args[@]}" > "$directory/arguments.txt" || return 1
+    fi
     qualification_bazel "${command_args[@]}" \
       "--execution_log_compact_file=$directory/execution.binpb" \
       "--profile=$directory/profile.json.gz" \
