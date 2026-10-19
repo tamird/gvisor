@@ -401,42 +401,36 @@ syscall_test(
 syscall_test(
     # These cases require Landlock ABI 1; missing support skips their bodies.
     native_kernel_requirements = ["landlock-abi-1"],
-    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v1_test",
 )
 
 syscall_test(
     # These cases require Landlock ABI 2; missing support skips their bodies.
     native_kernel_requirements = ["landlock-abi-2"],
-    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v2_test",
 )
 
 syscall_test(
     # These cases require Landlock ABI 3; missing support skips their bodies.
     native_kernel_requirements = ["landlock-abi-3"],
-    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v3_test",
 )
 
 syscall_test(
     # These cases require Landlock ABI 4; missing support skips their bodies.
     native_kernel_requirements = ["landlock-abi-4"],
-    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v4_test",
 )
 
 syscall_test(
     # These cases require Landlock ABI 5; missing support skips their bodies.
     native_kernel_requirements = ["landlock-abi-5"],
-    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v5_test",
 )
 
 syscall_test(
     # These cases require Landlock ABI 6; missing support skips their bodies.
     native_kernel_requirements = ["landlock-abi-6"],
-    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v6_test",
 )
 
