@@ -32,6 +32,11 @@ RUN patch -p1 --no-backup-if-mismatch < /tmp/tls-servername.patch \
   && out/Release/node --check test/internet/test-tls-add-ca-cert.js \
   && rm -f /tmp/tls-servername.patch
 
+COPY brotli-backpressure.patch /tmp/brotli-backpressure.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/brotli-backpressure.patch \
+  && out/Release/node --check test/parallel/test-zlib-brotli-16GB.js \
+  && rm -f /tmp/brotli-backpressure.patch
+
 # Including dumb-init emulates the Linux "init" process, preventing the failure
 # of tests involving worker processes.
 ENTRYPOINT ["/usr/bin/dumb-init"]
