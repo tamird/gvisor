@@ -11,6 +11,7 @@ function client() {
   context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-12T18:05:00Z' } };
   context.snapshotInput = { schema: 1, repo: 'google/gvisor', owner: 'tamird', checkedAt: '2026-10-12T11:48:00Z',
     registryDate: context.registryInput.meta.updatedAt, issues: {}, prs: [], workStates: {} };
+  vm.runInContext("registry = registryInput", context);
   return context;
 }
 
@@ -66,7 +67,7 @@ test('promotion uses an exact-head branch refinement when the PR comparison is s
     const context = client();
     const branch = { id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', ref: 'proposal', head: branchHead,
       refinement: { ...branchRefinement, after: { head: branchHead } } };
-    const pr = { id: 'pr:1', type: 'pr', number: 1, repo: 'google/gvisor', head: prRefinement?.after.head,
+    const pr = { id: 'pr:1', type: 'pr', number: 1, repo: 'google/gvisor', url: 'https://github.com/google/gvisor/pull/1', head: prRefinement?.after.head,
       ...(prRefinement ? { refinement: prRefinement } : {}) };
     context.registryInput = { ...context.registryInput, nodes: [branch, pr], edges: [], groups: [] };
     context.snapshotInput.prs = [{ ...attentionNode().github, head: after, ref: 'proposal', headRepo: 'tamird/gvisor' }];
@@ -138,7 +139,7 @@ test('contributor decisions bind the registered branch repository and exact prop
 
 test('direct terminal status refresh does not refresh other PR states', () => {
   const context = client();
-  context.snapshotInput.prs = [{ number: 1, imports: [], head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: context.snapshotInput.checkedAt,
+  context.snapshotInput.prs = [{ number: 1, url: 'https://github.com/google/gvisor/pull/1', imports: [], head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: context.snapshotInput.checkedAt,
     statusObservation: { checkedAt: '2026-10-12T18:05:00Z' } }];
   const record = { scope: 'a'.repeat(40), basis: 'transition', since: '2026-10-12T17:54:16Z', observedAt: '2026-10-12T18:05:00Z' };
   context.snapshotInput.workStates['pr:1'] = { merged: record };
@@ -149,8 +150,8 @@ test('direct terminal status refresh does not refresh other PR states', () => {
 
 test('scoped mergeability observations use each source or import PR clock', () => {
   const context = client();
-  const source = { number: 1, head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: '2026-10-12T18:05:00Z' };
-  const imported = { number: 2, head: 'b'.repeat(40), labels: [], threads: {}, checkedAt: '2026-10-12T17:00:00Z' };
+  const source = { number: 1, url: 'https://github.com/google/gvisor/pull/1', head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: '2026-10-12T18:05:00Z' };
+  const imported = { number: 2, url: 'https://github.com/google/gvisor/pull/2', head: 'b'.repeat(40), labels: [], threads: {}, checkedAt: '2026-10-12T17:00:00Z' };
   source.imports = [imported];
   for (const item of [source, imported]) {
     item.mergeabilityCheckedAt = item.checkedAt;
@@ -455,7 +456,7 @@ test('a fresh mergeable head overrides old conflict metadata', () => {
 test('a directly observed new-head conflict remains actionable while old checks are invalidated', () => {
   const context = client(), node = attentionNode(); node.github.checkedAt = '2026-10-13T09:00:00Z'; context.nodeInput = node;
   context.observationInput = { head: 'd'.repeat(40), base: 'e'.repeat(40), status: 'open', state: 'CONFLICTING', checkedAt: '2026-10-13T10:00:00Z' };
-  const result = JSON.parse(vm.runInContext('conflictResults.set(nodeInput.number, observationInput); nodeInput.github = withConflictResult(nodeInput.github); JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+  const result = JSON.parse(vm.runInContext('conflictResults.set(prIdentity(nodeInput.github), observationInput); nodeInput.github = withConflictResult(nodeInput.github); JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
   assert.deepEqual(result.map(reason => reason.id), ['author-conflicts', 'agent-refresh']);
   assert.equal(node.github.revisionChanged, true); assert.equal(node.github.checks, null);
 });
@@ -551,4 +552,70 @@ test('clipboard fallback and pending writes cannot restore a stale handoff after
   assert.equal(elements['handoff-copy-status'].textContent, 'Current group copied.');
   vm.runInContext('invalidateHandoffCopy()', context);
   assert.equal(elements['handoff-copy-status'].textContent, '');
+});
+
+test('repository identity separates same-number PRs, promotion and conflict observations', async () => {
+  const context = client(), repo = 'buildbuddy-io/buildbuddy';
+  const primary = attentionNode(7).github, external = { ...attentionNode(7).github,
+    repo, url: `https://github.com/${repo}/pull/7`, importPolicy: 'none', ref: 'topic', headRepo: 'tamird/buildbuddy' };
+  for (const pr of [primary, external]) pr.checkedAt = context.snapshotInput.checkedAt;
+  context.registryInput = { ...context.registryInput, nodes: [
+    { id: 'branch:bb', type: 'branch', repo: 'tamird/buildbuddy', ref: 'topic', title: 'BB work' },
+    { id: 'branch:gv', type: 'branch', repo: 'tamird/gvisor', ref: 'topic', title: 'Different work' },
+  ], edges: [], groups: [] };
+  context.registryInput.meta.repositories = { 'google/gvisor': 'copybara', [repo]: 'none' };
+  context.snapshotInput.prs = [primary, external];
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /lacks repository inventory/);
+  context.snapshotInput.repositories = context.registryInput.meta.repositories;
+  context.document = { getElementById: () => ({ scrollTop: 0, scrollLeft: 0, querySelectorAll: () => [], scrollTo() {} }) };
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput); updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
+  assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(model.nodes.map(n => n.id).sort())', context)),
+    ['branch:gv', 'pr:7', `pr:${repo}:7`]);
+  context.externalInput = external; context.primaryInput = primary;
+  vm.runInContext('conflictResults.set(prIdentity(externalInput), {head: "d".repeat(40), status: "open", state: "CONFLICTING", checkedAt: "2026-10-14T00:00:00Z"})', context);
+  assert.equal(vm.runInContext('withConflictResult(primaryInput).head', context), primary.head);
+  assert.equal(vm.runInContext('withConflictResult(externalInput).head', context), 'd'.repeat(40));
+  context.document = { querySelector: () => null };
+  context.AbortSignal = { timeout: () => undefined };
+  let requestedURL;
+  context.fetch = async url => { requestedURL = url; return { ok: true, json: async () => ({
+    number: 7, html_url: external.url, head: { sha: external.head, ref: 'topic', repo: { full_name: 'tamird/buildbuddy' } },
+    base: { sha: 'b'.repeat(40) }, mergeable: true, state: 'open', merged: false, draft: false,
+  }) }; };
+  vm.runInContext('drawDetails = () => {}; applyLive = () => {};', context);
+  await vm.runInContext(`refreshConflict(7, 'buildbuddy-io/buildbuddy')`, context);
+  assert.equal(requestedURL, `https://api.github.com/repos/${repo}/pulls/7`);
+  assert.equal(vm.runInContext('withConflictResult(primaryInput).head', context), primary.head);
+  external.url = primary.url;
+  assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid PR inventory/);
+});
+
+test('direct-review approvals do not acquire Copybara actions', () => {
+  const node = attentionNode(); node.repo = 'buildbuddy-io/buildbuddy'; node.github.repo = node.repo;
+  node.github.importPolicy = 'none';
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  node.github.checks.state = 'PENDING'; node.github.checks.contexts[0].state = 'IN_PROGRESS';
+  assert.deepEqual(idsFor(node), []);
+  node.github.checks.state = 'FAILURE'; node.github.checks.contexts[0].state = 'FAILURE';
+  assert.deepEqual(idsFor(node), ['author-public-checks']);
+});
+
+test('branchless graph endpoints reuse investigation records and reject missing groups', () => {
+  const context = client();
+  const investigation = { id: 'investigation:kernel', title: 'Select guest kernel', status: 'active',
+    owner: 'agent', group: 'bb', summary: 'Unpublished work', updatedAt: context.registryInput.meta.updatedAt,
+    evidence: [], findings: [] };
+  context.registryInput = { ...context.registryInput, nodes: [{ id: 'external:kernel', type: 'issue' }],
+    groups: [{ id: 'bb', label: 'BuildBuddy' }], investigations: [investigation],
+    edges: [{ from: investigation.id, to: 'external:kernel', type: 'depends_on' }] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  const projection = JSON.parse(vm.runInContext('JSON.stringify(registryNodes(registryInput)[1])', context));
+  assert.equal(projection.id, investigation.id);
+  assert.match(projection.url, /view=investigations#investigation%3Akernel$/);
+  assert.equal(projection.summary, investigation.summary);
+  context.location = new URL(projection.url);
+  const route = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context));
+  assert.equal(route.view, 'investigations'); assert.equal(route.selected, investigation.id);
+  delete investigation.group;
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /invalid relationships/);
 });

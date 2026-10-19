@@ -56,8 +56,20 @@ function button(text, action, className) {
 function date(value) {
   return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 }
+function prRepo(pr, data = registry) { return pr.repo || data.meta.repo; }
+function prIdentity(pr, data = registry) {
+  const repo = prRepo(pr, data);
+  return repo === data.meta.repo ? `pr:${pr.number}` : `pr:${repo}:${pr.number}`;
+}
+function repositoryPolicies(data) { return data.meta.repositories || { [data.meta.repo]: "copybara" }; }
+function usesImports(pr) { return pr.importPolicy !== "none"; }
+function registryNodes(data) {
+  return [...data.nodes, ...(data.investigations || []).filter(item => item.group).map(item => ({ ...item,
+    type: "investigation", url: `https://tamird.github.io/gvisor/?view=investigations#${encodeURIComponent(item.id)}` }))];
+}
 function label(node) {
-  if (node.type === "pr") return `#${node.number}`;
+  if (node.type === "pr") return `${node.repo && node.repo !== registry?.meta?.repo ? node.repo.split("/")[1] + " " : ""}#${node.number}`;
+  if (node.type === "investigation") return "INVESTIGATION";
   if (node.type === "branch") return "BRANCH";
   if (node.type === "commit") return "UPSTREAM";
   return node.number ? `ISSUE #${node.number}` : "CAPACITY";
@@ -131,7 +143,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
   { id: "maintainer-import-label", owner: "maintainer", title: "Needs import label" },
   { id: "maintainer-import", owner: "maintainer", title: "Ready for import" },
-  { id: "maintainer-merge", owner: "maintainer", title: "Imported, unmerged" },
+  { id: "maintainer-merge", owner: "maintainer", title: "Waiting for merge" },
   { id: "maintainer-assignment", owner: "maintainer", title: "Reviewer assignment" },
   { id: "maintainer-unknown", owner: "maintainer", title: "Import status update" },
 ];
@@ -242,7 +254,7 @@ function attentionReasons(node, owner) {
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
   if (review.incomplete || [pr, ...active].some(item => !completeChecks(item)
       || checkInfo(item).tone === "unknown" && validationChecks(item).length > 0)
-      || decision === "APPROVED" && (!pr.importsComplete || pr.labelsComplete !== true))
+      || decision === "APPROVED" && (usesImports(pr) && !pr.importsComplete || pr.labelsComplete !== true))
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
     add("agent-refresh", "GitHub reports a source check failure without its failing context. Investigate the public check records.");
@@ -254,7 +266,12 @@ function attentionReasons(node, owner) {
     add("maintainer-review", "Approval of the current published revision is not established.");
   if (decision === "APPROVED" && !agentBlocked) {
     const open = active.filter(item => item.status === "open");
-    if (open.length) {
+    if (!usesImports(pr)) {
+      if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"
+          && pr.checks.contexts.every(check => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(check.state)))
+        add("maintainer-merge", "Current-head approval and complete green checks are recorded. Maintainers control merging; the site never merges automatically.");
+    }
+    else if (open.length) {
       const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
       add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.", "Matching import is a draft");
@@ -313,11 +330,12 @@ function badge(info, title) {
 function attributeTitle(node) {
   const pr = node.github;
   if (!pr) return "PR attributes have not been fetched.";
-  return `Review: ${reviewInfo(pr).text}\nPR checks: ${checkInfo(pr).text} · ${checkInfo(pr).detail}\nLabels: ${pr.labels.join(", ") || "none"}\n${pr.imports.length} verified import PR(s)${pr.importsComplete ? "" : "; lookup incomplete"}\nSnapshot ${date(pr.checkedAt)} · source ${pr.head.slice(0, 9)}`;
+  return `Review: ${reviewInfo(pr).text}\nPR checks: ${checkInfo(pr).text} · ${checkInfo(pr).detail}\nLabels: ${pr.labels.join(", ") || "none"}\n${usesImports(pr) ? `${pr.imports.length} verified import PR(s)${pr.importsComplete ? "" : "; lookup incomplete"}` : "Direct repository review; no Copybara import"}\nSnapshot ${date(pr.checkedAt)} · source ${pr.head.slice(0, 9)}`;
 }
 function importCell(node) {
   const cell = element("td", "import-cell"), pr = node.github;
   if (!pr) { cell.textContent = node.type === "pr" ? "Not fetched" : "—"; return cell; }
+  if (!usesImports(pr)) { cell.textContent = "Not applicable"; return cell; }
   const labels = pr.labels.filter((name) => /import|ready to pull/i.test(name));
   for (const name of labels) cell.append(badge({ text: name, tone: "label" }, "Actual GitHub label; not an approval or a test result."));
   if (pr.imports.length === 1) {
@@ -331,7 +349,7 @@ function importCell(node) {
 }
 function appendChecks(container, pr, heading) {
   const section = element("details", "check-details"), info = checkInfo(pr), summary = element("summary");
-  section.dataset.pr = pr.number;
+  section.dataset.pr = prIdentity(pr);
   summary.append(document.createTextNode(`${heading} · `), badge(info)); section.append(summary);
   section.append(element("p", "detail-meta", info.detail));
   for (const check of pr.checks?.contexts || []) {
@@ -359,7 +377,7 @@ function mergeDescription(pr) {
   return current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
 }
 function withConflictResult(pr) {
-  const result = conflictResults.get(pr.number);
+  const result = conflictResults.get(prIdentity(pr));
   if (!result) return pr;
   if (Date.parse(result.checkedAt) <= Date.parse(pr.mergeabilityCheckedAt || pr.checkedAt)) {
     const observed = result.observation;
@@ -376,16 +394,17 @@ function withConflictResult(pr) {
   current.mergeabilityObservation = result.observation || pr.mergeabilityObservation;
   return current;
 }
-async function refreshConflict(number) {
+async function refreshConflict(number, repo = registry.meta.repo) {
+  const identity = prIdentity({ number, repo });
   if (conflictRequest || Date.now() - lastConflictAttempt < 10000) return;
   conflictRequest = true; lastConflictAttempt = Date.now(); drawDetails();
   let message;
   try {
-    const response = await fetch(`https://api.github.com/repos/${registry.meta.repo}/pulls/${number}`, {
+    const response = await fetch(`https://api.github.com/repos/${repo}/pulls/${number}`, {
       cache: "no-cache", credentials: "omit", headers: { Accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? "GitHub rate limit or access restriction; try later or open the PR" : `GitHub returned ${response.status}`);
     const data = await response.json(), headRepo = data.head?.repo?.full_name ?? null;
-    if (data.number !== number || data.html_url !== `https://github.com/${registry.meta.repo}/pull/${number}` ||
+    if (data.number !== number || data.html_url !== `https://github.com/${repo}/pull/${number}` ||
         !/^[a-f0-9]{40}$/.test(data.head?.sha) || !/^[a-f0-9]{40}$/.test(data.base?.sha) ||
         typeof data.head.ref !== "string" || !data.head.ref ||
         headRepo !== null && (typeof headRepo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(headRepo)) ||
@@ -394,16 +413,16 @@ async function refreshConflict(number) {
     const result = { head: data.head.sha, headRepo, ref: data.head.ref, base: data.base.sha, state: data.mergeable === true ? "MERGEABLE" : data.mergeable === false ? "CONFLICTING" : "UNKNOWN",
       status: data.merged ? "merged" : data.state === "closed" ? "closed" : data.draft ? "draft" : "open", checkedAt: new Date().toISOString() };
     // A newer unknown response must not erase a concrete result obtained in this tab.
-    const old = conflictResults.get(number);
+    const old = conflictResults.get(identity);
     result.observation = result.state === "UNKNOWN" ? old?.observation
       : { state: result.state, head: result.head, base: result.base, checkedAt: result.checkedAt };
-    conflictResults.set(number, result);
+    conflictResults.set(identity, result);
     applyLive(liveSnapshot);
     message = `Conflicts checked directly on GitHub at ${date(result.checkedAt)}. Reviews and checks still use the published snapshot.`;
   } catch (error) { message = `Conflict refresh unavailable: ${error.message}. Last displayed evidence is retained.`; }
   finally {
     conflictRequest = false; drawDetails();
-    const output = document.querySelector(`[data-conflict-message="${number}"]`);
+    const output = document.querySelector(`[data-conflict-message="${identity}"]`);
     if (output) output.textContent = message;
   }
 }
@@ -431,10 +450,10 @@ function appendAttributes(container, node) {
   section.append(element("p", "detail-meta", threads.complete ? `${threads.unresolved} unresolved review threads` : `Thread count incomplete: ${threads.unresolved} unresolved among ${Math.min(100, threads.total)} of ${threads.total} threads.`));
   section.append(element("p", "detail-meta conflict-description", mergeDescription(pr)));
   if (pr.revisionChanged) section.append(element("p", "detail-meta", "GitHub has a newer source head than the published snapshot. Review, checks and import eligibility are unavailable for this revision until the next collection."));
-  const refreshButton = button("Check conflicts on GitHub", () => refreshConflict(pr.number));
+  const refreshButton = button("Check conflicts on GitHub", () => refreshConflict(pr.number, prRepo(pr)));
   refreshButton.disabled = conflictRequest;
-  refreshButton.dataset.conflictRefresh = pr.number;
-  const refreshMessage = element("p", "detail-meta"); refreshMessage.dataset.conflictMessage = pr.number; refreshMessage.setAttribute("role", "status");
+  refreshButton.dataset.conflictRefresh = prIdentity(pr);
+  const refreshMessage = element("p", "detail-meta"); refreshMessage.dataset.conflictMessage = prIdentity(pr); refreshMessage.setAttribute("role", "status");
   section.append(refreshButton, refreshMessage);
   const labels = element("div", "label-list");
   for (const name of pr.labels) labels.append(badge({ text: name, tone: "label" }));
@@ -442,6 +461,7 @@ function appendAttributes(container, node) {
   if (!pr.labelsComplete) labels.append(element("span", "attribute-unknown", "Label list incomplete"));
   section.append(labels, element("p", "detail-meta", `Snapshot ${date(pr.checkedAt)} · activity ${date(pr.updatedAt)}`), link(`Source head ${pr.head.slice(0, 9)} ↗`, `https://github.com/${node.repo}/commit/${pr.head}`, "detail-meta"));
   appendChecks(section, pr, "Original PR checks");
+  if (!usesImports(pr)) { container.append(section); return; }
   section.append(element("h4", "", "Verified import PRs"));
   for (const imported of pr.imports) {
     const block = element("div", "import-detail");
@@ -458,7 +478,7 @@ function appendAttributes(container, node) {
   if (!pr.importsComplete && pr.imports.length) section.append(element("p", "detail-meta", "Only the latest 100 cross-references were checked; older imports may exist."));
   container.append(section);
 }
-function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
+function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status) || node.type === "investigation" && node.status === "concluded"; }
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
 function investigationMap() { return new Map((registry.investigations || []).map(item => [item.id, item])); }
 function selectionMap() { return view === "investigations" ? investigationMap() : new Map([...nodeMap(), ...(view === "table" && tableGrouping ? [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => [`attention-${group.id}`, group]) : [])]); }
@@ -1133,12 +1153,12 @@ function applyLive(snapshot, nextRegistry = registry) {
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
-  const nodes = registry.nodes.map((node) => ({ ...node, workStates: stateRecords(snapshot, node) })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
+  const nodes = registryNodes(registry).map((node) => ({ ...node, workStates: stateRecords(snapshot, node) })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
   for (const original of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const pr = withConflictResult(original);
-    const id = `pr:${pr.number}`, existing = ids.get(id);
+    const id = prIdentity(pr), existing = ids.get(id);
     const branch = pr.ref && pr.headRepo ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === pr.headRepo) : null;
-    const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
+    const node = { ...existing, id, type: "pr", number: pr.number, repo: prRepo(pr), title: pr.title, url: pr.url,
       status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
       workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
@@ -1172,6 +1192,13 @@ function applyLive(snapshot, nextRegistry = registry) {
 function validateRegistry(candidate) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
+  const policies = repositoryPolicies(candidate);
+  if (!policies || Array.isArray(policies) || !Object.hasOwn(policies, candidate.meta.repo) ||
+      !Object.entries(policies).every(([repo, policy]) => /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) && ["none", "copybara"].includes(policy))) throw new Error("Invalid repository policies");
+  for (const node of candidate.nodes.filter(node => node.type === "pr"))
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) || !Number.isInteger(node.number) || node.number <= 0 ||
+        Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
+        node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
     const refinement = node.refinement;
     if (refinement !== undefined && (!refinement || !["branch", "pr"].includes(node.type) ||
@@ -1205,9 +1232,9 @@ function validateRegistry(candidate) {
       throw new Error("Invalid CI recovery record");
   }
   const ids = new Set(candidate.nodes.map((node) => node.id));
-  if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
+  if (ids.size !== candidate.nodes.length) throw new Error("Registry contains duplicate identities");
   for (const edge of candidate.edges) if (edge.role !== undefined && (edge.role !== "proposed_update" || edge.type !== "includes" ||
-      candidate.nodes.find(node => node.id === edge.from).type !== "branch" || candidate.nodes.find(node => node.id === edge.to).type !== "pr")) throw new Error("Invalid proposed update relationship");
+      candidate.nodes.find(node => node.id === edge.from)?.type !== "branch" || candidate.nodes.find(node => node.id === edge.to)?.type !== "pr")) throw new Error("Invalid proposed update relationship");
   if (candidate.investigations !== undefined) {
     if (!Array.isArray(candidate.investigations)) throw new Error("Invalid investigations");
     const evidenceValid = entries => Array.isArray(entries) && entries.every(entry => entry && typeof entry.label === "string" && entry.label.trim() && typeof entry.url === "string" && safeURL(entry.url));
@@ -1223,9 +1250,12 @@ function validateRegistry(candidate) {
           Array.isArray(comparison.columns) && comparison.columns.length >= 2 && comparison.columns.every(nonemptyText) &&
           Array.isArray(comparison.rows) && comparison.rows.length > 0 && comparison.rows.every(row => Array.isArray(row) && row.length === comparison.columns.length && row.every(nonemptyText)) &&
           evidenceValid(comparison.evidence) && comparison.evidence.length > 0))) throw new Error("Invalid investigation comparison");
+      if (item.group !== undefined && !candidate.groups.some(group => group.id === item.group)) throw new Error("Invalid investigation group");
       ids.add(item.id);
     }
   }
+  const graphIds = new Set(registryNodes(candidate).map(node => node.id));
+  if (candidate.edges.some(edge => !graphIds.has(edge.from) || !graphIds.has(edge.to))) throw new Error("Registry contains invalid relationships");
 }
 function updateRegistryControls() {
   const group = $("group-filter").value;
@@ -1246,7 +1276,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     for (const [identity, records] of Object.entries(snapshot.workStates)) {
       if (!records || Array.isArray(records) || typeof records !== "object") throw new Error("Invalid state records");
       for (const [state, record] of Object.entries(records)) {
-        const pr = snapshot.prs.find(item => `pr:${item.number}` === identity);
+        const pr = snapshot.prs.find(item => prIdentity(item, nextRegistry) === identity);
         const sourceTime = pr ? Math.max(Date.parse(pr.checkedAt || snapshot.checkedAt),
           ["merged", "closed"].includes(state) && pr.statusObservation ? Date.parse(pr.statusObservation.checkedAt) : 0)
           : Date.parse(nextRegistry.meta.updatedAt);
@@ -1258,11 +1288,20 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       }
     }
   }
+  const policies = repositoryPolicies(nextRegistry);
+  if (snapshot.repositories !== undefined && (Object.keys(snapshot.repositories).length !== Object.keys(policies).length ||
+      Object.entries(policies).some(([repo, policy]) => snapshot.repositories[repo] !== policy))) throw new Error("Snapshot repository policies differ");
+  if (Object.keys(policies).length > 1 && !snapshot.repositories) throw new Error("Snapshot lacks repository inventory");
   const numbers = new Set();
   for (const pr of snapshot.prs) {
-    if (!Number.isInteger(pr.number) || numbers.has(pr.number) || !Array.isArray(pr.imports)) throw new Error("Invalid PR inventory");
-    numbers.add(pr.number);
+    const identity = prIdentity(pr, nextRegistry), repo = prRepo(pr, nextRegistry), policy = policies[repo];
+    if (!Number.isInteger(pr.number) || numbers.has(identity) || !Array.isArray(pr.imports) || !policy ||
+        pr.url !== `https://github.com/${repo}/pull/${pr.number}` ||
+        (pr.importPolicy !== undefined && pr.importPolicy !== policy) ||
+        (policy === "none" && (pr.importPolicy !== "none" || pr.imports.length))) throw new Error("Invalid PR inventory");
+    numbers.add(identity);
     for (const item of [pr, ...pr.imports]) {
+      if (prRepo(item, nextRegistry) !== repo || item.url !== `https://github.com/${repo}/pull/${item.number}`) throw new Error("Invalid PR URL identity");
       const observation = item.mergeabilityObservation;
       if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation time");
       if (item.base != null && !/^[a-f0-9]{40}$/.test(item.base)) throw new Error("Invalid PR base");
@@ -1421,7 +1460,7 @@ async function start() {
     const response = await fetch("registry.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`Registry returned ${response.status}`);
     registry = await response.json(); validateRegistry(registry);
-    model = { ...registry, groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
+    model = { ...registry, nodes: registryNodes(registry), groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
     updateRegistryControls();
     // Resolve URLs against the full snapshot, including newly discovered PRs.
     // A failed refresh leaves the validated registry as the known inventory.

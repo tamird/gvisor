@@ -29,3 +29,6 @@
 @media(max-width:700px){.table-tools{padding:10px;max-width:100vw}.attention-heading-content{max-width:calc(100vw - 32px)}.attention-heading-content a{font-size:11px}.attention-selector{position:static}.state-toolbar{position:relative}.attention-options{top:100%;left:10px;width:calc(100vw - 20px);max-width:none}.table-actions{gap:10px}}
 
 .range-diff{margin:8px 0}.range-diff-command{display:block;width:100%;min-width:0;box-sizing:border-box;font-family:monospace;font-size:11px;margin:5px 0}.range-diff .detail-meta{display:block;margin-top:4px}
+
+/* Branchless work shares its investigation record with the dependency graph. */
+.node.investigation .node-shape{stroke:var(--blue);stroke-dasharray:4 3}.node.investigation .node-label,.detail-top.investigation{fill:var(--blue);color:var(--blue)}

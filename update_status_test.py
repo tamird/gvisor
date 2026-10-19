@@ -47,7 +47,7 @@ def imported(number: int, source: int, state: str = "OPEN", *, head: int | None 
 
 def retained(pr: dict, imports: list[dict] | None = None) -> dict:
     item = updater.normalize(pr)
-    item.update(checkedAt=OLD, importsComplete=True, imports=imports or [])
+    item.update(checkedAt=OLD, importPolicy="copybara", importsComplete=True, imports=imports or [])
     return item
 
 
@@ -154,6 +154,35 @@ class CollectorHistoryTest(unittest.TestCase):
                     self.collect()
                 self.assertEqual(self.path.read_bytes(), self.original_bytes)
                 self.assertFalse((self.root / ".github-status.json.tmp").exists())
+
+    def test_same_number_keeps_repository_history_and_direct_review_policy(self) -> None:
+        repo = "buildbuddy-io/buildbuddy"
+        self.registry["meta"]["repositories"] = {"google/gvisor": "copybara", repo: "none"}
+        self.registry["nodes"].append({"id": f"pr:{repo}:5", "type": "pr", "repo": repo, "number": 5})
+        raw = raw_pr(5)
+        raw.update(repository={"nameWithOwner": repo}, url=f"https://github.com/{repo}/pull/5",
+                   headRepository={"nameWithOwner": "tamird/buildbuddy", "owner": {"login": "tamird"}})
+        primary_graphql = self.graphql
+
+        def graphql(query: str, variables: dict | None = None) -> dict:
+            if (variables or {}).get("owner") == "buildbuddy-io":
+                return {"repository": {"pullRequests": {"totalCount": 1,
+                        "nodes": [{"number": 5, "author": {"login": "tamird"}}],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None}}}}
+            if 'owner:"buildbuddy-io"' in query:
+                self.assertNotIn("CROSS_REFERENCED_EVENT", query)
+                return {"repository": {"p5": copy.deepcopy(raw)}}
+            return primary_graphql(query, variables)
+
+        with mock.patch.object(self, "graphql", side_effect=graphql):
+            current = self.collect()
+        records = {(pr["repo"], pr["number"]): pr for pr in current["prs"]}
+        self.assertEqual(records[("google/gvisor", 5)]["status"], "closed")
+        self.assertEqual((records[(repo, 5)]["status"], records[(repo, 5)]["importPolicy"]), ("open", "none"))
+        self.assertEqual(records[(repo, 5)]["imports"], [])
+        self.assertIn("closed", current["workStates"]["pr:5"])
+        self.assertIn("maintainer-review", current["workStates"][f"pr:{repo}:5"])
+        self.assertEqual(current["repositories"], self.registry["meta"]["repositories"])
 
 
 class ScopedApprovalTest(unittest.TestCase):

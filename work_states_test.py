@@ -45,7 +45,7 @@ class WorkStatesTest(unittest.TestCase):
         branch = {"id": "branch:proposal", "type": "branch", "ref": "proposal",
                   "head": "b" * 40,
                   "contributorReview": {"status": "pending", "head": "b" * 40}}
-        registry = {"meta": {"updatedAt": decision_at}, "nodes": [branch]}
+        registry = {"meta": {"repo": "google/gvisor", "updatedAt": decision_at}, "nodes": [branch]}
         pr = original(checkedAt=full_at)
         states = record_states([pr], registry, {}, full_at)
         decision = states[branch["id"]]["contributor-review"]
@@ -62,18 +62,18 @@ class WorkStatesTest(unittest.TestCase):
         observed_at = "2026-10-12T18:05:00+00:00"
         pr = original(status="merged", mergedAt=merged_at, checkedAt=full_at,
                       statusObservation={"checkedAt": observed_at})
-        state = record_states([pr], {"nodes": []}, {}, full_at)["pr:1"]["merged"]
+        state = record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": []}, {}, full_at)["pr:1"]["merged"]
         self.assertEqual((state["since"], state["basis"], state["observedAt"]),
                          (merged_at, "transition", observed_at))
         pr["checkedAt"] = "2026-10-12T18:36:00Z"
-        self.assertEqual(record_states([pr], {"nodes": []}, {}, full_at)["pr:1"]["merged"]["observedAt"],
+        self.assertEqual(record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": []}, {}, full_at)["pr:1"]["merged"]["observedAt"],
                          pr["checkedAt"])
 
     def test_legacy_first_observation_uses_pr_time(self):
         pr = original(checkedAt="2026-10-12T12:00:00Z")
         previous = {"checkedAt": "2026-10-12T11:00:00Z", "prs": [copy.deepcopy(pr)]}
         pr["checkedAt"] = "2026-10-12T13:00:00Z"
-        state = record_states([pr], {"nodes": []}, previous, pr["checkedAt"])["pr:1"]["maintainer-review"]
+        state = record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": []}, previous, pr["checkedAt"])["pr:1"]["maintainer-review"]
         self.assertEqual((state["since"], state["observedAt"]),
                          ("2026-10-12T12:00:00Z", "2026-10-12T13:00:00Z"))
 
@@ -117,7 +117,7 @@ class WorkStatesTest(unittest.TestCase):
         previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [copy.deepcopy(pr)],
                     "workStates": {"pr:1": {"failing": {"scope": "1:" + pr["head"],
                         "since": "2026-10-01T00:00:00Z", "basis": "observed", "qualifier": "Source checks failing"}}}}
-        self.assertNotIn("failing", record_states([pr], {"nodes": []}, previous, "2026-10-02T00:00:00Z")["pr:1"])
+        self.assertNotIn("failing", record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": []}, previous, "2026-10-02T00:00:00Z")["pr:1"])
         pr["checks"]["contexts"][1]["state"] = "FAILURE"
         self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Source checks failing")
 
@@ -265,7 +265,7 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(set(pr_states(pr)), {"maintainer-review", "failing", "checks-pending"})
 
     def test_same_head_age_survives_refresh_but_not_state_or_head_change(self):
-        registry = {"nodes": []}
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": []}
         pr = original()
         first = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [copy.deepcopy(pr)]}
         second = record_states([pr], registry, first, "2026-10-02T00:00:00Z")
@@ -315,7 +315,7 @@ class WorkStatesTest(unittest.TestCase):
         branch = {"id": "branch:revision", "type": "branch", "ref": "revision",
                   "head": "b" * 40,
                   "contributorChangesRequested": {"head": "b" * 40}}
-        registry = {"nodes": [branch]}
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}
         states = record_states([original()], registry, {}, "2026-10-02T00:00:00Z")
         self.assertEqual(set(states[branch["id"]]), {"changes-requested"})
         self.assertEqual(states[branch["id"]]["changes-requested"]["qualifier"], "Contributor")
@@ -332,7 +332,7 @@ class WorkStatesTest(unittest.TestCase):
         previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [], "workStates": {
             branch["id"]: {"contributor-review": {
                 "scope": branch["head"], "since": "2026-09-01T00:00:00Z", "basis": "observed"}}}}
-        current = record_states([], {"nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
+        current = record_states([], {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
         self.assertEqual(set(current[branch["id"]]), {"changes-requested"})
         self.assertEqual(current[branch["id"]]["changes-requested"]["since"], "2026-10-02T00:00:00Z")
         branch["ref"] = "topic"
@@ -366,7 +366,7 @@ class WorkStatesTest(unittest.TestCase):
                 "contributorReview": {"status": "pending", "head": "c" * 40}}
         branch = {"id": "branch:amendment", "type": "branch", "ref": "review/amendment",
                   "contributorReview": copy.deepcopy(node["contributorReview"])}
-        registry = {"nodes": [node, branch]}
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [node, branch]}
         pr = original(reviewDecision="APPROVED")
         previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [pr],
                     "workStates": {"pr:1": {"review": {"scope": "c" * 40, "basis": "observed", "since": "2026-09-01T00:00:00Z"}}}}
@@ -387,27 +387,42 @@ class WorkStatesTest(unittest.TestCase):
         old = {"scope": pr["head"], "since": "2026-09-01T00:00:00Z", "basis": "observed"}
         previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [pr], "workStates": {
             "pr:1": {"review": old}, "branch:other": {"review": {**old, "scope": "b" * 40}}}}
-        result = record_states([pr], {"nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
+        result = record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
         self.assertEqual(result["pr:1"]["maintainer-review"]["since"], old["since"])
         self.assertEqual(result["branch:other"]["contributor-review"]["since"], old["since"])
         branch["contributorReview"]["head"] = "c" * 40
-        result = record_states([pr], {"nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
+        result = record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
         self.assertEqual(result["branch:other"]["contributor-review"]["since"], "2026-10-02T00:00:00Z")
 
     def test_new_head_rule_does_not_backdate_changed_review_state(self):
         pr = original(reviewDecision="APPROVED")
         pr["head"] = "c" * 40
         previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [pr], "workStates": {"pr:1": {}}}
-        recorded = record_states([pr], {"nodes": []}, previous, "2026-10-02T00:00:00Z")
+        recorded = record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": []}, previous, "2026-10-02T00:00:00Z")
         self.assertEqual(recorded["pr:1"]["maintainer-review"]["since"], "2026-10-02T00:00:00Z")
 
     def test_prepared_proposal_is_not_a_review_request(self):
         branch = {"id": "branch:proposal", "type": "branch", "ref": "review/proposal",
                   "head": "b" * 40, "status": "Prepared proposal"}
         pr = original(reviewDecision="APPROVED")
-        result = record_states([pr], {"nodes": [branch]}, {}, "2026-10-02T00:00:00Z")
+        result = record_states([pr], {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}, {}, "2026-10-02T00:00:00Z")
         self.assertNotIn("branch:proposal", result)
         self.assertEqual(set(result["pr:1"]), {"awaiting-import"})
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RepositoryStateTest(unittest.TestCase):
+    def test_direct_approval_and_same_number_have_separate_states(self):
+        primary = original(reviewDecision="APPROVED")
+        external = original(reviewDecision="APPROVED", repo="buildbuddy-io/buildbuddy", importPolicy="none",
+                            mergeable="MERGEABLE", checks={"complete": True, "total": 1, "state": "SUCCESS",
+                            "contexts": [{"name": "tests", "state": "SUCCESS", "purpose": "validation"}]})
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": []}
+        states = record_states([primary, external], registry, {}, "2026-10-19T00:00:00Z")
+        self.assertIn("awaiting-import", states["pr:1"])
+        self.assertEqual(set(states["pr:buildbuddy-io/buildbuddy:1"]), {"waiting-merge"})
+        external["checks"]["contexts"][0]["state"] = "FAILURE"
+        self.assertNotIn("waiting-merge", pr_states(external))
+        self.assertIn("failing", pr_states(external))

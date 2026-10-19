@@ -1,6 +1,7 @@
 """Derive overlapping work states and retain revision-bound observations."""
 
 from datetime import datetime
+import re
 from typing import Literal, TypedDict
 
 
@@ -30,6 +31,23 @@ ObservationMap = dict[str, dict[str, StateObservation]]
 FAILURES = {"FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"}
 PENDING = {"PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"}
 PASSED = {"SUCCESS", "SKIPPED", "NEUTRAL"}
+
+
+def repository_policies(registry: dict) -> dict[str, str]:
+    """Keep import workflows explicit; old snapshots describe the primary repo."""
+    policies = registry["meta"].get("repositories", {registry["meta"]["repo"]: "copybara"})
+    if not isinstance(policies, dict) or registry["meta"]["repo"] not in policies or not all(
+        isinstance(repo, str) and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
+        and policy in ("copybara", "none") for repo, policy in policies.items()
+    ):
+        raise ValueError("Invalid tracked repository policies")
+    return policies
+
+
+def pr_identity(pr: dict, primary: str) -> str:
+    repo = pr.get("repo", primary)
+    # Preserve existing gVisor deep links and state history.
+    return f"pr:{pr['number']}" if repo == primary else f"pr:{repo}:{pr['number']}"
 
 
 def check_purpose(check: dict) -> Literal["validation", "reviewer-assignment"]:
@@ -198,7 +216,10 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
     elif decision != "APPROVED":
         states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
     eligible = pr["status"] == "open" and decision == "APPROVED"
-    if active:
+    if pr.get("importPolicy", "copybara") == "none":
+        if eligible and pr.get("mergeable") == "MERGEABLE" and checks_passed(pr):
+            states["waiting-merge"] = {"scope": head}
+    elif active:
         qualifiers = []
         for item in active:
             merge = {"CONFLICTING": "conflicts", "MERGEABLE": "no reported conflict"}.get(item.get("mergeable"), "mergeability unknown")
@@ -220,10 +241,10 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
 
 
 def derive_states(prs: list[dict], registry: dict) -> StateMap:
-    states = {f"pr:{pr['number']}": pr_states(pr) for pr in prs}
+    states = {pr_identity(pr, registry["meta"]["repo"]): pr_states(pr) for pr in prs}
     promoted = {(pr["headRepo"], pr["ref"]) for pr in prs
                 if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}
-    closed = {f"pr:{pr['number']}" for pr in prs if pr["status"] in {"closed", "merged"}}
+    closed = {pr_identity(pr, registry["meta"]["repo"]) for pr in prs if pr["status"] in {"closed", "merged"}}
     for node in registry["nodes"]:
         if node["type"] != "branch" or node["id"] in closed or (node.get("repo"), node.get("ref")) in promoted:
             continue
@@ -241,15 +262,15 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
 
 def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: str) -> ObservationMap:
     current = derive_states(prs, registry)
-    current_prs = {f"pr:{pr['number']}": pr for pr in prs}
-    previous_prs = {f"pr:{pr['number']}": pr for pr in previous.get("prs", [])}
-    prior_prs = {f"pr:{pr['number']}": pr_states(pr) for pr in previous.get("prs", [])}
+    current_prs = {pr_identity(pr, registry["meta"]["repo"]): pr for pr in prs}
+    previous_prs = {pr_identity(pr, registry["meta"]["repo"]): pr for pr in previous.get("prs", [])}
+    prior_prs = {pr_identity(pr, registry["meta"]["repo"]): pr_states(pr) for pr in previous.get("prs", [])}
     # The old collector's aggregate approval cannot backdate the first
     # observation under the exact-head and submission-time rules.
     for pr in previous.get("prs", []):
         if pr.get("reviewDecision") == "APPROVED" and (
                 "approvedHead" not in pr or "approvedAt" not in pr):
-            prior_prs[f"pr:{pr['number']}"].pop("maintainer-review", None)
+            prior_prs[pr_identity(pr, registry["meta"]["repo"])].pop("maintainer-review", None)
     history = previous.get("workStates", {})
     result: ObservationMap = {}
     for identity, states in current.items():

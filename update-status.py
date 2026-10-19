@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from work_states import check_purpose, effective_approval, record_states, remember_mergeability, review_decision
+from work_states import check_purpose, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
 
 
 ROOT = Path(__file__).resolve().parent
@@ -91,7 +91,7 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
             # Retry this read-only query once for transport or gateway errors.
             interrupted = any(error in result.stderr for error in (
                 "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
-                "i/o timeout", "gh: HTTP 502", "gh: HTTP 504",
+                "i/o timeout", "connection reset by peer", "gh: HTTP 502", "gh: HTTP 504",
             ))
             if attempt == 0 and requests < REQUEST_LIMIT and interrupted:
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
@@ -170,7 +170,7 @@ def normalize(pr: dict) -> dict:
                   "complete": not connection["pageInfo"]["hasNextPage"], "contexts": contexts}
     threads = pr["reviewThreads"]
     normalized = {
-        "number": pr["number"], "title": pr["title"], "url": pr["url"],
+        "number": pr["number"], "repo": pr["repository"]["nameWithOwner"], "title": pr["title"], "url": pr["url"],
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
         "ref": pr["headRefName"], "head": pr["headRefOid"], "base": pr["baseRefOid"],
         "headCommittedAt": commits[0]["commit"]["committedDate"],
@@ -203,9 +203,9 @@ def normalize(pr: dict) -> dict:
     return normalized
 
 
-def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:
+def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO) -> dict[int, dict]:
     result = {}
-    owner, name = REPO.split("/")
+    owner, name = repo.split("/")
     for start in range(0, len(numbers), PR_BATCH_SIZE):
         fields = " ".join(f"p{number}:pullRequest(number:{number}){{{FIELDS}{TIMELINE if timeline else 'body'}}}"
                           for number in numbers[start:start + PR_BATCH_SIZE])
@@ -218,8 +218,8 @@ def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:
     return result
 
 
-def import_source(candidate: dict, source_url: str, head_owner: str | None, head_ref: str) -> str | None:
-    if candidate.get("repository", {}).get("nameWithOwner") != REPO or (candidate.get("author") or {}).get("login") != "copybara-service":
+def import_source(candidate: dict, source_url: str, head_owner: str | None, head_ref: str, repo: str = REPO) -> str | None:
+    if candidate.get("repository", {}).get("nameWithOwner") != repo or (candidate.get("author") or {}).get("login") != "copybara-service":
         return None
     footer = re.compile(r"FUTURE_COPYBARA_INTEGRATE_REVIEW=" + re.escape(source_url)
                         + " from " + re.escape(f"{head_owner}:{head_ref}")
@@ -230,9 +230,9 @@ def import_source(candidate: dict, source_url: str, head_owner: str | None, head
     return next(iter(heads), None)
 
 
-def open_inventory() -> dict[int, str | None]:
+def open_inventory(repo: str = REPO) -> dict[int, str | None]:
     """Discover new author PRs and reopened tracked sources/imports together."""
-    owner, name = REPO.split("/")
+    owner, name = repo.split("/")
     cursor = None
     numbers = {}
     total = None
@@ -271,7 +271,7 @@ def needs_refresh(number: int, previous: dict[int, dict], open_numbers: dict[int
     return number in open_numbers or previous.get(number, {}).get("status") not in {"closed", "merged"}
 
 
-def recheck_unknown_mergeability(prs: list[dict]) -> dict[str, object]:
+def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str, object]:
     """Give GitHub's asynchronous calculation one bounded, head-checked read."""
     unknown = {pr["number"]: pr for pr in prs
                if pr["state"] == "OPEN" and pr["mergeable"] == "UNKNOWN"}
@@ -279,7 +279,7 @@ def recheck_unknown_mergeability(prs: list[dict]) -> dict[str, object]:
         return {"status": "not-needed", "numbers": []}
     if requests >= REQUEST_LIMIT:
         return {"status": "budget-exhausted", "numbers": sorted(unknown)}
-    owner, name = REPO.split("/")
+    owner, name = repo.split("/")
     fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid baseRefOid state mergeable mergeStateStatus}}"
                       for number in unknown)
     try:
@@ -304,22 +304,16 @@ def recheck_unknown_mergeability(prs: list[dict]) -> dict[str, object]:
     return {"status": "completed", "numbers": sorted(unknown)}
 
 
-def main() -> None:
+def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dict], dict, dict, dict]:
     numbers = {node["number"] for node in REGISTRY["nodes"]
-               if node["type"] == "pr" and node["repo"] == REPO}
-    output = ROOT / "github-status.json"
-    previous = {}
-    if output.exists():
-        previous = json.loads(output.read_text())
-        if not (previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER):
-            previous = {}
-    prior_sources = {pr["number"]: pr for pr in previous.get("prs", [])}
+               if node["type"] == "pr" and node["repo"] == repo}
+    prior_sources = {pr["number"]: pr for pr in previous.get("prs", []) if pr.get("repo", REPO) == repo}
     prior_imports = {pr["number"]: pr for source in prior_sources.values() for pr in source.get("imports", [])}
     numbers.update(prior_sources)
-    open_numbers = open_inventory()
+    open_numbers = open_inventory(repo)
     numbers.update(number for number, author in open_numbers.items() if author == OWNER)
     originals = fetch_numbers(sorted(number for number in numbers
-                                     if needs_refresh(number, prior_sources, open_numbers)), timeline=True)
+                                     if needs_refresh(number, prior_sources, open_numbers)), timeline=policy == "copybara", repo=repo)
     relations = {number: {pr["number"]: pr["sourceHead"]
                           for pr in prior_sources.get(number, {}).get("imports", [])}
                  for number in numbers}
@@ -327,10 +321,10 @@ def main() -> None:
     changed_relations = set()
     for number, pr in originals.items():
         matches = {}
-        for event in pr["timelineItems"]["nodes"]:
+        for event in pr.get("timelineItems", {}).get("nodes", []):
             candidate = event.get("source", {})
             head_owner = (pr["headRepository"] or {}).get("owner", {}).get("login")
-            if head := import_source(candidate, pr["url"], head_owner, pr["headRefName"]):
+            if head := import_source(candidate, pr["url"], head_owner, pr["headRefName"], repo):
                 matches[candidate["number"]] = head
         timeline_relations[number] = matches
         changed_relations.update(other for other, head in matches.items() if relations[number].get(other) != head)
@@ -340,7 +334,64 @@ def main() -> None:
     import_numbers = {other for matches in relations.values() for other in matches}
     imported = fetch_numbers(sorted(other for other in import_numbers
                                     if needs_refresh(other, prior_imports, open_numbers) or other in changed_relations),
-                             timeline=False)
+                             timeline=False, repo=repo)
+    # Finish every required fetch before spending the remaining request budget
+    # on GitHub's optional asynchronous mergeability recalculation.
+    mergeability_recheck = recheck_unknown_mergeability([*originals.values(), *imported.values()], repo)
+    # A merge can occur while these bounded requests are in flight. Stamp only
+    # fresh detail observations; terminal history keeps its original clock.
+    checked_at = datetime.now(timezone.utc).isoformat()
+    prior_prs = {**prior_sources, **prior_imports}
+    refreshed = {}
+    for number, raw in {**originals, **imported}.items():
+        item = normalize(raw)
+        item["checkedAt"] = checked_at
+        item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(number, {}), item["mergeabilityCheckedAt"])
+        refreshed[number] = item
+    prs = []
+    for number in sorted(numbers):
+        item = dict(refreshed[number] if number in originals else prior_sources[number])
+        item.setdefault("checkedAt", previous.get("checkedAt"))
+        if number in originals:
+            item["importsComplete"] = policy == "none" or not originals[number]["timelineItems"]["pageInfo"]["hasPreviousPage"]
+        imports = []
+        for other, head in sorted(relations[number].items()):
+            if other in imported:
+                actual = import_source(imported[other], item["url"], item.get("headOwner"), item["ref"], repo)
+                expected = timeline_relations.get(number, {}).get(other)
+                if actual is None or (expected is not None and actual != expected):
+                    raise RuntimeError(f"Import #{other} source footer changed during retrieval")
+                head = actual
+                linked = dict(refreshed[other])
+            else:
+                linked = dict(prior_imports[other])
+                linked.setdefault("checkedAt", previous.get("checkedAt"))
+            linked.update(sourceHead=head, matchesSourceHead=head == item["head"], relationshipEvidence=linked["url"])
+            imports.append(linked)
+        item["importPolicy"] = policy
+        item["imports"] = imports
+        prs.append(item)
+    return prs, refreshed, prior_prs, {
+        "openInventoryTotal": len(open_numbers), "retainedSources": len(numbers) - len(originals),
+        "retainedImports": len(import_numbers) - len(imported), "mergeabilityRecheck": mergeability_recheck,
+    }
+
+
+def main() -> None:
+    policies = repository_policies(REGISTRY)
+    output = ROOT / "github-status.json"
+    previous = {}
+    if output.exists():
+        previous = json.loads(output.read_text())
+        if not (previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER):
+            previous = {}
+    prs, refreshed, prior_prs, inventories = [], {}, {}, {}
+    for repo, policy in policies.items():
+        records, fresh, prior, inventory = collect_repository(repo, policy, previous)
+        prs.extend(records)
+        refreshed.update({(repo, number): value for number, value in fresh.items()})
+        prior_prs.update({(repo, number): value for number, value in prior.items()})
+        inventories[repo] = inventory
     issue_fields = []
     issue_ids = {}
     for index, node in enumerate(REGISTRY["nodes"]):
@@ -357,49 +408,14 @@ def main() -> None:
             if value and value["issue"]:
                 issue = value["issue"]
                 issues[issue_ids[alias]] = {"githubState": issue["state"].lower(), "updatedAt": issue["updatedAt"]}
-    # Finish every required fetch before spending the remaining request budget
-    # on GitHub's optional asynchronous mergeability recalculation.
-    mergeability_recheck = recheck_unknown_mergeability([*originals.values(), *imported.values()])
-    # A merge can occur while these bounded requests are in flight. Stamp only
-    # fresh detail observations; terminal history keeps its original clock.
     checked_at = datetime.now(timezone.utc).isoformat()
-    prior_prs = {**prior_sources, **prior_imports}
-    refreshed = {}
-    for number, raw in {**originals, **imported}.items():
-        item = normalize(raw)
-        item["checkedAt"] = checked_at
-        item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(number, {}), item["mergeabilityCheckedAt"])
-        refreshed[number] = item
-    prs = []
-    for number in sorted(numbers):
-        item = dict(refreshed[number] if number in originals else prior_sources[number])
-        item.setdefault("checkedAt", previous.get("checkedAt"))
-        if number in originals:
-            item["importsComplete"] = not originals[number]["timelineItems"]["pageInfo"]["hasPreviousPage"]
-        imports = []
-        for other, head in sorted(relations[number].items()):
-            if other in imported:
-                actual = import_source(imported[other], item["url"], item.get("headOwner"), item["ref"])
-                expected = timeline_relations.get(number, {}).get(other)
-                if actual is None or (expected is not None and actual != expected):
-                    raise RuntimeError(f"Import #{other} source footer changed during retrieval")
-                head = actual
-                linked = dict(refreshed[other])
-            else:
-                linked = dict(prior_imports[other])
-                linked.setdefault("checkedAt", previous.get("checkedAt"))
-            linked.update(sourceHead=head, matchesSourceHead=head == item["head"], relationshipEvidence=linked["url"])
-            imports.append(linked)
-        item["imports"] = imports
-        prs.append(item)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
-                "registryDate": REGISTRY["meta"]["updatedAt"], "prs": prs, "issues": issues,
+                "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
-                           "nestedPageSize": 100, "maxOpenPRs": 200, "openInventoryTotal": len(open_numbers),
-                           "retainedSources": len(numbers) - len(originals),
-                           "retainedImports": len(import_numbers) - len(imported),
-                           "mergeabilityRecheck": mergeability_recheck}}
+                           "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,
+                           **{key: sum(item[key] for item in inventories.values())
+                              for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
     # Run the same validator used by the browser before publishing any bytes.
@@ -409,15 +425,15 @@ def main() -> None:
         temporary.unlink()
         raise RuntimeError(f"Client metadata validation failed: {validation.stderr.strip()}")
     temporary.replace(output)
-    print(f"Retained {len(prs)} PRs and {len(import_numbers)} verified imports; refreshed "
-          f"{len(originals)} PRs and {len(imported)} imports in {requests} GitHub requests ({query_cost} GraphQL points).")
+    print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
+          f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
     for source in prs:
         for pr in (source, *source["imports"]):
-            if pr["number"] not in refreshed:
+            if (pr.get("repo", REPO), pr["number"]) not in refreshed:
                 continue
-            changes = changed_feedback(pr, prior_prs.get(pr["number"], {}))
+            changes = changed_feedback(pr, prior_prs.get((pr.get("repo", REPO), pr["number"]), {}))
             if changes or not pr["feedback"]["complete"]:
-                print(json.dumps({"number": pr["number"], "url": pr["url"], "head": pr["head"],
+                print(json.dumps({"repo": pr.get("repo", REPO), "number": pr["number"], "url": pr["url"], "head": pr["head"],
                                   "feedbackComplete": pr["feedback"]["complete"], "feedback": changes}))
 
 

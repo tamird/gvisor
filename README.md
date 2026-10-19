@@ -1,6 +1,6 @@
-# gVisor work map
+# gVisor and BuildBuddy work map
 
-An interactive map of Tamir's open `google/gvisor` pull requests, selected
+An interactive map of Tamir's open `google/gvisor` and `buildbuddy-io/buildbuddy` pull requests, selected
 working branches, external capacity issues, and branchless investigations.
 
 **Site:** https://tamird.github.io/gvisor/
@@ -31,6 +31,21 @@ facts and unresolved causes in every relationship.
   an issue does not establish that a fix is deployed or that a workload passed.
 - Remove obsolete branches manually. Do not infer retirement from a missing
   branch lookup or silently replace a dependency with a similarly named item.
+
+Repository policies in `meta.repositories` select the existing Copybara workflow
+for gVisor and ordinary direct PR review for BuildBuddy. Every live PR carries
+its source repository; non-primary PR IDs include that repository, preserving
+existing gVisor deep links and preventing equal PR numbers from colliding.
+Repository-qualified identity also scopes review history and conflict refreshes.
+Selected third-party prerequisite PRs can be curated like other PRs. Discovery
+adds only the configured contributor's open PRs; other repository work is not
+imported automatically.
+
+An investigation with a `group` also appears as a dashed blue graph card. It
+remains the same research record in the Investigations view, can be an edge
+endpoint, and links there until it has a published branch or PR. Do not invent
+a branch link before publication. Move relationships to the published node
+when that identity is established, retaining findings in the investigation.
 
 ### GitHub attribute snapshot
 
