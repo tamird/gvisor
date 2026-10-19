@@ -1124,10 +1124,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     wanted = {leaf.name: leaf for leaf in expectations.get(attempt.owner.label, [])}
                     # Go appends -GOMAXPROCS to benchmark names. Retain the
                     # observed suffix, but match default-CPU runs by leaf name.
-                    # Explicit -test.cpu contracts still require exact names.
+                    # An exact leaf may itself end in digits. Explicit -test.cpu
+                    # contracts still require exact names.
                     # https://pkg.go.dev/golang.org/x/perf/benchfmt#Name.Parts
                     names = [re.sub(r"-\d+$", "", string(row["name"]))
-                             if declared_benchmark or benchmark_default_cpu and pgo_expected is None else string(row["name"])
+                             if (declared_benchmark or benchmark_default_cpu and pgo_expected is None)
+                             and string(row["name"]) not in wanted else string(row["name"])
                              for row in rows]
                     actual = Counter(names)
                     if actual != Counter({name: leaf.count for name, leaf in wanted.items()}):

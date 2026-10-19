@@ -579,6 +579,8 @@ class QualificationReportTest(unittest.TestCase):
         cases = (
             (None, "", ("",), "PASS"),
             (None, "", ("-3",), "PASS"),
+            (None, "/case-32", ("/case-32",), "PASS"),
+            (None, "/case-32", ("/case-32-3",), "PASS"),
             (None, "", ("-3", "-4"), "INCOMPLETE"),
             (None, "", ("/unexpected-3",), "INCOMPLETE"),
             ("1", "", ("-3",), "INCOMPLETE"),
