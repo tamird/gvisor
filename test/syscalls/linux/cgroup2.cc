@@ -1210,7 +1210,7 @@ TEST_F(Cgroup2Test, AttachNonExistentProc) {
     ASSERT_NO_ERRNO(c().WriteIntegerControlFile("cgroup.procs", 0));
     EXPECT_THAT(child.WriteIntegerControlFile("cgroup.procs", invalid),
                 PosixErrorIs(EINVAL));
-    EXPECT_NO_ERRNO(c().ContainsCallingProcess());
+    EXPECT_TRUE(ASSERT_NO_ERRNO_AND_VALUE(c().Procs()).contains(getpid()));
     EXPECT_TRUE(ASSERT_NO_ERRNO_AND_VALUE(child.Procs()).empty());
   }
 }
