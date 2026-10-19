@@ -363,11 +363,11 @@ func do(ctx context.Context, c *bwrapConfig, waitStatus *unix.WaitStatus) subcom
 	return subcommands.ExitSuccess
 }
 
-// getEnvID returns fallback when the variable is unset or empty. Invalid IDs
+// getEnvID returns fallback when the variable is unset. Invalid IDs
 // must not silently select a different host user or group.
 func getEnvID(key string, fallback uint32) (uint32, error) {
-	s := os.Getenv(key)
-	if s == "" {
+	s, ok := os.LookupEnv(key)
+	if !ok {
 		return fallback, nil
 	}
 	v, err := strconv.ParseInt(s, 10, 64)
