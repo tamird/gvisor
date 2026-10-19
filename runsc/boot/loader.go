@@ -57,6 +57,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/inet"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
+	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/version"
 	"gvisor.dev/gvisor/pkg/sentry/loader"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
@@ -852,6 +853,9 @@ func New(args Args) (*Loader, error) {
 
 	if err := enableStrace(args.Conf); err != nil {
 		return nil, fmt.Errorf("enabling strace: %w", err)
+	}
+	if args.Conf.DebugPipeReadAfter > 0 {
+		l.k.PipeReadDiagnostics = pipe.NewReadDiagnostics(args.Conf.DebugPipeReadAfter, args.Conf.DebugPipeReadTask)
 	}
 
 	rootUserNs := auth.NewRootUserNamespace()

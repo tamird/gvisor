@@ -108,6 +108,10 @@ func (wq *waitWriters) EventUnregister(e *waiter.Entry) {
 //
 // +stateify savable
 type Pipe struct {
+	// Fork-only observation state is installed before a fresh pipe is published.
+	// It is never restored and holds no manual file references.
+	writerDiagnostics *writerRegistry `state:"nosave"`
+
 	// queue is the waiter queue.
 	queue waiter.Queue
 

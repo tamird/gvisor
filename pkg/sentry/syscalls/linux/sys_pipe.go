@@ -22,6 +22,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/pipefs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
+	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 )
 
@@ -48,6 +49,11 @@ func pipe2(t *kernel.Task, addr hostarch.Addr, flags int32) error {
 	}
 	defer r.DecRef(t)
 	defer w.DecRef(t)
+	if d := t.Kernel().PipeReadDiagnostics; d != nil {
+		r.Impl().(*pipe.VFSPipeFD).EnrollWriter(d, w.Impl().(*pipe.VFSPipeFD), pipe.ReadIdentity{
+			TID: int32(t.Kernel().RootPIDNamespace().IDOfTask(t)), TGID: int32(t.TGIDInRoot()), Name: t.Name(),
+		})
+	}
 
 	fds, err := t.NewFDs(0, []*vfs.FileDescription{r, w}, kernel.FDFlags{
 		CloseOnExec: flags&linux.O_CLOEXEC != 0,

@@ -36,8 +36,10 @@ go_library(
         "pipe_mutex.go",
         "pipe_unsafe.go",
         "pipe_util.go",
+        "read_diagnostics.go",
         "save_restore.go",
         "vfs.go",
+        "writer_diagnostics.go",
     ],
     visibility = ["//pkg/sentry:internal"],
     deps = [
@@ -66,9 +68,11 @@ go_test(
     size = "small",
     srcs = [
         "pipe_test.go",
+        "writer_diagnostics_test.go",
     ],
     embed = [":pipe"],
     deps = [
+        "//pkg/abi/linux",
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/sentry/contexttest",

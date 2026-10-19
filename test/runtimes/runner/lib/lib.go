@@ -244,6 +244,8 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 					t.Fatalf("container is not running: state = %s", state.Status)
 				}
 				log.Infof("Running test case batch: %s", strings.Join(tcs, ","))
+				stopDiagnostics := startSentryDiagnostics(t, d, i)
+				defer stopDiagnostics()
 
 				go func() {
 					argv := []string{

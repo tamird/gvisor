@@ -81,6 +81,11 @@ type Config struct {
 	// E.g. "create,start" or "!boot,events".
 	DebugCommand string `flag:"debug-command"`
 
+	// DebugPipeReadAfter and DebugPipeReadTask enable the fork-only pipe-stall
+	// observer. The task prefix is required to avoid observing ordinary waits.
+	DebugPipeReadAfter time.Duration `flag:"debug-pipe-read-after"`
+	DebugPipeReadTask  string        `flag:"debug-pipe-read-task"`
+
 	// PanicLog is the path to log GO's runtime messages, if not empty.
 	PanicLog string `flag:"panic-log"`
 
@@ -559,6 +564,9 @@ func (c *Config) PlatformDeviceFor(platform string) string {
 // Config.Override does not validate, so callers must call Validate once they
 // are done overriding.
 func (c *Config) Validate() error {
+	if c.DebugPipeReadAfter < 0 || (c.DebugPipeReadAfter > 0) != (c.DebugPipeReadTask != "") {
+		return fmt.Errorf("debug-pipe-read-after must be positive with a nonempty debug-pipe-read-task prefix, or both must be unset")
+	}
 	if _, err := parsePlatformDevicePaths(c.PlatformDevicePath); err != nil {
 		return err
 	}

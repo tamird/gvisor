@@ -21,6 +21,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
+	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/socket"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
@@ -57,7 +58,7 @@ func Read(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, *
 		return 0, nil, err
 	}
 
-	n, err := read(t, file, dst, vfs.ReadOptions{})
+	n, err := read(t, fd, file, dst, vfs.ReadOptions{})
 	t.IOUsage().AccountReadSyscall(n)
 	return uintptr(n), nil, HandleIOError(t, n != 0, err, linuxerr.ERESTARTSYS, "read", file)
 }
@@ -80,12 +81,12 @@ func Readv(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, 
 		return 0, nil, err
 	}
 
-	n, err := read(t, file, dst, vfs.ReadOptions{})
+	n, err := read(t, fd, file, dst, vfs.ReadOptions{})
 	t.IOUsage().AccountReadSyscall(n)
 	return uintptr(n), nil, HandleIOError(t, n != 0, err, linuxerr.ERESTARTSYS, "readv", file)
 }
 
-func read(t *kernel.Task, file *vfs.FileDescription, dst usermem.IOSequence, opts vfs.ReadOptions) (int64, error) {
+func read(t *kernel.Task, fd int32, file *vfs.FileDescription, dst usermem.IOSequence, opts vfs.ReadOptions) (int64, error) {
 	n, err := file.Read(t, dst, opts)
 	if !linuxerr.Equals(linuxerr.ErrWouldBlock, err) {
 		return n, err
@@ -116,7 +117,17 @@ func read(t *kernel.Task, file *vfs.FileDescription, dst usermem.IOSequence, opt
 		}
 
 		// Wait for a notification that we should retry.
-		if err = t.BlockWithDeadline(ch, hasDeadline, deadline); err != nil {
+		var observation *pipe.ReadObservation
+		if diagnostics := t.Kernel().PipeReadDiagnostics; diagnostics != nil {
+			if p, ok := file.Impl().(*pipe.VFSPipeFD); ok {
+				observation = p.ObserveRead(diagnostics, pipe.ReadIdentity{
+					TID: int32(t.Kernel().RootPIDNamespace().IDOfTask(t)), TGID: int32(t.TGIDInRoot()), FD: fd, Name: t.Name(),
+				}, ch)
+			}
+		}
+		err = t.BlockWithDeadline(ch, hasDeadline, deadline)
+		observation.End()
+		if err != nil {
 			if linuxerr.Equals(linuxerr.ETIMEDOUT, err) {
 				err = linuxerr.ErrWouldBlock
 			}
@@ -228,7 +239,7 @@ func Preadv2(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr
 	}
 	var n int64
 	if offset == -1 {
-		n, err = read(t, file, dst, opts)
+		n, err = read(t, fd, file, dst, opts)
 	} else {
 		n, err = pread(t, file, dst, offset, opts)
 	}
@@ -287,7 +298,14 @@ func Write(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, 
 	if file == nil {
 		return 0, nil, linuxerr.EBADF
 	}
-	defer file.DecRef(t)
+	observation := observePipeWrite(t, fd, file, "write")
+	defer func() {
+		// DECREF_STARTED is release progress, not a claim that the reference
+		// remains held while its final destructor is running.
+		observation.DecRefStarted()
+		file.DecRef(t)
+		observation.Done()
+	}()
 
 	// Check that the size is legitimate.
 	si := int(size)
@@ -301,7 +319,7 @@ func Write(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, 
 		return 0, nil, err
 	}
 
-	n, err := write(t, file, src, vfs.WriteOptions{})
+	n, err := write(t, file, src, vfs.WriteOptions{}, observation)
 	t.IOUsage().AccountWriteSyscall(n)
 	return uintptr(n), nil, HandleIOError(t, n != 0, err, linuxerr.ERESTARTSYS, "write", file)
 }
@@ -316,7 +334,12 @@ func Writev(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr,
 	if file == nil {
 		return 0, nil, linuxerr.EBADF
 	}
-	defer file.DecRef(t)
+	observation := observePipeWrite(t, fd, file, "writev")
+	defer func() {
+		observation.DecRefStarted()
+		file.DecRef(t)
+		observation.Done()
+	}()
 
 	// Get the source of the write.
 	src, err := t.IovecsIOSequence(addr, iovcnt, usermem.IOOpts{})
@@ -324,12 +347,23 @@ func Writev(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr,
 		return 0, nil, err
 	}
 
-	n, err := write(t, file, src, vfs.WriteOptions{})
+	n, err := write(t, file, src, vfs.WriteOptions{}, observation)
 	t.IOUsage().AccountWriteSyscall(n)
 	return uintptr(n), nil, HandleIOError(t, n != 0, err, linuxerr.ERESTARTSYS, "writev", file)
 }
 
-func write(t *kernel.Task, file *vfs.FileDescription, src usermem.IOSequence, opts vfs.WriteOptions) (int64, error) {
+func observePipeWrite(t *kernel.Task, fd int32, file *vfs.FileDescription, operation string) pipe.WriteObservation {
+	if t.Kernel().PipeReadDiagnostics != nil {
+		if p, ok := file.Impl().(*pipe.VFSPipeFD); ok && p.HasWriterDiagnostic() {
+			return p.ObserveWrite(pipe.ReadIdentity{
+				TID: int32(t.Kernel().RootPIDNamespace().IDOfTask(t)), TGID: int32(t.TGIDInRoot()), FD: fd, Name: t.Name(),
+			}, operation)
+		}
+	}
+	return pipe.WriteObservation{}
+}
+
+func write(t *kernel.Task, file *vfs.FileDescription, src usermem.IOSequence, opts vfs.WriteOptions, observation pipe.WriteObservation) (int64, error) {
 	n, err := file.Write(t, src, opts)
 	if !linuxerr.Equals(linuxerr.ErrWouldBlock, err) {
 		return n, err
@@ -360,7 +394,10 @@ func write(t *kernel.Task, file *vfs.FileDescription, src usermem.IOSequence, op
 		}
 
 		// Wait for a notification that we should retry.
-		if err = t.BlockWithDeadline(ch, hasDeadline, deadline); err != nil {
+		observation.Waiting()
+		err = t.BlockWithDeadline(ch, hasDeadline, deadline)
+		observation.Resumed()
+		if err != nil {
 			if linuxerr.Equals(linuxerr.ETIMEDOUT, err) {
 				err = linuxerr.ErrWouldBlock
 			}
@@ -471,7 +508,9 @@ func Pwritev2(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintpt
 	}
 	var n int64
 	if offset == -1 {
-		n, err = write(t, file, src, opts)
+		// Only write/writev ownership is diagnosed; other private holders
+		// remain unknown rather than inferred absent.
+		n, err = write(t, file, src, opts, pipe.WriteObservation{})
 	} else {
 		n, err = pwrite(t, file, src, offset, opts)
 	}

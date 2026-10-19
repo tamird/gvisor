@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/usermem"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -70,6 +71,7 @@ func (vp *VFSPipe) ReaderWriterPair(ctx context.Context, mnt *vfs.Mount, vfsd *v
 		return nil, nil, err
 	}
 	vp.pipe.wOpen()
+	w.Impl().(*VFSPipeFD).observeWriterOpened()
 	return r, w, nil
 }
 
@@ -105,6 +107,7 @@ func (vp *VFSPipe) Open(ctx context.Context, mnt *vfs.Mount, vfsd *vfs.Dentry, s
 	case readable && writable:
 		vp.pipe.rOpen()
 		vp.pipe.wOpen()
+		fd.Impl().(*VFSPipeFD).observeWriterOpened()
 		// Pipes opened for read-write always succeed without blocking.
 
 	case readable:
@@ -123,6 +126,7 @@ func (vp *VFSPipe) Open(ctx context.Context, mnt *vfs.Mount, vfsd *vfs.Dentry, s
 	case writable:
 		tReaders := vp.pipe.totalReaders.Load()
 		vp.pipe.wOpen()
+		fd.Impl().(*VFSPipeFD).observeWriterOpened()
 		for vp.pipe.isNamed && !vp.pipe.HasReaders() &&
 			tReaders == vp.pipe.totalReaders.Load() {
 			// Non-blocking, write-only opens fail with ENXIO when the read
@@ -159,6 +163,9 @@ func (vp *VFSPipe) newFD(mnt *vfs.Mount, vfsd *vfs.Dentry, statusFlags uint32, l
 		return nil, err
 	}
 
+	if r := vp.pipe.writerDiagnostics; r != nil && fd.vfsfd.IsWritable() {
+		r.register(fd)
+	}
 	return &fd.vfsfd, nil
 }
 
@@ -175,6 +182,12 @@ type VFSPipeFD struct {
 
 	pipe *Pipe
 
+	// Fork-only read diagnostics are not part of checkpoint state. Callers hold
+	// a syscall reference while installing or ending an observation.
+	readObserverMu   sync.Mutex    `state:"nosave"`
+	readObserver     *readObserver `state:"nosave"`
+	writerDiagnostic *writerRecord `state:"nosave"`
+
 	// lastAddr is the last hostarch.Addr at which a call to a
 	// VFSPipeFD.(usermem.IO) method ended. lastAddr is protected by pipe.mu.
 	lastAddr hostarch.Addr
@@ -187,6 +200,10 @@ func (fd *VFSPipeFD) Pipe() *Pipe {
 
 // Release implements vfs.FileDescriptionImpl.Release.
 func (fd *VFSPipeFD) Release(context.Context) {
+	fd.observeRelease(releasePipeEntered)
+	if fd.readObserver != nil {
+		fd.readObserver.close()
+	}
 	var event waiter.EventMask
 	if fd.vfsfd.IsReadable() {
 		fd.pipe.rClose()
@@ -197,6 +214,7 @@ func (fd *VFSPipeFD) Release(context.Context) {
 	}
 	if fd.vfsfd.IsWritable() {
 		fd.pipe.wClose()
+		fd.observeRelease(releaseWriterClosed)
 		event |= waiter.ReadableEvents | waiter.EventHUp
 	}
 	if event == 0 {
@@ -204,6 +222,7 @@ func (fd *VFSPipeFD) Release(context.Context) {
 	}
 
 	fd.pipe.queue.Notify(event)
+	fd.observeRelease(releaseNotified)
 }
 
 // Readiness implements waiter.Waitable.Readiness.

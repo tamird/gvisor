@@ -96,6 +96,7 @@ go_library(
         "//pkg/sentry/inet",
         "//pkg/sentry/kernel",
         "//pkg/sentry/kernel/auth",
+        "//pkg/sentry/kernel/pipe",
         "//pkg/sentry/kernel/version",
         "//pkg/sentry/limits",
         "//pkg/sentry/loader",

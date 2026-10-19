@@ -67,6 +67,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/futex"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/ipc"
+	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/sched"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/limits"
@@ -312,6 +313,10 @@ type Kernel struct {
 	//
 	// +checkatomic
 	nextInotifyCookie atomicbitops.Uint32
+
+	// PipeReadDiagnostics is an opt-in, fork-only observation of selected pipe
+	// reads. Set before tasks start; it is deliberately not checkpointed.
+	PipeReadDiagnostics *pipe.ReadDiagnostics `state:"nosave"`
 
 	// netlinkPorts manages allocation of netlink socket port IDs.
 	netlinkPorts *port.Manager
@@ -2486,6 +2491,9 @@ func (k *Kernel) releaseCgroupMounts(ctx context.Context) {
 // +checklocksexclude:k.cgroupMountsMapMu
 // +checklocksexclude:k.devGofersMu
 func (k *Kernel) Release() {
+	if k.PipeReadDiagnostics != nil {
+		k.PipeReadDiagnostics.LogSummary()
+	}
 	ctx := k.SupervisorContext()
 	k.releaseCgroupMounts(ctx)
 	k.hostMount.DecRef(ctx)

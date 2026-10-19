@@ -190,6 +190,17 @@ func (vfs *VirtualFilesystem) NumFiles() int64 {
 // DecRef decrements fd's reference count.
 func (fd *FileDescription) DecRef(ctx context.Context) {
 	fd.FileDescriptionRefs.DecRef(func() {
+		// Fork-only pipe diagnosis: this optional hook runs only after the
+		// final decrement, never on ordinary reference operations. Implementors
+		// must only store diagnostic atomic state; they cannot retain references,
+		// block, allocate, log, or change destruction. Remove with the diagnostic.
+		observer, _ := fd.impl.(interface {
+			ObserveFinalReleaseStart()
+			ObserveFinalReleaseDone()
+		})
+		if observer != nil {
+			observer.ObserveFinalReleaseStart()
+		}
 		// Generate inotify events.
 		ev := uint32(linux.IN_CLOSE_NOWRITE)
 		if fd.IsWritable() {
@@ -240,6 +251,9 @@ func (fd *FileDescription) DecRef(ctx context.Context) {
 		}
 		fd.vd.mount.vfs.numFiles.Add(-1)
 		fd.vd.DecRef(ctx)
+		if observer != nil {
+			observer.ObserveFinalReleaseDone()
+		}
 	})
 }
 
