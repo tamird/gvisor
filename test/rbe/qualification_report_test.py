@@ -575,6 +575,56 @@ class QualificationReportTest(unittest.TestCase):
         value = self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl")
         self.assertEqual(value["status"], "INCOMPLETE", value)
 
+    def test_benchmark_cpu_suffix_preserves_leaf_and_count_contracts(self) -> None:
+        cases = (
+            (None, "", ("",), "PASS"),
+            (None, "", ("-3",), "PASS"),
+            (None, "", ("-3", "-4"), "INCOMPLETE"),
+            (None, "", ("/unexpected-3",), "INCOMPLETE"),
+            ("1", "", ("-3",), "INCOMPLETE"),
+            ("3", "-3", ("-3",), "PASS"),
+            ("3", "-3", ("-4",), "INCOMPLETE"),
+        )
+        for cpu, expected_suffix, observed_suffixes, status in cases:
+            with self.subTest(cpu=cpu, expected=expected_suffix, observed=observed_suffixes):
+                invocation = self.benchmark_fixture()
+                manifest_path = invocation / "benchmarks.json"
+                manifest = report.read_json(manifest_path)
+                manifest["arguments"].remove("-test.cpu=1")
+                if cpu is not None:
+                    manifest["arguments"].append("-test.cpu=" + cpu)
+                (leaves,) = manifest["owners"].values()
+                (leaf,) = leaves
+                name = leaf["name"]
+                leaf["name"] += expected_suffix
+                report.write_json(manifest_path, manifest)
+                arguments = invocation / "arguments.txt"
+                original = arguments.read_text().replace("--test_arg=-test.cpu=1\n", "")
+                arguments.write_text(original + (f"--test_arg=-test.cpu={cpu}\n" if cpu is not None else ""))
+                path = invocation / "test.log"
+                lines = path.read_text().splitlines(keepends=True)
+                row = next(line for line in lines if "ns/op" in line)
+                path.write_text("".join("".join(row.replace(name, name + suffix, 1) for suffix in observed_suffixes)
+                                        if line == row else line for line in lines))
+                value = self.benchmark_verdict(invocation)
+                self.assertEqual(value["status"], status, value)
+                self.assertEqual([row["name"] for row in value["executed"][0]["benchmarks"]],
+                                 [name + suffix for suffix in observed_suffixes])
+                shutil.rmtree(invocation)
+
+    def test_pgo_numeric_leaf_suffix_is_not_a_second_cpu_suffix(self) -> None:
+        invocation = self.pgo_fixture()
+        name = "BenchmarkFirstRestore/case-32"
+        manifest = invocation / "benchmarks.json"
+        manifest.write_text(manifest.read_text().replace("BenchmarkFirstRestore/empty", name))
+        log = invocation / "test.log"
+        log.write_text(log.read_text().replace("BenchmarkFirstRestore/empty", name + "-3"))
+        xml = invocation / "test.xml"
+        xml.write_text(xml.read_text().replace("BenchmarkFirstRestore/empty", name))
+        value = self.pgo_verdict(invocation)
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["executed"][0]["benchmarks"][0]["name"], name)
+
     def test_benchmark_missing_extra_zero_and_invalid_rows(self) -> None:
         changes = {
             "missing": lambda row: "",
