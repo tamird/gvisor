@@ -56,7 +56,7 @@ func TestPortsBeforeNetworkSetup(t *testing.T) {
 			// setup; invalid ports must fail before any socket is opened.
 			args := []string{"-iface=", "-addr=127.0.0.1", "-port=44000", "-forward=127.0.0.1:45201"}
 			args = append(args, tc.args...)
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 			defer cancel()
 			output, err := exec.CommandContext(ctx, binary, args...).CombinedOutput()
 			if ctx.Err() != nil {

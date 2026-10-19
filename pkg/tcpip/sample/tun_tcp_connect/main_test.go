@@ -53,7 +53,7 @@ func TestPortValidationBeforeDeviceSetup(t *testing.T) {
 				// device setup; invalid ports must be rejected before it.
 				args := []string{"", "127.0.0.1", "0", "127.0.0.1", "0"}
 				args[portArg.index] = tc.port
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 				defer cancel()
 				output, err := exec.CommandContext(ctx, binary, args...).CombinedOutput()
 				if ctx.Err() != nil {
