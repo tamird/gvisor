@@ -164,7 +164,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, compile_companion = False, **kwargs):
     """Build a go test.
 
     Args:
@@ -177,6 +177,8 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
             static platform transition. Used by the base and architecture variants.
         cgroup_v2: Declare an explicit cgroup-v2 environment variant for combined
             container qualification, preserving the ordinary target's environment.
+        compile_companion: Experimental manual compilation target with the same
+            Go inputs, without runtime data, arguments or environment.
         **kwargs: rest of the arguments to pass to _go_test.
     """
     if pure:
@@ -201,6 +203,16 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         name = name,
         **kwargs
     )
+    if compile_companion:
+        # This opt-in experiment keeps the original runtime declaration intact.
+        # A final split must make its runtime frontend reuse this compilation.
+        compilation = dict(kwargs)
+        for attribute in ["data", "args", "env", "env_inherit"]:
+            compilation.pop(attribute, None)
+        owner = str(native.package_relative_label(":" + name))
+        compilation["importpath_owner"] = owner
+        compilation["tags"] = kwargs.get("tags", []) + ["manual", "go-compilation-owner:" + owner]
+        base_rule(name = name + "_compile", **compilation)
     if cgroup_v2:
         cgroup_attributes = cgroup_v2_variant(name, base_rule, kwargs)
         if test_rule != None:

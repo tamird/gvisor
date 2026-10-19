@@ -36,6 +36,7 @@ go_test(
         "modules_test.go",
         "wheels_test.go",
     ],
+    compile_companion = True,
     data = [
         "dependencies.yaml",
         "//governance:licensing.yaml",

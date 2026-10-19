@@ -15,6 +15,7 @@
 """Check actual CodeQL extraction against a small declared package graph."""
 
 import argparse
+from collections.abc import Callable
 import hashlib
 import json
 import os
@@ -49,6 +50,9 @@ class Manifest(TypedDict):
     goarch: str
     goos: str
     bazel_version_file: str
+    owner_map: dict[str, str]
+    comparison_package_json: list[str]
+    compilation_metadata: dict
 
 
 # A concrete independent floor prevents a driver omission from disappearing
@@ -92,6 +96,111 @@ def json_records(path: Path) -> list[Package]:
     return records
 
 
+def selected_packages(paths: list[str]) -> tuple[dict[str, Package], list[Package]]:
+    """Keep real packages and account separately for their generated test mains."""
+    selected: dict[str, Package] = {}
+    testmains = []
+    for name in paths:
+        for record in json_records(Path(name)):
+            if record["PkgPath"] == "testmain":
+                testmains.append(record)
+                continue
+            identity = record["ID"]
+            if identity in selected and selected[identity] != record:
+                raise ValueError(f"Conflicting configured package records: {identity}")
+            if not record.get("Dir"):
+                raise ValueError(f"Missing declared package directory: {identity}")
+            selected[identity] = record
+    for record in testmains:
+        if record["ID"] not in selected:
+            raise ValueError(f"Synthetic testmain has no real test package: {record['ID']}")
+    return selected, testmains
+
+
+def compare_compilations(manifest: Manifest, selected: dict[str, Package], resolve: Callable[[str], Path]) -> list[dict]:
+    """Compare logical owners without equating their distinct output labels."""
+    owners = manifest.get("owner_map", {})
+    if not owners:
+        return []
+    originals, _ = selected_packages(manifest["comparison_package_json"])
+    metadata = manifest["compilation_metadata"]
+    comparisons = []
+
+    def logical_label(label: str) -> str:
+        return owners.get(label, label)
+
+    def logical_file(name: str) -> str:
+        path = str(resolve(name).resolve())
+        # Only outputs owned by a declared companion have different names.
+        # Source paths, import paths and arbitrary substrings are never mapped.
+        for companion, owner in owners.items():
+            package, companion_name = companion.removeprefix("@@//").split(":")
+            owner_name = owner.rsplit(":", 1)[1]
+            marker = "/bin/" + package + "/" + companion_name
+            for suffix in (".", "/"):
+                if marker + suffix in path:
+                    return path.replace(marker + suffix, "/bin/" + package + "/" + owner_name + suffix, 1)
+        return path
+
+    def source_hashes(names: list[str]) -> dict[str, str]:
+        hashes = {}
+        for name in names:
+            path = logical_file(name)
+            digest = hashlib.sha256(resolve(name).read_bytes()).hexdigest()
+            if path in hashes and hashes[path] != digest:
+                raise ValueError(f"Conflicting declared source contents: {path}")
+            hashes[path] = digest
+        return hashes
+
+    for companion, owner in owners.items():
+        current = metadata[companion]
+        if current["owner"] != owner or any(current["runtime_attributes"].values()):
+            raise ValueError(f"Companion retains runtime attributes or loses its owner: {companion}")
+        if owner not in metadata:
+            if owner != "@@//test/rbe:triton_archive_integrity_test":
+                raise ValueError(f"Unexpected unpaired compilation owner: {owner}")
+            comparisons.append({"owner": owner, "companion": companion, "original_runtime_graph_analyzed": False})
+            continue
+        original = metadata[owner]
+        by_role = lambda records: {(record["is_main"], record["testfilter"]): record for record in records}
+        left, right = by_role(original["archives"]), by_role(current["archives"])
+        if len(left) != len(original["archives"]) or len(right) != len(current["archives"]) or left.keys() != right.keys():
+            raise ValueError(f"Different or duplicate compiled archive roles: {owner}")
+        archive_evidence = []
+        for role in left:
+            before, after = dict(left[role]), dict(right[role])
+            identity = {"original_label": before.pop("label"), "companion_label": after.pop("label"), "original_name": before.pop("name"), "companion_name": after.pop("name")}
+            if logical_label(identity["companion_label"]) != identity["original_label"]:
+                raise ValueError(f"Archive owner differs from declared relationship: {owner}")
+            for record in (before, after):
+                record["deps"] = [{"label": logical_label(dep["label"]), "importpath": dep["importpath"]} for dep in record["deps"]]
+            source_evidence = {}
+            for field in ("srcs", "embedsrcs"):
+                a, b = source_hashes(before.pop(field)), source_hashes(after.pop(field))
+                source_evidence[field] = {"original": a, "companion": b, "equal": a == b}
+                if not role[0] and a != b:
+                    raise ValueError(f"Real test archive source contents differ: {owner} {field}")
+            if before != after:
+                raise ValueError(f"Compilation configuration/import metadata differs: {owner} {role}")
+            archive_evidence.append({"identity": identity, "metadata": before, "sources": source_evidence})
+        before, after = dict(originals[owner]), dict(selected[companion])
+        before.pop("ID")
+        after.pop("ID")
+        package_sources = {}
+        for field in ("GoFiles", "CompiledGoFiles", "OtherFiles"):
+            a, b = source_hashes(before.pop(field)), source_hashes(after.pop(field))
+            if a != b:
+                raise ValueError(f"Package source content differs: {owner} {field}")
+            package_sources[field] = a
+        for record in (before, after):
+            record["ExportFile"] = logical_file(record["ExportFile"])
+            record["Imports"] = {path: logical_label(label) for path, label in record["Imports"].items()}
+        if before != after:
+            raise ValueError(f"Package metadata differs: {owner}")
+        comparisons.append({"owner": owner, "companion": companion, "original_runtime_graph_analyzed": True, "archives": archive_evidence, "package_metadata": before, "package_sources": package_sources})
+    return comparisons
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("manifest", "codeql", "extractor", "driver", "output", "outcome", "go", "goroot"):
@@ -121,26 +230,10 @@ def main() -> None:
             name = name.replace(placeholder, str(root))
         return Path(name).absolute()
 
-    # Preserve package identities and the upstream real-test/testmain rule.
-    # Never merge two incompatible variants just because their import paths match.
-    selected: dict[str, Package] = {}
-    testmains = []
-    for name in manifest["package_json"]:
-        for record in json_records(Path(name)):
-            if record["PkgPath"] == "testmain":
-                testmains.append(record)
-                continue
-            identity = record["ID"]
-            if identity in selected and selected[identity] != record:
-                raise ValueError(f"Conflicting configured package records: {identity}")
-            if not record.get("Dir"):
-                raise ValueError(f"Missing declared package directory: {identity}")
-            selected[identity] = record
+    selected, testmains = selected_packages(manifest["package_json"])
     if missing := set(manifest["labels"]) - selected.keys():
         raise ValueError(f"Missing requested package records: {sorted(missing)}")
-    for record in testmains:
-        if record["ID"] not in selected:
-            raise ValueError(f"Synthetic testmain has no real test package: {record['ID']}")
+    compilation_comparisons = compare_compilations(manifest, selected, resolve)
 
     raw_sources = set()
     for record in selected.values():
@@ -198,7 +291,15 @@ def main() -> None:
             raise ValueError("Driver did not return its declared package graph")
     if missing := set(manifest["labels"]) - set(roots):
         raise ValueError(f"Driver omitted requested roots: {sorted(missing)}")
-    if set(manifest["labels"]) != REQUIRED_SOURCES.keys():
+    owner_map = manifest.get("owner_map", {})
+    source_floor = dict(REQUIRED_SOURCES)
+    if owner_map:
+        source_floor["@@//test/rbe:triton_archive_integrity_test"] = (
+            "test/rbe/source_archive_common_test.go", "test/rbe/source_archive_integrity_test.go",
+        )
+        if set(owner_map) != set(manifest["labels"]) or set(owner_map.values()) != source_floor.keys() or len(set(owner_map.values())) != len(owner_map):
+            raise ValueError("Compilation owners differ from the independent fixture floor")
+    elif set(manifest["labels"]) != source_floor.keys():
         raise ValueError("Requested roots differ from the independent fixture floor")
     eligible: dict[str, set[str]] = {}
     for record in packages:
@@ -221,11 +322,15 @@ def main() -> None:
                 raise ValueError(f"Driver duplicated package identity: {identity}")
             eligible[identity] = {str(Path(name).resolve()) for name in files}
     floor = {}
-    for identity, suffixes in REQUIRED_SOURCES.items():
+    companions = {owner: label for label, owner in owner_map.items()}
+    for identity, suffixes in source_floor.items():
         # MoveTestFiles may move a source into the canonical external-test clone.
-        files = eligible.get(identity, set()) | eligible.get(identity + "_xtest", set())
+        label = companions.get(identity, identity)
+        files = eligible.get(label, set()) | eligible.get(label + "_xtest", set())
         floor[identity] = []
         for suffix in suffixes:
+            if owner_map and ".internal.a.cgo/" in suffix:
+                suffix = suffix.replace(identity.rsplit(":", 1)[1] + ".internal.a.cgo/", label.rsplit(":", 1)[1] + ".internal.a.cgo/", 1)
             match [name for name in files if name.endswith("/" + suffix)]:
                 case [name]:
                     floor[identity].append(name)
@@ -293,6 +398,8 @@ def main() -> None:
     unexpected = sorted(actual.keys() - expected.keys())
     outcome = {
         "requested_roots": manifest["labels"],
+        "owner_map": owner_map,
+        "compilation_comparisons": compilation_comparisons,
         "package_records": len(selected),
         "driver_roots": roots,
         "driver_package_records": len(packages),

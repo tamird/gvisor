@@ -37,6 +37,7 @@ go_test(
     ],
     cdeps = ["@libpluginstack//:libpluginstack"],
     cgo = True,
+    compile_companion = True,
     # Nogo always analyzes ARM64 too; this native plugin only supports AMD64.
     nogo = False,
     rundir = ".",

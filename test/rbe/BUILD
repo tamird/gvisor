@@ -303,6 +303,7 @@ go_test(
             "--archive=$(rootpath //test/docker:" + archive + ")",
             "--image=" + image,
         ],
+        compile_companion = name == "triton",
         data = ["//test/docker:" + archive],
         exec_properties = select({
             "//tools/bazeldefs:rbe": {
@@ -318,6 +319,7 @@ go_test(
             "no-local",
         ],
         target_compatible_with = ["@platforms//os:linux"],
+        visibility = ["//tools/codeql:__pkg__"] if name == "triton" else ["//visibility:private"],
     )
     for name, image, archive, free_disk, size, timeout in [
         ("source", "containerd/harness", "containerd_harness_source_amd64", "20GB", "medium", "moderate"),

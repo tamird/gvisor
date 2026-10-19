@@ -22,6 +22,18 @@ py_binary(
     main = "package_probe.py",
 )
 
+_PACKAGE_PROBE_ROOTS = [
+    "//pkg/tcpip/tests/integration:forward_test",
+    "//pkg/tcpip/tests/integration:iptables_test",
+    "//pkg/tcpip/header:header_test",
+    "//pkg/tcpip/header:header_x_test",
+    "//pkg/segment/test:segment_test",
+    "//tools/go_generics/rules_tests:template_test",
+    "//tools/licensecheck:licensecheck_test",
+    "//test/runner:xml_test",
+    "//external/tools/plugin-stack:backtrace_test",
+]
+
 # Investigate the existing package-loader contract before replacing full analysis.
 package_probe(
     name = "package_probe",
@@ -34,16 +46,25 @@ package_probe(
         "EstimatedCPU": "4",
         "EstimatedMemory": "16GB",
     },
-    roots = [
-        "//pkg/tcpip/tests/integration:forward_test",
-        "//pkg/tcpip/tests/integration:iptables_test",
-        "//pkg/tcpip/header:header_test",
-        "//pkg/tcpip/header:header_x_test",
-        "//pkg/segment/test:segment_test",
-        "//tools/go_generics/rules_tests:template_test",
-        "//tools/licensecheck:licensecheck_test",
-        "//test/runner:xml_test",
-        "//external/tools/plugin-stack:backtrace_test",
+    roots = _PACKAGE_PROBE_ROOTS,
+    tags = ["manual"],
+)
+
+# Compare nine qualified owners and analyze Triton without its runtime archive.
+package_probe(
+    name = "compile_companion_probe",
+    testonly = True,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = {
+        "EstimatedCPU": "4",
+        "EstimatedMemory": "16GB",
+    },
+    comparison_roots = _PACKAGE_PROBE_ROOTS,
+    roots = [label + "_compile" for label in _PACKAGE_PROBE_ROOTS] + [
+        "//test/rbe:triton_archive_integrity_test_compile",
     ],
     tags = ["manual"],
 )

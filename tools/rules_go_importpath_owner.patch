@@ -1,0 +1,74 @@
+Preserve inferred package identity when a logical test is compiled under a
+separate implementation label. Defaults and explicit/embed precedence remain
+unchanged; the logical owner is not a dependency on runtime data.
+Experimental extension of rules_go v0.63.0:
+https://github.com/bazel-contrib/rules_go/blob/v0.63.0/go/private/context.bzl
+
+diff --git a/go/private/context.bzl b/go/private/context.bzl
+--- a/go/private/context.bzl
++++ b/go/private/context.bzl
+@@ -488,7 +488,7 @@
+         [get_source(t).runfiles for t in deps],
+     )
+ 
+-def _infer_importpath(ctx, embeds, importpath, importmap):
++def _infer_importpath(label, embeds, importpath, importmap):
+     VENDOR_PREFIX = "/vendor/"
+ 
+     # Check if paths were explicitly set, either in this rule or in an
+@@ -509,9 +509,9 @@
+ 
+     # Guess an import path based on the directory structure
+     # This should only be executed for binaries, since Gazelle generates importpath for libraries.
+-    importpath = ctx.label.package
+-    if not importpath.endswith(ctx.label.name):
+-        importpath += "/" + ctx.label.name
++    importpath = label.package
++    if not importpath.endswith(label.name):
++        importpath += "/" + label.name
+     if importpath.rfind(VENDOR_PREFIX) != -1:
+         importpath = importpath[len(VENDOR_PREFIX) + importpath.rfind(VENDOR_PREFIX):]
+     if importpath.startswith("/"):
+@@ -602,7 +602,8 @@
+         go_context_data = None,
+         maybe_needs_cc_toolchain = True,
+         goos = "auto",
+-        goarch = "auto"):
++        goarch = "auto",
++        importpath_owner = None):
+     """Returns an API used to build Go code.
+ 
+     See /go/toolchains.rst#go-context
+@@ -741,7 +742,7 @@
+     if embed == None:
+         embed = getattr(attr, "embed", [])
+ 
+-    importpath, importmap, pathtype = _infer_importpath(ctx, embed, importpath, importmap)
++    importpath, importmap, pathtype = _infer_importpath(importpath_owner or ctx.label, embed, importpath, importmap)
+ 
+     if include_deprecated_properties:
+         deprecated_properties = {
+diff --git a/go/private/rules/test.bzl b/go/private/rules/test.bzl
+--- a/go/private/rules/test.bzl
++++ b/go/private/rules/test.bzl
+@@ -63,6 +63,7 @@
+     go = go_context(
+         ctx,
+         importpath = ctx.attr.importpath,
++        importpath_owner = Label(ctx.attr.importpath_owner) if ctx.attr.importpath_owner else None,
+         embed = ctx.attr.embed,
+         go_context_data = ctx.attr._go_context_data,
+         maybe_needs_cc_toolchain = maybe_needs_cc_toolchain(ctx.attr, go_infos = ctx.attr.deps),
+@@ -298,6 +299,12 @@
+         ),
+         "env_inherit": attr.string_list(
+             doc = """Environment variables to inherit from the external environment.
++            """,
++        ),
++        "importpath_owner": attr.string(
++            doc = """Optional absolute logical-owner label used only when inferring
++            the import path. Explicit and embedded import paths keep precedence.
++            This is an identity, not a dependency on the owning target.
+             """,
+         ),
+         "importpath": attr.string(

@@ -14,9 +14,51 @@
 
 """A bounded extraction experiment over declared rules_go package records."""
 
-load("@io_bazel_rules_go//go:def.bzl", "go_context")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "go_context")
 load("@io_bazel_rules_go//go/tools/gopackagesdriver:aspect.bzl", "GoPkgInfo", "go_pkg_info_aspect")
 load("//tools/bazeldefs:go.bzl", "go_rule")
+
+_CompilationInfo = provider(fields = ["owner", "archives", "runtime_attributes"])
+_OWNER_TAG = "go-compilation-owner:"
+
+def _compilation_info_impl(target, ctx):
+    owners = [tag[len(_OWNER_TAG):] for tag in ctx.rule.attr.tags if tag.startswith(_OWNER_TAG)]
+    if len(owners) > 1:
+        fail("multiple logical compilation owners: %s" % target.label)
+    archive = target[GoArchive]
+    archives = [archive] + [dep for dep in archive.direct if dep.data.label == archive.data.label]
+    records = []
+    for archive in archives:
+        source = archive.source
+        records.append({
+            "label": str(source.label),
+            "name": source.name,
+            "importpath": source.importpath,
+            "importmap": source.importmap,
+            "pathtype": source.pathtype,
+            "testfilter": source.testfilter,
+            "is_main": source.is_main,
+            "mode": {key: getattr(source.mode, key) for key in ["goos", "goarch", "pure", "static", "race", "msan", "asan", "tags"]},
+            "srcs": [file.path for file in source.srcs],
+            "embedsrcs": [file.path for file in source.embedsrcs],
+            "deps": [{"label": str(dep.data.label), "importpath": dep.data.importpath} for dep in source.deps],
+            "cgo": source.cgo,
+            "cdeps": [str(dep.label) for dep in source.cdeps],
+            "compiler_options": {key: getattr(source, key) for key in ["gc_goopts", "cppopts", "copts", "cxxopts", "clinkopts"]},
+            "x_defs": source.x_defs,
+        })
+    return [_CompilationInfo(
+        owner = owners[0] if owners else str(target.label),
+        archives = records,
+        runtime_attributes = {
+            "data": [str(dep.label) for dep in ctx.rule.attr.data],
+            "args": ctx.rule.attr.args,
+            "env": ctx.rule.attr.env,
+            "env_inherit": ctx.rule.attr.env_inherit,
+        },
+    )]
+
+_compilation_info = aspect(implementation = _compilation_info_impl)
 
 def _package_probe_impl(ctx):
     go = go_context(ctx)
@@ -26,6 +68,7 @@ def _package_probe_impl(ctx):
     outcome = ctx.actions.declare_file(ctx.label.name + "-outcome.json")
     manifest = ctx.actions.declare_file(ctx.label.name + ".json")
     packages = [dep[GoPkgInfo] for dep in ctx.attr.roots]
+    comparisons = [dep[GoPkgInfo] for dep in ctx.attr.comparison_roots]
     json_files = depset(transitive = [pkg.pkg_json_files for pkg in packages])
     stdlib_json = depset([pkg.stdlib_json_file for pkg in packages])
     ctx.actions.write(manifest, json.encode({
@@ -36,6 +79,16 @@ def _package_probe_impl(ctx):
         "goarch": go.mode.goarch,
         "goos": go.mode.goos,
         "bazel_version_file": ctx.file._bazel_version.path,
+        "owner_map": {str(dep.label): dep[_CompilationInfo].owner for dep in ctx.attr.roots} if comparisons else {},
+        "comparison_package_json": [file.path for file in depset(transitive = [pkg.pkg_json_files for pkg in comparisons]).to_list()],
+        "compilation_metadata": {
+            str(dep.label): {
+                "owner": dep[_CompilationInfo].owner,
+                "archives": dep[_CompilationInfo].archives,
+                "runtime_attributes": dep[_CompilationInfo].runtime_attributes,
+            }
+            for dep in ctx.attr.roots + ctx.attr.comparison_roots
+        } if comparisons else {},
     }))
     args = ctx.actions.args()
     args.add("--manifest", manifest)
@@ -47,8 +100,9 @@ def _package_probe_impl(ctx):
     args.add("--go", go.sdk.go)
     args.add("--goroot", go.sdk.root_file.dirname)
     inputs = [ctx.attr._bundle[DefaultInfo].files, json_files, stdlib_json]
+    inputs.extend([pkg.pkg_json_files for pkg in comparisons])
     inputs.extend([go.sdk.srcs, go.sdk.headers, go.sdk.tools])
-    for pkg in packages:
+    for pkg in packages + comparisons:
         inputs.extend([pkg.compiled_go_files, pkg.export_files, pkg.stdlib_cache_dir])
     ctx.actions.run(
         executable = ctx.executable._runner,
@@ -69,7 +123,8 @@ package_probe = go_rule(
     rule,
     implementation = _package_probe_impl,
     attrs = {
-        "roots": attr.label_list(aspects = [go_pkg_info_aspect], mandatory = True),
+        "roots": attr.label_list(aspects = [go_pkg_info_aspect, _compilation_info], mandatory = True),
+        "comparison_roots": attr.label_list(aspects = [go_pkg_info_aspect, _compilation_info]),
         "_bazel_version": attr.label(default = "//:.bazelversion", allow_single_file = True),
         "_bundle": attr.label(default = "@codeql_bundle//:files"),
         "_codeql": attr.label(default = "@codeql_bundle//:codeql", allow_single_file = True),
