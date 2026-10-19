@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
 	"net/netip"
 	"os"
@@ -51,8 +52,8 @@ import (
 var (
 	port    = flag.Int("port", 0, "bind port (all addresses)")
 	forward = flag.String("forward", "", "forwarding target")
-	client  = flag.Bool("client", false, "use netstack for listen")
-	server  = flag.Bool("server", false, "use netstack for dial")
+	client  = flag.Bool("client", false, "use netstack for dial")
+	server  = flag.Bool("server", false, "use netstack for listen")
 
 	// Netstack-specific options.
 	mtu                = flag.Int("mtu", 1280, "mtu for network stack")
@@ -80,7 +81,7 @@ var (
 
 type impl interface {
 	dial(address string) (net.Conn, error)
-	listen(port int) (net.Listener, error)
+	listen(port uint16) (net.Listener, error)
 	printStats()
 }
 
@@ -90,7 +91,7 @@ func (netImpl) dial(address string) (net.Conn, error) {
 	return net.Dial("tcp", address)
 }
 
-func (netImpl) listen(port int) (net.Listener, error) {
+func (netImpl) listen(port uint16) (net.Listener, error) {
 	return net.Listen("tcp", fmt.Sprintf(":%d", port))
 }
 
@@ -310,30 +311,40 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	}, probeFile.Close, nil
 }
 
-func (n netstackImpl) dial(address string) (net.Conn, error) {
+func parseNetstackAddress(address string) (tcpip.FullAddress, error) {
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		return nil, err
+		return tcpip.FullAddress{}, err
 	}
 	if host == "" {
 		// A host must be provided for the dial.
-		return nil, fmt.Errorf("no host provided")
+		return tcpip.FullAddress{}, fmt.Errorf("no host provided")
 	}
-	portNumber, err := strconv.Atoi(port)
+	portNumber, err := strconv.ParseInt(port, 10, 64)
 	if err != nil {
-		return nil, err
+		return tcpip.FullAddress{}, err
+	}
+	if portNumber < 0 || portNumber > math.MaxUint16 {
+		return tcpip.FullAddress{}, fmt.Errorf("port %q: %w", port, strconv.ErrRange)
 	}
 	parsedAddr, err := netip.ParseAddr(host)
 	if err != nil {
-		return nil, err
+		return tcpip.FullAddress{}, err
 	}
 	if parsedAddr.Zone() != "" {
-		return nil, fmt.Errorf("unexpected IPv6 zone in %q", host)
+		return tcpip.FullAddress{}, fmt.Errorf("unexpected IPv6 zone in %q", host)
 	}
-	addr := tcpip.FullAddress{
+	return tcpip.FullAddress{
 		NIC:  nicID,
 		Addr: netip.AddrFrom16(parsedAddr.As16()),
 		Port: uint16(portNumber),
+	}, nil
+}
+
+func (n netstackImpl) dial(address string) (net.Conn, error) {
+	addr, err := parseNetstackAddress(address)
+	if err != nil {
+		return nil, err
 	}
 	proto := ipv4.ProtocolNumber
 	if *useIpv6 {
@@ -346,10 +357,10 @@ func (n netstackImpl) dial(address string) (net.Conn, error) {
 	return conn, nil
 }
 
-func (n netstackImpl) listen(port int) (net.Listener, error) {
+func (n netstackImpl) listen(port uint16) (net.Listener, error) {
 	addr := tcpip.FullAddress{
 		NIC:  nicID,
-		Port: uint16(port),
+		Port: port,
 	}
 	proto := ipv4.ProtocolNumber
 	if *useIpv6 {
@@ -375,8 +386,18 @@ func main() {
 	if *port == 0 {
 		log.Fatalf("no port provided")
 	}
+	if *port < 0 || *port > math.MaxUint16 {
+		log.Fatalf("invalid port %d: %v", *port, strconv.ErrRange)
+	}
 	if *forward == "" {
 		log.Fatalf("no forward provided")
+	}
+	if *client {
+		// Reject invalid numeric targets before opening network devices. The
+		// native dialer also accepts service names, so leave those to net.Dial.
+		if _, err := parseNetstackAddress(*forward); err != nil {
+			log.Fatalf("invalid forwarding target %q: %v", *forward, err)
+		}
 	}
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -461,7 +482,7 @@ func main() {
 	}
 
 	// Bind once to the server socket.
-	listener, err := in.listen(*port)
+	listener, err := in.listen(uint16(*port))
 	if err != nil {
 		// Should not happen, everything must be bound by this time
 		// this proxy is started.
