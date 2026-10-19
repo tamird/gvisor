@@ -223,58 +223,50 @@ func TestSandboxOptions(t *testing.T) {
 func TestSandboxOptionsSudoIDs(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
-		uid     string
-		gid     string
-		unset   bool
+		env     map[string]string
 		wantUID uint32
 		wantGID uint32
 		wantErr error
 	}{
 		{
 			name:    "unset",
-			unset:   true,
-			wantUID: uint32(os.Getuid()),
-			wantGID: uint32(os.Getgid()),
-		},
-		{
-			name:    "empty",
 			wantUID: uint32(os.Getuid()),
 			wantGID: uint32(os.Getgid()),
 		},
 		{
 			name:    "sudo_user",
-			uid:     "4242",
-			gid:     "4343",
+			env:     map[string]string{"SUDO_UID": "4242", "SUDO_GID": "4343"},
 			wantUID: 4242,
 			wantGID: 4343,
 		},
 		{
 			name:    "plus_and_leading_zeros",
-			uid:     "+0001",
-			gid:     "+0002",
+			env:     map[string]string{"SUDO_UID": "+0001", "SUDO_GID": "+0002"},
 			wantUID: 1,
 			wantGID: 2,
 		},
 		{
 			name:    "largest_valid_id",
-			uid:     "4294967294",
-			gid:     "4294967294",
+			env:     map[string]string{"SUDO_UID": "4294967294", "SUDO_GID": "4294967294"},
 			wantUID: 4294967294,
 			wantGID: 4294967294,
 		},
-		{name: "negative_uid", uid: "-1", wantErr: strconv.ErrRange},
-		{name: "negative_gid", gid: "-1", wantErr: strconv.ErrRange},
-		{name: "oversized_uid", uid: "4294967296", wantErr: strconv.ErrRange},
-		{name: "oversized_gid", gid: "4294967296", wantErr: strconv.ErrRange},
-		{name: "reserved_uid", uid: "4294967295", wantErr: strconv.ErrRange},
-		{name: "reserved_gid", gid: "4294967295", wantErr: strconv.ErrRange},
-		{name: "malformed_uid", uid: "not-an-id", wantErr: strconv.ErrSyntax},
-		{name: "malformed_gid", gid: "not-an-id", wantErr: strconv.ErrSyntax},
+		{name: "empty_uid", env: map[string]string{"SUDO_UID": ""}, wantErr: strconv.ErrSyntax},
+		{name: "empty_gid", env: map[string]string{"SUDO_GID": ""}, wantErr: strconv.ErrSyntax},
+		{name: "negative_uid", env: map[string]string{"SUDO_UID": "-1"}, wantErr: strconv.ErrRange},
+		{name: "negative_gid", env: map[string]string{"SUDO_GID": "-1"}, wantErr: strconv.ErrRange},
+		{name: "oversized_uid", env: map[string]string{"SUDO_UID": "4294967296"}, wantErr: strconv.ErrRange},
+		{name: "oversized_gid", env: map[string]string{"SUDO_GID": "4294967296"}, wantErr: strconv.ErrRange},
+		{name: "reserved_uid", env: map[string]string{"SUDO_UID": "4294967295"}, wantErr: strconv.ErrRange},
+		{name: "reserved_gid", env: map[string]string{"SUDO_GID": "4294967295"}, wantErr: strconv.ErrRange},
+		{name: "malformed_uid", env: map[string]string{"SUDO_UID": "not-an-id"}, wantErr: strconv.ErrSyntax},
+		{name: "malformed_gid", env: map[string]string{"SUDO_GID": "not-an-id"}, wantErr: strconv.ErrSyntax},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for key, value := range map[string]string{"SUDO_UID": tc.uid, "SUDO_GID": tc.gid} {
+			for _, key := range []string{"SUDO_UID", "SUDO_GID"} {
+				value, ok := tc.env[key]
 				t.Setenv(key, value)
-				if tc.unset {
+				if !ok {
 					if err := os.Unsetenv(key); err != nil {
 						t.Fatal(err)
 					}
