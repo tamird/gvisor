@@ -39,6 +39,7 @@ def _codeql_source(name, testonly, srcs = None, excluded_modes = None):
             visibility = ["//tools/codeql:__pkg__"],
         )
         return
+
     # An alias in the same package preserves the owner's visibility (including
     # package defaults) and configuration. It adds no compilation or runfiles.
     native.alias(

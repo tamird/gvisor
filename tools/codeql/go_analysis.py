@@ -295,7 +295,8 @@ def default_roots(owners: list[Owner], records: dict[str, Package], packages: li
             raise ValueError(f"Root metadata omitted original sources: {owner['owner']}: {sorted(missing)}")
         if not owner["cgo"] and (missing := originals - prefilter_files):
             raise ValueError(f"Root prefilter metadata omitted original sources: {owner['owner']}: {sorted(missing)}")
-        files = loaded.get("CompiledGoFiles")
+        # packages.Package.MarshalJSON omits empty source lists.
+        files = loaded.get("CompiledGoFiles", [])
         if not isinstance(files, list) or any(not isinstance(name, str) for name in files):
             raise ValueError(f"Driver returned invalid root source paths: {identity}")
         if files:

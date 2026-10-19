@@ -122,12 +122,20 @@ class ConfiguredPackagesTest(unittest.TestCase):
         normal_owner = {"owner": "//pkg:main", "package_id": normal["ID"], "cgo": False, "original_sources": [main]}
         owner = {"owner": "//pkg:plugin", "package_id": raw["ID"], "cgo": False, "original_sources": [plugin]}
         inputs = go_analysis.source_files(self.inputs, self.root)
-        labels, excluded = go_analysis.default_roots([normal_owner, owner], {normal["ID"]: normal, raw["ID"]: raw},
-                                                    [normal, empty], inputs, self.root)
-        self.assertEqual(labels, [normal["ID"]])
-        self.assertEqual(excluded, [{"owner": owner, "reason": "no-default-sources", "sources": [plugin],
-                                     "raw_go_files": [plugin], "raw_compiled_go_files": [plugin],
-                                     "constraints": {plugin: ["//go:build network_plugins"]}}])
+        # The canonical Go JSON serializer omits empty slices; an explicit
+        # empty list is equivalent, while malformed present values stay invalid.
+        for filtered in (empty, {key: value for key, value in empty.items() if key != "CompiledGoFiles"}):
+            with self.subTest(filtered=filtered):
+                labels, excluded = go_analysis.default_roots([normal_owner, owner], {normal["ID"]: normal, raw["ID"]: raw},
+                                                            [normal, filtered], inputs, self.root)
+                self.assertEqual(labels, [normal["ID"]])
+                self.assertEqual(excluded, [{"owner": owner, "reason": "no-default-sources", "sources": [plugin],
+                                             "raw_go_files": [plugin], "raw_compiled_go_files": [plugin],
+                                             "constraints": {plugin: ["//go:build network_plugins"]}}])
+        for files in (None, "", [None]):
+            with self.subTest(files=files), self.assertRaisesRegex(ValueError, "invalid root source paths"):
+                go_analysis.default_roots([normal_owner, owner], {normal["ID"]: normal, raw["ID"]: raw},
+                                          [normal, {**empty, "CompiledGoFiles": files}], inputs, self.root)
         for originals, raw_files in [([], []), ([plugin], []), ([plugin], [plugin, main])]:
             with self.subTest(originals=originals, raw_files=raw_files), self.assertRaises(ValueError):
                 go_analysis.default_roots([normal_owner, {**owner, "original_sources": originals}],
