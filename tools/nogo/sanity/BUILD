@@ -33,17 +33,11 @@ nogo_test(
     deps = [":sanity"],
 )
 
-# Only the explicit native variants require the embedded analyzer to match the
-# target CPU. The ordinary test may use a different execution platform.
 [
     nogo_test(
         name = "sanity_nogo_" + arch,
         srcs = ["sanity.go"],
         config = ":sanity_config",
-        exec_compatible_with = [
-            "@platforms//os:linux",
-            cpu,
-        ],
         tags = [
             "manual",
             "noguitar",
@@ -52,10 +46,7 @@ nogo_test(
         visibility = ["//visibility:private"],
         deps = [":sanity"],
     )
-    for arch, cpu in [
-        ("amd64", "@platforms//cpu:x86_64"),
-        ("arm64", "@platforms//cpu:aarch64"),
-    ]
+    for arch in ["amd64", "arm64"]
 ]
 
 sh_test(

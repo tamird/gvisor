@@ -353,6 +353,8 @@ go_path(
         "//pkg/tcpip/sample/tun_tcp_connect",
         "//pkg/tcpip/sample/tun_tcp_echo",
         "//pkg/tcpip/transport/tcpconntrack",
+        "//runsc/checkpointgofer/gcs",
+        "//runsc/metricserver",
         "//sandboxexec/sandbox",
         "//tools/xdp/cmd",
     ],
@@ -367,7 +369,12 @@ genrule(
         "go.mod",
         "go.sum",
         "//runsc:go_export_sources",
+        "//runsc/checkpointgofer:go_export_sources",
+        "//runsc/cmd/metricserver:go_export_sources",
         "//runsc/cmd/sentry:go_export_sources",
+        "//runsc/fdparking:fdparking.c",
+        "//runsc/prewarmer:prewarmer.c",
+        "//runsc/procumounter:procumounter.c",
         "//shim:go_export_sources",
         "//tools/checklocks/cmd/checklocks:go_export_sources",
         "//webhook:go_export_sources",
@@ -375,9 +382,13 @@ genrule(
     outs = ["go_export.zip"],
     cmd = "$(execpath //tools/go_export:assemble) --gopath $(execpath :gopath) --output $@ --go-mod $(execpath go.mod) " +
           "$(execpath AUTHORS) $(execpath LICENSE) $(execpath go.sum) " +
-          "$(execpaths //runsc:go_export_sources) $(execpaths //runsc/cmd/sentry:go_export_sources) " +
+          "$(execpaths //runsc:go_export_sources) $(execpaths //runsc/checkpointgofer:go_export_sources) " +
+          "$(execpaths //runsc/cmd/metricserver:go_export_sources) $(execpaths //runsc/cmd/sentry:go_export_sources) " +
+          "$(execpath //runsc/fdparking:fdparking.c) $(execpath //runsc/prewarmer:prewarmer.c) " +
+          "$(execpath //runsc/procumounter:procumounter.c) " +
           "$(execpaths //shim:go_export_sources) " +
           "$(execpaths //tools/checklocks/cmd/checklocks:go_export_sources) $(execpaths //webhook:go_export_sources)",
+    tags = ["qualification-output-group=default"],
     tools = ["//tools/go_export:assemble"],
     visibility = ["//visibility:public"],
 )

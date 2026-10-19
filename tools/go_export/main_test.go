@@ -52,6 +52,13 @@ func TestAssemble(t *testing.T) {
 	if err := os.WriteFile(command, []byte("command source"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	sidecar := filepath.Join(root, "runsc", "sidecar", "sidecar.c")
+	if err := os.MkdirAll(filepath.Dir(sidecar), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sidecar, []byte("C sidecar source"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	for _, tc := range []struct {
 		name, module, wantError string
 	}{
@@ -68,7 +75,7 @@ func TestAssemble(t *testing.T) {
 				t.Fatal(err)
 			}
 			var output bytes.Buffer
-			err := assemble(gopath, goMod, []string{command}, &output)
+			err := assemble(gopath, goMod, []string{command, sidecar}, &output)
 			if tc.wantError != "" {
 				if err == nil || !strings.Contains(err.Error(), tc.wantError) {
 					t.Fatalf("assemble error = %v, want %q", err, tc.wantError)
@@ -83,10 +90,11 @@ func TestAssemble(t *testing.T) {
 				t.Fatal(err)
 			}
 			want := map[string]string{
-				"README.md":  readme,
-				"command.go": "command source",
-				"go.mod":     tc.module,
-				"pkg.go":     "library source",
+				"README.md":               readme,
+				"command.go":              "command source",
+				"go.mod":                  tc.module,
+				"pkg.go":                  "library source",
+				"runsc/sidecar/sidecar.c": "C sidecar source",
 			}
 			if len(got.File) != len(want) {
 				t.Fatalf("archive entries = %d, want %d", len(got.File), len(want))
@@ -109,7 +117,7 @@ func TestAssemble(t *testing.T) {
 				t.Errorf("archive entries are not sorted: %v", names)
 			}
 			var repeated bytes.Buffer
-			if err := assemble(gopath, goMod, []string{command}, &repeated); err != nil {
+			if err := assemble(gopath, goMod, []string{command, sidecar}, &repeated); err != nil {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(output.Bytes(), repeated.Bytes()) {

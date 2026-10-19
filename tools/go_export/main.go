@@ -35,9 +35,11 @@ import (
 
 const readme = `# gVisor
 
-This branch is a synthetic branch, containing only Go sources, that is
-compatible with standard Go tools. See the master branch for authoritative
-sources and tests.
+This branch is a synthetic branch, containing Go sources and the C sources of
+runsc's sidecars, that is compatible with standard Go tools. Build runsc and
+its Go sidecars with CGO_ENABLED=0, and build the C sidecars with the flags in
+their BUILD files on the master commit that each go branch commit merges. See
+the master branch for authoritative sources and tests.
 `
 
 func readEntry(entry *zip.File) ([]byte, error) {
@@ -87,7 +89,7 @@ func assemble(gopath, goMod string, extraFiles []string, output io.Writer) error
 		return fmt.Errorf("GOPATH archive contains no sources for %s", module.Module.Mod.Path)
 	}
 	// go_path consumes libraries, so add the explicitly selected command
-	// entrypoints and module metadata from the source tree.
+	// entrypoints, C sidecars, and module metadata from the source tree.
 	for _, filename := range extraFiles {
 		name, err := filepath.Rel(filepath.Dir(goMod), filename)
 		if err != nil {
