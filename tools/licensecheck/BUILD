@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/bazeldefs:go_runtime.bzl", "go_runtime_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -44,4 +45,19 @@ go_test(
     embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),  # keep
     shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
+)
+
+# Exercise location transport without adding a test program or changing its
+# assertions. The output directory affects only optional profiles, not tests.
+go_runtime_test(
+    name = "shared_runtime_contract_test",
+    size = "small",
+    src = ":licensecheck_test_compile",
+    args = ["-test.outputdir=$(rootpath :dependencies.yaml)/.."],
+    data = [
+        "dependencies.yaml",
+        "//governance:licensing.yaml",
+    ],
+    env = {"GVISOR_SHARED_RUNTIME_DATA": "$(rootpath :dependencies.yaml)"},
+    tags = ["manual"],
 )
