@@ -145,7 +145,11 @@ _cgo_analysis, _cgo_transition = _with_analysis_platform(_go_analysis).set(
     False,
 ).build()
 
-def codeql_analysis(name, language, **kwargs):
+def codeql_analysis(name, language, roots = None, **kwargs):
     """Declare one Linux/AMD64 analysis using the public workflow's language."""
-    implementation = _cgo_analysis if language == "go" else _analysis
-    implementation(name = name, language = language, **kwargs)
+    if language == "go":
+        _cgo_analysis(name = name, language = language, roots = roots, **kwargs)
+    else:
+        if roots != None:
+            fail("Only Go analysis accepts declared package roots")
+        _analysis(name = name, language = language, **kwargs)

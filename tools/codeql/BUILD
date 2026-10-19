@@ -68,8 +68,8 @@ _LANGUAGES = [
             "EstimatedMemory": "16GB",
         },
         language = language,
+        roots = GO_ANALYSIS_ROOTS if language == "go" else None,
         tags = ["manual"],
-        **({"roots": GO_ANALYSIS_ROOTS} if language == "go" else {})
     )
     for language in _LANGUAGES
 ]
