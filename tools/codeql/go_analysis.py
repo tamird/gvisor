@@ -23,7 +23,7 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
-from typing import TypedDict, cast
+from typing import Literal, TypedDict, cast
 import zipfile
 
 
@@ -139,83 +139,92 @@ def source_files(inputs: list[DeclaredInput], root: Path) -> dict[str, SourceFil
     return result
 
 
-def selected_packages(paths: list[str], inputs: dict[str, SourceFile], root: Path) -> PackageSelection:
-    """Require coherent metadata for every ID and every extractor package path."""
+def selected_packages(records: list[tuple[str, Package]], inputs: dict[str, SourceFile], root: Path,
+                      *, group_by: Literal["ID", "PkgPath"]) -> PackageSelection:
+    """Reconcile configured IDs or actual loaded package paths with one contract."""
     selected: dict[str, Package] = {}
     representatives: dict[str, tuple[Package, str]] = {}
     variants: list[dict[str, object]] = []
     equivalents: dict[str, str] = {}
     conflicts: list[dict[str, object]] = []
-    for name in sorted(paths):
-        for record in json_records(Path(name)):
-            identity, package_path = record["ID"], record["PkgPath"]
-            if package_path == "testmain":
-                raise ValueError(f"Test package selected for production analysis: {identity}")
-            if not record.get("Dir"):
-                raise ValueError(f"Missing declared package directory: {identity}")
-            for field in _SOURCE_FIELDS:
-                if missing := [path for path in record.get(field, []) if str(resolve_input(path, root)) not in inputs]:
-                    conflicts.append({"id": identity, "metadata": name, "field": field, "undeclared_sources": missing})
-            if (previous_id := selected.get(identity)) is not None and previous_id["PkgPath"] != package_path:
-                conflicts.append({"id": identity, "metadata": name,
-                                  "package_paths": [previous_id["PkgPath"], package_path]})
-            selected.setdefault(identity, record)
-            if (representative := representatives.get(package_path)) is None:
-                representatives[package_path] = record, name
+    for name, record in sorted(records, key=lambda item: item[0]):
+        identity, package_path = record["ID"], record["PkgPath"]
+        if package_path == "testmain":
+            raise ValueError(f"Test package selected for production analysis: {identity}")
+        if not record.get("Dir"):
+            raise ValueError(f"Missing declared package directory: {identity}")
+        for field in _SOURCE_FIELDS:
+            if missing := [path for path in record.get(field, []) if str(resolve_input(path, root)) not in inputs]:
+                conflicts.append({"id": identity, "metadata": name, "field": field, "undeclared_sources": missing})
+        if (previous_id := selected.get(identity)) is not None and previous_id["PkgPath"] != package_path:
+            conflicts.append({"id": identity, "metadata": name,
+                              "package_paths": [previous_id["PkgPath"], package_path]})
+        selected.setdefault(identity, record)
+        if (representative := representatives.get(record[group_by])) is None:
+            representatives[record[group_by]] = record, name
+            continue
+        previous, previous_path = representative
+        differences = {}
+        copies = {}
+        for field in sorted(previous.keys() | record.keys()):
+            # CodeQL selects one AST variant per PkgPath. Keep all IDs and
+            # imports, but prove every variant has the same source semantics.
+            # The effective source-loading mode does not use export data.
+            if field in ("ID", "ExportFile") or (field in previous and field in record
+                    and json.dumps(previous[field], sort_keys=True, allow_nan=False)
+                    == json.dumps(record[field], sort_keys=True, allow_nan=False)):
                 continue
-            previous, previous_path = representative
-            differences = {}
-            copies = {}
-            for field in sorted(previous.keys() | record.keys()):
-                # CodeQL selects one AST variant per PkgPath. Keep all IDs and
-                # imports, but prove every variant has the same source semantics.
-                # The effective source-loading mode does not use export data.
-                if field in ("ID", "ExportFile") or (field in previous and field in record
-                        and json.dumps(previous[field], sort_keys=True, allow_nan=False)
-                        == json.dumps(record[field], sort_keys=True, allow_nan=False)):
-                    continue
-                first, current = previous.get(field), record.get(field)
-                if field in _SOURCE_FIELDS and isinstance(first, list) and isinstance(current, list) and len(first) == len(current):
-                    field_copies = {}
-                    unequal = []
-                    for old_name, new_name in zip(first, current, strict=True):
-                        if old_name == new_name:
-                            continue
-                        old_path, new_path = str(resolve_input(old_name, root)), str(resolve_input(new_name, root))
-                        old_file, new_file = inputs.get(old_path), inputs.get(new_path)
-                        if old_file is None or new_file is None or not old_file.generated or not old_file.owner or old_file != new_file:
-                            unequal.append({"previous": old_name, "current": new_name,
-                                            "previous_facts": asdict(old_file) if old_file else None,
-                                            "current_facts": asdict(new_file) if new_file else None})
-                        else:
-                            field_copies[new_path] = old_path
-                    if not unequal:
-                        copies.update(field_copies)
+            first, current = previous.get(field), record.get(field)
+            if field in _SOURCE_FIELDS and isinstance(first, list) and isinstance(current, list) and len(first) == len(current):
+                field_copies = {}
+                unequal = []
+                for old_name, new_name in zip(first, current, strict=True):
+                    if old_name == new_name:
                         continue
-                    differences[field] = unequal
-                else:
-                    # Preserve absent versus explicitly null values and future fields.
-                    differences[field] = {
-                        "previous": {field: first} if field in previous else {},
-                        "current": {field: current} if field in record else {},
-                    }
-            variants.append({"id": identity, "package_path": package_path,
-                             "selected_metadata": previous_path, "metadata": name,
-                             "selected": deepcopy(previous), "record": deepcopy(record),
-                             "equivalent_sources": copies})
-            if differences:
-                conflicts.append({"id": identity, "package_path": package_path,
-                                  "selected_metadata": previous_path, "metadata": name,
-                                  "differences": differences})
+                    old_path, new_path = str(resolve_input(old_name, root)), str(resolve_input(new_name, root))
+                    old_file, new_file = inputs.get(old_path), inputs.get(new_path)
+                    if old_file is None or new_file is None or not old_file.generated or not old_file.owner or old_file != new_file:
+                        unequal.append({"previous": old_name, "current": new_name,
+                                        "previous_facts": asdict(old_file) if old_file else None,
+                                        "current_facts": asdict(new_file) if new_file else None})
+                    else:
+                        field_copies[new_path] = old_path
+                if not unequal:
+                    copies.update(field_copies)
+                    continue
+                differences[field] = unequal
             else:
-                for path, representative_path in copies.items():
-                    if path in equivalents and equivalents[path] != representative_path:
-                        conflicts.append({"id": identity, "path": path,
-                                          "representatives": [equivalents[path], representative_path]})
-                    equivalents[path] = representative_path
+                # Preserve absent versus explicitly null values and future fields.
+                differences[field] = {
+                    "previous": {field: first} if field in previous else {},
+                    "current": {field: current} if field in record else {},
+                }
+        variants.append({"id": identity, "package_path": package_path, "group_by": group_by,
+                         "selected_metadata": previous_path, "metadata": name,
+                         "selected": deepcopy(previous), "record": deepcopy(record),
+                         "equivalent_sources": copies})
+        if differences:
+            conflicts.append({"id": identity, "package_path": package_path,
+                              "selected_metadata": previous_path, "metadata": name,
+                              "differences": differences})
+        else:
+            for path, representative_path in copies.items():
+                if path in equivalents and equivalents[path] != representative_path:
+                    conflicts.append({"id": identity, "path": path,
+                                      "representatives": [equivalents[path], representative_path]})
+                equivalents[path] = representative_path
     if conflicts:
         raise ValueError("Conflicting configured package records: " + json.dumps(conflicts, sort_keys=True))
     return PackageSelection(selected, variants, equivalents)
+
+
+def loaded_packages(records: list[tuple[str, Package]], package_ids: set[str],
+                    inputs: dict[str, SourceFile], root: Path) -> PackageSelection:
+    """Check only original records reached by the canonical driver's import walk."""
+    if unknown := package_ids - {record["ID"] for _, record in records}:
+        raise ValueError(f"Driver returned undeclared package identities: {sorted(unknown)}")
+    return selected_packages([(name, record) for name, record in records if record["ID"] in package_ids],
+                             inputs, root, group_by="PkgPath")
 
 
 @dataclass
@@ -272,7 +281,9 @@ def extract(args: argparse.Namespace) -> Path:
             for owner in manifest["owners"]):
         raise ValueError("Declared roots differ from the Linux/AMD64 loader and type-size contract")
     inputs = source_files(manifest["declared_inputs"], root)
-    selection = selected_packages(manifest["package_json"], inputs, root)
+    records = [(name, record) for name in sorted(manifest["package_json"]) for record in json_records(Path(name))]
+    # Registry insertion is keyed by ID: reconcile configured copies first.
+    selection = selected_packages(records, inputs, root, group_by="ID")
     selected = selection.records
     if missing := set(manifest["labels"]) - selected.keys():
         raise ValueError(f"Missing requested package records: {sorted(missing)}")
@@ -287,8 +298,10 @@ def extract(args: argparse.Namespace) -> Path:
     packages_path = output / "packages.json"
     packages_path.write_text("\n".join(json.dumps(record) for record in augmented_records) + "\n")
     stdlib_paths = [Path(name).absolute() for name in manifest["stdlib_json"]]
+    stdlib_ids = set()
     for path in stdlib_paths:
         for record in json_records(path):
+            stdlib_ids.add(record["ID"])
             if not record.get("Dir"):
                 raise ValueError(f"Standard package lacks its source directory: {record['ID']}")
     driver_manifest = output / "driver.json"
@@ -332,9 +345,14 @@ def extract(args: argparse.Namespace) -> Path:
                 raise ValueError("Driver returned a non-string root identity")
         case _:
             raise ValueError("Driver did not return its declared graph and gc/amd64 type-size identity")
-    if missing := set(manifest["labels"]) - set(roots):
-        raise ValueError(f"Driver omitted requested roots: {sorted(missing)}")
+    if set(roots) != set(manifest["labels"]) or len(roots) != len(manifest["labels"]):
+        raise ValueError("Driver roots differ from the exact production selection: " + json.dumps({
+            "missing": sorted(set(manifest["labels"]) - set(roots)),
+            "unexpected": sorted(set(roots) - set(manifest["labels"])),
+            "duplicates": len(roots) != len(set(roots)),
+        }))
     eligible: dict[str, set[str]] = {}
+    loaded_ids = set()
     for record in packages:
         match record:
             case {"ID": str() as identity, "Dir": str() as directory} if directory:
@@ -343,6 +361,9 @@ def extract(args: argparse.Namespace) -> Path:
                     raise ValueError(f"Driver returned invalid source paths: {identity}")
             case _:
                 raise ValueError("Driver lost package directory or source identity")
+        if identity in loaded_ids:
+            raise ValueError(f"Driver duplicated package identity: {identity}")
+        loaded_ids.add(identity)
         if identity.startswith("@@//"):
             observed_module = record.get("Module")
             if (not isinstance(observed_module, dict)
@@ -351,9 +372,13 @@ def extract(args: argparse.Namespace) -> Path:
                     or observed_module.get("Replace") is not None
                     or observed_module.get("Error") is not None):
                 raise ValueError(f"Driver lost declared module provenance: {identity}")
-            if identity in eligible:
-                raise ValueError(f"Driver duplicated package identity: {identity}")
             eligible[identity] = {str(Path(name).resolve()) for name in files}
+    # Aspect inputs include embedded fragments which are not separate imported
+    # packages. The upstream driver owns reachability and build-tag filtering.
+    # Compare original records for its actual IDs so unknown fields stay strict.
+    loaded = loaded_packages(records, loaded_ids - stdlib_ids, inputs, root)
+    excluded_records = [{"metadata": name, "record": record} for name, record in records
+                        if record["ID"] not in loaded_ids]
     eligible_sources = set().union(*eligible.values())
     if introduced := eligible_sources - raw_sources:
         raise ValueError(f"Driver introduced undeclared source files: {sorted(introduced)}")
@@ -364,7 +389,7 @@ def extract(args: argparse.Namespace) -> Path:
     equivalent_sources = {
         name: {"representative": representative, "facts": asdict(inputs[name]),
                "eligible": representative in eligible_sources}
-        for name, representative in selection.equivalents.items()
+        for name, representative in loaded.equivalents.items()
     }
     database = output / "database"
     # CodeQL removes one leading @ from each @@ command argument. Escape the
@@ -414,7 +439,7 @@ def extract(args: argparse.Namespace) -> Path:
                 continue
             path = "/" + entry.filename.lstrip("/")
             actual[path] = hashlib.sha256(archive.read(entry)).hexdigest()
-    coverage = archive_coverage(expected, actual, selection.equivalents)
+    coverage = archive_coverage(expected, actual, loaded.equivalents)
     outcome = {
         "requested_roots": manifest["labels"],
         "owners": manifest["owners"],
@@ -428,7 +453,10 @@ def extract(args: argparse.Namespace) -> Path:
         "raw_to_eligible_exclusions": sorted(raw_sources - eligible_sources),
         "declared_inputs": declared_inputs,
         "declared_source_provenance": {name: asdict(facts) for name, facts in inputs.items()},
-        "package_variants": selection.variants,
+        "configured_package_variants": selection.variants,
+        "loaded_package_variants": loaded.variants,
+        "unreachable_metadata_records": excluded_records,
+        "loaded_package_ids": sorted(loaded_ids),
         "equivalent_sources": equivalent_sources,
         "module": module,
         "source_coverage_unit": "accepted package source equivalence class",
@@ -455,6 +483,8 @@ def extract(args: argparse.Namespace) -> Path:
         "actual_files": len(coverage.actual),
         "declared_inputs": len(declared_inputs),
         "configured_variants": len(selection.variants),
+        "loaded_variants": len(loaded.variants),
+        "unreachable_metadata_records": len(excluded_records),
         "equivalent_generated_sources": len(equivalent_sources),
         "raw_to_eligible_exclusions": len(raw_sources - eligible_sources),
         "missing": len(coverage.missing),

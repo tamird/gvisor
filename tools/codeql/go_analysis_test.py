@@ -49,7 +49,9 @@ class ConfiguredPackagesTest(unittest.TestCase):
             path = self.root / name
             path.write_text(json.dumps(record))
             paths.append(str(path))
-        return go_analysis.selected_packages(list(reversed(paths)), go_analysis.source_files(self.inputs, self.root), self.root)
+        records = [(name, record) for name in reversed(paths) for record in go_analysis.json_records(Path(name))]
+        return go_analysis.selected_packages(records, go_analysis.source_files(self.inputs, self.root), self.root,
+                                             group_by="PkgPath")
 
     def test_equal_generated_copies_preserve_records(self) -> None:
         first = self.record([self.source("one")])
@@ -189,6 +191,37 @@ class ConfiguredPackagesTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "undeclared_sources"):
             self.select(first, second)
 
+    def test_loaded_scope_does_not_promote_embedded_fragment(self) -> None:
+        generated = self.source("one", "generated.go")
+        fragment = self.record([generated], identity="@@//pkg:proto")
+        container = self.record([generated, self.source("one", "gen.go")], identity="@@//pkg:library")
+        records = [("fragment.json", fragment), ("container.json", container)]
+        inputs = go_analysis.source_files(self.inputs, self.root)
+        configured = go_analysis.selected_packages(records, inputs, self.root, group_by="ID")
+        self.assertEqual(configured.records, {fragment["ID"]: fragment, container["ID"]: container})
+        loaded = go_analysis.loaded_packages(records, {container["ID"]}, inputs, self.root)
+        self.assertEqual(loaded.records, {container["ID"]: container})
+        self.assertEqual(loaded.variants, [])
+        # An explicit root or import edge makes both packages genuinely loaded.
+        with self.assertRaisesRegex(ValueError, "CompiledGoFiles"):
+            go_analysis.loaded_packages(records, {fragment["ID"], container["ID"]}, inputs, self.root)
+
+    def test_loaded_scope_rejects_unknown_identity(self) -> None:
+        record = self.record([self.source("one")])
+        with self.assertRaisesRegex(ValueError, "undeclared package identities.*@@//other:package"):
+            go_analysis.loaded_packages([("package.json", record)], {"@@//other:package"},
+                                        go_analysis.source_files(self.inputs, self.root), self.root)
+
+    def test_loaded_scope_preserves_unknown_raw_metadata(self) -> None:
+        first = self.record([self.source("one")], identity="@@//pkg:first")
+        second = self.record([self.source("two")], identity="@@//pkg:second")
+        first["FutureField"], second["FutureField"] = {"nested": True}, {"nested": 1}
+        # The driver need only return IDs; its serialization cannot erase raw facts.
+        with self.assertRaisesRegex(ValueError, "FutureField"):
+            go_analysis.loaded_packages([("first.json", first), ("second.json", second)],
+                                        {first["ID"], second["ID"]},
+                                        go_analysis.source_files(self.inputs, self.root), self.root)
+
     def test_reports_all_package_conflicts(self) -> None:
         first = self.record([self.source("one")])
         second = self.record([self.source("two", content=b"package changed\n")])
@@ -198,7 +231,9 @@ class ConfiguredPackagesTest(unittest.TestCase):
             path.write_text("\n".join(json.dumps({**record, "ID": identity}) for identity in ("@@//pkg:first", "@@//pkg:second")))
             paths.append(str(path))
         with self.assertRaises(ValueError) as caught:
-            go_analysis.selected_packages(paths, go_analysis.source_files(self.inputs, self.root), self.root)
+            records = [(name, record) for name in paths for record in go_analysis.json_records(Path(name))]
+            go_analysis.selected_packages(records, go_analysis.source_files(self.inputs, self.root), self.root,
+                                          group_by="ID")
         self.assertIn("@@//pkg:first", str(caught.exception))
         self.assertIn("@@//pkg:second", str(caught.exception))
 
