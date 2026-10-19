@@ -487,10 +487,11 @@ bazel() {
       --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
     "${capture_options[@]}" || capture_status=$?
     verdict_options+=(--expected-analysis "$directory/expected.jsonl")
+    if [[ $command_kind == build ]]; then capture_options+=(--expected-analysis "$directory/expected.jsonl"); fi
     if (( capture_status == 0 )); then
       if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
         --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
-        --output "$directory/selection.json" --test-output-options "$directory/test-output-options.txt"; then
+        --output "$directory/selection.json" --output-options "$directory/output-options.txt"; then
         result=0
       else
         preflight_status=$?
@@ -504,7 +505,7 @@ bazel() {
       # original stream exactly once, without reporter status text on stdout.
       qualification_bazel "$@" > "$directory/stdout.log" 2> "$directory/stderr.log" || result=$?
     elif [[ $analysis_only == false ]]; then
-      while IFS= read -r argument; do command_args+=("$argument"); done < "$directory/test-output-options.txt" || return 1
+      while IFS= read -r argument; do command_args+=("$argument"); done < "$directory/output-options.txt" || return 1
       printf '%s\n' "${command_args[@]}" "${target_args[@]}" > "$directory/arguments.txt" || return 1
     fi
     if [[ $command_only == false ]]; then

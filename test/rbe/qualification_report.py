@@ -179,7 +179,79 @@ class Attempt:
         return result
 
 
-def capture(events: Path, output: Path, output_root: Path, report_dir: Path, retain_outputs: bool = False) -> dict[str, object]:
+def declared_output_groups(targets: dict[str, unit_matrix.ConfiguredTarget]) -> set[tuple[Owner, str]]:
+    """Read the small report output groups explicitly requested by each owner."""
+    groups = set()
+    for label, target in targets.items():
+        for tag in target.tags:
+            if not tag.startswith("qualification-output-group="):
+                continue
+            group = tag.removeprefix("qualification-output-group=")
+            if re.fullmatch(r"[A-Za-z0-9_]+", group) is None:
+                raise ValueError(f"Invalid qualification output group: {tag}")
+            groups.add((Owner(label, target.configuration), group))
+    return groups
+
+
+def advertised_build_outputs(events: Path, groups: set[tuple[Owner, str]]) -> list[dict[str, object]]:
+    """Resolve declared groups through BEP file sets, independent of event order."""
+    if not groups:
+        return []
+    sets = {}
+    selected = {}
+    with events.open() as stream:
+        for line in stream:
+            event = mapping(json.loads(line))
+            identity = mapping(event.get("id"))
+            if "namedSetOfFiles" in event:
+                name = string(mapping(identity.get("namedSet")).get("id"))
+                if name in sets:
+                    raise ValueError(f"Duplicate build output file set: {name}")
+                sets[name] = mapping(event["namedSetOfFiles"])
+            if "completed" not in event or mapping(identity.get("targetCompleted")).get("aspect"):
+                continue
+            owner = Owner.parse(identity["targetCompleted"])
+            for raw in sequence(mapping(event["completed"]).get("outputGroup", [])):
+                group = mapping(raw)
+                key = owner, string(group.get("name"))
+                if key not in groups:
+                    continue
+                if key in selected or group.get("incomplete", False):
+                    raise ValueError(f"Duplicate or incomplete build output group: {key}")
+                selected[key] = group
+    if groups != selected.keys():
+        raise ValueError(f"Missing build output groups: {sorted(groups - selected.keys())}")
+
+    def files(name: str, ancestors: frozenset[str]) -> Iterator[dict[str, object]]:
+        if name in ancestors or name not in sets:
+            raise ValueError(f"Cyclic or missing build output file set: {name}")
+        value = sets[name]
+        yield from (mapping(item) for item in sequence(value.get("files", [])))
+        for child in sequence(value.get("fileSets", [])):
+            yield from files(string(mapping(child).get("id")), ancestors | {name})
+
+    outputs = []
+    for (owner, group), value in sorted(selected.items()):
+        found = {}
+        for raw in sequence(value.get("fileSets", [])):
+            for item in files(string(mapping(raw).get("id")), frozenset()):
+                name = "/".join([string(part) for part in sequence(item.get("pathPrefix", []))] + [string(item.get("name"))])
+                if name in found and found[name] != item:
+                    raise ValueError(f"Conflicting build output: {name}")
+                found[name] = item
+        if not found:
+            raise ValueError(f"Empty build output group: {owner} {group}")
+        for name, item in sorted(found.items()):
+            digest, size = string(item.get("digest")), number(item.get("length"))
+            if re.fullmatch(r"[0-9a-f]{64}", digest) is None or not 0 <= size <= MAX_REPORT_BYTES:
+                raise ValueError(f"Invalid build output digest or size: {name}")
+            outputs.append({"identity": {"label": owner.label, "configuration": {"id": owner.configuration}},
+                            "group": group, "name": name, "uri": string(item.get("uri")), "sha256": digest, "bytes": size})
+    return outputs
+
+
+def capture(events: Path, output: Path, output_root: Path, report_dir: Path, retain_outputs: bool = False,
+            expected_analysis: tuple[Path, ...] = ()) -> dict[str, object]:
     """Copy all advertised original reports before returning capture failures."""
     errors: list[str] = []
     reports: list[dict[str, object]] = []
@@ -195,6 +267,48 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     seen: set[tuple[Attempt, str]] = set()
     previous: dict[tuple[Attempt, str], dict[str, object]] = {}
     input_events: dict[str, object] = {}
+
+    def retain(uri_text: str, expected: dict[str, object] | None = None,
+               saved: dict[str, object] | None = None) -> dict[str, object]:
+        nonlocal total
+        uri = urlsplit(uri_text)
+        if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
+            raise ValueError(f"Expected a local report URI: {uri_text}")
+        path = Path(unquote(uri.path)).resolve()
+        relative = path.relative_to(output_root)
+        destination = (report_dir / relative).resolve()
+        destination.relative_to(report_dir)
+        reusable = expected
+        if reusable is None and saved is not None and saved.get("path") == str(destination.relative_to(output.parent.resolve())):
+            reusable = {"sha256": saved.get("sha256"), "bytes": saved.get("bytes")}
+        if reusable is not None and destination.is_file() and file_record(destination) == reusable:
+            record = reusable
+            total += number(record["bytes"])
+            if total > MAX_TOTAL_REPORT_BYTES:
+                raise ValueError("Retained reports exceed total size bound")
+        else:
+            size = path.stat().st_size
+            if not path.is_file() or size > MAX_REPORT_BYTES or total + size > MAX_TOTAL_REPORT_BYTES:
+                raise ValueError(f"Report size/type exceeds retention bounds: {path}")
+            if expected is not None and size != expected["bytes"]:
+                raise ValueError(f"Report differs from its advertised digest/size: {path}")
+            total += size
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("rb") as src, destination.open("wb") as dst:
+                remaining = size
+                while remaining:
+                    chunk = src.read(min(remaining, 1024 * 1024))
+                    if not chunk:
+                        raise ValueError(f"Report shrank during capture: {path}")
+                    dst.write(chunk)
+                    remaining -= len(chunk)
+                if src.read(1):
+                    raise ValueError(f"Report grew during capture: {path}")
+            record = file_record(destination)
+            if record["bytes"] != size or expected is not None and record != expected:
+                raise ValueError(f"Report differs from its advertised digest/size: {path}")
+        return {"path": str(destination.relative_to(output.parent.resolve())), **record}
+
     try:
         input_events = file_record(events)
         if manifest_path(output).exists():
@@ -247,33 +361,9 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
                                     raise ValueError(f"Expected one original {name} for {attempt}")
                                 seen.add((attempt, name))
                                 (report,) = matches
-                                uri = urlsplit(string(report.get("uri")))
-                                if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
-                                    raise ValueError(f"Expected a local report URI for {attempt}: {name}")
-                                path = Path(unquote(uri.path)).resolve()
-                                relative = path.relative_to(output_root)
-                                destination = (report_dir / relative).resolve()
-                                destination.relative_to(report_dir)
                                 old = previous.get((attempt, name))
-                                if old is not None and old.get("path") == str(destination.relative_to(output.parent.resolve())) and destination.is_file():
-                                    if file_record(destination) == {"sha256": old.get("sha256"), "bytes": old.get("bytes")}:
-                                        total += number(old["bytes"])
-                                        if total > MAX_TOTAL_REPORT_BYTES:
-                                            raise ValueError("Retained reports exceed total size bound")
-                                        reports.append(old)
-                                        continue
-                                size = path.stat().st_size
-                                if not path.is_file() or size > MAX_REPORT_BYTES or total + size > MAX_TOTAL_REPORT_BYTES:
-                                    raise ValueError(f"Report size/type exceeds retention bounds: {path}")
-                                destination.parent.mkdir(parents=True, exist_ok=True)
-                                with path.open("rb") as src, destination.open("wb") as dst:
-                                    shutil.copyfileobj(src, dst, length=1024 * 1024)
-                                record = file_record(destination)
-                                if record["bytes"] != size:
-                                    raise ValueError(f"Report changed during capture: {path}")
-                                total += size
-                                reports.append({"identity": identity["testResult"], "name": name,
-                                                "path": str(destination.relative_to(output.parent.resolve())), **record})
+                                record = retain(string(report.get("uri")), saved=old)
+                                reports.append({"identity": identity["testResult"], "name": name, **record})
                             except (OSError, ValueError) as error:
                                 errors.append(f"line {line_number}: {error}")
                     if "started" in event:
@@ -292,7 +382,21 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
         output.write_text("")
     if count == 0:
         errors.append("No complete build events")
-    result = {"schema_version": 1, "input_events": input_events, "events": file_record(output), "reports": reports, "errors": errors}
+    build_outputs = []
+    try:
+        groups = set()
+        for analysis in expected_analysis:
+            groups.update(declared_output_groups(unit_matrix.configured_targets(str(analysis), tests=None)))
+        for item in advertised_build_outputs(output, groups):
+            try:
+                record = retain(string(item["uri"]), {"sha256": item["sha256"], "bytes": item["bytes"]})
+                build_outputs.append({**item, **record})
+            except (OSError, ValueError) as error:
+                errors.append(str(error))
+    except (OSError, ValueError) as error:
+        errors.append(str(error))
+    result = {"schema_version": 1, "input_events": input_events, "events": file_record(output),
+              "reports": reports, "build_outputs": build_outputs, "errors": errors}
     write_json(manifest_path(output), result)
     return result
 
@@ -681,6 +785,10 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
             str(events), tests=True if kind == "test" else None,
             allow_test_no_build=kind == "test", expected_exit=native_exit,
         )
+        groups = declared_output_groups(targets)
+        if groups:
+            output_options = ["--output_groups=+" + ",+".join(sorted({group for _, group in groups})),
+                              "--remote_download_outputs=toplevel"]
         if kind == "test":
             paths = []
             for label, target in sorted(targets.items()):
@@ -698,12 +806,12 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
                 # Materialize only these owners' batch logs, not runtime images
                 # or successful debug logs. Repeated regex options are additive.
                 pattern = r".*/testlogs/(?:" + "|".join(paths) + r")/(?:[^/]+/)*test\.outputs/" + JTREG_OUTPUT_NAME + "$"
-                output_options = ["--nozip_undeclared_test_outputs", "--remote_download_regex=" + pattern]
+                output_options.extend(["--nozip_undeclared_test_outputs", "--remote_download_regex=" + pattern])
     except (OSError, ValueError) as error:
         errors.append(str(error))
     return {"schema_version": 1, "status": "INCOMPLETE" if errors else "PASS",
             "kind": kind, "native_exit": native_exit, "errors": errors,
-            "test_output_options": output_options,
+            "output_options": output_options,
             "expected": [asdict(Owner(label, target.configuration)) for label, target in sorted(targets.items())]}
 
 
@@ -847,6 +955,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     negative_tests: set[Owner] = set()
     marshal_tests: set[Owner] = set()
     declared_benchmark_tests: set[Owner] = set()
+    build_groups: set[tuple[Owner, str]] = set()
     for analysis in expected_analysis:
         try:
             targets = unit_matrix.configured_targets(
@@ -854,6 +963,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 allow_test_no_build=info["bazel_command"] == "test",
             )
             expected.update(Owner(label, target.configuration) for label, target in targets.items())
+            if info["command_kind"] != "analysis":
+                build_groups.update(declared_output_groups(targets))
             negative_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                   if "expected-failure" in target.tags)
             marshal_tests.update(Owner(label, target.configuration) for label, target in targets.items()
@@ -867,6 +978,23 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                     for label, target in targets.items() for name in target.aspects)
         except (OSError, ValueError) as error:
             errors.append(f"Expected analysis: {error}")
+    build_outputs = []
+    try:
+        advertised = advertised_build_outputs(events, build_groups)
+        captured = sequence(retained.get("build_outputs", []))
+        if len(advertised) != len(captured):
+            raise ValueError("Retained build outputs differ from the declared output groups")
+        for item, raw in zip(advertised, captured, strict=True):
+            row = mapping(raw)
+            if item != {key: value for key, value in row.items() if key != "path"}:
+                raise ValueError(f"Retained build output differs from BEP: {item['name']}")
+            path = (manifest.parent / string(row.get("path"))).resolve()
+            path.relative_to(manifest.parent.resolve())
+            if file_record(path) != {"sha256": item["sha256"], "bytes": item["bytes"]}:
+                raise ValueError(f"Retained build output digest/size mismatch: {item['name']}")
+            build_outputs.append(row)
+    except (OSError, ValueError) as error:
+        errors.append(str(error))
     if info["command_kind"] in ("test", "benchmark", "build") and not expected_analysis and not labels:
         errors.append("No independent expected selection was retained")
     if not expected_analysis:
@@ -1066,6 +1194,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     now = datetime.datetime.now(datetime.timezone.utc)
     return {"schema_version": 1, **info, "status": status, "accepted_analysis_exit": accepted_analysis_exit,
             "errors": errors, "failures": failures,
+            "build_outputs": build_outputs,
             "expected_labels": sorted(labels or {owner.label for owner in expected}),
             "expected": [asdict(owner) for owner in sorted(expected)], "executed": observations,
             "expected_aspects": [{**asdict(aspect.owner), "aspect": aspect.name} for aspect in sorted(expected_aspects)],
@@ -1135,6 +1264,8 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
               "non_runtime_owners": [item for row in verdicts for item in sequence(row.get("non_runtime_owners", []))],
               "all_skipped_owners": [item for row in verdicts for item in sequence(row.get("all_skipped_owners", []))],
               "failures": [item for row in verdicts for item in sequence(row.get("failures", []))],
+              "build_outputs": [{"invocation": row["path"], **mapping(item)} for row in rows
+                                for item in sequence(mapping(row["verdict"]).get("build_outputs", []))],
               "expected_failures": [item for row in verdicts for item in sequence(row.get("expected_failures", []))],
               "missing": [item for row in verdicts for item in sequence(row.get("missing", []))],
               "skips": [item for row in verdicts for item in sequence(row.get("skips", []))],
@@ -1362,12 +1493,13 @@ def main() -> int:
     for name in ("events", "output", "output-root", "report-dir"):
         copy.add_argument("--" + name, type=Path, required=True)
     copy.add_argument("--retain-outputs", action="store_true")
+    copy.add_argument("--expected-analysis", type=Path, action="append", default=[])
     analyze = commands.add_parser("preflight")
     for name in ("events", "output"):
         analyze.add_argument("--" + name, type=Path, required=True)
     analyze.add_argument("--native-exit", type=int, required=True)
     analyze.add_argument("--kind", choices=("test", "build"), required=True)
-    analyze.add_argument("--test-output-options", type=Path)
+    analyze.add_argument("--output-options", type=Path)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
         check.add_argument("--" + name, type=Path, required=True)
@@ -1433,13 +1565,14 @@ def main() -> int:
         args.output.write_text("".join(argument + "\n" for argument in arguments))
         return 0
     if args.command == "capture":
-        result = capture(args.events, args.output, args.output_root, args.report_dir, args.retain_outputs)
+        result = capture(args.events, args.output, args.output_root, args.report_dir, args.retain_outputs,
+                         tuple(args.expected_analysis))
         return int(bool(result["errors"]))
     if args.command == "preflight":
         result = preflight(args.events, args.native_exit, args.kind)
         write_json(args.output, result)
-        if args.test_output_options is not None and result["status"] == "PASS":
-            args.test_output_options.write_text("".join(option + "\n" for option in result["test_output_options"]))
+        if args.output_options is not None and result["status"] == "PASS":
+            args.output_options.write_text("".join(option + "\n" for option in result["output_options"]))
         return int(result["status"] != "PASS")
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,

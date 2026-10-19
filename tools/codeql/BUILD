@@ -95,16 +95,30 @@ _LANGUAGES = [
         },
         language = language,
         roots = GO_ANALYSIS_ROOTS if language == "go" else None,
-        tags = ["manual"],
+        tags = [
+            "manual",
+            "qualification-output-group=default",
+        ] + (["qualification-output-group=codeql_summary"] if language == "go" else []),
     )
     for language in _LANGUAGES
 ]
 
 filegroup(
+    name = "go_summary",
+    testonly = True,
+    srcs = [":go"],
+    output_group = "codeql_summary",
+    tags = ["manual"],
+)
+
+filegroup(
     name = "all",
     testonly = True,
-    srcs = [":" + language for language in _LANGUAGES],
-    tags = ["manual"],
+    srcs = [":" + language for language in _LANGUAGES] + [":go_summary"],
+    tags = [
+        "manual",
+        "qualification-output-group=default",
+    ],
     visibility = ["//visibility:public"],
 )
 

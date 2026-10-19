@@ -75,6 +75,13 @@ their hashes, and sanitized build events. Test failures remain failures when
 report collection or cleanup also fails; missing results cannot produce a
 passing verdict.
 
+Build targets can tag small report groups with
+`qualification-output-group=<group>`. The coordinator asks Bazel to materialize
+those outputs, retains their configured owner and output-group identities, and
+checks every copy against its BEP digest and size. Missing or corrupt reports
+prevent a passing verdict. CodeQL declares its SARIF files and Go source summary
+this way; its database directories are not report outputs.
+
 The same bundle records `bazel run` and `bazel query` commands, including the
 Gazelle checks, in a separate `commands` list. Each row retains exact arguments,
 source identity, exit status, completion time and hashes of both output streams.

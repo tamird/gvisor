@@ -107,6 +107,93 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
+    def build_output_fixture(self) -> tuple[Path, Path, Path]:
+        invocation = self.fixture()
+        path = invocation / "analysis.sarif"
+        path.write_text('{"runs": []}\n')
+        identity = report.file_record(path)
+        events = [event for event in self.events(invocation) if "testResult" not in event and "testSummary" not in event]
+        for event in events:
+            event["children"] = [child for child in event.get("children", []) if "targetCompleted" in child]
+            if "configured" in event:
+                event["configured"].pop("testSize", None)
+                event["configured"]["targetKind"] = "filegroup rule"
+                event["configured"]["tag"] = ["qualification-output-group=default"]
+            if "completed" in event:
+                event["completed"]["outputGroup"] = [{"name": "default", "fileSets": [{"id": "parent"}]}]
+        # Real BEP uses string lengths and can put a referenced file set after
+        # its owner. Include a transitive set as emitted for aggregate reports.
+        events.extend([
+            {"id": {"namedSet": {"id": "parent"}}, "namedSetOfFiles": {"fileSets": [{"id": "leaf"}]}},
+            {"id": {"namedSet": {"id": "leaf"}}, "namedSetOfFiles": {"files": [
+                {"name": path.name, "uri": path.as_uri(), "digest": identity["sha256"], "length": str(identity["bytes"])},
+            ]}},
+        ])
+        self.write_events(invocation, events)
+        context = report.read_json(invocation / "context.json")
+        context["command_kind"] = "build"
+        report.write_json(invocation / "context.json", context)
+        (invocation / "executed-arguments.txt").write_text("build\n//:report\n")
+        return invocation, self.analysis(invocation), path
+
+    def test_build_outputs_preserve_failures_and_reject_missing_or_corrupt_evidence(self) -> None:
+        for damage, expected_status, error in (
+            (None, "PASS", None),
+            ("missing-file", "INCOMPLETE", "No such file"),
+            ("digest", "INCOMPLETE", "advertised digest/size"),
+            ("missing-group", "INCOMPLETE", "Missing build output groups"),
+            ("missing-set", "INCOMPLETE", "missing build output file set"),
+            ("cycle", "INCOMPLETE", "Cyclic"),
+            ("empty", "INCOMPLETE", "Empty build output group"),
+            ("changed-copy", "INCOMPLETE", "digest/size mismatch"),
+            ("failed-build", "FAIL", "Missing build output groups"),
+        ):
+            with self.subTest(damage=damage):
+                invocation, analysis, output = self.build_output_fixture()
+                try:
+                    events = self.events(invocation)
+                    leaf = events[-1]["namedSetOfFiles"]
+                    if damage == "missing-file":
+                        output.unlink()
+                    elif damage == "digest":
+                        output.write_text("changed bytes\n")
+                    elif damage in ("missing-group", "failed-build"):
+                        next(event["completed"] for event in events if "completed" in event)["outputGroup"] = []
+                        if damage == "failed-build":
+                            (invocation / "native-exit").write_text("1\n")
+                    elif damage == "missing-set":
+                        events.pop()
+                    elif damage == "cycle":
+                        leaf["fileSets"] = [{"id": "parent"}]
+                    elif damage == "empty":
+                        leaf["files"] = []
+                    self.write_events(invocation, events)
+                    captured = report.capture(invocation / "events.jsonl", invocation / "captured.jsonl",
+                                              invocation, invocation / "reports", expected_analysis=(analysis,))
+                    if damage == "changed-copy":
+                        (invocation / captured["build_outputs"][0]["path"]).write_text("damaged retained report")
+                    value = self.verdict(invocation, analysis=analysis)
+                    self.assertEqual(value["status"], expected_status, value)
+                    if error is not None:
+                        self.assertTrue(any(error in item for item in value["errors"]), value)
+                    else:
+                        self.assertEqual(len(value["build_outputs"]), 1)
+                        preflight = report.preflight(analysis, 0, "build")
+                        self.assertEqual(preflight["output_options"], ["--output_groups=+default", "--remote_download_outputs=toplevel"])
+                        # Resume can authenticate the earlier retained copy even
+                        # when the original output is no longer available.
+                        output.unlink()
+                        resumed = report.capture(invocation / "events.jsonl", invocation / "captured.jsonl",
+                                                invocation, invocation / "reports", expected_analysis=(analysis,))
+                        self.assertEqual(resumed["errors"], [])
+                    archive = self.root / "build-outputs.tar.gz"
+                    combined = report.bundle(self.evidence, int(damage == "failed-build"), 0, archive)
+                    self.assertEqual(combined["status"], expected_status, combined)
+                    receipt = report.receipt(archive, report.file_record(archive)["sha256"], value["source"])
+                    self.assertEqual(receipt["status"], expected_status, receipt)
+                finally:
+                    shutil.rmtree(invocation)
+
     def test_command_completion_preserves_streams_and_failure_evidence(self) -> None:
         for command, exit_code, damage, status in (
             ("query", 0, None, "PASS"),
@@ -759,7 +846,7 @@ class QualificationReportTest(unittest.TestCase):
         value = report.preflight(events, 1, "test")
         self.assertEqual((value["status"], value["native_exit"]), ("PASS", 1))
         self.assertEqual(len(value["expected"]), 2)
-        self.assertEqual(value["test_output_options"], [])
+        self.assertEqual(value["output_options"], [])
         self.assertEqual(report.preflight(events, 1, "build")["status"], "INCOMPLETE")
         self.assertEqual(report.preflight(events, 4, "test")["status"], "INCOMPLETE")
 
@@ -781,6 +868,11 @@ class QualificationReportTest(unittest.TestCase):
     def test_analysis_verdict_retains_accepted_original_exit(self) -> None:
         invocation = self.fixture()
         (invocation / "events.jsonl").write_bytes((FIXTURES / "analysis-no-build/events.jsonl").read_bytes())
+        events = self.events(invocation)
+        for event in events:
+            if "configured" in event:
+                event["configured"].setdefault("tag", []).append("qualification-output-group=default")
+        self.write_events(invocation, events)
         (invocation / "expected.txt").write_text("")
         (invocation / "native-exit").write_text("1\n")
         (invocation / "executed-arguments.txt").write_text("test\n--nobuild\n")
@@ -788,7 +880,7 @@ class QualificationReportTest(unittest.TestCase):
         context["command_kind"] = "analysis"
         report.write_json(invocation / "context.json", context)
         self.capture(invocation)
-        value = self.verdict(invocation)
+        value = self.verdict(invocation, analysis=invocation / "events.jsonl")
         self.assertEqual((value["status"], value["native_exit"], value["accepted_analysis_exit"]), ("PASS", 1, True))
         combined = report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")
         self.assertEqual((combined["status"], combined["native_exit"]), ("PASS", 0))
@@ -1417,35 +1509,30 @@ signal.pause()
 
     def test_capture_resumes_after_independent_copy_failure(self) -> None:
         invocation = self.fixture()
-        original_copy = shutil.copyfileobj
-
-        def fail_log(source, destination, length):
-            if Path(source.name).name == "test.log":
-                raise OSError("retained fixture copy failure")
-            return original_copy(source, destination, length)
-
-        with mock.patch.object(shutil, "copyfileobj", side_effect=fail_log):
-            first = self.capture(invocation)
+        log = (invocation / "test.log").read_bytes()
+        (invocation / "test.log").unlink()
+        first = self.capture(invocation)
         self.assertEqual(len(first["errors"]), 1)
         self.assertEqual([row["name"] for row in first["reports"]], ["test.xml"])
+        (invocation / "test.log").write_bytes(log)
         # The source XML can be gone: the previous verified copy is sufficient.
         (invocation / "test.xml").unlink()
-        with mock.patch.object(shutil, "copyfileobj", wraps=original_copy) as copying:
-            repaired = self.capture(invocation)
-        self.assertEqual(copying.call_count, 1)
+        repaired = self.capture(invocation)
         self.assertEqual(repaired["errors"], [])
         self.assertEqual(self.verdict(invocation)["status"], "PASS")
 
     def test_resume_repairs_only_missing_or_corrupt_copies(self) -> None:
         invocation = self.fixture()
         self.capture(invocation)
-        with mock.patch.object(shutil, "copyfileobj", side_effect=AssertionError("valid copy must be reused")):
-            self.assertEqual(self.capture(invocation)["errors"], [])
+        originals = {name: (invocation / name).read_bytes() for name in ("test.log", "test.xml")}
+        for name in originals:
+            (invocation / name).unlink()
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        for name, contents in originals.items():
+            (invocation / name).write_bytes(contents)
         (invocation / "reports/test.log").write_text("corrupt")
         (invocation / "reports/test.xml").unlink()
-        with mock.patch.object(shutil, "copyfileobj", wraps=shutil.copyfileobj) as copying:
-            repaired = self.capture(invocation)
-        self.assertEqual(copying.call_count, 2)
+        repaired = self.capture(invocation)
         self.assertEqual(repaired["errors"], [])
         self.assertEqual(self.verdict(invocation)["status"], "PASS")
 
