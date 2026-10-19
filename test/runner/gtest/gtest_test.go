@@ -16,6 +16,7 @@ package gtest
 
 import (
 	"encoding/xml"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,6 +34,14 @@ func TestDiscoveryDoesNotWriteResults(t *testing.T) {
 	t.Setenv("XML_OUTPUT_FILE", report)
 	t.Setenv("GTEST_OUTPUT", "xml:"+report)
 	t.Setenv("GUNIT_OUTPUT", "xml:"+report)
+
+	// Diagnose discovery errors before ParseTestCases converts them to Default.All.
+	if out, err := discoveryOutput(binary, listTestFlag); err != nil {
+		if exitErr, ok := errors.AsType[*exec.ExitError](err); ok {
+			t.Fatalf("discoveryOutput(%q, %q): %v\nstdout:\n%s\nstderr:\n%s", binary, listTestFlag, err, out, exitErr.Stderr)
+		}
+		t.Fatalf("discoveryOutput(%q, %q): %v\nstdout:\n%s", binary, listTestFlag, err, out)
+	}
 
 	cases, err := ParseTestCases(binary, true)
 	if err != nil {
