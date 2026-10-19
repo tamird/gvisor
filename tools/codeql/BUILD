@@ -60,6 +60,7 @@ codeql_analysis(
     language = "go",
     roots = {
         "//images:cuda_run_sample_codeql": "//images:cuda_run_sample",
+        "//pkg/sentry/socket/plugin/cgo:cgo_codeql": "//pkg/sentry/socket/plugin/cgo:cgo",
         "//pkg/test/dockerutil:dockerutil_codeql": "//pkg/test/dockerutil:dockerutil",
         "//runsc:runsc-plugin-stack_codeql": "//runsc:runsc-plugin-stack",
         "//runsc:runsc_codeql": "//runsc:runsc",

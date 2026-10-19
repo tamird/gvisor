@@ -45,6 +45,7 @@ class Package(TypedDict, total=False):
     CompiledGoFiles: list[str]
     GoFiles: list[str]
     OtherFiles: list[str]
+    IgnoredFiles: list[str]
     Module: Module
 
 
@@ -79,6 +80,13 @@ class Owner(TypedDict):
     goarch: str
     cgo: bool
     original_sources: list[str]
+
+
+@dataclass
+class RootSelection:
+    labels: list[str]
+    empty_roots: list[dict[str, object]]
+    original_exclusions: list[dict[str, object]]
 
 
 class ConfiguredOwner(TypedDict):
@@ -278,13 +286,14 @@ def archive_coverage(expected: dict[str, str], actual: dict[str, str], equivalen
 
 
 def default_roots(owners: list[Owner], records: dict[str, Package], packages: list[Package],
-                  inputs: dict[str, SourceFile], root: Path) -> tuple[list[str], list[dict[str, object]]]:
+                  inputs: dict[str, SourceFile], root: Path) -> RootSelection:
     """Retain default-filtered roots, accounting for every original root source."""
     filtered = {record["ID"]: record for record in packages}
     if len(filtered) != len(packages):
         raise ValueError("Driver duplicated package identity")
     labels = set()
     excluded = []
+    original_exclusions = []
     for owner in owners:
         identity = owner["package_id"]
         raw, loaded = records[identity], filtered[identity]
@@ -293,18 +302,41 @@ def default_roots(owners: list[Owner], records: dict[str, Package], packages: li
         prefilter_files = {str(resolve_input(name, root)) for name in raw.get("CompiledGoFiles", [])}
         if missing := originals - raw_files:
             raise ValueError(f"Root metadata omitted original sources: {owner['owner']}: {sorted(missing)}")
-        if not owner["cgo"] and (missing := originals - prefilter_files):
+        ignored = loaded.get("IgnoredFiles", [])
+        if not isinstance(ignored, list) or any(not isinstance(name, str) for name in ignored):
+            raise ValueError(f"Driver returned invalid ignored source paths: {identity}")
+        ignored_files = {str(Path(name).resolve()) for name in ignored}
+        if not ignored_files <= raw_files:
+            raise ValueError(f"Driver ignored undeclared original sources: {identity}")
+        # pkgjson removes import-C originals even without cgo output. Only
+        # the canonical driver's actual constraint evaluation can account for
+        # such a missing original in a non-cgo declaration.
+        if not owner["cgo"] and (missing := originals - prefilter_files - ignored_files):
             raise ValueError(f"Root prefilter metadata omitted original sources: {owner['owner']}: {sorted(missing)}")
         # packages.Package.MarshalJSON omits empty source lists.
         files = loaded.get("CompiledGoFiles", [])
         if not isinstance(files, list) or any(not isinstance(name, str) for name in files):
             raise ValueError(f"Driver returned invalid root source paths: {identity}")
+        if ignored_files & {str(Path(name).resolve()) for name in files}:
+            raise ValueError(f"Driver both compiled and ignored original sources: {identity}")
+        ignored_originals = originals & ignored_files
+        if ignored_originals:
+            evidence = []
+            for name in sorted(ignored_originals):
+                if name not in inputs or inputs[name].generated:
+                    raise ValueError(f"Ignored original lacks declared source identity: {name}")
+                evidence.append({"path": name, "facts": asdict(inputs[name]),
+                                 "present_in_compiled_prefilter": name in prefilter_files,
+                                 "constraints": [line for line in Path(name).read_text().splitlines()
+                                                 if line.startswith(("//go:build ", "// +build "))]})
+            original_exclusions.append({"owner": owner["owner"], "package_id": identity,
+                                        "reason": "canonical-build-constraints", "sources": evidence})
         if files:
             labels.add(identity)
             continue
         # An initially empty or generated-only declaration is not evidence of
         # a package excluded by the canonical architecture/build-tag filter.
-        if (not originals or raw_files != originals or prefilter_files != originals
+        if (not originals or raw_files != originals or ignored_files != originals
                 or any(name not in inputs or inputs[name].generated for name in originals)):
             raise ValueError(f"Empty root lacks complete original source exclusion evidence: {identity}")
         excluded.append({"owner": owner, "reason": "no-default-sources", "sources": sorted(originals),
@@ -314,7 +346,7 @@ def default_roots(owners: list[Owner], records: dict[str, Package], packages: li
                                          for name in sorted(originals)}})
     if not labels:
         raise ValueError("Default source selection has no roots")
-    return sorted(labels), excluded
+    return RootSelection(sorted(labels), excluded, original_exclusions)
 
 
 def configured_source_parity(excluded: list[ConfiguredOwner], loaded_records: dict[str, Package],
@@ -443,7 +475,8 @@ def extract(args: argparse.Namespace) -> Path:
     # The first response proves source filtering for every declared candidate.
     response_path = output / "driver-response.json"
     response = driver_response(args.driver, manifest["labels"], environment, output / "candidate-response.json")
-    labels, empty_roots = default_roots(manifest["owners"], selected, response["Packages"], inputs, root)
+    root_selection = default_roots(manifest["owners"], selected, response["Packages"], inputs, root)
+    labels, empty_roots = root_selection.labels, root_selection.empty_roots
     driver_configuration["Labels"] = labels
     driver_manifest.write_text(json.dumps(driver_configuration, indent=2) + "\n")
     # Reuse canonical import reachability after removing proved empty roots.
@@ -549,6 +582,7 @@ def extract(args: argparse.Namespace) -> Path:
         "owners": manifest["owners"],
         "configured_dispositions": configured_dispositions,
         "empty_default_roots": empty_roots,
+        "original_source_exclusions": root_selection.original_exclusions,
         "stdlib_json": str(stdlib_paths[0]),
         "stdlib_sha256": hashlib.sha256(stdlib_paths[0].read_bytes()).hexdigest(),
         "extract_tests": False,

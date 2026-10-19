@@ -33,13 +33,30 @@ diff --git a/go/tools/gopackagesdriver/flatpackage.go b/go/tools/gopackagesdrive
  	resolvePathsInPlace(prf, pak.CompiledGoFiles)
  	resolvePathsInPlace(prf, pak.GoFiles)
  	resolvePathsInPlace(prf, pak.OtherFiles)
-@@ -112,8 +125,13 @@
+@@ -112,8 +125,30 @@
 -func FilterFilesForBuildTags(pak *packages.Package) {
 -	pak.CompiledGoFiles = filterSourceFilesForTags(pak.CompiledGoFiles)
 +func FilterFilesForBuildTags(pak *packages.Package) error {
 +	files, err := filterSourceFilesForTags(pak.CompiledGoFiles)
 +	if err != nil {
 +		return err
++	}
++	// pkgjson removes import-C originals before tag filtering, even when
++	// cgo is disabled. Account for those originals through the same matcher
++	// without changing GoFiles or inferring exclusion from their absence.
++	originals, err := filterSourceFilesForTags(pak.GoFiles)
++	if err != nil {
++		return err
++	}
++	included := make(map[string]bool, len(originals))
++	for _, path := range originals {
++		included[path] = true
++	}
++	pak.IgnoredFiles = nil
++	for _, path := range pak.GoFiles {
++		if !included[path] {
++			pak.IgnoredFiles = append(pak.IgnoredFiles, path)
++		}
 +	}
 +	pak.CompiledGoFiles = files
 +	return nil
@@ -49,12 +66,13 @@ diff --git a/go/tools/gopackagesdriver/flatpackage.go b/go/tools/gopackagesdrive
  	for _, filename := range files {
  		if strings.HasSuffix(filename, "_test.go") {
  			fset := token.NewFileSet()
-@@ -164,6 +181,8 @@
+@@ -164,6 +181,9 @@
  	// Clone package, only xtgf files
  	return &packages.Package{
  		ID:              pkg.ID + "_xtest",
 +		Dir:             pkg.Dir,
 +		Module:          pkg.Module,
++		IgnoredFiles:    pkg.IgnoredFiles,
  		Name:            pkg.Name + "_test",
  		PkgPath:         pkg.PkgPath + "_test",
  		Imports:         newImports,
@@ -322,7 +340,7 @@ diff --git a/go/tools/gopackagesdriver/json_manifest_test.go b/go/tools/gopackag
 new file mode 100644
 --- /dev/null
 +++ b/go/tools/gopackagesdriver/json_manifest_test.go
-@@ -0,0 +1,177 @@
+@@ -0,0 +1,202 @@
 +// Copyright 2026 The Bazel Authors. All rights reserved.
 +//
 +// Licensed under the Apache License, Version 2.0 (the "License");
@@ -439,14 +457,18 @@ new file mode 100644
 +
 +func TestJSONManifestSourceFiltering(t *testing.T) {
 +	for _, tc := range []struct {
-+		name, filename, source         string
-+		missing, wantError, wantSource bool
++		name, filename, source                                    string
++		missing, omitCompiled, wantError, wantSource, wantIgnored bool
 +	}{
 +		{name: "default fallback", filename: "fallback.go", source: "//go:build !custom\n\npackage p\n", wantSource: true},
-+		{name: "tag excluded", filename: "tagged.go", source: "//go:build custom\n\npackage p\n"},
++		{name: "tag excluded", filename: "tagged.go", source: "//go:build custom\n\npackage p\n", wantIgnored: true},
 +		{name: "invalid constraint", filename: "invalid.go", source: "//go:build (\n\npackage p\n", wantError: true},
 +		{name: "missing source", filename: "missing.go", missing: true, wantError: true},
 +		{name: "cgo generated", filename: "_cgo_gotypes.go", source: "package p\n", wantSource: true},
++		{name: "ignored import-C original", filename: "tagged.go", source: "//go:build custom\n\npackage p\nimport \"C\"\n", omitCompiled: true, wantIgnored: true},
++		{name: "eligible import-C original", filename: "cgo.go", source: "package p\nimport \"C\"\n", omitCompiled: true},
++		{name: "invalid original-only constraint", filename: "invalid.go", source: "//go:build (\n\npackage p\n", omitCompiled: true, wantError: true},
++		{name: "missing original-only source", filename: "missing.go", missing: true, omitCompiled: true, wantError: true},
 +	} {
 +		t.Run(tc.name, func(t *testing.T) {
 +			dir := t.TempDir()
@@ -458,6 +480,20 @@ new file mode 100644
 +			}
 +			const label = "@@//example:p"
 +			record := FlatPackage{ID: label, Name: "p", PkgPath: "example/p", Dir: dir, GoFiles: []string{path}, CompiledGoFiles: []string{path}}
++			var wantFiles []string
++			if tc.omitCompiled {
++				// Keep a nonempty compiled list so Add does not substitute GoFiles.
++				ordinary := filepath.Join(dir, "ordinary.go")
++				if err := os.WriteFile(ordinary, []byte("package p\n"), 0600); err != nil {
++					t.Fatal(err)
++				}
++				record.GoFiles = append(record.GoFiles, ordinary)
++				record.CompiledGoFiles = []string{ordinary}
++				wantFiles = append(wantFiles, ordinary)
++			}
++			if tc.wantSource {
++				wantFiles = append(wantFiles, path)
++			}
 +			data, err := json.Marshal(record)
 +			if err != nil {
 +				t.Fatal(err)
@@ -494,8 +530,15 @@ new file mode 100644
 +				t.Fatalf("unexpected response: %+v", response)
 +			}
 +			files := response.Packages[0].CompiledGoFiles
-+			if tc.wantSource && !slices.Equal(files, []string{path}) || !tc.wantSource && len(files) != 0 {
-+				t.Fatalf("filtered files %v, want source %v", files, tc.wantSource)
++			if !slices.Equal(files, wantFiles) {
++				t.Fatalf("filtered files %v, want %v", files, wantFiles)
++			}
++			if !slices.Equal(response.Packages[0].GoFiles, record.GoFiles) {
++				t.Fatalf("original sources changed: %v", response.Packages[0].GoFiles)
++			}
++			ignored := response.Packages[0].IgnoredFiles
++			if tc.wantIgnored && !slices.Equal(ignored, []string{path}) || !tc.wantIgnored && len(ignored) != 0 {
++				t.Fatalf("ignored originals %v, want ignored %v", ignored, tc.wantIgnored)
 +			}
 +		})
 +	}

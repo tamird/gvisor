@@ -96,11 +96,11 @@ class ConfiguredPackagesTest(unittest.TestCase):
         tagged = self.original("tagged.go", "//go:build feature\n\npackage main\n")
         fallback = self.original("untagged.go", "//go:build !feature\n\npackage main\n")
         raw = self.record([main, tagged, fallback])
-        filtered = self.record([main, fallback])
+        filtered = {**self.record([main, fallback]), "IgnoredFiles": [tagged]}
         owner = {"owner": "//pkg:tagged", "package_id": raw["ID"], "cgo": False, "original_sources": [main, tagged, fallback]}
         inputs = go_analysis.source_files(self.inputs, self.root)
-        labels, empty = go_analysis.default_roots([owner], {raw["ID"]: raw}, [filtered], inputs, self.root)
-        self.assertEqual((labels, empty), ([raw["ID"]], []))
+        selection = go_analysis.default_roots([owner], {raw["ID"]: raw}, [filtered], inputs, self.root)
+        self.assertEqual((selection.labels, selection.empty_roots), ([raw["ID"]], []))
         excluded = [{"owner": "//pkg:race", "modes": ["race"], "sources": [main, tagged, fallback]}]
         parity = go_analysis.configured_source_parity(excluded, {raw["ID"]: raw}, {main, fallback}, inputs, self.root)
         self.assertEqual([item["default_eligible"] for item in parity[0]["sources"]], [True, False, True])
@@ -118,7 +118,7 @@ class ConfiguredPackagesTest(unittest.TestCase):
         plugin = self.original("plugin.go", "//go:build network_plugins\n\npackage main\n")
         normal = self.record([main])
         raw = self.record([plugin], identity="@@//pkg:plugin")
-        empty = self.record([], identity=raw["ID"])
+        empty = {**self.record([], identity=raw["ID"]), "GoFiles": [plugin], "IgnoredFiles": [plugin]}
         normal_owner = {"owner": "//pkg:main", "package_id": normal["ID"], "cgo": False, "original_sources": [main]}
         owner = {"owner": "//pkg:plugin", "package_id": raw["ID"], "cgo": False, "original_sources": [plugin]}
         inputs = go_analysis.source_files(self.inputs, self.root)
@@ -126,10 +126,10 @@ class ConfiguredPackagesTest(unittest.TestCase):
         # empty list is equivalent, while malformed present values stay invalid.
         for filtered in (empty, {key: value for key, value in empty.items() if key != "CompiledGoFiles"}):
             with self.subTest(filtered=filtered):
-                labels, excluded = go_analysis.default_roots([normal_owner, owner], {normal["ID"]: normal, raw["ID"]: raw},
-                                                            [normal, filtered], inputs, self.root)
-                self.assertEqual(labels, [normal["ID"]])
-                self.assertEqual(excluded, [{"owner": owner, "reason": "no-default-sources", "sources": [plugin],
+                selection = go_analysis.default_roots([normal_owner, owner], {normal["ID"]: normal, raw["ID"]: raw},
+                                                     [normal, filtered], inputs, self.root)
+                self.assertEqual(selection.labels, [normal["ID"]])
+                self.assertEqual(selection.empty_roots, [{"owner": owner, "reason": "no-default-sources", "sources": [plugin],
                                              "raw_go_files": [plugin], "raw_compiled_go_files": [plugin],
                                              "constraints": {plugin: ["//go:build network_plugins"]}}])
         for files in (None, "", [None]):
@@ -169,9 +169,42 @@ class ConfiguredPackagesTest(unittest.TestCase):
         generated = self.source("cgo", "_cgo_gotypes.go")
         raw = {**self.record([original]), "CompiledGoFiles": [generated]}
         owner = {"owner": "//pkg:cgo", "package_id": raw["ID"], "cgo": True, "original_sources": [original]}
-        labels, excluded = go_analysis.default_roots([owner], {raw["ID"]: raw}, [raw],
-                                                     go_analysis.source_files(self.inputs, self.root), self.root)
-        self.assertEqual((labels, excluded), ([raw["ID"]], []))
+        selection = go_analysis.default_roots([owner], {raw["ID"]: raw}, [raw],
+                                            go_analysis.source_files(self.inputs, self.root), self.root)
+        self.assertEqual((selection.labels, selection.empty_roots), ([raw["ID"]], []))
+
+    def test_missing_prefilter_original_requires_canonical_exclusion(self) -> None:
+        main = self.original("main.go")
+        cgo = self.original("cgo.go", '//go:build network_plugins\n\npackage main\nimport "C"\n')
+        raw = {**self.record([main, cgo]), "CompiledGoFiles": [main]}
+        loaded = {**raw, "IgnoredFiles": [cgo]}
+        owner = {"owner": "//pkg:main", "package_id": raw["ID"], "cgo": False, "original_sources": [main, cgo]}
+        inputs = go_analysis.source_files(self.inputs, self.root)
+        selection = go_analysis.default_roots([owner], {raw["ID"]: raw}, [loaded], inputs, self.root)
+        self.assertEqual(selection.labels, [raw["ID"]])
+        evidence = selection.original_exclusions[0]["sources"][0]
+        self.assertEqual(evidence["path"], cgo)
+        self.assertEqual(evidence["facts"]["sha256"], inputs[cgo].sha256)
+        self.assertFalse(evidence["present_in_compiled_prefilter"])
+        self.assertEqual(evidence["constraints"], ["//go:build network_plugins"])
+        for ignored in ([], None, "", [None], [str(self.root / "undeclared.go")], [main, cgo]):
+            with self.subTest(ignored=ignored), self.assertRaises(ValueError):
+                go_analysis.default_roots([owner], {raw["ID"]: raw}, [{**loaded, "IgnoredFiles": ignored}], inputs, self.root)
+
+    def test_empty_root_requires_actual_original_constraint_evaluation(self) -> None:
+        main = self.original("main.go")
+        plugin = self.original("plugin.go", '//go:build network_plugins\n\npackage main\nimport "C"\n')
+        normal = self.record([main])
+        raw = {**self.record([plugin], identity="@@//pkg:plugin"), "CompiledGoFiles": []}
+        owners = [{"owner": "//pkg:main", "package_id": normal["ID"], "cgo": False, "original_sources": [main]},
+                  {"owner": "//pkg:plugin", "package_id": raw["ID"], "cgo": False, "original_sources": [plugin]}]
+        inputs = go_analysis.source_files(self.inputs, self.root)
+        selection = go_analysis.default_roots(owners, {normal["ID"]: normal, raw["ID"]: raw},
+                                             [normal, {**raw, "IgnoredFiles": [plugin]}], inputs, self.root)
+        self.assertEqual(selection.labels, [normal["ID"]])
+        self.assertEqual(selection.empty_roots[0]["raw_compiled_go_files"], [])
+        with self.assertRaisesRegex(ValueError, "prefilter metadata omitted original sources"):
+            go_analysis.default_roots(owners, {normal["ID"]: normal, raw["ID"]: raw}, [normal, raw], inputs, self.root)
 
     def select(self, first: go_analysis.Package, second: go_analysis.Package) -> go_analysis.PackageSelection:
         paths = []
