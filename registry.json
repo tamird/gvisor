@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T16:40:35.224648+00:00",
+    "updatedAt": "2026-10-19T16:51:01.512289+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5253,13 +5253,13 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Incremental bounds, ID-map and resolver validation passed",
-      "summary": "Canonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.",
-      "updatedAt": "2026-10-19T16:40:35.224648+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
+      "updatedAt": "2026-10-19T16:51:01.512289+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Incremental qualification complete; standalone validation and review remain distinct",
         "sourceHead": "9f23a47ae173eda6cbe7b3c0e8ff3f3eaed0e71d",
-        "observedAt": "2026-10-19T16:37:54.790430+00:00",
+        "observedAt": "2026-10-19T16:48:31.047201+00:00",
         "nextAction": "Preserve the completed incremental proofs and separate pending contributor decisions for standalone fixes. Keep prior full-build, runtime and CodeQL evidence bound to its actual source; no additional broad validation is currently claimed.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/4846a914-e9e8-4a79-bd78-640ca30f6969"
@@ -6385,6 +6385,10 @@
         {
           "label": "Resolver and analyzers: 84 passing cases, no skips",
           "url": "https://app.buildbuddy.io/invocation/40e88f9f-2ad5-4ac6-864e-353a2eec0a3b"
+        },
+        {
+          "label": "Controlled native and shared-gofer pipe lifetime: six cases pass",
+          "url": "https://app.buildbuddy.io/invocation/c56ae79a-39c4-45fe-94ff-802d4e412b0d"
         }
       ]
     },
@@ -10432,17 +10436,17 @@
       "group": "buildbuddy",
       "status": "open",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13850",
-      "updatedAt": "2026-10-19T16:40:35.224648+00:00",
-      "summary": "Maggie approved current head 2aa3f015f2 after the clarification that the parent already has a 200 GB non-recycled cap. The PR changes no cap. Public checks are still not green: the Windows job ran tests and timed out in TestScanWithConcurrentAdd on both attempts. Retained logs show progress across 100 and 96 distinct cache roots; no stack establishes the underlying cause. Earlier PR/ARM missing-key failures are separate.",
+      "updatedAt": "2026-10-19T16:51:01.512289+00:00",
+      "summary": "Maggie approved current head 2aa3f015f2 after the clarification that the parent already has a 200 GB non-recycled cap. The PR changes no cap. Public checks are still not green: the Windows job ran tests and timed out in TestScanWithConcurrentAdd on both attempts. Retained logs show progress across 100 and 96 distinct cache roots; no stack establishes the underlying cause. Earlier PR/ARM missing-key failures are separate. Existing open PR #13781 addresses this timeout by reusing and cleaning up the concurrent-scan fixture; its Windows check passes at separate source 6867093386. The duplicate budget-only proposal was withdrawn after its fork dispatch returned 404 before execution. The original #13850 failure remains open until the remedy is incorporated and that source reruns.",
       "followup": {
         "owner": "root",
-        "disposition": "Current-head approval received; public checks remain outstanding",
+        "disposition": "Existing fixture remedy #13781 awaits upstream incorporation; original Windows failure retained",
         "sourceHead": "2aa3f015f27e6c89cd5408d455a1afa6187efc5c",
-        "observedAt": "2026-10-19T15:16:25.127103+00:00",
-        "nextAction": "Follow public checks and maintainer disposition; preserve the already-delivered 200GB-cap explanation. No further capacity-policy amendment or merge action is authorized.",
+        "observedAt": "2026-10-19T16:45:40.646023+00:00",
+        "nextAction": "Follow #13781 incorporation and then affected-source Windows results. No duplicate budget PR, blind rerun, or tasksize change. Earlier missing-key CI failures remain separate.",
         "evidence": [
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13850#pullrequestreview-5573632950",
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13850#issuecomment-6269971075"
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13781",
+          "https://github.com/buildbuddy-io/buildbuddy/actions/runs/38129447672/job/114440533259"
         ]
       },
       "evidence": [
@@ -10469,6 +10473,10 @@
         {
           "label": "Windows timeout invocation",
           "url": "https://app.buildbuddy.io/invocation/4e072648-22f4-48f7-9304-815438db89c5"
+        },
+        {
+          "label": "Existing concurrent-scan fixture remedy",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
         }
       ]
     },
@@ -11396,6 +11404,66 @@
         }
       ],
       "number": 15978
+    },
+    {
+      "id": "pr:15980",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15980,
+      "ref": "fix/cgroup-task-id-validation",
+      "head": "9307d422cc05d082387044fc336988eda436d5d4",
+      "title": "Reject out-of-range cgroup task IDs",
+      "url": "https://github.com/google/gvisor/pull/15980",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-10-19T16:51:01.512289+00:00",
+      "summary": "The contributor approved exact 9307d422cc, now delivered as PR #15980. Both cgroup migration paths reject negative and oversized task IDs before narrowing, matching native Linux EINVAL behavior and preserving membership. Native and sentry before/after checks reproduce and correct live-PID aliases. The final native/directfs/shared fixture check passes all three actual cases and complete actions, with all five files identical to the standalone proposal. Earlier fixture and wrapper failures remain preserved; this does not change the shared 64-bit controller parser. Public review and CI are newly pending.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "9307d422cc05d082387044fc336988eda436d5d4",
+        "observedAt": "2026-10-19T16:48:36.565569+00:00",
+        "disposition": "Approved fix delivered; follow public review and CI",
+        "nextAction": "Use the existing PR/provider sweep for incoming reviews, source CI and matching imports. Contributor review and publication are complete.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15980"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Approved cgroup PID-range fix delivered",
+          "url": "https://github.com/google/gvisor/pull/15980"
+        }
+      ]
+    },
+    {
+      "id": "pr:15981",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15981,
+      "ref": "user-id-resolution-bounds",
+      "head": "30fdf4caad3e51586eb30f60a282fe90c13287ce",
+      "title": "Reject invalid IDs during user resolution",
+      "url": "https://github.com/google/gvisor/pull/15981",
+      "group": "runsc",
+      "status": "open",
+      "updatedAt": "2026-10-19T16:51:01.512289+00:00",
+      "summary": "The contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "30fdf4caad3e51586eb30f60a282fe90c13287ce",
+        "observedAt": "2026-10-19T16:50:03.006851+00:00",
+        "disposition": "Approved resolver fix delivered; follow public review and CI",
+        "nextAction": "Use the existing PR/provider sweep for incoming feedback, source checks and matching imports. Contributor review and publication are complete.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15981"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Approved resolver bounds fix delivered",
+          "url": "https://github.com/google/gvisor/pull/15981"
+        }
+      ]
     }
   ],
   "edges": [
@@ -13023,6 +13091,13 @@
       "type": "depends_on",
       "reason": "Reproducible hosted guest-kernel qualification needs an explicit supported kernel selector. The implementation and actual deployed worker qualification remain separate.",
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13523"
+    },
+    {
+      "from": "pr:buildbuddy-io/buildbuddy:13781",
+      "to": "pr:buildbuddy-io/buildbuddy:13850",
+      "type": "blocked_by",
+      "reason": "The observed Windows concurrent-scan timeout has an existing fixture remedy. Its separate-source Windows PASS does not clear this PR failure until incorporation and rerun; no tasksize code dependency is asserted.",
+      "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
     }
   ],
   "investigations": [
