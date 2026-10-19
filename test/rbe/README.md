@@ -759,6 +759,7 @@ bundle, including compatible query packs and notices, and uses the same default
 code-scanning suites and language categories. The default outputs are four SARIF
 files with per-file coverage and extraction diagnostics. Build
 `//tools/codeql:diagnostics` to also retrieve the databases and logs.
+For Go source identities without the database, request `--output_groups=+codeql_summary`.
 Uploading results to GitHub is separate.
 
 JavaScript, Python and Ruby read every indexed source path using its current

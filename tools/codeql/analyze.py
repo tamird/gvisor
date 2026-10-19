@@ -32,7 +32,7 @@ def main() -> None:
     for name in ("codeql", "manifest", "output", "sarif"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--language", choices=("go", "javascript", "python", "ruby"), required=True)
-    for name in ("go", "goroot", "extractor", "driver"):
+    for name in ("go", "goroot", "extractor", "driver", "go-summary"):
         parser.add_argument("--" + name, type=Path)
     args = parser.parse_args()
     codeql = args.codeql.absolute()
@@ -46,9 +46,10 @@ def main() -> None:
         work = Path(tmp)
         env = dict(os.environ)
         if args.language == "go":
-            if any(getattr(args, name) is None for name in ("go", "goroot", "extractor", "driver")):
+            if any(getattr(args, name) is None for name in ("go", "goroot", "extractor", "driver", "go_summary")):
                 raise ValueError("Go analysis requires its declared SDK, extractor and package driver")
             database = extract(args)
+            shutil.copyfile(output / "outcome.json", args.go_summary)
             source = Path.cwd()
         else:
             source = work / "source"

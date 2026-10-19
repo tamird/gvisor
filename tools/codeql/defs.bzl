@@ -31,7 +31,11 @@ def _analysis_impl(ctx):
     direct = []
     tools = []
     env = {}
+    summaries = []
     if ctx.attr.language == "go":
+        summary = ctx.actions.declare_file(ctx.label.name + "-sources.json")
+        args.add("--go-summary", summary)
+        summaries.append(summary)
         go = go_context(ctx)
         packages = [dep[GoPkgInfo] for dep in ctx.attr.roots]
         json_files = depset(transitive = [pkg.pkg_json_files for pkg in packages])
@@ -86,14 +90,17 @@ def _analysis_impl(ctx):
         arguments = [args],
         inputs = depset(direct, transitive = inputs),
         tools = tools,
-        outputs = [output, sarif],
+        outputs = [output, sarif] + summaries,
         env = env,
         mnemonic = "CodeQL",
         progress_message = "Analyzing %s sources with CodeQL" % ctx.attr.language,
     )
     return [
         DefaultInfo(files = depset([sarif])),
-        OutputGroupInfo(codeql_diagnostics = depset([output])),
+        OutputGroupInfo(
+            codeql_diagnostics = depset([output]),
+            codeql_summary = depset(summaries),
+        ),
     ]
 
 _ATTRS = {
