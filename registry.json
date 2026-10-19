@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T17:01:18.303811+00:00",
+    "updatedAt": "2026-10-19T17:11:46.439437+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5248,21 +5248,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "849f741c42d7ac16d49c3aad8a2bb50653215ace",
+      "head": "c126f7889305ef79b5730af01793ce25c3d484b2",
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Incremental bounds, ID-map and resolver validation passed",
-      "summary": "Canonical qualification/current-upstream-refresh advanced to 849f741c42 after the bwrap numeric-ID checks: five owners and attempts, 90 passing cases and one existing TestUserns skip. All 13 original numeric-ID cases and four integration ownership cases pass. The before run preserves eight invalid-input failures plus the parent failure. The contributor then requested unset-only environment fallback; that semantic amendment distinguishes present-empty values and is awaiting its focused validation. No PR publication is implied.\n\nCanonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
-      "updatedAt": "2026-10-19T17:01:18.303811+00:00",
+      "summary": "The bwrap unset-only amendment is qualified at c126f78893: five owners and attempts, 91 passing cases and one existing TestUserns skip. All 14 numeric-ID cases and 26 integration cases pass. Both present-empty cases fail before the correction; the original eight invalid-ID failures remain retained. The contributor-approved standalone 007c189b39 is delivered as PR #15983, with no contributor hold. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity.\n\nA separate blocked-writer diagnostic at 7c98923402 passes eight exact cases across native Linux and systrap shared-gofer, with two uncached remote attempts. The new case observes the announced writer thread in its controlled blocking path, closes the shared FD-table entry, checks the retained private writer reference, then requires kill/reap, buffered HUP, exact drain and EOF. Automatic verification followed execution by 5.675154 seconds and owner sealing by another 10.457157 seconds, without collection intervention. This controlled result does not reproduce or resolve the original Java hang.\n\nCanonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
+      "updatedAt": "2026-10-19T17:11:46.439437+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified integration retained; approved unset-only amendment under validation",
-        "sourceHead": "849f741c42d7ac16d49c3aad8a2bb50653215ace",
-        "observedAt": "2026-10-19T16:59:39.874869+00:00",
-        "nextAction": "Validate the contributor-requested LookupEnv contract, then publish the authorized standalone fix. Preserve earlier broad qualification source identities.",
+        "disposition": "Incremental qualification complete; approved bwrap amendment delivered",
+        "sourceHead": "c126f7889305ef79b5730af01793ce25c3d484b2",
+        "observedAt": "2026-10-19T17:10:09.188398+00:00",
+        "nextAction": "Preserve completed incremental evidence and follow the published standalone fixes through existing public CI/review monitoring. Keep earlier broad profiles source-bound.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/6efd91d4-6d7a-4203-9e43-2da99b3fdc6d"
+          "https://github.com/google/gvisor/pull/15983"
         ]
       },
       "evidence": [
@@ -11062,8 +11062,8 @@
       "url": "https://github.com/tamird/gvisor/tree/fix/codeql-production-inputs",
       "group": "analysis",
       "status": "Source/query proof complete; advisory follow-up active",
-      "summary": "The full Go/Python analysis remains qualified at e34fcbf68e, with the original wrapper failure and reviewed graph recovery retained. All 59 Go advisories have bounded dispositions: 16 fixes are remotely qualified, 24 conversions are bounded, one matches Linux masks, ten noninteger findings have bounded assessments, and eight input-validation follow-ups remain. The four user/group findings now have before/after evidence: five legacy cases fail, while six corrected owners pass 84 cases, including all 51 resolver table cases. Standalone fixes retain separate contributor-review and publication status. No new CodeQL scan or blanket security conclusion is implied.",
-      "updatedAt": "2026-10-19T16:40:35.224648+00:00",
+      "summary": "The full Go/Python analysis remains qualified at e34fcbf68e, with the original wrapper failure and reviewed graph recovery retained. All 59 Go advisory identities are unchanged: 18 fixes are remotely qualified, 24 conversions are bounded, one matches Linux masks, ten noninteger findings have bounded assessments, and six input-validation followups remain. The bwrap pair now has before/after numeric and explicit-empty evidence; the corrected five-owner run passes 91 cases with one existing user-namespace skip. Its approved unset-only fix is published as #15983, and the four qualified user/group fixes are published as #15981. Other standalone fixes retain their separate contributor-review and publication status. The independent index review verifies all 24 evidence records; no new CodeQL scan or blanket security conclusion is implied.",
+      "updatedAt": "2026-10-19T17:11:46.439437+00:00",
       "followup": {
         "owner": "root / hostinet_delivery",
         "disposition": "Sixteen fixes qualified; eight input-validation follow-ups remain",
@@ -11109,6 +11109,10 @@
         {
           "label": "Qualified resolver: 84 passing cases across six owners",
           "url": "https://app.buildbuddy.io/invocation/40e88f9f-2ad5-4ac6-864e-353a2eec0a3b"
+        },
+        {
+          "label": "Qualified bwrap unset-only correction #15983",
+          "url": "https://github.com/google/gvisor/pull/15983"
         }
       ]
     },
@@ -11462,6 +11466,36 @@
         {
           "label": "Approved resolver bounds fix delivered",
           "url": "https://github.com/google/gvisor/pull/15981"
+        }
+      ]
+    },
+    {
+      "id": "pr:15983",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15983,
+      "ref": "bwrap-sudo-id-bounds",
+      "head": "007c189b39250b0c60fa861778b7077ffca00d54",
+      "title": "Reject invalid sudo IDs before creating user mappings",
+      "url": "https://github.com/google/gvisor/pull/15983",
+      "group": "runsc",
+      "status": "open",
+      "updatedAt": "2026-10-19T17:11:46.439437+00:00",
+      "summary": "The contributor-approved unset-only correction is delivered at exact 007c189b39. SUDO_UID/SUDO_GID use LookupEnv: absent variables retain host-ID fallback, while present empty, malformed, negative, oversized and reserved values fail before creating OCI mappings. Before checks reproduce both empty-value failures and eight earlier invalid-ID failures. The corrected five-owner run passes 91 cases, all 14 numeric-ID cases and 26 integration cases, with one existing unsupported user-namespace skip. Public review and CI are pending.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "007c189b39250b0c60fa861778b7077ffca00d54",
+        "observedAt": "2026-10-19T17:09:26.226832+00:00",
+        "disposition": "Approved bwrap correction delivered; follow public review and CI",
+        "nextAction": "Use the existing PR/provider sweep for feedback, checks and matching imports. Contributor approval and publication are complete.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15983"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Approved unset-only bwrap correction delivered",
+          "url": "https://github.com/google/gvisor/pull/15983"
         }
       ]
     }
