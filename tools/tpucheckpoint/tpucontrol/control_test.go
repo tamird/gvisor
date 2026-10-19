@@ -17,6 +17,8 @@ package tpucontrol_test
 import (
 	"encoding/binary"
 	"errors"
+	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -104,25 +106,40 @@ func writeDelimited(f *os.File, msg []byte) {
 	f.Write(msg)
 }
 
-// readRequest consumes one framed request message from the pipe.
-func readRequest(reqRead *os.File) {
+// readRequest decodes one framed request message from the pipe.
+func readRequest(reqRead *os.File) (*tpupb.ControlRequest, error) {
 	var sizeBuf [4]byte
-	if _, err := reqRead.Read(sizeBuf[:]); err != nil {
-		return
+	if _, err := io.ReadFull(reqRead, sizeBuf[:]); err != nil {
+		return nil, err
 	}
 	size := binary.BigEndian.Uint32(sizeBuf[:])
-	discard := make([]byte, size)
-	reqRead.Read(discard)
+	data := make([]byte, size)
+	if _, err := io.ReadFull(reqRead, data); err != nil {
+		return nil, err
+	}
+	req := &tpupb.ControlRequest{}
+	if err := proto.Unmarshal(data, req); err != nil {
+		return nil, err
+	}
+	return req, nil
 }
 
-func mockResponder(t *testing.T, reqRead, rspWrite *os.File, success bool, state tpupb.RuntimeState, errMsg string) {
+func mockResponder(t *testing.T, reqRead, rspWrite *os.File, success bool, state tpupb.RuntimeState, errMsg string) <-chan *tpupb.ControlRequest {
 	t.Helper()
 	resp := marshalResponse(t, success, state, errMsg)
+	requests := make(chan *tpupb.ControlRequest, 1)
 	go func() {
 		defer rspWrite.Close()
-		readRequest(reqRead)
+		defer close(requests)
+		req, err := readRequest(reqRead)
+		if err != nil {
+			t.Errorf("read request: %v", err)
+			return
+		}
+		requests <- req
 		writeDelimited(rspWrite, resp)
 	}()
+	return requests
 }
 
 func TestParsePIDs(t *testing.T) {
@@ -163,75 +180,72 @@ func TestParsePIDs(t *testing.T) {
 	}
 }
 
-func TestCheckpointSuccess(t *testing.T) {
-	reqRead, reqWrite, _ := os.Pipe()
-	rspRead, rspWrite, _ := os.Pipe()
-	defer reqRead.Close()
-
-	setupPipeTest(t, 42, []pipePair{{
-		threadName:   "libtpu00010002",
-		reqWriteFD:   1,
-		rspReadFD:    2,
-		reqWriteFile: reqWrite,
-		rspReadFile:  rspRead,
-	}})
-
-	mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_DETACHED, "")
-
-	results := tpucontrol.Checkpoint([]int{42}, 10)
-	if len(results) != 1 {
-		t.Fatalf("got %d results, want 1", len(results))
+func TestControlSuccess(t *testing.T) {
+	operations := []struct {
+		name   string
+		call   func([]int, int32) []tpucontrol.Result
+		action tpupb.ControlAction
+		state  tpupb.RuntimeState
+	}{
+		{"checkpoint", tpucontrol.Checkpoint, tpupb.ControlAction_ACTION_CHECKPOINT, tpupb.RuntimeState_STATE_UNSPECIFIED},
+		{"restore", tpucontrol.Restore, tpupb.ControlAction_ACTION_RESTORE, tpupb.RuntimeState_STATE_UNSPECIFIED},
+		{"get_state", tpucontrol.GetState, tpupb.ControlAction_ACTION_GETSTATE, tpupb.RuntimeState_STATE_DETACHED},
 	}
-	if results[0].Err != nil {
-		t.Fatalf("Checkpoint() error = %v", results[0].Err)
-	}
-	if results[0].PID != 42 {
-		t.Errorf("results[0].PID = %d, want 42", results[0].PID)
-	}
-}
-
-func TestRestoreSuccess(t *testing.T) {
-	reqRead, reqWrite, _ := os.Pipe()
-	rspRead, rspWrite, _ := os.Pipe()
-	defer reqRead.Close()
-
-	setupPipeTest(t, 42, []pipePair{{
-		threadName:   "libtpu00010002",
-		reqWriteFD:   1,
-		rspReadFD:    2,
-		reqWriteFile: reqWrite,
-		rspReadFile:  rspRead,
-	}})
-
-	mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_RUNNING, "")
-
-	results := tpucontrol.Restore([]int{42}, 10)
-	if results[0].Err != nil {
-		t.Fatalf("Restore() error = %v", results[0].Err)
-	}
-}
-
-func TestGetStateSuccess(t *testing.T) {
-	reqRead, reqWrite, _ := os.Pipe()
-	rspRead, rspWrite, _ := os.Pipe()
-	defer reqRead.Close()
-
-	setupPipeTest(t, 42, []pipePair{{
-		threadName:   "libtpu00010002",
-		reqWriteFD:   1,
-		rspReadFD:    2,
-		reqWriteFile: reqWrite,
-		rspReadFile:  rspRead,
-	}})
-
-	mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_DETACHED, "")
-
-	results := tpucontrol.GetState([]int{42}, 10)
-	if results[0].Err != nil {
-		t.Fatalf("GetState() error = %v", results[0].Err)
-	}
-	if results[0].State != tpupb.RuntimeState_STATE_DETACHED {
-		t.Errorf("GetState() = %v, want %v", results[0].State, tpupb.RuntimeState_STATE_DETACHED)
+	for i, op := range operations {
+		t.Run(op.name, func(t *testing.T) {
+			for _, tc := range []struct {
+				name    string
+				timeout int32
+				// Expected wire values for checkpoint, restore, and get-state.
+				want [3]int32
+			}{
+				{"positive", 10, [3]int32{10, 10, 10}},
+				{"maximum", math.MaxInt32, [3]int32{math.MaxInt32, math.MaxInt32, math.MaxInt32}},
+				{"zero", 0, [3]int32{180, 180, 0}},
+				{"negative", -1, [3]int32{180, 180, -1}},
+				{"minimum", math.MinInt32, [3]int32{180, 180, math.MinInt32}},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					reqRead, reqWrite, err := os.Pipe()
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer reqRead.Close()
+					defer reqWrite.Close()
+					rspRead, rspWrite, err := os.Pipe()
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer rspRead.Close()
+					defer rspWrite.Close()
+					setupPipeTest(t, 42, []pipePair{{
+						threadName:   "libtpu00010002",
+						reqWriteFD:   1,
+						rspReadFD:    2,
+						reqWriteFile: reqWrite,
+						rspReadFile:  rspRead,
+					}})
+					requests := mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_DETACHED, "")
+					results := op.call([]int{42}, tc.timeout)
+					if len(results) != 1 {
+						t.Fatalf("got %d results, want 1", len(results))
+					}
+					if results[0].Err != nil {
+						t.Fatalf("%s() error = %v", op.name, results[0].Err)
+					}
+					if results[0].PID != 42 || results[0].State != op.state {
+						t.Errorf("result = %+v, want PID 42 and state %v", results[0], op.state)
+					}
+					req := <-requests
+					if req == nil {
+						t.Fatal("no request received")
+					}
+					if req.GetAction() != op.action || req.GetTimeoutSecs() != tc.want[i] {
+						t.Errorf("request = %v, want action %v and timeout %d", req, op.action, tc.want[i])
+					}
+				})
+			}
+		})
 	}
 }
 
@@ -248,7 +262,7 @@ func TestControlFailureResponse(t *testing.T) {
 		rspReadFile:  rspRead,
 	}})
 
-	mockResponder(t, reqRead, rspWrite, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
+	_ = mockResponder(t, reqRead, rspWrite, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
 
 	results := tpucontrol.Checkpoint([]int{42}, 10)
 	if results[0].Err == nil {
@@ -283,7 +297,7 @@ func TestControlTimeout(t *testing.T) {
 
 	// Read the request but never write a response.
 	go func() {
-		readRequest(reqRead)
+		_, _ = readRequest(reqRead)
 		time.Sleep(5 * time.Second)
 	}()
 
@@ -317,7 +331,7 @@ func TestControlPipeClosed(t *testing.T) {
 
 	// Read the request, then close the response pipe without writing.
 	go func() {
-		readRequest(reqRead)
+		_, _ = readRequest(reqRead)
 		rspWrite.Close()
 	}()
 
@@ -347,7 +361,7 @@ func TestControlCorruptedResponse(t *testing.T) {
 
 	go func() {
 		defer rspWrite.Close()
-		readRequest(reqRead)
+		_, _ = readRequest(reqRead)
 
 		// Valid size prefix but a truncated varint payload.
 		writeDelimited(rspWrite, []byte{0x08})
@@ -377,8 +391,8 @@ func TestControlAllMultipleThreads(t *testing.T) {
 		{threadName: "libtpu00030004", reqWriteFD: 3, rspReadFD: 4, reqWriteFile: reqWrite2, rspReadFile: rspRead2},
 	})
 
-	mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
-	mockResponder(t, reqRead2, rspWrite2, true, tpupb.RuntimeState_STATE_DETACHED, "")
+	_ = mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
+	_ = mockResponder(t, reqRead2, rspWrite2, true, tpupb.RuntimeState_STATE_DETACHED, "")
 
 	results := tpucontrol.Checkpoint([]int{42}, 10)
 	if results[0].Err != nil {
@@ -401,7 +415,7 @@ func TestControlAllFirstFails(t *testing.T) {
 	})
 
 	// The first thread fails; the operation should report the failure.
-	mockResponder(t, reqRead1, rspWrite1, false, tpupb.RuntimeState_STATE_FAULTED, "device error")
+	_ = mockResponder(t, reqRead1, rspWrite1, false, tpupb.RuntimeState_STATE_FAULTED, "device error")
 
 	results := tpucontrol.Checkpoint([]int{42}, 10)
 	if results[0].Err == nil {
@@ -440,7 +454,7 @@ func TestCheckpointMultiplePIDs(t *testing.T) {
 	} {
 		go func(reqRead, rspWrite *os.File) {
 			defer rspWrite.Close()
-			readRequest(reqRead)
+			_, _ = readRequest(reqRead)
 			barrier.Done()
 			barrier.Wait()
 			writeDelimited(rspWrite, resp)
@@ -474,8 +488,8 @@ func TestCheckpointMultiplePIDsPartialFailure(t *testing.T) {
 		42: {{threadName: "libtpu00030004", reqWriteFD: 3, rspReadFD: 4, reqWriteFile: reqWrite2, rspReadFile: rspRead2}},
 	})
 
-	mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
-	mockResponder(t, reqRead2, rspWrite2, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
+	_ = mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
+	_ = mockResponder(t, reqRead2, rspWrite2, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
 
 	results := tpucontrol.Checkpoint([]int{41, 42}, 10)
 	if results[0].PID != 41 || results[1].PID != 42 {
