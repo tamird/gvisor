@@ -303,7 +303,7 @@ diff --git a/go/tools/gopackagesdriver/BUILD.bazel b/go/tools/gopackagesdriver/B
  load("//go/private:common.bzl", "RULES_GO_REPO_NAME")
  load("//go/tools/bazel_testing:def.bzl", "go_bazel_test")
  
-@@ -33,6 +33,13 @@
+@@ -33,6 +33,14 @@
      },
  )
  
@@ -311,6 +311,7 @@ diff --git a/go/tools/gopackagesdriver/BUILD.bazel b/go/tools/gopackagesdriver/B
 +    name = "json_manifest_test",
 +    srcs = ["json_manifest_test.go"],
 +    embed = [":gopackagesdriver_lib"],
++    env = {"GOTAGS": ""},
 +    deps = ["@org_golang_x_tools//go/packages"],
 +)
 +
@@ -321,7 +322,7 @@ diff --git a/go/tools/gopackagesdriver/json_manifest_test.go b/go/tools/gopackag
 new file mode 100644
 --- /dev/null
 +++ b/go/tools/gopackagesdriver/json_manifest_test.go
-@@ -0,0 +1,181 @@
+@@ -0,0 +1,177 @@
 +// Copyright 2026 The Bazel Authors. All rights reserved.
 +//
 +// Licensed under the Apache License, Version 2.0 (the "License");
@@ -437,10 +438,6 @@ new file mode 100644
 +}
 +
 +func TestJSONManifestSourceFiltering(t *testing.T) {
-+	t.Setenv("GOTAGS", "")
-+	previous := buildContext
-+	buildContext = makeBuildContext()
-+	defer func() { buildContext = previous }()
 +	for _, tc := range []struct {
 +		name, filename, source         string
 +		missing, wantError, wantSource bool

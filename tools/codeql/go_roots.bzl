@@ -1,9 +1,5 @@
 """Generated production Go roots; update with //tools/codeql:update_go_roots."""
 
-# Bootstrap declarations; the canonical query generator fills dispositions.
-GO_ANALYSIS_EXCLUDED_ROOTS = {}
-GO_ANALYSIS_EXCLUDED_MODES = {}
-
 GO_ANALYSIS_ROOTS = {
     "//examples/sandboxexec/go/docprocessor:docprocessor_codeql": "//examples/sandboxexec/go/docprocessor:docprocessor",
     "//examples/sandboxexec/go:doc_processor_codeql": "//examples/sandboxexec/go:doc_processor",
@@ -356,11 +352,8 @@ GO_ANALYSIS_ROOTS = {
     "//runsc/cmd/sandboxsetup:sandboxsetup_codeql": "//runsc/cmd/sandboxsetup:sandboxsetup",
     "//runsc/cmd/sentry/forwardcmd:forwardcmd_codeql": "//runsc/cmd/sentry/forwardcmd:forwardcmd",
     "//runsc/cmd/sentry/sentrycmd:sentrycmd_codeql": "//runsc/cmd/sentry/sentrycmd:sentrycmd",
-    "//runsc/cmd/sentry:gvisor_sentry-race_codeql": "//runsc/cmd/sentry:gvisor_sentry-race",
     "//runsc/cmd/sentry:gvisor_sentry_codeql": "//runsc/cmd/sentry:gvisor_sentry",
-    "//runsc/cmd/sentry:gvisor_sentry_coverage_codeql": "//runsc/cmd/sentry:gvisor_sentry_coverage",
     "//runsc/cmd/sentry:gvisor_sentry_plugin_stack_codeql": "//runsc/cmd/sentry:gvisor_sentry_plugin_stack",
-    "//runsc/cmd/sentry:gvisor_sentry_race_coverage_codeql": "//runsc/cmd/sentry:gvisor_sentry_race_coverage",
     "//runsc/cmd/trace:trace_codeql": "//runsc/cmd/trace:trace",
     "//runsc/cmd/util:util_codeql": "//runsc/cmd/util:util",
     "//runsc/cmd:cmd_codeql": "//runsc/cmd:cmd",
@@ -390,10 +383,7 @@ GO_ANALYSIS_ROOTS = {
     "//runsc/starttime:starttime_codeql": "//runsc/starttime:starttime",
     "//runsc/version:version_codeql": "//runsc/version:version",
     "//runsc:runsc-plugin-stack_codeql": "//runsc:runsc-plugin-stack",
-    "//runsc:runsc-race_codeql": "//runsc:runsc-race",
     "//runsc:runsc_codeql": "//runsc:runsc",
-    "//runsc:runsc_coverage_codeql": "//runsc:runsc_coverage",
-    "//runsc:runsc_race_coverage_codeql": "//runsc:runsc_race_coverage",
     "//sandboxexec/proto:sandbox_options_go_proto_codeql": "//sandboxexec/proto:sandbox_options_go_proto",
     "//sandboxexec/sandbox:sandbox_codeql": "//sandboxexec/sandbox:sandbox",
     "//shim/shimutils:shimutils_codeql": "//shim/shimutils:shimutils",
@@ -499,7 +489,6 @@ GO_ANALYSIS_ROOTS = {
     "//tools/checkconst:checkconst_codeql": "//tools/checkconst:checkconst",
     "//tools/checkescape/test1:test1_codeql": "//tools/checkescape/test1:test1",
     "//tools/checkescape/test2:test2_codeql": "//tools/checkescape/test2:test2",
-    "//tools/checkescape/test3:test3-race_codeql": "//tools/checkescape/test3:test3-race",
     "//tools/checkescape/test3:test3_codeql": "//tools/checkescape/test3:test3",
     "//tools/checkescape:checkescape_codeql": "//tools/checkescape:checkescape",
     "//tools/checklinkname/test:test_codeql": "//tools/checklinkname/test:test",
@@ -571,4 +560,24 @@ GO_ANALYSIS_ROOTS = {
     "//webhook:webhook_codeql": "//webhook:webhook",
     "//website/cmd/server:server_codeql": "//website/cmd/server:server",
     "//website/cmd/syscalldocs:syscalldocs_codeql": "//website/cmd/syscalldocs:syscalldocs",
+}
+
+GO_ANALYSIS_EXCLUDED_ROOTS = {
+    "//runsc/cmd/sentry:gvisor_sentry-race_codeql": "//runsc/cmd/sentry:gvisor_sentry-race",
+    "//runsc/cmd/sentry:gvisor_sentry_coverage_codeql": "//runsc/cmd/sentry:gvisor_sentry_coverage",
+    "//runsc/cmd/sentry:gvisor_sentry_race_coverage_codeql": "//runsc/cmd/sentry:gvisor_sentry_race_coverage",
+    "//runsc:runsc-race_codeql": "//runsc:runsc-race",
+    "//runsc:runsc_coverage_codeql": "//runsc:runsc_coverage",
+    "//runsc:runsc_race_coverage_codeql": "//runsc:runsc_race_coverage",
+    "//tools/checkescape/test3:test3-race_codeql": "//tools/checkescape/test3:test3-race",
+}
+
+GO_ANALYSIS_EXCLUDED_MODES = {
+    "//runsc/cmd/sentry:gvisor_sentry-race": ["race"],
+    "//runsc/cmd/sentry:gvisor_sentry_coverage": ["coverage"],
+    "//runsc/cmd/sentry:gvisor_sentry_race_coverage": ["coverage", "race"],
+    "//runsc:runsc-race": ["race"],
+    "//runsc:runsc_coverage": ["coverage"],
+    "//runsc:runsc_race_coverage": ["coverage", "race"],
+    "//tools/checkescape/test3:test3-race": ["race"],
 }

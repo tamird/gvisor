@@ -25,8 +25,6 @@ _DEFAULT_STATIC = select({
 })
 
 def _codeql_source(name, testonly, srcs = None, excluded_modes = None):
-    # An alias in the same package preserves the owner's visibility (including
-    # package defaults) and configuration. It adds no compilation or runfiles.
     tags = ["manual", "codeql-go-owner:" + str(Label("//%s:%s" % (native.package_name(), name)))]
     if excluded_modes:
         # Instrumented/race compilations are not the default source analysis.
@@ -41,6 +39,8 @@ def _codeql_source(name, testonly, srcs = None, excluded_modes = None):
             visibility = ["//tools/codeql:__pkg__"],
         )
         return
+    # An alias in the same package preserves the owner's visibility (including
+    # package defaults) and configuration. It adds no compilation or runfiles.
     native.alias(
         name = name + "_codeql",
         actual = ":" + name,
