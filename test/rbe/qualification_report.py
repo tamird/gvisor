@@ -182,6 +182,7 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     """Copy all advertised original reports before returning capture failures."""
     errors: list[str] = []
     reports: list[dict[str, object]] = []
+    jtreg_labels: set[str] = set()
     output_root = output_root.resolve()
     if events.resolve() == output.resolve():
         raise ValueError("Raw and sanitized event files must differ")
@@ -204,6 +205,18 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
         # A missing/corrupt earlier manifest cannot authenticate reusable copies.
         previous = {}
     try:
+        # BEP children may precede their parents. Discover output contracts
+        # before copying any result, regardless of the event ordering.
+        with events.open() as source:
+            for line in source:
+                try:
+                    event = mapping(json.loads(line))
+                    if "jtreg-results" in mapping(event.get("configured", {})).get("tag", []):
+                        identity = mapping(event.get("id"))
+                        jtreg_labels.add(string(mapping(identity.get("targetConfigured")).get("label")))
+                except (ValueError, TypeError):
+                    # The capture pass below reports malformed events.
+                    continue
         with events.open() as source, output.open("w") as target:
             for line_number, line in enumerate(source, 1):
                 try:
@@ -220,7 +233,7 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
                         # Guest logs can survive only in undeclared outputs when
                         # the wrapper times out before printing them to test.log.
                         # Bazel may publish a ZIP or the individual files.
-                        if retain_outputs or result.get("status") != "PASSED":
+                        if retain_outputs or result.get("status") != "PASSED" or attempt.owner.label in jtreg_labels:
                             names.extend(name for name in advertised
                                          if name == "test.outputs__outputs.zip" or name.startswith("test.outputs/"))
                         for name in names:
@@ -305,6 +318,72 @@ def xml_cases(path: Path) -> dict[str, object]:
     if declared is not None and number(declared) != sum(counts.values()):
         raise ValueError(f"XML declares {declared} tests but contains {sum(counts.values())}")
     return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"], "failures": failures, "skips": skips}
+
+
+def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
+    """Reconcile selected Java names with jtreg's retained per-test results."""
+    pattern = r"^I\d{4} \S+\s+\d+ lib\.go:\d+\] Running test case batch: (.+)$"
+    batches = [match[1].split(",") for line in log.read_text().splitlines()
+               if (match := re.fullmatch(pattern, line))]
+    expected = [name for batch in batches for name in batch]
+    if not expected or len(expected) != len(set(expected)):
+        raise ValueError("Java selection is empty or contains duplicate names")
+
+    def outputs() -> Iterator[str]:
+        total = 0
+        if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
+            with zipfile.ZipFile(archive_path) as archive:
+                names = [item for item in archive.infolist() if re.fullmatch(r"batch-\d+\.log", item.filename)]
+                if len(names) != len({item.filename for item in names}):
+                    raise ValueError("Duplicate Java batch artifacts")
+                for item in names:
+                    total += item.file_size
+                    if item.file_size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
+                        raise ValueError("Java batch output exceeds retention bounds")
+                    yield archive.read(item).decode()
+        else:
+            for (owner, name), path in reports.items():
+                if owner == attempt and re.fullmatch(r"test.outputs/batch-\d+\.log", name):
+                    yield path.read_text()
+
+    found_batches = []
+    results: dict[str, str] = {}
+    errors = []
+    try:
+        for output in outputs():
+            selection, separator, body = output.partition("\nOutput:\n")
+            if not separator or not selection.startswith("Batch:\n"):
+                errors.append("Invalid Java batch artifact header")
+                continue
+            names = selection.removeprefix("Batch:\n").splitlines()
+            found_batches.append(names)
+            current = None
+            for line in body.splitlines():
+                if line.startswith("TEST: "):
+                    if current is not None:
+                        errors.append("Java test starts before the preceding result")
+                    current = line.removeprefix("TEST: ")
+                    if current not in names or current in results:
+                        errors.append(f"Unexpected or duplicate Java test: {current}")
+                        current = None
+                elif line.startswith("TEST RESULT: "):
+                    if current is None:
+                        errors.append("Java result has no test identity")
+                        continue
+                    result = line.removeprefix("TEST RESULT: ")
+                    if not result.startswith(("Passed.", "Failed.", "Error.")):
+                        errors.append(f"Unrecognized Java result: {result}")
+                    else:
+                        results[current] = result
+                    current = None
+    except (OSError, ValueError, zipfile.BadZipFile) as error:
+        errors.append(str(error))
+    if Counter(map(tuple, batches)) != Counter(map(tuple, found_batches)):
+        errors.append("Retained Java batches differ from the selected batches")
+    return {"expected": expected, "results": results, "errors": errors,
+            "passed": sum(result.startswith("Passed.") for result in results.values()),
+            "failures": [name for name, result in results.items() if not result.startswith("Passed.")],
+            "missing": sorted(set(expected) - results.keys())}
 
 
 @dataclass(frozen=True)
@@ -626,6 +705,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     summaries: dict[Owner, dict[str, object]] = {}
     finished: dict[str, object] = {}
     skipped_owners: set[Owner] = set()
+    jtreg_tests: set[Owner] = set()
     with events.open() as stream:
         for line_number, line in enumerate(stream, 1):
             try:
@@ -637,6 +717,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     if details.get("targetKind") != "test_suite rule" and (not testing or "testSize" in details):
                         configured.update(Owner.parse(child["targetCompleted"]) for child in children
                                           if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
+                    if "jtreg-results" in details.get("tag", []):
+                        jtreg_tests.update(Owner.parse(child["targetCompleted"]) for child in children
+                                           if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
                 for child in children:
                     if "targetCompleted" in child and mapping(child["targetCompleted"]).get("aspect"):
                         aspects.add(Aspect.parse(child["targetCompleted"]))
@@ -688,6 +771,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                   if "expected-failure" in target.tags)
             marshal_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                  if "go-marshal-test-contract" in target.tags)
+            jtreg_tests.update(Owner(label, target.configuration) for label, target in targets.items()
+                               if "jtreg-results" in target.tags)
             if info["command_kind"] == "test":
                 declared_benchmark_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                                 if "go-benchmark-contract" in target.tags)
@@ -771,6 +856,17 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             observation: dict[str, object] = {**asdict(attempt), "status": result.get("status"),
                                             "cached_locally": result.get("cachedLocally", False),
                                             "execution_info": result.get("executionInfo", {})}
+            if attempt.owner in jtreg_tests:
+                try:
+                    runtime = jtreg_results(reports[(attempt, "test.log")], attempt, reports)
+                    observation["jtreg"] = runtime
+                    errors.extend(f"{attempt}: {error}" for error in runtime["errors"])
+                    failures.extend({**asdict(attempt), "reason": "jtreg failure", "name": name}
+                                    for name in runtime["failures"])
+                    missing.extend({**asdict(attempt), "reason": "jtreg result missing", "name": name}
+                                   for name in runtime["missing"])
+                except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
+                    errors.append(f"{attempt}: {error}")
             try:
                 xml = reports[(attempt, "test.xml")]
                 log = reports[(attempt, "test.log")]

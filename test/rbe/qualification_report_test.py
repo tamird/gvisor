@@ -106,6 +106,91 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
+    def jtreg_fixture(self, output: str, *, zipped: bool, names: str = "First.java,Second.java") -> Path:
+        invocation = self.fixture()
+        events = self.events(invocation)
+        configured = next(event["configured"] for event in events if "configured" in event)
+        configured["tag"].append("jtreg-results")
+        (invocation / "test.log").write_text(
+            f"I1018 00:00:00.000000 1 lib.go:243] Running test case batch: {names}\n"
+            "PASS: (1s) 2 tests passed\n")
+        batch = "Batch:\n" + names.replace(",", "\n") + "\nOutput:\n" + output
+        result = next(event["testResult"] for event in events if "testResult" in event)
+        if zipped:
+            path = invocation / "outputs.zip"
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr("batch-0.log", batch)
+            name = "test.outputs__outputs.zip"
+        else:
+            path = invocation / "batch-0.log"
+            path.write_text(batch)
+            name = "test.outputs/batch-0.log"
+        result["testActionOutput"].append({"name": name, "uri": path.as_uri()})
+        self.write_events(invocation, events)
+        return invocation
+
+    def test_jtreg_results_override_successful_wrapper(self) -> None:
+        scenarios = (
+            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: Second.java\nTEST RESULT: Passed.\n", "PASS"),
+            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: Second.java\nTEST RESULT: Failed. timeout\n", "FAIL"),
+            ("TEST: First.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
+            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: Second.java\n", "INCOMPLETE"),
+            ("", "INCOMPLETE"),
+            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: First.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
+            ("TEST: Unselected.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
+            ("TEST: First.java\nTEST RESULT: Failed.\nTEST: First.java\nTEST RESULT: Passed.\n", "FAIL"),
+            ("TEST: First.java\nTEST RESULT: Error.\nTEST: Unselected.java\nTEST RESULT: Passed.\n", "FAIL"),
+        )
+        for zipped, (output, expected) in itertools.product((False, True), scenarios):
+            with self.subTest(zipped=zipped, output=output):
+                invocation = self.jtreg_fixture(output, zipped=zipped)
+                # A result can precede its configured-parent event in BEP.
+                events = self.events(invocation)
+                self.write_events(invocation, events[1:] + events[:1])
+                # The configured contract retains passing artifacts without
+                # relying on the caller to request all undeclared outputs.
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], expected, value)
+                if expected == "PASS":
+                    self.assertEqual(value["executed"][0]["jtreg"]["passed"], 2)
+                shutil.rmtree(invocation)
+
+    def test_jtreg_requires_matching_retained_batches(self) -> None:
+        for missing in (True, False):
+            with self.subTest(missing=missing):
+                invocation = self.jtreg_fixture("TEST: First.java\nTEST RESULT: Passed.\n", zipped=False)
+                events = self.events(invocation)
+                result = next(event["testResult"] for event in events if "testResult" in event)
+                if missing:
+                    result["testActionOutput"].pop()
+                    self.write_events(invocation, events)
+                else:
+                    path = invocation / "batch-0.log"
+                    path.write_text(path.read_text().replace("Second.java", "Third.java"))
+                self.capture(invocation)
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "INCOMPLETE", value)
+                self.assertTrue(any("batches differ" in error for error in value["errors"]), value)
+                shutil.rmtree(invocation)
+
+    def test_jtreg_and_xml_failures_survive_other_report_errors(self) -> None:
+        for malformed_xml in (False, True):
+            with self.subTest(malformed_xml=malformed_xml):
+                invocation = self.jtreg_fixture("TEST: First.java\nTEST RESULT: Failed.\n", zipped=False)
+                if malformed_xml:
+                    (invocation / "test.xml").write_text("<truncated")
+                else:
+                    (invocation / "test.log").write_text("No valid batch selection\n")
+                    (invocation / "test.xml").write_text(
+                        '<testsuite tests="1" failures="1"><testcase name="batch_0"><failure/></testcase></testsuite>')
+                self.capture(invocation)
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "FAIL", value)
+                self.assertTrue(value["errors"], value)
+                self.assertTrue(value["failures"], value)
+                shutil.rmtree(invocation)
+
     def benchmark_fixture(self) -> Path:
         invocation = self.fixture("benchmark")
         context = report.read_json(invocation / "context.json")

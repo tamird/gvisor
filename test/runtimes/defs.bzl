@@ -107,13 +107,14 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
     """
     if partitions < 1:
         fail("runtime tests require at least one partition")
+    result_tags = ["jtreg-results"] if kwargs.get("lang") == "java" else []
     _runtime_test(
         name = name,
         image = name,  # Resolved as images/runtimes/%s.
         tags = [
             "no-sandbox",
             "manual",
-        ] + local_test_tags,
+        ] + local_test_tags + result_tags,
         **kwargs
     )
 
@@ -146,7 +147,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
                 memory = memory,
             ),
             target_compatible_with = ["@platforms//cpu:x86_64"],
-            tags = ["manual"],
+            tags = ["manual"] + result_tags,
             **kwargs
         )
     for mode, directfs in _RUNTIME_MODES.items():
@@ -183,7 +184,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
                     memory = memory,
                 ),
                 target_compatible_with = ["@platforms//cpu:x86_64"],
-                tags = ["manual"],
+                tags = ["manual"] + result_tags,
                 **kwargs
             )
             tests.append(test)
