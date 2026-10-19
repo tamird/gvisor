@@ -1,0 +1,93 @@
+{
+  "arguments": ["-test.run=^$", "-test.v=false", "-test.bench=.", "-test.benchtime=1x", "-test.count=1"],
+  "owners": {
+    "//pkg/atomicbitops:atomicbitops_benchmark_test": [
+      {"name": "BenchmarkAndUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkAndUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkAndUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkAndUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//pkg/atomicbitops:atomicbitops_benchmark_test_arm64": [
+      {"name": "BenchmarkAndUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkAndUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkAndUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkAndUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkOrUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkXorUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint32", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint32Parallel", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkCompareAndSwapUint64Parallel", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//pkg/sentry/fsimpl/tmpfs:benchmark_test": [
+      {"name": "BenchmarkTmpfsStat/1", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/2", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/3", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/8", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/100", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/1", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/2", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/3", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/8", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/100", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//pkg/sentry/fsimpl/tmpfs:benchmark_test_arm64": [
+      {"name": "BenchmarkTmpfsStat/1", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/2", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/3", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/8", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsStat/100", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/1", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/2", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/3", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/8", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/64", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkTmpfsMountStat/100", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//pkg/state/wire:wire_test": [
+      {"name": "BenchmarkUintSave", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//pkg/state/wire:wire_test_arm64": [
+      {"name": "BenchmarkUintSave", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//tools/go_marshal/test:benchmark_test": [
+      {"name": "BenchmarkEncodingBinary", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkBinary", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkMarshalManual", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkGoMarshalSafe", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkGoMarshalUnsafe", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkBinarySlice", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkGoMarshalUnsafeSlice", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ],
+    "//tools/go_marshal/test:benchmark_test_arm64": [
+      {"name": "BenchmarkEncodingBinary", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkBinary", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkMarshalManual", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkGoMarshalSafe", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkGoMarshalUnsafe", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkBinarySlice", "count": 1, "units": ["ns/op"], "iterations": 1},
+      {"name": "BenchmarkGoMarshalUnsafeSlice", "count": 1, "units": ["ns/op"], "iterations": 1}
+    ]
+  }
+}
