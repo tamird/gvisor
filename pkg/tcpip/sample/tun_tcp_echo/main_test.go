@@ -47,7 +47,7 @@ func TestPortValidationBeforeDeviceSetup(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// An empty interface name cannot exist. Valid ports reach
 			// device setup; invalid ports must be rejected before it.
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 			defer cancel()
 			output, err := exec.CommandContext(ctx, binary, "", "127.0.0.1", tc.port).CombinedOutput()
 			if ctx.Err() != nil {
