@@ -42,6 +42,5 @@ go_test(
     ],
     embed = [":licensecheck"],
     embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),  # keep
-    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
 )

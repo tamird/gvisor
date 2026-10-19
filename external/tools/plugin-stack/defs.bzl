@@ -2,6 +2,7 @@
 
 load("@io_bazel_rules_go//go:def.bzl", _go_test = "go_test")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("//tools/bazeldefs:go_runtime.bzl", "go_runtime_test")
 
 def _plugin_configuration(configured):
     # Bazel forbids transitioning --define. One build setting replaces the
@@ -11,11 +12,11 @@ def _plugin_configuration(configured):
         False,
     )
 
-# Extend the loaded raw rule so the existing Docker/Go declarations keep their
-# attributes, runfiles, providers and execution properties. The Go macro also
-# passes this rule to its native architecture variants.
-# Keep the go_test rule kind used by the existing Nogo aspect.
+# Keep one configuration owner for compilation and runtime dependencies. The
+# raw rule retains go_test's kind for the package and Nogo aspects.
 go_test, _plugin_test_transition = _plugin_configuration(with_cfg(_go_test)).build()
+_plugin_runtime_test, _plugin_runtime_transition = _plugin_configuration(with_cfg(go_runtime_test)).build()
+plugin_test_rules = struct(compilation = go_test, runtime = _plugin_runtime_test)
 
 # Only the public build lane uses opt and Bazel's default stripping policy.
 # Network tests keep their existing compilation mode and strip=never, including

@@ -48,6 +48,7 @@ bzl_library(
     deps = [
         "//test/docker:defs_bzl",
         "//tools:defs_bzl",
+        "//tools/bazeldefs:go_runtime_bzl",
         "@io_bazel_rules_go//go:def",
         "@with_cfg.bzl//:with_cfg",
     ],

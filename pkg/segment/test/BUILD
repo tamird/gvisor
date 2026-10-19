@@ -67,6 +67,5 @@ go_test(
     size = "small",
     srcs = ["segment_test.go"],
     embed = [":segment"],
-    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
 )

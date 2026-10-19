@@ -192,7 +192,7 @@ _GO_RUNTIME_ATTRIBUTES = [
     "visibility",
 ]
 
-def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, shared_compilation = False, **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rules = None, cgroup_v2 = False, **kwargs):
     """Build a go test.
 
     Args:
@@ -201,12 +201,10 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         pure: should it be built without cgo.
         library: the library to embed.
         architectures: Additional explicitly selected native architecture variants.
-        test_rule: Optional configured raw Go test rule, including any required
-            static platform transition. Used by the base and architecture variants.
+        test_rules: Optional compilation/runtime rule pair sharing one declared
+            configuration, including any required static platform transition.
         cgroup_v2: Declare an explicit cgroup-v2 environment variant for combined
             container qualification, preserving the ordinary target's environment.
-        shared_compilation: Share one raw compilation between analysis and the
-            public runtime frontends. Limited to the reviewed initial owners.
         **kwargs: rest of the arguments to pass to _go_test.
 
     Returns:
@@ -226,47 +224,40 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    base_rule = test_rule if test_rule != None else (_static_go_test if static else _go_test)
+    compilation_rule = test_rules.compilation if test_rules != None else (_static_go_test if static else _go_test)
+    runtime_rule = test_rules.runtime if test_rules != None else (static_go_runtime_test if static else go_runtime_test)
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     if cgroup_v2:
         kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
-    compilation_label = ":" + name
-    if shared_compilation:
-        # Explicit Go OS/architecture attributes also change the runtime data's
-        # platform. Preserve that boundary until the wider migration supports it.
-        if "goos" in kwargs or "goarch" in kwargs or test_rule != None:
-            fail("shared compilation does not yet support explicit Go platforms or test_rule")
-        compilation = dict(kwargs)
-        for attribute in ["data", "args", "env", "env_inherit"]:
-            compilation.pop(attribute, None)
-        owner = str(native.package_relative_label(":" + name))
-        compilation["importpath_owner"] = owner
-        compilation["tags"] = kwargs.get("tags", []) + ["manual", "go-compilation-owner:" + owner]
-        base_rule(name = name + "_compile", **compilation)
-        compilation_label = ":" + name + "_compile"
+    # Explicit Go OS/architecture attributes also transition the runtime data's
+    # platform. All maintained tests use the architecture frontends instead.
+    if "goos" in kwargs or "goarch" in kwargs:
+        fail("use architectures to configure both Go compilation and runtime data")
+    compilation = dict(kwargs)
+    for attribute in ["data", "args", "env", "env_inherit"]:
+        compilation.pop(attribute, None)
+    owner = str(native.package_relative_label(":" + name))
+    compilation["importpath_owner"] = owner
+    compilation["tags"] = kwargs.get("tags", []) + ["manual", "go-compilation-owner:" + owner]
+    compilation_rule(name = name + "_compile", **compilation)
+    compilation_label = ":" + name + "_compile"
 
-        # Keep runtime dependencies inside the configured frontend. Moving them
-        # outside with_cfg would build ARM/static data in the caller's platform.
-        kwargs = {key: value for key, value in kwargs.items() if key in _GO_RUNTIME_ATTRIBUTES}
-        kwargs["src"] = compilation_label
-        base_rule = static_go_runtime_test if static else go_runtime_test
-        test_rule = base_rule
-    base_rule(name = name, **kwargs)
+    # Keep runtime dependencies inside the configured frontend. Moving them
+    # outside with_cfg would build ARM/static data in the caller's platform.
+    kwargs = {key: value for key, value in kwargs.items() if key in _GO_RUNTIME_ATTRIBUTES}
+    kwargs["src"] = compilation_label
+    runtime_rule(name = name, **kwargs)
     if cgroup_v2:
-        cgroup_attributes = cgroup_v2_variant(name, base_rule, kwargs)
-        if test_rule != None:
-            cgroup_attributes["test_rule"] = test_rule
+        cgroup_attributes = cgroup_v2_variant(name, runtime_rule, kwargs)
+        cgroup_attributes["test_rule"] = runtime_rule
         test_architecture_variants(
             name + "_cgroup_v2",
             architectures,
             {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
             dict(cgroup_attributes, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
         )
-    cgroup_v1_variant(name, go_cgroup_v1_test, dict(kwargs, test_rule = base_rule))
-    if test_rule != None:
-        # The architecture frontend must configure the same raw rule as the
-        # original declaration, without copying this macro's Go/Nogo setup.
-        kwargs["test_rule"] = test_rule
+    cgroup_v1_variant(name, go_cgroup_v1_test, dict(kwargs, test_rule = runtime_rule))
+    kwargs["test_rule"] = runtime_rule
     test_architecture_variants(
         name,
         architectures,

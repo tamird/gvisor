@@ -313,7 +313,6 @@ go_test(
             "//conditions:default": {},
         }),
         rundir = ".",
-        shared_compilation = name == "triton",
         tags = [
             "manual",
             "no-local",

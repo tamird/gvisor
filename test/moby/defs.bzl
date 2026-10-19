@@ -1,9 +1,10 @@
 """Moby's public CI deadline on its original Go test declaration."""
 
-load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_test = "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive", _go_test = "go_test")
 load("@with_cfg.bzl//:with_cfg.bzl", "frontend_test", "with_cfg")
 load("//test/docker:defs.bzl", "owned_docker_test")
 load("//tools:defs.bzl", "go_test", "local_test_tags")
+load("//tools/bazeldefs:go_runtime.bzl", "go_runtime_test")
 
 # Make's moby-tests gives each of the four shards 360 seconds. Configure the
 # outer TestRunner directly: reading Bazel's native test_timeout map as a
@@ -20,10 +21,10 @@ _moby_frontend_test = rule(
     cfg = _moby_timeout,
 )
 
-moby_go_test, _moby_go_transition = with_cfg(
-    _go_test,
+_moby_runtime_test, _moby_runtime_transition = with_cfg(
+    go_runtime_test,
     test_frontend = _moby_frontend_test,
-    extra_providers = [GoLibrary, GoArchive],
+    extra_providers = [GoArchive],
 ).build()
 
 def moby_test(name, **kwargs):
@@ -45,7 +46,7 @@ def moby_test(name, **kwargs):
         runtime_variants = [struct(
             name = "",
             args = ["--net-raw", "--allow-packet-socket-write", "--TESTONLY-nftables"],
-            test_rule = moby_go_test,
+            test_rules = struct(compilation = _go_test, runtime = _moby_runtime_test),
         )],
         tags = ["manual"],
         visibility = ["//:sandbox"],

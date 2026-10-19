@@ -1,6 +1,6 @@
 """Shared configuration for the Docker integration suites."""
 
-load("//external/tools/plugin-stack:defs.bzl", plugin_go_test = "go_test")
+load("//external/tools/plugin-stack:defs.bzl", "plugin_test_rules")
 load("//tools/bazeldefs:platforms.bzl", "platforms")
 
 # Runtime suffixes used by MakeContainerWithRuntime. Both the private test
@@ -57,7 +57,7 @@ PLUGIN_NETWORK_VARIANT = struct(
     runtime = Label("//:plugin_release"),
     tags = ["network_plugins"],
     test_args = ["-test.run=ConnectToSelf"],
-    test_rule = plugin_go_test,
+    test_rules = plugin_test_rules,
 )
 
 # Port forwarding is qualified with both runtime network implementations. The

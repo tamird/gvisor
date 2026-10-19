@@ -43,6 +43,5 @@ go_test(
         "instance_test.go",
         "template_test.go",
     ],
-    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
 )

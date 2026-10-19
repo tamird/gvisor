@@ -26,6 +26,11 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//:sandbox"],
+    deps = [
+        "//tools/bazeldefs:go_runtime_bzl",
+        "@io_bazel_rules_go//go:def",
+        "@with_cfg.bzl//:with_cfg",
+    ],
 )
 
 go_test(
@@ -40,7 +45,6 @@ go_test(
     # Nogo always analyzes ARM64 too; this native plugin only supports AMD64.
     nogo = False,
     rundir = ".",
-    shared_compilation = True,
     static = True,
     target_compatible_with = select({
         ":plugin_tldk": [

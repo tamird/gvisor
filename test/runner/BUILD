@@ -44,7 +44,6 @@ go_test(
         "xml.go",
         "xml_test.go",
     ],
-    shared_compilation = True,
     visibility = ["//tools/codeql:__pkg__"],
 )
 
