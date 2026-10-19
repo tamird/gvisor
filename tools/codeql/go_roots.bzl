@@ -95,6 +95,7 @@ GO_ANALYSIS_ROOTS = {
     "//pkg/sentry/arch:registers_go_proto_codeql": "//pkg/sentry/arch:registers_go_proto",
     "//pkg/sentry/checkpoint:checkpoint_codeql": "//pkg/sentry/checkpoint:checkpoint",
     "//pkg/sentry/contexttest:contexttest_codeql": "//pkg/sentry/contexttest:contexttest",
+    "//pkg/sentry/control/controlapi:controlapi_codeql": "//pkg/sentry/control/controlapi:controlapi",
     "//pkg/sentry/control:control_api_go_proto_codeql": "//pkg/sentry/control:control_api_go_proto",
     "//pkg/sentry/control:control_codeql": "//pkg/sentry/control:control",
     "//pkg/sentry/control:tpu_control_proto_go_proto_codeql": "//pkg/sentry/control:tpu_control_proto_go_proto",
