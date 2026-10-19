@@ -74,6 +74,8 @@ def _syscall_test(
         hostnet_kernel_requirements = [],
         native_rc_images = {},
         kcov = False,
+        supported_platforms = None,
+        supported_networks = None,
         **kwargs):
     runtime_coverage = kcov and platform != "native"
     if external_network or limit_ephemeral_ports:
@@ -81,6 +83,12 @@ def _syscall_test(
     if external_network:
         if platform != "native" and network == "none":
             network = "sandbox"
+
+    # Filter the effective runtime before emitting any architecture or RC tests.
+    if supported_platforms != None and platform not in supported_platforms:
+        return 0
+    if supported_networks != None and network not in supported_networks:
+        return 0
 
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -285,6 +293,7 @@ def _syscall_test(
             tags = attributes["tags"] + ["amd64-rc-kvm"],
             **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
+    return 1
 
 def all_platforms():
     """All platforms returns a list of all platforms."""
@@ -359,11 +368,15 @@ def syscall_test_variants(
         requiring features absent from the default packaged kernels.
         kcov selects an instrumented gVisor runtime and leaves coverage counters
         available to the test instead of collecting a runtime coverage report.
+
+    Returns:
+      The number of runtime variants emitted.
     """
+    generated = 0
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
         directfs = add_directfs and platform == default_platform
-        _syscall_test(
+        generated += _syscall_test(
             test = test,
             platform = platform,
             use_tmpfs = use_tmpfs,
@@ -391,7 +404,7 @@ def syscall_test_variants(
         )
 
     if add_overlay:
-        _syscall_test(
+        generated += _syscall_test(
             test = test,
             platform = default_platform,
             use_tmpfs = use_tmpfs,
@@ -420,7 +433,7 @@ def syscall_test_variants(
     # Connected host sockets do not survive restore, so the save tests are
     # skipped and only the save_resume tests are generated.
     if add_hostinet and not save:
-        _syscall_test(
+        generated += _syscall_test(
             test = test,
             platform = default_platform,
             use_tmpfs = use_tmpfs,
@@ -447,7 +460,7 @@ def syscall_test_variants(
         )
     if not use_tmpfs:
         # Also test shared gofer access.
-        _syscall_test(
+        generated += _syscall_test(
             test = test,
             platform = default_platform,
             use_tmpfs = use_tmpfs,
@@ -473,7 +486,7 @@ def syscall_test_variants(
             **kwargs
         )
     if add_fusefs:
-        _syscall_test(
+        generated += _syscall_test(
             test = test,
             platform = default_platform,
             use_tmpfs = True,
@@ -497,6 +510,7 @@ def syscall_test_variants(
             network_tools = network_tools,
             **kwargs
         )
+    return generated
 
 def syscall_test(
         test,
@@ -524,6 +538,8 @@ def syscall_test(
         kvm_use_cpu_nums = False,
         in_sandbox_cgroup = "v1",
         network_tools = False,
+        supported_platforms = None,
+        supported_networks = None,
         **kwargs):
     """syscall_test is a macro that will create targets for all platforms.
 
@@ -553,6 +569,10 @@ def syscall_test(
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
+      supported_platforms: Platforms on which the test is applicable, or None for
+        all generated platforms. Native also requires allow_native.
+      supported_networks: Applicable effective network modes (none, sandbox, host),
+        or None for all generated modes. This does not add variants.
       **kwargs: Additional test arguments; memory sets a remote memory budget
         and requires_atime enables host atime updates. tcg_timeout overrides
         the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
@@ -564,6 +584,22 @@ def syscall_test(
         kcov selects an instrumented gVisor runtime and leaves coverage counters
         available to the test instead of collecting a runtime coverage report.
     """
+    for name, selected, available in [
+        ("supported_platforms", supported_platforms, [platform for platform, _ in all_platforms()] + ["native"]),
+        ("supported_networks", supported_networks, ["none", "sandbox", "host"]),
+    ]:
+        if selected == None:
+            continue
+        if type(selected) != "list" or not selected:
+            fail("%s must be None or a nonempty list" % name)
+        for value in selected:
+            if type(value) != "string" or value not in available:
+                fail("Unknown %s value %r; expected one of %s" % (name, value, available))
+    if not allow_native and supported_platforms != None and "native" in supported_platforms:
+        fail("supported_platforms includes native but allow_native is False")
+    kwargs["supported_platforms"] = supported_platforms
+    kwargs["supported_networks"] = supported_networks
+
     if not tags:
         tags = []
 
@@ -577,8 +613,9 @@ def syscall_test(
     if perf:
         tags.append("perf")
 
+    generated = 0
     if allow_native:
-        _syscall_test(
+        generated += _syscall_test(
             test = test,
             platform = "native",
             use_tmpfs = False,
@@ -597,7 +634,7 @@ def syscall_test(
             **kwargs
         )
 
-    syscall_test_variants(
+    generated += syscall_test_variants(
         test,
         use_tmpfs,
         add_fusefs,
@@ -630,7 +667,7 @@ def syscall_test(
     if save:
         # Disable go sanitizers for save tests.
         tags.append("nogotsan")
-        syscall_test_variants(
+        generated += syscall_test_variants(
             test,
             use_tmpfs,
             add_fusefs,
@@ -660,7 +697,7 @@ def syscall_test(
         )
 
         # Add save resume variant to all other variants generated above.
-        syscall_test_variants(
+        generated += syscall_test_variants(
             test,
             use_tmpfs,
             add_fusefs,
@@ -688,3 +725,5 @@ def syscall_test(
             network_tools = network_tools,
             **kwargs
         )
+    if not generated:
+        fail("No syscall test variants are applicable for %s" % test)
