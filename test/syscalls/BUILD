@@ -381,32 +381,32 @@ syscall_test(
 )
 
 syscall_test(
-    add_overlay = True,
+    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v1_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v2_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v3_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v4_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v5_test",
 )
 
 syscall_test(
-    add_overlay = True,
+    supported_platforms = ["native"],
     test = "//test/syscalls/linux:landlock_v6_test",
 )
 
@@ -1293,6 +1293,8 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
+    allow_native = False,
+    supported_networks = ["host"],
     test = "//test/syscalls/linux:tuntap_hostinet_test",
 )
 
