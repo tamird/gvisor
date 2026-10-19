@@ -19,7 +19,10 @@ load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "go_context")
 load("@io_bazel_rules_go//go/tools/gopackagesdriver:aspect.bzl", "GoPkgInfo", "go_pkg_info_aspect")
 load("//tools/bazeldefs:go.bzl", "go_rule")
 
-_CompilationInfo = provider(fields = ["owner", "archives", "runtime_attributes"])
+_CompilationInfo = provider(
+    "Declared logical owner and compilation facts for source comparison.",
+    fields = ["owner", "archives", "runtime_attributes"],
+)
 _OWNER_TAG = "go-compilation-owner:"
 
 def _compilation_info_impl(target, ctx):
