@@ -15,6 +15,8 @@
 """Extract production Go packages using declared Bazel package facts."""
 
 import argparse
+from copy import deepcopy
+from dataclasses import asdict, dataclass
 import hashlib
 import json
 import os
@@ -23,6 +25,9 @@ import shlex
 import subprocess
 from typing import TypedDict, cast
 import zipfile
+
+
+_SOURCE_FIELDS = ("GoFiles", "CompiledGoFiles", "OtherFiles")
 
 
 class Module(TypedDict):
@@ -38,7 +43,33 @@ class Package(TypedDict, total=False):
     PkgPath: str
     Dir: str
     CompiledGoFiles: list[str]
+    GoFiles: list[str]
+    OtherFiles: list[str]
     Module: Module
+
+
+class DeclaredInput(TypedDict):
+    path: str
+    owner: str | None
+    short_path: str
+    is_source: bool
+    is_directory: bool
+
+
+@dataclass(frozen=True)
+class SourceFile:
+    owner: str | None
+    short_path: str
+    generated: bool
+    sha256: str
+    size: int
+
+
+@dataclass
+class PackageSelection:
+    records: dict[str, Package]
+    variants: list[dict[str, object]]
+    equivalents: dict[str, str]
 
 
 class Manifest(TypedDict):
@@ -50,7 +81,7 @@ class Manifest(TypedDict):
     goos: str
     bazel_version_file: str
     owners: list[dict[str, str]]
-    declared_inputs: list[str]
+    declared_inputs: list[DeclaredInput]
 
 
 def json_records(path: Path) -> list[Package]:
@@ -64,8 +95,10 @@ def json_records(path: Path) -> list[Package]:
             case {"ID": str(), "PkgPath": str()}:
                 if not isinstance(record.get("Dir", ""), str) or not isinstance(record.get("CompiledGoFiles", []), list):
                     raise ValueError(f"Invalid package paths in {path}")
-                if any(not isinstance(name, str) for name in record.get("CompiledGoFiles", [])):
-                    raise ValueError(f"Non-string compiled source in {path}")
+                for field in _SOURCE_FIELDS:
+                    files = record.get(field, [])
+                    if not isinstance(files, list) or any(not isinstance(name, str) for name in files):
+                        raise ValueError(f"Invalid {field} paths in {path}")
             case _:
                 raise ValueError(f"Invalid package identity in {path}")
         records.append(cast(Package, record))
@@ -73,33 +106,145 @@ def json_records(path: Path) -> list[Package]:
     return records
 
 
-def selected_packages(paths: list[str]) -> dict[str, Package]:
-    """Require one unambiguous production package record for each identity."""
+def resolve_input(name: str, root: Path) -> Path:
+    for placeholder in ("__BAZEL_WORKSPACE__", "__BAZEL_EXECROOT__", "__BAZEL_OUTPUT_BASE__"):
+        name = name.replace(placeholder, str(root))
+    return Path(name).resolve()
+
+
+def source_files(inputs: list[DeclaredInput], root: Path) -> dict[str, SourceFile]:
+    """Index only declared files and leaves of declared tree artifacts."""
+    result: dict[str, SourceFile] = {}
+    for item in inputs:
+        match item:
+            case {"path": str() as name, "owner": owner, "short_path": str() as short_path,
+                  "is_source": bool() as original, "is_directory": bool() as directory} if owner is None or isinstance(owner, str):
+                pass
+            case _:
+                raise ValueError(f"Invalid declared source provenance: {item}")
+        path = root / name
+        if not path.exists() or path.is_dir() != directory:
+            raise ValueError(f"Missing or wrong-kind declared package input: {name}")
+        leaves = sorted(path.rglob("*")) if directory else [path]
+        for leaf in leaves:
+            if not leaf.is_file():
+                continue
+            logical_path = str(Path(short_path) / leaf.relative_to(path)) if directory else short_path
+            data = leaf.read_bytes()
+            facts = SourceFile(owner, logical_path, not original, hashlib.sha256(data).hexdigest(), len(data))
+            key = str(leaf.resolve())
+            if (previous := result.get(key)) is not None and previous != facts:
+                raise ValueError(f"Ambiguous declared source identity: {key}: {previous} != {facts}")
+            result[key] = facts
+    return result
+
+
+def selected_packages(paths: list[str], inputs: dict[str, SourceFile], root: Path) -> PackageSelection:
+    """Require coherent metadata for every ID and every extractor package path."""
     selected: dict[str, Package] = {}
+    representatives: dict[str, tuple[Package, str]] = {}
+    variants: list[dict[str, object]] = []
+    equivalents: dict[str, str] = {}
+    conflicts: list[dict[str, object]] = []
     for name in sorted(paths):
         for record in json_records(Path(name)):
-            if record["PkgPath"] == "testmain":
-                raise ValueError(f"Test package selected for production analysis: {record['ID']}")
-            identity = record["ID"]
+            identity, package_path = record["ID"], record["PkgPath"]
+            if package_path == "testmain":
+                raise ValueError(f"Test package selected for production analysis: {identity}")
             if not record.get("Dir"):
                 raise ValueError(f"Missing declared package directory: {identity}")
-            if (previous := selected.get(identity)) is not None:
-                # This source-loading mode does not consume export archives.
-                # Retain the first complete record, but compare every other field.
-                previous_fields = {key: value for key, value in previous.items() if key != "ExportFile"}
-                current_fields = {key: value for key, value in record.items() if key != "ExportFile"}
-                if previous_fields != current_fields:
-                    differences = []
-                    for field in sorted(previous_fields.keys() | current_fields.keys()):
-                        if field in previous_fields and field in current_fields and previous_fields[field] == current_fields[field]:
-                            continue
-                        first = repr(previous_fields[field]) if field in previous_fields else "<missing>"
-                        current = repr(current_fields[field]) if field in current_fields else "<missing>"
-                        differences.append(f"{field}: {first} != {current}")
-                    raise ValueError(f"Conflicting configured package records: {identity}\n" + "\n".join(differences))
+            for field in _SOURCE_FIELDS:
+                if missing := [path for path in record.get(field, []) if str(resolve_input(path, root)) not in inputs]:
+                    conflicts.append({"id": identity, "metadata": name, "field": field, "undeclared_sources": missing})
+            if (previous_id := selected.get(identity)) is not None and previous_id["PkgPath"] != package_path:
+                conflicts.append({"id": identity, "metadata": name,
+                                  "package_paths": [previous_id["PkgPath"], package_path]})
+            selected.setdefault(identity, record)
+            if (representative := representatives.get(package_path)) is None:
+                representatives[package_path] = record, name
                 continue
-            selected[identity] = record
-    return selected
+            previous, previous_path = representative
+            differences = {}
+            copies = {}
+            for field in sorted(previous.keys() | record.keys()):
+                # CodeQL selects one AST variant per PkgPath. Keep all IDs and
+                # imports, but prove every variant has the same source semantics.
+                # The effective source-loading mode does not use export data.
+                if field in ("ID", "ExportFile") or (field in previous and field in record
+                        and json.dumps(previous[field], sort_keys=True, allow_nan=False)
+                        == json.dumps(record[field], sort_keys=True, allow_nan=False)):
+                    continue
+                first, current = previous.get(field), record.get(field)
+                if field in _SOURCE_FIELDS and isinstance(first, list) and isinstance(current, list) and len(first) == len(current):
+                    field_copies = {}
+                    unequal = []
+                    for old_name, new_name in zip(first, current, strict=True):
+                        if old_name == new_name:
+                            continue
+                        old_path, new_path = str(resolve_input(old_name, root)), str(resolve_input(new_name, root))
+                        old_file, new_file = inputs.get(old_path), inputs.get(new_path)
+                        if old_file is None or new_file is None or not old_file.generated or not old_file.owner or old_file != new_file:
+                            unequal.append({"previous": old_name, "current": new_name,
+                                            "previous_facts": asdict(old_file) if old_file else None,
+                                            "current_facts": asdict(new_file) if new_file else None})
+                        else:
+                            field_copies[new_path] = old_path
+                    if not unequal:
+                        copies.update(field_copies)
+                        continue
+                    differences[field] = unequal
+                else:
+                    # Preserve absent versus explicitly null values and future fields.
+                    differences[field] = {
+                        "previous": {field: first} if field in previous else {},
+                        "current": {field: current} if field in record else {},
+                    }
+            variants.append({"id": identity, "package_path": package_path,
+                             "selected_metadata": previous_path, "metadata": name,
+                             "selected": deepcopy(previous), "record": deepcopy(record),
+                             "equivalent_sources": copies})
+            if differences:
+                conflicts.append({"id": identity, "package_path": package_path,
+                                  "selected_metadata": previous_path, "metadata": name,
+                                  "differences": differences})
+            else:
+                for path, representative_path in copies.items():
+                    if path in equivalents and equivalents[path] != representative_path:
+                        conflicts.append({"id": identity, "path": path,
+                                          "representatives": [equivalents[path], representative_path]})
+                    equivalents[path] = representative_path
+    if conflicts:
+        raise ValueError("Conflicting configured package records: " + json.dumps(conflicts, sort_keys=True))
+    return PackageSelection(selected, variants, equivalents)
+
+
+@dataclass
+class ArchiveCoverage:
+    expected: dict[str, str]
+    actual: dict[str, str]
+    missing: list[str]
+    mismatched: list[str]
+    unexpected: list[str]
+
+
+def archive_coverage(expected: dict[str, str], actual: dict[str, str], equivalents: dict[str, str]) -> ArchiveCoverage:
+    """Compare only source classes proved equivalent by package selection."""
+    mismatched = set()
+    normalized = []
+    for sources in (expected, actual):
+        classes: dict[str, str] = {}
+        for path, digest in sorted(sources.items()):
+            representative = equivalents.get(path, path)
+            if representative in classes and classes[representative] != digest:
+                mismatched.add(representative)
+            classes.setdefault(representative, digest)
+        normalized.append(classes)
+    expected_classes, actual_classes = normalized
+    mismatched.update(name for name in expected_classes.keys() & actual_classes.keys()
+                      if expected_classes[name] != actual_classes[name])
+    return ArchiveCoverage(expected_classes, actual_classes,
+                           sorted(expected_classes.keys() - actual_classes.keys()),
+                           sorted(mismatched), sorted(actual_classes.keys() - expected_classes.keys()))
 
 
 def extract(args: argparse.Namespace) -> Path:
@@ -122,22 +267,25 @@ def extract(args: argparse.Namespace) -> Path:
             raise ValueError("Expected one declared module Go version")
     module: Module = {"Path": module_path, "Dir": str(go_mod.parent), "GoMod": str(go_mod), "Main": True, "GoVersion": go_version}
 
-    def resolve(name: str) -> Path:
-        for placeholder in ("__BAZEL_WORKSPACE__", "__BAZEL_EXECROOT__", "__BAZEL_OUTPUT_BASE__"):
-            name = name.replace(placeholder, str(root))
-        return Path(name).absolute()
-
-    selected = selected_packages(manifest["package_json"])
+    if (manifest["goos"], manifest["goarch"]) != ("linux", "amd64") or any(
+            (owner.get("goos"), owner.get("goarch")) != (manifest["goos"], manifest["goarch"])
+            for owner in manifest["owners"]):
+        raise ValueError("Declared roots differ from the Linux/AMD64 loader and type-size contract")
+    inputs = source_files(manifest["declared_inputs"], root)
+    selection = selected_packages(manifest["package_json"], inputs, root)
+    selected = selection.records
     if missing := set(manifest["labels"]) - selected.keys():
         raise ValueError(f"Missing requested package records: {sorted(missing)}")
 
     raw_sources = set()
+    augmented_records = []
     for record in selected.values():
         if record["ID"].startswith("@@//"):
-            record["Module"] = module
-            raw_sources.update(str(resolve(name).resolve()) for name in record["CompiledGoFiles"])
+            raw_sources.update(str(resolve_input(name, root)) for name in record["CompiledGoFiles"])
+            record = {**record, "Module": module}
+        augmented_records.append(record)
     packages_path = output / "packages.json"
-    packages_path.write_text("\n".join(json.dumps(record) for record in selected.values()) + "\n")
+    packages_path.write_text("\n".join(json.dumps(record) for record in augmented_records) + "\n")
     stdlib_paths = [Path(name).absolute() for name in manifest["stdlib_json"]]
     for path in stdlib_paths:
         for record in json_records(path):
@@ -179,11 +327,11 @@ def extract(args: argparse.Namespace) -> Path:
             env=environment, stdout=response_file, check=True,
         )
     match json.loads(response_path.read_text()):
-        case {"Roots": list() as roots, "Packages": list() as packages}:
+        case {"Compiler": "gc", "Arch": "amd64", "Roots": list() as roots, "Packages": list() as packages}:
             if not all(isinstance(label, str) for label in roots):
                 raise ValueError("Driver returned a non-string root identity")
         case _:
-            raise ValueError("Driver did not return its declared package graph")
+            raise ValueError("Driver did not return its declared graph and gc/amd64 type-size identity")
     if missing := set(manifest["labels"]) - set(roots):
         raise ValueError(f"Driver omitted requested roots: {sorted(missing)}")
     eligible: dict[str, set[str]] = {}
@@ -212,17 +360,12 @@ def extract(args: argparse.Namespace) -> Path:
     expected = {name: hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in eligible_sources}
     expected[str(go_mod.resolve())] = hashlib.sha256(go_mod.read_bytes()).hexdigest()
     (output / "expected-files.json").write_text(json.dumps(expected, indent=2) + "\n")
-    # GoPkgInfo supplies original, generated and embed inputs. Hash each
-    # declared leaf independently of the driver's AST file selection.
-    declared_inputs = {}
-    for name in manifest["declared_inputs"]:
-        path = Path(name)
-        if not path.exists():
-            raise ValueError(f"Missing declared package input: {name}")
-        leaves = path.rglob("*") if path.is_dir() else [path]
-        for leaf in leaves:
-            if leaf.is_file():
-                declared_inputs[str(leaf.resolve())] = hashlib.sha256(leaf.read_bytes()).hexdigest()
+    declared_inputs = {name: facts.sha256 for name, facts in inputs.items()}
+    equivalent_sources = {
+        name: {"representative": representative, "facts": asdict(inputs[name]),
+               "eligible": representative in eligible_sources}
+        for name, representative in selection.equivalents.items()
+    }
     database = output / "database"
     # CodeQL removes one leading @ from each @@ command argument. Escape the
     # canonical labels once so the strict driver receives their original bytes.
@@ -271,9 +414,7 @@ def extract(args: argparse.Namespace) -> Path:
                 continue
             path = "/" + entry.filename.lstrip("/")
             actual[path] = hashlib.sha256(archive.read(entry)).hexdigest()
-    missing = sorted(expected.keys() - actual.keys())
-    mismatched = sorted(name for name in expected.keys() & actual.keys() if expected[name] != actual[name])
-    unexpected = sorted(actual.keys() - expected.keys())
+    coverage = archive_coverage(expected, actual, selection.equivalents)
     outcome = {
         "requested_roots": manifest["labels"],
         "owners": manifest["owners"],
@@ -286,14 +427,22 @@ def extract(args: argparse.Namespace) -> Path:
         "tags": environment["GOTAGS"],
         "raw_to_eligible_exclusions": sorted(raw_sources - eligible_sources),
         "declared_inputs": declared_inputs,
+        "declared_source_provenance": {name: asdict(facts) for name, facts in inputs.items()},
+        "package_variants": selection.variants,
+        "equivalent_sources": equivalent_sources,
         "module": module,
-        "expected_files": len(expected),
-        "actual_files": len(actual),
-        "missing": missing,
-        "mismatched": mismatched,
-        "unexpected": unexpected,
-        "expected_sha256": expected,
-        "actual_sha256": actual,
+        "source_coverage_unit": "accepted package source equivalence class",
+        "expected_files": len(coverage.expected),
+        "actual_files": len(coverage.actual),
+        "missing": coverage.missing,
+        "mismatched": coverage.mismatched,
+        "unexpected": coverage.unexpected,
+        "expected_sha256": coverage.expected,
+        "actual_sha256": coverage.actual,
+        "raw_expected_files": len(expected),
+        "raw_actual_files": len(actual),
+        "raw_expected_sha256": expected,
+        "raw_actual_sha256": actual,
         "diagnostics": diagnostic_report,
         "extraction_errors": extraction_errors,
         "package_error_lines": package_error_lines,
@@ -302,17 +451,19 @@ def extract(args: argparse.Namespace) -> Path:
     print(json.dumps({
         "owners": len(manifest["owners"]),
         "package_records": len(selected),
-        "expected_files": len(expected),
-        "actual_files": len(actual),
+        "expected_files": len(coverage.expected),
+        "actual_files": len(coverage.actual),
         "declared_inputs": len(declared_inputs),
+        "configured_variants": len(selection.variants),
+        "equivalent_generated_sources": len(equivalent_sources),
         "raw_to_eligible_exclusions": len(raw_sources - eligible_sources),
-        "missing": len(missing),
-        "mismatched": len(mismatched),
-        "unexpected": len(unexpected),
+        "missing": len(coverage.missing),
+        "mismatched": len(coverage.mismatched),
+        "unexpected": len(coverage.unexpected),
         "extraction_errors": len(extraction_errors),
         "package_error_lines": len(package_error_lines),
     }), flush=True)
-    if missing or mismatched or unexpected:
+    if coverage.missing or coverage.mismatched or coverage.unexpected:
         raise ValueError("Extracted source coverage differs from declared package inputs")
     if extraction_errors or package_error_lines:
         raise ValueError("CodeQL reported incomplete or failed package extraction")

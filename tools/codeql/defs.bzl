@@ -45,13 +45,18 @@ def _analysis_impl(ctx):
         for dep, owner in ctx.attr.roots.items():
             if GoArchive not in dep:
                 fail("Declared production owner has no GoArchive: " + owner)
+            archive = dep[GoArchive]
+            if archive.source.mode.goos != go.mode.goos or archive.source.mode.goarch != go.mode.goarch:
+                fail("Declared production owner differs from the analysis OS/architecture: " + owner)
 
             # Alias and configured frontends keep their logical owner, while
             # the driver must request the actual archive's package identity.
             owners.append({
                 "owner": owner,
                 "provider_label": str(dep.label),
-                "package_id": str(dep[GoArchive].data.label),
+                "package_id": str(archive.data.label),
+                "goos": archive.source.mode.goos,
+                "goarch": archive.source.mode.goarch,
             })
         if not owners:
             fail("Go analysis requires a generated nonempty production root manifest")
@@ -61,7 +66,13 @@ def _analysis_impl(ctx):
             "owners": owners,
             "package_json": [file.path for file in json_files.to_list()],
             "stdlib_json": [file.path for file in stdlib_json.to_list()],
-            "declared_inputs": [file.path for file in compiled_inputs.to_list()],
+            "declared_inputs": [{
+                "path": file.path,
+                "owner": str(file.owner) if file.owner != None else None,
+                "short_path": file.short_path,
+                "is_source": file.is_source,
+                "is_directory": file.is_directory,
+            } for file in compiled_inputs.to_list()],
             "go_mod": ctx.file._go_mod.path,
             "goarch": go.mode.goarch,
             "goos": go.mode.goos,

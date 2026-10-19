@@ -1,4 +1,4 @@
-load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 load(":defs.bzl", "codeql_analysis")
 load(":go_roots.bzl", "GO_ANALYSIS_ROOTS")
 
@@ -21,6 +21,15 @@ py_binary(
 py_binary(
     name = "update_go_roots",
     srcs = ["update_go_roots.py"],
+)
+
+py_test(
+    name = "go_analysis_test",
+    srcs = [
+        "go_analysis.py",
+        "go_analysis_test.py",
+    ],
+    main = "go_analysis_test.py",
 )
 
 # Bounded provider-forwarding proof; the complete analyzer uses the generated
