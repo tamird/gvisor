@@ -125,54 +125,56 @@ class QualificationReportTest(unittest.TestCase):
         ):
             with self.subTest(command=command, exit_code=exit_code, damage=damage):
                 invocation = self.fixture()
-                context = report.read_json(invocation / "context.json")
-                arguments = [command, "--literal=spaces # and\nnewlines", "//:owner"]
-                if damage == "analysis":
-                    arguments.insert(1, "--nobuild")
-                elif damage == "tool-argument":
-                    arguments.extend(["--", "--nobuild"])
-                context.update(command_kind="command", executed_arguments="arguments.json")
-                if damage == "finish":
-                    context["execution_finished_at"] = None
-                report.write_json(invocation / "context.json", context)
-                report.write_json(invocation / "arguments.json", arguments)
-                (invocation / context["native_exit"]).write_text(str(exit_code))
-                (invocation / "stdout.log").write_bytes(b"<query>\x00\nraw</query>")
-                (invocation / "stderr.log").write_bytes(b"diagnostic without final newline")
-                if damage == "empty":
-                    (invocation / "stdout.log").write_bytes(b"")
-                    (invocation / "stderr.log").write_bytes(b"")
-                elif damage == "arguments":
-                    report.write_json(invocation / "arguments.json", ["query", 7])
-                elif damage == "source-after":
-                    (invocation / "source-after.txt").write_text(" M changed.go\n")
-                elif damage == "native-exit":
-                    (invocation / context["native_exit"]).unlink()
-                elif damage == "capture-exit":
-                    (invocation / context["capture_exit"]).unlink()
-                elif damage in ("stdout", "stderr"):
-                    (invocation / (damage + ".log")).unlink()
-                value = report.command_verdict(invocation / "context.json")
-                report.write_json(invocation / "verdict.json", value)
-                self.assertEqual(value["status"], status, value)
-                if damage != "arguments":
-                    self.assertEqual(value["arguments"], arguments)
-                archive = self.root / "commands.tar.gz"
-                combined = report.bundle(self.evidence, exit_code, 0, archive)
-                self.assertEqual(combined["status"], status, combined)
-                receipt = report.receipt(archive, report.file_record(archive)["sha256"], context["expected_source"])
-                self.assertEqual(receipt["status"], status, receipt)
-                self.assertEqual(receipt["expected_owner_count"], 0)
-                self.assertEqual(receipt["executed_attempt_count"], 0)
-                self.assertEqual(receipt["case_counts"], {})
-                [record] = receipt["commands"]
-                self.assertEqual(record["bazel_command"], command)
-                with tarfile.open(archive) as bundle:
-                    for name, identity in record["command_outputs"].items():
-                        retained = bundle.extractfile("invocation-pass/" + identity["path"]).read()
-                        self.assertEqual(retained, (invocation / (name + ".log")).read_bytes())
-                        self.assertEqual(hashlib.sha256(retained).hexdigest(), identity["sha256"])
-                shutil.rmtree(invocation)
+                try:
+                    context = report.read_json(invocation / "context.json")
+                    arguments = [command, "--literal=spaces # and\nnewlines", "//:owner"]
+                    if damage == "analysis":
+                        arguments.insert(1, "--nobuild")
+                    elif damage == "tool-argument":
+                        arguments.extend(["--", "--nobuild"])
+                    context.update(command_kind="command", executed_arguments="arguments.json")
+                    if damage == "finish":
+                        context["execution_finished_at"] = None
+                    report.write_json(invocation / "context.json", context)
+                    report.write_json(invocation / "arguments.json", arguments)
+                    (invocation / context["native_exit"]).write_text(str(exit_code))
+                    (invocation / "stdout.log").write_bytes(b"<query>\x00\nraw</query>")
+                    (invocation / "stderr.log").write_bytes(b"diagnostic without final newline")
+                    if damage == "empty":
+                        (invocation / "stdout.log").write_bytes(b"")
+                        (invocation / "stderr.log").write_bytes(b"")
+                    elif damage == "arguments":
+                        report.write_json(invocation / "arguments.json", ["query", 7])
+                    elif damage == "source-after":
+                        (invocation / "source-after.txt").write_text(" M changed.go\n")
+                    elif damage == "native-exit":
+                        (invocation / context["native_exit"]).unlink()
+                    elif damage == "capture-exit":
+                        (invocation / context["capture_exit"]).unlink()
+                    elif damage in ("stdout", "stderr"):
+                        (invocation / (damage + ".log")).unlink()
+                    value = report.command_verdict(invocation / "context.json")
+                    report.write_json(invocation / "verdict.json", value)
+                    self.assertEqual(value["status"], status, value)
+                    if damage != "arguments":
+                        self.assertEqual(value["arguments"], arguments)
+                    archive = self.root / "commands.tar.gz"
+                    combined = report.bundle(self.evidence, exit_code, 0, archive)
+                    self.assertEqual(combined["status"], status, combined)
+                    receipt = report.receipt(archive, report.file_record(archive)["sha256"], context["expected_source"])
+                    self.assertEqual(receipt["status"], status, receipt)
+                    self.assertEqual(receipt["expected_owner_count"], 0)
+                    self.assertEqual(receipt["executed_attempt_count"], 0)
+                    self.assertEqual(receipt["case_counts"], {})
+                    [record] = receipt["commands"]
+                    self.assertEqual(record["bazel_command"], None if damage == "arguments" else command)
+                    with tarfile.open(archive) as bundle:
+                        for name, identity in record["command_outputs"].items():
+                            retained = bundle.extractfile("invocation-pass/" + identity["path"]).read()
+                            self.assertEqual(retained, (invocation / (name + ".log")).read_bytes())
+                            self.assertEqual(hashlib.sha256(retained).hexdigest(), identity["sha256"])
+                finally:
+                    shutil.rmtree(invocation)
 
     def test_missing_finish_time_preserves_retained_test_failure(self) -> None:
         invocation = self.fixture("fail")
@@ -1316,8 +1318,9 @@ signal.pause()
                     "TEST_WORK_STARTED": str(started),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
+                options = [] if phase.startswith("command-") else [f"--bazel-option={option}" for option in bazel_options]
                 result = subprocess.run(
-                    ["bash", "test/rbe/actions.sh", *[f"--bazel-option={option}" for option in bazel_options]],
+                    ["bash", "test/rbe/actions.sh", *options],
                     cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
                 self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
