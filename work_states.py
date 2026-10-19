@@ -169,6 +169,54 @@ def review_decision(pr: dict) -> str | None:
     return "APPROVED" if effective_approval(pr) else "REVIEW_REQUIRED"
 
 
+def approved_patch(pr: dict, evidence: dict | None) -> bool:
+    """Use a reviewed mechanical comparison without inventing a fresh review."""
+    if (not evidence or pr.get("repo", "google/gvisor") != "google/gvisor"
+            or evidence.get("head") != pr.get("head") or pr.get("revisionChanged")
+            or evidence.get("approvedHead") == evidence.get("head")
+            or evidence.get("method") not in {"stable-patch-id", "reviewed-context-only"}
+            or not all(isinstance(evidence.get(key), str) and re.fullmatch(r"[a-f0-9]{40}", evidence[key])
+                       for key in ("head", "approvedHead", "oldPatchId", "newPatchId"))
+            or evidence["method"] == "stable-patch-id" and evidence["oldPatchId"] != evidence["newPatchId"]
+            or pr.get("githubReviewDecision", pr.get("reviewDecision")) == "CHANGES_REQUESTED"
+            or not pr.get("reviewsComplete") or not pr.get("reviewRequestsComplete")
+            or not pr.get("feedback", {}).get("complete") or not pr.get("threads", {}).get("complete")
+            or pr["threads"].get("unresolved") != 0):
+        return False
+    try:
+        verified = datetime.fromisoformat(evidence["verifiedAt"].replace("Z", "+00:00"))
+        submitted = datetime.fromisoformat(evidence["submittedAt"].replace("Z", "+00:00"))
+        if verified.tzinfo is None or submitted.tzinfo is None or verified < submitted:
+            return False
+    except (KeyError, AttributeError, ValueError):
+        return False
+    items = pr["feedback"]["items"]
+    approval = next((item for item in items if item.get("kind") == "review"
+                     and item.get("id") == evidence.get("reviewId")), None)
+    if (not approval or approval.get("state") != "APPROVED"
+            or (approval.get("commit") or {}).get("oid") not in {evidence["approvedHead"], evidence["head"]}
+            or approval.get("submittedAt") != evidence["submittedAt"]
+            or (approval.get("author") or {}).get("login") != evidence.get("reviewer")
+            or any(item.get("login") == evidence["reviewer"] for item in pr.get("reviewRequests", []))):
+        return False
+    for item in items:
+        author = (item.get("author") or {}).get("login")
+        if author == pr.get("headOwner"):
+            continue  # Author announcements neither approve nor revoke a patch.
+        value = item.get("submittedAt") or item.get("createdAt")
+        try:
+            at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            updated = datetime.fromisoformat(item.get("updatedAt", value).replace("Z", "+00:00"))
+        except (AttributeError, ValueError):
+            return False
+        if at.tzinfo is None or updated.tzinfo is None or max(at, updated) > verified:
+            return False  # New feedback needs owner reconciliation first.
+        if (item.get("kind") == "review" and item.get("state") in {"CHANGES_REQUESTED", "DISMISSED"}
+                and at >= submitted):
+            return False
+    return True
+
+
 class MergeabilityObservation(TypedDict):
     state: Literal["MERGEABLE", "CONFLICTING"]
     head: str
@@ -197,10 +245,11 @@ def conflict_qualifier(pr: dict) -> str | None:
     return None
 
 
-def pr_states(pr: dict) -> dict[str, StateEvidence]:
+def pr_states(pr: dict, patch: dict | None = None) -> dict[str, StateEvidence]:
     """Keep source review, public import progress and check provenance distinct."""
     head = pr["head"]
     decision = review_decision(pr)
+    accepted_patch = approved_patch(pr, patch)
     if pr["status"] in {"merged", "closed"}:
         timestamp = pr.get("mergedAt" if pr["status"] == "merged" else "closedAt")
         return {pr["status"]: {"scope": head, "transitionAt": timestamp}}
@@ -222,11 +271,11 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
         states["draft"] = {"scope": head}
     elif decision == "CHANGES_REQUESTED":
         states["changes-requested"] = {"scope": head}
-    elif decision != "APPROVED":
+    elif decision != "APPROVED" and not accepted_patch:
         states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
     if pr["status"] == "open" and any(is_approval_gate(pr, item) for item in (pr.get("checks") or {}).get("contexts", [])):
         states["maintainer-review"] = {"scope": head, "qualifier": "BuildBuddy requires approving review before these checks run"}
-    eligible = pr["status"] == "open" and decision == "APPROVED"
+    eligible = pr["status"] == "open" and (decision == "APPROVED" or accepted_patch)
     if pr.get("importPolicy", "copybara") == "none":
         if eligible and pr.get("mergeable") == "MERGEABLE" and checks_passed(pr):
             states["waiting-merge"] = {"scope": head}
@@ -252,7 +301,10 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
 
 
 def derive_states(prs: list[dict], registry: dict) -> StateMap:
-    states = {pr_identity(pr, registry["meta"]["repo"]): pr_states(pr) for pr in prs}
+    nodes = {node["id"]: node for node in registry["nodes"]}
+    states = {pr_identity(pr, registry["meta"]["repo"]):
+              pr_states(pr, nodes.get(pr_identity(pr, registry["meta"]["repo"]), {}).get("approvedPatch"))
+              for pr in prs}
     promoted = {(pr["headRepo"], pr["ref"]) for pr in prs
                 if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}
     closed = {pr_identity(pr, registry["meta"]["repo"]) for pr in prs if pr["status"] in {"closed", "merged"}}
@@ -289,6 +341,10 @@ def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: s
         for state, evidence in states.items():
             if pr := current_prs.get(identity):
                 observed_at = pr.get("checkedAt", checked_at)
+                node = next((node for node in registry["nodes"] if node["id"] == identity), {})
+                if state in {"awaiting-import", "waiting-merge"} and approved_patch(pr, node.get("approvedPatch")):
+                    observed_at = max(observed_at, node["approvedPatch"]["verifiedAt"],
+                                      key=lambda value: datetime.fromisoformat(value.replace("Z", "+00:00")))
                 if state in {"merged", "closed"} and (terminal := pr.get("statusObservation")):
                     observed_at = max(observed_at, terminal["checkedAt"],
                                       key=lambda value: datetime.fromisoformat(value.replace("Z", "+00:00")))

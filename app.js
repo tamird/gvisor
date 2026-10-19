@@ -91,7 +91,34 @@ function effectiveReviewDecision(pr) {
   return pr.headHistoryComplete === true && pr.approvedHead === pr.head && cutoffs.length && cutoffs.every(Number.isFinite)
     && Number.isFinite(submitted) && submitted >= Math.max(...cutoffs) ? "APPROVED" : "REVIEW_REQUIRED";
 }
-function reviewInfo(pr) {
+function approvedPatch(node) {
+  const pr = node?.github, proof = node?.approvedPatch;
+  if (!pr || !proof || (pr.repo || node.repo) !== "google/gvisor" || pr.revisionChanged || proof.head !== pr.head
+      || proof.head === proof.approvedHead || !["stable-patch-id", "reviewed-context-only"].includes(proof.method)
+      || ![proof.head, proof.approvedHead, proof.oldPatchId, proof.newPatchId].every(value => /^[a-f0-9]{40}$/.test(value))
+      || proof.method === "stable-patch-id" && proof.oldPatchId !== proof.newPatchId
+      || (pr.githubReviewDecision || pr.reviewDecision) === "CHANGES_REQUESTED"
+      || pr.reviewsComplete !== true || pr.reviewRequestsComplete !== true || pr.feedback?.complete !== true
+      || pr.threads?.complete !== true || pr.threads.unresolved !== 0) return null;
+  const timestamp = value => typeof value === "string" && /(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? Date.parse(value) : NaN;
+  const verified = timestamp(proof.verifiedAt), submitted = timestamp(proof.submittedAt);
+  if (!Number.isFinite(verified) || !Number.isFinite(submitted) || verified < submitted) return null;
+  const approval = pr.feedback.items.find(item => item.kind === "review" && item.id === proof.reviewId);
+  if (!approval || approval.state !== "APPROVED" || ![proof.approvedHead, proof.head].includes(approval.commit?.oid)
+      || approval.submittedAt !== proof.submittedAt
+      || approval.author?.login !== proof.reviewer || pr.reviewRequests.some(item => item.login === proof.reviewer)) return null;
+  for (const item of pr.feedback.items) {
+    if (item.author?.login === pr.headOwner) continue;
+    const at = timestamp(item.submittedAt || item.createdAt), updated = timestamp(item.updatedAt || item.submittedAt || item.createdAt);
+    if (!Number.isFinite(at) || !Number.isFinite(updated) || Math.max(at, updated) > verified || item.kind === "review"
+        && ["CHANGES_REQUESTED", "DISMISSED"].includes(item.state) && at >= submitted) return null;
+  }
+  return proof;
+}
+function reviewInfo(pr, node) {
+  if (effectiveReviewDecision(pr) !== "APPROVED" && approvedPatch(node))
+    return { text: "Approved patch · rebased", tone: "good", glyph: "✓" };
+
   return ({ APPROVED: { text: "Approved", tone: "good", glyph: "✓" },
     CHANGES_REQUESTED: { text: "Changes requested", tone: "bad", glyph: "!" },
     REVIEW_REQUIRED: { text: "Maintainer review", tone: "pending", glyph: "○" } })[effectiveReviewDecision(pr)]
@@ -232,6 +259,7 @@ function attentionReasons(node, owner) {
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
   if (approvalGates.length) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
+  const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
   if (review.author) add("author-feedback", "A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
   if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
@@ -263,7 +291,7 @@ function attentionReasons(node, owner) {
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
   if (review.incomplete || [pr, ...active].some(item => !completeChecks(item)
       || checkInfo(item).tone === "unknown" && validationChecks(item).length > 0)
-      || decision === "APPROVED" && (usesImports(pr) && !pr.importsComplete || pr.labelsComplete !== true))
+      || approved && (usesImports(pr) && !pr.importsComplete || pr.labelsComplete !== true))
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
     add("agent-refresh", "GitHub reports a source check failure without its failing context. Investigate the public check records.");
@@ -271,9 +299,9 @@ function attentionReasons(node, owner) {
   if (review.unknown && !review.incomplete && !agentBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
   if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
-  if (decision !== "APPROVED" && !agentBlocked && !review.response && !review.unknown)
+  if (!approved && !agentBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
-  if (decision === "APPROVED" && !agentBlocked) {
+  if (approved && !agentBlocked) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
       if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"
@@ -288,8 +316,8 @@ function attentionReasons(node, owner) {
     else if (importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports import success, but no matching public import PR was found in the complete lookup. Ask for the internal import's progress.", "Import succeeded; no public PR");
     else if (importStatus && !FAILURE_STATES.has(importStatus.state)) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. Ask for the import's progress.`, "Import pending; no public PR");
     else if (!importStatus && !feedbackStatus) {
-      if (!pr.labels.includes("ready to pull")) add("maintainer-import-label", "Current-head approval is recorded, but the ready to pull label is absent. A maintainer needs to mark the PR for import; an internal CL may already exist.");
-      else add("maintainer-import", "Current-head approval and the ready to pull label are recorded; no matching public import was found. An internal CL may already exist.");
+      if (!pr.labels.includes("ready to pull")) add("maintainer-import-label", `${acceptedPatch ? "Approval of the unchanged patch" : "Current-head approval"} is recorded, but the ready to pull label is absent. A maintainer needs to mark the PR for import; an internal CL may already exist.`);
+      else add("maintainer-import", `${acceptedPatch ? "Approval of the unchanged patch" : "Current-head approval"} and the ready to pull label are recorded; no matching public import was found. An internal CL may already exist.`);
     }
   }
   return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
@@ -339,7 +367,7 @@ function badge(info, title) {
 function attributeTitle(node) {
   const pr = node.github;
   if (!pr) return "PR attributes have not been fetched.";
-  return `Review: ${reviewInfo(pr).text}\nPR checks: ${checkInfo(pr).text} · ${checkInfo(pr).detail}\nLabels: ${pr.labels.join(", ") || "none"}\n${usesImports(pr) ? `${pr.imports.length} verified import PR(s)${pr.importsComplete ? "" : "; lookup incomplete"}` : "Direct repository review; no Copybara import"}\nSnapshot ${date(pr.checkedAt)} · source ${pr.head.slice(0, 9)}`;
+  return `Review: ${reviewInfo(pr, node).text}\nPR checks: ${checkInfo(pr).text} · ${checkInfo(pr).detail}\nLabels: ${pr.labels.join(", ") || "none"}\n${usesImports(pr) ? `${pr.imports.length} verified import PR(s)${pr.importsComplete ? "" : "; lookup incomplete"}` : "Direct repository review; no Copybara import"}\nSnapshot ${date(pr.checkedAt)} · source ${pr.head.slice(0, 9)}`;
 }
 function importCell(node) {
   const cell = element("td", "import-cell"), pr = node.github;
@@ -442,7 +470,9 @@ function appendAttributes(container, node) {
   const section = element("section", "detail-section pr-attributes"), pr = node.github;
   section.append(element("h3", "", "PR attributes"));
   if (!pr) { section.append(element("p", "detail-description", "No published GitHub attributes for this PR yet. Reloading uses the latest published snapshot.")); container.append(section); return; }
-  section.append(badge(reviewInfo(pr), "Approval requires an effective review of this exact source head. Labels and comments do not grant approval."));
+  section.append(badge(reviewInfo(pr, node), "Fresh-head approval and verified approval of an unchanged rebased patch are distinct. Labels and comments do not grant approval."));
+  const patch = approvedPatch(node);
+  if (patch) section.append(element("p", "detail-meta", `Unchanged patch approved by ${patch.reviewer} at ${date(patch.submittedAt)} on ${patch.approvedHead.slice(0, 9)}; mechanical equivalence to ${patch.head.slice(0, 9)} verified ${date(patch.verifiedAt)}. This is not a new review submission.`));
   const requests = pr.reviewRequests || [];
   if (requests.length) section.append(element("p", "detail-meta", `Review requested from: ${requests.map(item => item.login || item.name || item.slug).join(", ")}`));
   if (pr.reviewRequestsComplete === false) section.append(element("p", "detail-meta", "Review-request inventory incomplete."));
@@ -453,7 +483,7 @@ function appendAttributes(container, node) {
       const head = item.commit?.oid;
       history.append(link(`${item.author?.login || "Unknown reviewer"} · submitted ${item.submittedAt ? date(item.submittedAt) : "time not recorded"} · GitHub-recorded commit ${head?.slice(0, 9) || "not recorded"}`, item.url), element("br"));
     }
-    history.append(element("p", "detail-meta", "GitHub can reassociate an older review with a rebased commit. Current approval requires a fresh submission after this head was introduced; later reviews, dismissals and review requests still apply."));
+    history.append(element("p", "detail-meta", "GitHub can reassociate an older review with a rebased commit. Fresh-head approval requires a submission after this head was introduced; later reviews, dismissals and review requests still apply."));
     section.append(history);
   }
   const threads = pr.threads;
@@ -891,7 +921,7 @@ function drawGraph(nodes) {
     if (reach) card.append(svg("text", { class: "node-reach", x: CARD.width - 33, y: 15, "text-anchor": "end" }, `${reach} downstream`));
     wrap(node.title).forEach((line, index) => card.append(svg("text", { class: "node-title", x: 10, y: 32 + index * 14 }, line)));
     if (node.type === "pr") {
-      for (const [x, prefix, info] of [[64, "R", reviewInfo(node.github)], [87, "C", checkInfo(node.github)]]) {
+      for (const [x, prefix, info] of [[64, "R", reviewInfo(node.github, node)], [87, "C", checkInfo(node.github)]]) {
         card.append(svg("text", { class: `node-attribute ${info.tone}`, x, y: 15, "aria-hidden": "true" }, `${prefix}${info.glyph}`));
       }
     }
@@ -921,7 +951,7 @@ function drawTable(nodes) {
   }
   const groups = new Map(model.groups.map((group) => [group.id, group.label]));
   const value = (node) => ({ impact: impact(node.id).prs, direct: impact(node.id).direct, title: node.title,
-    age: stateAge(node), status: status(node), review: node.type === "pr" ? reviewInfo(node.github).text : "", checks: node.type === "pr" ? checkInfo(node.github).text : "",
+    age: stateAge(node), status: status(node), review: node.type === "pr" ? reviewInfo(node.github, node).text : "", checks: node.type === "pr" ? checkInfo(node.github).text : "",
     group: groups.get(node.group) || "", number: node.number || 0 })[sortKey];
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   visibleTableGroups = attentionGroups(nodes, registry.meta.owner, tableGrouping);
@@ -947,7 +977,7 @@ function drawTable(nodes) {
     state.append(element("span", "base-status", status(node))); appendStates(state, node);
     for (const reason of entry.reasons) { const item = element("span", `attention-reason ${reason.owner}`, reason.title); item.title = `${ATTENTION_OWNERS[reason.owner]}. ${reason.detail}`; state.append(item); }
     if (node.type === "pr") {
-      review.append(badge(reviewInfo(node.github), attributeTitle(node)));
+      review.append(badge(reviewInfo(node.github, node), attributeTitle(node)));
       checks.append(badge(checkInfo(node.github), node.github ? `Original PR head ${node.github.head.slice(0, 9)}. ${checkInfo(node.github).detail}` : "No published check data."));
       if (node.github && conflictRecord(node.github)) state.append(badge({ text: node.github.mergeable === "CONFLICTING" ? "conflicts" : "last observed conflict", tone: "bad" }, mergeDescription(node.github)));
     } else { review.textContent = "—"; checks.textContent = "—"; }
@@ -1108,7 +1138,7 @@ function stateRecords(snapshot, node) {
   // Keep the published state enum compatible with already-open older clients.
   if (node.type === "branch" && node.status === "Prepared proposal") records["proposed-update"] = {
     scope: node.head, since: null, basis: "unknown", qualifier: "Unpublished revision; observation age is not recorded" };
-  if (node.type === "pr" && node.github && node.github.status === "open" && effectiveReviewDecision(node.github) === "REVIEW_REQUIRED") {
+  if (node.type === "pr" && node.github && node.github.status === "open" && effectiveReviewDecision(node.github) === "REVIEW_REQUIRED" && !approvedPatch(node)) {
     records["maintainer-review"] ||= { scope: node.github.head, since: null, basis: "unknown", qualifier: "No effective approval recorded for this head" };
     delete records["awaiting-import"]; delete records["waiting-merge"];
   }
@@ -1118,6 +1148,7 @@ function stateRecords(snapshot, node) {
       records["contributor-review"] ||= records.review;
     delete records.review;
   }
+  if (approvedPatch(node)) delete records["maintainer-review"];
   if (node.github) {
     if (node.github.revisionChanged) {
       for (const key of Object.keys(records)) delete records[key];
@@ -1127,7 +1158,7 @@ function stateRecords(snapshot, node) {
       // A partial REST response can revoke readiness, but cannot establish it.
       for (const key of ["draft", "closed", "merged", "maintainer-review", "changes-requested", "awaiting-import", "waiting-merge"]) delete records[key];
       const state = pr.status === "draft" ? "draft" : pr.status === "open"
-        ? decision === "CHANGES_REQUESTED" ? "changes-requested" : decision !== "APPROVED" ? "maintainer-review" : null : null;
+        ? decision === "CHANGES_REQUESTED" ? "changes-requested" : decision !== "APPROVED" && !approvedPatch(node) ? "maintainer-review" : null : null;
       if (state) records[state] = pr.revisionChanged && state === "maintainer-review"
         ? { scope: null, since: null, basis: "unknown", qualifier: "New head; approval has not been collected" }
         : { scope: pr.head, since: pr.conflictCheckedAt, observedAt: pr.conflictCheckedAt, basis: "observed", qualifier: null };
@@ -1225,6 +1256,15 @@ function validateRegistry(candidate) {
     if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
         !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || changes.url !== `https://github.com/${proposalRepo}/commit/${changes.head}`))
       throw new Error("Invalid contributor changes request");
+    const patch = node.approvedPatch;
+    if (patch !== undefined && (!patch || node.type !== "pr" || node.repo !== "google/gvisor"
+        || ![patch.head, patch.approvedHead, patch.oldPatchId, patch.newPatchId].every(value => typeof value === "string" && /^[a-f0-9]{40}$/.test(value))
+        || patch.head === patch.approvedHead || !["stable-patch-id", "reviewed-context-only"].includes(patch.method)
+        || patch.method === "stable-patch-id" && patch.oldPatchId !== patch.newPatchId
+        || ![patch.reviewId, patch.reviewer].every(value => typeof value === "string" && value.trim())
+        || ![patch.submittedAt, patch.verifiedAt].every(value => typeof value === "string" && /(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value)))
+        || Date.parse(patch.submittedAt) > Date.parse(patch.verifiedAt) || Date.parse(patch.verifiedAt) > Date.parse(candidate.meta.updatedAt)))
+      throw new Error("Invalid approved patch equivalence");
     const recovery = node.ciRecovery;
     if (recovery !== undefined && (!recovery || node.type !== "pr" || node.repo !== candidate.meta.repo
         || recovery.kind !== "dependency-download-retry-denied" || recovery.httpStatus !== 403

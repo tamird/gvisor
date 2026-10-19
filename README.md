@@ -109,13 +109,33 @@ entries; incomplete thread counts, label lists, check details and import lookups
 are explicitly marked. A null review decision is **not reported**, not approval.
 A `ready to pull` label is displayed as a label, not a merge-readiness decision.
 
-Approval requires a still-effective review of the exact head, submitted no earlier
-than its commit time and any observed force-push introducing that head, with a
-retrieved latest force-push metadata. GitHub can
+Fresh-head approval requires a still-effective review of the exact head,
+submitted no earlier than its commit time and any observed force-push introducing
+that head, with retrieved latest force-push metadata. GitHub can
 reassociate old reviews during a rebase; changing the review commit or `updatedAt`
 does not constitute a new review. Missing time evidence in an older cached
 snapshot remains readable but supplies no approval credit. Approval history shows
 submission time and GitHub’s recorded commit association separately.
+
+### gVisor patch-preserving rebases
+
+- Maintain an approved patch's base quietly when its actual master merge-base is over five hours old, a conflict is verified, or a merged prerequisite requires an update; do not repeatedly rebase a recent head or interrupt an active matching Copybara import merely because master advances.
+- Before publication, verify the old approved head, complete topic change, latest feedback, explicit holds and import state; establish patch equivalence with stable patch IDs and range-diff, independently reviewing any context-only difference.
+- A mechanical rebase does not require another review request or announcement solely because its commit SHA changes; comments solicit human attention and do not trigger Copybara automation.
+- Preserve the original approval's author, head, time and review ID separately from verified patch equivalence and exact-source import progress; GitHub reassociating an old review with a new head is not a fresh review.
+- Continue review for substantive changes, unresolved findings or an explicit reviewer request; a rebase never clears license, dependency or maintainer holds.
+- Let an exact-source active import proceed through its checks, diagnose concrete failures in their owning workflow, and avoid redundant reviewer nudges or rebase churn; import progress is not a guarantee of merge or permission to merge.
+
+The October 19 cohort supplied five merged examples:
+[#15500](https://github.com/google/gvisor/pull/15500),
+[#15541](https://github.com/google/gvisor/pull/15541),
+[#15575](https://github.com/google/gvisor/pull/15575),
+[#15935](https://github.com/google/gvisor/pull/15935) and
+[#15964](https://github.com/google/gvisor/pull/15964). Their approved source,
+rebased source and actual Copybara merge had identical stable patch IDs, without
+new public approval. This supports the operational distinction above; it does
+not document Copybara's internal policy or establish that a rebase caused every
+observed progression.
 
 The snapshot also retains public top-level comments, review bodies and inline
 replies by their GitHub IDs, with authors, timestamps, reviewed commits and
@@ -385,9 +405,16 @@ Unknown filter values and stale item IDs are ignored.
 Approval credit requires GitHub's approved decision plus a latest effective
 approval whose commit matches the current PR head. Dismissed, older-head or
 missing-identity approvals supply no current credit. Review requests are retained;
-prior approvals remain available as history. Import readiness also requires
-current-head approval; a ready-to-pull label alone cannot supply it. Older cached snapshots without the
-new head-bound proof show Maintainer review until refreshed.
+prior approvals remain available as history. For gVisor, a curated `approvedPatch`
+record can separately bind an old approval to a verified equivalent head using
+the original review ID, author, time and
+approved head, comparison method and patch IDs. Lifecycle routing accepts that
+unchanged approved patch without labeling it a fresh review. A changed head,
+dismissal, changes request, unresolved thread, incomplete feedback or new external
+feedback after verification invalidates this path until reconciled. Author
+notices have no effect. Bot feedback also requires reconciliation. Existing
+holds and dependency relationships remain.
+A ready-to-pull label alone supplies neither kind of approval.
 
 Contributor decisions remain separate from GitHub maintainer reviews.
 An answered request for revisions is recorded as
@@ -395,8 +422,9 @@ An answered request for revisions is recorded as
 mutually exclusive with a pending `contributorReview`, and applies only to
 the exact branch head. The existing Changes requested filter includes it
 with an explicit Contributor qualifier. Older clients accept the optional
-field and the unchanged state enum. Live PR approval continues to come
-only from a maintainer review of the current GitHub head.
+field and the unchanged state enum. Fresh-head approval continues to come
+only from a maintainer review of the current GitHub head; approval of a verified
+unchanged patch is displayed separately.
 
 
 ### Maintainer handoff

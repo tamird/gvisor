@@ -215,6 +215,69 @@ function reasonsFor(node) {
 function idsFor(node) { return reasonsFor(node).map(reason => reason.id); }
 function serviceStatus(name, state) { return { name, state, kind: 'status', purpose: 'validation', url: null }; }
 
+test('verified unchanged approval routes imports without rewriting fresh review provenance', () => {
+  const node = attentionNode(); node.repo = 'google/gvisor';
+  const pr = node.github;
+  pr.githubReviewDecision = 'REVIEW_REQUIRED'; pr.reviewDecision = 'REVIEW_REQUIRED';
+  pr.reviewRequestsComplete = true; pr.reviewRequests = [];
+  pr.feedback.items = [{ kind: 'review', id: 'review-1', state: 'APPROVED', author: { login: 'reviewer' },
+    submittedAt: '2026-10-09T12:00:00Z', commit: { oid: 'b'.repeat(40) } }];
+  node.approvedPatch = { head: pr.head, approvedHead: 'b'.repeat(40), reviewId: 'review-1', reviewer: 'reviewer',
+    submittedAt: '2026-10-09T12:00:00Z', verifiedAt: '2026-10-13T10:00:00Z',
+    method: 'stable-patch-id', oldPatchId: 'c'.repeat(40), newPatchId: 'c'.repeat(40) };
+  pr.labels = ['ready to pull'];
+  assert.deepEqual(idsFor(node), ['maintainer-import']);
+  pr.imports = [attentionImport(node)];
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  const context = client(); context.nodeInput = node;
+  const original = JSON.stringify(node.github);
+  context.snapshotInput.workStates[node.id] = { 'maintainer-review': { scope: pr.head, since: null, basis: 'unknown' } };
+  assert.equal(vm.runInContext('effectiveReviewDecision(nodeInput.github)', context), 'REVIEW_REQUIRED');
+  assert.equal(vm.runInContext('reviewInfo(nodeInput.github, nodeInput).text', context), 'Approved patch · rebased');
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["maintainer-review"]', context), undefined);
+  assert.equal(JSON.stringify(node.github), original);
+  context.snapshotInput.workStates[node.id] = { review: { scope: pr.head, since: null, basis: 'unknown' } };
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["maintainer-review"]', context), undefined);
+  pr.statusChanged = true;
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["maintainer-review"]', context), undefined);
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["waiting-merge"]', context), undefined);
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["awaiting-import"]', context), undefined);
+  delete pr.statusChanged;
+  pr.feedback.items.push({ kind: 'comment', author: { login: 'tamird' }, createdAt: '2026-10-13T11:00:00Z', body: 'Please review the rebase.' });
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  const checkRejected = changed => {
+    const c = client(); c.nodeInput = changed;
+    assert.equal(vm.runInContext('approvedPatch(nodeInput)', c), null);
+  };
+  const gated = structuredClone(node);
+  gated.repo = 'buildbuddy-io/buildbuddy'; gated.github.repo = gated.repo;
+  gated.github.checks = { complete: true, total: 1, state: 'ERROR', contexts: [
+    { kind: 'status', name: 'linux', state: 'ERROR', description: 'Check requires approving review', url: 'https://app.buildbuddy.io' }] };
+  const gateContext = client(); gateContext.nodeInput = gated;
+  gateContext.snapshotInput.workStates[node.id] = { 'maintainer-review': { scope: pr.head, since: null, basis: 'unknown', qualifier: 'BuildBuddy requires approving review before these checks run' } };
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["maintainer-review"].qualifier', gateContext), 'BuildBuddy requires approving review before these checks run');
+  for (const change of [{ head: 'd'.repeat(40) }, { githubReviewDecision: 'CHANGES_REQUESTED' },
+    { reviewsComplete: false }, { threads: { complete: true, unresolved: 1 } }, { reviewRequests: [{ login: 'reviewer' }] }])
+    checkRejected({ ...node, github: { ...pr, ...change } });
+  for (const change of [{ head: 'd'.repeat(40) }, { reviewId: 'different' }, { reviewer: 'other' },
+    { submittedAt: '2026-10-10T12:00:00Z' }, { newPatchId: 'd'.repeat(40) }, { verifiedAt: 'not-a-time' }])
+    checkRejected({ ...node, approvedPatch: { ...node.approvedPatch, ...change } });
+  for (const association of [null, 'd'.repeat(40)]) {
+    const changed = structuredClone(node); changed.github.feedback.items[0].commit.oid = association; checkRejected(changed);
+  }
+  const edited = structuredClone(node); edited.github.feedback.items[0].updatedAt = '2026-10-13T11:00:00Z'; checkRejected(edited);
+  for (const state of ['DISMISSED', 'CHANGES_REQUESTED']) {
+    const changed = structuredClone(node); changed.github.feedback.items[0].state = state; checkRejected(changed);
+  }
+  const changed = structuredClone(node);
+  changed.github.feedback.items.push({ kind: 'comment', author: { login: 'reviewer' }, createdAt: '2026-10-13T11:00:00Z', body: 'Please hold this.' });
+  checkRejected(changed);
+  context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-13T12:00:00Z' }, nodes: [node], edges: [], groups: [] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  node.approvedPatch.newPatchId = 'd'.repeat(40);
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid approved patch equivalence/);
+});
+
 test('Copybara failures remain import attention without a public validation failure', () => {
   const node = attentionNode();
   node.github.checks.contexts.push(serviceStatus('import/copybara', 'ERROR'));

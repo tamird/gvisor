@@ -6,7 +6,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from work_states import check_purpose, checks_passed, pr_states, record_states, remember_mergeability, review_decision
+from work_states import approved_patch, check_purpose, checks_passed, pr_states, record_states, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
@@ -91,6 +91,68 @@ class WorkStatesTest(unittest.TestCase):
         del pr["headIntroducedAt"]
         approval["submittedAt"] = "2026-10-06T20:18:13Z"
         self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+
+    def test_equivalent_approved_patch_routes_without_fresh_review(self):
+        pr = original(repo="google/gvisor", githubReviewDecision="REVIEW_REQUIRED", reviewDecision="REVIEW_REQUIRED",
+                      headCommittedAt="2026-10-19T18:00:00Z", reviewsComplete=True, reviewRequestsComplete=True,
+                      reviewRequests=[], threads={"complete": True, "unresolved": 0},
+                      feedback={"complete": True, "items": [{"kind": "review", "id": "review-1", "state": "APPROVED",
+                                "submittedAt": "2026-10-09T12:00:00Z", "author": {"login": "reviewer"},
+                                "commit": {"oid": "b" * 40}}]})
+        proof = {"head": pr["head"], "approvedHead": "b" * 40, "reviewId": "review-1", "reviewer": "reviewer",
+                 "submittedAt": "2026-10-09T12:00:00Z", "verifiedAt": "2026-10-19T19:00:00Z",
+                 "method": "stable-patch-id", "oldPatchId": "c" * 40, "newPatchId": "c" * 40}
+        pr["checkedAt"] = "2026-10-19T18:30:00Z"
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [{"id": "pr:1", "type": "pr", "approvedPatch": proof}]}
+        pending = {**pr, "checks": {"state": "PENDING", "total": 1, "complete": True,
+                                    "contexts": [{"name": "test", "state": "PENDING"}]}}
+        observed = record_states([pending], registry, {}, pr["checkedAt"])["pr:1"]
+        self.assertEqual(observed["awaiting-import"]["observedAt"], proof["verifiedAt"])
+        self.assertEqual(observed["checks-pending"]["observedAt"], pr["checkedAt"])
+        raw = copy.deepcopy(pr)
+        self.assertTrue(approved_patch(pr, proof))
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        self.assertIn("awaiting-import", pr_states(pr, proof))
+        self.assertNotIn("maintainer-review", pr_states(pr, proof))
+        imported = {**original(), "number": 2, "status": "open", "matchesSourceHead": True}
+        pr["imports"] = [imported]
+        self.assertIn("importing", pr_states(pr, proof))
+        self.assertNotIn("maintainer-review", pr_states(pr, proof))
+        pr["imports"] = []
+        self.assertEqual(pr, raw)
+        # Provider reassociation does not alter the retained review provenance.
+        pr["feedback"]["items"][0]["commit"]["oid"] = pr["head"]
+        self.assertTrue(approved_patch(pr, proof))
+        pr["feedback"]["items"].append({"kind": "comment", "author": {"login": "tamird"},
+                                          "createdAt": "2026-10-19T20:00:00Z", "body": "Please review the rebase."})
+        self.assertTrue(approved_patch(pr, proof))
+        for change in [{"head": "d" * 40}, {"repo": "buildbuddy-io/buildbuddy"},
+                       {"githubReviewDecision": "CHANGES_REQUESTED"}, {"reviewsComplete": False},
+                       {"threads": {"complete": True, "unresolved": 1}},
+                       {"reviewRequests": [{"login": "reviewer"}]}]:
+            with self.subTest(change=change):
+                candidate = {**pr, **change}
+                self.assertFalse(approved_patch(candidate, proof))
+                self.assertNotIn("awaiting-import", pr_states(candidate, proof))
+        for key, value in [("head", "d" * 40), ("reviewId", "different"), ("reviewer", "other"),
+                           ("submittedAt", "2026-10-10T00:00:00Z"), ("newPatchId", "d" * 40),
+                           ("verifiedAt", "not-a-time")]:
+            with self.subTest(key=key):
+                self.assertFalse(approved_patch(pr, {**proof, key: value}))
+        for association in [None, "d" * 40]:
+            candidate = copy.deepcopy(pr)
+            candidate["feedback"]["items"][0]["commit"]["oid"] = association
+            self.assertFalse(approved_patch(candidate, proof))
+        edited = copy.deepcopy(pr)
+        edited["feedback"]["items"][0]["updatedAt"] = "2026-10-19T20:00:00Z"
+        self.assertFalse(approved_patch(edited, proof))
+        for state in ["DISMISSED", "CHANGES_REQUESTED"]:
+            candidate = copy.deepcopy(pr)
+            candidate["feedback"]["items"][0]["state"] = state
+            self.assertFalse(approved_patch(candidate, proof))
+        pr["feedback"]["items"].append({"kind": "comment", "author": {"login": "reviewer"},
+                                          "createdAt": "2026-10-19T20:00:00Z", "body": "Please hold this."})
+        self.assertFalse(approved_patch(pr, proof))
 
     def test_incomplete_head_history_cannot_grant_approval(self):
         pr = original(reviewDecision="APPROVED", headHistoryComplete=False)
