@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T16:51:01.512289+00:00",
+    "updatedAt": "2026-10-19T17:01:18.303811+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5248,21 +5248,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "9f23a47ae173eda6cbe7b3c0e8ff3f3eaed0e71d",
+      "head": "849f741c42d7ac16d49c3aad8a2bb50653215ace",
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Incremental bounds, ID-map and resolver validation passed",
-      "summary": "Canonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
-      "updatedAt": "2026-10-19T16:51:01.512289+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh advanced to 849f741c42 after the bwrap numeric-ID checks: five owners and attempts, 90 passing cases and one existing TestUserns skip. All 13 original numeric-ID cases and four integration ownership cases pass. The before run preserves eight invalid-input failures plus the parent failure. The contributor then requested unset-only environment fallback; that semantic amendment distinguishes present-empty values and is awaiting its focused validation. No PR publication is implied.\n\nCanonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
+      "updatedAt": "2026-10-19T17:01:18.303811+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Incremental qualification complete; standalone validation and review remain distinct",
-        "sourceHead": "9f23a47ae173eda6cbe7b3c0e8ff3f3eaed0e71d",
-        "observedAt": "2026-10-19T16:48:31.047201+00:00",
-        "nextAction": "Preserve the completed incremental proofs and separate pending contributor decisions for standalone fixes. Keep prior full-build, runtime and CodeQL evidence bound to its actual source; no additional broad validation is currently claimed.",
+        "disposition": "Qualified integration retained; approved unset-only amendment under validation",
+        "sourceHead": "849f741c42d7ac16d49c3aad8a2bb50653215ace",
+        "observedAt": "2026-10-19T16:59:39.874869+00:00",
+        "nextAction": "Validate the contributor-requested LookupEnv contract, then publish the authorized standalone fix. Preserve earlier broad qualification source identities.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/4846a914-e9e8-4a79-bd78-640ca30f6969"
+          "https://app.buildbuddy.io/invocation/6efd91d4-6d7a-4203-9e43-2da99b3fdc6d"
         ]
       },
       "evidence": [
