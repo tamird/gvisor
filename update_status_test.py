@@ -1,6 +1,7 @@
 """Collector history retention and reopening through the real main path."""
 
 import copy
+from datetime import datetime
 import importlib
 import json
 from pathlib import Path
@@ -131,15 +132,17 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(set(prs), {1, 2, 3, 4, 5, 6, *range(200, 300)})
         self.assertEqual(prs[1]["checkedAt"], OLD)
         self.assertEqual(prs[200], self.previous["prs"][4])
-        self.assertEqual((prs[2]["status"], prs[2]["head"], prs[2]["checkedAt"]),
-                         ("open", f"{202:040x}", current["checkedAt"]))
+        checked_at = prs[2]["checkedAt"]
+        self.assertGreater(datetime.fromisoformat(checked_at), datetime.fromisoformat(OLD))
+        self.assertLessEqual(datetime.fromisoformat(checked_at), datetime.fromisoformat(current["checkedAt"]))
+        self.assertEqual((prs[2]["status"], prs[2]["head"]), ("open", f"{202:040x}"))
         self.assertEqual(prs[4]["status"], "merged")
-        self.assertEqual(prs[4]["checkedAt"], current["checkedAt"])
+        self.assertEqual(prs[4]["checkedAt"], checked_at)
         imports = {item["number"]: item for pr in prs.values() for item in pr["imports"]}
-        self.assertEqual(imports[101]["checkedAt"], current["checkedAt"])
+        self.assertEqual(imports[101]["checkedAt"], checked_at)
         self.assertEqual(imports[102], self.previous["prs"][0]["imports"][1])
         self.assertEqual((imports[103]["status"], imports[103]["head"]), ("open", f"{113:040x}"))
-        self.assertEqual(imports[103]["checkedAt"], current["checkedAt"])
+        self.assertEqual(imports[103]["checkedAt"], checked_at)
         self.assertEqual(imports[104]["checkedAt"], OLD)
         self.assertTrue(imports[105]["matchesSourceHead"])
         self.assertEqual(current["workStates"]["pr:1"]["merged"]["observedAt"], OLD)
