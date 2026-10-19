@@ -4884,15 +4884,22 @@ exceptions:
       licensed firmware is not represented as GPLv2 by this audit. This
       scoped exception does not authorize linking or packaging QEMU in
       gVisor release artifacts.
+  # QEMU COPYING contains the GPLv2 text and its example GPLv2-or-later
+  # notice. These are the scanner identifiers for that text, not an
+  # assertion that every bundled component offers a later-license option.
   - dependency: qemu_user_prebuilt_linux_amd64_aarch64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for aarch64 target binaries on amd64 build
       machines. The executable uses QEMU's GPL terms, not the MIT license of
       the prebuilt repository's build scripts. Used only for cross-compilation;
       QEMU is neither linked into nor distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_arm
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for arm target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4900,7 +4907,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_i386
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for i386 target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4908,7 +4917,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_mips64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for mips64 target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4916,7 +4927,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_ppc
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for ppc target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4924,7 +4937,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_ppc64le
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for ppc64le target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4932,7 +4947,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_riscv32
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for riscv32 target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4940,14 +4957,18 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_riscv64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for riscv64 target binaries on amd64 build
       machines. The executable uses QEMU's GPL terms, not the MIT license of
       the prebuilt repository's build scripts. Used only for cross-compilation;
       QEMU is neither linked into nor distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_s390x
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for s390x target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4955,7 +4976,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_amd64_x86_64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for x86_64 target binaries on amd64 build
       machines, declared by the user toolchain alongside the selected
@@ -4963,7 +4986,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_aarch64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for aarch64 target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -4971,7 +4996,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_arm
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for arm target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -4979,7 +5006,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_i386
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for i386 target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -4987,7 +5016,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_mips64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for mips64 target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -4995,7 +5026,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_ppc
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for ppc target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -5003,7 +5036,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_ppc64le
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for ppc64le target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -5011,7 +5046,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_riscv32
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for riscv32 target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -5019,14 +5056,18 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_riscv64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for riscv64 target binaries on arm64 build
       machines. The executable uses QEMU's GPL terms, not the MIT license of
       the prebuilt repository's build scripts. Used only for cross-compilation;
       QEMU is neither linked into nor distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_s390x
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for s390x target binaries on arm64 build
       machines, declared by the user toolchain alongside the selected
@@ -5034,7 +5075,9 @@ exceptions:
       license of its build scripts. QEMU is neither linked into nor
       distributed with gVisor.
   - dependency: qemu_user_prebuilt_linux_arm64_x86_64
-    license: GPL-2.0-only
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
     exception_rationale: >-
       QEMU user-mode emulator for x86_64 target binaries on arm64 build
       machines. The executable uses QEMU's GPL terms, not the MIT license of
