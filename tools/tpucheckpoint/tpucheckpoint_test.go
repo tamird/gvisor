@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// tpucheckpoint drives the libtpu checkpoint/restore control protocol
-// against unsandboxed processes. It discovers the libtpu control threads
-// of each target PID by scanning /proc/<pid>/task/*/comm, opens the
-// encoded pipe FDs via /proc/<pid>/fd/, and sends ControlRequest messages.
 package tpucheckpoint_test
 
 import (
@@ -50,9 +46,9 @@ func TestTimeout(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			args := append([]string{"--get-state"}, tc.args...)
-			output, err := exec.Command(bin, args...).CombinedOutput()
-			var exit *exec.ExitError
-			if !errors.As(err, &exit) || exit.ExitCode() != 1 {
+			output, err := exec.CommandContext(t.Context(), bin, args...).CombinedOutput()
+			exit, ok := errors.AsType[*exec.ExitError](err)
+			if !ok || exit.ExitCode() != 1 {
 				t.Fatalf("tpucheckpoint %v: error = %v, want exit 1; output: %s", args, err, output)
 			}
 			if want := "tpucheckpoint: " + tc.want + "\n"; string(output) != want {
