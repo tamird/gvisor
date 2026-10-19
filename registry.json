@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T13:27:24.486874+00:00",
+    "updatedAt": "2026-10-19T13:38:37.490254+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5281,7 +5281,7 @@
         "disposition": "Complete current-source build and Go analysis",
         "sourceHead": "e6bcc170b5ddc333cf0cd28a3c2b308d4a023f3e",
         "nextAction": "Collect the live c948 whole build and resolve the separately owned Go package diagnostics before advancing canonical qualification.",
-        "observedAt": "2026-10-19T13:25:37.422204+00:00"
+        "observedAt": "2026-10-19T13:36:15.748188+00:00"
       },
       "evidence": [
         {
@@ -11131,26 +11131,81 @@
       "type": "branch",
       "repo": "tamird/buildbuddy",
       "ref": "remote-bazel-authenticated-attribution",
-      "head": "42a88e68041516d38b0eedb544ac1e968516e4cb",
+      "head": "fed809dda10775e347486ac8b8c0399e8d87b4c1",
       "title": "Attribute Remote Bazel builds to the API-key user",
       "group": "buildbuddy",
-      "status": "Agent validation",
+      "status": "Upstream PR open; remote validation passed",
       "url": "https://github.com/tamird/buildbuddy/tree/remote-bazel-authenticated-attribution",
-      "summary": "The reviewed attribution correction is now published. Remote Bazel build attribution uses the authenticated API-key user instead of the worker OS username. Remote validation is pending; upstream publication is already authorized.",
-      "updatedAt": "2026-10-19T13:14:58.863080+00:00",
+      "summary": "Upstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "updatedAt": "2026-10-19T13:38:37.490254+00:00",
       "followup": {
         "owner": "Root",
-        "disposition": "agent-validation",
-        "sourceHead": "42a88e68041516d38b0eedb544ac1e968516e4cb",
-        "observedAt": "2026-10-19T13:14:58.863080+00:00",
-        "nextAction": "Complete the three-owner remote validation and open the already-authorized upstream PR."
+        "disposition": "Maintainer review",
+        "sourceHead": "fed809dda10775e347486ac8b8c0399e8d87b4c1",
+        "observedAt": "2026-10-19T13:30:34.030553+00:00",
+        "nextAction": "Follow upstream review and current-head CI for #13855; implementation and initial publication are complete."
       },
       "evidence": [
         {
           "label": "Exact reviewed commit",
           "url": "https://github.com/tamird/buildbuddy/commit/42a88e68041516d38b0eedb544ac1e968516e4cb"
+        },
+        {
+          "label": "Published BuildBuddy PR",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855"
         }
       ]
+    },
+    {
+      "id": "branch:buildbuddy:guest-kernel-execution-property",
+      "type": "branch",
+      "repo": "tamird/buildbuddy",
+      "ref": "guest-kernel-execution-property",
+      "head": "7d9c40b2d0ef22245aa74e0ab0538d08ac513691",
+      "title": "Select the BuildBuddy guest kernel explicitly",
+      "group": "buildbuddy",
+      "url": "https://github.com/tamird/buildbuddy/tree/guest-kernel-execution-property",
+      "status": "Agent validation",
+      "summary": "The reviewed proposal is published at 7d9c40b2d0ef22245aa74e0ab0538d08ac513691; remote validation 31731912 is running. Upstream PR publication is already authorized after the required validation passes. No contributor decision is pending.",
+      "updatedAt": "2026-10-19T13:38:37.490254+00:00",
+      "followup": {
+        "owner": "Hostinet",
+        "disposition": "agent-validation",
+        "sourceHead": "7d9c40b2d0ef22245aa74e0ab0538d08ac513691",
+        "observedAt": "2026-10-19T13:30:34.030553+00:00",
+        "nextAction": "Complete the owning remote validation, then open the authorized upstream PR."
+      }
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:13855",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13855,
+      "ref": "remote-bazel-authenticated-attribution",
+      "head": "fed809dda10775e347486ac8b8c0399e8d87b4c1",
+      "title": "Attribute Remote Bazel builds to the API-key user",
+      "group": "buildbuddy",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
+      "status": "open",
+      "summary": "Upstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "followup": {
+        "owner": "Root",
+        "disposition": "Maintainer review",
+        "sourceHead": "fed809dda10775e347486ac8b8c0399e8d87b4c1",
+        "observedAt": "2026-10-19T13:30:34.030553+00:00",
+        "nextAction": "Follow upstream review and current-head CI for #13855; implementation and initial publication are complete."
+      },
+      "evidence": [
+        {
+          "label": "Published BuildBuddy PR",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855"
+        },
+        {
+          "label": "Remote attribution validation",
+          "url": "https://app.buildbuddy.io/invocation/ca110e6e-b807-4d8f-a3ba-87027f52bee5"
+        }
+      ],
+      "updatedAt": "2026-10-19T13:38:37.490254+00:00"
     }
   ],
   "edges": [
@@ -12773,7 +12828,7 @@
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13803"
     },
     {
-      "from": "investigation:buildbuddy-kernel-property",
+      "from": "branch:buildbuddy:guest-kernel-execution-property",
       "to": "branch:rbe-qualification-next",
       "type": "depends_on",
       "reason": "Reproducible hosted guest-kernel qualification needs an explicit supported kernel selector. The implementation and actual deployed worker qualification remain separate.",
@@ -19809,14 +19864,17 @@
       "title": "Select the BuildBuddy guest kernel explicitly",
       "status": "active",
       "owner": "Hostinet (Codex)",
-      "group": "buildbuddy",
-      "updatedAt": "2026-10-19T10:33:24.407103+00:00",
-      "summary": "Implement the user-authorized guest-kernel-version execution property. Work is in the assigned BuildBuddy checkout; no published ref or PR is established yet. Selection must bind boot, jailer and snapshot identity, with incompatible restored snapshots rejected.",
-      "nextStep": "Complete source review and remote validation, then publish the authorized BuildBuddy proposal. This does not claim an available hosted kernel or deployed fix.",
+      "updatedAt": "2026-10-19T13:38:37.490254+00:00",
+      "summary": "The reviewed proposal is published at 7d9c40b2d0ef22245aa74e0ab0538d08ac513691; remote validation 31731912 is running. Upstream PR publication is already authorized after the required validation passes. No contributor decision is pending.",
+      "nextStep": "Complete the owning remote validation, then open the authorized upstream PR.",
       "evidence": [
         {
           "label": "Existing kernel selection request",
           "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13523"
+        },
+        {
+          "label": "Published proposal",
+          "url": "https://github.com/tamird/buildbuddy/tree/guest-kernel-execution-property"
         }
       ],
       "findings": []
