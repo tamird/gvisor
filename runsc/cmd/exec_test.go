@@ -36,6 +36,11 @@ func TestUser(t *testing.T) {
 		{input: "7", want: user{kuid: 7, kuidSet: true, kgid: 0, kgidSet: false}},
 		{input: "49:343", want: user{kuid: 49, kuidSet: true, kgid: 343, kgidSet: true}},
 		{input: "0:2401", want: user{kuid: 0, kuidSet: true, kgid: 2401, kgidSet: true}},
+		{input: "4294967294:4294967294", want: user{kuid: 4294967294, kuidSet: true, kgid: 4294967294, kgidSet: true}},
+		{input: "-1", wantErr: true},
+		{input: "0:-1", wantErr: true},
+		{input: "4294967296", wantErr: true},
+		{input: "0:4294967296", wantErr: true},
 		{input: "", wantErr: true},
 		{input: "foo", wantErr: true},
 		{input: ":123", wantErr: true},
@@ -64,6 +69,7 @@ func TestCLIArgs(t *testing.T) {
 		spec     specs.Process
 		argv     []string
 		expected control.ExecArgs
+		wantErr  bool
 	}{
 		{
 			name: "spec used by default",
@@ -94,7 +100,7 @@ func TestCLIArgs(t *testing.T) {
 			ex: Exec{
 				cwd:        "/baz",
 				user:       user{kuid: 4, kuidSet: true, kgid: 4, kgidSet: true},
-				extraKGIDs: []string{"4", "5", "6"},
+				extraKGIDs: []string{"4", "5", "6", "4294967294"},
 				caps:       []string{"CAP_DAC_READ_SEARCH"},
 				env:        []string{"BAZ=new", "XYZ=xyz,BAZ=new"},
 			},
@@ -111,7 +117,7 @@ func TestCLIArgs(t *testing.T) {
 				WorkingDirectory: "/baz",
 				KUID:             4,
 				KGID:             4,
-				ExtraKGIDs:       []auth.KGID{1, 2, 3, 4, 5, 6},
+				ExtraKGIDs:       []auth.KGID{1, 2, 3, 4, 5, 6, 4294967294},
 				Capabilities: &auth.TaskCapabilities{
 					BoundingCaps:    auth.CapabilitySetOfMany([]linux.Capability{linux.CAP_DAC_OVERRIDE, linux.CAP_DAC_READ_SEARCH}),
 					EffectiveCaps:   auth.CapabilitySetOfMany([]linux.Capability{linux.CAP_DAC_READ_SEARCH}),
@@ -122,11 +128,27 @@ func TestCLIArgs(t *testing.T) {
 				SupportTTYs: true,
 			},
 		},
+		{
+			name:    "negative supplementary GID",
+			ex:      Exec{extraKGIDs: []string{"-1"}},
+			wantErr: true,
+		},
+		{
+			name:    "supplementary GID exceeds uint32",
+			ex:      Exec{extraKGIDs: []string{"4294967296"}},
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			e, err := tc.ex.argsFromCLI(&tc.spec, tc.argv, true)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("argsFromCLI(%+v): got no error, but wanted one", tc.ex)
+				}
+				return
+			}
 			if err != nil {
 				t.Errorf("argsFromCLI(%+v): got error: %+v", tc.ex, err)
 				return
