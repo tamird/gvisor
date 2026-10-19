@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T14:45:15.293711+00:00",
+    "updatedAt": "2026-10-19T14:55:29.211250+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5259,7 +5259,7 @@
         "owner": "root",
         "disposition": "Accepted CodeQL proof; Java diagnostic and ARM applicability work remain active",
         "sourceHead": "e34fcbf68e10e7b0dcd241317c02073d88ae9331",
-        "observedAt": "2026-10-19T14:41:50.339655+00:00",
+        "observedAt": "2026-10-19T14:52:23.811043+00:00",
         "nextAction": "Keep the completed c948 whole-build and e34 CodeQL proof source-bound. Node owns the reviewed Java observer replay preparation and root owns its final request gate; Hostinet/root own the remaining ARM capability disposition. Retain original runtime failures and unsupported coverage.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/2cf878bd-0337-47c8-84c4-c5118a570dfb"
@@ -10027,20 +10027,19 @@
       "title": "BuildBuddy: retry canceled OCI initialization",
       "group": "buildbuddy",
       "status": "open",
-      "summary": "The CI diagnosis is now posted and verified: the unchanged PR-build and ARM64 jobs report missing credentials, while Windows times out in the existing file-cache fixture covered by Son\u2019s separate #13781. The maintainer\u2019s newer question to Son asks whether the dependency upgrade alone passes the regression; that question remains open and this CI evidence does not answer it.\n\nBuildBuddy #13848 remains open and mergeable at 715688f5d. At October 18 13:28:06 UTC, sluongng left LGTM feedback as a COMMENTED review and asked for dan-stowell to review before merge; GitHub still reports REVIEW_REQUIRED, with bduffany and dan-stowell requested. At 13:49:15 UTC, sluongng linked their separate open PR #13851, which upgrades go-containerregistry to v0.22.1 and related dependencies; its current head is bf1f85f2e and review is required. No dependency change has been added to this branch. Public PR/build failed with a missing API key before any tests executed (exit 34). The Linux ARM64 lane passed both test targets, then failed its build-event upload with a missing API key (exit 38). Why the key was absent is unknown; these failures do not establish a source regression. CodeQL passed. The completed Windows executor job ran all five test targets: four passed and filecache_test timed out in both 60-second attempts (exit 1). Root recovered both Windows test logs and verified that filecache_test.go and BUILD match this PR head. Both attempts end during TestScanWithConcurrentAdd after 99 completed directory scans, with progress continuing until the 60-second timeout and no assertion failure. The test performs 100 trials of 100 files; its small size assigns a 60-second suite limit. Root found sluongng\u2019s existing open PR #13781, which addresses this Windows concurrent-scan fixture problem. Its current head, 6867093386, has a passing Windows executor check. The Windows failure is linked to that existing work; no separate test-size proposal is being pursued. This evidence does not establish an OCI regression or a passing Windows result for #13848. Three Darwin ERROR statuses remain maintainer execution-approval gates, while hosted Linux/style/bare-metal/release statuses remain queued. The prepared real-registry regression fails before the correction and the corrected race suite passes 79 cases without skips; its connection to the hosted image-preparation incident remains unproved. Root reviewed the suggested go-containerregistry cleanup: later calls can reinitialize after a failure, while concurrent callers can still hold the canceled reader. That distinction is source-derived, not a new executed regression; the separate upgrade remains in sluongng\u2019s PR #13851.\n\nThe contributor posted a follow-up at 17:33:41 UTC on October 18 asking whether any updates are needed. The current sweep found no incoming reply or review/check change. The separate authentication-evidence report remains unposted pending its existing authorization question.",
+      "summary": "bduffany now also says LGTM and agrees Dan should review. That review is COMMENTED, not an approval; the dependency-only regression question and the posted CI-credential evidence remain open.\n\nThe CI diagnosis is now posted and verified: the unchanged PR-build and ARM64 jobs report missing credentials, while Windows times out in the existing file-cache fixture covered by Son\u2019s separate #13781. The maintainer\u2019s newer question to Son asks whether the dependency upgrade alone passes the regression; that question remains open and this CI evidence does not answer it.\n\nBuildBuddy #13848 remains open and mergeable at 715688f5d. At October 18 13:28:06 UTC, sluongng left LGTM feedback as a COMMENTED review and asked for dan-stowell to review before merge; GitHub still reports REVIEW_REQUIRED, with bduffany and dan-stowell requested. At 13:49:15 UTC, sluongng linked their separate open PR #13851, which upgrades go-containerregistry to v0.22.1 and related dependencies; its current head is bf1f85f2e and review is required. No dependency change has been added to this branch. Public PR/build failed with a missing API key before any tests executed (exit 34). The Linux ARM64 lane passed both test targets, then failed its build-event upload with a missing API key (exit 38). Why the key was absent is unknown; these failures do not establish a source regression. CodeQL passed. The completed Windows executor job ran all five test targets: four passed and filecache_test timed out in both 60-second attempts (exit 1). Root recovered both Windows test logs and verified that filecache_test.go and BUILD match this PR head. Both attempts end during TestScanWithConcurrentAdd after 99 completed directory scans, with progress continuing until the 60-second timeout and no assertion failure. The test performs 100 trials of 100 files; its small size assigns a 60-second suite limit. Root found sluongng\u2019s existing open PR #13781, which addresses this Windows concurrent-scan fixture problem. Its current head, 6867093386, has a passing Windows executor check. The Windows failure is linked to that existing work; no separate test-size proposal is being pursued. This evidence does not establish an OCI regression or a passing Windows result for #13848. Three Darwin ERROR statuses remain maintainer execution-approval gates, while hosted Linux/style/bare-metal/release statuses remain queued. The prepared real-registry regression fails before the correction and the corrected race suite passes 79 cases without skips; its connection to the hosted image-preparation incident remains unproved. Root reviewed the suggested go-containerregistry cleanup: later calls can reinitialize after a failure, while concurrent callers can still hold the canceled reader. That distinction is source-derived, not a new executed regression; the separate upgrade remains in sluongng\u2019s PR #13851.\n\nThe contributor posted a follow-up at 17:33:41 UTC on October 18 asking whether any updates are needed. The current sweep found no incoming reply or review/check change. The separate authentication-evidence report remains unposted pending its existing authorization question.",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13848",
-      "updatedAt": "2026-10-19T14:45:15.293711+00:00",
+      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "CI evidence reply delivered; maintainer dependency comparison pending",
+        "disposition": "Dan review and maintainer dependency comparison pending",
         "sourceHead": "715688f5dda713463b7ce4252ceab32eae3c2b26",
-        "observedAt": "2026-10-19T14:44:50.193280+00:00",
-        "nextAction": "Follow the response to bduffany\u2019s upgrade-only regression question and the CI-credential request. Do not duplicate the existing Windows fixture PR or infer the dependency upgrade alone is sufficient.",
+        "observedAt": "2026-10-19T14:55:28.897551+00:00",
+        "nextAction": "Follow Dan\u2019s review, the upgrade-only regression comparison and the CI credential response. Existing LGTM wording does not establish formal approval or passing checks.",
         "evidence": [
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13848#issuecomment-6269982243",
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13848#pullrequestreview-5573398526",
           "https://github.com/buildbuddy-io/buildbuddy/pull/13848#issuecomment-6269860599",
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13851",
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13848#issuecomment-6269982243"
         ]
       },
       "evidence": [
@@ -10366,17 +10365,16 @@
       "group": "buildbuddy",
       "status": "open",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849",
-      "updatedAt": "2026-10-19T14:45:15.293711+00:00",
-      "summary": "The direct-assignment amendment is published at 4f3069a053. Hostinet owns the current remote validation and responses to both existing review threads; the child-context question remains explicitly assigned.\n\nNew review feedback asks whether shared assignments should move inside the goroutines and whether the auxiliary-log loop should own a child errgroup. Three public Actions checks failed at this head; their failure causes have not yet been diagnosed. Root is reviewing the feedback before any amendment or reply.\n\nPrior validation: Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip.",
+      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
+      "summary": "The explicit-response and caller-context refinement is now published at 7c1bdbe82a. Hostinet\u2019s existing remote validation ff95f4a9 is active; its result and the corresponding correction to prior thread prose are pending. The earlier 26-case result remains at 4f3069a053.\n\nA new user-directed refinement is now active with Hostinet: pass the response explicitly to the error closure and use a plain error group with the caller context for uploads. The previous direct-assignment amendment and replies remain recorded, but the new source/lifetime/error-semantics review, remote validation and corresponding reply correction are still pending. No contributor approval is required for this authorized revision.\n\nBoth review threads now have verified replies in review 5573348673: direct response-field assignments are published at 4f3069a053, and the reply explains why diagnostic log uploads retain the caller context after output-tree cancellation. The focused workspace validation passes 26 cases and lint, retaining one existing case-insensitive-filesystem skip. Public Darwin approval gates and pending checks remain separate; unresolved thread flags do not mean the author has not responded.\n\nThe direct-assignment amendment is published at 4f3069a053. Hostinet owns the current remote validation and responses to both existing review threads; the child-context question remains explicitly assigned.\n\nNew review feedback asks whether shared assignments should move inside the goroutines and whether the auxiliary-log loop should own a child errgroup. Three public Actions checks failed at this head; their failure causes have not yet been diagnosed. Root is reviewing the feedback before any amendment or reply.\n\nPrior validation: Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip.",
       "followup": {
         "owner": "Hostinet",
-        "disposition": "Published assignment fix; validation and review replies active",
-        "sourceHead": "4f3069a053fdb5c5c07181fbc3c2a67b791cdf4c",
-        "observedAt": "2026-10-19T14:44:50.193280+00:00",
-        "nextAction": "Collect the existing validation and post the approved thread responses with exact source evidence. Keep the child-context response distinct from the completed direct-assignment edit.",
+        "disposition": "Latest user-directed amendment published; remote validation active",
+        "sourceHead": "7c1bdbe82aa599a5bd16caaa38a6c23b66c8e49f",
+        "observedAt": "2026-10-19T14:55:28.897551+00:00",
+        "nextAction": "Collect the existing executor/workspace race validation and lint, then post the authorized explanation of the explicit response and shared caller-context design. Keep previous replies and validation source-bound.",
         "evidence": [
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13849#discussion_r4313322230",
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13849#discussion_r4313370354"
+          "https://github.com/tamird/buildbuddy/commit/7c1bdbe82aa599a5bd16caaa38a6c23b66c8e49f"
         ]
       },
       "evidence": [
@@ -10395,6 +10393,10 @@
         {
           "label": "Current maintainer feedback",
           "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849#pullrequestreview-5570920006"
+        },
+        {
+          "label": "Focused workspace validation PASS; one existing skip",
+          "url": "https://app.buildbuddy.io/invocation/16c4546c-61ae-45b4-9cc5-0fea7ab43216"
         }
       ]
     },
@@ -11191,13 +11193,17 @@
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
       "status": "Upstream PR open; current-head remote validation passed",
-      "summary": "The cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "summary": "The LookupEnv refinement is remotely qualified at bf7a47e3df: two test owners, eight attempts and 36 named cases, plus lint, with no gaps or skips. The published eb265eafda adds an authenticated-filter rationale and removes the redundant seven-line test; executable production code is unchanged. Exact test evidence remains at bf7, and earlier failures are preserved. Automatic verification took 2.300712 seconds after the final lint command; the 208.024634-second interval from test completion includes lint.\n\nThe cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
       "followup": {
-        "owner": "Root",
-        "disposition": "Maintainer review",
-        "sourceHead": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
-        "observedAt": "2026-10-19T14:15:21.653714+00:00",
-        "nextAction": "Follow upstream review and public checks for the validated current amendment; no contributor decision is pending."
+        "owner": "root",
+        "disposition": "Authorized refinement delivered and validation complete",
+        "sourceHead": "eb265eafdaaefd91b0fd910e6eb5695e157a3142",
+        "observedAt": "2026-10-19T14:46:53.138168+00:00",
+        "nextAction": "Follow current public review and checks. Keep Darwin approval gates separate from executed tests and preserve the bf7 test source versus eb265 applicability distinction.",
+        "evidence": [
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
+          "https://app.buildbuddy.io/invocation/f3934fdb-9939-438f-bf6d-5e9d6563d23e"
+        ]
       },
       "evidence": [
         {
@@ -11211,9 +11217,13 @@
         {
           "label": "Current attribution cleanup validation PASS",
           "url": "https://app.buildbuddy.io/invocation/0449dba2-d697-4c28-84f5-bd4639255941"
+        },
+        {
+          "label": "LookupEnv validation PASS; published-source applicability recorded",
+          "url": "https://app.buildbuddy.io/invocation/f3934fdb-9939-438f-bf6d-5e9d6563d23e"
         }
       ],
-      "updatedAt": "2026-10-19T14:19:12.443712+00:00"
+      "updatedAt": "2026-10-19T14:55:29.211250+00:00"
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13858",
@@ -11225,26 +11235,53 @@
       "title": "Select the BuildBuddy guest kernel explicitly",
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858",
-      "status": "Rationale replied; awaiting maintainer response",
-      "summary": "Tamir replied to the maintainer\u2019s API question: explicit kernel selection preserves the execution-environment identity needed when gVisor compares behavior with the host kernel. The response is awaiting maintainer feedback. A mutable provider track alone would not establish that cache identity; no design change or support commitment has been approved.\n\nThe guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
+      "status": "Maintainer internal API and support-policy discussion",
+      "summary": "The maintainer acknowledges that changing the guest kernel without changing the action cache key is a correctness problem for kernel-behavior tests. BuildBuddy will discuss the kernel-selection API, updates and old-version retirement internally before committing to a supported interface. The contributor rationale is answered; no further author source action or new support commitment has been requested.\n\nTamir replied to the maintainer\u2019s API question: explicit kernel selection preserves the execution-environment identity needed when gVisor compares behavior with the host kernel. The response is awaiting maintainer feedback. A mutable provider track alone would not establish that cache identity; no design change or support commitment has been approved.\n\nThe guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
       "followup": {
-        "owner": "Root",
-        "disposition": "Contributor response posted; maintainer response pending",
+        "owner": "bduffany",
+        "disposition": "Maintainer-owned API and support-policy consensus pending",
         "sourceHead": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "observedAt": "2026-10-19T14:41:49.977507+00:00",
-        "nextAction": "Wait for the maintainer response to Tamir\u2019s cache-identity explanation. Do not duplicate the reply or change the API design without an agreed resolution.",
+        "observedAt": "2026-10-19T14:55:28.897551+00:00",
+        "nextAction": "Await the maintainer\u2019s internal consensus on selection API and support policy. Preserve the explicit cache-identity requirement; do not substitute a mutable kernel track without an agreed contract.",
         "evidence": [
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13858#pullrequestreview-5572972935",
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13858#issuecomment-6270072552",
           "https://github.com/buildbuddy-io/buildbuddy/pull/13858#issuecomment-6269685051"
         ]
       },
-      "updatedAt": "2026-10-19T14:45:15.293711+00:00",
+      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
       "evidence": [
         {
           "label": "Guest-kernel selection validation PASS",
           "url": "https://app.buildbuddy.io/invocation/295fbd6a-7d07-4d25-a56d-d9c216d1bb1b"
+        },
+        {
+          "label": "Maintainer acknowledges correctness issue; policy discussion pending",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13858#issuecomment-6270072552"
         }
       ]
+    },
+    {
+      "id": "branch:proc-task-id-parsing",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proc-task-id-parsing",
+      "head": "4674542b6d227e33df83826e466678187e1315ae",
+      "title": "Reject noncanonical procfs task IDs",
+      "url": "https://github.com/tamird/gvisor/commit/4674542b6d227e33df83826e466678187e1315ae",
+      "group": "kernel",
+      "status": "Agent validation in progress",
+      "summary": "An independently source-reviewed procfs correction rejects leading-zero task names and oversized decimal IDs that can wrap to a live task. The standalone source is published at 4674542b6d. Linux, failing-before and corrected remote checks are pending; the first request stopped during target loading with zero executions and remains FAIL. No upstream PR or contributor-review request exists yet.",
+      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Agent validation of Linux task-ID parsing semantics",
+        "sourceHead": "4674542b6d227e33df83826e466678187e1315ae",
+        "observedAt": "2026-10-19T14:55:28.897551+00:00",
+        "nextAction": "Finish the existing Linux/before/after validation, retain the failed zero-execution attempt, then prepare the source and evidence for contributor review before any upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/4674542b6d227e33df83826e466678187e1315ae"
+        ]
+      }
     }
   ],
   "edges": [
