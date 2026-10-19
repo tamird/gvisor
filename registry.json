@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T19:02:46.588257+00:00",
+    "updatedAt": "2026-10-19T19:13:56.133494+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5494,7 +5494,7 @@
         "owner": "root / node_tls_sni",
         "disposition": "Full build recovered; Java coverage and reporting reconciliation pending",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-19T18:58:16.133622+00:00",
+        "observedAt": "2026-10-19T19:08:34.141811+00:00",
         "nextAction": "Node reconciles current Java producer identity, framed jtreg output and exact time-limit exclusions from retained evidence. Preserve raw Java FAIL, first build-attempt TLS FAIL, original attempt2 INCOMPLETE and one manual artifact recovery. Existing ARM/runtime gaps remain separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39299248716/attempts/2",
@@ -11897,22 +11897,26 @@
       "url": "https://github.com/google/gvisor/pull/15981",
       "group": "runsc",
       "status": "open",
-      "updatedAt": "2026-10-19T16:51:01.512289+00:00",
-      "summary": "The contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
+      "updatedAt": "2026-10-19T19:13:56.133494+00:00",
+      "summary": "New review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "hostinet_delivery",
         "sourceHead": "30fdf4caad3e51586eb30f60a282fe90c13287ce",
-        "observedAt": "2026-10-19T16:50:03.006851+00:00",
-        "disposition": "Approved resolver fix delivered; follow public review and CI",
-        "nextAction": "Use the existing PR/provider sweep for incoming feedback, source checks and matching imports. Contributor review and publication are complete.",
+        "observedAt": "2026-10-19T19:02:47Z",
+        "disposition": "Selected passwd record review correction and validation in progress",
+        "nextAction": "Review the two-file correction, qualify selected-record failures and preserved fallback, then request contributor review before publication.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15981"
+          "https://github.com/google/gvisor/pull/15981#pullrequestreview-5576328560"
         ]
       },
       "evidence": [
         {
           "label": "Approved resolver bounds fix delivered",
           "url": "https://github.com/google/gvisor/pull/15981"
+        },
+        {
+          "label": "Selected passwd structure review",
+          "url": "https://github.com/google/gvisor/pull/15981#pullrequestreview-5576328560"
         }
       ]
     },
