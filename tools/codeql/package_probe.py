@@ -137,6 +137,11 @@ def compare_compilations(manifest: Manifest, selected: dict[str, Package], resol
             package, companion_name = companion.removeprefix("@@//").split(":")
             owner_name = owner.rsplit(":", 1)[1]
             marker = "/bin/" + package + "/" + companion_name
+            if marker + "_/" in path:
+                prefix, child = path.split(marker + "_/", 1)
+                if child.startswith(companion_name + "."):
+                    child = owner_name + child[len(companion_name):]
+                return prefix + "/bin/" + package + "/" + owner_name + "_/" + child
             for suffix in (".", "/"):
                 if marker + suffix in path:
                     return path.replace(marker + suffix, "/bin/" + package + "/" + owner_name + suffix, 1)
