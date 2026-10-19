@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T22:28:19.323049+00:00",
+    "updatedAt": "2026-10-19T22:49:18.498548+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5626,14 +5626,14 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-19T21:36:45.846198+00:00",
-      "summary": "The patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
+      "updatedAt": "2026-10-19T22:49:18.498548+00:00",
+      "summary": "The older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
-        "disposition": "Unchanged approved patch; current CI and import progression",
+        "disposition": "Older import discovery failure under bounded diagnosis",
         "owner": "work_map_current",
         "sourceHead": "0729cdc9c742b6ab664b8f636ef550b3b165ab8a",
-        "observedAt": "2026-10-19T21:34:57.526725+00:00",
-        "nextAction": "Observe exact-head checks and import progression through the existing sweep. Preserve substantive feedback and explicit holds; no reapproval notice or repeated rebase solely for a changed SHA.",
+        "observedAt": "2026-10-19T22:46:00Z",
+        "nextAction": "Identify why posix_error_test discovery returns the fallback Default.All in all three final unit jobs of import15687/build50720. The current0729 source retains the test and fallback; quiet rebase alone is not a fix. No rerun or source change yet.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15562",
           "https://github.com/tamird/gvisor/commit/d7ffb314ab008b4ee47b4cd3f192a0f25c7f46be",
@@ -5656,7 +5656,13 @@
         "method": "reviewed-context-only",
         "oldPatchId": "24526a3257d81c14c861c059361de9c965360938",
         "newPatchId": "5da08ff51a3178ad6b437c95dd8d4f9a67ad9d71"
-      }
+      },
+      "evidence": [
+        {
+          "label": "Older import unit discovery failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/50720"
+        }
+      ]
     },
     {
       "id": "branch:rbe-current-integration",
@@ -5673,7 +5679,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-19T22:24:50.078444+00:00",
+        "observedAt": "2026-10-19T22:37:39.626974+00:00",
         "disposition": "All currently executable unit-runtime cases and owner obligations complete; external NVIDIA comparisons remain",
         "nextAction": "Retain the18 NVIDIA comparison instances until their exact public sources become available; root owns the pending contributor decision for qualified RACK proposal8643925c. Preserve raw failures, all84 skips and original execution-source bindings.",
         "evidence": [
@@ -9894,13 +9900,13 @@
       "url": "https://github.com/google/gvisor/pull/15919",
       "group": "analysis",
       "status": "open",
-      "summary": "The latest import #15984 at88d06cc3 still fails Gazelle on the established redundant //pkg/zip dependency in the production tools/nogo/check library. Its recorded source remains7847dc30, while current source #15919 is98bc7fc0. The exact new job log requests the same one-line dependency removal. This does not establish a new defect in the current source; root owns import reconciliation, and the earlier public reply draft remains unposted. #15868 still requires the actual #15919 merge.\n\nThe published mechanical rebase is at 98bc7fc081ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nPublic import #15984 at085df06c4 has an import-only Gazelle defect: it adds //pkg/zip to the production check library as well as check_test. All five Go-source blobs match the approved source, and only check_test.go imports pkg/zip. The source PR already has the correct test-only dependency. Root prepared a factual reply requesting the maintainer/internal-export correction and has asked for authorization to post; no source amendment or blind rerun is needed. Landing and dependent #15868 formatting remain held.\n\nThe shared pkg/zip proxy provides inlineable wrappers and the two named aliases used by current consumers. The existing unsafe import analyzer becomes checkimports, retaining unsafe filename exemptions while permitting archive/zip only in the exact proxy package. Four maintained consumer files migrate. Qualified-harness composition 3c34c5f3 passes thirteen selected owners and 110 cases, including the analyzer bootstrap and consumer builds. The isolated forbidden-import witness fails facts_nogo with the expected checkimports diagnostic on both CPUs; its native failure is retained. The contributor approved publication after making the proxy consumers use consistent standard/nonstandard import groups. That correction removes one blank line in licensecheck; it is the same import shape already validated in the formatter tree. The corrected independent proposal is published as #15919 at 7847dc30fe, with one commit and the prepared description verified. Maintainer review and current-head CI remain separate. EtiennePerot approved exact 7847dc30fe at 06:39:06 UTC. Current source checks and both Copybara statuses are successful; landing remains pending.",
+      "summary": "The user-authorized Gazelle correction request is posted and verified at comment6278816021 on #15919. Current source98bc and originally imported source7847 already lack the redundant production //pkg/zip dependency; import88d adds it. The remaining correction is Etienne's internal one-line deletion and subsequent Gazelle verification. The user's requested action is complete; no contributor decision, agent source amendment, or further public reminder is pending.\n\nThe latest import #15984 at88d06cc3 still fails Gazelle on the established redundant //pkg/zip dependency in the production tools/nogo/check library. Its recorded source remains7847dc30, while current source #15919 is98bc7fc0. The exact new job log requests the same one-line dependency removal. This does not establish a new defect in the current source; root owns import reconciliation, and the earlier public reply draft remains unposted. #15868 still requires the actual #15919 merge.\n\nThe published mechanical rebase is at 98bc7fc081ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nPublic import #15984 at085df06c4 has an import-only Gazelle defect: it adds //pkg/zip to the production check library as well as check_test. All five Go-source blobs match the approved source, and only check_test.go imports pkg/zip. The source PR already has the correct test-only dependency. Root prepared a factual reply requesting the maintainer/internal-export correction and has asked for authorization to post; no source amendment or blind rerun is needed. Landing and dependent #15868 formatting remain held.\n\nThe shared pkg/zip proxy provides inlineable wrappers and the two named aliases used by current consumers. The existing unsafe import analyzer becomes checkimports, retaining unsafe filename exemptions while permitting archive/zip only in the exact proxy package. Four maintained consumer files migrate. Qualified-harness composition 3c34c5f3 passes thirteen selected owners and 110 cases, including the analyzer bootstrap and consumer builds. The isolated forbidden-import witness fails facts_nogo with the expected checkimports diagnostic on both CPUs; its native failure is retained. The contributor approved publication after making the proxy consumers use consistent standard/nonstandard import groups. That correction removes one blank line in licensecheck; it is the same import shape already validated in the formatter tree. The corrected independent proposal is published as #15919 at 7847dc30fe, with one commit and the prepared description verified. Maintainer review and current-head CI remain separate. EtiennePerot approved exact 7847dc30fe at 06:39:06 UTC. Current source checks and both Copybara statuses are successful; landing remains pending.",
       "followup": {
-        "owner": "root",
-        "disposition": "Current import still contains established Gazelle dependency drift",
+        "owner": "EtiennePerot",
+        "disposition": "Authorized correction request delivered; internal import fix pending",
         "sourceHead": "98bc7fc081ce3c3638c389c00aa2338dbe251276",
         "observedAt": "2026-10-19T22:05:22.000583+00:00",
-        "nextAction": "Root owns current source/import reconciliation. Import88d still references older source7847 and Gazelle requests removal of the redundant production //pkg/zip dependency. Keep the old reply draft unposted and #15868 held until #15919 actually merges; no speculative current-source amendment.",
+        "nextAction": "Await Etienne's internal removal of the redundant production //pkg/zip dependency and exact import Gazelle verification. WorkMap follows ordinary status; root's authorized reply is complete. Preserve15868 hold until15919 actually merges; no repeated public reminder.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39293864159/job/118201208380",
           "https://github.com/google/gvisor/pull/15984",
@@ -9911,7 +9917,7 @@
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN"
       },
-      "updatedAt": "2026-10-19T22:05:22.297632+00:00",
+      "updatedAt": "2026-10-19T22:49:18.498548+00:00",
       "number": 15919,
       "evidence": [
         {
@@ -9929,6 +9935,10 @@
         {
           "label": "Current import Gazelle drift",
           "url": "https://github.com/google/gvisor/actions/runs/39331257471/job/118329714179"
+        },
+        {
+          "label": "Delivered Gazelle correction request",
+          "url": "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
         }
       ]
     },
@@ -12144,15 +12154,15 @@
       "title": "Reject out-of-range do ID mappings",
       "url": "https://github.com/google/gvisor/pull/15978",
       "group": "runtime",
-      "summary": "The sampled current-import job fails during GitHub checkout with HTTP403. Hostinet now owns a bounded audit of the other failed public jobs so this sample is not treated as an exhaustive diagnosis. No rerun or source amendment is authorized by this evidence alone.\n\nCurrent matching import #16011 at b880bf29af has a Buildkite checkout failure. The inspected failed job in build 51357 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. The separate Go-export cleanup failure remains related to existing #15598.",
+      "summary": "Current matching import16011 atb880 has distinct failures. Exact generate39318731787/job118286913482 fails while fetching the typeparams dependency ZIP from proxy.golang.org with HTTP/2 stream INTERNAL_ERROR, before analyzer completion; the earlier cleanup classification was incorrect and has been withdrawn. This failure is not linked to15598. Hostinet owns one root-authorized targeted retry after exact-head preflight. The Buildkite51357 audit separately found an executed NodeJS test-zlib-brotli-16GB assertion (0 !== 4) and later checkout403 failures; those observations remain distinct and do not establish one cause. The source ID-map correction remains qualified by its existing package/analyzer proof.",
       "status": "Upstream PR open; qualified correction delivered",
-      "updatedAt": "2026-10-19T22:28:19.323049+00:00",
+      "updatedAt": "2026-10-19T22:49:18.498548+00:00",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Bounded audit of remaining failed public import jobs",
+        "disposition": "Import failures diagnosed; one targeted download retry authorized",
         "sourceHead": "7ff604b88c766e269f5f71541bafeab0fa9428e4",
-        "observedAt": "2026-10-19T21:07:57.057911+00:00",
-        "nextAction": "Inspect only remaining failed jobs for the recorded exact import/build, reusing the sampled checkout403 logs. No new sweep, retry, comment or source change. WorkMap retains the sole periodic watcher; root owns any source correction supported by new evidence.",
+        "observedAt": "2026-10-19T22:50:00Z",
+        "nextAction": "Hostinet owns the one authorized failed generate-job retry after exact-head preflight. Retain the separate NodeJS Brotli assertion and checkout403 findings from the bounded public-job audit; root owns any justified source follow-up. No whole-workflow retry.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/51357#01a155f0-8ffc-4a5f-b9b0-38df79a88b4c",
           "https://github.com/google/gvisor/pull/16011"
@@ -12166,6 +12176,10 @@
         {
           "label": "Current import checkout failure",
           "url": "https://buildkite.com/gvisor/pipeline/builds/51357#01a155f0-8ffc-4a5f-b9b0-38df79a88b4c"
+        },
+        {
+          "label": "Exact dependency-download failure; targeted retry owned",
+          "url": "https://github.com/google/gvisor/actions/runs/39318731787/job/118286913482"
         }
       ],
       "number": 15978

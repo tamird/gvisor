@@ -157,6 +157,16 @@ means **No linked PR found**, not “not imported”: an internal Copybara CL/st
 can exist without a public import PR. Titles, labels and comments never invent
 an import relationship or graph edge.
 
+A diagnosed failing import requires an assigned action until a verified
+correction is delivered or a concrete upstream report reaches an identified
+owner. Reporting transfers the next action; it does not mark the failure repaired.
+Record the failed import head and job, the fix or report link, the responsible
+owner and the remaining action in the existing PR follow-up. An older source
+marker or import-only drift explains applicability; neither closes the defect.
+Retain that follow-up when the source advances, while keeping the old check
+separate from current-head validation. Check undiagnosed failures before
+claiming that all remaining work is externally held.
+
 Original PR checks and import PR checks are separate. The API's check/status
 rollup is **not a test-case result**. Details distinguish success, skipped,
 neutral, pending and failure results and retain available HTTPS check links.
