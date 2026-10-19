@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T17:44:44.809861+00:00",
+    "updatedAt": "2026-10-19T18:08:31.665081+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2165,26 +2165,20 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "The upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
+      "summary": "GitHub now reports a merge conflict at unchanged head 4006dae11b, verified 2026-10-19T18:05:30.863749+00:00. The last published observation was mergeable at 2026-10-19T17:42:59.616657+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nThe upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "disposition": "Published rebase awaiting maintainer review",
-        "owner": "external_sweeps",
-        "nextAction": "Follow maintainer review and current-head checks. Preserve existing reviewer requests; there was no prior approval to invalidate.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/15181",
-          "https://github.com/tamird/gvisor/commit/069085391e6f3c5264f54b4d253356b1efec26be",
-          "https://github.com/tamird/gvisor/commit/d543737e0b8fe765d2401e0a7492f8ef4ebc779a",
-          "https://github.com/tamird/gvisor/commit/4006dae11bc963504eb196aa20ce6c6c87fd33ee"
-        ],
-        "reviewedAt": "2026-10-08T03:51:23.594895+00:00",
+        "owner": "root",
+        "disposition": "New exact-head merge conflict requires source triage",
         "sourceHead": "4006dae11bc963504eb196aa20ce6c6c87fd33ee",
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-16T07:32:28.619478+00:00"
+        "observedAt": "2026-10-19T18:05:30.863749+00:00",
+        "nextAction": "Inspect the current upstream conflict and prepare the smallest faithful amendment in a root-assigned checkout, preserving the reviewed production/test patch and qualified evidence. No maintainer poke or contributor decision is pending for this investigation.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15181"
+        ]
       },
-      "updatedAt": "2026-10-16T07:34:24.921541+00:00",
+      "updatedAt": "2026-10-19T18:08:31.665081+00:00",
       "head": "4006dae11bc963504eb196aa20ce6c6c87fd33ee"
     },
     {
@@ -5253,17 +5247,18 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Incremental input fixes and six public source lanes passed",
-      "summary": "Canonical qualification/current-upstream-refresh is 420fdf6373. The six public source lanes now pass at this exact source: 4,541 configured analysis checks and 11 test owners, with no missing results. Five test results came from the remote cache. All three Gazelle command results are retained in the canonical bundle, including verification of 566 declared Go owners (559 candidates and seven configured dispositions). Automatic verification took 4.166965 seconds after execution; the owner finished reconciliation 68.821687 seconds later, with no collection intervention. Independent composition review also verified all 16 changed files against the disjoint qualified TCP, metrics and TPU sources. This refresh does not replace earlier full-build, runtime or CodeQL evidence.\n\nThe bwrap unset-only amendment is qualified at c126f78893: five owners and attempts, 91 passing cases and one existing TestUserns skip. All 14 numeric-ID cases and 26 integration cases pass. Both present-empty cases fail before the correction; the original eight invalid-ID failures remain retained. The contributor-approved standalone 007c189b39 is delivered as PR #15983, with no contributor hold. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity.\n\nA separate blocked-writer diagnostic at 7c98923402 passes eight exact cases across native Linux and systrap shared-gofer, with two uncached remote attempts. The new case observes the announced writer thread in its controlled blocking path, closes the shared FD-table entry, checks the retained private writer reference, then requires kill/reap, buffered HUP, exact drain and EOF. Automatic verification followed execution by 5.675154 seconds and owner sealing by another 10.457157 seconds, without collection intervention. This controlled result does not reproduce or resolve the original Java hang.\n\nCanonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
-      "updatedAt": "2026-10-19T17:44:44.809861+00:00",
+      "summary": "The separate syscall applicability change at d7ece726b5 is qualified by loading and configured-action comparison against 420fdf6373. Exactly 1,190 known-inapplicable nodes were removed across six native-only Landlock families and the host-network-only TUN family; all 39,840 common nodes remain unchanged apart from source locations. All 134 configured actions and the runner-script bindings for 40 retained representatives remain equivalent. Buildifier passes. No syscall runtime was rerun: the original ARM audit remains incomplete and the six KVM RSEQ abort-case gaps remain explicit. Automatic verification took 10.516463 and 9.664011 seconds; final owner reconciliation took 409.183618 and 363.450165 seconds from execution, with no collection intervention.\n\nCurrent-source broad qualification is running at canonical 420fdf6373: the full Java profile selects 80 runtime owners and 640 shard attempts, plus buildifier, without diagnostics; the existing AMD64 build-all workflow is also running. The already-qualified six source lanes remain PASS. The separate pipe-writer controls at a3ceba454e pass six uncached remote owners and 250 cases, including all eight pipe controls and five configuration subcases, with no skips or gaps. Automatic verification took 6.289121 seconds after execution, followed by 76.246422 seconds for owner reconciliation; collection required no intervention. These controls do not reproduce or resolve the historical Java hang, and no diagnostic Java replay is claimed.\n\nCanonical qualification/current-upstream-refresh is 420fdf6373. The six public source lanes now pass at this exact source: 4,541 configured analysis checks and 11 test owners, with no missing results. Five test results came from the remote cache. All three Gazelle command results are retained in the canonical bundle, including verification of 566 declared Go owners (559 candidates and seven configured dispositions). Automatic verification took 4.166965 seconds after execution; the owner finished reconciliation 68.821687 seconds later, with no collection intervention. Independent composition review also verified all 16 changed files against the disjoint qualified TCP, metrics and TPU sources. This refresh does not replace earlier full-build, runtime or CodeQL evidence.\n\nThe bwrap unset-only amendment is qualified at c126f78893: five owners and attempts, 91 passing cases and one existing TestUserns skip. All 14 numeric-ID cases and 26 integration cases pass. Both present-empty cases fail before the correction; the original eight invalid-ID failures remain retained. The contributor-approved standalone 007c189b39 is delivered as PR #15983, with no contributor hold. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity.\n\nA separate blocked-writer diagnostic at 7c98923402 passes eight exact cases across native Linux and systrap shared-gofer, with two uncached remote attempts. The new case observes the announced writer thread in its controlled blocking path, closes the shared FD-table entry, checks the retained private writer reference, then requires kill/reap, buffered HUP, exact drain and EOF. Automatic verification followed execution by 5.675154 seconds and owner sealing by another 10.457157 seconds, without collection intervention. This controlled result does not reproduce or resolve the original Java hang.\n\nCanonical qualification/current-upstream-refresh advanced to 9f23a47ae1 after exact resolver qualification: six owners and attempts, 84 passing cases, all 51 resolver table cases, and no skips or gaps. This adds to the prior ID-map proof at 92144609a8 and 15-owner proof at bccffbaccb. Earlier broad full-build, runtime and CodeQL evidence retains its own source identity; no broad profile rerun is implied.\n\nA separate diagnostic at 3640d0bfa6 qualifies controlled pipe lifetime on native Linux and systrap shared-gofer: both new EOF/readiness cases and the existing ExitAllThreads case pass, six actual cases across two uncached remote attempts. Verification followed execution by 13.163505 seconds and the first owner seal followed by 5.979695 seconds, with no collection intervention. This is not a Java reproducer or fix; the original intermittent Java hang remains unresolved.",
+      "updatedAt": "2026-10-19T18:08:31.665081+00:00",
       "followup": {
-        "owner": "root / hostinet_delivery",
-        "disposition": "Exact input-fix integration and six public source lanes qualified",
+        "owner": "root / node_tls_sni / hostinet_delivery",
+        "disposition": "Current full Java and AMD64 build-all collecting; applicability graph proof qualified",
         "sourceHead": "420fdf6373de56a4dc1cb0e11ec7f1ff4bcf13fd",
-        "observedAt": "2026-10-19T17:42:48.599628+00:00",
-        "nextAction": "Keep the four published standalone proposals awaiting their already-requested contributor decisions. Earlier broad build, runtime and CodeQL evidence remains bound to its own source; no new scan or full profile run is claimed.",
+        "observedAt": "2026-10-19T18:03:59.595735+00:00",
+        "nextAction": "Consume the sole owners' complete source-bound Java/build results. Root can integrate the independently qualified applicability change; historical ARM and RSEQ coverage gaps remain. Keep the four standalone proposals awaiting their already-requested contributor decisions.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15983",
-          "https://app.buildbuddy.io/invocation/578d8c09-ddc2-432b-bb12-a3647c763354"
+          "https://app.buildbuddy.io/invocation/e60ec501-a2a5-49f7-b654-4e87afe2a85b",
+          "https://github.com/tamird/gvisor/actions/runs/39299248716",
+          "https://app.buildbuddy.io/invocation/e34da4ba-8472-4495-8587-2e672356fb15"
         ]
       },
       "evidence": [
@@ -6356,7 +6351,7 @@
           "url": "https://app.buildbuddy.io/invocation/3af78812-484f-44a3-bb7d-4a5342f11965"
         },
         {
-          "label": "Current source whole-build qualification",
+          "label": "Earlier c948 AMD64 full build PASS",
           "url": "https://github.com/tamird/gvisor/actions/runs/39234886397"
         },
         {
@@ -6364,7 +6359,7 @@
           "url": "https://github.com/tamird/gvisor/commit/402f0b51cdb44bf3c0300b1daf298e7b9197b5e3"
         },
         {
-          "label": "Current-source full build PASS",
+          "label": "Earlier c948 AMD64 full build PASS",
           "url": "https://github.com/tamird/gvisor/actions/runs/39234886397"
         },
         {
@@ -6390,6 +6385,22 @@
         {
           "label": "Controlled native and shared-gofer pipe lifetime: six cases pass",
           "url": "https://app.buildbuddy.io/invocation/c56ae79a-39c4-45fe-94ff-802d4e412b0d"
+        },
+        {
+          "label": "Current420 full Java qualification collecting",
+          "url": "https://app.buildbuddy.io/invocation/e60ec501-a2a5-49f7-b654-4e87afe2a85b"
+        },
+        {
+          "label": "Current420 AMD64 build-all collecting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39299248716"
+        },
+        {
+          "label": "Pipe writer lifetime and diagnostic controls:250 passing cases",
+          "url": "https://app.buildbuddy.io/invocation/e34da4ba-8472-4495-8587-2e672356fb15"
+        },
+        {
+          "label": "Syscall applicability graph preservation and buildifier PASS",
+          "url": "https://app.buildbuddy.io/invocation/e60dd7fe-8c45-4928-887f-26d9ea52664c"
         }
       ]
     },
@@ -9851,18 +9862,15 @@
       "url": "https://github.com/google/gvisor/pull/15932",
       "group": "runtime",
       "status": "open",
-      "summary": "Move page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. The contributor-approved change is published as #15932 with GitHub Linux source permalinks.",
-      "updatedAt": "2026-10-17T20:19:52.132311+00:00",
+      "summary": "GitHub now reports a merge conflict at unchanged head 4c5874f87a, verified 2026-10-19T18:06:10.488155+00:00. The last published observation was mergeable at 2026-10-19T17:43:44.536727+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nMove page-alignment validation from initialization to mmap and reject partial or nonzero-offset mappings. Both new syscall cases pass on Linux and fail on the two gVisor variants before the production fix. Corrected source de22cf145 passes five complete native/gVisor KCOV suites and both owning analyzer checks, with no failures, skips or missing results. The contributor-approved change is published as #15932 with GitHub Linux source permalinks.",
+      "updatedAt": "2026-10-19T18:08:31.665081+00:00",
       "followup": {
-        "owner": "work_map_delivery",
-        "disposition": "Delivered as #15932",
+        "owner": "root",
+        "disposition": "New exact-head merge conflict requires source triage",
         "sourceHead": "4c5874f87a9f691043036a0d56c4e7bd99cebfde",
-        "observedAt": "2026-10-17T20:19:52.132311+00:00",
-        "nextAction": "Follow current-head checks, review and import status on #15932.",
+        "observedAt": "2026-10-19T18:06:10.488155+00:00",
+        "nextAction": "Inspect the current upstream conflict and prepare the smallest faithful amendment in a root-assigned checkout, preserving the reviewed production/test patch and qualified evidence. No maintainer poke or contributor decision is pending for this investigation.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e1aa51f2562cd44cee1b860d6f1488ee491fb525",
-          "https://github.com/tamird/gvisor/actions/runs/39064221095",
-          "https://github.com/tamird/gvisor/actions/runs/39064225594",
           "https://github.com/google/gvisor/pull/15932"
         ]
       },
