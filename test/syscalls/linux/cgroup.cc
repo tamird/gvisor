@@ -30,6 +30,7 @@
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <list>
 #include <memory>
 #include <optional>
@@ -350,8 +351,18 @@ TEST(Cgroup, MigrateToSubcontainerThread) {
 }
 
 TEST(Cgroup, MigrateInvalidPID) {
-  SKIP_IF(!CgroupsAvailable());
-  Cgroup c = Cgroup::RootCgroup("/sys/fs/cgroup/cpuacct");
+  const char* cgroup_v2 = std::getenv("CGROUPV2");
+  // Native execution requires the existing disposable cgroup-v1 fixture.
+  SKIP_IF(!IsRunningOnGvisor() &&
+          (cgroup_v2 == nullptr || absl::string_view(cgroup_v2) != "false"));
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SYS_ADMIN)));
+  SKIP_IF(!IsRunningOnGvisor() &&
+          !ASSERT_NO_ERRNO_AND_VALUE(InInitialUserNamespace()));
+  // A controller-free hierarchy also exercises the native kernel without
+  // changing the test process's resource-controller memberships.
+  Mounter m(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
+  Cgroup c = ASSERT_NO_ERRNO_AND_VALUE(
+      m.MountCgroupfs(absl::StrCat("none,name=pid_range_", getpid())));
 
   EXPECT_THAT(c.WriteControlFile("cgroup.procs", "-1"), PosixErrorIs(EINVAL));
   EXPECT_THAT(c.WriteControlFile("cgroup.procs", "not-a-number"),
@@ -360,6 +371,28 @@ TEST(Cgroup, MigrateInvalidPID) {
   EXPECT_THAT(c.WriteControlFile("tasks", "-1"), PosixErrorIs(EINVAL));
   EXPECT_THAT(c.WriteControlFile("tasks", "not-a-number"),
               PosixErrorIs(EINVAL));
+
+  Cgroup child = ASSERT_NO_ERRNO_AND_VALUE(c.CreateChild("child"));
+  auto restore = Cleanup([&] {
+    EXPECT_NO_ERRNO(c.WriteIntegerControlFile("cgroup.procs", 0));
+    EXPECT_NO_ERRNO(child.Delete());
+  });
+  for (absl::string_view control : {"cgroup.procs", "tasks"}) {
+    const int64_t id = control == "tasks" ? syscall(SYS_gettid) : getpid();
+    // The latter two values alias the calling task if narrowed to pid_t before
+    // validation. A rejected write must not migrate it into the child.
+    for (int64_t invalid : {int64_t{INT_MAX} + 1, (int64_t{1} << 32) + id,
+                            id - (int64_t{1} << 32)}) {
+      SCOPED_TRACE(absl::StrCat(control, ": ", invalid));
+      ASSERT_NO_ERRNO(c.WriteIntegerControlFile("cgroup.procs", 0));
+      EXPECT_THAT(child.WriteIntegerControlFile(control, invalid),
+                  PosixErrorIs(EINVAL));
+      EXPECT_NO_ERRNO(c.ContainsCallingProcess());
+      EXPECT_NO_ERRNO(c.ContainsCallingThread());
+      EXPECT_TRUE(ASSERT_NO_ERRNO_AND_VALUE(child.Procs()).empty());
+      EXPECT_TRUE(ASSERT_NO_ERRNO_AND_VALUE(child.Tasks()).empty());
+    }
+  }
 }
 
 // Regression test for b/222278194.
