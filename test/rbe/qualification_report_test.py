@@ -24,6 +24,7 @@ import itertools
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -146,10 +147,19 @@ class QualificationReportTest(unittest.TestCase):
                 invocation = self.jtreg_fixture(output, zipped=zipped)
                 # A result can precede its configured-parent event in BEP.
                 events = self.events(invocation)
+                result = next(event["testResult"] for event in events if "testResult" in event)
+                result["testActionOutput"].append({
+                    "name": "test.outputs/boot.log", "uri": (invocation / "unmaterialized-debug.log").as_uri()})
+                diagnostic = invocation / "batch-0-sentry-stacks.log"
+                diagnostic.write_text("goroutine 1 [running]:\n")
+                result["testActionOutput"].append({
+                    "name": "test.outputs/" + diagnostic.name, "uri": diagnostic.as_uri()})
                 self.write_events(invocation, events[1:] + events[:1])
                 # The configured contract retains passing artifacts without
                 # relying on the caller to request all undeclared outputs.
-                self.assertEqual(self.capture(invocation)["errors"], [])
+                captured = self.capture(invocation)
+                self.assertEqual(captured["errors"], [])
+                self.assertIn("test.outputs/" + diagnostic.name, [item["name"] for item in captured["reports"]])
                 value = self.verdict(invocation, analysis=self.analysis(invocation))
                 self.assertEqual(value["status"], expected, value)
                 if expected == "PASS":
@@ -613,6 +623,7 @@ class QualificationReportTest(unittest.TestCase):
         value = report.preflight(events, 1, "test")
         self.assertEqual((value["status"], value["native_exit"]), ("PASS", 1))
         self.assertEqual(len(value["expected"]), 2)
+        self.assertEqual(value["test_output_options"], [])
         self.assertEqual(report.preflight(events, 1, "build")["status"], "INCOMPLETE")
         self.assertEqual(report.preflight(events, 4, "test")["status"], "INCOMPLETE")
 
@@ -1180,6 +1191,12 @@ signal.pause()
                 runner_temp = workspace / "temporary"
                 runner_temp.mkdir()
                 started = workspace / "work-started"
+                analysis = [json.loads(line) for line in (FIXTURES / "analysis-no-build/events.jsonl").read_text().splitlines()]
+                configured = next(event for event in analysis if "configured" in event)
+                configured["configured"].setdefault("tag", []).append("jtreg-results")
+                tagged = configured["id"]["targetConfigured"]["label"]
+                analysis_path = workspace / "analysis.jsonl"
+                analysis_path.write_text("".join(json.dumps(event) + "\n" for event in analysis))
                 source = (FIXTURES / "pass/final-head.txt").read_text().strip()
                 environment = {
                     **os.environ,
@@ -1199,7 +1216,7 @@ signal.pause()
                     "QUALIFICATION_WORK_DEADLINE": str(time.monotonic() + (5 if phase == "execution" else -1)),
                     "TEST_HEAD": source,
                     "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
-                    "TEST_ANALYSIS": str(FIXTURES / "analysis-no-build/events.jsonl"),
+                    "TEST_ANALYSIS": str(analysis_path),
                     "TEST_WORK_STARTED": str(started),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
@@ -1215,6 +1232,18 @@ signal.pause()
                     for command in commands:
                         for option in bazel_options:
                             self.assertIn(option, command)
+                    self.assertFalse(any(option.startswith("--remote_download_regex=") for option in commands[0]))
+                    self.assertIn("--nozip_undeclared_test_outputs", commands[1])
+                    [pattern] = [option.removeprefix("--remote_download_regex=") for option in commands[1]
+                                 if option.startswith("--remote_download_regex=")]
+                    path = "bazel-out/config/testlogs/" + tagged.removeprefix("//").replace(":", "/")
+                    self.assertRegex(path + "/run_1_of_2/test.outputs/batch-0.log", pattern)
+                    self.assertRegex(path + "/test.outputs/batch-0-sentry-stacks.log", pattern)
+                    self.assertIsNone(re.search(pattern, path + "/test.outputs/boot.log"))
+                    self.assertIsNone(re.search(pattern, path + "_other/test.outputs/batch-0.log"))
+                    [arguments] = (runner_temp / "qualification").glob("invocation-*/arguments.txt")
+                    for option in ("--nozip_undeclared_test_outputs", "--remote_download_regex=" + pattern):
+                        self.assertIn(option, arguments.read_text().splitlines())
                 artifact = runner_temp / "qualification.tar.gz"
                 self.assertTrue(artifact.is_file(), result.stdout + result.stderr)
                 value = report.read_json(runner_temp / "qualification/verdict.json")
