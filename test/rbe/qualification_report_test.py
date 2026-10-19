@@ -188,6 +188,15 @@ class QualificationReportTest(unittest.TestCase):
         self.assertIsNone(value["execution_to_verdict_seconds"])
         self.assertTrue(any("execution_finished_at" in error for error in value["errors"]))
 
+    @staticmethod
+    def jtreg_output(name: str, result: str | None, stdout: str = "") -> str:
+        output = ("--------------------------------------------------\n"
+                  f"TEST: {name}\nTEST JDK: /usr/lib/jvm/java-21-openjdk-amd64\n"
+                  f"\nACTION: main -- Passed.\nSTDOUT:\n{stdout}\n")
+        if result is not None:
+            output += f"TEST RESULT: {result}\n--------------------------------------------------\n"
+        return output
+
     def jtreg_fixture(self, output: str, *, zipped: bool, names: str = "First.java,Second.java") -> Path:
         invocation = self.fixture()
         events = self.events(invocation)
@@ -213,15 +222,17 @@ class QualificationReportTest(unittest.TestCase):
 
     def test_jtreg_results_override_successful_wrapper(self) -> None:
         scenarios = (
-            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: Second.java\nTEST RESULT: Passed.\n", "PASS"),
-            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: Second.java\nTEST RESULT: Failed. timeout\n", "FAIL"),
-            ("TEST: First.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
-            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: Second.java\n", "INCOMPLETE"),
+            (self.jtreg_output("First.java", "Passed.") + self.jtreg_output("Second.java", "Passed."), "PASS"),
+            (self.jtreg_output("First.java", "Passed.") + self.jtreg_output("Second.java", "Failed. timeout"), "FAIL"),
+            (self.jtreg_output("First.java", "Passed."), "INCOMPLETE"),
+            (self.jtreg_output("First.java", "Passed.") + self.jtreg_output("Second.java", None), "INCOMPLETE"),
             ("", "INCOMPLETE"),
-            ("TEST: First.java\nTEST RESULT: Passed.\nTEST: First.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
-            ("TEST: Unselected.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
-            ("TEST: First.java\nTEST RESULT: Failed.\nTEST: First.java\nTEST RESULT: Passed.\n", "FAIL"),
-            ("TEST: First.java\nTEST RESULT: Error.\nTEST: Unselected.java\nTEST RESULT: Passed.\n", "FAIL"),
+            (self.jtreg_output("First.java", "Passed.") + self.jtreg_output("First.java", "Passed."), "INCOMPLETE"),
+            (self.jtreg_output("Unselected.java", "Passed."), "INCOMPLETE"),
+            (self.jtreg_output("First.java", "Failed.") + self.jtreg_output("First.java", "Passed."), "FAIL"),
+            (self.jtreg_output("First.java", "Error.") + self.jtreg_output("Unselected.java", "Passed."), "FAIL"),
+            ("TEST: First.java\nTEST RESULT: Passed.\n", "INCOMPLETE"),
+            (self.jtreg_output("First.java", "Passed.").removesuffix("--------------------------------------------------\n"), "INCOMPLETE"),
         )
         for zipped, (output, expected) in itertools.product((False, True), scenarios):
             with self.subTest(zipped=zipped, output=output):
@@ -247,10 +258,40 @@ class QualificationReportTest(unittest.TestCase):
                     self.assertEqual(value["executed"][0]["jtreg"]["passed"], 2)
                 shutil.rmtree(invocation)
 
+    def test_jtreg_section_stdout_is_not_result_framing(self) -> None:
+        # Actual section output from DefaultProvider.java and the RMI tests
+        # contains TEST: lines. A result-like stdout line is also ordinary text.
+        stdout = ("TEST: Default provider with constructor\n"
+                  "TEST: SHA1PRNG supported on all platforms by SUN provider\n"
+                  "TEST: rmi\nTEST RESULT: Failed. printed by the test\n")
+        for zipped in (False, True):
+            with self.subTest(zipped=zipped):
+                invocation = self.jtreg_fixture(
+                    self.jtreg_output("First.java", "Passed.", stdout)
+                    + self.jtreg_output("Second.java", "Passed."), zipped=zipped)
+                self.capture(invocation)
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["executed"][0]["jtreg"]["results"],
+                                 {"First.java": "Passed.", "Second.java": "Passed."})
+                shutil.rmtree(invocation)
+
+    def test_jtreg_skipped_result_is_not_a_passed_body(self) -> None:
+        result = "Passed. Skipped: jtreg.SkippedException: Could not find NSS"
+        invocation = self.jtreg_fixture(self.jtreg_output("First.java", result)
+                                        + self.jtreg_output("Second.java", "Passed."), zipped=False)
+        self.capture(invocation)
+        value = self.verdict(invocation, analysis=self.analysis(invocation))
+        self.assertEqual(value["status"], "PASS", value)
+        jtreg = value["executed"][0]["jtreg"]
+        self.assertEqual(jtreg["passed"], 1)
+        self.assertEqual(jtreg["skipped"], {"First.java": result})
+        self.assertTrue(any(item["name"] == "First.java" and item["reason"] == result for item in value["skips"]))
+
     def test_jtreg_requires_matching_retained_batches(self) -> None:
         for missing in (True, False):
             with self.subTest(missing=missing):
-                invocation = self.jtreg_fixture("TEST: First.java\nTEST RESULT: Passed.\n", zipped=False)
+                invocation = self.jtreg_fixture(self.jtreg_output("First.java", "Passed."), zipped=False)
                 events = self.events(invocation)
                 result = next(event["testResult"] for event in events if "testResult" in event)
                 if missing:
@@ -268,7 +309,7 @@ class QualificationReportTest(unittest.TestCase):
     def test_jtreg_and_xml_failures_survive_other_report_errors(self) -> None:
         for malformed_xml in (False, True):
             with self.subTest(malformed_xml=malformed_xml):
-                invocation = self.jtreg_fixture("TEST: First.java\nTEST RESULT: Failed.\n", zipped=False)
+                invocation = self.jtreg_fixture(self.jtreg_output("First.java", "Failed."), zipped=False)
                 if malformed_xml:
                     (invocation / "test.xml").write_text("<truncated")
                 else:

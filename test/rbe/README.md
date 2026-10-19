@@ -1759,6 +1759,14 @@ partition-only results do not qualify a complete language lane. These published
 images and public jobs are AMD64-only; selecting an ARM64 language lane fails
 explicitly. Passing a bounded cohort does not qualify all language partitions.
 
+Java discovery and execution both apply jtreg's existing `-tl:200` policy:
+tests declaring a timeout of zero or over 200 seconds are excluded. This is a
+coverage limit, not evidence that those test bodies passed. Qualification
+reconciliation retains the unfiltered inventory and exact excluded names when
+comparing an earlier unfiltered discovery with this policy. The reporter reads
+jtreg's framed results separately from arbitrary test stdout and records
+`Passed. Skipped:` results as skips, including their original reasons.
+
 The rootless Podman lane runs the public smoke workload with DirectFS disabled
 and enabled:
 
