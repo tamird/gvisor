@@ -46,7 +46,10 @@ nogo_test(
         visibility = ["//visibility:private"],
         deps = [":sanity"],
     )
-    for arch in ["amd64", "arm64"]
+    for arch in [
+        "amd64",
+        "arm64",
+    ]
 ]
 
 sh_test(
