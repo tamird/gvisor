@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T15:26:56.666504+00:00",
+    "updatedAt": "2026-10-19T15:48:59.197058+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5259,7 +5259,7 @@
         "owner": "root",
         "disposition": "Accepted CodeQL proof; Java nonreproduction sealed; source fixes and ARM applicability validating",
         "sourceHead": "e34fcbf68e10e7b0dcd241317c02073d88ae9331",
-        "observedAt": "2026-10-19T15:25:00.394117+00:00",
+        "observedAt": "2026-10-19T15:46:31.368784+00:00",
         "nextAction": "Keep the c948 whole-build and e34 CodeQL proof source-bound. The single Java replay is sealed without reproduction; original hangs remain unresolved and no retry is authorized. Node owns cgroup PID-range validation, root owns exec-ID/unet validation and the native ARM PAC gate, and Hostinet owns the remaining ARM applicability audit.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/2cf878bd-0337-47c8-84c4-c5118a570dfb"
@@ -10033,7 +10033,7 @@
       "status": "merged",
       "summary": "A maintainer merged this PR at 15:11:21 UTC with source head 715688f5dd and merge commit cf236b2a12fcdbbac99ed82267a55053d7ae3ad1. The related go-containerregistry upgrade #13851 also merged at 15:17:24 UTC, at head bf1f85f2e2 and merge commit 660043c7fe9940ea9de6dba62b22e5e01541dd06. No author action remains.\n\nThe delivered CI explanation remains source-bound: Linux jobs reported missing credentials, and Windows timed out in the existing file-cache fixture covered by separate PR #13781. The real-registry regression failed before this correction and the corrected race suite passed 79 cases. These results do not turn the historical public CI failures into passes or establish that the dependency upgrade alone satisfied the regression.",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13848",
-      "updatedAt": "2026-10-19T15:26:56.666504+00:00",
+      "updatedAt": "2026-10-19T15:38:41.299972+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Merged by maintainer; delivery complete",
@@ -11299,6 +11299,41 @@
           "url": "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2"
         }
       ]
+    },
+    {
+      "id": "pr:15977",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "exec-id-bounds",
+      "head": "e49c983b9e9503fb3cd1c13d1c2df6ff192e5def",
+      "title": "Reject out-of-range exec user and group IDs",
+      "url": "https://github.com/google/gvisor/pull/15977",
+      "group": "runtime",
+      "status": "Upstream PR open; qualified refinement delivered",
+      "summary": "The approved precise-error refinement is delivered as PR #15977 at e49c983b9e. Validation at its source-equivalent integration fdd7804827 passes 134 cases across three owners, with one existing KVM skip and no missing evidence. The affected user and CLI cases verify syntax and range errors. Automatic verification followed test completion by 7.555567 seconds; the final owner seal took 36.873932 seconds. The earlier failing-before evidence remains separate. Public CI and maintainer review are pending.",
+      "updatedAt": "2026-10-19T15:48:59.197058+00:00",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "Approved refinement delivered; maintainer review pending",
+        "sourceHead": "e49c983b9e9503fb3cd1c13d1c2df6ff192e5def",
+        "observedAt": "2026-10-19T15:48:58.924711+00:00",
+        "nextAction": "Follow the current PR review and public checks through the existing sweep. No contributor approval or additional reply is pending.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15977",
+          "https://app.buildbuddy.io/invocation/025597f7-3570-4b00-ad29-a7ff34b15adb"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Earlier full package and analyzer validation",
+          "url": "https://app.buildbuddy.io/invocation/8cb3c12b-d777-440c-a1f9-fbf65a62b45e"
+        },
+        {
+          "label": "Precise-error validation: 134 PASS, one existing skip",
+          "url": "https://app.buildbuddy.io/invocation/025597f7-3570-4b00-ad29-a7ff34b15adb"
+        }
+      ],
+      "number": 15977
     }
   ],
   "edges": [
