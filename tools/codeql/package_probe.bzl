@@ -14,6 +14,7 @@
 
 """A bounded extraction experiment over declared rules_go package records."""
 
+load("@bazel_skylib//lib:structs.bzl", "structs")
 load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "go_context")
 load("@io_bazel_rules_go//go/tools/gopackagesdriver:aspect.bzl", "GoPkgInfo", "go_pkg_info_aspect")
 load("//tools/bazeldefs:go.bzl", "go_rule")
@@ -30,6 +31,8 @@ def _compilation_info_impl(target, ctx):
     records = []
     for archive in archives:
         source = archive.source
+        mode = structs.to_dict(source.mode)
+        mode["pgoprofile"] = mode["pgoprofile"].path if mode["pgoprofile"] != None else None
         records.append({
             "label": str(source.label),
             "name": source.name,
@@ -38,7 +41,7 @@ def _compilation_info_impl(target, ctx):
             "pathtype": source.pathtype,
             "testfilter": source.testfilter,
             "is_main": source.is_main,
-            "mode": {key: getattr(source.mode, key) for key in ["goos", "goarch", "pure", "static", "race", "msan", "asan", "tags"]},
+            "mode": mode,
             "srcs": [file.path for file in source.srcs],
             "embedsrcs": [file.path for file in source.embedsrcs],
             "deps": [{"label": str(dep.data.label), "importpath": dep.data.importpath} for dep in source.deps],
