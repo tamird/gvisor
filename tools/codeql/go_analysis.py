@@ -76,15 +76,28 @@ def json_records(path: Path) -> list[Package]:
 def selected_packages(paths: list[str]) -> dict[str, Package]:
     """Require one unambiguous production package record for each identity."""
     selected: dict[str, Package] = {}
-    for name in paths:
+    for name in sorted(paths):
         for record in json_records(Path(name)):
             if record["PkgPath"] == "testmain":
                 raise ValueError(f"Test package selected for production analysis: {record['ID']}")
             identity = record["ID"]
-            if identity in selected and selected[identity] != record:
-                raise ValueError(f"Conflicting configured package records: {identity}")
             if not record.get("Dir"):
                 raise ValueError(f"Missing declared package directory: {identity}")
+            if (previous := selected.get(identity)) is not None:
+                # This source-loading mode does not consume export archives.
+                # Retain the first complete record, but compare every other field.
+                previous_fields = {key: value for key, value in previous.items() if key != "ExportFile"}
+                current_fields = {key: value for key, value in record.items() if key != "ExportFile"}
+                if previous_fields != current_fields:
+                    differences = []
+                    for field in sorted(previous_fields.keys() | current_fields.keys()):
+                        if field in previous_fields and field in current_fields and previous_fields[field] == current_fields[field]:
+                            continue
+                        first = repr(previous_fields[field]) if field in previous_fields else "<missing>"
+                        current = repr(current_fields[field]) if field in current_fields else "<missing>"
+                        differences.append(f"{field}: {first} != {current}")
+                    raise ValueError(f"Conflicting configured package records: {identity}\n" + "\n".join(differences))
+                continue
             selected[identity] = record
     return selected
 
