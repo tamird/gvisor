@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+from http.client import RemoteDisconnected
 import io
 import itertools
 import json
@@ -2014,11 +2015,15 @@ signal.pause()
                 # coverage. Preserve that producer result independently.
                 metadata["success"] = status != "FAIL"
                 pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
-                with mock.patch.object(report.time, "sleep") as sleep:
+                with mock.patch.object(report.time, "sleep"):
                     value = self.native_collect(metadata, [self.metadata_response(pending),
+                                                           TimeoutError("timed out"),
+                                                           ConnectionResetError("connection reset"),
+                                                           RemoteDisconnected("connection closed"),
                                                            self.metadata_response(metadata),
                                                            self.native_response(artifact.read_bytes())])
-                sleep.assert_called_once()
+                self.assertEqual([retry["error"] for retry in value["observation_retries"]],
+                                 ["TimeoutError", "ConnectionResetError", "RemoteDisconnected"])
                 self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
                                  (status, status, "COMPLETE"))
                 for field in ("case_counts", "failures", "missing", "skips", "zero_case_owners",
@@ -2087,18 +2092,22 @@ signal.pause()
         artifact, producer = self.artifact(self.fixture(), native=True)
         metadata = self.native_metadata(artifact, producer)
         pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
-        clock = [0]
+        for timeout in (False, True):
+            with self.subTest(timeout=timeout):
+                clock = [0]
 
-        def expire(_: float) -> None:
-            clock[0] = 31
+                def expire(_: float) -> None:
+                    clock[0] = 31
 
-        with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
-             mock.patch.object(report.time, "sleep", side_effect=expire):
-            value = self.native_collect(metadata, [self.metadata_response(pending)])
-        self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
-        self.assertIn("deadline", value["collection_error"])
-        self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
-        self.assertNotIn("consumer_verified_at", value)
+                responses = [TimeoutError("timed out")] if timeout else [self.metadata_response(pending)]
+                with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
+                     mock.patch.object(report.time, "sleep", side_effect=expire):
+                    value = self.native_collect(metadata, responses)
+                self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
+                self.assertIn("deadline", value["collection_error"])
+                if not timeout:
+                    self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
+                self.assertNotIn("consumer_verified_at", value)
 
     def test_native_collection_deadline_covers_verification(self) -> None:
         original_open = Path.open

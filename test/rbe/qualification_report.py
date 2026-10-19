@@ -1367,6 +1367,7 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
     if output.resolve() in (artifact.resolve(), partial.resolve()):
         raise ValueError("Artifact, partial download and receipt paths must differ")
     execution: dict[str, object] = {"invocationId": invocation_id}
+    observation_retries: list[dict[str, str]] = []
     result: dict[str, object]
     deadline = time.monotonic() + timeout_seconds
 
@@ -1402,18 +1403,29 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         if not api_key or any(not 33 <= ord(character) <= 126 for character in api_key):
             raise ValueError("BuildBuddy API key file must contain one nonempty ASCII token")
         while True:
-            with request("GetInvocation", {"selector": {"invocation_id": invocation_id},
-                                           "include_artifacts": True}) as response:
-                raw = bytearray()
-                while True:
-                    remaining()
-                    chunk = response.read1(64 * 1024)
-                    remaining()
-                    if not chunk:
-                        break
-                    raw.extend(chunk)
-                    if len(raw) > 4 * 1024 * 1024:
-                        raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
+            try:
+                with request("GetInvocation", {"selector": {"invocation_id": invocation_id},
+                                               "include_artifacts": True}) as response:
+                    raw = bytearray()
+                    while True:
+                        remaining()
+                        chunk = response.read1(64 * 1024)
+                        remaining()
+                        if not chunk:
+                            break
+                        raw.extend(chunk)
+                        if len(raw) > 4 * 1024 * 1024:
+                            raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
+            except (TimeoutError, ConnectionResetError) as error:
+                # A failed status read says nothing about the running build.
+                # Retry that read within the original collection deadline.
+                remaining()
+                observation_retries.append({
+                    "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "error": type(error).__name__,
+                })
+                time.sleep(min(5, remaining()))
+                continue
             match sequence(mapping(json.loads(raw)).get("invocation", [])):
                 case []:
                     invocation = {}
@@ -1487,6 +1499,7 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         result = {"schema_version": 1, "status": "FAIL" if failed else "INCOMPLETE",
                   "collection_status": "ERROR", "collection_error": str(error)}
     result["native_invocation"] = execution
+    result["observation_retries"] = observation_retries
     result["submitted_source"] = expected_source
     result["collection_finished_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     write_json(output, result)
