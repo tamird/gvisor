@@ -161,8 +161,8 @@ class Cgroup2Test : public ::testing::Test {
   }
 
   void TearDown() override {
-    if (!original_cgroup_procs_.empty()) {
-      EXPECT_NO_ERRNO(RestoreOriginalCgroup());
+    if (root_) {
+      root_->Enter(getpid()).IgnoreError();
     }
     if (c_) {
       CleanCgroupDirs(c_->Path());
@@ -173,17 +173,6 @@ class Cgroup2Test : public ::testing::Test {
     if (m_) return;
     m_.emplace(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
     root_.emplace(ASSERT_NO_ERRNO_AND_VALUE(m_->MountCgroup2fs()));
-
-    // Both this mount and /proc/self/cgroup are relative to our cgroup
-    // namespace. Its root may have controllers enabled and cannot accept
-    // processes, so cleanup must return to the original cgroup instead.
-    const auto memberships =
-        ASSERT_NO_ERRNO_AND_VALUE(ProcPIDCgroupEntries(getpid()));
-    const auto membership = memberships.find("");
-    ASSERT_NE(membership, memberships.end());
-    ASSERT_EQ(membership->second.hierarchy, 0);
-    original_cgroup_procs_ =
-        root_->Relpath(JoinPath(membership->second.path, "cgroup.procs"));
 
     auto controllers = root_->ReadControlFile("cgroup.controllers");
     if (controllers.ok()) {
@@ -206,10 +195,6 @@ class Cgroup2Test : public ::testing::Test {
   const Cgroup& root() {
     Init();
     return *root_;
-  }
-
-  PosixError RestoreOriginalCgroup() {
-    return SetContents(original_cgroup_procs_, absl::StrCat(getpid()));
   }
 
   // WaitForFrozen blocks until cg's cgroup.events reports "frozen <want>"
@@ -366,7 +351,6 @@ class Cgroup2Test : public ::testing::Test {
   std::optional<Mounter> m_;
   std::optional<Cgroup> root_;
   std::optional<Cgroup> c_;
-  std::string original_cgroup_procs_;
 };
 
 TEST(Cgroup2, SysFsCgroupAlreadyMounted) {
@@ -436,12 +420,12 @@ TEST_F(Cgroup2Test, DestroyConstraints) {
   EXPECT_THAT(parent.Delete(), PosixErrorIs(EBUSY));
 
   // Cannot destroy a cgroup node with a live attached process.
-  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(RestoreOriginalCgroup()); });
+  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(root().Enter(getpid())); });
   ASSERT_NO_ERRNO(child.Enter(getpid()));
   EXPECT_THAT(child.Delete(), PosixErrorIs(EBUSY));
 
   // Destroy successfully once leaf node is empty.
-  ASSERT_NO_ERRNO(RestoreOriginalCgroup());
+  ASSERT_NO_ERRNO(root().Enter(getpid()));
   clean.Release();
   EXPECT_NO_ERRNO(child.Delete());
   EXPECT_NO_ERRNO(parent.Delete());
@@ -1177,7 +1161,7 @@ TEST_F(Cgroup2Test, NoInternalProcesses) {
   // as long as no controllers are enabled in its subtree_control.
   ASSERT_THAT(parent.ReadControlFile("cgroup.subtree_control"),
               IsPosixErrorOkAndHolds(Eq("")));
-  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(RestoreOriginalCgroup()); });
+  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(root().Enter(getpid())); });
   ASSERT_NO_ERRNO(parent.Enter(getpid()));
 
   // Attempting to subsequently enable any resource controllers while
@@ -1219,7 +1203,7 @@ TEST_F(Cgroup2Test, PIDZeroMovesSelf) {
   Cgroup child = ASSERT_NO_ERRNO_AND_VALUE(c().CreateChild("child"));
   ExpectDefaultControlFiles(child);
 
-  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(RestoreOriginalCgroup()); });
+  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(root().Enter(getpid())); });
   ASSERT_NO_ERRNO(child.WriteIntegerControlFile("cgroup.procs", 0));
 
   auto procs = ASSERT_NO_ERRNO_AND_VALUE(child.Procs());
@@ -1236,7 +1220,7 @@ TEST_F(Cgroup2Test, TaskMigration) {
   Cgroup dst = ASSERT_NO_ERRNO_AND_VALUE(c().CreateChild("dst"));
   ExpectDefaultControlFiles(dst);
 
-  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(RestoreOriginalCgroup()); });
+  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(root().Enter(getpid())); });
   ASSERT_NO_ERRNO(src.Enter(getpid()));
   EXPECT_THAT(src.ReadControlFile("cgroup.events"),
               IsPosixErrorOkAndHolds(HasSubstr("populated 1")));
@@ -1597,7 +1581,7 @@ TEST_F(Cgroup2Test, CgroupDotEventsPerFDPollReadiness) {
   ExpectPollEvent(event_fd2);
 
   // Enter the cgroup.
-  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(RestoreOriginalCgroup()); });
+  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(root().Enter(getpid())); });
   ASSERT_NO_ERRNO(child.Enter(getpid()));
   EXPECT_THAT(child.ReadControlFile("cgroup.events"),
               IsPosixErrorOkAndHolds(HasSubstr("populated 1")));
@@ -1684,7 +1668,7 @@ TEST_F(Cgroup2Test, PermChecksUseOpenTimeCreds) {
   Cgroup parent = ASSERT_NO_ERRNO_AND_VALUE(c().CreateChild("parent"));
   Cgroup child = ASSERT_NO_ERRNO_AND_VALUE(parent.CreateChild("child"));
 
-  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(RestoreOriginalCgroup()); });
+  auto clean = Cleanup([&] { ASSERT_NO_ERRNO(root().Enter(getpid())); });
   ASSERT_NO_ERRNO(parent.Enter(getpid()));
 
   // Grant unprivileged user read/write permissions to cgroup.procs.
@@ -1919,20 +1903,9 @@ TEST_F(Cgroup2Test, FrozenProcessWakesAndDiesOnDefaultFatalSignal) {
   FileDescriptor go_r(go_fds[0]);
   FileDescriptor go_w(go_fds[1]);
 
-  int ready_fds[2];
-  ASSERT_THAT(pipe(ready_fds), SyscallSucceeds());
-  FileDescriptor ready_r(ready_fds[0]);
-  FileDescriptor ready_w(ready_fds[1]);
-
   pid_t pid = fork();
   if (pid == 0) {
     go_w.reset();
-    ready_r.reset();
-    char ready_token = 1;
-    if (write(ready_w.get(), &ready_token, 1) != 1) {
-      _exit(1);
-    }
-    ready_w.reset();
     // Block indefinitely with SIGTERM at its default disposition (no
     // handler installed); the parent never writes and holds the write end
     // open.
@@ -1944,17 +1917,10 @@ TEST_F(Cgroup2Test, FrozenProcessWakesAndDiesOnDefaultFatalSignal) {
   }
   ASSERT_GT(pid, 0);
   go_r.reset();
-  ready_w.reset();
   auto cleanup = Cleanup([&] {
     kill(pid, SIGKILL);
     waitpid(pid, nullptr, 0);
   });
-
-  // Let fork restore the child's signal mask before freezing it. Otherwise
-  // libc's temporary blocked mask can prevent the pending SIGTERM from firing.
-  char ready_token;
-  ASSERT_THAT(read(ready_r.get(), &ready_token, 1),
-              SyscallSucceedsWithValue(1));
 
   ASSERT_NO_ERRNO(child.Enter(pid));
 
@@ -2206,13 +2172,8 @@ TEST_F(Cgroup2Test, FrozenProcessDefersCoreDumpSignalUntilThaw) {
   // SIGQUIT: frozen, must not die until thaw.
   {
     Cgroup child = ASSERT_NO_ERRNO_AND_VALUE(c().CreateChild("quit"));
-    int ready_fds[2];
-    ASSERT_THAT(pipe(ready_fds), SyscallSucceeds());
-    FileDescriptor ready_r(ready_fds[0]);
-    FileDescriptor ready_w(ready_fds[1]);
     pid_t pid = fork();
     if (pid == 0) {
-      ready_r.reset();
       // Explicitly force SIG_DFL rather than relying on inherited
       // disposition: fork() preserves whatever disposition (SIG_DFL,
       // SIG_IGN, or a handler) the parent currently has for SIGQUIT, so if
@@ -2225,26 +2186,15 @@ TEST_F(Cgroup2Test, FrozenProcessDefersCoreDumpSignalUntilThaw) {
       if (sigaction(SIGQUIT, &sa, nullptr) != 0) {
         _exit(1);
       }
-      char ready_token = 1;
-      if (write(ready_w.get(), &ready_token, 1) != 1) {
-        _exit(1);
-      }
-      ready_w.reset();
       while (true) {
         pause();
       }
     }
     ASSERT_GT(pid, 0);
-    ready_w.reset();
     auto cleanup = Cleanup([&] {
       kill(pid, SIGKILL);
       waitpid(pid, nullptr, 0);
     });
-
-    // Wait for fork's signal-mask restoration and child setup before freezing.
-    char ready_token;
-    ASSERT_THAT(read(ready_r.get(), &ready_token, 1),
-                SyscallSucceedsWithValue(1));
 
     ASSERT_NO_ERRNO(child.Enter(pid));
     ASSERT_NO_ERRNO(child.WriteControlFile("cgroup.freeze", "1"));
@@ -2286,33 +2236,17 @@ TEST_F(Cgroup2Test, FrozenProcessDefersCoreDumpSignalUntilThaw) {
   // SIGTERM: frozen, must die immediately (comparison).
   {
     Cgroup child = ASSERT_NO_ERRNO_AND_VALUE(c().CreateChild("term"));
-    int ready_fds[2];
-    ASSERT_THAT(pipe(ready_fds), SyscallSucceeds());
-    FileDescriptor ready_r(ready_fds[0]);
-    FileDescriptor ready_w(ready_fds[1]);
     pid_t pid = fork();
     if (pid == 0) {
-      ready_r.reset();
-      char ready_token = 1;
-      if (write(ready_w.get(), &ready_token, 1) != 1) {
-        _exit(1);
-      }
-      ready_w.reset();
       while (true) {
         pause();
       }
     }
     ASSERT_GT(pid, 0);
-    ready_w.reset();
     auto cleanup = Cleanup([&] {
       kill(pid, SIGKILL);
       waitpid(pid, nullptr, 0);
     });
-
-    // Wait for fork's signal-mask restoration and child setup before freezing.
-    char ready_token;
-    ASSERT_THAT(read(ready_r.get(), &ready_token, 1),
-                SyscallSucceedsWithValue(1));
 
     ASSERT_NO_ERRNO(child.Enter(pid));
     ASSERT_NO_ERRNO(child.WriteControlFile("cgroup.freeze", "1"));
