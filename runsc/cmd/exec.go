@@ -547,14 +547,14 @@ func (u *user) Set(s string) error {
 	parts := strings.SplitN(s, ":", 2)
 	kuid, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		return fmt.Errorf("couldn't parse UID: %s", parts[0])
+		return fmt.Errorf("parsing UID %q: %w", parts[0], err)
 	}
 	u.kuid = auth.KUID(kuid)
 	u.kuidSet = true
 	if len(parts) > 1 {
 		kgid, err := strconv.ParseUint(parts[1], 10, 32)
 		if err != nil {
-			return fmt.Errorf("couldn't parse GID: %s", parts[1])
+			return fmt.Errorf("parsing GID %q: %w", parts[1], err)
 		}
 		u.kgid = auth.KGID(kgid)
 		u.kgidSet = true

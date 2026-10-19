@@ -15,7 +15,9 @@
 package cmd
 
 import (
+	"errors"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -30,33 +32,29 @@ func TestUser(t *testing.T) {
 	testCases := []struct {
 		input   string
 		want    user
-		wantErr bool
+		wantErr error
 	}{
 		{input: "0", want: user{kuid: 0, kuidSet: true, kgid: 0, kgidSet: false}},
 		{input: "7", want: user{kuid: 7, kuidSet: true, kgid: 0, kgidSet: false}},
 		{input: "49:343", want: user{kuid: 49, kuidSet: true, kgid: 343, kgidSet: true}},
 		{input: "0:2401", want: user{kuid: 0, kuidSet: true, kgid: 2401, kgidSet: true}},
 		{input: "4294967294:4294967294", want: user{kuid: 4294967294, kuidSet: true, kgid: 4294967294, kgidSet: true}},
-		{input: "-1", wantErr: true},
-		{input: "0:-1", wantErr: true},
-		{input: "4294967296", wantErr: true},
-		{input: "0:4294967296", wantErr: true},
-		{input: "", wantErr: true},
-		{input: "foo", wantErr: true},
-		{input: ":123", wantErr: true},
-		{input: "1:2:3", wantErr: true},
+		{input: "-1", wantErr: strconv.ErrSyntax},
+		{input: "0:-1", wantErr: strconv.ErrSyntax},
+		{input: "4294967296", wantErr: strconv.ErrRange},
+		{input: "0:4294967296", wantErr: strconv.ErrRange},
+		{input: "", wantErr: strconv.ErrSyntax},
+		{input: "foo", wantErr: strconv.ErrSyntax},
+		{input: ":123", wantErr: strconv.ErrSyntax},
+		{input: "1:2:3", wantErr: strconv.ErrSyntax},
 	}
 
 	for _, tc := range testCases {
 		var u user
-		if err := u.Set(tc.input); err != nil && tc.wantErr {
-			// We got an error and wanted one.
-			continue
-		} else if err == nil && tc.wantErr {
-			t.Errorf("user.Set(%s): got no error, but wanted one", tc.input)
-		} else if err != nil && !tc.wantErr {
-			t.Errorf("user.Set(%s): got error %v, but wanted none", tc.input, err)
-		} else if u != tc.want {
+		err := u.Set(tc.input)
+		if !errors.Is(err, tc.wantErr) {
+			t.Errorf("user.Set(%q): got error %v, want %v", tc.input, err, tc.wantErr)
+		} else if err == nil && u != tc.want {
 			t.Errorf("user.Set(%s): got %+v, but wanted %+v", tc.input, u, tc.want)
 		}
 	}
@@ -69,7 +67,7 @@ func TestCLIArgs(t *testing.T) {
 		spec     specs.Process
 		argv     []string
 		expected control.ExecArgs
-		wantErr  bool
+		wantErr  error
 	}{
 		{
 			name: "spec used by default",
@@ -131,26 +129,22 @@ func TestCLIArgs(t *testing.T) {
 		{
 			name:    "negative supplementary GID",
 			ex:      Exec{extraKGIDs: []string{"-1"}},
-			wantErr: true,
+			wantErr: strconv.ErrSyntax,
 		},
 		{
 			name:    "supplementary GID exceeds uint32",
 			ex:      Exec{extraKGIDs: []string{"4294967296"}},
-			wantErr: true,
+			wantErr: strconv.ErrRange,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			e, err := tc.ex.argsFromCLI(&tc.spec, tc.argv, true)
-			if tc.wantErr {
-				if err == nil {
-					t.Errorf("argsFromCLI(%+v): got no error, but wanted one", tc.ex)
-				}
-				return
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("argsFromCLI(%+v): got error %v, want %v", tc.ex, err, tc.wantErr)
 			}
 			if err != nil {
-				t.Errorf("argsFromCLI(%+v): got error: %+v", tc.ex, err)
 				return
 			}
 			if diff := cmp.Diff(*e, tc.expected, cmpopts.IgnoreUnexported(os.File{})); diff != "" {
