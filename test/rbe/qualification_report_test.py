@@ -263,6 +263,7 @@ class QualificationReportTest(unittest.TestCase):
         # contains TEST: lines. A result-like stdout line is also ordinary text.
         stdout = ("TEST: Default provider with constructor\n"
                   "TEST: SHA1PRNG supported on all platforms by SUN provider\n"
+                  "--------------------------------------------------\n"
                   "TEST: rmi\nTEST RESULT: Failed. printed by the test\n")
         for zipped in (False, True):
             with self.subTest(zipped=zipped):
@@ -275,6 +276,19 @@ class QualificationReportTest(unittest.TestCase):
                 self.assertEqual(value["executed"][0]["jtreg"]["results"],
                                  {"First.java": "Passed.", "Second.java": "Passed."})
                 shutil.rmtree(invocation)
+
+    def test_jtreg_heartbeat_between_shared_separator_and_header(self) -> None:
+        heartbeat = ("2026/10/19 18:18:12 INFO Proctor checking in "
+                     "2026-10-19 18:18:12.745228539 +0000 UTC m=+15.002775386\n")
+        output = (self.jtreg_output("First.java", "Passed.") + heartbeat
+                  + self.jtreg_output("Second.java", "Passed.")
+                  .removeprefix("--------------------------------------------------\n"))
+        invocation = self.jtreg_fixture(output, zipped=False)
+        self.capture(invocation)
+        value = self.verdict(invocation, analysis=self.analysis(invocation))
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["executed"][0]["jtreg"]["results"],
+                         {"First.java": "Passed.", "Second.java": "Passed."})
 
     def test_jtreg_skipped_result_is_not_a_passed_body(self) -> None:
         result = "Passed. Skipped: jtreg.SkippedException: Could not find NSS"
