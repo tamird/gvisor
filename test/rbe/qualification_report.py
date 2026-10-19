@@ -362,14 +362,18 @@ def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str]
             names = selection.removeprefix("Batch:\n").splitlines()
             found_batches.append(names)
             current = None
+            awaiting_header = False
             lines = body.splitlines()
             # jtreg's VerboseHandler frames each full result with separators.
             # Section stdout is arbitrary text and can itself start with TEST:.
+            # Proctor heartbeats can appear between results, after the shared
+            # separator but before the next header.
             separator = "--------------------------------------------------"
             for index, line in enumerate(lines):
-                if line.startswith("TEST: ") and index and lines[index - 1] == separator:
-                    if current is not None:
-                        errors.append("Java test starts before the preceding result")
+                if line == separator and current is None:
+                    awaiting_header = True
+                elif line.startswith("TEST: ") and awaiting_header:
+                    awaiting_header = False
                     current = line.removeprefix("TEST: ")
                     if current not in names or current in results:
                         errors.append(f"Unexpected or duplicate Java test: {current}")
