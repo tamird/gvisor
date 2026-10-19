@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T14:55:29.211250+00:00",
+    "updatedAt": "2026-10-19T15:10:46.579237+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5259,7 +5259,7 @@
         "owner": "root",
         "disposition": "Accepted CodeQL proof; Java diagnostic and ARM applicability work remain active",
         "sourceHead": "e34fcbf68e10e7b0dcd241317c02073d88ae9331",
-        "observedAt": "2026-10-19T14:52:23.811043+00:00",
+        "observedAt": "2026-10-19T15:03:01.379815+00:00",
         "nextAction": "Keep the completed c948 whole-build and e34 CodeQL proof source-bound. Node owns the reviewed Java observer replay preparation and root owns its final request gate; Hostinet/root own the remaining ARM capability disposition. Retain original runtime failures and unsupported coverage.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/2cf878bd-0337-47c8-84c4-c5118a570dfb"
@@ -10359,22 +10359,23 @@
       "type": "pr",
       "repo": "buildbuddy-io/buildbuddy",
       "ref": "preserve-upload-failure-logs",
-      "head": "c4c33abb4657319113eff015bf5c69671a3a437a",
+      "head": "7656cdae616b5c9b23115d1d1fb6ed4ade453328",
       "number": 13849,
       "title": "BuildBuddy: preserve logs when output uploads fail",
       "group": "buildbuddy",
       "status": "open",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849",
-      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
-      "summary": "The explicit-response and caller-context refinement is now published at 7c1bdbe82a. Hostinet\u2019s existing remote validation ff95f4a9 is active; its result and the corresponding correction to prior thread prose are pending. The earlier 26-case result remains at 4f3069a053.\n\nA new user-directed refinement is now active with Hostinet: pass the response explicitly to the error closure and use a plain error group with the caller context for uploads. The previous direct-assignment amendment and replies remain recorded, but the new source/lifetime/error-semantics review, remote validation and corresponding reply correction are still pending. No contributor approval is required for this authorized revision.\n\nBoth review threads now have verified replies in review 5573348673: direct response-field assignments are published at 4f3069a053, and the reply explains why diagnostic log uploads retain the caller context after output-tree cancellation. The focused workspace validation passes 26 cases and lint, retaining one existing case-insensitive-filesystem skip. Public Darwin approval gates and pending checks remain separate; unresolved thread flags do not mean the author has not responded.\n\nThe direct-assignment amendment is published at 4f3069a053. Hostinet owns the current remote validation and responses to both existing review threads; the child-context question remains explicitly assigned.\n\nNew review feedback asks whether shared assignments should move inside the goroutines and whether the auxiliary-log loop should own a child errgroup. Three public Actions checks failed at this head; their failure causes have not yet been diagnosed. Root is reviewing the feedback before any amendment or reply.\n\nPrior validation: Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip.",
+      "updatedAt": "2026-10-19T15:10:46.579237+00:00",
+      "summary": "The final user-approved restoration is published at 7656cdae61. The executor matches qualified 4f306 except the explanatory nil-safe protobuf-getter comment; the plain error group, caller context and tests remain unchanged from race-qualified 7c1bdbe82a. That remote validation passed two owners/two attempts with 50 named cases, one existing case-insensitive-filesystem skip and lint. The PR body and existing reply reflect the final behavior; no duplicate comment was posted. Current public checks remain separate from this source-bound validation.\n\nThe 7c1bdbe82a amendment passed both owning suites with the race configuration: two owners, two attempts, 50 passing named cases and one existing case-insensitive-filesystem skip, plus lint. The user then approved restoring the original captured response with an explanatory nil-safe protobuf-getter comment, while retaining the plain error group and caller context. Independent source review confirms the restored executor matches previously qualified 4f306 except that comment; Hostinet is publishing this final plumbing refinement and correcting the existing reply. Earlier validation remains tied to its tested source.\n\nThe explicit-response and caller-context refinement is now published at 7c1bdbe82a. Hostinet\u2019s existing remote validation ff95f4a9 is active; its result and the corresponding correction to prior thread prose are pending. The earlier 26-case result remains at 4f3069a053.\n\nA new user-directed refinement is now active with Hostinet: pass the response explicitly to the error closure and use a plain error group with the caller context for uploads. The previous direct-assignment amendment and replies remain recorded, but the new source/lifetime/error-semantics review, remote validation and corresponding reply correction are still pending. No contributor approval is required for this authorized revision.\n\nBoth review threads now have verified replies in review 5573348673: direct response-field assignments are published at 4f3069a053, and the reply explains why diagnostic log uploads retain the caller context after output-tree cancellation. The focused workspace validation passes 26 cases and lint, retaining one existing case-insensitive-filesystem skip. Public Darwin approval gates and pending checks remain separate; unresolved thread flags do not mean the author has not responded.\n\nThe direct-assignment amendment is published at 4f3069a053. Hostinet owns the current remote validation and responses to both existing review threads; the child-context question remains explicitly assigned.\n\nNew review feedback asks whether shared assignments should move inside the goroutines and whether the auxiliary-log loop should own a child errgroup. Three public Actions checks failed at this head; their failure causes have not yet been diagnosed. Root is reviewing the feedback before any amendment or reply.\n\nPrior validation: Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip.",
       "followup": {
         "owner": "Hostinet",
-        "disposition": "Latest user-directed amendment published; remote validation active",
-        "sourceHead": "7c1bdbe82aa599a5bd16caaa38a6c23b66c8e49f",
-        "observedAt": "2026-10-19T14:55:28.897551+00:00",
-        "nextAction": "Collect the existing executor/workspace race validation and lint, then post the authorized explanation of the explicit response and shared caller-context design. Keep previous replies and validation source-bound.",
+        "disposition": "Final user-approved amendment and reply delivered; awaiting maintainer",
+        "sourceHead": "7656cdae616b5c9b23115d1d1fb6ed4ade453328",
+        "observedAt": "2026-10-19T15:10:46.325994+00:00",
+        "nextAction": "Follow current public review and checks. The final captured-response comment and unchanged plain error-group behavior are published, with prior validation applicability verified. No active source amendment or contributor decision remains.",
         "evidence": [
-          "https://github.com/tamird/buildbuddy/commit/7c1bdbe82aa599a5bd16caaa38a6c23b66c8e49f"
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13849#discussion_r4315231612",
+          "https://app.buildbuddy.io/invocation/ff95f4a9-87ae-42ab-825b-b706ef83beeb"
         ]
       },
       "evidence": [
@@ -10397,6 +10398,10 @@
         {
           "label": "Focused workspace validation PASS; one existing skip",
           "url": "https://app.buildbuddy.io/invocation/16c4546c-61ae-45b4-9cc5-0fea7ab43216"
+        },
+        {
+          "label": "Final executor/workspace race validation PASS; one existing skip",
+          "url": "https://app.buildbuddy.io/invocation/ff95f4a9-87ae-42ab-825b-b706ef83beeb"
         }
       ]
     },
@@ -11193,13 +11198,13 @@
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
       "status": "Upstream PR open; current-head remote validation passed",
-      "summary": "The LookupEnv refinement is remotely qualified at bf7a47e3df: two test owners, eight attempts and 36 named cases, plus lint, with no gaps or skips. The published eb265eafda adds an authenticated-filter rationale and removes the redundant seven-line test; executable production code is unchanged. Exact test evidence remains at bf7, and earlier failures are preserved. Automatic verification took 2.300712 seconds after the final lint command; the 208.024634-second interval from test completion includes lint.\n\nThe cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "summary": "The latest published attribution head is b5e6c9df9d. Its final changes clarify mixed-version compatibility in comments; authenticated API-key attribution and executable behavior remain unchanged. The qualified LookupEnv behavior is still source-bound to bf7a47e3df, with later comment/test-removal applicability stated separately.\n\nThe LookupEnv refinement is remotely qualified at bf7a47e3df: two test owners, eight attempts and 36 named cases, plus lint, with no gaps or skips. The published eb265eafda adds an authenticated-filter rationale and removes the redundant seven-line test; executable production code is unchanged. Exact test evidence remains at bf7, and earlier failures are preserved. Automatic verification took 2.300712 seconds after the final lint command; the 208.024634-second interval from test completion includes lint.\n\nThe cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
       "followup": {
         "owner": "root",
-        "disposition": "Authorized refinement delivered and validation complete",
-        "sourceHead": "eb265eafdaaefd91b0fd910e6eb5695e157a3142",
-        "observedAt": "2026-10-19T14:46:53.138168+00:00",
-        "nextAction": "Follow current public review and checks. Keep Darwin approval gates separate from executed tests and preserve the bf7 test source versus eb265 applicability distinction.",
+        "disposition": "Authorized attribution refinement complete; current-head review pending",
+        "sourceHead": "b5e6c9df9dc32d7ca1ff235522daba4dfe7e488c",
+        "observedAt": "2026-10-19T15:04:20.886299+00:00",
+        "nextAction": "Follow current public review and checks. Preserve the tested bf7 source versus subsequent comment/test-removal applicability, and distinguish Darwin approval gates from executed tests.",
         "evidence": [
           "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
           "https://app.buildbuddy.io/invocation/f3934fdb-9939-438f-bf6d-5e9d6563d23e"
@@ -11223,7 +11228,7 @@
           "url": "https://app.buildbuddy.io/invocation/f3934fdb-9939-438f-bf6d-5e9d6563d23e"
         }
       ],
-      "updatedAt": "2026-10-19T14:55:29.211250+00:00"
+      "updatedAt": "2026-10-19T15:10:46.579237+00:00"
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13858",
@@ -11269,19 +11274,26 @@
       "title": "Reject noncanonical procfs task IDs",
       "url": "https://github.com/tamird/gvisor/commit/4674542b6d227e33df83826e466678187e1315ae",
       "group": "kernel",
-      "status": "Agent validation in progress",
-      "summary": "An independently source-reviewed procfs correction rejects leading-zero task names and oversized decimal IDs that can wrap to a live task. The standalone source is published at 4674542b6d. Linux, failing-before and corrected remote checks are pending; the first request stopped during target loading with zero executions and remains FAIL. No upstream PR or contributor-review request exists yet.",
-      "updatedAt": "2026-10-19T14:55:29.211250+00:00",
+      "status": "Needs contributor review",
+      "summary": "Linux and gVisor before/after checks verify the new InvalidTaskNames regression: native Linux passes while both original gVisor modes fail; native and both corrected gVisor modes pass. The before/after source delta contains only the two parser fixes. Three owning checks add 59 passing cases with no gaps or skips; automatic verification followed execution by 4.994385 seconds. Independent compact review ties the tested implementation to standalone proposal 4674542b6d. Initial target-loading failures and collector reattachments remain recorded. Root sent the contributor-review question for exact 4674542b6d; opening the upstream PR now awaits that decision.",
+      "updatedAt": "2026-10-19T15:10:46.579237+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Agent validation of Linux task-ID parsing semantics",
+        "disposition": "Validated proposal awaiting contributor review",
         "sourceHead": "4674542b6d227e33df83826e466678187e1315ae",
-        "observedAt": "2026-10-19T14:55:28.897551+00:00",
-        "nextAction": "Finish the existing Linux/before/after validation, retain the failed zero-execution attempt, then prepare the source and evidence for contributor review before any upstream PR.",
+        "observedAt": "2026-10-19T15:10:06.032874+00:00",
+        "nextAction": "Await the contributor decision already requested for exact standalone 4674542b6d; open the upstream PR only after approval. No duplicate question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4674542b6d227e33df83826e466678187e1315ae"
+          "https://app.buildbuddy.io/invocation/d642e02b-64ef-4667-822b-92ff8ed55d8b",
+          "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Procfs owning checks: 59 PASS, no gaps",
+          "url": "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2"
+        }
+      ]
     }
   ],
   "edges": [
