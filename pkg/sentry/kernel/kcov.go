@@ -84,7 +84,6 @@ type Kcov struct {
 
 // afterLoad is invoked by stateify.
 func (kcov *Kcov) afterLoad(ctx goContext.Context) {
-	kcov.mf = pgalloc.MemoryFileFromContext(ctx)
 }
 
 // NewKcov creates and returns a Kcov instance.
