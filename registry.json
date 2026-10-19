@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-19T00:55:37.165523+00:00",
+    "updatedAt": "2026-10-19T01:05:19.048120+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5272,7 +5272,7 @@
         "owner": "root",
         "disposition": "Owned Java fixture/timeout diagnoses and Go extraction validation",
         "sourceHead": "fc4da0788c2e8a5fa31c49b46c13d4481afe924b",
-        "observedAt": "2026-10-19T00:54:00.752296+00:00",
+        "observedAt": "2026-10-19T01:04:16.061000+00:00",
         "nextAction": "Hostinet owns focused three-mode validation of the Java output-marker fixture correction; root owns the remaining goferfs HTTP publisher timeout. Node owns corrected canonical dependency generation, full licensecheck testing and the nine-root Go extraction prototype. Preserve the full Java FAIL and unsupported Shenandoah exclusion, prior generation failures and RC skip gaps. No new contributor decision is required for these qualification tasks."
       },
       "evidence": [
