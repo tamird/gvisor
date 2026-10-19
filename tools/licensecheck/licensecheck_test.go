@@ -577,7 +577,7 @@ func TestLicenseSourceIdentity(t *testing.T) {
 func TestVerifyLicenseSource(t *testing.T) {
 	const commit = "0123456789abcdef0123456789abcdef01234567"
 	d := dep{name: "tool", kind: kindArchive, url: "https://example.com/tool.tar.gz", sha256: strings.Repeat("a", 64)}
-	e := Entry{Dependency: d.name, Version: d.url, SHA256: d.sha256, Retrieved: "2026-10-17", Commit: commit, License: Licenses{gpl2}, LicenseSource: "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"}
+	e := Entry{Dependency: d.name, Version: d.url, SHA256: d.sha256, Retrieved: "2026-10-17", Commit: commit, License: Licenses{"GPL-2.0-only"}, LicenseSource: "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"}
 	if problems := verifyProblems([]dep{d}, []Entry{e}); len(problems) != 0 {
 		t.Fatalf("verifyProblems = %v, want a valid explicit notice", problems)
 	}
