@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T17:11:46.439437+00:00",
+    "updatedAt": "2026-10-19T17:24:54.709688+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5259,7 +5259,7 @@
         "owner": "root",
         "disposition": "Incremental qualification complete; approved bwrap amendment delivered",
         "sourceHead": "c126f7889305ef79b5730af01793ce25c3d484b2",
-        "observedAt": "2026-10-19T17:10:09.188398+00:00",
+        "observedAt": "2026-10-19T17:20:19.372326+00:00",
         "nextAction": "Preserve completed incremental evidence and follow the published standalone fixes through existing public CI/review monitoring. Keep earlier broad profiles source-bound.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15983"
@@ -11062,19 +11062,23 @@
       "url": "https://github.com/tamird/gvisor/tree/fix/codeql-production-inputs",
       "group": "analysis",
       "status": "Source/query proof complete; advisory follow-up active",
-      "summary": "The full Go/Python analysis remains qualified at e34fcbf68e, with the original wrapper failure and reviewed graph recovery retained. All 59 Go advisory identities are unchanged: 18 fixes are remotely qualified, 24 conversions are bounded, one matches Linux masks, ten noninteger findings have bounded assessments, and six input-validation followups remain. The bwrap pair now has before/after numeric and explicit-empty evidence; the corrected five-owner run passes 91 cases with one existing user-namespace skip. Its approved unset-only fix is published as #15983, and the four qualified user/group fixes are published as #15981. Other standalone fixes retain their separate contributor-review and publication status. The independent index review verifies all 24 evidence records; no new CodeQL scan or blanket security conclusion is implied.",
-      "updatedAt": "2026-10-19T17:11:46.439437+00:00",
+      "summary": "The remaining TCP, metrics and TPU input-boundary proposals are qualified; root has now requested contributor approval for four independent PRs at samples b3c3c094c, proxy f0e518e6b, metrics d2518f62a and TPU 5265adcc0. TCP sample/proxy ports reproduce 12 invalid CLI cases before the fix and pass all 40 CLI cases plus owning static checks (50 rows across 10 targets) at fb1fd4cc38; the final standalone amendments only inherit the test context. Metrics timestamp offsets reproduce both oversized-offset failures and pass the full CLI plus three analyzers (11 rows) at d72efaa60d. TPU timeout validation retains four expected failing leaves before the fix and passes 68 rows across seven targets at c6a4cd630b, including all 10 CLI and 15 wire-contract cases. Exact original failures remain preserved; metrics collection required one same-invocation recovery per run after sandbox HTTPS errors. These are bounded owning checks, with no TPU hardware, TUN protocol, new scan or broad-profile claim. The existing 59-finding index still retains its last reviewed 18-qualified/six-follow-up partition until the index owner records this increment.\n\nThe full Go/Python analysis remains qualified at e34fcbf68e, with the original wrapper failure and reviewed graph recovery retained. All 59 Go advisory identities are unchanged: 18 fixes are remotely qualified, 24 conversions are bounded, one matches Linux masks, ten noninteger findings have bounded assessments, and six input-validation followups remain. The bwrap pair now has before/after numeric and explicit-empty evidence; the corrected five-owner run passes 91 cases with one existing user-namespace skip. Its approved unset-only fix is published as #15983, and the four qualified user/group fixes are published as #15981. Other standalone fixes retain their separate contributor-review and publication status. The independent index review verifies all 24 evidence records; no new CodeQL scan or blanket security conclusion is implied.",
+      "updatedAt": "2026-10-19T17:24:54.709688+00:00",
       "followup": {
         "owner": "root / hostinet_delivery",
-        "disposition": "Sixteen fixes qualified; eight input-validation follow-ups remain",
+        "disposition": "Four qualified standalone proposals await contributor review",
         "sourceHead": "e34fcbf68e10e7b0dcd241317c02073d88ae9331",
-        "observedAt": "2026-10-19T16:33:46.463794+00:00",
-        "nextAction": "Retain the eight remaining input-validation follow-ups and separate contributor-review decisions for qualified standalone fixes. The resolver implementation and validation are complete; do not reinterpret the original scan result.",
+        "observedAt": "2026-10-19T17:24:54.387921+00:00",
+        "nextAction": "Await the contributor decision on samples b3c3c094c, proxy f0e518e6b, metrics d2518f62a and TPU 5265adcc0. Hostinet owns the separate exact integration and 59-finding index increment; no broad rerun is implied.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15977",
           "https://app.buildbuddy.io/invocation/74d4ab44-6263-4030-b195-01e67f9568f1",
           "https://app.buildbuddy.io/invocation/4846a914-e9e8-4a79-bd78-640ca30f6969",
-          "https://app.buildbuddy.io/invocation/40e88f9f-2ad5-4ac6-864e-353a2eec0a3b"
+          "https://app.buildbuddy.io/invocation/40e88f9f-2ad5-4ac6-864e-353a2eec0a3b",
+          "https://github.com/google/gvisor/pull/15983",
+          "https://app.buildbuddy.io/invocation/196a5f6c-9b12-45bd-983c-4ec7845f18e1",
+          "https://app.buildbuddy.io/invocation/846551d1-2ace-4b2f-a39f-4a5b646cad90",
+          "https://app.buildbuddy.io/invocation/5ec68f47-794a-4aa0-a6e4-52ca3b4b92a4"
         ]
       },
       "evidence": [
