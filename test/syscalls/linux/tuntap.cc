@@ -405,6 +405,8 @@ TEST_F(TuntapTest, CreateInterface) {
   EXPECT_THAT(ifname, ::testing::StartsWith("tap"));
   EXPECT_THAT(DumpLinkNames(),
               IsPosixErrorOkAndHolds(::testing::Contains(ifname)));
+  auto link = ASSERT_NO_ERRNO_AND_VALUE(GetLinkByName(ifname));
+  EXPECT_EQ(link.flags & IFF_MULTICAST, IFF_MULTICAST);
   fd.reset();
   EXPECT_THAT(GetLinkByName(ifname), PosixErrorIs(ENOENT));
 }
@@ -676,6 +678,7 @@ TEST_F(TuntapTest, TUNNoPacketInfo) {
 
   const auto& [fd, link] = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
       kTunName, kTapIPAddr, false /* tap */, true /* no_pi */));
+  EXPECT_EQ(link.flags & IFF_MULTICAST, IFF_MULTICAST);
 
   ping_ip_pkt ping_req = CreatePingIPPacket(kTapPeerIPAddr, kTapIPAddr);
 
