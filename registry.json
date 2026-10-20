@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T04:50:27.779391+00:00",
+    "updatedAt": "2026-10-20T05:04:04.826903+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3046,15 +3046,15 @@
       "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
       "status": "open",
-      "summary": "New import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
+      "summary": "The 05:01 UTC snapshot shows new public Buildkite51498 and private33211 failures on the unchanged, exact-source import16042/f3b63a0a. Root owns bounded public failed-job diagnosis; the causes are not yet established. This is distinct from the already diagnosed Gazelle dependency deletion, whose shared correction is present in green import16031 and assigned to Etienne. Source a6168c64 and the active import are preserved; no retry, rebase or BPF topic fix is inferred.\n\nNew import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
       "number": 15337,
       "head": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-20T04:42:22.329046+00:00",
+      "updatedAt": "2026-10-20T05:04:04.826903+00:00",
       "followup": {
-        "disposition": "Exact-source import16042 inherits the reported ZIP Gazelle defect",
-        "owner": "EtiennePerot",
-        "nextAction": "Follow the shared correction already present in green import16031. Its existing report is assigned to Etienne. Preserve import16042 and all failed evidence; no duplicate BPF source fix, retry, rebase or public ping.",
+        "disposition": "Current import Buildkite failures under bounded diagnosis; shared ZIP Gazelle correction remains external",
+        "owner": "root",
+        "nextAction": "Root owns the current public Buildkite51498 failed-job audit for exact import16042/f3b63a0a. Preserve the private33211 failure as unavailable internal evidence unless accessible evidence establishes its cause. The separate Gazelle failure still awaits Etienne\u2019s existing shared correction in green import16031. Do not infer a BPF source defect, repeat a rebase or retry, or send another public report without the actual diagnosis.",
         "sourceHead": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": "REVIEW_REQUIRED",
@@ -3074,9 +3074,11 @@
           "https://github.com/google/gvisor/pull/16042",
           "https://github.com/google/gvisor/actions/runs/39370267060/job/118456317218",
           "https://github.com/google/gvisor/pull/16031",
-          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
+          "https://buildkite.com/gvisor/pipeline/builds/51498",
+          "https://buildkite.com/gvisor/internal/builds/33211"
         ],
-        "observedAt": "2026-10-20T04:42:22.084393+00:00",
+        "observedAt": "2026-10-20T05:01:40.925962+00:00",
         "mergeable": "UNKNOWN"
       },
       "refinement": {
@@ -3099,6 +3101,10 @@
         {
           "label": "Exact import Gazelle failure",
           "url": "https://github.com/google/gvisor/actions/runs/39370267060/job/118456317218"
+        },
+        {
+          "label": "Current import public Buildkite failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51498"
         }
       ],
       "approvedPatch": {
@@ -5716,7 +5722,7 @@
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T04:50:18.716724+00:00",
+        "observedAt": "2026-10-20T04:58:28.323415+00:00",
         "disposition": "Node26 source corrections active; profiler and npm decisions pending",
         "nextAction": "Continue the assigned procfs and npm generator source work. Root owns the already-sent profiler review/open-PR and seven package-exception decisions; do not repeat questions or open a PR/install held prerequisites before the respective approval. Preserve original runtime failures and exact evidence.",
         "evidence": [
