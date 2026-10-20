@@ -37,6 +37,12 @@ RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/brotli-backpressure.patch 
   && out/Release/node --check test/parallel/test-zlib-brotli-16GB.js \
   && rm -f /tmp/brotli-backpressure.patch
 
+COPY error-serdes.patch /tmp/error-serdes.patch
+RUN mv test/parallel/test-error-serdes.js test/sequential/test-error-serdes.js \
+  && patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/error-serdes.patch \
+  && out/Release/node --check test/sequential/test-error-serdes.js \
+  && rm -f /tmp/error-serdes.patch
+
 # Including dumb-init emulates the Linux "init" process, preventing the failure
 # of tests involving worker processes.
 ENTRYPOINT ["/usr/bin/dumb-init"]

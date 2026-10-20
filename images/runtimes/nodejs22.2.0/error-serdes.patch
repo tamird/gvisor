@@ -1,0 +1,26 @@
+# Limit the recursion needed to exhaust the stack in cyclic error serialization.
+# Run the test sequentially and remove its flaky status, matching upstream:
+# https://github.com/nodejs/node/commit/b875f2d7d
+# The Dockerfile moves the test before applying this patch.
+diff --git a/test/parallel/parallel.status b/test/parallel/parallel.status
+--- a/test/parallel/parallel.status
++++ b/test/parallel/parallel.status
+@@ -16,9 +16,6 @@ test-worker-arraybuffer-zerofill: PASS, FLAKY
+ # https://github.com/nodejs/node/issues/51862
+ test-fs-read-stream-concurrent-reads: PASS, FLAKY
+ 
+-# https://github.com/nodejs/node/issues/52630
+-test-error-serdes: PASS, FLAKY
+-
+ [$system==win32]
+ 
+ # Windows on x86
+diff --git a/test/sequential/test-error-serdes.js b/test/sequential/test-error-serdes.js
+--- a/test/sequential/test-error-serdes.js
++++ b/test/sequential/test-error-serdes.js
+@@ -1,4 +1,4 @@
+-// Flags: --expose-internals
++// Flags: --expose-internals --stack-size=64
+ 'use strict';
+ require('../common');
+ const assert = require('assert');
