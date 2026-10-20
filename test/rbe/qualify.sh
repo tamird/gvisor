@@ -1104,6 +1104,7 @@ run_lane() (
       ;;
     test)
       options=("${bazel_options[@]}")
+      language_test_options
       targets=("${test_targets[@]}")
       if [[ -n $test_filter ]]; then
         options+=("--test_filter=$test_filter")
