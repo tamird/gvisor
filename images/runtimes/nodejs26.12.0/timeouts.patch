@@ -1,0 +1,12 @@
+# Double test timeouts to accommodate gVisor's syscall overhead.
+--- a/test/common/index.js
++++ b/test/common/index.js
+@@ -313,6 +313,8 @@
+ function platformTimeout(ms) {
+   const multipliers = typeof ms === 'bigint' ?
+     { two: 2n, four: 4n, seven: 7n } : { two: 2, four: 4, seven: 7 };
++
++  ms = multipliers.two * ms;
+ 
+   if (isDebug)
+     ms = multipliers.two * ms;
