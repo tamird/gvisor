@@ -307,6 +307,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       qualification_seconds=7200
     else
       case "${lanes[*]}" in
+        # Reserve 25 minutes for capture and bundling before the Actions cutoff.
+        benchmarks) qualification_seconds=15000 ;;
         container) qualification_seconds=4800 ;;
         # Leave the Actions step time to capture interrupted guest results and
         # bundle them before GitHub terminates the coordinator.

@@ -637,9 +637,13 @@ root suite and the native systemd fixture, which runs that suite with the
 systemd cgroup manager. Existing cgroup-version skips remain visible. The
 separate `syscalls-kvm` lane owns KVM syscall selection. Local continuous
 benchmarks retain their declared KVM, systrap and runc variants, workload
-filters and iteration controls. Their
-results establish only the selected workloads; shared-host timings do not
-establish comparative performance.
+filters and iteration controls. The local benchmark coordinator allows
+250 minutes of work within a 275-minute step and 285-minute job, reserving
+time to capture interrupted results and upload the evidence bundle. It keeps
+two local test slots and the original per-owner deadlines. These are ceilings,
+not expected runtimes; select explicit owner subsets when useful. Results
+establish only the selected workloads; shared-host timings do not establish
+comparative performance.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
