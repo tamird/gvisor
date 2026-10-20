@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T00:58:20.306390+00:00",
+    "updatedAt": "2026-10-20T01:10:32.929687+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4690,14 +4690,14 @@
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-20T00:58:20.306390+00:00",
-      "summary": "The quiet patch-preserving rebase b33e9c5be has a matching refreshed import#15718/a8e09fd. Its generate job118387213057 fails during disposable clone removal with Directory not empty; the exact imported script lacks existing #15598 maintenance disabling. This is separate from the retained old checkout403 failure. The existing mitigation is the next upstream action, without a claim that its cause or writer is proved. Other current import pipelines remain pending.",
+      "updatedAt": "2026-10-20T01:10:32.929687+00:00",
+      "summary": "Matching import#15718 refreshed again to05a9c0922 at01:02:30 for unchanged source b33e9c5be; new generate and Buildkite checks are pending. The prior a8e import failed disposable-clone cleanup and lacked existing #15598 maintenance disabling; its exact failure remains retained separately from the older checkout403. No new source amendment, rebase or cause/writer claim is justified while the matching import progresses.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
-        "observedAt": "2026-10-20T00:58:20.047031+00:00",
-        "disposition": "Current import clone-cleanup failure; existing mitigation awaits upstream progress",
-        "nextAction": "Matching import#15718/a8e09fd has a newly diagnosed generate failure in disposable clone cleanup; exact imported go_branch.sh lacks the existing #15598 maintenance mitigation. Preserve this failure and await that existing upstream mitigation; no new topic amendment or identical replay is justified. Writer identity remains unknown. The public/internal Buildkite pipelines are still pending.",
+        "observedAt": "2026-10-20T01:08:50.356213+00:00",
+        "disposition": "New exact-current import execution pending; prior cleanup failure retained",
+        "nextAction": "Follow new matching import#15718/05a9c0922 for unchanged b33e source through the existing sweep; it was introduced01:02:30 and its generate/pipelines are pending. Preserve prior import a8e cleanup failure and older checkout403. Existing #15598 mitigation remains separately green/open with matching#15996; do not repeat a rebase, add a topic correction, or infer the earlier writer/cause.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15718"
         ]
@@ -4732,6 +4732,10 @@
         {
           "label": "Current import generate failure: disposable clone cleanup",
           "url": "https://github.com/google/gvisor/actions/runs/39348624801/job/118387213057"
+        },
+        {
+          "label": "Current matching import generate execution",
+          "url": "https://github.com/google/gvisor/actions/runs/39351191781/job/118395492924"
         }
       ],
       "approvedPatch": {
@@ -5677,12 +5681,12 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Node completion validation pending; UIDMap route qualified",
-      "summary": "The shared KVM guest routing correction is integrated at150ecd after three actual UIDMap XML positives at a8f and a docstring-only lint recovery at4dc. The two earlier raw failures remain; this later run did not reproduce the historical gofer failure, and the diagnostic startup edits were excluded from integration. Node completion reporting is source-reviewed at54fd and has passed all five owning checks (95 reporter methods, six aggregate XML positives); its one genuinely emitted TAP case remains running. Historical Node7,898 counts are wrapper-selected claims, while161 Go/Bazel wrapper positives remain valid; no complete inner-runtime or causal-fix claim is made.\n\nNode runtime completion evidence remains active agent work. The pinned Node runner can swallow IOError and return success without completing every selected case; the outer wrapper selected-count message is therefore insufficient per-case proof. Three recovered original CAS batches from95195 now establish complete49/49 expected-outcome accounting for both Brotli modes and directfs HTTP-cork. Goferfs HTTP-cork retains its separate complete48-success/one-error-serdes-failure batch accounting. Only these mandatory focused cases receive completion credit; the whole invocation remains FAIL and the historical cork timeout cause is unresolved. Named Brotli completion was verified4002.351178 seconds after execution with one manual CAS recovery; the14.336779-second receipt covered only outer owners. Hostinet owns a minimal TAP completion and passing-output retention correction on qualification/node-completion-contract from5b6. The original full Node FAIL and old public timeout stay visible; no broad replay or causal fix is claimed.\n\nCombined build evidence covers all 7,660 owners: original 7,655 successes at 4a3516 plus exact-configuration five-owner conntrack recovery at 4b784. The original full-build FAIL remains; this is not a new full-run PASS. The focused conntrack runtime also passes 20 IPv4/IPv6 cases. Mixed units retain raw FAIL/producer INCOMPLETE: 723 owners, 743 attempts, 200,358 passes and 84 skips. The eight benchmark-only zero-case owners now have separate qualified evidence at 770a: eight uncached Linux attempts and 72 metric rows, 36 per architecture. Reporter 6a5e passes 93 methods; canonical retained-evidence replay preserves every raw row and accepts default CPU suffixes. The original benchmark raw FAIL/producer INCOMPLETE and setup failure remain. The automatic incomplete receipt took 2.901 seconds; the corrected seal followed 698.309 seconds later with one manual reconciliation and no reporting-driven runtime rerun. The 723-owner inventory now partitions into 653 ordinary-positive owners, 58 declared non-runtime owners, eight benchmark-completed owners and four capability-completed owners. All 84 original skips remain recorded. Both current-source TestBootPosture/kvm checks now pass on the established AMD64 KVM and ARM64 EL2/TCG routes at 98d9. Owner and capability coverage is complete. Both original TestRACKDetectReorder instances now have separate passing evidence at 6c8c, with an intended negative mutation failing both cases. The composed accounting at integration 6d3b completes all 723 owner obligations and all currently executable runtime-case gaps. All 84 original skips remain recorded: 16 now have alternate positive evidence, 50 are invalid checksum tuples, and 18 NVIDIA source comparisons remain unexecuted because their nine exact public source versions are unavailable. Full case coverage remains INCOMPLETE for those 18 external-source instances; the original raw FAIL/producer INCOMPLETE is unchanged. Go-only CodeQL recovery at 4b784 is PASS/COMPLETE with both declared report groups authenticated: 567 declared owners, 558 actual roots, all 2,745 source classes and physical files, and zero extraction/package errors. The scan retains 35 advisories versus 59 previously, with no new rule/path/message identities and 24 removed occurrences. Remaining advisories are not waived. Three non-Go reports remain separately recovered from cdf29; the original failed aggregate and its manual recovery remain explicit.\n\nLandlock declaration restoration at e51a is independently qualified by exact loading/configured-action evidence: 834 restored nodes, no changed common nodes or removals, 134 common actions/40 bindings and nine restored bindings, plus buildifier. The original failed representative selection and one manual reconciliation remain recorded. This restores coverage selection and establishes no new runtime support. Root integration 6d3b0c8c1f contains the qualified Landlock restoration, benchmark manifest/parser and numeric-leaf correction, plus the ARM KVM_CREATE_VM EINTR retry whose file matches qualified 6a749. The 8f007 README entrypoint correction is followed by f18d58e26e, which integrates the exact previously approved #15598 disposable-clone maintenance mitigation. Independent patch-equivalence review and existing source/import export successes are reused; no fresh export run or writer-identity claim is made. The RACK fixture integration 6d3b follows f18d; its exact source applicability is independently reviewed. Focused BootPosture runs remain bound to 98d9 and RACK execution remains bound to 6c8c. The current public-source refresh at da863 is independently verified PASS/COMPLETE: all 4,510 configured aspects, nine positive test owners and three canonical Gazelle commands pass. Five cached test results and two separately reused governance positives are explicit; this is scoped source evidence at da863, not a full runtime qualification of 98d9. The 72-row benchmark proof remains tied to its actual execution source; final mixed-unit/RACK accounting is independently verified. A canonical public-tag check at 22:04 UTC confirms all nine exact NVIDIA versions remain unavailable, so their 18 comparison instances remain unexecuted without a justified retry. The qualified RACK fixture proposal 8643925c awaits the contributor decision requested by root; no upstream PR is open. Earlier raw failures and original gaps are retained. Canonical qualification/current-upstream-refresh remains d7ece726.\n\nEarlier source-profile evidence remains bound to 4a plus generated manifest bffe: 4,438 configured aspects, 11 test owners and canonical 567-owner manifest check. Java source 420 retains per-mode 7,029 body passes, 4 explicit skips and 136 time-policy exclusions, with original raw FAIL and one manual reconciliation. The historical Java hang cause and ARM/KVM runtime gaps remain unresolved.",
-      "updatedAt": "2026-10-20T00:58:20.306390+00:00",
+      "summary": "Focused error-serdes qualification is complete at2f148/2b66: both mandatory cases have recovered46/46 completed batches, parentPASS/COMPLETE, named proof328.696 seconds after execution with one manual recovery. The intended filter was not transported:396 cases were selected per mode, and uninspected batches receive no inner-case credit. Standalone d064da903e is now awaiting contributor review. Generic filter forwarding is source-reviewed and its existing fixture regression is being validated; full Node qualification remains pending.\n\nThe shared KVM guest routing correction is integrated at150ecd after three actual UIDMap XML positives at a8f and a docstring-only lint recovery at4dc. The two earlier raw failures remain; this later run did not reproduce the historical gofer failure, and the diagnostic startup edits were excluded from integration. Node completion reporting is source-reviewed at54fd and has passed all five owning checks (95 reporter methods, six aggregate XML positives); its genuine TAP run remains active. The planned one-case environment filter was not forwarded by the generic test lane, so actual scope is the selected partition pending retained names and all TAP outcomes. Preserve the current run and require named cork completion separately; no one-case execution claim remains. Historical Node7,898 counts are wrapper-selected claims, while161 Go/Bazel wrapper positives remain valid; no complete inner-runtime or causal-fix claim is made.\n\nNode runtime completion evidence remains active agent work. The pinned Node runner can swallow IOError and return success without completing every selected case; the outer wrapper selected-count message is therefore insufficient per-case proof. Three recovered original CAS batches from95195 now establish complete49/49 expected-outcome accounting for both Brotli modes and directfs HTTP-cork. Goferfs HTTP-cork retains its separate complete48-success/one-error-serdes-failure batch accounting. Only these mandatory focused cases receive completion credit; the whole invocation remains FAIL and the historical cork timeout cause is unresolved. Named Brotli completion was verified4002.351178 seconds after execution with one manual CAS recovery; the14.336779-second receipt covered only outer owners. Hostinet owns a minimal TAP completion and passing-output retention correction on qualification/node-completion-contract from5b6. The original full Node FAIL and old public timeout stay visible; no broad replay or causal fix is claimed.\n\nCombined build evidence covers all 7,660 owners: original 7,655 successes at 4a3516 plus exact-configuration five-owner conntrack recovery at 4b784. The original full-build FAIL remains; this is not a new full-run PASS. The focused conntrack runtime also passes 20 IPv4/IPv6 cases. Mixed units retain raw FAIL/producer INCOMPLETE: 723 owners, 743 attempts, 200,358 passes and 84 skips. The eight benchmark-only zero-case owners now have separate qualified evidence at 770a: eight uncached Linux attempts and 72 metric rows, 36 per architecture. Reporter 6a5e passes 93 methods; canonical retained-evidence replay preserves every raw row and accepts default CPU suffixes. The original benchmark raw FAIL/producer INCOMPLETE and setup failure remain. The automatic incomplete receipt took 2.901 seconds; the corrected seal followed 698.309 seconds later with one manual reconciliation and no reporting-driven runtime rerun. The 723-owner inventory now partitions into 653 ordinary-positive owners, 58 declared non-runtime owners, eight benchmark-completed owners and four capability-completed owners. All 84 original skips remain recorded. Both current-source TestBootPosture/kvm checks now pass on the established AMD64 KVM and ARM64 EL2/TCG routes at 98d9. Owner and capability coverage is complete. Both original TestRACKDetectReorder instances now have separate passing evidence at 6c8c, with an intended negative mutation failing both cases. The composed accounting at integration 6d3b completes all 723 owner obligations and all currently executable runtime-case gaps. All 84 original skips remain recorded: 16 now have alternate positive evidence, 50 are invalid checksum tuples, and 18 NVIDIA source comparisons remain unexecuted because their nine exact public source versions are unavailable. Full case coverage remains INCOMPLETE for those 18 external-source instances; the original raw FAIL/producer INCOMPLETE is unchanged. Go-only CodeQL recovery at 4b784 is PASS/COMPLETE with both declared report groups authenticated: 567 declared owners, 558 actual roots, all 2,745 source classes and physical files, and zero extraction/package errors. The scan retains 35 advisories versus 59 previously, with no new rule/path/message identities and 24 removed occurrences. Remaining advisories are not waived. Three non-Go reports remain separately recovered from cdf29; the original failed aggregate and its manual recovery remain explicit.\n\nLandlock declaration restoration at e51a is independently qualified by exact loading/configured-action evidence: 834 restored nodes, no changed common nodes or removals, 134 common actions/40 bindings and nine restored bindings, plus buildifier. The original failed representative selection and one manual reconciliation remain recorded. This restores coverage selection and establishes no new runtime support. Root integration 6d3b0c8c1f contains the qualified Landlock restoration, benchmark manifest/parser and numeric-leaf correction, plus the ARM KVM_CREATE_VM EINTR retry whose file matches qualified 6a749. The 8f007 README entrypoint correction is followed by f18d58e26e, which integrates the exact previously approved #15598 disposable-clone maintenance mitigation. Independent patch-equivalence review and existing source/import export successes are reused; no fresh export run or writer-identity claim is made. The RACK fixture integration 6d3b follows f18d; its exact source applicability is independently reviewed. Focused BootPosture runs remain bound to 98d9 and RACK execution remains bound to 6c8c. The current public-source refresh at da863 is independently verified PASS/COMPLETE: all 4,510 configured aspects, nine positive test owners and three canonical Gazelle commands pass. Five cached test results and two separately reused governance positives are explicit; this is scoped source evidence at da863, not a full runtime qualification of 98d9. The 72-row benchmark proof remains tied to its actual execution source; final mixed-unit/RACK accounting is independently verified. A canonical public-tag check at 22:04 UTC confirms all nine exact NVIDIA versions remain unavailable, so their 18 comparison instances remain unexecuted without a justified retry. The qualified RACK fixture proposal 8643925c awaits the contributor decision requested by root; no upstream PR is open. Earlier raw failures and original gaps are retained. Canonical qualification/current-upstream-refresh remains d7ece726.\n\nEarlier source-profile evidence remains bound to 4a plus generated manifest bffe: 4,438 configured aspects, 11 test owners and canonical 567-owner manifest check. Java source 420 retains per-mode 7,029 body passes, 4 explicit skips and 136 time-policy exclusions, with original raw FAIL and one manual reconciliation. The historical Java hang cause and ARM/KVM runtime gaps remain unresolved.",
+      "updatedAt": "2026-10-20T01:10:32.929687+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T00:54:19.393885+00:00",
+        "observedAt": "2026-10-20T01:04:32.756693+00:00",
         "disposition": "Node completion and passing-batch retention mechanism needs validation",
         "nextAction": "Complete and independently review the source-owned TAP/retention contract, then validate through existing focused routes. Preserve raw95195 failure, directfs completion gap, separately completed unit obligations and18 unavailable NVIDIA comparison instances.",
         "evidence": [
@@ -12178,15 +12182,15 @@
       "title": "Reject out-of-range do ID mappings",
       "url": "https://github.com/google/gvisor/pull/15978",
       "group": "runtime",
-      "summary": "Original import16011 retains observed Brotli and HTTP-cork failures plus a separate transient dependency-download failure in generate. Three recovered original95195 batches now prove focused Brotli completion in both modes and later HTTP-cork completion in both modes; the whole95195 run remains FAIL due separate error-serdes/lint findings. Brotli proposal eb95d5a200 awaits the existing contributor decision. The cork failure cause remains unresolved, with later non-reproduction and no additional identical replay planned. Durable Node completion reporting remains agent-owned. A repository-authorized maintainer must retry exact generate job118286913482 because our authorized targeted retry was denied403; this is unrelated to clone cleanup.",
+      "summary": "Error-serdes proposal d064da903e now also awaits contributor review after focused named-case completion in both modes. Actual generic-lane execution selected396 cases per mode because its environment filter was not transported; only the two exact46-name containing batches were reconciled. Full Node completion and filter transport remain separate agent work.\n\nOriginal import16011 retains observed Brotli and HTTP-cork failures plus a separate transient dependency-download failure in generate. Three recovered original95195 batches now prove focused Brotli completion in both modes and later HTTP-cork completion in both modes; the whole95195 run remains FAIL due separate error-serdes/lint findings. Brotli proposal eb95d5a200 awaits the existing contributor decision. The cork failure cause remains unresolved, with later non-reproduction and no additional identical replay planned. Durable Node completion reporting remains agent-owned. A repository-authorized maintainer must retry exact generate job118286913482 because our authorized targeted retry was denied403; this is unrelated to clone cleanup.",
       "status": "Upstream PR open; qualified correction delivered",
-      "updatedAt": "2026-10-20T00:58:20.306390+00:00",
+      "updatedAt": "2026-10-20T01:10:32.929687+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified Brotli proposal awaiting contributor review; separate Node completion work and maintainer retry",
+        "disposition": "Qualified Node proposals awaiting contributor review; completion mechanism and maintainer retry remain separate",
         "sourceHead": "7ff604b88c766e269f5f71541bafeab0fa9428e4",
-        "observedAt": "2026-10-20T00:54:19.393885+00:00",
-        "nextAction": "Brotli proposal eb95d5a200 awaits the existing contributor decision after both modes completed in the original95195 execution. HTTP-cork later completed in both modes; its historical cause is unresolved and no further identical replay is planned. Root owns the separate error-serdes work; Hostinet owns durable Node completion reporting and its live genuine TAP check. A repository-authorized maintainer must rerun generate job118286913482 after the observed dependency-download failure; our single authorized attempt was denied403 before any new run. No public retry request has been authorized or posted.",
+        "observedAt": "2026-10-20T01:09:55.957302+00:00",
+        "nextAction": "Await existing contributor decisions for Brotli eb95d5a200 and error-serdes d064da903e. Their named cases have focused completion evidence; HTTP-cork later passed in both modes without establishing the historical failure cause. Hostinet owns durable Node completion reporting and combined validation; Node owns generic filter forwarding. Full-suite inner completion remains unqualified. A repository-authorized maintainer must retry generate job118286913482; our targeted retry was denied403 before a new run, and no public retry request is authorized.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/51357#01a155f0-8ffc-4a5f-b9b0-38df79a88b4c",
           "https://github.com/google/gvisor/pull/16011"
@@ -12208,6 +12212,10 @@
         {
           "label": "Focused original Node completion recovered; parent FAIL retained",
           "url": "https://app.buildbuddy.io/invocation/95195e63-22cf-45c9-931f-f36f26484041"
+        },
+        {
+          "label": "Error-serdes contributor-review proposal",
+          "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
         }
       ],
       "number": 15978
@@ -12571,6 +12579,49 @@
         }
       ],
       "updatedAt": "2026-10-19T21:54:21.570214+00:00"
+    },
+    {
+      "id": "branch:fix/node-error-serdes",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/node-error-serdes",
+      "head": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
+      "title": "Bound Node error serialization recursion",
+      "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T01:10:32.929687+00:00",
+      "summary": "Backports the upstream Node error-serialization regression fix: sequential placement, a bounded JS stack and removal of its flaky designation. Both named cases completed in original integration2f148 run2b66, proved by recovered exact46-name batches ending46/46 expected-outcome successes. The generic test lane did not forward the planned filter, so396 cases were selected per mode; other batches retain wrapper-only credit. Parent result is PASS/COMPLETE, while named proof arrived328.695981 seconds after execution with one manual two-object recovery. This is focused qualification, not a full Node suite claim. The contributor review question has been asked and remains pending.",
+      "evidence": [
+        {
+          "label": "Exact contributor-review commit and rationale",
+          "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
+        },
+        {
+          "label": "Original focused qualification; actual partition scope retained",
+          "url": "https://app.buildbuddy.io/invocation/2b66db6f-d359-4bcd-928a-98654946ee29"
+        },
+        {
+          "label": "Upstream Node correction",
+          "url": "https://github.com/nodejs/node/commit/b875f2d7d"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
+        "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Qualified proposal awaiting contributor decision",
+        "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
+        "observedAt": "2026-10-20T01:09:55.957302+00:00",
+        "nextAction": "Await the existing contributor decision before opening a PR. Preserve actual396-per-mode selection and focused46-name completion evidence; no full Node completion claim or repeated question. Generic filter forwarding and full completion preparation remain separate agent-owned work.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
+          "https://app.buildbuddy.io/invocation/2b66db6f-d359-4bcd-928a-98654946ee29"
+        ]
+      }
     }
   ],
   "edges": [
