@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T03:57:24.765234+00:00",
+    "updatedAt": "2026-10-20T04:04:38.965285+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5703,14 +5703,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Selected integration qualified; corrected Node26 full continuation active",
-      "summary": "Combined source385c selected integration is now qualified:19 disjoint owners and314 positive records (original14/217 plus AMD3/11 and native ARM2/86). Original d0af remains rawFAIL from unavailable ARM Firecracker routing. The bounded split recoveries preserve exact source, and AMD owner configurations match the original; ARM uses the reviewed local namespace route with a distinct configuration. One route correction and one local collector reattachment are explicit. This is selected-owner proof, not full public CI or Node26 runtime qualification.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
-      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
+      "summary": "Fork ZIP integration cfcd5c5c3c now passes canonical Gazelle, the tagged-owner query and generated-root check: three captured commands, with568 declared roots (561 candidates plus7 configured dispositions). Native5afba284 is PASS/COMPLETE; automatic verdict followed execution by2.703435 seconds. Root independently accepted the compact result. This is command/manifest evidence only, with no runtime or CodeQL scan credit. Node still owns the separately active affected-checker tests ce6857c8; Hostinet owns Node26 full d316c3f5.\n\nCombined source385c selected integration is now qualified:19 disjoint owners and314 positive records (original14/217 plus AMD3/11 and native ARM2/86). Original d0af remains rawFAIL from unavailable ARM Firecracker routing. The bounded split recoveries preserve exact source, and AMD owner configurations match the original; ARM uses the reviewed local namespace route with a distinct configuration. One route correction and one local collector reattachment are explicit. This is selected-owner proof, not full public CI or Node26 runtime qualification.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
+      "updatedAt": "2026-10-20T04:04:38.965285+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T03:56:34.030494+00:00",
+        "observedAt": "2026-10-20T04:04:37.167351+00:00",
         "disposition": "19 selected integration owners qualified; Node26 full continuation live",
-        "nextAction": "Hostinet collects only the active corrected Node26 full d316c3f5 atfa2ed8208a. Root/Node own separate ZIP integration. Preserve raw original failures and exact-source applicability; no repeated integration owners.",
+        "nextAction": "Hostinet collects active Node26 full d316c3f5 atfa2ed8208a; Node collects ZIP affected-owner checks ce6857c8 atcfcd. Canonical ZIP Gazelle/root commands are complete. Preserve exact-source and original-failure bounds.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624"
         ]
@@ -6923,6 +6923,10 @@
         {
           "label": "ARM recovery completes selected19-owner integration",
           "url": "https://github.com/tamird/gvisor/actions/runs/39365282018"
+        },
+        {
+          "label": "Canonical ZIP Gazelle and declared-root checks PASS",
+          "url": "https://app.buildbuddy.io/invocation/5afba284-d480-4e69-a034-29b9348e5e07"
         }
       ]
     },
@@ -10022,9 +10026,9 @@
       "title": "Normalize ordinary Go import groups",
       "url": "https://github.com/tamird/gvisor/commit/befdfe4a63044b5f58dd937b0cec296093826266",
       "group": "analysis",
-      "status": "Approved; waiting for #15919 to land",
-      "updatedAt": "2026-10-17T06:37:29.914364+00:00",
-      "summary": "The proposed #15868 refinement normalizes the remaining 94 maintained Go files into the existing standard/nonstandard import categories. Import paths and aliases are unchanged, and code following the imports is byte-identical. The pinned goimports entrypoint, mixed-group rejection, exact repair, repeated-fix idempotence and final check pass remotely. Only the simple go_generics golden output is excluded because its test contract checks comment positions across distinct import declarations; other golden outputs remain covered and unchanged. No new formatter dependency or general subgroup policy is added: goimports still preserves explicit blank subgroup boundaries. The contributor approved this refinement with the proxy grouping correction. Replaying it onto corrected proxy 7847dc30fe produces befdfe4a63 with the exact previously validated final tree; the one licensecheck blank-line cleanup now belongs to the proxy commit. Amendment of #15868 waits only for #15919 to land.",
+      "status": "Approved amendment delivered on #15868",
+      "updatedAt": "2026-10-20T04:04:38.965285+00:00",
+      "summary": "The approved befd formatter proposal was delivered as #15868 at56ea17b50b277dedf98974be0228306313633446 after ZIP ancestry landed through760b/#15984. Independent review verifies all97 file edit streams and all94 Go import sets/bodies preserved. Canonical current-head lint passed; the separate inherited Gazelle dependency failure follows existing green correction import16031. No contributor decision or amendment action remains for this proposal.\n\nThe proposed #15868 refinement normalizes the remaining 94 maintained Go files into the existing standard/nonstandard import categories. Import paths and aliases are unchanged, and code following the imports is byte-identical. The pinned goimports entrypoint, mixed-group rejection, exact repair, repeated-fix idempotence and final check pass remotely. Only the simple go_generics golden output is excluded because its test contract checks comment positions across distinct import declarations; other golden outputs remain covered and unchanged. No new formatter dependency or general subgroup policy is added: goimports still preserves explicit blank subgroup boundaries. The contributor approved this refinement with the proxy grouping correction. Replaying it onto corrected proxy 7847dc30fe produces befdfe4a63 with the exact previously validated final tree; the one licensecheck blank-line cleanup now belongs to the proxy commit. Amendment of #15868 waits only for #15919 to land.",
       "refinement": {
         "before": {
           "head": "1d98d0be916115d7fbbbebcec08239cbb31a87db"
@@ -10034,21 +10038,25 @@
         }
       },
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Contributor approval complete; proxy landing pending",
+        "owner": "work_map_current",
         "sourceHead": "befdfe4a63044b5f58dd937b0cec296093826266",
-        "observedAt": "2026-10-17T06:37:29.914364+00:00",
-        "nextAction": "After #15919 lands, rebase the approved formatter amendment onto current upstream, verify the preserved patch, and amend #15868. No additional contributor decision is required for this approved consistency correction.",
+        "observedAt": "2026-10-20T04:02:18.367649+00:00",
+        "disposition": "Approved formatter amendment delivered; proposal retained as lineage",
+        "nextAction": "Follow current-head #15868 checks/imports in the existing sweep. No repeated amendment, contributor question or formatter validation.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/befdfe4a63044b5f58dd937b0cec296093826266",
-          "https://github.com/google/gvisor/pull/15919",
-          "https://app.buildbuddy.io/invocation/3209c92e-805a-4301-933f-8bd31726ba5e"
+          "https://github.com/google/gvisor/pull/15868",
+          "https://github.com/tamird/gvisor/commit/56ea17b50b277dedf98974be0228306313633446",
+          "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314"
         ]
       },
       "evidence": [
         {
           "label": "Actual pinned formatter check, repair and idempotence validation",
           "url": "https://app.buildbuddy.io/invocation/3209c92e-805a-4301-933f-8bd31726ba5e"
+        },
+        {
+          "label": "Approved formatter amendment delivered",
+          "url": "https://github.com/google/gvisor/pull/15868"
         }
       ]
     },
@@ -12655,9 +12663,9 @@
       "title": "Bound Node error serialization recursion",
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
-      "status": "Agent revision in progress",
-      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
-      "summary": "The contributor requested a released Node upgrade instead of this backport. Proposal d064da903e is superseded; no contributor decision or PR remains pending for it. Hostinet\u2019s Node26.12 integration b049 is in full qualification after its owning checks and canonical metadata smoke passed. The old Node22.2 full run689 has closed raw FAIL/COMPLETE, with identity collisions and one worker timeout retained. Historical d064 evidence remains: both named error-serdes cases completed in original integration2f148 run2b66, verified from exact46-name batch completion logs. That generic-lane request actually selected396 cases per mode because its filter was not forwarded. The focused named proof required one manual two-object recovery and does not establish full-suite coverage.",
+      "status": "Superseded by Node26 upgrade; full validation active",
+      "updatedAt": "2026-10-20T04:04:38.965285+00:00",
+      "summary": "The superseding Node26 full continuation is d316c3f5 atfa2ed8208a after the reviewed make-order correction. Originala6d2 failed before all runtime owners; no new runtime success is claimed until the active continuation finishes. The d064 backport remains superseded with no contributor decision or PR.\n\nThe contributor requested a released Node upgrade instead of this backport. Proposal d064da903e is superseded; no contributor decision or PR remains pending for it. Hostinet\u2019s Node26.12 integration b049 is in full qualification after its owning checks and canonical metadata smoke passed. The old Node22.2 full run689 has closed raw FAIL/COMPLETE, with identity collisions and one worker timeout retained. Historical d064 evidence remains: both named error-serdes cases completed in original integration2f148 run2b66, verified from exact46-name batch completion logs. That generic-lane request actually selected396 cases per mode because its filter was not forwarded. The focused named proof required one manual two-object recovery and does not establish full-suite coverage.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12674,10 +12682,10 @@
       ],
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Backport superseded; Node26 full qualification active",
+        "disposition": "Backport superseded; corrected Node26 full continuation active",
         "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T03:05:15.502493+00:00",
-        "nextAction": "Hostinet owns Node26.12 full qualification at b049 under invocationa6d2. Retain the d064 backport and its focused historical evidence; no pending contributor decision and no PR for this superseded proposal. The old Node22.2 full run689 is closed FAIL/COMPLETE.",
+        "observedAt": "2026-10-20T04:04:37.167351+00:00",
+        "nextAction": "Hostinet owns Node26.12 continuation d316c3f5 atfa2ed8208a after the source-image make-order fix. Retain superseded d064 and originala6d2 image failure; no backport contributor decision or PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
         ]
