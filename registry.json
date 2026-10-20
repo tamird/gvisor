@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T06:26:23.575837+00:00",
+    "updatedAt": "2026-10-20T06:47:10.414531+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3063,15 +3063,15 @@
       "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
       "status": "open",
-      "summary": "Header-only libbpf proposal 0975ddf1b2 is qualified through integration 83c287b388: all seven BPF build owners passed on each architecture, both configured graphs exclude elfutils/libbpf_impl, and buildifier passed. Independent compact review verified exact source, graphs, canonical verdicts and timing (4.606 s automatic, manual collection 0); this is build/graph/lint proof, not runtime or standalone toolchain identity. Root requested contributor review once at 05:29 UTC for the PR amendment, description and prepared reply. Public PR remains a6168c643. Compare the complete revisions with git -C ~/code/gvisor range-diff a6168c643^! 0975ddf1b2^!.\n\nBounded public-job diagnosis is complete: all 18 latest failed jobs in Buildkite51498 stopped in analysis on the sourceware.org elfutils0.195 HTTP403 download. The BPF rule consumes only libbpf headers, while the current BCR target also analyzes its userspace implementation and elfutils. Root owns a minimal header-only target correction and focused validation; runtime behavior has not been exercised by these failed jobs. The separate inherited ZIP/Gazelle failure still awaits the existing correction in green import16031. Private33211\u2019s cause remains unobserved.\n\nThe 05:01 UTC snapshot shows new public Buildkite51498 and private33211 failures on the unchanged, exact-source import16042/f3b63a0a. Root owns bounded public failed-job diagnosis; the causes are not yet established. This is distinct from the already diagnosed Gazelle dependency deletion, whose shared correction is present in green import16031 and assigned to Etienne. Source a6168c64 and the active import are preserved; no retry, rebase or BPF topic fix is inferred.\n\nNew import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
+      "summary": "Matching import16042 refreshed to1aee3a73ae48c3f81a5c764449df35bc72f5ec88 while source remains a616. Its exact current Gazelle job118486864595 requests only the inherited production //pkg/zip deletion, still owned through correction16031/Etienne. Current public51501 has two observed failed final attempts (Containerd2.2.3 and Go runtime): both stop in the repository pre-command while //runsc:runsc analysis fetches elfutils0.195 through libbpf_impl and receives HTTP403. Their runtime commands never run. This is the existing header-only amendment0975 mechanism; build-wide completion and private33214 cause are not inferred. The qualified0975 header-only amendment remains a separate contributor decision; no latest-run BPF failure is inferred.\n\nHeader-only libbpf proposal 0975ddf1b2 is qualified through integration 83c287b388: all seven BPF build owners passed on each architecture, both configured graphs exclude elfutils/libbpf_impl, and buildifier passed. Independent compact review verified exact source, graphs, canonical verdicts and timing (4.606 s automatic, manual collection 0); this is build/graph/lint proof, not runtime or standalone toolchain identity. Root requested contributor review once at 05:29 UTC for the PR amendment, description and prepared reply. Public PR remains a6168c643. Compare the complete revisions with git -C ~/code/gvisor range-diff a6168c643^! 0975ddf1b2^!.\n\nBounded public-job diagnosis is complete: all 18 latest failed jobs in Buildkite51498 stopped in analysis on the sourceware.org elfutils0.195 HTTP403 download. The BPF rule consumes only libbpf headers, while the current BCR target also analyzes its userspace implementation and elfutils. Root owns a minimal header-only target correction and focused validation; runtime behavior has not been exercised by these failed jobs. The separate inherited ZIP/Gazelle failure still awaits the existing correction in green import16031. Private33211\u2019s cause remains unobserved.\n\nThe 05:01 UTC snapshot shows new public Buildkite51498 and private33211 failures on the unchanged, exact-source import16042/f3b63a0a. Root owns bounded public failed-job diagnosis; the causes are not yet established. This is distinct from the already diagnosed Gazelle dependency deletion, whose shared correction is present in green import16031 and assigned to Etienne. Source a6168c64 and the active import are preserved; no retry, rebase or BPF topic fix is inferred.\n\nNew import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
       "number": 15337,
       "head": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-20T05:28:43.488080+00:00",
+      "updatedAt": "2026-10-20T06:47:10.414531+00:00",
       "followup": {
         "disposition": "Contributor review requested for qualified BPF header-only amendment",
         "owner": "root",
-        "nextAction": "Await the existing contributor decision on proposal 0975ddf1b2 before amending public a616 and posting the prepared reply. The source-equivalent integration passed seven configured BPF builds per architecture, both header-only graph checks and buildifier. Preserve the separate shared ZIP/Gazelle correction in green import 16031 under Etienne, and private build 33211 as unavailable internal evidence. No public amendment or reply has been delivered.",
+        "nextAction": "Await the existing contributor decision on proposal 0975ddf1b2 before amending public a616 and posting the prepared reply. The source-equivalent integration passed seven configured BPF builds per architecture, both header-only graph checks and buildifier. Preserve the separate shared ZIP/Gazelle correction in green import 16031 under Etienne, and private build33211 as historical unavailable evidence; refreshed import16042/1aee has two verified public51501 setup failures covered by the existing BPF amendment; private33214 failure remains unavailable. No public amendment or reply has been delivered.",
         "sourceHead": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": "REVIEW_REQUIRED",
@@ -3096,7 +3096,7 @@
           "https://buildkite.com/gvisor/internal/builds/33211",
           "https://app.buildbuddy.io/invocation/1f3352af-04fd-4505-94c2-46d645fda44d"
         ],
-        "observedAt": "2026-10-20T05:28:43.239697+00:00",
+        "observedAt": "2026-10-20T06:36:41.705563+00:00",
         "mergeable": "UNKNOWN"
       },
       "refinement": {
@@ -3127,6 +3127,10 @@
         {
           "label": "Qualified BPF amendment awaiting contributor review",
           "url": "https://github.com/tamird/gvisor/commit/0975ddf1b2cec1c5af952d089c963a40f60aa4e6"
+        },
+        {
+          "label": "Current public import setup failures",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/51501"
         }
       ],
       "approvedPatch": {
@@ -5739,14 +5743,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Selected integration qualified; full Node26 validation running",
-      "summary": "Generic Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.\n\nEarlier selected integration385c and ZIPcfcd retain their source-specific qualified results and original recovery evidence. This is not a blanket current-source PASS; GPU, version/source gaps and18 unavailable NVIDIA comparisons remain separate.",
-      "updatedAt": "2026-10-20T06:26:23.575837+00:00",
+      "summary": "Candidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.\n\nEarlier selected integration385c and ZIPcfcd retain their source-specific qualified results and original recovery evidence. This is not a blanket current-source PASS; GPU, version/source gaps and18 unavailable NVIDIA comparisons remain separate.",
+      "updatedAt": "2026-10-20T06:47:10.414531+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T06:22:43.891273+00:00",
-        "disposition": "Full Node26 validation running; policy exceptions remain separate decisions",
-        "nextAction": "Hostinet owns full Node26 invocation93279a99 at665f and independent candidate audit0d5da94d. Classifier f96 checks42592 passed and were independently accepted. Runtime installation is authorized; package-specific policy/catalog decisions remain separate. Retain original failures, fresh inventory obligations and existing contributor questions.",
+        "observedAt": "2026-10-20T06:45:52.679963+00:00",
+        "disposition": "Full Node26 running; candidate audit fetch failed before classification",
+        "nextAction": "Hostinet owns full Node26 invocation93279a99 at665f and the source-unchanged retry625c1b91-7fee-4368-b2e8-74b6d6790cd0 of failed candidate audit0d5. The latter failed during pinned googleapis dependency fetching before npm classification; seed-only Verify46/552 is incomplete input, not new policy evidence. Existing classifier tests passed. Runtime installation remains authorized and policy/catalog decisions remain separate.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624",
           "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8",
@@ -8102,16 +8106,16 @@
       "head": "f057834035ce37166fc50c9c066865d9bff90efb",
       "title": "Respect sandbox exit in FS checkpoint tests",
       "group": "tests",
-      "summary": "The published mechanical rebase is at f057834035ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The existing native review request was already pending.\n\nEarlier source-specific record:\n\nThe requested comment amendment is published at e10ab455e3. It explains why the resumed sandbox must be stopped before restoring it, without referring to removed code. Rebase range-diff confirms executable code is unchanged. Etienne\u2019s changes-requested thread remains open; no new reply or resolution has been posted.\n\nThe observed shared-volume test sent a child signal after filesystem checkpointing and root termination had closed the control server. Both synchronous ExitAfterSaving tests now wait for the root sandbox and require status zero; the resume=true annotation test explicitly destroys the whole sandbox. The separate filesystem-checkpoint waiter, which lacked a registration handshake, is removed without changing production API semantics. The three existing roots and subtests pass across both cgroup modes and systrap/KVM, with owning analyzers passing both architectures. The actual before failure and the separate unresolved chained-restore stall remain recorded.\n\nA later third-party report on ARM64/systrap in a Docker Desktop builder observed three failures in sixty SharedVolume runs on master c1058949e and sixty passes with this change, plus twenty passes each for Command and Annotation and one clean combined checkpoint run. That report does not cover KVM or cgroup v1 and is separate from our source-bound validation. The user subsequently requested Etienne review in the public thread.",
+      "summary": "Etienne approved exact current head f057834035ce37166fc50c9c066865d9bff90efb at 2026-10-20T06:30:12Z (review5581499824). Public source checks pass and ready-to-pull remains set. The old import15928 is green but still identifies source534046f9; current Copybara reports an unspecified migration error. No cause or new matching import is inferred.\n\nThe published mechanical rebase is at f057834035ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The existing native review request was already pending.\n\nEarlier source-specific record:\n\nThe requested comment amendment is published at e10ab455e3. It explains why the resumed sandbox must be stopped before restoring it, without referring to removed code. Rebase range-diff confirms executable code is unchanged. Etienne\u2019s changes-requested thread remains open; no new reply or resolution has been posted.\n\nThe observed shared-volume test sent a child signal after filesystem checkpointing and root termination had closed the control server. Both synchronous ExitAfterSaving tests now wait for the root sandbox and require status zero; the resume=true annotation test explicitly destroys the whole sandbox. The separate filesystem-checkpoint waiter, which lacked a registration handshake, is removed without changing production API semantics. The three existing roots and subtests pass across both cgroup modes and systrap/KVM, with owning analyzers passing both architectures. The actual before failure and the separate unresolved chained-restore stall remain recorded.\n\nA later third-party report on ARM64/systrap in a Docker Desktop builder observed three failures in sixty SharedVolume runs on master c1058949e and sixty passes with this change, plus twenty passes each for Command and Annotation and one clean combined checkpoint run. That report does not cover KVM or cgroup v1 and is separate from our source-bound validation. The user subsequently requested Etienne review in the public thread.",
       "url": "https://github.com/google/gvisor/pull/15653",
       "status": "open",
-      "updatedAt": "2026-10-19T18:51:31.070963+00:00",
+      "updatedAt": "2026-10-20T06:47:10.414531+00:00",
       "followup": {
-        "disposition": "Mechanical rebase delivered; current-head review and checks",
-        "owner": "root",
+        "disposition": "Fresh exact-head maintainer approval; import progression pending",
+        "owner": "work_map_current",
         "sourceHead": "f057834035ce37166fc50c9c066865d9bff90efb",
         "reviewedAt": "2026-10-17T16:40:09.859646+00:00",
-        "nextAction": "Follow current-head public checks, genuine maintainer replies and any new import through the existing sweep. Historical approvals and imports do not cover the rebased head; do not duplicate the delivered notice.",
+        "nextAction": "Follow ordinary import progression after the fresh Etienne approval. Source checks are green, but Copybara reports an unspecified migration error and existing import15928 still identifies older source534046f9. Preserve that distinction; no new public ping or automatic second rebase.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15653",
           "https://github.com/tamird/gvisor/commit/534046f9628f7fc9b56071bf2cf4a9c391de2328",
@@ -8127,8 +8131,8 @@
           "https://github.com/google/gvisor/pull/15653#issuecomment-6274686699"
         ],
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-19T18:51:31.070963+00:00",
-        "reviewDecision": "CHANGES_REQUESTED"
+        "observedAt": "2026-10-20T06:36:41.705563+00:00",
+        "reviewDecision": "APPROVED"
       },
       "number": 15653,
       "refinement": {
@@ -8147,6 +8151,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15653#issuecomment-6274686699"
+        },
+        {
+          "label": "Fresh exact-head approval",
+          "url": "https://github.com/google/gvisor/pull/15653#pullrequestreview-5581499824"
         }
       ]
     },
@@ -9449,8 +9457,8 @@
       "url": "https://github.com/google/gvisor/pull/15859",
       "group": "runtime",
       "status": "open",
-      "summary": "Matching import 16041 advanced to 189464df0b on public base 760b, preserving source 7941bdca98. Its new Gazelle failure is independently diagnosed from job118471719901: the sole emitted hunk removes the unused production //pkg/zip dependency from tools/nogo/check. This is the existing shared correction in green import16031 under Etienne, not a new gofer topic defect. Public Buildkite51500 and internal33213 were pending at the 05:36 snapshot; old private33207 remains historical and its cause unobserved. Preserve the source and active import without a duplicate comment or rebase.\n\nAt the 03:00 UTC snapshot, matching import #16041 at 89e34851c6e861c9a8197c74c53d988b68505d93 has passing generate, Gazelle and public Buildkite checks, but internal build #33207 failed. Its internal failure details are unavailable; no source defect or relationship to the historical cleanup failure is established. Source 7941bdca9 preserves the previously approved patch. Earlier #15861 clone-cleanup failure remains linked to #15598 as a candidate mitigation, with the writer unknown.",
-      "updatedAt": "2026-10-20T05:39:55.492607+00:00",
+      "summary": "At the 06:33 snapshot, matching import16041/189464df passes public Buildkite51500, internal33213, generation and Go tests. Its Gazelle failure remains the previously diagnosed inherited unused production ZIP dependency, owned through existing green correction16031 and report to Etienne.\n\nMatching import 16041 advanced to 189464df0b on public base 760b, preserving source 7941bdca98. Its new Gazelle failure is independently diagnosed from job118471719901: the sole emitted hunk removes the unused production //pkg/zip dependency from tools/nogo/check. This is the existing shared correction in green import16031 under Etienne, not a new gofer topic defect. Public Buildkite51500 and internal33213 were pending at the 05:36 snapshot; old private33207 remains historical and its cause unobserved. Preserve the source and active import without a duplicate comment or rebase.\n\nAt the 03:00 UTC snapshot, matching import #16041 at 89e34851c6e861c9a8197c74c53d988b68505d93 has passing generate, Gazelle and public Buildkite checks, but internal build #33207 failed. Its internal failure details are unavailable; no source defect or relationship to the historical cleanup failure is established. Source 7941bdca9 preserves the previously approved patch. Earlier #15861 clone-cleanup failure remains linked to #15598 as a candidate mitigation, with the writer unknown.",
+      "updatedAt": "2026-10-20T06:47:10.414531+00:00",
       "refinement": {
         "before": {
           "head": "78abb01a0ac542aa97f49168b3af698ff1025392"
@@ -9462,9 +9470,9 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "7941bdca9889cc4a27faca6b166c79b5b92b2598",
-        "observedAt": "2026-10-20T05:39:39.576339+00:00",
-        "disposition": "Refreshed matching import awaits shared ZIP correction; new public/internal checks pending",
-        "nextAction": "Preserve current source and active import; shared correction16031 belongs to Etienne under existing report6278816021. Continue current51500/internal33213 checks through ordinary sweep; do not reuse old33207 failure as current or issue a duplicate comment/rebase.",
+        "observedAt": "2026-10-20T06:36:41.705563+00:00",
+        "disposition": "Current matching import tests pass; shared ZIP/Gazelle correction pending",
+        "nextAction": "Current import16041 at189464df passes public51500, internal33213 and generation. Only the diagnosed shared Gazelle dependency correction remains with Etienne/import16031 under existing report6278816021. Preserve current source/import; no duplicate comment or rebase.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16041",
           "https://github.com/google/gvisor/actions/runs/39375210832/job/118471719901",
@@ -11093,26 +11101,39 @@
       "type": "branch",
       "title": "Restore trace tests to routine CI",
       "repo": "tamird/gvisor",
-      "ref": "trace-unit-selection",
-      "head": "f1b764c9632512b4ea99c4858517661edb03a8e5",
-      "url": "https://github.com/tamird/gvisor/commit/f1b764c9632512b4ea99c4858517661edb03a8e5",
+      "ref": "review/trace-unit-selection-current",
+      "head": "5c51476a1303bd6c5affeed6e0cd61d54a36ba41",
+      "url": "https://github.com/tamird/gvisor/commit/5c51476a1303bd6c5affeed6e0cd61d54a36ba41",
       "group": "tests",
-      "status": "Agent preparing current-source applicability and contributor packet",
-      "updatedAt": "2026-10-20T06:26:23.575837+00:00",
-      "summary": "The fchdir producer correction #15935 merged on October 19 at 21:03:44 UTC. Node now owns preparation of the selector-only follow-up on current public source, including applicability of the retained full trace and Nogo results. The later fixture-scoped offset correction is published separately as #15936 at d48995da34b3d52c5bd6fdceb08655b772a2761d; it remains open with successful checks, no import and pending maintainer review. Its corrected integration d265 passed the full AMD64 and ARM64 trace owners plus both-architecture Nogo. The owner must distinguish that stronger unmerged assertion patch from prerequisites of the current upstream suite before preparing a contributor packet. No PR submission or contributor decision is pending for this selector follow-up yet.",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T06:47:10.414531+00:00",
+      "summary": "Current selector-only proposal5c51476a1303bd6c5affeed6e0cd61d54a36ba41 is published and independently source-reviewed on public760b. Its complete Makefile patch is identical to f1 and removes only the trace exclusion. Public producer/workload bytes match retained d265, while assertions, metadata capture and fork BUILD differ explicitly; no exact-current-source execution is claimed. The fchdir fix is merged; stronger open #15936 and metadata #15916 are separate changes, not demonstrated blockers of ordinary public unit fixtures. Root requested contributor review once, including the exact f1-to-5c range-diff and evidence limits. No upstream PR or comment has been made.\n\nThe fchdir producer correction #15935 merged on October 19 at 21:03:44 UTC. Node now owns preparation of the selector-only follow-up on current public source, including applicability of the retained full trace and Nogo results. The later fixture-scoped offset correction is published separately as #15936 at d48995da34b3d52c5bd6fdceb08655b772a2761d; it remains open with successful checks, no import and pending maintainer review. Its corrected integration d265 passed the full AMD64 and ARM64 trace owners plus both-architecture Nogo. The owner must distinguish that stronger unmerged assertion patch from prerequisites of the current upstream suite before preparing a contributor packet. No PR submission or contributor decision is pending for this selector follow-up yet.",
       "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "f1b764c9632512b4ea99c4858517661edb03a8e5",
-        "observedAt": "2026-10-20T06:26:23.313604+00:00",
-        "disposition": "Merged fchdir prerequisite; current-source trace selection preparation active",
-        "nextAction": "Verify current public source, all actual prerequisites and retained trace/Nogo applicability; prepare a standalone contributor packet. Do not submit a PR before contributor review. A fresh workload requires a concrete source or test gap."
+        "owner": "root",
+        "sourceHead": "5c51476a1303bd6c5affeed6e0cd61d54a36ba41",
+        "observedAt": "2026-10-20T06:36:41.705563+00:00",
+        "disposition": "Contributor review requested; no upstream publication",
+        "nextAction": "Await the existing contributor decision for exact5c51476a before submitting an upstream PR. Retain originalf1 refinement and precise supporting-evidence limits."
       },
       "evidence": [
         {
           "label": "Later corrected full trace and Nogo proof",
           "url": "https://github.com/tamird/gvisor/actions/runs/39084628044"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "f1b764c9632512b4ea99c4858517661edb03a8e5"
+        },
+        "after": {
+          "head": "5c51476a1303bd6c5affeed6e0cd61d54a36ba41"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "5c51476a1303bd6c5affeed6e0cd61d54a36ba41",
+        "url": "https://github.com/tamird/gvisor/commit/5c51476a1303bd6c5affeed6e0cd61d54a36ba41"
+      }
     },
     {
       "id": "branch:netip-parser-followups",
@@ -12761,8 +12782,8 @@
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
       "status": "Superseded by Node26 upgrade; full validation running",
-      "updatedAt": "2026-10-20T06:26:23.575837+00:00",
-      "summary": "Generic Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.",
+      "updatedAt": "2026-10-20T06:47:10.414531+00:00",
+      "summary": "Candidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12791,10 +12812,10 @@
       ],
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Full Node26 validation running; policy exceptions remain separate decisions",
+        "disposition": "Full Node26 running; candidate audit fetch failed before classification",
         "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T06:22:43.891273+00:00",
-        "nextAction": "Hostinet owns full Node26 invocation93279a99 at665f and independent candidate audit0d5da94d. Classifier f96 checks42592 passed and were independently accepted. Runtime installation is authorized; package-specific policy/catalog decisions remain separate. Retain original failures, fresh inventory obligations and existing contributor questions.",
+        "observedAt": "2026-10-20T06:36:41.705563+00:00",
+        "nextAction": "Hostinet owns full Node26 invocation93279a99 at665f and the source-unchanged retry625c1b91-7fee-4368-b2e8-74b6d6790cd0 of failed candidate audit0d5. The latter failed during pinned googleapis dependency fetching before npm classification; seed-only Verify46/552 is incomplete input, not new policy evidence. Existing classifier tests passed. Runtime installation remains authorized and policy/catalog decisions remain separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/009b27e7cad5330a13671c944a605fe712c4aa65",
           "https://app.buildbuddy.io/invocation/0a6f56ed-0ec9-4ecb-a5fd-55764eab0df7",
