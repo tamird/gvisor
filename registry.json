@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T02:08:14.617667+00:00",
+    "updatedAt": "2026-10-20T02:21:06.301349+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5686,7 +5686,7 @@
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T02:08:13.002895+00:00",
+        "observedAt": "2026-10-20T02:16:12.027787+00:00",
         "disposition": "Full Node completion qualification active; RSEQ suites qualified",
         "nextAction": "Reconcile actual built-image discovery, every selected TAP completion and all skipped/status dispositions from the sole full Node run. Root and Node own portable RSEQ delivery using the completed54-case proof. Preserve historical failed/incomplete records and unsupported-mode limits; no duplicate workloads.",
         "evidence": [
@@ -12612,9 +12612,9 @@
       "title": "Bound Node error serialization recursion",
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-20T01:10:32.929687+00:00",
-      "summary": "Backports the upstream Node error-serialization regression fix: sequential placement, a bounded JS stack and removal of its flaky designation. Both named cases completed in original integration2f148 run2b66, proved by recovered exact46-name batches ending46/46 expected-outcome successes. The generic test lane did not forward the planned filter, so396 cases were selected per mode; other batches retain wrapper-only credit. Parent result is PASS/COMPLETE, while named proof arrived328.695981 seconds after execution with one manual two-object recovery. This is focused qualification, not a full Node suite claim. The contributor review question has been asked and remains pending.",
+      "status": "Agent revision in progress",
+      "updatedAt": "2026-10-20T02:21:06.301349+00:00",
+      "summary": "The contributor requested a released Node upgrade instead of the standalone error-serdes backport. Proposal d064da903e is superseded as the current delivery approach; root and Hostinet are checking the newer release and affected test patches. No PR will be opened for the backport. Its completed focused qualification remains historical evidence, while the already-running Node 22.2 full qualification continues independently.\n\nBackports the upstream Node error-serialization regression fix: sequential placement, a bounded JS stack and removal of its flaky designation. Both named cases completed in original integration2f148 run2b66, proved by recovered exact46-name batches ending46/46 expected-outcome successes. The generic test lane did not forward the planned filter, so396 cases were selected per mode; other batches retain wrapper-only credit. Parent result is PASS/COMPLETE, while named proof arrived328.695981 seconds after execution with one manual two-object recovery. This is focused qualification, not a full Node suite claim. The contributor review question has been asked and remains pending.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12629,20 +12629,58 @@
           "url": "https://github.com/nodejs/node/commit/b875f2d7d"
         }
       ],
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "Contributor-directed Node upgrade investigation; backport proposal superseded",
+        "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
+        "observedAt": "2026-10-20T02:20:48.814045+00:00",
+        "nextAction": "Prepare the released Node upgrade and reconcile the existing patches with the upstream release. Retain the backport commit and focused evidence; do not ask the superseded contributor question again or open its PR. Let the existing full Node 22.2 run finish.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
+        ]
+      }
+    },
+    {
+      "id": "branch:fix/rseq-periodic-interrupt",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/rseq-periodic-interrupt",
+      "head": "ace40f56d2d11427d027e125bd33eaec3b19f2b4",
+      "title": "Interrupt RSEQ abort tests with a timer",
+      "url": "https://github.com/tamird/gvisor/commit/ace40f56d2d11427d027e125bd33eaec3b19f2b4",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T02:21:06.301349+00:00",
+      "summary": "The portable four-file fixture arms a periodic SIGALRM around the six existing RSEQ abort helpers and restores their KVM execution. The original descriptors and success/SIGSEGV assertions remain unchanged. Exact qualified source82b895 passed54 named runtime cases across AMD64 native/KVM and ARM64 native/KVM, plus lint, with no skips or gaps. ARM execution is the existing7.3rc3 EL2/TCG route, not physical ARM hardware. Independent extraction review confirms the complete patch and eleven owning/supporting source blobs match the qualified fixture. Upstream owning BUILD/toolchain plumbing differs, so this is fixture/ABI/runtime evidence reuse, not an identical standalone build or binary claim. The contributor question has been sent; no PR is open.",
+      "evidence": [
+        {
+          "label": "Exact contributor-review commit and rationale",
+          "url": "https://github.com/tamird/gvisor/commit/ace40f56d2d11427d027e125bd33eaec3b19f2b4"
+        },
+        {
+          "label": "Complete AMD64 native/KVM suites and lint PASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39356295903"
+        },
+        {
+          "label": "Complete ARM64 native/EL2-KVM suites PASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39356299077"
+        }
+      ],
       "contributorReview": {
         "status": "pending",
-        "head": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
+        "head": "ace40f56d2d11427d027e125bd33eaec3b19f2b4",
+        "url": "https://github.com/tamird/gvisor/commit/ace40f56d2d11427d027e125bd33eaec3b19f2b4"
       },
       "followup": {
         "owner": "root",
-        "disposition": "Qualified proposal awaiting contributor decision",
-        "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T01:09:55.957302+00:00",
-        "nextAction": "Await the existing contributor decision before opening a PR. Preserve actual396-per-mode selection and focused46-name completion evidence; no full Node completion claim or repeated question. Generic filter forwarding and full completion preparation remain separate agent-owned work.",
+        "disposition": "Qualified RSEQ proposal awaiting contributor decision",
+        "sourceHead": "ace40f56d2d11427d027e125bd33eaec3b19f2b4",
+        "observedAt": "2026-10-20T02:12:21.336193+00:00",
+        "nextAction": "Await the already-sent contributor decision before opening the PR using the reviewed commit message. No further RSEQ validation or collection is required; preserve the standalone toolchain and ARM guest applicability limits.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
-          "https://app.buildbuddy.io/invocation/2b66db6f-d359-4bcd-928a-98654946ee29"
+          "https://github.com/tamird/gvisor/commit/ace40f56d2d11427d027e125bd33eaec3b19f2b4",
+          "https://github.com/tamird/gvisor/actions/runs/39356295903",
+          "https://github.com/tamird/gvisor/actions/runs/39356299077"
         ]
       }
     }
