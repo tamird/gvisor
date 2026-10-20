@@ -29,6 +29,8 @@ environment limits, or pass lane names to run a smaller selection, for example
 failure if any lane fails, including fixture cleanup after the test cases pass.
 This remote profile does not replace the full public CI matrix. It omits the KVM
 variants of posture, startup, continuous benchmarks and syscall tests.
+PGO also runs separately: both the remote systrap and local KVM selections
+in [PGO profile generation](#pgo-profile-generation) remain required.
 Public CI uses AMD64 save/restore and ARM64 save/resume;
 `--arch=all` follows that mapping. Standalone checkpoint lanes use the requested
 `--arch`, defaulting to AMD64. Remote ARM64 checkpoints require Firecracker
@@ -661,6 +663,21 @@ Select the six `*_pgo_systrap_owned` owners with `architecture=amd64` and
 Docker bridge and serial local test execution. Each action keeps the existing
 eternal benchmark timeout; the coordinator has a 120-minute work deadline,
 145-minute step limit and 155-minute job limit.
+
+Set `PGO_SYSTRAP_TARGETS` and `PGO_KVM_TARGETS` to the six space-separated
+owner labels for each mode in `test/benchmarks/pgo.json`, then dispatch
+both selections:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref "$QUALIFICATION_REF" \
+  -f lanes=pgo -f architecture=amd64 -f execution=remote \
+  -f "targets=$PGO_SYSTRAP_TARGETS"
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref "$QUALIFICATION_REF" \
+  -f lanes=pgo -f architecture=amd64 -f execution=local \
+  -f "targets=$PGO_KVM_TARGETS"
+```
 
 `test/benchmarks/pgo.json` records all 23 active leaves and deliberate PGO
 exclusions per platform. The producer requires every active measurement and the
