@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T03:43:41.972601+00:00",
+    "updatedAt": "2026-10-20T03:57:24.765234+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -109,30 +109,41 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-20T03:29:57.017574+00:00",
-      "summary": "Current head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
+      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
+      "summary": "The ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published cb9eb60707c470b0729388c48538a1eb60ba6a34 on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The explicit maintainer license hold remains unchanged; the rebase does not clear it.\n\nCurrent head554623136dadd13e0bae2a83ccc5224609b56d5d is CONFLICTING/DIRTY after the latest public merge. This is a new mechanical maintenance item for root; the explicit internal license-exception hold and existing changes-requested review remain unchanged.\n\nThe published mechanical rebase is at 554623136dad on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe conflict is resolved by a patch-equivalent rebase at b4e336c68. Both current upstream QEMU license records are preserved; all classifier additions and deletions match the previously reviewed patch. GitHub confirms the new head is mergeable. The changes-requested review and unresolved internal exception status remain. An authorized follow-up now asks Etienne whether the internal exceptions for both #15145 and #15146 have propagated; the existing holds remain unchanged.\n\nEarlier record:\n\nEtienne\u2019s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. The authorized follow-up is now posted on #15146, asking Etienne whether the internal exceptions for both #15145 and #15146 have propagated. The response and existing changes-requested review remain pending; neither hold is cleared.",
       "followup": {
-        "disposition": "New verified conflict requires root triage; existing review/hold provenance preserved",
-        "owner": "root",
-        "nextAction": "Root triages the new license-text-classifier-final conflict while preserving the existing internal-exception hold. Any mechanical rebase must not be treated as clearing that hold; no duplicate public follow-up.",
+        "disposition": "Awaiting existing shared ZIP correction import16031; explicit license hold retained",
+        "owner": "EtiennePerot",
+        "nextAction": "Follow existing corrected import16031 and ordinary current-head checks; no duplicate source change, rebase or report. The independent explicit license hold remains until a maintainer clears it.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
           "https://github.com/tamird/gvisor/commit/44d3ce3bc",
           "https://github.com/tamird/gvisor/commit/b4e336c68c3672fa7e25b29f86f321da09774fde",
           "https://github.com/google/gvisor/pull/15146#issuecomment-6250305913",
-          "https://github.com/tamird/gvisor/commit/554623136dadd13e0bae2a83ccc5224609b56d5d"
+          "https://github.com/tamird/gvisor/commit/554623136dadd13e0bae2a83ccc5224609b56d5d",
+          "https://github.com/google/gvisor/actions/runs/39366093488/job/118443166330",
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
         ],
         "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
-        "sourceHead": "554623136dadd13e0bae2a83ccc5224609b56d5d",
+        "sourceHead": "cb9eb60707c470b0729388c48538a1eb60ba6a34",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-10-20T03:23:39.030387+00:00"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-20T03:57:17.209892+00:00"
       },
-      "head": "554623136dadd13e0bae2a83ccc5224609b56d5d",
+      "head": "cb9eb60707c470b0729388c48538a1eb60ba6a34",
       "evidence": [
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/554623136dadd13e0bae2a83ccc5224609b56d5d"
+        },
+        {
+          "label": "Published mechanically preserved conflict resolution",
+          "url": "https://github.com/tamird/gvisor/commit/cb9eb60707c470b0729388c48538a1eb60ba6a34"
+        },
+        {
+          "label": "Gazelle requests the existing shared ZIP dependency correction",
+          "url": "https://github.com/google/gvisor/actions/runs/39366093488/job/118443166330"
         }
       ]
     },
@@ -4949,18 +4960,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-deprecated-identifiers",
-      "head": "ed0c9217fd029629cfb539f0a305eaec103da1bf",
+      "head": "b243b30cff1fde38d73e499f809fead198940edc",
       "title": "Expose imported object facts to Nogo analyzers",
       "url": "https://github.com/google/gvisor/pull/15473",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-20T03:29:57.017574+00:00",
-      "summary": "Current head ed0c9217fd029629cfb539f0a305eaec103da1bf is CONFLICTING/DIRTY after the ZIP parent landed. The existing approved-patch provenance remains historical evidence; this new conflict requires root allocation and exact source review before any quiet rebase. No new reviewer request or maintainer reminder is needed solely for mechanical maintenance.\n\nThe patch approved by EtiennePerot on 2026-10-17T08:20:38Z at 5a0d23abf7 is independently verified unchanged at ed0c9217fd. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at ed0c9217fd02 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe current source head has a fresh Etienne approval. Its import/copybara status reports an error without a public diagnostic URL; no source-check failure is established. Maintainer import attention remains necessary.\n\nEarlier source and review evidence:\n\nThe user-approved independent change is delivered as https://github.com/google/gvisor/pull/15473. The single commit and exact reviewed head/body are verified; GitHub reports MERGEABLE at delivery, with CI and review pending.\n\nThe narrowed standalone checker correction is public at 5a0d23abf779ab5a73354524b242206fd4769445; its three reviewed checker/test blobs are unchanged and upstream nogo.yaml is retained. Independent saved peer 664df581f17d closes the complete diagnostic inventory 769cf7cb: all 834 owners executed, 48 pass and 786 fail solely with SA1019 findings. Both complete checker architecture owners pass all four regression variants each. The 5,810 distinct findings span 37 handwritten locations and 5,736 generated configuration-specific locations; these are not distinct bugs. All primary archive bytes were verified without another extraction of its 1 GB expanded content.\n\nThe independent generator/state reflection cleanup composition e86dda0a844077c8bc5174e47fdb2965a8b92a46 passes https://app.buildbuddy.io/invocation/8b123bf1-36cf-40d5-a7e0-bcecfe48af05 in 739.030452 seconds. Saved peer 72c2aae21145 verifies 19 original-deadline actions: eight complete normal AMD64/ARM64 owners, four actual AMD64 race binaries and seven both-CPU Nogo owners. All 32,584 reported XML root/subtest entries pass without skips; no distinct-leaf or performance count is inferred. Source, raw action/input and compact evidence show no local execution.\n\nA separate full enabled-policy inventory plus twelve owning unit targets was accepted as https://app.buildbuddy.io/invocation/48fc2d0f-a52c-4ed5-9a62-7a2a90c5d953 at composition 988df1d8e after source/method peer b04e82118bf4. The first policy validation is terminal Failed after 174 seconds: eight of twelve units pass and four do not build because the title-conversion change left an unused strings import. The full inventory never started. The exact one-line correction is public at standalone d273b89cc and composition 4b2fa4ed4 after peer 951e. The same-method continuation https://app.buildbuddy.io/invocation/a5aa730d-8310-493a-858c-00ccbb24486c completed OK in1012.883seconds. The owner has captured12/12 unit and834/834 Nogo owner summaries passing, all qualification/capture exits0 and54 source captures. Independent saved peer d98696c4f37b now closes the result: all1813 primary files,54 Git records,846 complete compact TestRunners and24 raw Actions are verified. All12 executed unit binaries match exact GoLink outputs for their respective CPUs; all834 Nogo owners report bothCPU PASS. The400 XML entries have no skips/errors. No full repository runtime or performance claim is made. The closed reflection result remains valid and the original policy failure is retained. The contributor approved the three independent checker, marshal and state changes. Ready PRs #15473, #15474 and #15475 are now open with exact source/body readback; the separate global-policy proposal remains distinct.",
+      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
+      "summary": "The ZIP-parent conflict is resolved in published b243b30cff1fde38d73e499f809fead198940edc on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The retained approval and verified equivalent patch permit ordinary CI/import progression without inventing a fresh approval. The parent\u2019s unused production ZIP dependency remains separately tracked. The unchanged review ID/time is now bound to its provider-associated ed0c source and verified equivalent b243 patch. The original5a approval provenance remains historical; this is not a new review. Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe ZIP-parent conflict is resolved in published b243b30cff1fde38d73e499f809fead198940edc on760b. Independent review confirms every topic addition/removal is unchanged and both upstream ZIP and topic dependencies are retained. No comment or reviewer request was sent. The retained approval and verified equivalent patch permit ordinary CI/import progression without inventing a fresh approval. The parent\u2019s unused production ZIP dependency remains separately tracked.\n\nCurrent head ed0c9217fd029629cfb539f0a305eaec103da1bf is CONFLICTING/DIRTY after the ZIP parent landed. The existing approved-patch provenance remains historical evidence; this new conflict requires root allocation and exact source review before any quiet rebase. No new reviewer request or maintainer reminder is needed solely for mechanical maintenance.\n\nThe patch approved by EtiennePerot on 2026-10-17T08:20:38Z at 5a0d23abf7 is independently verified unchanged at ed0c9217fd. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at ed0c9217fd02 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe current source head has a fresh Etienne approval. Its import/copybara status reports an error without a public diagnostic URL; no source-check failure is established. Maintainer import attention remains necessary.\n\nEarlier source and review evidence:\n\nThe user-approved independent change is delivered as https://github.com/google/gvisor/pull/15473. The single commit and exact reviewed head/body are verified; GitHub reports MERGEABLE at delivery, with CI and review pending.\n\nThe narrowed standalone checker correction is public at 5a0d23abf779ab5a73354524b242206fd4769445; its three reviewed checker/test blobs are unchanged and upstream nogo.yaml is retained. Independent saved peer 664df581f17d closes the complete diagnostic inventory 769cf7cb: all 834 owners executed, 48 pass and 786 fail solely with SA1019 findings. Both complete checker architecture owners pass all four regression variants each. The 5,810 distinct findings span 37 handwritten locations and 5,736 generated configuration-specific locations; these are not distinct bugs. All primary archive bytes were verified without another extraction of its 1 GB expanded content.\n\nThe independent generator/state reflection cleanup composition e86dda0a844077c8bc5174e47fdb2965a8b92a46 passes https://app.buildbuddy.io/invocation/8b123bf1-36cf-40d5-a7e0-bcecfe48af05 in 739.030452 seconds. Saved peer 72c2aae21145 verifies 19 original-deadline actions: eight complete normal AMD64/ARM64 owners, four actual AMD64 race binaries and seven both-CPU Nogo owners. All 32,584 reported XML root/subtest entries pass without skips; no distinct-leaf or performance count is inferred. Source, raw action/input and compact evidence show no local execution.\n\nA separate full enabled-policy inventory plus twelve owning unit targets was accepted as https://app.buildbuddy.io/invocation/48fc2d0f-a52c-4ed5-9a62-7a2a90c5d953 at composition 988df1d8e after source/method peer b04e82118bf4. The first policy validation is terminal Failed after 174 seconds: eight of twelve units pass and four do not build because the title-conversion change left an unused strings import. The full inventory never started. The exact one-line correction is public at standalone d273b89cc and composition 4b2fa4ed4 after peer 951e. The same-method continuation https://app.buildbuddy.io/invocation/a5aa730d-8310-493a-858c-00ccbb24486c completed OK in1012.883seconds. The owner has captured12/12 unit and834/834 Nogo owner summaries passing, all qualification/capture exits0 and54 source captures. Independent saved peer d98696c4f37b now closes the result: all1813 primary files,54 Git records,846 complete compact TestRunners and24 raw Actions are verified. All12 executed unit binaries match exact GoLink outputs for their respective CPUs; all834 Nogo owners report bothCPU PASS. The400 XML entries have no skips/errors. No full repository runtime or performance claim is made. The closed reflection result remains valid and the original policy failure is retained. The contributor approved the three independent checker, marshal and state changes. Ready PRs #15473, #15474 and #15475 are now open with exact source/body readback; the separate global-policy proposal remains distinct.",
       "followup": {
-        "disposition": "New verified conflict requires root triage; existing review/hold provenance preserved",
-        "owner": "root",
-        "sourceHead": "ed0c9217fd029629cfb539f0a305eaec103da1bf",
-        "nextAction": "Root triages and allocates the new nogo-deprecated-identifiers conflict. Preserve existing approved-patch evidence and inspect the ZIP-related import/BUILD context before any authorized quiet rebase.",
+        "disposition": "Awaiting existing shared ZIP correction import16031",
+        "owner": "EtiennePerot",
+        "sourceHead": "b243b30cff1fde38d73e499f809fead198940edc",
+        "nextAction": "Follow existing corrected import16031 and ordinary current-head checks; no duplicate source change, rebase or report.",
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8380b01ca65c44cb970ff31d67810cbe5250d384",
@@ -4971,11 +4982,14 @@
           "https://github.com/tamird/gvisor/commit/5a0d23abf779ab5a73354524b242206fd4769445",
           "https://github.com/google/gvisor/pull/15473",
           "https://github.com/tamird/gvisor/commit/ed0c9217fd029629cfb539f0a305eaec103da1bf",
-          "https://github.com/google/gvisor/pull/15473#issuecomment-6274675152"
+          "https://github.com/google/gvisor/pull/15473#issuecomment-6274675152",
+          "https://github.com/google/gvisor/actions/runs/39365976526/job/118442795509",
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "CONFLICTING",
-        "observedAt": "2026-10-20T03:23:39.030387+00:00"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-20T03:57:17.209892+00:00"
       },
       "number": 15473,
       "evidence": [
@@ -4986,18 +5000,26 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15473#issuecomment-6274675152"
+        },
+        {
+          "label": "Published mechanically preserved conflict resolution",
+          "url": "https://github.com/tamird/gvisor/commit/b243b30cff1fde38d73e499f809fead198940edc"
+        },
+        {
+          "label": "Gazelle requests the existing shared ZIP dependency correction",
+          "url": "https://github.com/google/gvisor/actions/runs/39365976526/job/118442795509"
         }
       ],
       "approvedPatch": {
-        "head": "ed0c9217fd029629cfb539f0a305eaec103da1bf",
-        "approvedHead": "5a0d23abf779ab5a73354524b242206fd4769445",
+        "head": "b243b30cff1fde38d73e499f809fead198940edc",
+        "approvedHead": "ed0c9217fd029629cfb539f0a305eaec103da1bf",
         "reviewId": "PRR_kwDOB9IlXs8AAAABSzjnmA",
         "reviewer": "EtiennePerot",
         "submittedAt": "2026-10-17T08:20:38Z",
-        "verifiedAt": "2026-10-19T21:13:25.316060+00:00",
+        "verifiedAt": "2026-10-20T03:46:32.704926+00:00",
         "method": "reviewed-context-only",
-        "oldPatchId": "e3a8684976d5b4ca1ea990e5d005a941ff106ecf",
-        "newPatchId": "9f6763d1e5c398824ea36b469742f49eb4272637"
+        "oldPatchId": "9f6763d1e5c398824ea36b469742f49eb4272637",
+        "newPatchId": "7558e4aedb8338d61e807c7b84aae794654a291a"
       }
     },
     {
@@ -5680,15 +5702,15 @@
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
-      "status": "ARM integration route recovery and corrected Node26 full continuation active",
-      "summary": "Combined source385c4ee0 preserves the reviewed runtime819172, TSCb10 and Nodeb049 components. The existing19-owner integration check d0af7f97 closed FAIL/COMPLETE:14 owners retain217 passing records, five remain unresolved. The plain ARM clock target requested the unavailable ARM64 Firecracker pool, a route-selection error rather than a transient provider failure. Root owns a bounded split recovery: native ARM Actions39365282018 for boot_test_arm64 and the ARM clock owner, plus remote AMD invocation e3241b66 for boot_nogo, boot_test_nogo and the AMD clock owner. This preserves the original analyzer runner configuration and avoids the unavailable ARM Firecracker pool. No all19 replay or full-current-source qualification claim.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
-      "updatedAt": "2026-10-20T03:43:41.972601+00:00",
+      "status": "Selected integration qualified; corrected Node26 full continuation active",
+      "summary": "Combined source385c selected integration is now qualified:19 disjoint owners and314 positive records (original14/217 plus AMD3/11 and native ARM2/86). Original d0af remains rawFAIL from unavailable ARM Firecracker routing. The bounded split recoveries preserve exact source, and AMD owner configurations match the original; ARM uses the reviewed local namespace route with a distinct configuration. One route correction and one local collector reattachment are explicit. This is selected-owner proof, not full public CI or Node26 runtime qualification.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
+      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T03:43:27.116110+00:00",
-        "disposition": "Combined integration failed on unavailable ARM Firecracker route; corrected Node26 full continuation live",
-        "nextAction": "Root collects the two supported-route continuations for exactly five missing owners, preserving d0af rawFAIL and 14owner/217PASS evidence. Hostinet collects corrected Node26 full d316c3f5 atfa2ed8208a. No broad current-source PASS.",
+        "observedAt": "2026-10-20T03:56:34.030494+00:00",
+        "disposition": "19 selected integration owners qualified; Node26 full continuation live",
+        "nextAction": "Hostinet collects only the active corrected Node26 full d316c3f5 atfa2ed8208a. Root/Node own separate ZIP integration. Preserve raw original failures and exact-source applicability; no repeated integration owners.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624"
         ]
@@ -6897,6 +6919,10 @@
         {
           "label": "Combined19-owner integration: unavailable ARM route; partial positives retained",
           "url": "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624"
+        },
+        {
+          "label": "ARM recovery completes selected19-owner integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39365282018"
         }
       ]
     },
@@ -9437,8 +9463,8 @@
       "url": "https://github.com/google/gvisor/pull/15868",
       "group": "analysis",
       "status": "open",
-      "summary": "The contributor-approved import-formatting amendment is published at56ea17b50b277dedf98974be0228306313633446 on merged ZIP parent760b. Independent review verifies all97 files have exactly the approved befd added/removed lines; all94 Go import multisets and code bodies are unchanged. The canonical new-head make lint job39365307402/118440688314 passed at03:40:13UTC. Remaining public checks and maintainer review are tracked normally; this is not an all-CI PASS claim. No repeated contributor question, comment or reviewer request was sent.\n\nThe amendment uses pinned goimports through Bazel in formatting-only mode, retaining standard/nonstandard grouping and the golden-output exclusion. Earlier standalone formatter evidence at1d98/native34726fe4 remains historical; the preserved blank-ZIP subgroup proposal8b598018c is superseded. The separate public ZIP production-dependency defect remains reported to Etienne and is not declared repaired by the parent merge.",
-      "updatedAt": "2026-10-20T03:43:41.972601+00:00",
+      "summary": "Current-head Gazelle fails only because merged parent760b retains an unused //pkg/zip dependency on production tools/nogo/check:check. Exact failed logs request that single deletion. The correction is already present in open, all-green import16031, assigned to Etienne; follow that shared import without duplicating a fix or public report. These failed checks remain visible until the correction lands and current checks confirm it.\n\nThe contributor-approved import-formatting amendment is published at56ea17b50b277dedf98974be0228306313633446 on merged ZIP parent760b. Independent review verifies all97 files have exactly the approved befd added/removed lines; all94 Go import multisets and code bodies are unchanged. The canonical new-head make lint job39365307402/118440688314 passed at03:40:13UTC. Remaining public checks and maintainer review are tracked normally; this is not an all-CI PASS claim. No repeated contributor question, comment or reviewer request was sent.\n\nThe amendment uses pinned goimports through Bazel in formatting-only mode, retaining standard/nonstandard grouping and the golden-output exclusion. Earlier standalone formatter evidence at1d98/native34726fe4 remains historical; the preserved blank-ZIP subgroup proposal8b598018c is superseded. The separate public ZIP production-dependency defect remains reported to Etienne and is not declared repaired by the parent merge.",
+      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
       "refinement": {
         "before": {
           "head": "611e97d4394faf9e66bafe2b84db222198d377c7"
@@ -9448,14 +9474,17 @@
         }
       },
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "EtiennePerot",
         "sourceHead": "56ea17b50b277dedf98974be0228306313633446",
-        "observedAt": "2026-10-20T03:43:27.116110+00:00",
-        "disposition": "Approved amendment delivered; current-head canonical formatter passed",
-        "nextAction": "Delivery is complete; ordinary watcher follows remaining checks, maintainer feedback and import progression without redundant comments.",
+        "observedAt": "2026-10-20T03:57:17.209892+00:00",
+        "disposition": "Awaiting existing shared ZIP correction import16031",
+        "nextAction": "Follow existing corrected import16031 and ordinary current-head checks; no duplicate source change, rebase or report.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15868",
-          "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314"
+          "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314",
+          "https://github.com/google/gvisor/actions/runs/39365307287/job/118440687561",
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
         ]
       },
       "evidence": [
@@ -9470,6 +9499,10 @@
         {
           "label": "Published approved formatting amendment; canonical lint passed",
           "url": "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314"
+        },
+        {
+          "label": "Gazelle requests the existing shared ZIP dependency correction",
+          "url": "https://github.com/google/gvisor/actions/runs/39365307287/job/118440687561"
         }
       ]
     },
@@ -9931,19 +9964,19 @@
       "url": "https://github.com/google/gvisor/pull/15919",
       "group": "analysis",
       "status": "open",
-      "summary": "ZIP proxy import #15984 merged at760b80785dc53311d4c87bd2de167525a99709c1 on2026-10-20 at03:10:08UTC, releasing the approved15868 dependency hold. The merged public source still contains the previously diagnosed unused production //pkg/zip dependency in tools/nogo/check:check; only its tests import pkg/zip. Merge does not establish that the Gazelle defect was repaired. The existing authorized correction report reached Etienne in comment6278816021; no duplicate public reminder is authorized. Root separately preserves the approved test-only dependency arrangement in the qualification fork and will use canonical Gazelle validation. Current source15919 remains98bc; merged import marker7847 is older, and open import16031/b109 is separately retained.",
+      "summary": "ZIP proxy work landed through #15984/760b, but that merged BUILD retains the reported unused production //pkg/zip dependency. The current approved source98bc already omits it, and fresh inspection confirms OPEN all-green import #16031/b1092c90 also contains the exact correction while retaining check_test\u2019s ZIP dependency. Its marker is the older source7847; actual BUILD content, Gazelle, generate, public51447 and internal33159 establish the corrected import state. Preserve that active import\u2019s progression; root explicitly chose no source narrowing, duplicate PR, rebase or new comment.\n\nThe existing report to Etienne remains linked. Reporting transferred the action; master is not claimed repaired before the corrected import lands. The merged equivalent test-literal formatting is preserved. Current source has no additional functional topic delta beyond this dependency correction. The separately approved #15868 formatting amendment is delivered now that ZIP ancestry landed.",
       "followup": {
         "owner": "EtiennePerot",
         "sourceHead": "98bc7fc081ce3c3638c389c00aa2338dbe251276",
-        "observedAt": "2026-10-20T03:21:25.388954+00:00",
-        "disposition": "ZIP parent merged; reported unused production dependency remains in public source",
-        "nextAction": "Etienne/Copybara maintainer retains the existing delivered public correction request. Root owns the separate fork integration/Gazelle check, while Node delivers the approved15868 amendment now that the ZIP parent landed. Reporting and merge do not mark the dependency defect repaired.",
+        "observedAt": "2026-10-20T03:51:04.513116+00:00",
+        "disposition": "Correction already present in active green import16031; preserve progression",
+        "nextAction": "Follow corrected import16031 to merge. Do not churn the existing source or repeat the delivered public report; retain the current-master defect until corrected import lands.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15984",
-          "https://github.com/google/gvisor/commit/760b80785dc53311d4c87bd2de167525a99709c1"
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
         ]
       },
-      "updatedAt": "2026-10-20T03:29:57.017574+00:00",
+      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
       "number": 15919,
       "evidence": [
         {
@@ -9973,6 +10006,10 @@
         {
           "label": "ZIP proxy import merged03:10:08UTC",
           "url": "https://github.com/google/gvisor/pull/15984"
+        },
+        {
+          "label": "Active all-green import already carries production dependency correction",
+          "url": "https://github.com/google/gvisor/pull/16031"
         }
       ]
     },
@@ -12731,6 +12768,48 @@
           "https://github.com/tamird/gvisor/commit/624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
           "https://app.buildbuddy.io/invocation/00278c16-afb9-4e92-9228-163c9af0cc3d",
           "https://app.buildbuddy.io/invocation/4cc5f2f9-7c37-4588-8f1c-755123cd5f01"
+        ]
+      }
+    },
+    {
+      "id": "branch:fix/vdso-mapped-tail",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/vdso-mapped-tail",
+      "head": "378545976dd3ed7f8e6583d61d124cc3d26cd58e",
+      "title": "Use the full executable VDSO mapping",
+      "url": "https://github.com/tamird/gvisor/commit/378545976dd3ed7f8e6583d61d124cc3d26cd58e",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
+      "summary": "Use verified zero tail across the full executable VDSO mapping, retaining live-section, metadata-overlap and nonzero-padding rejection. Exact three-file standalone patch matches qualified b10 source. Focused AMD checks passed26 records and ARM checks21, including generated two-page boundary regressions. The later ARM host7.0 differs from original6.17; the captured old ELF and failure are retained, with no claim of old-host after-execution. Root sent the contributor decision once; no upstream PR is open.",
+      "evidence": [
+        {
+          "label": "Exact contributor-review commit",
+          "url": "https://github.com/tamird/gvisor/commit/378545976dd3ed7f8e6583d61d124cc3d26cd58e"
+        },
+        {
+          "label": "Focused AMD mapped-tail checks PASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39362870872"
+        },
+        {
+          "label": "Focused ARM mapped-tail checks PASS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39362874469"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "378545976dd3ed7f8e6583d61d124cc3d26cd58e",
+        "url": "https://github.com/tamird/gvisor/commit/378545976dd3ed7f8e6583d61d124cc3d26cd58e"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "378545976dd3ed7f8e6583d61d124cc3d26cd58e",
+        "observedAt": "2026-10-20T03:51:04.513116+00:00",
+        "disposition": "Qualified VDSO mapped-tail proposal awaiting contributor decision",
+        "nextAction": "Await the already-sent contributor decision before opening a PR. Preserve exact three-file source applicability and host-change limit; no repeated validation or question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/378545976dd3ed7f8e6583d61d124cc3d26cd58e"
         ]
       }
     }
