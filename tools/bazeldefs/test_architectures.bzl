@@ -27,7 +27,16 @@ def host_test_requirement_tags(requirements):
     return [_HOST_REQUIREMENT_PREFIX + requirement for requirement in requirements]
 
 def route_test(ctx, providers, original_executable):
-    """Applies declared local capabilities to a rule with TEST_ROUTING_ATTRS."""
+    """Applies declared local capabilities to a rule with TEST_ROUTING_ATTRS.
+
+    Args:
+        ctx: Rule context containing TEST_ROUTING_ATTRS.
+        providers: Providers returned by the underlying test implementation.
+        original_executable: Test executable before local capability routing.
+
+    Returns:
+        Providers with the selected local fixture and execution requirements.
+    """
     local_architecture = ctx.attr._local_test_architecture[BuildSettingInfo].value
     constraints = [target.label for target in ctx.attr.exec_compatible_with]
     if not local_architecture or _ARCHITECTURES[local_architecture].constraint not in constraints:
