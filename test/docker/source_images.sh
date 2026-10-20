@@ -54,12 +54,25 @@ printf -v crane_command '%q' "${crane}"
 export MAKE="${make}"
 cd "${work}"
 if [[ ${mode} == test ]]; then
-  # Bazel shards are zero-based; canonical Make partitions are one-based.
-  partition=$((${TEST_SHARD_INDEX:-0} + 1))
-  partitions=${TEST_TOTAL_SHARDS:-1}
-  "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
-    PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
-    CRANE="${crane_command}" "test-${selection}-images"
+  # This qualification branch exercises the public Node recipe once with the
+  # legacy Docker builder. The canonical Makefile supplies these two values.
+  test "${arch}" = x86_64
+  test "${selection}" = cpu
+  test "${TEST_SHARD_INDEX:-0}" -eq 0
+  test "${TEST_TOTAL_SHARDS:-1}" -eq 1
+  export DOCKER_BUILDKIT=0
+  printf 'Node plain Docker build: DOCKER_BUILDKIT=%s\n' "${DOCKER_BUILDKIT}"
+  sha256sum "${makefile}" images/runtimes/nodejs26.12.0/*
+  "${make}" -f "${makefile}" ARCH="${arch}" SHELL=/bin/bash \
+    'header=echo --- $(1) >&2' rebuild-runtimes_nodejs26.12.0
+  image=$("${make}" --no-print-directory -s -f "${makefile}" \
+    ARCH="${arch}" SHELL=/bin/bash 'header=echo --- $(1) >&2' \
+    local-image-runtimes_nodejs26.12.0)
+  docker image inspect --format '{{json .}}' "${image}"
+  image_id=$(docker image inspect --format '{{.Id}}' "${image}")
+  version=$(docker run --rm "${image}" /root/node-v26.12.0/node --version)
+  test "${version}" = v26.12.0
+  printf 'Node plain Docker image: %s %s %s\n' "${image}" "${image_id}" "${version}"
 else
   target=${selection//\//_}
   case "${arch}" in

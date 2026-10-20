@@ -311,10 +311,11 @@ docker_command_test(
         "@platforms//cpu:x86_64",
     ],
     exec_properties = docker_test_exec_properties(
-        free_disk = "40GB",
-        memory = "8GB",
+        cpu = 8,
+        free_disk = "80GB",
+        memory = "24GB",
     ),
-    shard_count = 4,
+    shard_count = 1,
     tags = ["manual"],
     target_compatible_with = [
         "@platforms//os:linux",

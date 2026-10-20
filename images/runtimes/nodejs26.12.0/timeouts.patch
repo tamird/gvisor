@@ -1,3 +1,4 @@
+# Double test timeouts to accommodate gVisor's syscall overhead.
 --- a/test/common/index.js
 +++ b/test/common/index.js
 @@ -313,6 +313,8 @@
