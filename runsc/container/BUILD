@@ -163,14 +163,14 @@ go_test(
 amd64_kvm_test(
     name = "container_test_kvm_cgroup_v1_guest",
     size = "large",
-    args = _CONTAINER_PLATFORM_ARGS["kvm"],
+    args = ["--test_platforms=systrap,kvm"],
     guest_env = {"CGROUPV2": "false"},
     image = "//test/rbe/tcg:amd64_cgroup_v1_guest",
     memory_mib = 6144,
     payload = ":container_test_kvm",
     run_under = "//test/rbe:cgroup_v1",
     scratch_gib = 8,
-    shard_count = most_shards,
+    shard_count = 1,
     tags = [],
 )
 

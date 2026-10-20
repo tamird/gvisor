@@ -26,7 +26,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+	"unsafe"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
@@ -1403,6 +1405,12 @@ func (c *Container) stop() error {
 
 	// Try killing gofer if it does not exit with container.
 	if goferPid := c.GoferPid.Load(); goferPid != 0 {
+		if c.goferIsChild {
+			// Observe an already-waitable child without reaping or waiting for it.
+			var info linux.SignalInfo
+			_, _, errno := unix.Syscall6(unix.SYS_WAITID, unix.P_PID, uintptr(goferPid), uintptr(unsafe.Pointer(&info)), unix.WEXITED|unix.WNOHANG|unix.WNOWAIT, 0, 0)
+			log.Infof("UIDMAP_DIAGNOSTIC pre-kill: cid=%s pid=%d errno=%v observed_pid=%d signo=%d code=%d status=%d", c.ID, goferPid, errno, info.PID(), info.Signo, info.Code, info.Status())
+		}
 		log.Debugf("Killing gofer for container, cid: %s, PID: %d", c.ID, goferPid)
 		// The gofer process may have been racily reaped by the goroutine from
 		// c.Wait() so ignore ESRCH errors.
@@ -1451,7 +1459,10 @@ func (c *Container) waitForStopped() error {
 		// The gofer process is a child of the current process, so we can wait it
 		// and collect its zombie. The gofer process could be racily reaped by the
 		// goroutine from c.Wait() so ignore ECHILD errors.
-		if _, err := unix.Wait4(int(goferPid), nil, 0, nil); err != nil && !errors.Is(err, unix.ECHILD) {
+		var status unix.WaitStatus
+		reapedPID, err := unix.Wait4(int(goferPid), &status, 0, nil)
+		log.Infof("UIDMAP_DIAGNOSTIC reap: cid=%s pid=%d reaped_pid=%d err=%v status_valid=%t raw_status=%#x", c.ID, goferPid, reapedPID, err, err == nil && reapedPID == int(goferPid), uint32(status))
+		if err != nil && !errors.Is(err, unix.ECHILD) {
 			return fmt.Errorf("error waiting the gofer process: %v", err)
 		}
 	} else {
@@ -1585,14 +1596,14 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *sentryap
 
 	// Start with the general config flags.
 	cmd := exec.Command(specutils.ExePath, conf.ToFlags()...)
+	cmd.Stderr = os.Stderr
 	// Don't forward GOMAXPROCS defaults that apply to this process (in
 	// particular, containerd-shim-runsc-v1 passes GOMAXPROCS=2 in
 	// v1.service.newCommand()).
-	// Also exclude filesystem coverage collectors that cannot run under the
-	// gofer's seccomp policy.
-	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool {
-		return strings.HasPrefix(env, "GOMAXPROCS=") || specutils.IsGoCoverageEnv(env)
-	})
+	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool { return strings.HasPrefix(env, "GOMAXPROCS=") })
+	_, coverageDir := specutils.EnvVar(cmd.Env, "COVERAGE_DIR")
+	_, goCoverDir := specutils.EnvVar(cmd.Env, "GOCOVERDIR")
+	log.Infof("UIDMAP_DIAGNOSTIC environment: cid=%s COVERAGE_DIR_present=%t GOCOVERDIR_present=%t", c.ID, coverageDir, goCoverDir)
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		// Detach from session. Otherwise, signals sent to the foreground process
 		// will also be forwarded by this process, resulting in duplicate signals.
@@ -1741,9 +1752,9 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *sentryap
 	if !rootlessEUID {
 		if userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec); ok {
 			nss = append(nss, userNS)
-			if err := sandbox.ConfigureCmdForUserNamespace(cmd, c.Spec, userNS); err != nil {
-				return nil, nil, nil, nil, err
-			}
+			specutils.SetUIDGIDMappings(cmd, c.Spec)
+			// We need to set UID and GID to have capabilities in a new user namespace.
+			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 0, Gid: 0}
 		}
 	} else {
 		userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec)
