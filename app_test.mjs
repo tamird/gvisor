@@ -215,6 +215,70 @@ function reasonsFor(node) {
 function idsFor(node) { return reasonsFor(node).map(reason => reason.id); }
 function serviceStatus(name, state) { return { name, state, kind: 'status', purpose: 'validation', url: null }; }
 
+function assignedCommentNode() {
+  const node = attentionNode(15926); node.repo = 'google/gvisor';
+  const comment = { kind: 'comment', id: 'comment-1', url: `${node.url}#issuecomment-6295602307`,
+    author: { login: 'reviewer' }, body: 'Please check the partial-segment behavior.' };
+  node.github.feedback.items.push(comment); node.github.imports = [attentionImport(node)];
+  node.followup = { owner: 'hostinet_delivery', sourceHead: node.github.head,
+    actionableComment: { head: node.github.head, commentId: comment.id, url: comment.url } };
+  return node;
+}
+
+test('assigned top-level feedback blocks merge attention without rewriting approval', () => {
+  const node = assignedCommentNode(), assignment = node.followup.actionableComment;
+  delete node.followup.actionableComment;
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  node.followup.actionableComment = assignment;
+  const original = JSON.stringify(node.github);
+  assert.deepEqual(idsFor(node), ['author-feedback']);
+  const reason = reasonsFor(node)[0];
+  assert.equal(reason.owner, 'agent'); assert.match(reason.detail, /hostinet_delivery/);
+  assert.ok(reason.detail.includes(assignment.url));
+  const context = client(); context.nodeInput = node;
+  context.snapshotInput.workStates[node.id] = { 'waiting-merge': { scope: node.github.head, since: null, basis: 'unknown' } };
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["waiting-merge"]', context), undefined);
+  assert.ok(context.snapshotInput.workStates[node.id]['waiting-merge']);
+  assert.equal(JSON.stringify(node.github), original);
+  node.github.head = 'b'.repeat(40); node.followup.sourceHead = node.github.head;
+  assert.ok(!idsFor(node).includes('author-feedback'));
+  assignment.head = node.github.head;
+  assert.ok(idsFor(node).includes('author-feedback'));
+  delete node.followup.actionableComment;
+  assert.ok(!idsFor(node).includes('author-feedback'));
+  for (const mutate of [
+    node => { node.github.feedback.items[0].id = 'another-comment'; },
+    node => { node.github.feedback.items[0].url += '0'; },
+    node => { node.github.feedback.items[0].kind = 'review'; },
+    node => { node.github.feedback.items = []; },
+    node => { node.github.feedback.complete = false; },
+    node => { node.github.revisionChanged = true; },
+    node => { node.github.status = 'closed'; },
+  ]) {
+    const changed = assignedCommentNode(); mutate(changed);
+    assert.ok(!idsFor(changed).includes('author-feedback'), mutate.toString());
+  }
+});
+
+test('actionable comment assignments require an owner and exact PR evidence', () => {
+  for (const mutate of [null,
+    node => { node.followup.actionableComment = null; },
+    node => { node.followup.owner = ''; },
+    node => { node.followup.actionableComment.head = 'unknown'; },
+    node => { node.followup.actionableComment.commentId = ''; },
+    node => { node.followup.actionableComment.url = 'https://github.com/google/gvisor/pull/1#issuecomment-1'; },
+    node => { node.type = 'branch'; },
+  ]) {
+    const context = client(); context.nodeInput = assignedCommentNode();
+    context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-13T18:00:00Z' },
+      nodes: [context.nodeInput], groups: [], edges: [] };
+    if (mutate) {
+      mutate(context.nodeInput);
+      assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid actionable comment/, mutate.toString());
+    } else vm.runInContext('validateRegistry(registryInput)', context);
+  }
+});
+
 test('verified unchanged approval routes imports without rewriting fresh review provenance', () => {
   const node = attentionNode(); node.repo = 'google/gvisor';
   const pr = node.github;

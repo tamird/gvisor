@@ -252,6 +252,13 @@ function sourceAuthenticationRecovery(node) {
   return { ids: new Set(recovery.checks.map(item => item.id)),
     detail: `${[...names].join("; ")}: the inspected Actions logs report a missing API key. A maintainer needs to correct CI authentication. The failed check results remain visible.` };
 }
+function actionableComment(node) {
+  const record = node.followup?.actionableComment, pr = node.github;
+  if (!record || !pr || pr.status !== "open" || pr.revisionChanged
+      || record.head !== pr.head || pr.feedback?.complete !== true) return null;
+  return pr.feedback.items.find(item => item.kind === "comment"
+    && item.id === record.commentId && item.url === record.url) || null;
+}
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
     if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
@@ -278,7 +285,10 @@ function attentionReasons(node, owner) {
   if (approvalGates.length) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
-  if (review.author) add("author-feedback", "A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
+  const comment = actionableComment(node), feedback = [];
+  if (review.author) feedback.push("A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
+  if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level comment: ${comment.url}. GitHub's review decision is unchanged.`);
+  if (feedback.length) add("author-feedback", feedback.join(" "));
   if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
@@ -1198,7 +1208,7 @@ function stateRecords(snapshot, node) {
     if (conflict && ["open", "draft"].includes(node.github.status)) records.conflicts = { ...conflict,
       since: records.conflicts?.scope === conflict.scope ? records.conflicts.since : conflict.since };
     else delete records.conflicts;
-    if (node.github.mergeable !== "MERGEABLE") delete records["waiting-merge"];
+    if (node.github.mergeable !== "MERGEABLE" || actionableComment(node)) delete records["waiting-merge"];
     if (["merged", "closed"].includes(node.github.status) && node.github.conflictCheckedAt) {
       for (const key of Object.keys(records)) delete records[key];
       records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, observedAt: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
@@ -1260,6 +1270,14 @@ function validateRegistry(candidate) {
         Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
+    const comment = node.followup?.actionableComment, commentPrefix = `${node.url}#issuecomment-`;
+    if (comment !== undefined && (!comment || node.type !== "pr"
+        || typeof node.followup.owner !== "string" || !node.followup.owner.trim()
+        || !/^[a-f0-9]{40}$/.test(comment.head)
+        || typeof comment.commentId !== "string" || !comment.commentId.trim()
+        || typeof comment.url !== "string" || !comment.url.startsWith(commentPrefix)
+        || !/^[1-9]\d*$/.test(comment.url.slice(commentPrefix.length))))
+      throw new Error("Invalid actionable comment assignment");
     const refinement = node.refinement;
     if (refinement !== undefined && (!refinement || !["branch", "pr"].includes(node.type) ||
         ![refinement.before, refinement.after].every(revision => revision && /^[a-f0-9]{40}$/.test(revision.head) &&

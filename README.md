@@ -160,6 +160,15 @@ reported. Review/comment lists retain the latest 100 entries per connection;
 the existing 100-thread bound still applies. These records do not imply that a
 reviewer's concern has been resolved.
 
+An assigned top-level comment can be recorded in the existing PR `followup` as
+`actionableComment: {head, commentId, url}`, with its assigned `owner`. The exact
+head and comment ID/URL must match the complete public feedback snapshot before
+it appears under **Review feedback to address**. It also prevents the **Waiting
+for merge** label while the assignment remains active, without changing
+GitHub's approval. No comment text or follow-up prose creates this assignment. Remove
+the record when addressed; a new head requires an explicit carry-forward of
+the record's own head, independently of ordinary follow-up metadata updates.
+
 Copybara import links require a same-repository PR by `copybara-service` whose
 body contains the exact `FUTURE_COPYBARA_INTEGRATE_REVIEW` footer for the original
 PR URL and source owner/branch. The footer SHA is retained. An older source SHA
