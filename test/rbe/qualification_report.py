@@ -54,7 +54,8 @@ import unit_matrix
 
 MAX_REPORT_BYTES = 512 * 1024 * 1024
 MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
-JTREG_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
+RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
+RUNTIME_RESULT_TAGS = {"jtreg-results", "nodejs-results"}
 EVENT_KEYS = {
     "id", "children", "started", "finished", "configured", "completed",
     "testResult", "testSummary", "aborted", "namedSetOfFiles",
@@ -255,7 +256,7 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     """Copy all advertised original reports before returning capture failures."""
     errors: list[str] = []
     reports: list[dict[str, object]] = []
-    jtreg_labels: set[str] = set()
+    runtime_labels: set[str] = set()
     output_root = output_root.resolve()
     if events.resolve() == output.resolve():
         raise ValueError("Raw and sanitized event files must differ")
@@ -326,9 +327,9 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
             for line in source:
                 try:
                     event = mapping(json.loads(line))
-                    if "jtreg-results" in mapping(event.get("configured", {})).get("tag", []):
+                    if RUNTIME_RESULT_TAGS.intersection(mapping(event.get("configured", {})).get("tag", [])):
                         identity = mapping(event.get("id"))
-                        jtreg_labels.add(string(mapping(identity.get("targetConfigured")).get("label")))
+                        runtime_labels.add(string(mapping(identity.get("targetConfigured")).get("label")))
                 except (ValueError, TypeError):
                     # The capture pass below reports malformed events.
                     continue
@@ -351,9 +352,9 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
                         if retain_outputs or result.get("status") != "PASSED":
                             names.extend(name for name in advertised
                                          if name == "test.outputs__outputs.zip" or name.startswith("test.outputs/"))
-                        elif attempt.owner.label in jtreg_labels:
+                        elif attempt.owner.label in runtime_labels:
                             names.extend(name for name in advertised
-                                         if name == "test.outputs__outputs.zip" or re.fullmatch("test.outputs/" + JTREG_OUTPUT_NAME, name))
+                                         if name == "test.outputs__outputs.zip" or re.fullmatch("test.outputs/" + RUNTIME_OUTPUT_NAME, name))
                         for name in names:
                             try:
                                 matches = advertised.get(name, [])
@@ -428,14 +429,15 @@ def xml_cases(path: Path) -> dict[str, object]:
     return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"], "failures": failures, "skips": skips}
 
 
-def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
-    """Reconcile selected Java names with jtreg's retained per-test results."""
+def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]
+                    ) -> tuple[list[str], list[tuple[list[str], str]], list[str]]:
+    """Bind retained batch output to the runner's original selected names."""
     pattern = r"^I\d{4} \S+\s+\d+ lib\.go:\d+\] Running test case batch: (.+)$"
     batches = [match[1].split(",") for line in log.read_text().splitlines()
                if (match := re.fullmatch(pattern, line))]
     expected = [name for batch in batches for name in batch]
     if not expected or len(expected) != len(set(expected)):
-        raise ValueError("Java selection is empty or contains duplicate names")
+        raise ValueError("Runtime selection is empty or contains duplicate names")
 
     def outputs() -> Iterator[str]:
         total = 0
@@ -443,11 +445,11 @@ def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str]
             with zipfile.ZipFile(archive_path) as archive:
                 names = [item for item in archive.infolist() if re.fullmatch(r"batch-\d+\.log", item.filename)]
                 if len(names) != len({item.filename for item in names}):
-                    raise ValueError("Duplicate Java batch artifacts")
+                    raise ValueError("Duplicate runtime batch artifacts")
                 for item in names:
                     total += item.file_size
                     if item.file_size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
-                        raise ValueError("Java batch output exceeds retention bounds")
+                        raise ValueError("Runtime batch output exceeds retention bounds")
                     yield archive.read(item).decode()
         else:
             for (owner, name), path in reports.items():
@@ -455,53 +457,148 @@ def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str]
                     yield path.read_text()
 
     found_batches = []
-    results: dict[str, str] = {}
+    retained = []
     errors = []
     try:
         for output in outputs():
             selection, separator, body = output.partition("\nOutput:\n")
             if not separator or not selection.startswith("Batch:\n"):
-                errors.append("Invalid Java batch artifact header")
+                errors.append("Invalid runtime batch artifact header")
                 continue
             names = selection.removeprefix("Batch:\n").splitlines()
             found_batches.append(names)
-            current = None
-            awaiting_header = False
-            lines = body.splitlines()
-            # jtreg's VerboseHandler frames each full result with separators.
-            # Section stdout is arbitrary text and can itself start with TEST:.
-            # Proctor heartbeats can appear between results, after the shared
-            # separator but before the next header.
-            separator = "--------------------------------------------------"
-            for index, line in enumerate(lines):
-                if line == separator and current is None:
-                    awaiting_header = True
-                elif line.startswith("TEST: ") and awaiting_header:
-                    awaiting_header = False
-                    current = line.removeprefix("TEST: ")
-                    if current not in names or current in results:
-                        errors.append(f"Unexpected or duplicate Java test: {current}")
-                        current = None
-                elif (line.startswith("TEST RESULT: ") and index + 1 < len(lines)
-                      and lines[index + 1] == separator):
-                    if current is None:
-                        errors.append("Java result has no test identity")
-                        continue
-                    result = line.removeprefix("TEST RESULT: ")
-                    if not result.startswith(("Passed.", "Failed.", "Error.")):
-                        errors.append(f"Unrecognized Java result: {result}")
-                    else:
-                        results[current] = result
-                    current = None
+            retained.append((names, body))
     except (OSError, ValueError, zipfile.BadZipFile) as error:
         errors.append(str(error))
     if Counter(map(tuple, batches)) != Counter(map(tuple, found_batches)):
-        errors.append("Retained Java batches differ from the selected batches")
+        errors.append("Retained runtime batches differ from the selected batches")
+    return expected, retained, errors
+
+
+def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
+    """Reconcile selected Java names with jtreg's retained per-test results."""
+    expected, batches, errors = runtime_batches(log, attempt, reports)
+    results: dict[str, str] = {}
+    for names, body in batches:
+        current = None
+        awaiting_header = False
+        lines = body.splitlines()
+        # jtreg's VerboseHandler frames each full result with separators.
+        # Section stdout is arbitrary text and can itself start with TEST:.
+        # Proctor heartbeats can appear between results, after the shared
+        # separator but before the next header.
+        separator = "--------------------------------------------------"
+        for index, line in enumerate(lines):
+            if line == separator and current is None:
+                awaiting_header = True
+            elif line.startswith("TEST: ") and awaiting_header:
+                awaiting_header = False
+                current = line.removeprefix("TEST: ")
+                if current not in names or current in results:
+                    errors.append(f"Unexpected or duplicate Java test: {current}")
+                    current = None
+            elif (line.startswith("TEST RESULT: ") and index + 1 < len(lines)
+                  and lines[index + 1] == separator):
+                if current is None:
+                    errors.append("Java result has no test identity")
+                    continue
+                result = line.removeprefix("TEST RESULT: ")
+                if not result.startswith(("Passed.", "Failed.", "Error.")):
+                    errors.append(f"Unrecognized Java result: {result}")
+                else:
+                    results[current] = result
+                current = None
     skipped = {name: result for name, result in results.items() if result.startswith("Passed. Skipped:")}
     return {"expected": expected, "results": results, "errors": errors,
             "passed": sum(result.startswith("Passed.") for result in results.values()) - len(skipped),
             "skipped": skipped,
             "failures": [name for name, result in results.items() if not result.startswith("Passed.")],
+            "missing": sorted(set(expected) - results.keys())}
+
+
+def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
+    """Require completed Node harness TAP results, not its zero exit alone.
+
+    Node's TAP ``ok`` means the configured expected outcome was observed.
+    A status-file expected failure can therefore be ``ok`` without raw exit 0.
+    TODO annotates expected flakiness without negating a completed ``ok``;
+    every ``not ok`` remains a qualification failure, including TODO.
+    """
+    expected, batches, errors = runtime_batches(log, attempt, reports)
+    results: dict[str, str] = {}
+    failures: set[str] = set()
+    skipped: dict[str, str] = {}
+    expected_flaky: dict[str, str] = {}
+    heartbeat = r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} INFO Proctor checking in .+"
+    # Require the pinned Node HasRun frame, not arbitrary valid TAP:
+    # https://github.com/nodejs/node/blob/d57af10d1/tools/test.py#L338-L413
+    for names, body in batches:
+        # NormalizePath in the pinned tools/test.py removes the JS extension.
+        normalized = {name.removesuffix(".js"): name for name in names}
+        if len(normalized) != len(names):
+            errors.append("Node selection has ambiguous normalized names")
+        header = False
+        plan = None
+        identifiers: list[int] = []
+        current: tuple[str, str, str | None] | None = None
+        diagnostic = duration = False
+        for line in body.splitlines():
+            if not line or re.fullmatch(heartbeat, line):
+                continue
+            if line == "TAP version 13":
+                if header or current is not None:
+                    errors.append("Unexpected Node TAP header")
+                header = True
+            elif match := re.fullmatch(r"1\.\.(\d+)", line):
+                if not header or plan is not None or current is not None:
+                    errors.append("Unexpected Node TAP plan")
+                plan = int(match[1])
+            elif match := re.fullmatch(r"(ok|not ok) (\d+) (\S+?)(?: # (.+))?", line):
+                outcome, identifier, normalized_name, directive = match.groups()
+                name = normalized.get(normalized_name, normalized_name)
+                if outcome == "not ok":
+                    # Preserve observed failures even if a later frame is lost.
+                    failures.add(name)
+                if not header or plan is None or current is not None:
+                    errors.append("Node result is outside a complete TAP frame")
+                identifiers.append(int(identifier))
+                if normalized_name not in normalized or name in results:
+                    errors.append(f"Unexpected or duplicate Node test: {name}")
+                if directive and not re.match(r"(?:skip|todo)(?:\s|:|$)", directive, re.IGNORECASE):
+                    errors.append(f"Unknown Node TAP directive: {directive}")
+                current = (name, outcome, directive)
+                diagnostic = duration = False
+            elif line == "  ---" and current is not None and not diagnostic:
+                diagnostic = True
+            elif match := re.fullmatch(r"  duration_ms: (\d+(?:\.\d+)?)", line):
+                if current is None or not diagnostic or duration:
+                    errors.append("Unexpected Node TAP duration")
+                duration = True
+            elif line == "  ..." and current is not None and diagnostic:
+                name, outcome, directive = current
+                if not duration:
+                    errors.append(f"Node result has no duration: {name}")
+                elif name not in results and name in names:
+                    results[name] = outcome
+                    if directive and re.match(r"skip(?:\s|:|$)", directive, re.IGNORECASE):
+                        skipped[name] = directive
+                    elif directive and re.match(r"todo(?:\s|:|$)", directive, re.IGNORECASE):
+                        expected_flaky[name] = directive
+                current = None
+                diagnostic = duration = False
+            elif diagnostic and line.startswith("  "):
+                # The emitter indents child stdout/stderr by four spaces;
+                # it cannot create a top-level TAP result or close this frame.
+                continue
+            else:
+                errors.append(f"Unexpected Node TAP output: {line}")
+        if not header or plan != len(names) or identifiers != list(range(1, len(names) + 1)):
+            errors.append("Node TAP plan/results do not cover the selected batch")
+        if current is not None:
+            errors.append(f"Unfinished Node TAP result: {current[0]}")
+    return {"expected": expected, "results": results, "errors": errors,
+            "passed": sum(result == "ok" and name not in skipped for name, result in results.items()),
+            "skipped": skipped, "expected_flaky": expected_flaky, "failures": sorted(failures),
             "missing": sorted(set(expected) - results.keys())}
 
 
@@ -792,11 +889,11 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
         if kind == "test":
             paths = []
             for label, target in sorted(targets.items()):
-                if "jtreg-results" not in target.tags:
+                if not RUNTIME_RESULT_TAGS.intersection(target.tags):
                     continue
                 repository, separator, local = label.partition("//")
                 if not separator or ":" not in local:
-                    raise ValueError(f"Invalid jtreg owner label: {label}")
+                    raise ValueError(f"Invalid runtime owner label: {label}")
                 path = local.replace(":", "/", 1).lstrip("/")
                 if repository:
                     path = "external/" + repository.lstrip("@") + "/" + path
@@ -805,7 +902,7 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
                 # Minimal remote downloads omit passing undeclared outputs.
                 # Materialize only these owners' batch logs, not runtime images
                 # or successful debug logs. Repeated regex options are additive.
-                pattern = r".*/testlogs/(?:" + "|".join(paths) + r")/(?:[^/]+/)*test\.outputs/" + JTREG_OUTPUT_NAME + "$"
+                pattern = r".*/testlogs/(?:" + "|".join(paths) + r")/(?:[^/]+/)*test\.outputs/" + RUNTIME_OUTPUT_NAME + "$"
                 output_options.extend(["--nozip_undeclared_test_outputs", "--remote_download_regex=" + pattern])
     except (OSError, ValueError) as error:
         errors.append(str(error))
@@ -903,6 +1000,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     finished: dict[str, object] = {}
     skipped_owners: set[Owner] = set()
     jtreg_tests: set[Owner] = set()
+    nodejs_tests: set[Owner] = set()
     with events.open() as stream:
         for line_number, line in enumerate(stream, 1):
             try:
@@ -916,6 +1014,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                           if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
                     if "jtreg-results" in details.get("tag", []):
                         jtreg_tests.update(Owner.parse(child["targetCompleted"]) for child in children
+                                           if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
+                    if "nodejs-results" in details.get("tag", []):
+                        nodejs_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
                 for child in children:
                     if "targetCompleted" in child and mapping(child["targetCompleted"]).get("aspect"):
@@ -973,6 +1074,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                  if "go-marshal-test-contract" in target.tags)
             jtreg_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                if "jtreg-results" in target.tags)
+            nodejs_tests.update(Owner(label, target.configuration) for label, target in targets.items()
+                                if "nodejs-results" in target.tags)
             if info["command_kind"] == "test":
                 declared_benchmark_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                                 if "go-benchmark-contract" in target.tags)
@@ -1073,17 +1176,22 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             observation: dict[str, object] = {**asdict(attempt), "status": result.get("status"),
                                             "cached_locally": result.get("cachedLocally", False),
                                             "execution_info": result.get("executionInfo", {})}
-            if attempt.owner in jtreg_tests:
+            for contract, owners, parser in (("jtreg", jtreg_tests, jtreg_results),
+                                             ("nodejs", nodejs_tests, nodejs_results)):
+                if attempt.owner not in owners:
+                    continue
                 try:
-                    runtime = jtreg_results(reports[(attempt, "test.log")], attempt, reports)
-                    observation["jtreg"] = runtime
+                    runtime = parser(reports[(attempt, "test.log")], attempt, reports)
+                    observation[contract] = runtime
                     errors.extend(f"{attempt}: {error}" for error in runtime["errors"])
-                    failures.extend({**asdict(attempt), "reason": "jtreg failure", "name": name}
+                    failures.extend({**asdict(attempt), "reason": f"{contract} failure", "name": name}
                                     for name in runtime["failures"])
                     skips.extend({**asdict(attempt), "reason": reason, "name": name}
                                  for name, reason in runtime["skipped"].items())
-                    missing.extend({**asdict(attempt), "reason": "jtreg result missing", "name": name}
+                    missing.extend({**asdict(attempt), "reason": f"{contract} result missing", "name": name}
                                    for name in runtime["missing"])
+                    if contract == "nodejs" and not runtime["passed"] and not runtime["failures"]:
+                        missing.append({**asdict(attempt), "reason": "No Node expected-outcome successes"})
                 except (OSError, ValueError, KeyError, zipfile.BadZipFile) as error:
                     errors.append(f"{attempt}: {error}")
             try:

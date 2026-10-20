@@ -285,11 +285,12 @@ class QualificationReportTest(unittest.TestCase):
             output += f"TEST RESULT: {result}\n--------------------------------------------------\n"
         return output
 
-    def jtreg_fixture(self, output: str, *, zipped: bool, names: str = "First.java,Second.java") -> Path:
+    def runtime_fixture(self, output: str, *, zipped: bool, names: str = "First.java,Second.java",
+                        tag: str = "jtreg-results") -> Path:
         invocation = self.fixture()
         events = self.events(invocation)
         configured = next(event["configured"] for event in events if "configured" in event)
-        configured["tag"].append("jtreg-results")
+        configured["tag"].append(tag)
         (invocation / "test.log").write_text(
             f"I1018 00:00:00.000000 1 lib.go:243] Running test case batch: {names}\n"
             "PASS: (1s) 2 tests passed\n")
@@ -324,7 +325,7 @@ class QualificationReportTest(unittest.TestCase):
         )
         for zipped, (output, expected) in itertools.product((False, True), scenarios):
             with self.subTest(zipped=zipped, output=output):
-                invocation = self.jtreg_fixture(output, zipped=zipped)
+                invocation = self.runtime_fixture(output, zipped=zipped)
                 # A result can precede its configured-parent event in BEP.
                 events = self.events(invocation)
                 result = next(event["testResult"] for event in events if "testResult" in event)
@@ -346,6 +347,73 @@ class QualificationReportTest(unittest.TestCase):
                     self.assertEqual(value["executed"][0]["jtreg"]["passed"], 2)
                 shutil.rmtree(invocation)
 
+    def test_node_completion_overrides_successful_wrapper(self) -> None:
+        # This is the pinned v22.2 tools/test.py TapProgressIndicator contract,
+        # not an execution transcript. In particular, an IOError can leave
+        # fewer HasRun frames than Starting's plan despite a zero process exit.
+        first = "ok 1 parallel/first\n  ---\n  duration_ms: 1.00000\n  ...\n"
+        second = "ok 2 parallel/second\n  ---\n  duration_ms: 2.00000\n  ...\n"
+        failed = second.replace("ok 2", "not ok 2")
+        skipped = second.replace("parallel/second", "parallel/second # skip unavailable")
+        todo = second.replace("parallel/second", "parallel/second # TODO : Fix flaky test")
+        plan = "TAP version 13\n1..2\n"
+        heartbeat = "2026/10/19 23:42:26 INFO Proctor checking in 2026-10-19 23:42:26 +0000 UTC\n"
+        scenarios = (
+            (plan + first + second, "PASS", 2),
+            (plan + first + heartbeat + second, "PASS", 2),
+            (plan + first + failed, "FAIL", 1),
+            (plan + first, "INCOMPLETE", 1),
+            (plan, "INCOMPLETE", 0),
+            ("", "INCOMPLETE", 0),
+            ("[00:01|% 100|+   2|-   0]: Done\n", "INCOMPLETE", 0),
+            (plan + first + second.removesuffix("  ...\n"), "INCOMPLETE", 1),
+            (plan + first + failed.removesuffix("  ...\n"), "FAIL", 1),
+            (plan + first + second.replace("ok 2", "ok 1"), "INCOMPLETE", 2),
+            (plan + first + second.replace("parallel/second", "parallel/first"), "INCOMPLETE", 1),
+            (plan + first + second.replace("parallel/second", "parallel/unknown"), "INCOMPLETE", 1),
+            (plan + first + second + plan, "INCOMPLETE", 2),
+            (plan.replace("1..2", "1..0") + first + second, "INCOMPLETE", 2),
+            (plan + first + skipped, "PASS", 1),
+            (plan + first + todo, "PASS", 2),
+            (plan + first + todo.replace("ok 2", "not ok 2"), "FAIL", 1),
+            (plan + first.replace("parallel/first", "parallel/first # TODO : Fix flaky test") + todo, "PASS", 2),
+            (plan + first.replace("parallel/first", "parallel/first # skip unavailable") + skipped, "INCOMPLETE", 0),
+        )
+        for zipped, (output, expected, passed) in itertools.product((False, True), scenarios):
+            with self.subTest(zipped=zipped, output=output):
+                invocation = self.runtime_fixture(
+                    output, zipped=zipped, names="parallel/first.js,parallel/second.js", tag="nodejs-results")
+                captured = self.capture(invocation)
+                self.assertEqual(captured["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], expected, value)
+                runtime = value["executed"][0]["nodejs"]
+                self.assertEqual(runtime["passed"], passed)
+                self.assertEqual(set(runtime["skipped"]), {
+                    "parallel/" + name + ".js" for name in ("first", "second")
+                    if f"parallel/{name} # skip" in output
+                })
+                self.assertEqual(set(runtime["expected_flaky"]), {
+                    "parallel/" + name + ".js" for name in ("first", "second")
+                    if f"parallel/{name} # TODO" in output
+                })
+                shutil.rmtree(invocation)
+
+    def test_node_child_output_cannot_complete_missing_test(self) -> None:
+        # The emitter indents diagnostic stdout/stderr. A failed child may
+        # print TAP-looking output, but only the outer HasRun frame counts.
+        output = ("TAP version 13\n1..2\nnot ok 1 parallel/first\n"
+                  "  ---\n  duration_ms: 1.00000\n  severity: fail\n  stack: |-\n"
+                  "    ok 2 parallel/second\n    1..2\n    TAP version 13\n"
+                  "      ---\n      duration_ms: 2.00000\n      ...\n  ...\n")
+        invocation = self.runtime_fixture(
+            output, zipped=False, names="parallel/first.js,parallel/second.js", tag="nodejs-results")
+        self.capture(invocation)
+        value = self.verdict(invocation)
+        self.assertEqual(value["status"], "FAIL", value)
+        self.assertEqual(value["executed"][0]["nodejs"]["results"], {"parallel/first.js": "not ok"})
+        self.assertEqual(value["executed"][0]["nodejs"]["missing"], ["parallel/second.js"])
+
     def test_jtreg_section_stdout_is_not_result_framing(self) -> None:
         # Actual section output from DefaultProvider.java and the RMI tests
         # contains TEST: lines. A result-like stdout line is also ordinary text.
@@ -355,7 +423,7 @@ class QualificationReportTest(unittest.TestCase):
                   "TEST: rmi\nTEST RESULT: Failed. printed by the test\n")
         for zipped in (False, True):
             with self.subTest(zipped=zipped):
-                invocation = self.jtreg_fixture(
+                invocation = self.runtime_fixture(
                     self.jtreg_output("First.java", "Passed.", stdout)
                     + self.jtreg_output("Second.java", "Passed."), zipped=zipped)
                 self.capture(invocation)
@@ -371,7 +439,7 @@ class QualificationReportTest(unittest.TestCase):
         output = (self.jtreg_output("First.java", "Passed.") + heartbeat
                   + self.jtreg_output("Second.java", "Passed.")
                   .removeprefix("--------------------------------------------------\n"))
-        invocation = self.jtreg_fixture(output, zipped=False)
+        invocation = self.runtime_fixture(output, zipped=False)
         self.capture(invocation)
         value = self.verdict(invocation, analysis=self.analysis(invocation))
         self.assertEqual(value["status"], "PASS", value)
@@ -380,7 +448,7 @@ class QualificationReportTest(unittest.TestCase):
 
     def test_jtreg_skipped_result_is_not_a_passed_body(self) -> None:
         result = "Passed. Skipped: jtreg.SkippedException: Could not find NSS"
-        invocation = self.jtreg_fixture(self.jtreg_output("First.java", result)
+        invocation = self.runtime_fixture(self.jtreg_output("First.java", result)
                                         + self.jtreg_output("Second.java", "Passed."), zipped=False)
         self.capture(invocation)
         value = self.verdict(invocation, analysis=self.analysis(invocation))
@@ -393,7 +461,7 @@ class QualificationReportTest(unittest.TestCase):
     def test_jtreg_requires_matching_retained_batches(self) -> None:
         for missing in (True, False):
             with self.subTest(missing=missing):
-                invocation = self.jtreg_fixture(self.jtreg_output("First.java", "Passed."), zipped=False)
+                invocation = self.runtime_fixture(self.jtreg_output("First.java", "Passed."), zipped=False)
                 events = self.events(invocation)
                 result = next(event["testResult"] for event in events if "testResult" in event)
                 if missing:
@@ -411,7 +479,7 @@ class QualificationReportTest(unittest.TestCase):
     def test_jtreg_and_xml_failures_survive_other_report_errors(self) -> None:
         for malformed_xml in (False, True):
             with self.subTest(malformed_xml=malformed_xml):
-                invocation = self.jtreg_fixture(self.jtreg_output("First.java", "Failed."), zipped=False)
+                invocation = self.runtime_fixture(self.jtreg_output("First.java", "Failed."), zipped=False)
                 if malformed_xml:
                     (invocation / "test.xml").write_text("<truncated")
                 else:
@@ -902,6 +970,22 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["output_options"], [])
         self.assertEqual(report.preflight(events, 1, "build")["status"], "INCOMPLETE")
         self.assertEqual(report.preflight(events, 4, "test")["status"], "INCOMPLETE")
+        for tag in ("jtreg-results", "nodejs-results"):
+            with self.subTest(tag=tag):
+                records = [json.loads(line) for line in events.read_text().splitlines()]
+                configured = next(record for record in records if "configured" in record)
+                configured["configured"].setdefault("tag", []).append(tag)
+                path = self.root / f"{tag}-analysis.jsonl"
+                path.write_text("".join(json.dumps(record) + "\n" for record in records))
+                value = report.preflight(path, 1, "test")
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertIn("--nozip_undeclared_test_outputs", value["output_options"])
+                [pattern] = [option.removeprefix("--remote_download_regex=")
+                             for option in value["output_options"] if option.startswith("--remote_download_regex=")]
+                label = configured["id"]["targetConfigured"]["label"]
+                output = "bazel-out/config/testlogs/" + label.removeprefix("//").replace(":", "/")
+                self.assertRegex(output + "/run_1_of_2/test.outputs/batch-0.log", pattern)
+                self.assertIsNone(re.search(pattern, output + "/test.outputs/boot.log"))
 
     def test_test_no_build_requires_all_owners_and_no_failure(self) -> None:
         original = [json.loads(line) for line in (FIXTURES / "analysis-no-build/events.jsonl").read_text().splitlines()]
