@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T10:09:15.639124+00:00",
+    "updatedAt": "2026-10-20T10:17:16.598262+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5734,7 +5734,7 @@
         "owner": "root",
         "disposition": "Selected runtime and licensing qualification complete; public delivery work separate",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T10:00:50.636478+00:00",
+        "observedAt": "2026-10-20T10:09:14.439734+00:00",
         "nextAction": "Preserve source-bound completed evidence while Hostinet validates the public Node image builder and Node prepares generic licensing prerequisites. No duplicate full runtime replay or license audit is required.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39388037075",
@@ -13302,7 +13302,7 @@
       "url": "https://github.com/tamird/gvisor/commit/4b4be636405594d798f3197885869cdd66b1c17f",
       "group": "runtime",
       "status": "Agent delivery preparation: qualified image and runtime",
-      "updatedAt": "2026-10-20T10:00:01.118901+00:00",
+      "updatedAt": "2026-10-20T10:17:16.598262+00:00",
       "refinement": {
         "before": {
           "head": "b9d9dec695a6d6e8a28a08b8586d147662989f36"
@@ -13311,7 +13311,7 @@
           "head": "4b4be636405594d798f3197885869cdd66b1c17f"
         }
       },
-      "summary": "Public proposal 4b4be6364 now has both accepted full Node26 runtime evidence and canonical legacy-Docker image evidence. The single uncached image owner at 121e/Actions39397545416 used the exact public Makefile and all seven image inputs with DOCKER_BUILDKIT=0, Docker24.0.9; it produced v26.12.0 and all four canonical tags. This is image proof, with zero added runtime-case credit and no registry push. The original runtime skips/exclusions and failed attempts remain retained. Delivery preparation still tracks SNI #15960, proc a28 and the separate public licensing mechanism/catalog prerequisites; no full-upgrade contributor review or upstream PR yet.\n\nPublished Node 26.12.0 upgrade proposal incorporates the exact independently qualified 665f image and proctor inputs; only the timeout patch purpose header is explanatory. Public 4b4be6364 is on d5b and preserves the original b9d9 proposal. It updates image, runtime targets, public CI commands and the unchanged exclusion CSV together; canonical exact-case discovery preserves extensions and configured WPT variants. Full 665f runtime proof is accepted separately, with skips/exclusions retained; public plain-Docker image validation is still pending. Delivery depends on SNI #15960, the procfs correction and licensing support/catalog prerequisites. Hostinet owns source/build preparation; no contributor question or upstream PR yet. Refinement command: git range-diff --creation-factor=999 b9d9dec695a6d6e8a28a08b8586d147662989f36^! 4b4be636405594d798f3197885869cdd66b1c17f^!.\n\n",
+      "summary": "The public Node catalog child 8aa91dcff7ea6b0c8c8d8f188aa4a4458d41c38b is published on upgrade/nodejs-26.12.0-licenses, parent4b4. Independent source review confirms the exact 552 generated npm rows and eight prior grants, preserving all195 existing public rows, five exceptions and the allowlist. The exact ab1e0708 offline TestLicensePolicy run now passes: one uncached owner/attempt and one positive against all747 catalog rows/13 exceptions, with no gaps or skips. Independent compact review verifies source/request/receipt/member hashes and separate4.509609-second automatic/86.802357-second owner timing. This supplies no new Fetch/Verify, HTTP, classifier or image/runtime proof. This child will fold into the existing Node upgrade after prerequisite mechanisms/classifier, not a standalone catalog proposal or new contributor question.\n\nPublic proposal 4b4be6364 now has both accepted full Node26 runtime evidence and canonical legacy-Docker image evidence. The single uncached image owner at 121e/Actions39397545416 used the exact public Makefile and all seven image inputs with DOCKER_BUILDKIT=0, Docker24.0.9; it produced v26.12.0 and all four canonical tags. This is image proof, with zero added runtime-case credit and no registry push. The original runtime skips/exclusions and failed attempts remain retained. Delivery preparation still tracks SNI #15960, proc a28 and the separate public licensing mechanism/catalog prerequisites; no full-upgrade contributor review or upstream PR yet.\n\nPublished Node 26.12.0 upgrade proposal incorporates the exact independently qualified 665f image and proctor inputs; only the timeout patch purpose header is explanatory. Public 4b4be6364 is on d5b and preserves the original b9d9 proposal. It updates image, runtime targets, public CI commands and the unchanged exclusion CSV together; canonical exact-case discovery preserves extensions and configured WPT variants. Full 665f runtime proof is accepted separately, with skips/exclusions retained; public plain-Docker image validation is still pending. Delivery depends on SNI #15960, the procfs correction and licensing support/catalog prerequisites. Hostinet owns source/build preparation; no contributor question or upstream PR yet. Refinement command: git range-diff --creation-factor=999 b9d9dec695a6d6e8a28a08b8586d147662989f36^! 4b4be636405594d798f3197885869cdd66b1c17f^!.\n\n",
       "followup": {
         "owner": "hostinet_delivery",
         "disposition": "Runtime and public builder qualification complete; delivery prerequisites remain",
@@ -13328,6 +13328,10 @@
         {
           "label": "Canonical plain-Docker image owner PASS",
           "url": "https://github.com/tamird/gvisor/actions/runs/39397545416"
+        },
+        {
+          "label": "Exact public Node catalog: offline policy PASS",
+          "url": "https://app.buildbuddy.io/invocation/ab1e0708-9f27-4a92-a9de-d044f403e32c"
         }
       ]
     },
