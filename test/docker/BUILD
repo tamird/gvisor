@@ -153,6 +153,26 @@ source_image_archive(
     tags = ["manual"],
 )
 
+source_image_archive(
+    name = "syzkaller_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "80GB",
+        memory = "12GB",
+        start_daemon = True,
+        vfs = True,
+    ),
+    image = "syzkaller",
+    tags = ["manual"],
+)
+
 # Build the CUDA contexts with their declared Go runners without requiring GPU
 # execution. The GPU smoke and CUDA cohorts consume these declared archives.
 [
