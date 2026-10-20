@@ -1,3 +1,4 @@
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//test/runner:defs.bzl", "syscall_test")
 load("//tools:defs.bzl", "more_shards", "most_shards")
 
@@ -808,6 +809,18 @@ syscall_test(
 syscall_test(
     kvm_use_cpu_nums = True,
     test = "//test/syscalls/linux:rseq_test",
+)
+
+# The public ARM64 RC profile omits KVM. Qualify its existing RSEQ payload
+# separately on the EL2 guest used by the other KVM capability tests.
+arm64_tcg_test(
+    name = "rseq_test_runsc_kvm_rc_tcg",
+    size = "medium",
+    args = ["--strace=false"],
+    arm64_el2 = True,
+    image = "//test/rbe/tcg:rc_guest",
+    payload = ":rseq_test_runsc_kvm_arm64",
+    tags = [],
 )
 
 syscall_test(
