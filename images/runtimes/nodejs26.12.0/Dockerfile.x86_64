@@ -25,7 +25,9 @@ RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/timeouts.patch \
 
 # Fail if Rust is unavailable instead of silently disabling Temporal support.
 RUN ./configure --v8-enable-temporal-support
-RUN make -j $(nproc) test-build
+# Addon documentation generation requires an available Node executable.
+RUN make -j $(nproc) all \
+  && make -j $(nproc) test-build
 
 # Use node --check on the files we patched
 RUN out/Release/node --check test/common/index.js
