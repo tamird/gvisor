@@ -241,13 +241,16 @@ function sourceAuthenticationRecovery(node) {
   const recovery = node.ciRecovery, pr = node.github;
   if (recovery?.kind !== "source-check-authentication" || !pr || pr.revisionChanged || pr.status !== "open"
       || recovery.sourceHead !== pr.head || !completeChecks(pr)) return null;
+  const names = new Set(recovery.checks.map(item => item.name));
+  const matching = pr.checks.contexts.filter(check => check.kind === "check-run" && names.has(check.name));
+  if (matching.length !== recovery.checks.length) return null;
   for (const signal of recovery.checks) {
-    const matching = pr.checks.contexts.filter(check => check.kind === "check-run" && check.name === signal.name);
-    if (matching.length !== 1 || matching[0].id !== signal.id || !FAILURE_STATES.has(matching[0].state)
-        || matching[0].url !== signal.jobURL || matching[0].appSlug !== "github-actions") return null;
+    const check = matching.find(item => item.id === signal.id);
+    if (!check || check.name !== signal.name || !FAILURE_STATES.has(check.state)
+        || check.url !== signal.jobURL || check.appSlug !== "github-actions") return null;
   }
   return { ids: new Set(recovery.checks.map(item => item.id)),
-    detail: `${recovery.checks.map(item => item.name).join("; ")}: the inspected Actions logs report a missing API key. A maintainer needs to correct CI authentication. The failed check results remain visible.` };
+    detail: `${[...names].join("; ")}: the inspected Actions logs report a missing API key. A maintainer needs to correct CI authentication. The failed check results remain visible.` };
 }
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
@@ -1292,8 +1295,7 @@ function validateRegistry(candidate) {
             || !recovery.checks.every(item => item && [item.id, item.name].every(value => typeof value === "string" && value.trim())
               && Number.isSafeInteger(item.workflowRun) && item.workflowRun > 0 && Number.isSafeInteger(item.job) && item.job > 0
               && item.jobURL === `https://github.com/${node.repo}/actions/runs/${item.workflowRun}/job/${item.job}`)
-            || new Set(recovery.checks.map(item => item.id)).size !== recovery.checks.length
-            || new Set(recovery.checks.map(item => item.name)).size !== recovery.checks.length)
+            || new Set(recovery.checks.map(item => item.id)).size !== recovery.checks.length)
           throw new Error("Invalid CI recovery record");
       } else if (recovery.kind !== "dependency-download-retry-denied" || node.repo !== candidate.meta.repo || recovery.httpStatus !== 403
         || !/^[a-f0-9]{40}$/.test(recovery.importHead)

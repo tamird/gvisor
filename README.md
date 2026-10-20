@@ -203,9 +203,11 @@ results remain visible. This record never comes from parsing comments or prose.
 The same record can identify inspected source-check logs that report a missing
 API key. It binds the current source head and each exact Actions check ID and
 job URL, routing those failures to **CI configuration or retry** with their
-specific authentication need. It does not
-infer why the credential is absent. Uncovered failures remain agent work, and
-the same identity, completeness and supersession checks apply.
+specific authentication need. Multiple jobs may share a name only when every
+current same-name job has an exact recorded identity. An extra or changed job
+invalidates the exception. The record does not infer why the credential is
+absent. Uncovered failures remain agent work. The same identity, completeness
+and supersession checks apply.
 
 The browser loads this single published snapshot; **Reload snapshot** downloads
 both the registry and GitHub snapshot without querying GitHub or changing the

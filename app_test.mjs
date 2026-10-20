@@ -372,14 +372,16 @@ function sourceAuthenticationFailure() {
   node.url = 'https://github.com/buildbuddy-io/buildbuddy/pull/13849';
   node.ciRecovery = { kind: 'source-check-authentication', reason: 'missing-api-key', sourceHead: node.github.head,
     observedAt: '2026-10-13T17:35:00Z', checks: [{ id: 'source-check', name: 'build', workflowRun: 39303727616,
-      job: 118523915013, jobURL: 'https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727616/job/118523915013' }] };
-  node.github.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [
-    { id: 'source-check', name: 'build', kind: 'check-run', appSlug: 'github-actions', state: 'FAILURE', purpose: 'validation', url: node.ciRecovery.checks[0].jobURL },
-  ] };
+      job: 118523915013, jobURL: 'https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727616/job/118523915013' },
+      { id: 'push-source-check', name: 'build', workflowRun: 39303727617,
+        job: 118523915014, jobURL: 'https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727617/job/118523915014' }] };
+  node.github.checks = { complete: true, state: 'FAILURE', total: 2, contexts: node.ciRecovery.checks.map(signal => (
+    { id: signal.id, name: signal.name, kind: 'check-run', appSlug: 'github-actions', state: 'FAILURE', purpose: 'validation', url: signal.jobURL }
+  )) };
   return node;
 }
 
-test('proven source authentication failures are maintainer work without hiding unrelated source failures', () => {
+test('proven same-name source authentication failures are maintainer work without hiding unrelated source failures', () => {
   const node = sourceAuthenticationFailure();
   const reason = reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry');
   assert.equal(reason.owner, 'maintainer'); assert.equal(reason.title, 'Maintainer CI configuration');
@@ -397,6 +399,8 @@ test('source authentication recovery expires when its head or check evidence cha
     node => { node.github.head = 'c'.repeat(40); },
     node => { node.github.checks.contexts[0].id = 'new-job'; },
     node => { delete node.github.checks.contexts[0].id; },
+    node => { node.github.checks.contexts[0].name = 'renamed'; },
+    node => { node.github.checks.contexts.pop(); node.github.checks.total--; },
     node => { node.github.checks.contexts[0].url += '?different'; },
     node => { node.github.checks.contexts[0].appSlug = 'another-app'; },
     node => { node.github.checks.complete = false; },
