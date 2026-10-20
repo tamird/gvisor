@@ -3920,14 +3920,23 @@ func TestMSSNotDelayed(t *testing.T) {
 func TestMinshallPartialSegment(t *testing.T) {
 	const maxPayload = 100
 	for _, gso := range []bool{false, true} {
-		for _, prefix := range []int{0, maxPayload} {
-			t.Run(fmt.Sprintf("gso=%t/full-prefix=%d", gso, prefix), func(t *testing.T) {
+		for _, test := range []struct {
+			name       string
+			prefix     int
+			expireCork bool
+		}{
+			{name: "full-prefix=0"},
+			{name: "full-prefix=100", prefix: maxPayload},
+			{name: "cork-expired", expireCork: true},
+		} {
+			t.Run(fmt.Sprintf("gso=%t/%s", gso, test.name), func(t *testing.T) {
+				clock := faketime.NewManualClock()
 				acknowledged := make(chan seqnum.Value, 16)
 				c := context.NewWithOpts(t, context.Options{
 					EnableV4: true,
 					MTU:      e2e.DefaultMTU,
-					// Timers must not release or retransmit the held data.
-					Clock: faketime.NewManualClock(),
+					// Keep timers stopped except for the explicit CORK expiry below.
+					Clock: clock,
 					Probe: func(state *tcp.TCPEndpointState) {
 						select {
 						case acknowledged <- state.Sender.SndUna:
@@ -3941,7 +3950,7 @@ func TestMinshallPartialSegment(t *testing.T) {
 					header.TCPOptionMSS, 4, byte(maxPayload / 256), byte(maxPayload % 256),
 				})
 				c.EP.SocketOptions().SetDelayOption(true)
-				data := make([]byte, prefix+3*maxPayload+3)
+				data := make([]byte, test.prefix+3*maxPayload+3)
 				for i := range data {
 					data[i] = byte(i)
 				}
@@ -3994,14 +4003,25 @@ func TestMinshallPartialSegment(t *testing.T) {
 					}
 				}
 
-				if prefix != 0 {
-					write(prefix)
-					receive(prefix)
+				if test.prefix != 0 {
+					write(test.prefix)
+					receive(test.prefix)
 				}
 				// Both an idle connection and one with only full segments in
 				// flight must send the split write's short tail without an ACK.
+				c.EP.SocketOptions().SetCorkOption(test.expireCork)
 				write(2*maxPayload + 1)
-				receive(2*maxPayload + 1)
+				if test.expireCork {
+					receive(2 * maxPayload)
+					noPacket()
+					// CORK expiry assigns flags before sending. Its partial tail
+					// must still count as outstanding data for Nagle below.
+					clock.Advance(tcp.MinRTO)
+					receive(1)
+					c.EP.SocketOptions().SetCorkOption(false)
+				} else {
+					receive(2*maxPayload + 1)
+				}
 				smallEnd := received
 				// Sending another full segment must not replace the small end.
 				write(maxPayload)
