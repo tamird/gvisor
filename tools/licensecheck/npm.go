@@ -266,7 +266,11 @@ func npmLicenses(d dep, body []byte) (Licenses, error) {
 	}
 	defer z.Close()
 	reader := tar.NewReader(z)
-	prefix := path.Join("package", d.npmPath) + "/"
+	var root string
+	prefix := d.npmPath
+	if prefix != "" {
+		prefix += "/"
+	}
 	files := make(map[string][]byte)
 	var notices, readmes []string
 	for {
@@ -277,7 +281,26 @@ func npmLicenses(d dep, body []byte) (Licenses, error) {
 		if err != nil {
 			return nil, err
 		}
-		name, ok := strings.CutPrefix(header.Name, prefix)
+		// npm removes the archive's leading directory when unpacking. Registry
+		// archives use both "package" and other names, including @types names.
+		name := strings.TrimSuffix(header.Name, "/")
+		if !fs.ValidPath(name) || strings.Contains(name, `\`) {
+			return nil, fmt.Errorf("%q: invalid npm archive path", header.Name)
+		}
+		directory, relative, nested := strings.Cut(name, "/")
+		if root == "" {
+			root = directory
+		}
+		if directory != root {
+			return nil, fmt.Errorf("%q: npm archive has multiple roots", header.Name)
+		}
+		if !nested {
+			if header.Typeflag != tar.TypeDir {
+				return nil, fmt.Errorf("%q: npm archive entry has no leading directory", header.Name)
+			}
+			continue
+		}
+		name, ok := strings.CutPrefix(relative, prefix)
 		if !ok || strings.Contains(name, "/") || name == "" {
 			continue
 		}
@@ -302,6 +325,7 @@ func npmLicenses(d dep, body []byte) (Licenses, error) {
 			readmes = append(readmes, name)
 		}
 	}
+	prefix = path.Join(root, d.npmPath) + "/"
 	var manifest struct{ Name, Version string }
 	if err := json.Unmarshal(files["package.json"], &manifest); err != nil {
 		return nil, fmt.Errorf("%s: missing or invalid package manifest: %w", prefix, err)
