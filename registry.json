@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T02:38:07.205060+00:00",
+    "updatedAt": "2026-10-20T02:54:00.448888+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5681,14 +5681,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Node upgrade and public source qualification active",
-      "summary": "Full Node22.2 run68993309 atcfab is closed raw FAIL/COMPLETE with inner accounting INCOMPLETE. Independent review authenticated the built inventory,321 retained member bindings and all compact counts. Each mode selected3937 cases: directfs has3803 unambiguous expected successes,122 runtime skips,4 classifier exclusions and8 ambiguous identities; goferfs has3802 successes, the same exclusions/ambiguities and one actual worker-arraybuffer-zerofill timeout. Eight .js/.mjs filename families affect16 shards and receive no ambiguous-case credit. The automatic receipt took9.251532 seconds; owner reconciliation took another335.408724 seconds, with no manual collection and one local reconciliation. No timeout cause or controlled image-build speedup is claimed. Hostinet owns the user-requested Node26.12 upgrade and exact configured-case identity correction. Both eb95 Brotli and d064 error-serdes backport proposals are superseded; preserve their evidence, with no pending contributor question or PR.\n\nRSEQ qualification remains complete at82b895:54 named runtime positives plus lint on the established AMD64 and ARM64 guest routes, with exact-source and toolchain limits retained. Portable ace40f56d awaits the already-sent contributor decision. Node owns the three TSC runs at2f4de97d; root owns public-runtime373dd analyzer checks and the corrected24-owner syscall selection. The first loading failure remains historical. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and NVIDIA availability limits remain. Prior full build, unit, Java and runtime records retain their original source/result scopes rather than claiming all-current qualification.",
-      "updatedAt": "2026-10-20T02:38:07.205060+00:00",
+      "summary": "Full Node22.2 run68993309 atcfab is closed raw FAIL/COMPLETE with inner accounting INCOMPLETE. Independent review authenticated the built inventory,321 retained member bindings and all compact counts. Each mode selected3937 cases: directfs has3803 unambiguous expected successes,122 runtime skips,4 classifier exclusions and8 ambiguous identities; goferfs has3802 successes, the same exclusions/ambiguities and one actual worker-arraybuffer-zerofill timeout. Eight .js/.mjs filename families affect16 shards and receive no ambiguous-case credit. The automatic receipt took9.251532 seconds; owner reconciliation took another335.408724 seconds, with no manual collection and one local reconciliation. No timeout cause or controlled image-build speedup is claimed. Hostinet owns the user-requested Node26.12 upgrade and exact configured-case identity correction. Both eb95 Brotli and d064 error-serdes backport proposals are superseded; preserve their evidence, with no pending contributor question or PR.\n\nRSEQ qualification remains complete at82b895:54 named runtime positives plus lint on the established AMD64 and ARM64 guest routes, with exact-source and toolchain limits retained. Portable ace40f56d awaits the already-sent contributor decision. TSC2f4de results are independently bound: AMD64 has204 passing records and4 disassembly-expectation failures; native ARM64 has139 passes,3 expectation failures and one actual host VDSO allocation failure. Both ARM EL2 KVM owners passed16 named records. Node owns narrow LLVM-expectation corrections and exact failed-host ELF retention for the unresolved allocation issue; no complete TSC qualification is claimed. Root public-runtime373dd checks retained234 positives across23 ordinary owners, with two benchmark-only wire owners correctly rejected in ordinary test mode. The established8-owner benchmark cohort subsequently passed72 one-iteration rows with actual Linux/amd64 and Linux/arm64 evidence. Both original loading and ordinary-test failures remain. Root owns a bounded netlink operstate-wait correction after the selected native case observed asynchronous carrier-state propagation; six-variant validation is pending. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and NVIDIA availability limits remain. Prior full build, unit, Java and runtime records retain their original source/result scopes rather than claiming all-current qualification.\n\nNode 26.12 integration b049f290 has passed its five owning checks (six XML positives and 98 reporter methods) and the source-inventory/exact-selector metadata smoke. The smoke lists 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs using the official binary and Python 3.10; it does not qualify the Ubuntu 26.04 built image or runtime bodies. Both compact gates are independently verified. The authorized full run a6d2cfa3-1745-4c63-a40d-a73030cc16d8 is live at b049f290 under Hostinet\u2019s sole collector; no runtime result is claimed yet.",
+      "updatedAt": "2026-10-20T02:54:00.448888+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T02:36:20.568830+00:00",
-        "disposition": "Node upgrade and newly merged public source qualification active",
-        "nextAction": "Hostinet owns Node26.12 and configured-case identities after independently reviewed full689 FAIL. Node owns the three current TSC runs, and root owns the current public syscall/analyzer checks. Preserve original failures, skips, ambiguous identities and source bounds; accept only complete compact outcomes. Both standalone Node backports are superseded without a new contributor decision.",
+        "observedAt": "2026-10-20T02:47:32.395659+00:00",
+        "disposition": "Node upgrade, TSC host compatibility and netlink fixture validation active",
+        "nextAction": "Hostinet owns Node26.12 configured-case integration and validation. Node owns the unresolved native ARM host VDSO layout issue and narrow expectation continuations. Root owns netlink operstate wait validation and public-runtime evidence composition. Preserve original raw failures and skips; do not transfer source-specific or guest results into a whole-current qualification claim.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/68993309-3173-4938-ac7f-4399447df983"
         ]
@@ -10584,14 +10584,14 @@
       "url": "https://github.com/google/gvisor/pull/15932",
       "group": "runtime",
       "status": "open",
-      "summary": "Matching import #16016 advanced to 0fed4b748018c1fda35b2f065423763de1156b5c during the bounded snapshot read. Fresh exact-head observation shows generate 39356142484 running, Gazelle passing and public 51493/internal 33206 pending. The previous 227b generation failure is retained as historical disposable-clone cleanup evidence; it does not describe this new execution. Source 254c remains unchanged and no new rebase, retry or comment was performed.\n\nEarlier observations (superseded where updated above):\n\nThe latest matching import16016/227b9e82 has a new generation failure: it successfully pushed the exported Go branch, then disposable-clone cleanup failed with Directory not empty (job118403255784). Exact imported go_branch.sh lacks the already-delivered15598 automatic-maintenance mitigation. This remains a candidate mitigation, with the writer unknown; no new source amendment, identical replay or immediate rebase is justified. Prior65fb import checks passed, and source internal-feedback failures remain separate.\n\nAt the 00:45 UTC observation, import #16016 is open at 65fb2ca58 and explicitly matches current source 254c5d70b; its checks are pending. Earlier failed import executions remain historical evidence. No new maintainer review or public notice accompanied this observed progression.\n\nQuiet patch-preserving rebase published at 254c5d70b9 on current master051768. The single topic commit, message and author are unchanged; complete range-diff and stable patch identity agree. Original approval provenance remains attached to the preserved patch. No reviewer notice was posted. Prior import checkout403 failures remain visible and are not claimed repaired by this rebase.\n\nThe complete bounded audit of import16016/build51371 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
-      "updatedAt": "2026-10-20T02:01:02.638710+00:00",
+      "summary": "At the 02:49 UTC snapshot, matching import #16016 at 0fed4b748018c1fda35b2f065423763de1156b5c has passing generate, Gazelle, public Buildkite and internal checks. Source #15932 remains 254c5d70b92a85f3d3b1519efe4ad34dff8353b6. Its Copybara feedback failure reports a separate 01:45:34 internal run; that private cause is unknown. Continue ordinary import monitoring without another rebase, retry or comment. The earlier checkout HTTP403 and disposable-clone cleanup failures remain historical evidence, and #15598 remains a candidate cleanup mitigation rather than a proven writer diagnosis. The quiet rebase preserved the approved topic patch and posted no reviewer notice.",
+      "updatedAt": "2026-10-20T02:54:00.448888+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "254c5d70b92a85f3d3b1519efe4ad34dff8353b6",
-        "observedAt": "2026-10-20T02:01:02.393175+00:00",
-        "disposition": "New matching import checks pending; historical cleanup failure retained",
-        "nextAction": "Follow current matching import16016/0fed through the existing sweep. Keep prior227b cleanup failure linked to existing15598 candidate mitigation; no duplicate rebase, retry, comment or new source investigation.",
+        "observedAt": "2026-10-20T02:49:11.365251+00:00",
+        "disposition": "Matching import checks green; source feedback retained separately",
+        "nextAction": "Follow matching import #16016 at 0fed4b748 through ordinary import progression. Its generate, Gazelle, public and internal checks pass. Retain the source Copybara failure timestamped 01:45:34 separately; do not infer its private cause or repeat a rebase, retry or comment. Earlier checkout and clone-cleanup failures remain historical evidence.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39353604011/job/118403255784",
           "https://github.com/google/gvisor/pull/15598"
@@ -10617,6 +10617,10 @@
         {
           "label": "Current import checkout failure",
           "url": "https://buildkite.com/gvisor/pipeline/builds/51371#01a155ef-675a-4a20-bd3f-0bfa7f3ebc63"
+        },
+        {
+          "label": "Current matching import",
+          "url": "https://github.com/google/gvisor/pull/16016"
         }
       ],
       "number": 15932,
