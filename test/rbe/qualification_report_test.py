@@ -1500,6 +1500,7 @@ if 'aquery' in sys.argv:
         event.pop('aborted', None)
         if 'finished' in event:
             event['finished']['exitCode'] = {'name': 'SUCCESS', 'code': 0}
+            event['finished']['overallSuccess'] = True
     events.write_text(''.join(json.dumps(event) + '\\n' for event in analysis))
     raise SystemExit(0)
 if '--nobuild' in sys.argv:
