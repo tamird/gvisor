@@ -253,6 +253,8 @@ class QualificationReportTest(unittest.TestCase):
                     self.assertEqual(receipt["status"], status, receipt)
                     self.assertEqual(receipt["expected_owner_count"], 0)
                     self.assertEqual(receipt["executed_attempt_count"], 0)
+                    self.assertEqual(receipt["invocations"][0]["expected_owner_count"], 0)
+                    self.assertEqual(receipt["invocations"][0]["executed_attempt_count"], 0)
                     self.assertEqual(receipt["case_counts"], {})
                     [record] = receipt["commands"]
                     self.assertEqual(record["bazel_command"], None if damage == "arguments" else command)
@@ -1701,6 +1703,11 @@ signal.pause()
         (invocation / "executed-arguments.txt").write_text('--bazelrc=/private.rc\ntest\n--nobuild\n')
         self.capture(invocation)
         self.assertEqual(self.verdict(invocation)["status"], "PASS")
+        archive = self.root / "analysis.tar.gz"
+        report.bundle(self.evidence, 0, 0, archive)
+        receipt = report.receipt(archive, report.file_record(archive)["sha256"], context["expected_source"])
+        [phase] = receipt["invocations"]
+        self.assertEqual((phase["expected_owner_count"], phase["executed_attempt_count"]), (1, 0))
         context["command_kind"] = "test"
         report.write_json(invocation / "context.json", context)
         self.assertEqual(self.verdict(invocation)["status"], "INCOMPLETE")
@@ -1764,6 +1771,9 @@ signal.pause()
                 self.assertEqual(value["invocations"][0]["errors"], producer["invocations"][0]["verdict"]["errors"])
                 self.assertEqual(value["expected_owner_count"], len(producer["expected"]))
                 self.assertEqual(value["executed_attempt_count"], len(producer["executed"]))
+                phase = producer["invocations"][0]["verdict"]
+                self.assertEqual(value["invocations"][0]["expected_owner_count"], len(phase["expected"]))
+                self.assertEqual(value["invocations"][0]["executed_attempt_count"], len(phase["executed"]))
                 self.assertGreaterEqual(report.timestamp(value["consumer_verified_at"]),
                                         report.timestamp(value["verdict_available_at"]))
                 self.assertEqual(value["invocations"][0]["execution_finished_at"],

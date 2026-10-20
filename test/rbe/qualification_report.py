@@ -1349,6 +1349,8 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             "source", "status", "command_kind", "native_exit", "capture_exit", "accepted_analysis_exit",
             "errors", "execution_finished_at", "bep_finish", "verdict_available_at",
         )}}
+        invocation["expected_owner_count"] = len(sequence(verdict.get("expected", [])))
+        invocation["executed_attempt_count"] = len(sequence(verdict.get("executed", [])))
         for key in ("expected_aspects", "completed_aspects"):
             if key in verdict:
                 invocation[key] = verdict[key]
