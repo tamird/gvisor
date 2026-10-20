@@ -1418,9 +1418,21 @@ class QualificationReportTest(unittest.TestCase):
         # Run the actual shell entry point and reporter. Only Git identity and
         # Bazel are fixtures; the real timeout interrupts a waiting child.
         bazel_options = ["--config=plugin-tldk", "--define=literal=before#after with spaces"]
-        for phase in ("preflight", "execution", "command-pass", "command-fail", "command-timeout"):
-            with self.subTest(phase=phase):
-                workspace = self.root / phase
+        cases = (
+            ("preflight", "amd64", None),
+            ("execution", "amd64", "parallel/test-http-outgoing-end-cork.js"),
+            ("execution", "amd64", ""),
+            ("execution", "amd64", None),
+            ("execution", "all", "parallel/test-http-outgoing-end-cork.js"),
+            ("execution", "all", ""),
+            ("execution", "all", None),
+            ("command-pass", "amd64", None),
+            ("command-fail", "amd64", None),
+            ("command-timeout", "amd64", None),
+        )
+        for index, (phase, architecture, runtime_filter) in enumerate(cases):
+            with self.subTest(phase=phase, architecture=architecture, runtime_filter=runtime_filter):
+                workspace = self.root / str(index)
                 scripts = workspace / "test/rbe"
                 scripts.mkdir(parents=True)
                 for name in (
@@ -1462,7 +1474,10 @@ from pathlib import Path
 import signal
 import sys
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
-    stream.write(json.dumps(sys.argv[1:]) + '\\n')
+    stream.write(json.dumps({
+        'arguments': sys.argv[1:],
+        'runtime_filter': os.environ.get('RUNTIME_TESTS_FILTER'),
+    }) + '\\n')
 if os.environ['TEST_PHASE'].startswith('command-'):
     Path(os.environ['TEST_WORK_STARTED']).touch()
     if os.environ['TEST_PHASE'] == 'command-timeout':
@@ -1479,6 +1494,14 @@ if os.environ['TEST_PHASE'].startswith('command-'):
     raise SystemExit(0)
 events = Path(next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--build_event_json_file=')))
 events.write_text(Path(os.environ['TEST_ANALYSIS']).read_text())
+if 'aquery' in sys.argv:
+    analysis = [json.loads(line) for line in events.read_text().splitlines()]
+    for event in analysis:
+        event.pop('aborted', None)
+        if 'finished' in event:
+            event['finished']['exitCode'] = {'name': 'SUCCESS', 'code': 0}
+    events.write_text(''.join(json.dumps(event) + '\\n' for event in analysis))
+    raise SystemExit(0)
 if '--nobuild' in sys.argv:
     raise SystemExit(1)
 Path(os.environ['TEST_WORK_STARTED']).touch()
@@ -1503,7 +1526,7 @@ signal.pause()
                     "BUILDBUDDY_ARTIFACTS_DIRECTORY": str(runner_temp),
                     "QUALIFICATION_COMMIT": source,
                     "QUALIFICATION_EXECUTION": "remote",
-                    "QUALIFICATION_ARCH": "amd64",
+                    "QUALIFICATION_ARCH": architecture,
                     "QUALIFICATION_LANES": "gazelle" if phase.startswith("command-") else "test",
                     "QUALIFICATION_TARGETS": "" if phase.startswith("command-") else "//test/syscalls:exec_binary_test_native_amd64",
                     "QUALIFICATION_HEADER_BASE": "",
@@ -1520,6 +1543,9 @@ signal.pause()
                     "TEST_WORK_STARTED": str(started),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
+                environment.pop("RUNTIME_TESTS_FILTER", None)
+                if runtime_filter is not None:
+                    environment["RUNTIME_TESTS_FILTER"] = runtime_filter
                 options = [] if phase.startswith("command-") else [f"--bazel-option={option}" for option in bazel_options]
                 result = subprocess.run(
                     ["bash", "test/rbe/actions.sh", *options],
@@ -1528,8 +1554,17 @@ signal.pause()
                 self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
                 self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
                 if phase == "execution":
-                    commands = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
+                    observations = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
+                    profiles = [row["arguments"] for row in observations if "aquery" in row["arguments"]]
+                    self.assertEqual(len(profiles), 2 if architecture == "all" else 0, observations)
+                    tests = [row for row in observations if "test" in row["arguments"]]
+                    commands = [row["arguments"] for row in tests]
                     self.assertEqual(len(commands), 2, commands)
+                    for row in tests:
+                        self.assertEqual(row["runtime_filter"], runtime_filter)
+                        self.assertEqual("--test_env=RUNTIME_TESTS_FILTER" in row["arguments"],
+                                         runtime_filter is not None)
+                        self.assertEqual("--config=rbe-matrix" in row["arguments"], architecture == "all")
                     for command in commands:
                         for option in bazel_options:
                             self.assertIn(option, command)

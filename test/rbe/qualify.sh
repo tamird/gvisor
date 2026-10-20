@@ -847,6 +847,7 @@ run_platform_matrix() (
         # compare their configured owners with the final combined selection.
         include_public_profiles=true
         options+=("${bazel_options[@]}")
+        language_test_options
         printf '%s\n' "${test_targets[@]}" >> "$selection_dir/shared-targets"
         ;;
       nogo)
@@ -1113,6 +1114,7 @@ run_lane() (
       ;;
     test)
       options=("${bazel_options[@]}")
+      language_test_options
       targets=("${test_targets[@]}")
       if [[ -n $test_filter ]]; then
         options+=("--test_filter=$test_filter")
