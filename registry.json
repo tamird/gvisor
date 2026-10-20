@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T00:12:36.624489+00:00",
+    "updatedAt": "2026-10-20T00:22:18.274621+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4686,19 +4686,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "seccomp-cgo-thread-clone",
-      "head": "8ac030121ad00ece8164b31d5c93810ba736eabd",
+      "head": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
       "title": "Allow libc thread creation in cgo filters",
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
-      "summary": "The complete bounded audit of import15718/build51374 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
+      "updatedAt": "2026-10-20T00:22:18.274621+00:00",
+      "summary": "Quiet patch-preserving rebase published at b33e9c5be3 on current master051768. The single topic commit, message and author are unchanged; complete range-diff and stable patch identity agree. Original approval provenance remains attached to the preserved patch. No reviewer notice was posted. Prior import checkout403 failures remain visible and are not claimed repaired by this rebase.\n\nThe complete bounded audit of import15718/build51374 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "8ac030121ad00ece8164b31d5c93810ba736eabd",
-        "observedAt": "2026-10-19T22:49:57.566473+00:00",
-        "disposition": "Checkout authorization failure needs identified external owner/report",
-        "nextAction": "All three failed attempts in import15718/build51374 fail checkout403 before source tests. Root owns identifying the provider authorization owner and concrete report/response; audit completion does not itself transfer the action. No source change or blind retry, and no new public comment authorized.",
+        "owner": "work_map_current",
+        "sourceHead": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
+        "observedAt": "2026-10-20T00:22:18.000313+00:00",
+        "disposition": "Quiet patch-equivalent recovery delivered; current checks and import progression pending",
+        "nextAction": "Follow current-head checks and any exact-source replacement import in the ordinary sweep. Preserve prior checkout403 evidence; a recurring failure needs an assigned concrete action. No immediate rebase, duplicate reviewer request or public comment.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/51374#01a155f1-9e69-496e-8d6a-2b9a91f481de",
           "https://github.com/google/gvisor/pull/15718"
@@ -4711,7 +4711,7 @@
           "head": "82c9f8fc129fcc2fb62a61906be3ead239eda8e0"
         },
         "after": {
-          "head": "8ac030121ad00ece8164b31d5c93810ba736eabd"
+          "head": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152"
         }
       },
       "evidence": [
@@ -4733,12 +4733,12 @@
         }
       ],
       "approvedPatch": {
-        "head": "8ac030121ad00ece8164b31d5c93810ba736eabd",
+        "head": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
         "approvedHead": "e9b0e1eb831c5e43e1a9c2b4a6376c95f66380d4",
         "reviewId": "PRR_kwDOB9IlXs8AAAABSzDieQ",
         "reviewer": "EtiennePerot",
         "submittedAt": "2026-10-17T05:35:55Z",
-        "verifiedAt": "2026-10-19T21:13:25.316060+00:00",
+        "verifiedAt": "2026-10-20T00:22:18.000313+00:00",
         "method": "stable-patch-id",
         "oldPatchId": "273ed9bacacda1ea5481b7e687b3323c17e85161",
         "newPatchId": "273ed9bacacda1ea5481b7e687b3323c17e85161"
@@ -5627,16 +5627,17 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-20T00:12:36.624489+00:00",
-      "summary": "The same-source loader diagnostic reproduced the failure and completed capture. The child loaded eight declared DT_NEEDED libraries and no Abseil DSO; the declared strings library exports the missing symbol, while posix_error leaves it undefined. The fixture link command places strings before its trailing no-as-needed option. Linker dependency retention is the next investigation; option ordering is not yet a proved cause.\n\nThe temporary exact-import diagnostic reproduced an actual pre-discovery dynamic-linker failure: posix_error_test exits127 with empty stdout because libposix_error cannot resolve absl lts20260817 FastIntToBuffer. This is below the fallback parser; owning shared-library dependency and artifact provenance remain to be diagnosed. Original public failure and hosted-environment limits are retained.\n\nHostinet now owns the bounded discovery-test diagnosis for older import15687/build50720. The exact subprocess error remains hidden by the existing fallback; no source correction or retry is yet qualified. WorkMap retains sole periodic monitoring.\n\nThe older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
+      "updatedAt": "2026-10-20T00:22:18.274621+00:00",
+      "summary": "The diagnosed linker failure is already corrected on current source0729 by merged toolchain fix928823 (#15772, imported by #15796). Fifteen owning toolchain, consumer and Bazel input files match the retained qualified source. The older failed importbc25 lacks that fix and remains failed; no fresh current-head runtime result is claimed. Source-fix work is complete and ordinary import progression remains pending.\n\nThe same-source loader diagnostic reproduced the failure and completed capture. The child loaded eight declared DT_NEEDED libraries and no Abseil DSO; the declared strings library exports the missing symbol, while posix_error leaves it undefined. The fixture link command places strings before its trailing no-as-needed option. Linker dependency retention is the next investigation; option ordering is not yet a proved cause.\n\nThe temporary exact-import diagnostic reproduced an actual pre-discovery dynamic-linker failure: posix_error_test exits127 with empty stdout because libposix_error cannot resolve absl lts20260817 FastIntToBuffer. This is below the fallback parser; owning shared-library dependency and artifact provenance remain to be diagnosed. Original public failure and hosted-environment limits are retained.\n\nHostinet now owns the bounded discovery-test diagnosis for older import15687/build50720. The exact subprocess error remains hidden by the existing fallback; no source correction or retry is yet qualified. WorkMap retains sole periodic monitoring.\n\nThe older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Loader evidence complete; linker dependency retention investigation",
+        "owner": "work_map_current",
+        "disposition": "Current source already contains merged linker fix; older import failure retained",
         "sourceHead": "0729cdc9c742b6ab664b8f636ef550b3b165ab8a",
-        "observedAt": "2026-10-20T00:10:30.951721+00:00",
-        "nextAction": "Inspect the owning toolchain and link-option semantics using the retained evidence. Preserve both raw failures and historical producer/environment limits; no cache or production fix is inferred.",
+        "observedAt": "2026-10-20T00:19:57.230709+00:00",
+        "nextAction": "Follow normal import progression for current0729. Preserve old import15687 failure separately; no immediate second rebase, duplicate fix or reviewer notice.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7fab6a4a68721df9c918125e51a9bfafcb3d6227",
+          "https://github.com/google/gvisor/commit/928823b75a0f7c72de98da966416c489057e4b24",
+          "https://github.com/google/gvisor/pull/15796",
           "https://buildkite.com/gvisor/pipeline/builds/50720"
         ]
       },
@@ -5657,6 +5658,10 @@
         {
           "label": "Older import unit discovery failure",
           "url": "https://buildkite.com/gvisor/pipeline/builds/50720"
+        },
+        {
+          "label": "Merged linker dependency fix present in current source",
+          "url": "https://github.com/google/gvisor/commit/928823b75a0f7c72de98da966416c489057e4b24"
         }
       ]
     },
@@ -5675,7 +5680,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T00:07:43.271575+00:00",
+        "observedAt": "2026-10-20T00:19:44.248122+00:00",
         "disposition": "All currently executable unit-runtime cases and owner obligations complete; external NVIDIA comparisons remain",
         "nextAction": "Retain the18 NVIDIA comparison instances until their exact public sources become available; root owns the pending contributor decision for qualified RACK proposal8643925c. Preserve raw failures, all84 skips and original execution-source bindings.",
         "evidence": [
@@ -10543,19 +10548,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "kcov-size-validation",
-      "head": "3bf1ae0812bf0c7d0108184ea89724170d5e4a68",
+      "head": "254c5d70b92a85f3d3b1519efe4ad34dff8353b6",
       "title": "Match Linux KCOV buffer-size validation",
       "url": "https://github.com/google/gvisor/pull/15932",
       "group": "runtime",
       "status": "open",
-      "summary": "The complete bounded audit of import16016/build51371 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
-      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
+      "summary": "Quiet patch-preserving rebase published at 254c5d70b9 on current master051768. The single topic commit, message and author are unchanged; complete range-diff and stable patch identity agree. Original approval provenance remains attached to the preserved patch. No reviewer notice was posted. Prior import checkout403 failures remain visible and are not claimed repaired by this rebase.\n\nThe complete bounded audit of import16016/build51371 verifies that all three failed attempts, including the terminal pipeline-upload job, fail GitHub checkout with HTTP403 before any source test executes. This establishes the failure phase, not its authorization cause. Hostinet's evidence audit is complete. Root owns identifying the external provider owner and delivering a concrete report or correction; that action is still open, and no blind retry or topic source change is justified.",
+      "updatedAt": "2026-10-20T00:22:18.274621+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Checkout authorization failure needs identified external owner/report",
-        "sourceHead": "3bf1ae0812bf0c7d0108184ea89724170d5e4a68",
-        "observedAt": "2026-10-19T22:49:57.566473+00:00",
-        "nextAction": "All three failed attempts in import16016/build51371 fail checkout403 before source tests. Root owns identifying the provider authorization owner and concrete report/response; audit completion does not itself transfer the action. No source change or blind retry, and no new public comment authorized.",
+        "owner": "work_map_current",
+        "sourceHead": "254c5d70b92a85f3d3b1519efe4ad34dff8353b6",
+        "observedAt": "2026-10-20T00:22:18.000313+00:00",
+        "disposition": "Quiet patch-equivalent recovery delivered; current checks and import progression pending",
+        "nextAction": "Follow current-head checks and any exact-source replacement import in the ordinary sweep. Preserve prior checkout403 evidence; a recurring failure needs an assigned concrete action. No immediate rebase, duplicate reviewer request or public comment.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/51371#01a155ef-675a-4a20-bd3f-0bfa7f3ebc63",
           "https://github.com/google/gvisor/pull/16016"
@@ -10583,7 +10588,18 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/51371#01a155ef-675a-4a20-bd3f-0bfa7f3ebc63"
         }
       ],
-      "number": 15932
+      "number": 15932,
+      "approvedPatch": {
+        "approvedHead": "3bf1ae0812bf0c7d0108184ea89724170d5e4a68",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABTHChkg",
+        "reviewer": "manninglucas",
+        "submittedAt": "2026-10-19T20:34:35Z",
+        "method": "stable-patch-id",
+        "oldPatchId": "b28843de03cac5228ddf8a7a03e8a73c40e4e88e",
+        "newPatchId": "b28843de03cac5228ddf8a7a03e8a73c40e4e88e",
+        "head": "254c5d70b92a85f3d3b1519efe4ad34dff8353b6",
+        "verifiedAt": "2026-10-20T00:22:18.000313+00:00"
+      }
     },
     {
       "id": "pr:15933",

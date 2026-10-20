@@ -1327,8 +1327,11 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       if (!records || Array.isArray(records) || typeof records !== "object") throw new Error("Invalid state records");
       for (const [state, record] of Object.entries(records)) {
         const pr = snapshot.prs.find(item => prIdentity(item, nextRegistry) === identity);
+        const patch = pr && ["awaiting-import", "waiting-merge"].includes(state)
+          ? approvedPatch({ ...nextRegistry.nodes?.find(node => node.id === identity), github: pr }) : null;
         const sourceTime = pr ? Math.max(Date.parse(pr.checkedAt || snapshot.checkedAt),
-          ["merged", "closed"].includes(state) && pr.statusObservation ? Date.parse(pr.statusObservation.checkedAt) : 0)
+          ["merged", "closed"].includes(state) && pr.statusObservation ? Date.parse(pr.statusObservation.checkedAt) : 0,
+          patch ? Date.parse(patch.verifiedAt) : 0)
           : Date.parse(nextRegistry.meta.updatedAt);
         const observedTime = Date.parse(record?.observedAt ?? snapshot.checkedAt);
         if ((!Object.hasOwn(STATE_LABELS, state) && state !== "review") || !record || !["observed", "transition", "unknown"].includes(record.basis) ||

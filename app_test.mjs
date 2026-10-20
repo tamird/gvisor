@@ -274,6 +274,23 @@ test('verified unchanged approval routes imports without rewriting fresh review 
   checkRejected(changed);
   context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-13T12:00:00Z' }, nodes: [node], edges: [], groups: [] };
   vm.runInContext('validateRegistry(registryInput)', context);
+  pr.checkedAt = '2026-10-13T09:00:00Z';
+  context.snapshotInput.registryDate = context.registryInput.meta.updatedAt;
+  context.snapshotInput.prs = [pr];
+  for (const state of ['awaiting-import', 'waiting-merge']) {
+    const record = { scope: pr.head, basis: 'observed', since: node.approvedPatch.verifiedAt, observedAt: node.approvedPatch.verifiedAt };
+    context.snapshotInput.workStates[node.id] = { [state]: record };
+    vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
+    record.observedAt = '2026-10-13T10:01:00Z';
+    assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid state observation/);
+    record.observedAt = node.approvedPatch.verifiedAt;
+    context.snapshotInput.workStates[node.id] = { 'checks-pending': record };
+    assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid state observation/);
+    context.snapshotInput.workStates[node.id] = { [state]: record };
+    pr.reviewsComplete = false;
+    assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid state observation/);
+    pr.reviewsComplete = true;
+  }
   node.approvedPatch.newPatchId = 'd'.repeat(40);
   assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid approved patch equivalence/);
 });
