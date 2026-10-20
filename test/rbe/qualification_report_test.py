@@ -406,6 +406,47 @@ class QualificationReportTest(unittest.TestCase):
                 })
                 shutil.rmtree(invocation)
 
+    def test_node_exact_case_identity_contract(self) -> None:
+        # Synthetic source-patch output exercises actual capture/tag dispatch.
+        # Filename extensions and encoded WPT variants are separate cases; a
+        # legacy display name or another variant cannot satisfy the selection.
+        names = ["parallel/test-worker.js", "parallel/test-worker.mjs",
+                 "wpt/test-fetch.js/fetch/basic.any.html%3Fq%3Da%2Cb",
+                 "wpt/test-fetch.js/fetch/basic.any.html%3Fq%3Da%252Cb"]
+        marker = "# gvisor-node-exact-ids\n"
+        frames = [f"ok {index} {name}\n  ---\n  duration_ms: 1.00000\n  ...\n"
+                  for index, name in enumerate(names, 1)]
+        output = marker + "TAP version 13\n1..4\n" + "".join(frames) + "All tests passed.\n"
+        exclusion = '# gvisor-node-skip ' + json.dumps({"name": names[-1], "reason": "status-file SKIP"}) + "\n"
+        scenarios = (
+            (output, "PASS", 4, set()),
+            (output.removeprefix(marker), "INCOMPLETE", 4, set()),
+            (marker + output, "INCOMPLETE", 4, set()),
+            (output.replace(names[1], names[0]), "INCOMPLETE", 3, set()),
+            (output.replace(names[0], "parallel/test-worker"), "INCOMPLETE", 3, set()),
+            (output.replace(names[-1], names[-2]), "INCOMPLETE", 3, set()),
+            (output.replace(names[-1], names[-1] + "%20unknown"), "INCOMPLETE", 3, set()),
+            (output.replace(frames[-1], ""), "INCOMPLETE", 3, set()),
+            (output.replace("ok 4", "not ok 4").replace("All tests passed.", "Failed tests:"), "FAIL", 3, set()),
+            (output.replace(marker, marker + exclusion).replace("1..4", "1..3").replace(frames[-1], ""),
+             "PASS", 3, {names[-1]}),
+            (output.replace(marker, exclusion + marker).replace("1..4", "1..3").replace(frames[-1], ""),
+             "INCOMPLETE", 3, set()),
+        )
+        for zipped, (body, status, passed, excluded) in itertools.product((False, True), scenarios):
+            with self.subTest(zipped=zipped, body=body):
+                invocation = self.runtime_fixture(
+                    body, zipped=zipped, names=",".join(names), tag="nodejs-exact-results")
+                captured = self.capture(invocation)
+                self.assertEqual(captured["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], status, value)
+                runtime = value["executed"][0]["nodejs"]
+                self.assertEqual(runtime["exact_ids"], True)
+                self.assertEqual(runtime["passed"], passed)
+                self.assertEqual(set(runtime["excluded"]), excluded)
+                shutil.rmtree(invocation)
+
     def test_node_classifier_exclusions_are_not_completed_results(self) -> None:
         # Synthetic image-patch records expose should_keep decisions without
         # duplicating Node's platform/mode/status-file classifier.
@@ -1035,7 +1076,7 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["output_options"], [])
         self.assertEqual(report.preflight(events, 1, "build")["status"], "INCOMPLETE")
         self.assertEqual(report.preflight(events, 4, "test")["status"], "INCOMPLETE")
-        for tag in ("jtreg-results", "nodejs-results"):
+        for tag in ("jtreg-results", "nodejs-results", "nodejs-exact-results"):
             with self.subTest(tag=tag):
                 records = [json.loads(line) for line in events.read_text().splitlines()]
                 configured = next(record for record in records if "configured" in record)

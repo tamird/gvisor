@@ -55,7 +55,8 @@ import unit_matrix
 MAX_REPORT_BYTES = 512 * 1024 * 1024
 MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
-RUNTIME_RESULT_TAGS = {"jtreg-results", "nodejs-results"}
+NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
+RUNTIME_RESULT_TAGS = {"jtreg-results"} | NODE_RESULT_TAGS
 EVENT_KEYS = {
     "id", "children", "started", "finished", "configured", "completed",
     "testResult", "testSummary", "aborted", "namedSetOfFiles",
@@ -516,7 +517,8 @@ def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str]
             "missing": sorted(set(expected) - results.keys())}
 
 
-def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
+def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path],
+                   *, exact_ids: bool = False) -> dict[str, object]:
     """Require completed Node harness TAP results, not its zero exit alone.
 
     Node's TAP ``ok`` means the configured expected outcome was observed.
@@ -532,12 +534,14 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
     expected_flaky: dict[str, str] = {}
     heartbeat = r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} INFO Proctor checking in .+"
     # Require the pinned Node HasRun frame, not arbitrary valid TAP:
-    # https://github.com/nodejs/node/blob/d57af10d1/tools/test.py#L338-L413
+    # https://github.com/nodejs/node/blob/26e72d85a/tools/test.py#L338-L413
+    # The legacy tag retains the v22 extension-stripping contract for original
+    # evidence; current owners require the source-owned exact identity marker.
     for names, body in batches:
-        # NormalizePath in the pinned tools/test.py removes the JS extension.
-        normalized = {name.removesuffix(".js"): name for name in names}
+        normalized = {name if exact_ids else name.removesuffix(".js"): name for name in names}
         if len(normalized) != len(names):
             errors.append("Node selection has ambiguous normalized names")
+        marker = False
         header = False
         plan = None
         identifiers: list[int] = []
@@ -552,8 +556,12 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
                 # Main prints failed command lines after the TAP frames.
                 # This tail cannot supply or repair completion evidence.
                 if footer != "Failed tests:" or re.match(
-                        r"(?:TAP version |1\.\.|(?:not )?ok |# gvisor-node-skip )", line):
+                        r"(?:TAP version |1\.\.|(?:not )?ok |# gvisor-node-)", line):
                     errors.append(f"Unexpected Node output after footer: {line}")
+            elif line == "# gvisor-node-exact-ids":
+                if not exact_ids or marker or header or omitted:
+                    errors.append("Unexpected Node exact-identity marker")
+                marker = True
             elif line.startswith("# gvisor-node-skip "):
                 # The image patch reports the canonical should_keep decision;
                 # do not reconstruct the status-file classifier here.
@@ -562,7 +570,8 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
                         case {"name": str(normalized_name), "reason": str(reason), **extra} if (
                                 not extra and reason in ("--skip-tests", "status-file SKIP", "--flaky-tests=skip")):
                             name = normalized.get(normalized_name, normalized_name)
-                            if header or normalized_name not in normalized or name in omitted or name in results:
+                            if (header or exact_ids and not marker or normalized_name not in normalized
+                                    or name in omitted or name in results):
                                 raise ValueError(f"Unexpected or duplicate Node exclusion: {name}")
                             omitted[name] = reason
                         case _:
@@ -581,7 +590,7 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
             elif line == "No tests to run." and not header and len(omitted) == len(names):
                 footer = line
             elif line == "TAP version 13":
-                if header or current is not None:
+                if header or current is not None or exact_ids and not marker:
                     errors.append("Unexpected Node TAP header")
                 header = True
             elif match := re.fullmatch(r"1\.\.(\d+)", line):
@@ -627,6 +636,8 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
                 continue
             else:
                 errors.append(f"Unexpected Node TAP output: {line}")
+        if exact_ids and not marker:
+            errors.append("Node batch has no exact-identity marker")
         count = len(names) - len(omitted)
         if footer != "No tests to run." and (
                 not header or plan != count or identifiers != list(range(1, count + 1))):
@@ -638,6 +649,7 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
     return {"expected": expected, "results": results, "errors": errors,
             "passed": sum(result == "ok" and name not in skipped for name, result in results.items()),
             "skipped": skipped, "excluded": excluded, "expected_flaky": expected_flaky, "failures": sorted(failures),
+            "exact_ids": exact_ids,
             "missing": sorted(set(expected) - results.keys() - excluded.keys())}
 
 
@@ -1040,6 +1052,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     skipped_owners: set[Owner] = set()
     jtreg_tests: set[Owner] = set()
     nodejs_tests: set[Owner] = set()
+    exact_nodejs_tests: set[Owner] = set()
     with events.open() as stream:
         for line_number, line in enumerate(stream, 1):
             try:
@@ -1054,9 +1067,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     if "jtreg-results" in details.get("tag", []):
                         jtreg_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
-                    if "nodejs-results" in details.get("tag", []):
+                    if NODE_RESULT_TAGS.intersection(details.get("tag", [])):
                         nodejs_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
+                    if "nodejs-exact-results" in details.get("tag", []):
+                        exact_nodejs_tests.update(Owner.parse(child["targetCompleted"]) for child in children
+                                                 if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
                 for child in children:
                     if "targetCompleted" in child and mapping(child["targetCompleted"]).get("aspect"):
                         aspects.add(Aspect.parse(child["targetCompleted"]))
@@ -1114,7 +1130,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             jtreg_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                if "jtreg-results" in target.tags)
             nodejs_tests.update(Owner(label, target.configuration) for label, target in targets.items()
-                                if "nodejs-results" in target.tags)
+                                if NODE_RESULT_TAGS.intersection(target.tags))
+            exact_nodejs_tests.update(Owner(label, target.configuration) for label, target in targets.items()
+                                      if "nodejs-exact-results" in target.tags)
             if info["command_kind"] == "test":
                 declared_benchmark_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                                 if "go-benchmark-contract" in target.tags)
@@ -1220,7 +1238,11 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 if attempt.owner not in owners:
                     continue
                 try:
-                    runtime = parser(reports[(attempt, "test.log")], attempt, reports)
+                    if contract == "nodejs":
+                        runtime = nodejs_results(reports[(attempt, "test.log")], attempt, reports,
+                                                 exact_ids=attempt.owner in exact_nodejs_tests)
+                    else:
+                        runtime = parser(reports[(attempt, "test.log")], attempt, reports)
                     observation[contract] = runtime
                     errors.extend(f"{attempt}: {error}" for error in runtime["errors"])
                     failures.extend({**asdict(attempt), "reason": f"{contract} failure", "name": name}

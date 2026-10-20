@@ -468,7 +468,7 @@ source_image_archive(
         memory = "24GB",
         start_daemon = True,
     ),
-    image = "runtimes/nodejs22.2.0",
+    image = "runtimes/nodejs26.12.0",
     tags = ["manual"],
 )
 

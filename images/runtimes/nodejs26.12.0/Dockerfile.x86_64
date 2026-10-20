@@ -1,0 +1,45 @@
+FROM ubuntu:26.04
+RUN apt-get update && apt-get install -y \
+  cargo \
+  curl \
+  dumb-init \
+  g++ \
+  make \
+  patch \
+  python3 \
+  rustc
+
+WORKDIR /root
+ARG VERSION=v26.12.0
+ARG SHA256=435d4e5b5e12e14819f2598710f0f637f2094b25232fdf0cc304b7c4eadeadbb
+RUN curl --fail --location -o node-${VERSION}.tar.gz https://nodejs.org/dist/${VERSION}/node-${VERSION}.tar.gz \
+ && echo "${SHA256}  node-${VERSION}.tar.gz" | sha256sum --check - \
+ && tar -zxf node-${VERSION}.tar.gz \
+ && rm -f node-${VERSION}.tar.gz
+
+# Patch in a timeout increase to reduce test flakiness on gVisor
+WORKDIR /root/node-${VERSION}
+COPY timeouts.patch /tmp/timeouts.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/timeouts.patch \
+  && rm -f /tmp/timeouts.patch
+
+# Fail if Rust is unavailable instead of silently disabling Temporal support.
+RUN ./configure --v8-enable-temporal-support
+RUN make -j $(nproc) test-build
+
+# Use node --check on the files we patched
+RUN out/Release/node --check test/common/index.js
+
+# Select the certificate for www.nodejs.org in the CA interaction test.
+COPY tls-servername.patch /tmp/tls-servername.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/tls-servername.patch \
+  && out/Release/node --check test/internet/test-tls-add-ca-cert.js \
+  && rm -f /tmp/tls-servername.patch
+
+COPY test-selection.patch /tmp/test-selection.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/test-selection.patch \
+  && rm -f /tmp/test-selection.patch
+
+# Including dumb-init emulates the Linux "init" process, preventing the failure
+# of tests involving worker processes.
+ENTRYPOINT ["/usr/bin/dumb-init"]

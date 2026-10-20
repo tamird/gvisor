@@ -109,7 +109,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
         fail("runtime tests require at least one partition")
     result_tags = {
         "java": ["jtreg-results"],
-        "nodejs": ["nodejs-results"],
+        "nodejs": ["nodejs-exact-results"],
     }.get(kwargs.get("lang"), [])
     _runtime_test(
         name = name,
