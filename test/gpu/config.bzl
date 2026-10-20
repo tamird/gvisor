@@ -10,6 +10,8 @@ GPU_SOURCE_IMAGES = {
     "gpu_sglang_source_amd64": "gpu/sglang",
     "gpu_stable_diffusion_source_amd64": "gpu/stable-diffusion-xl",
     "gpu_vllm_source_amd64": "gpu/vllm",
+    "tpu_jax_source_amd64": "tpu/jax",
+    "tpu_pytorch_source_amd64": "tpu/pytorch",
     "tpu_vllm_source_amd64": "tpu/vllm",
 }
 
