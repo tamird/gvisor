@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
   ca-certificates-java \
   curl \
   java-common \
+  libnss3 \
   make \
   openjdk-21-jdk \
   patch \
