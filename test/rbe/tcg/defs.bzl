@@ -21,6 +21,7 @@ load("@tar.bzl//tar:tar.bzl", "tar_lib")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
+load("//tools/bazeldefs:test_architectures.bzl", "TEST_ROUTING_ATTRS", "route_test")
 
 def _guest_config(settings, attr):
     if attr.architecture == "amd64":
@@ -301,18 +302,24 @@ def _tcg_test_impl(ctx):
     runfiles = ctx.runfiles(files = inputs).merge(ctx.attr._launcher[DefaultInfo].default_runfiles)
     if ctx.attr.payload_builder:
         runfiles = runfiles.merge(ctx.attr.payload_builder[DefaultInfo].default_runfiles)
-    return [
+    providers = route_test(ctx, [
         DefaultInfo(executable = executable, runfiles = runfiles),
-        # A build-only invocation can measure the shared input closure from BEP
-        # file metadata without downloading or executing every guest payload.
-        OutputGroupInfo(guest_inputs = depset([executable], transitive = [runfiles.files])),
         RunEnvironmentInfo(environment = {}, inherited_environment = inherited_environment),
-    ]
+    ], executable)
+    for provider in providers:
+        if type(provider) == "DefaultInfo":
+            # Include the local root wrapper and its helper when routing adds
+            # them, so guest_inputs still describes the whole launch closure.
+            return providers + [OutputGroupInfo(guest_inputs = depset(
+                [executable],
+                transitive = [provider.default_runfiles.files],
+            ))]
+    fail("Guest routing did not return DefaultInfo")
 
 _tcg_test = rule(
     implementation = _tcg_test_impl,
     test = True,
-    attrs = {
+    attrs = dict(TEST_ROUTING_ATTRS, **{
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "payload_image": attr.label(allow_single_file = True),
         "payload_builder": attr.label(executable = True, cfg = "target"),
@@ -328,7 +335,7 @@ _tcg_test = rule(
         "scratch_gib": attr.int(default = 4),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
         "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
-    },
+    }),
 )
 
 def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
@@ -417,6 +424,6 @@ def amd64_kvm_test(name, payload, tags, image, run_under = None, **kwargs):
         payload_builder = ":" + name + "_payload_builder",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
         # Compilation remains remote; disk preparation and QEMU run locally.
-        tags = tags + ["manual", "no-remote-exec", "no-sandbox"],
+        tags = tags + ["manual", "no-remote-exec", "no-sandbox", "requires-kvm"],
         **kwargs
     )

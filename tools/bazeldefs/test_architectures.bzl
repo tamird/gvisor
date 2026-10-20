@@ -26,7 +26,8 @@ def host_test_requirement_tags(requirements):
     """Declares host requirements independently of a worker routing policy."""
     return [_HOST_REQUIREMENT_PREFIX + requirement for requirement in requirements]
 
-def _route_test(ctx, providers, original_executable):
+def route_test(ctx, providers, original_executable):
+    """Applies declared local capabilities to a rule with TEST_ROUTING_ATTRS."""
     local_architecture = ctx.attr._local_test_architecture[BuildSettingInfo].value
     constraints = [target.label for target in ctx.attr.exec_compatible_with]
     if not local_architecture or _ARCHITECTURES[local_architecture].constraint not in constraints:
@@ -121,7 +122,7 @@ def _route_test(ctx, providers, original_executable):
     )]
 
 def _native_frontend_impl(ctx):
-    return _route_test(ctx, ctx.super(), ctx.attr.exports[FrontendInfo].executable)
+    return route_test(ctx, ctx.super(), ctx.attr.exports[FrontendInfo].executable)
 
 def _native_test_impl(ctx):
     providers = ctx.super()
@@ -130,10 +131,10 @@ def _native_test_impl(ctx):
             # Skylib native_test explicitly returns only its executable in files.
             # Raw providers from ctx.super() have no files_to_run yet.
             [executable] = provider.files.to_list()
-            return _route_test(ctx, providers, executable)
+            return route_test(ctx, providers, executable)
     fail("native_test did not return DefaultInfo")
 
-_ROUTING_ATTRS = {
+TEST_ROUTING_ATTRS = {
     "_docker_setup": attr.label(default = Label("//test/rbe:docker_setup"), executable = True, cfg = "target"),
     "_local_root": attr.label(default = Label("//test/rbe:local_root"), executable = True, cfg = "target"),
     "_local_test_architecture": attr.label(default = Label("//tools/bazeldefs:local_test_architecture")),
@@ -144,7 +145,7 @@ _ROUTING_ATTRS = {
 _native_frontend_test = rule(
     implementation = _native_frontend_impl,
     parent = frontend_test,
-    attrs = _ROUTING_ATTRS,
+    attrs = TEST_ROUTING_ATTRS,
 )
 
 # Extend native_test directly so its declared executable stays beside any
@@ -152,7 +153,7 @@ _native_frontend_test = rule(
 routed_native_test = rule(
     implementation = _native_test_impl,
     parent = _native_test,
-    attrs = _ROUTING_ATTRS,
+    attrs = TEST_ROUTING_ATTRS,
 )
 
 def with_test_architecture(test_rule, architecture, static = False, extra_providers = [], implicit_targets = None, test_frontend = _native_frontend_test):

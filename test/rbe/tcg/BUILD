@@ -258,6 +258,7 @@ bzl_library(
         "//tools:arch_bzl",
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
+        "//tools/bazeldefs:test_architectures_bzl",
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:shell",
         "@rules_pkg//pkg:path.bzl",
