@@ -1,0 +1,39 @@
+# List canonical Node cases before status exclusions, rather than recursive
+# fixture filenames. This mode returns before VM probes or test execution.
+# https://github.com/nodejs/node/blob/d57af10d1/tools/test.py#L1622-L1708
+--- a/tools/test.py
++++ b/tools/test.py
+@@ -1405,6 +1405,8 @@
+       default=False, action="store_true")
+   result.add_option("--cat", help="Print the source of the tests",
+       default=False, action="store_true")
++  result.add_option("--list-tests", help="List canonical test files as JSON",
++      default=False, action="store_true")
+   result.add_option("--flaky-tests",
+       help="Regard tests marked as flaky (run|skip|dontcare|keep_retrying)",
+       default="run")
+@@ -1647,7 +1649,7 @@
+   repositories += [TestRepository(a) for a in options.suite]
+ 
+   root = LiteralTestSuite(repositories, test_root)
+-  paths = ArgsToTestPaths(test_root, args, suites)
++  paths = ArgsToTestPaths(test_root, suites if options.list_tests and not args else args, suites)
+ 
+   # Check for --valgrind option. If enabled, we overwrite the special
+   # command flag with a command that uses the run-valgrind.py script.
+@@ -1680,6 +1682,15 @@
+                     options.store_unexpected_output,
+                     options.repeat,
+                     options.abort_on_timeout)
++
++  if options.list_tests:
++    names = [os.path.relpath(case.file, test_root)
++             for path in paths for arch in options.arch for mode in options.mode
++             for case in root.ListTests([], path, context, arch, mode)]
++    if not names or len(names) != len(set(names)):
++      raise ValueError('Canonical test inventory is empty or has duplicate files')
++    print(json.dumps(sorted(names)))
++    return 0
+ 
+   # Get status for tests
+   sections = [ ]

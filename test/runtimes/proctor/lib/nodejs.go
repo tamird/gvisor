@@ -15,15 +15,16 @@
 package lib
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 )
 
 var nodejsTestRegEx = regexp.MustCompile(`^test-[^-].+\.js$`)
-
-// Location of nodejs tests relative to working dir.
-const nodejsTestDir = "test"
 
 // nodejsRunner implements TestRunner for NodeJS.
 type nodejsRunner struct{}
@@ -32,15 +33,29 @@ var _ TestRunner = nodejsRunner{}
 
 // ListTests implements TestRunner.ListTests.
 func (nodejsRunner) ListTests() ([]string, error) {
-	testSlice, err := Search(nodejsTestDir, nodejsTestRegEx)
+	cmd := nodejsCommand("--list-tests")
+	cmd.Stderr = os.Stderr
+	output, err := cmd.Output()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("listing Node tests: %w", err)
 	}
-	return testSlice, nil
+	var tests []string
+	if err := json.Unmarshal(output, &tests); err != nil {
+		return nil, fmt.Errorf("decoding Node test inventory: %w", err)
+	}
+	// Keep the existing filename scope, but let Node's suite configuration
+	// determine which files are tests rather than recursively finding fixtures.
+	return slices.DeleteFunc(tests, func(name string) bool {
+		return !nodejsTestRegEx.MatchString(filepath.Base(name))
+	}), nil
 }
 
 // TestCmds implements TestRunner.TestCmds.
 func (nodejsRunner) TestCmds(tests []string) []*exec.Cmd {
+	return []*exec.Cmd{nodejsCommand(tests...)}
+}
+
+func nodejsCommand(tests ...string) *exec.Cmd {
 	args := append([]string{filepath.Join("tools", "test.py"), "--timeout=180", "--progress=tap"}, tests...)
-	return []*exec.Cmd{exec.Command("/usr/bin/python3.10", args...)}
+	return exec.Command("/usr/bin/python3.10", args...)
 }

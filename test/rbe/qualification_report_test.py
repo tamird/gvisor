@@ -452,6 +452,33 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["executed"][0]["nodejs"]["results"], {"parallel/first.js": "not ok"})
         self.assertEqual(value["executed"][0]["nodejs"]["missing"], ["parallel/second.js"])
 
+    def test_retained_node_tap_batches(self) -> None:
+        # These are unchanged authenticated outputs, including Main's footer.
+        # Batch 0 retains the selected fixture that Node never enumerated.
+        scenarios = (
+            ("batch-0.log", "INCOMPLETE", 44, 5,
+             ["fixtures/test-runner/default-behavior/node_modules/test-nm.js"]),
+            ("batch-150.log", "PASS", 50, 0, []),
+        )
+        for filename, status, passed, skipped, missing in scenarios:
+            with self.subTest(filename=filename):
+                selection, separator, body = (FIXTURES / "node-tap" / filename).read_text().partition("\nOutput:\n")
+                self.assertEqual(separator, "\nOutput:\n")
+                names = selection.removeprefix("Batch:\n").splitlines()
+                invocation = self.runtime_fixture(
+                    body, zipped=False, names=",".join(names), tag="nodejs-results")
+                self.capture(invocation)
+                value = self.verdict(invocation)
+                self.assertEqual(value["status"], status, value)
+                runtime = value["executed"][0]["nodejs"]
+                self.assertEqual(runtime["passed"], passed)
+                self.assertEqual(len(runtime["skipped"]), skipped)
+                self.assertEqual(runtime["missing"], missing)
+                self.assertEqual(runtime["excluded"], {})
+                if status == "PASS":
+                    self.assertEqual(runtime["results"]["parallel/test-http-outgoing-end-cork.js"], "ok")
+                shutil.rmtree(invocation)
+
     def test_jtreg_section_stdout_is_not_result_framing(self) -> None:
         # Actual section output from DefaultProvider.java and the RMI tests
         # contains TEST: lines. A result-like stdout line is also ordinary text.
