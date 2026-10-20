@@ -132,7 +132,9 @@ type Filesystem struct {
 
 	// NoNegativeDentries makes failed lookups remain errors during creation,
 	// rather than treating ENOENT as a negative dentry in which to create a
-	// child. Linux procfs has this behavior. Synthetic mountpoints are exempt.
+	// child. Linux procfs has this behavior, including for names longer than
+	// NAME_MAX, so lookups also bypass the generic filename length limit.
+	// Synthetic mountpoint creation is exempt.
 	// This is immutable.
 	NoNegativeDentries bool
 

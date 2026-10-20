@@ -69,7 +69,7 @@ func (fs *Filesystem) stepExistingLocked(ctx context.Context, rp *vfs.ResolvingP
 		rp.Advance()
 		return parent, false, nil
 	}
-	if len(name) > linux.NAME_MAX {
+	if len(name) > linux.NAME_MAX && !fs.NoNegativeDentries {
 		return nil, false, linuxerr.ENAMETOOLONG
 	}
 	next, err := fs.revalidateChildLocked(ctx, rp.VirtualFilesystem(), d, name)
@@ -251,15 +251,15 @@ func checkCreateLocked(ctx context.Context, creds *auth.Credentials, name string
 	if name == "." || name == ".." {
 		return linuxerr.EEXIST
 	}
-	if len(name) > linux.NAME_MAX {
-		return linuxerr.ENAMETOOLONG
-	}
 	if parent.fs.NoNegativeDentries && !forSyntheticMountpoint {
 		_, err := parent.fs.revalidateChildLocked(ctx, parent.fs.vfsfs.VirtualFilesystem(), parent, name)
 		if err != nil {
 			return err
 		}
 		return linuxerr.EEXIST
+	}
+	if len(name) > linux.NAME_MAX {
+		return linuxerr.ENAMETOOLONG
 	}
 	parent.dirMu.Lock()
 	_, exists := parent.children[name]
@@ -640,7 +640,7 @@ afterTrailingSymlink:
 	if pc == "." || pc == ".." {
 		return nil, linuxerr.EISDIR
 	}
-	if len(pc) > linux.NAME_MAX {
+	if len(pc) > linux.NAME_MAX && !fs.NoNegativeDentries {
 		return nil, linuxerr.ENAMETOOLONG
 	}
 	if parent.VFSDentry().IsDead() {

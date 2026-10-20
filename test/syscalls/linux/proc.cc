@@ -463,23 +463,28 @@ TEST(ProcTest, Create) {
           "/proc/self/fd", "/proc/self/fdinfo", "/proc/sys", "/proc/sys/kernel",
           "/proc/fs"}) {
       SCOPED_TRACE(parent);
-      const std::string missing = JoinPath(parent, "nonexistent-create");
-      EXPECT_THAT(mkdir(missing.c_str(), 0700), SyscallFailsWithErrno(ENOENT));
-      EXPECT_THAT(symlink("target", missing.c_str()),
-                  SyscallFailsWithErrno(ENOENT));
-      EXPECT_THAT(mknod(missing.c_str(), S_IFIFO | 0600, 0),
-                  SyscallFailsWithErrno(ENOENT));
-      EXPECT_THAT(Open(missing, O_CREAT | O_RDONLY, 0600),
-                  PosixErrorIs(ENOENT));
-      EXPECT_THAT(mkdir(absl::StrCat(missing, "/").c_str(), 0700),
-                  SyscallFailsWithErrno(ENOENT));
+      for (const std::string& name : {std::string("nonexistent-create"),
+                                      std::string(NAME_MAX + 1, 'x')}) {
+        SCOPED_TRACE(name);
+        const std::string missing = JoinPath(parent, name);
+        EXPECT_THAT(mkdir(missing.c_str(), 0700),
+                    SyscallFailsWithErrno(ENOENT));
+        EXPECT_THAT(symlink("target", missing.c_str()),
+                    SyscallFailsWithErrno(ENOENT));
+        EXPECT_THAT(mknod(missing.c_str(), S_IFIFO | 0600, 0),
+                    SyscallFailsWithErrno(ENOENT));
+        EXPECT_THAT(Open(missing, O_CREAT | O_RDONLY, 0600),
+                    PosixErrorIs(ENOENT));
+        EXPECT_THAT(Open(missing, O_RDONLY), PosixErrorIs(ENOENT));
+        EXPECT_THAT(mkdir(absl::StrCat(missing, "/").c_str(), 0700),
+                    SyscallFailsWithErrno(ENOENT));
+        EXPECT_THAT(mkdir(JoinPath(missing, "child").c_str(), 0700),
+                    SyscallFailsWithErrno(ENOENT));
+      }
       EXPECT_THAT(mkdir(JoinPath(parent, ".").c_str(), 0700),
                   SyscallFailsWithErrno(EEXIST));
       EXPECT_THAT(mkdir(JoinPath(parent, "..").c_str(), 0700),
                   SyscallFailsWithErrno(EEXIST));
-      EXPECT_THAT(
-          mkdir(JoinPath(parent, std::string(NAME_MAX + 1, 'x')).c_str(), 0700),
-          SyscallFailsWithErrno(ENAMETOOLONG));
     }
     // Existing directories, files, and symlinks fail with EEXIST, whether or
     // not they have already been looked up or the path has a trailing slash.
