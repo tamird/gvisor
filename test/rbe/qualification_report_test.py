@@ -360,8 +360,15 @@ class QualificationReportTest(unittest.TestCase):
         heartbeat = "2026/10/19 23:42:26 INFO Proctor checking in 2026-10-19 23:42:26 +0000 UTC\n"
         scenarios = (
             (plan + first + second, "PASS", 2),
+            (plan + first + second + "\nAll tests passed.\n", "PASS", 2),
             (plan + first + heartbeat + second, "PASS", 2),
             (plan + first + failed, "FAIL", 1),
+            (plan + first + failed + "\nFailed tests:\n/root/node/out/Release/node parallel/second.js\n", "FAIL", 1),
+            (plan + first + second + "\nFailed tests:\n", "INCOMPLETE", 2),
+            (plan + first + "\nAll tests passed.\n", "INCOMPLETE", 1),
+            (plan + first + "\nAll tests passed.\n" + second, "INCOMPLETE", 1),
+            (plan + first + second + "\nAll tests passed.\n" + plan, "INCOMPLETE", 2),
+            (plan + first + failed + "\nFailed tests:\n" + second, "FAIL", 1),
             (plan + first, "INCOMPLETE", 1),
             (plan, "INCOMPLETE", 0),
             ("", "INCOMPLETE", 0),
@@ -397,6 +404,37 @@ class QualificationReportTest(unittest.TestCase):
                     "parallel/" + name + ".js" for name in ("first", "second")
                     if f"parallel/{name} # TODO" in output
                 })
+                shutil.rmtree(invocation)
+
+    def test_node_classifier_exclusions_are_not_completed_results(self) -> None:
+        # Synthetic image-patch records expose should_keep decisions without
+        # duplicating Node's platform/mode/status-file classifier.
+        first = '# gvisor-node-skip {"name": "parallel/first", "reason": "status-file SKIP"}\n'
+        second = '# gvisor-node-skip {"name": "parallel/second", "reason": "status-file SKIP"}\n'
+        result = "TAP version 13\n1..1\nok 1 parallel/first\n  ---\n  duration_ms: 1.00000\n  ...\n"
+        scenarios = (
+            (second + result + "All tests passed.\n", "PASS", 1, {"parallel/second.js"}),
+            (first + second + "No tests to run.\n", "INCOMPLETE", 0, {"parallel/first.js", "parallel/second.js"}),
+            (result + "All tests passed.\n", "INCOMPLETE", 1, set()),
+            (second + second + result, "INCOMPLETE", 1, {"parallel/second.js"}),
+            (first + result, "INCOMPLETE", 0, {"parallel/first.js"}),
+            (result + second, "INCOMPLETE", 1, set()),
+            (second.replace("parallel/second", "parallel/unknown") + result, "INCOMPLETE", 1, set()),
+            (second.replace("status-file SKIP", "unknown") + result, "INCOMPLETE", 1, set()),
+            ('# gvisor-node-skip {"name":\n' + result, "INCOMPLETE", 1, set()),
+            (second + result.replace("1..1", "1..2"), "INCOMPLETE", 1, {"parallel/second.js"}),
+        )
+        for output, expected, passed, excluded in scenarios:
+            with self.subTest(output=output):
+                invocation = self.runtime_fixture(
+                    output, zipped=False, names="parallel/first.js,parallel/second.js", tag="nodejs-results")
+                self.capture(invocation)
+                value = self.verdict(invocation)
+                self.assertEqual(value["status"], expected, value)
+                runtime = value["executed"][0]["nodejs"]
+                self.assertEqual(runtime["passed"], passed)
+                self.assertEqual(set(runtime["excluded"]), excluded)
+                self.assertEqual(set(runtime["skipped"]), excluded)
                 shutil.rmtree(invocation)
 
     def test_node_child_output_cannot_complete_missing_test(self) -> None:

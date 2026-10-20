@@ -43,6 +43,10 @@ RUN mv test/parallel/test-error-serdes.js test/sequential/test-error-serdes.js \
   && out/Release/node --check test/sequential/test-error-serdes.js \
   && rm -f /tmp/error-serdes.patch
 
+COPY tap-skips.patch /tmp/tap-skips.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/tap-skips.patch \
+  && rm -f /tmp/tap-skips.patch
+
 # Including dumb-init emulates the Linux "init" process, preventing the failure
 # of tests involving worker processes.
 ENTRYPOINT ["/usr/bin/dumb-init"]

@@ -528,6 +528,7 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
     results: dict[str, str] = {}
     failures: set[str] = set()
     skipped: dict[str, str] = {}
+    excluded: dict[str, str] = {}
     expected_flaky: dict[str, str] = {}
     heartbeat = r"\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} INFO Proctor checking in .+"
     # Require the pinned Node HasRun frame, not arbitrary valid TAP:
@@ -542,10 +543,44 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
         identifiers: list[int] = []
         current: tuple[str, str, str | None] | None = None
         diagnostic = duration = False
+        footer = None
+        omitted: dict[str, str] = {}
         for line in body.splitlines():
             if not line or re.fullmatch(heartbeat, line):
                 continue
-            if line == "TAP version 13":
+            if footer is not None:
+                # Main prints failed command lines after the TAP frames.
+                # This tail cannot supply or repair completion evidence.
+                if footer != "Failed tests:" or re.match(
+                        r"(?:TAP version |1\.\.|(?:not )?ok |# gvisor-node-skip )", line):
+                    errors.append(f"Unexpected Node output after footer: {line}")
+            elif line.startswith("# gvisor-node-skip "):
+                # The image patch reports the canonical should_keep decision;
+                # do not reconstruct the status-file classifier here.
+                try:
+                    match json.loads(line.removeprefix("# gvisor-node-skip ")):
+                        case {"name": str(normalized_name), "reason": str(reason), **extra} if (
+                                not extra and reason in ("--skip-tests", "status-file SKIP", "--flaky-tests=skip")):
+                            name = normalized.get(normalized_name, normalized_name)
+                            if header or normalized_name not in normalized or name in omitted or name in results:
+                                raise ValueError(f"Unexpected or duplicate Node exclusion: {name}")
+                            omitted[name] = reason
+                        case _:
+                            raise ValueError("Invalid Node exclusion record")
+                except ValueError as error:
+                    errors.append(str(error))
+            elif line in ("All tests passed.", "Failed tests:"):
+                # The footer is unconditional on successful HasRun accounting:
+                # Main can print it even after RunSingle swallowed an IOError.
+                if (current is not None or plan is None or len(identifiers) != plan
+                        or not set(names) <= results.keys() | omitted.keys()):
+                    errors.append("Node footer precedes complete result accounting")
+                if line == "Failed tests:" and not failures.intersection(names):
+                    errors.append("Node failure footer has no failed result")
+                footer = line
+            elif line == "No tests to run." and not header and len(omitted) == len(names):
+                footer = line
+            elif line == "TAP version 13":
                 if header or current is not None:
                     errors.append("Unexpected Node TAP header")
                 header = True
@@ -562,7 +597,7 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
                 if not header or plan is None or current is not None:
                     errors.append("Node result is outside a complete TAP frame")
                 identifiers.append(int(identifier))
-                if normalized_name not in normalized or name in results:
+                if normalized_name not in normalized or name in results or name in omitted:
                     errors.append(f"Unexpected or duplicate Node test: {name}")
                 if directive and not re.match(r"(?:skip|todo)(?:\s|:|$)", directive, re.IGNORECASE):
                     errors.append(f"Unknown Node TAP directive: {directive}")
@@ -592,14 +627,18 @@ def nodejs_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str
                 continue
             else:
                 errors.append(f"Unexpected Node TAP output: {line}")
-        if not header or plan != len(names) or identifiers != list(range(1, len(names) + 1)):
+        count = len(names) - len(omitted)
+        if footer != "No tests to run." and (
+                not header or plan != count or identifiers != list(range(1, count + 1))):
             errors.append("Node TAP plan/results do not cover the selected batch")
         if current is not None:
             errors.append(f"Unfinished Node TAP result: {current[0]}")
+        excluded.update(omitted)
+        skipped.update(omitted)
     return {"expected": expected, "results": results, "errors": errors,
             "passed": sum(result == "ok" and name not in skipped for name, result in results.items()),
-            "skipped": skipped, "expected_flaky": expected_flaky, "failures": sorted(failures),
-            "missing": sorted(set(expected) - results.keys())}
+            "skipped": skipped, "excluded": excluded, "expected_flaky": expected_flaky, "failures": sorted(failures),
+            "missing": sorted(set(expected) - results.keys() - excluded.keys())}
 
 
 @dataclass(frozen=True)
