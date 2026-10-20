@@ -16,7 +16,6 @@
 package main
 
 import (
-	"archive/zip"
 	"errors"
 	"flag"
 	"fmt"
@@ -31,6 +30,7 @@ import (
 	"time"
 
 	"golang.org/x/mod/modfile"
+	"gvisor.dev/gvisor/pkg/zip"
 )
 
 const readme = `# gVisor

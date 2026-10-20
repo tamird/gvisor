@@ -15,7 +15,6 @@
 package main
 
 import (
-	"archive/zip"
 	"bytes"
 	"os"
 	"path/filepath"
@@ -23,6 +22,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/zip"
 )
 
 func TestAssemble(t *testing.T) {

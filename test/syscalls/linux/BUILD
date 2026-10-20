@@ -3167,6 +3167,7 @@ cc_library(
     alwayslink = 1,
 )
 
+# Internal socket-option tests depend on this target despite its empty source.
 cc_binary(
     name = "socketopt_test",
     testonly = 1,
@@ -4276,6 +4277,7 @@ cc_library(
         ":unix_domain_socket_test_util",
         "//test/util:capability_util",
         "//test/util:cleanup",
+        "//test/util:memory_util",
         "//test/util:posix_error",
         "//test/util:socket_util",
         "//test/util:test_util",
