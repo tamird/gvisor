@@ -828,7 +828,7 @@ func httpGet(url string, header map[string]string) ([]byte, error) {
 		resp.Body.Close()
 		switch {
 		case err != nil:
-			lastErr = err
+			lastErr = fmt.Errorf("GET %s response body: %w", url, err)
 		case resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone:
 			return nil, fmt.Errorf("%s: %w", url, errNotFound)
 		case resp.StatusCode != http.StatusOK:
