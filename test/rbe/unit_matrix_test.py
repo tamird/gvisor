@@ -261,7 +261,8 @@ class SyscallBucketsTest(unittest.TestCase):
         owner = "--test-target=//test/syscalls:msync_test_runsc_kvm_rc_kvm"
         for arguments in (
             ["--arch=all", owner, "syscalls-rc"],
-            ["--arch=all", owner, "test"],
+            ["--arch=all", "--test-target=--invalid", "test"],
+            ["--arch=all", "--test-execution=local", owner, "test"],
             ["--arch=all", "--test-execution=local", "--syscall-bucket=0", owner, "syscalls-rc"],
             ["--arch=arm64", "--syscall-bucket=0", owner, "syscalls-rc"],
             ["--arch=arm64", owner, "syscalls"],
