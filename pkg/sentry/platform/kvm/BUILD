@@ -250,3 +250,28 @@ arm64_tcg_test(
     ],
     visibility = ["//test/rbe:__pkg__"],
 )
+
+# Exercise offset and zero-offset controls in both existing KVM test binaries.
+[
+    arm64_tcg_test(
+        name = test + "_tsc_arm64_tcg",
+        size = "large",
+        args = ["-test.run=^Test(Rdtsc(WithOffset)?|TSCDomainWithOffset|KernelVDSO(WithTSCOffset)?|KernelSyscall)$$"],
+        arm64_el2 = True,
+        guest_env = {
+            "GO_TEST_RUN_FROM_BAZEL": "1",
+            "GO_TEST_WRAP_TESTV": "1",
+        },
+        image = "//test/rbe/tcg:rc_guest",
+        payload = ":" + test + "_arm64",
+        tags = [
+            "manual",
+            "nogotsan",
+        ],
+        visibility = ["//test/rbe:__pkg__"],
+    )
+    for test in [
+        "kvm_test",
+        "kvm_cgo_test",
+    ]
+]
