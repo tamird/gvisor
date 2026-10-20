@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T03:29:57.017574+00:00",
+    "updatedAt": "2026-10-20T03:43:41.972601+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5681,14 +5681,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "ARM integration route recovery and corrected Node26 full continuation active",
-      "summary": "Combined source385c4ee0 preserves the reviewed runtime819172, TSCb10 and Nodeb049 components. The existing19-owner integration check d0af7f97 closed FAIL/COMPLETE:14 owners retain217 passing records, five remain unresolved. The plain ARM clock target requested the unavailable ARM64 Firecracker pool, a route-selection error rather than a transient provider failure. Root owns a bounded recovery through the existing ARM Actions namespace route; no all19 replay or full-current-source qualification claim.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
-      "updatedAt": "2026-10-20T03:29:57.017574+00:00",
+      "summary": "Combined source385c4ee0 preserves the reviewed runtime819172, TSCb10 and Nodeb049 components. The existing19-owner integration check d0af7f97 closed FAIL/COMPLETE:14 owners retain217 passing records, five remain unresolved. The plain ARM clock target requested the unavailable ARM64 Firecracker pool, a route-selection error rather than a transient provider failure. Root owns a bounded split recovery: native ARM Actions39365282018 for boot_test_arm64 and the ARM clock owner, plus remote AMD invocation e3241b66 for boot_nogo, boot_test_nogo and the AMD clock owner. This preserves the original analyzer runner configuration and avoids the unavailable ARM Firecracker pool. No all19 replay or full-current-source qualification claim.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
+      "updatedAt": "2026-10-20T03:43:41.972601+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T03:20:05.112808+00:00",
+        "observedAt": "2026-10-20T03:43:27.116110+00:00",
         "disposition": "Combined integration failed on unavailable ARM Firecracker route; corrected Node26 full continuation live",
-        "nextAction": "Root preserves d0af rawFAIL/14owner217PASS/5missing and prepares only the supported ARM Actions recovery. Hostinet collects the sole corrected Node26 fulld316c3f5 atfa2ed8208a, preserving a6d2 imageFAIL/zero runtime execution. Node owns standalone VDSO delivery and approved15868 amendment. No broad current-source PASS.",
+        "nextAction": "Root collects the two supported-route continuations for exactly five missing owners, preserving d0af rawFAIL and 14owner/217PASS evidence. Hostinet collects corrected Node26 full d316c3f5 atfa2ed8208a. No broad current-source PASS.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624"
         ]
@@ -9432,13 +9432,13 @@
       "repo": "google/gvisor",
       "number": 15868,
       "ref": "lint-go-import-groups",
-      "head": "e2e4693d2d885a49fc3147c575bf8ffffd04eb94",
+      "head": "56ea17b50b277dedf98974be0228306313633446",
       "title": "Check Go import groups with goimports",
       "url": "https://github.com/google/gvisor/pull/15868",
       "group": "analysis",
       "status": "open",
-      "summary": "The ZIP proxy parent landed through import15984/760b on2026-10-20 at03:10:08UTC. The previously approved befdfe4a63044b5f58dd937b0cec296093826266 formatting amendment is now released from that dependency hold; Node owns source preflight and delivery. Current public head remains e2e4693d2d885a49fc3147c575bf8ffffd04eb94 on lint-go-import-groups until the amendment is actually published. No new contributor question or repeated preparation is required.\n\nThe published mechanical rebase is at e2e4693d2d88 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe review now has a verified reply pointing to the ZIP proxy in #15919. The approved formatting amendment remains held until that PR merges.\n\nThe published formatter change remains at 1d98d0be9 and uses the pinned goimports through bazel run. The requested Bazel-run delivery is complete. New maintainer feedback explains the internal hardened ZIP replacement; the user selected a separate pkg/zip proxy with enforcement and requested cleanup of all other ordinary import subgroups. The preserved blank-separated ZIP proposal 8b598018c is superseded. Proxy source 70a96285f passes thirteen selected analyzer/consumer/format owners and 110 cases in the qualified harness. A direct archive/zip import is rejected by the actual facts_nogo owner on AMD64 and ARM64. The contributor approved the proxy and broader normalization with consistent standard/nonstandard grouping. Proxy #15919 is published at 7847dc30fe. Companion refinement befdfe4a63 normalizes the remaining 94 maintained Go files and has the exact previously validated formatter tree; the one licensecheck grouping cleanup now belongs to the proxy. Amendment of this PR waits only for #15919 to land. No new formatter dependency or grouping policy is added. Existing goimports sorts and separates standard imports but preserves blank subgroup boundaries. The PR has not yet been amended.",
-      "updatedAt": "2026-10-20T03:29:57.017574+00:00",
+      "summary": "The contributor-approved import-formatting amendment is published at56ea17b50b277dedf98974be0228306313633446 on merged ZIP parent760b. Independent review verifies all97 files have exactly the approved befd added/removed lines; all94 Go import multisets and code bodies are unchanged. The canonical new-head make lint job39365307402/118440688314 passed at03:40:13UTC. Remaining public checks and maintainer review are tracked normally; this is not an all-CI PASS claim. No repeated contributor question, comment or reviewer request was sent.\n\nThe amendment uses pinned goimports through Bazel in formatting-only mode, retaining standard/nonstandard grouping and the golden-output exclusion. Earlier standalone formatter evidence at1d98/native34726fe4 remains historical; the preserved blank-ZIP subgroup proposal8b598018c is superseded. The separate public ZIP production-dependency defect remains reported to Etienne and is not declared repaired by the parent merge.",
+      "updatedAt": "2026-10-20T03:43:41.972601+00:00",
       "refinement": {
         "before": {
           "head": "611e97d4394faf9e66bafe2b84db222198d377c7"
@@ -9449,13 +9449,13 @@
       },
       "followup": {
         "owner": "node_tls_sni",
-        "sourceHead": "e2e4693d2d885a49fc3147c575bf8ffffd04eb94",
-        "observedAt": "2026-10-20T03:21:25.388954+00:00",
-        "disposition": "ZIP parent merged; existing approved formatter amendment is active agent delivery",
-        "nextAction": "Node owns the existing images checkout and verifies the retained approvedbefdfe4a63 amendment against the new public base, then delivers under existing user authorization. Do not claim publication before exact-head readback.",
+        "sourceHead": "56ea17b50b277dedf98974be0228306313633446",
+        "observedAt": "2026-10-20T03:43:27.116110+00:00",
+        "disposition": "Approved amendment delivered; current-head canonical formatter passed",
+        "nextAction": "Delivery is complete; ordinary watcher follows remaining checks, maintainer feedback and import progression without redundant comments.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15984",
-          "https://github.com/tamird/gvisor/commit/befdfe4a63044b5f58dd937b0cec296093826266"
+          "https://github.com/google/gvisor/pull/15868",
+          "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314"
         ]
       },
       "evidence": [
@@ -9466,6 +9466,10 @@
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/e2e4693d2d885a49fc3147c575bf8ffffd04eb94"
+        },
+        {
+          "label": "Published approved formatting amendment; canonical lint passed",
+          "url": "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314"
         }
       ]
     },
