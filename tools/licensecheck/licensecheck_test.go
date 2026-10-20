@@ -15,7 +15,6 @@
 package licensecheck
 
 import (
-	"archive/zip"
 	"bytes"
 	_ "embed"
 	"io/fs"
@@ -24,6 +23,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/zip"
 )
 
 // Complete notices copied from the inputs that exposed classifier mistakes:

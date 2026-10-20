@@ -15,7 +15,10 @@ go_binary(
         "//:__pkg__",
         "//tools/codeql:__pkg__",
     ],
-    deps = ["@org_golang_x_mod//modfile:go_default_library"],
+    deps = [
+        "//pkg/zip",
+        "@org_golang_x_mod//modfile:go_default_library",
+    ],
 )
 
 go_test(
@@ -25,7 +28,10 @@ go_test(
         "main.go",
         "main_test.go",
     ],
-    deps = ["@org_golang_x_mod//modfile:go_default_library"],
+    deps = [
+        "//pkg/zip",
+        "@org_golang_x_mod//modfile:go_default_library",
+    ],
 )
 
 py_binary(
