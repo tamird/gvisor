@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T01:25:09.406769+00:00",
+    "updatedAt": "2026-10-20T01:35:52.598120+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5686,7 +5686,7 @@
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T01:15:00.719773+00:00",
+        "observedAt": "2026-10-20T01:35:09.167355+00:00",
         "disposition": "Node completion and passing-batch retention mechanism needs validation",
         "nextAction": "Complete and independently review the source-owned TAP/retention contract, then validate through existing focused routes. Preserve raw95195 failure, directfs completion gap, separately completed unit obligations and18 unavailable NVIDIA comparison instances.",
         "evidence": [
