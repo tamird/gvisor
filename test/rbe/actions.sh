@@ -246,7 +246,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           ( $QUALIFICATION_EXECUTION == local &&
             ( $qualification_container == true || ${lanes[*]} == test ||
               ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-kvm ||
-              ${lanes[*]} == syscalls-save || ${lanes[*]} == syscalls-resume || ${lanes[*]} == pgo ) ) ]]; then
+              ${lanes[*]} == syscalls-save || ${lanes[*]} == syscalls-resume ||
+              ${lanes[*]} == pgo || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
