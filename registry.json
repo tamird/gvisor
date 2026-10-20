@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T04:28:07.926795+00:00",
+    "updatedAt": "2026-10-20T04:42:22.329046+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3046,15 +3046,15 @@
       "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
       "status": "open",
-      "summary": "The patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
+      "summary": "New import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
       "number": 15337,
       "head": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-19T21:36:45.846198+00:00",
+      "updatedAt": "2026-10-20T04:42:22.329046+00:00",
       "followup": {
-        "disposition": "Unchanged approved patch; current CI and import progression",
-        "owner": "work_map_current",
-        "nextAction": "Observe exact-head checks and import progression through the existing sweep. Preserve substantive feedback and explicit holds; no reapproval notice or repeated rebase solely for a changed SHA.",
+        "disposition": "Exact-source import16042 inherits the reported ZIP Gazelle defect",
+        "owner": "EtiennePerot",
+        "nextAction": "Follow the shared correction already present in green import16031. Its existing report is assigned to Etienne. Preserve import16042 and all failed evidence; no duplicate BPF source fix, retry, rebase or public ping.",
         "sourceHead": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": "REVIEW_REQUIRED",
@@ -3070,9 +3070,13 @@
           "https://github.com/tamird/gvisor/commit/be5bda6e54bdd2b401dd0492e29bd8e0b89cf6d3",
           "https://github.com/google/gvisor/pull/15337#issuecomment-6229778444",
           "https://github.com/tamird/gvisor/commit/a6168c6433e14cb816e2dcc08d2899889dbc5d6b",
-          "https://github.com/google/gvisor/pull/15337#issuecomment-6274672319"
+          "https://github.com/google/gvisor/pull/15337#issuecomment-6274672319",
+          "https://github.com/google/gvisor/pull/16042",
+          "https://github.com/google/gvisor/actions/runs/39370267060/job/118456317218",
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
         ],
-        "observedAt": "2026-10-19T21:34:57.526725+00:00",
+        "observedAt": "2026-10-20T04:42:22.084393+00:00",
         "mergeable": "UNKNOWN"
       },
       "refinement": {
@@ -3091,6 +3095,10 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15337#issuecomment-6274672319"
+        },
+        {
+          "label": "Exact import Gazelle failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39370267060/job/118456317218"
         }
       ],
       "approvedPatch": {
@@ -5702,15 +5710,15 @@
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
-      "status": "Selected integration qualified; Node26 runtime failures under diagnosis",
-      "summary": "Node26 full continuation d316c3f5 atfa2ed8208a is terminal FAIL/COMPLETE. All21 owners and161 attempts were collected, with complete inner inventory and no missing or duplicate configured identities. Per mode,6337 selections reconcile as6022 expected-outcome successes,306 runtime skips,4 classifier exclusions and5 failures. The source-image construction passed, but runtime qualification has not passed. Node independently accepted the compact result; raw failure and strict inner COMPLETE remain unchanged. The built inventory contains6353 IDs, and four ok-TODO annotations per mode are included within the successes. Automatic collection took22.870677 seconds, with one separate local reconciliation and no manual collection. Hostinet owns missing Corepack/documentation image inputs, Node owns the two filesystem cases (including an available upstream root-fixture correction and procfs ENOENT compatibility), and root owns the unconfirmed profiler-regex diagnosis. No retry or final PASS is claimed.\n\nFork ZIP integration cfcd5c5c3c has completed both independently accepted checks:21 uncached remote owners/267 positive XML records, including50 required named cases, plus the separate three canonical Gazelle/query/root commands. Both collectors are closed with no manual collection and no missing cases, skips or failures. The generated manifest contains568 declared roots (561 candidates plus7 configured dispositions). This closes selected ZIP integration qualification; it does not claim a full CodeQL scan or Node26 runtime PASS. Hostinet still owns the active Node26 continuation d316c3f5. Root has published/tracked combined941df83a64377f38dedd7170e8c4a28e20fecef8, combining385c, qualified cfcd ZIP and only the reviewed fa2 Docker build-order change. Independent source composition is verified; runtime evidence retains its individual executed sources. The Node26 build-order continuation has now produced its source image successfully atfa2/d316 (child5ced, action18b; OCI output and buildx/tar exit0), independently reviewed and accepted by root. Cold construction took2293.261 seconds. This is image-only evidence: built-image inventory and runtime results remain pending under the same sole collector84048, with no controlled-speedup claim. Originalb049 image failure remains unchanged.\n\nFork ZIP integration cfcd5c5c3c now passes canonical Gazelle, the tagged-owner query and generated-root check: three captured commands, with568 declared roots (561 candidates plus7 configured dispositions). Native5afba284 is PASS/COMPLETE; automatic verdict followed execution by2.703435 seconds. Root independently accepted the compact result. This is command/manifest evidence only, with no runtime or CodeQL scan credit. Node still owns the separately active affected-checker tests ce6857c8; Hostinet owns Node26 full d316c3f5.\n\nCombined source385c selected integration is now qualified:19 disjoint owners and314 positive records (original14/217 plus AMD3/11 and native ARM2/86). Original d0af remains rawFAIL from unavailable ARM Firecracker routing. The bounded split recoveries preserve exact source, and AMD owner configurations match the original; ARM uses the reviewed local namespace route with a distinct configuration. One route correction and one local collector reattachment are explicit. This is selected-owner proof, not full public CI or Node26 runtime qualification.\n\nNode 26.12 integration b049f290 full invocation a6d2cfa3 failed during source-image construction: addon documentation started before Node was built. Its sole executed owner was buildifier; all20 runtime owners/160 shards were NOT_EXECUTED. The reviewed make-order correction fa2ed8208a now has one full continuation d316c3f5 under Hostinet\u2019s sole collector84048, with unchanged owners, filters and deadlines. No runtime result is claimed before that continuation finishes. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain unqualified after this source-image failure. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. The narrow mapped-tail correction b10 passed the focused AMD three-owner/26-record and ARM one-owner/21-record checks. The later ARM host is7.0 rather than the original6.17, so this proves the current host plus generated boundary regression; the original failed ELF and failures remain retained. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
-      "updatedAt": "2026-10-20T04:28:07.926795+00:00",
+      "status": "Selected integration qualified; Node26 source corrections active",
+      "summary": "Node26 full continuation d316c3f5 at fa2ed8208a is terminal FAIL/COMPLETE, with complete inner accounting. All 21 owners and 161 attempts were collected. Per mode, 6,337 selections reconcile as 6,022 expected-outcome successes, 306 runtime skips, four classifier exclusions and five failures; four ok-TODO annotations per mode are included within the successes. There are no missing or duplicate identities in the 6,353-ID built inventory. Automatic collection took 22.870677 seconds; one local reconciliation and zero manual collections are explicit. Source-image construction passed in 2,293.261 seconds, but runtime qualification has not passed. Original image and runtime failures remain retained.\n\nBounded source corrections are active. Hostinet prepares the missing source/test prerequisites and the exact upstream root-fixture correction; installing the new npm prerequisites is explicitly held pending policy disposition for the actual out-of-policy license sets. Node owns the procfs ENOENT compatibility investigation. Root reproduced the profiler fixture timeout natively and verified the current JS: label correction in 1.189 seconds with the official Node binary; this focused diagnosis does not clear the original gVisor failure. The Node upstream proposal and image patch remain separate. No full retry has started.\n\nPublished combined source 941df83a64377f38dedd7170e8c4a28e20fecef8 contains selected runtime integration 385c, qualified ZIP cfcd and the reviewed fa2 Docker build-order change. Selected integration has 19 disjoint owners and 314 positives, preserving the original routing failure, one route correction and one collector reattachment. ZIP qualification has 21 uncached owners/267 positives plus three canonical Gazelle/query/root commands and 568 declared roots (561 candidates plus seven dispositions). Those collectors are closed. These are source-bound selected checks, not a full CodeQL scan or blanket current-source PASS.\n\nEarlier build, unit, Java, Node22, RSEQ, TSC, netlink and runtime evidence remains bound to its individual source and original failures/skips. RSEQ has 54 named runtime positives plus lint; TSC mapped-tail checks cover the later host and generated boundary regression, not a rerun on the original failed host. Current public Ollama 0.40.6 matches qualified sources. GPU, other version/source gaps and 18 unavailable NVIDIA comparisons remain separate. Superseded Node Brotli/error-serdes backport proposals need no contributor decision.",
+      "updatedAt": "2026-10-20T04:42:22.329046+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T04:27:49.324505+00:00",
-        "disposition": "Node26 terminal failure with complete accounting; bounded source diagnosis active",
-        "nextAction": "Hostinet addresses the two Node26 image prerequisites, Node diagnoses the two filesystem failures, and root owns the profiler case. Compact accounting is independently accepted; raw FAIL remains. Review any recovery source/request before execution; preserve selected inventory, skips/exclusions and original failures. ZIP and selected19-owner integration remain separately complete.",
+        "observedAt": "2026-10-20T04:40:10.959950+00:00",
+        "disposition": "Node26 source corrections active; npm policy disposition pending",
+        "nextAction": "Complete the bounded source corrections and explicit dependency-policy disposition, then qualify the corrected source through the existing reviewed path. Preserve the completed full-run failure and exact inventory; no blind full replay or blanket PASS.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624",
           "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8"
@@ -6936,6 +6944,10 @@
         {
           "label": "Node26 full runtime FAIL with complete inventory",
           "url": "https://app.buildbuddy.io/invocation/d316c3f5-db89-4710-9184-ce40882f08f0"
+        },
+        {
+          "label": "Current combined qualification source",
+          "url": "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8"
         }
       ]
     },
@@ -9976,20 +9988,21 @@
       "title": "Route ZIP imports through a shared proxy",
       "url": "https://github.com/google/gvisor/pull/15919",
       "group": "analysis",
-      "status": "open",
-      "summary": "ZIP proxy work landed through #15984/760b, but that merged BUILD retains the reported unused production //pkg/zip dependency. The current approved source98bc already omits it, and fresh inspection confirms OPEN all-green import #16031/b1092c90 also contains the exact correction while retaining check_test\u2019s ZIP dependency. Its marker is the older source7847; actual BUILD content, Gazelle, generate, public51447 and internal33159 establish the corrected import state. Preserve that active import\u2019s progression; root explicitly chose no source narrowing, duplicate PR, rebase or new comment.\n\nThe existing report to Etienne remains linked. Reporting transferred the action; master is not claimed repaired before the corrected import lands. The merged equivalent test-literal formatting is preserved. Current source has no additional functional topic delta beyond this dependency correction. The separately approved #15868 formatting amendment is delivered now that ZIP ancestry landed.",
+      "status": "closed",
+      "summary": "Etienne closed source #15919 at unchanged 98bc on 2026-10-20 at 04:37:53 UTC, reporting that it merged as 760b80785. The merged commit still retains the reported unused production //pkg/zip dependency; closure is not evidence that this remaining defect was repaired. Corrected import #16031/b1092c90 remains OPEN with all checks green, and its actual BUILD content contains the deletion while retaining the test dependency. Preserve that import and the existing report to Etienne; no duplicate PR, source narrowing, rebase or comment. The approved #15868 formatting amendment is already delivered and its canonical lint passed.",
       "followup": {
         "owner": "EtiennePerot",
         "sourceHead": "98bc7fc081ce3c3638c389c00aa2338dbe251276",
-        "observedAt": "2026-10-20T03:51:04.513116+00:00",
-        "disposition": "Correction already present in active green import16031; preserve progression",
-        "nextAction": "Follow corrected import16031 to merge. Do not churn the existing source or repeat the delivered public report; retain the current-master defect until corrected import lands.",
+        "observedAt": "2026-10-20T04:40:10.959950+00:00",
+        "disposition": "Source closed as merged; corrected green import16031 remains open",
+        "nextAction": "Follow corrected import16031 without source churn. Closure as 760b does not resolve the unused production dependency retained in that commit; the delivered report remains assigned to Etienne.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16031",
-          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021"
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6283500085"
         ]
       },
-      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
+      "updatedAt": "2026-10-20T04:42:22.329046+00:00",
       "number": 15919,
       "evidence": [
         {
@@ -10023,6 +10036,10 @@
         {
           "label": "Active all-green import already carries production dependency correction",
           "url": "https://github.com/google/gvisor/pull/16031"
+        },
+        {
+          "label": "Source closure and merged commit report",
+          "url": "https://github.com/google/gvisor/pull/15919#issuecomment-6283500085"
         }
       ]
     },
