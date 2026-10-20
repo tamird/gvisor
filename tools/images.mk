@@ -116,6 +116,14 @@ test-gpu-images: ## Test GPU/ML test images.
 test-gpu-images: $(patsubst %,test-%,$(SHARDED_GPU_IMAGES))
 .PHONY: test-gpu-images
 
+rebuild-cpu-images: ## Build CPU test images from source.
+rebuild-cpu-images: $(patsubst %,rebuild-%,$(SHARDED_CPU_IMAGES))
+.PHONY: rebuild-cpu-images
+
+rebuild-gpu-images: ## Build GPU/ML test images from source.
+rebuild-gpu-images: $(patsubst %,rebuild-%,$(SHARDED_GPU_IMAGES))
+.PHONY: rebuild-gpu-images
+
 test-all-test-images: ## Test all test images.
 test-all-test-images: $(patsubst %,test-%,$(SHARDED_ALL_IMAGES))
 .PHONY: test-all-test-images

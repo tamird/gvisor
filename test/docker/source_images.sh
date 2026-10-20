@@ -57,9 +57,10 @@ if [[ ${mode} == test ]]; then
   # Bazel shards are zero-based; canonical Make partitions are one-based.
   partition=$((${TEST_SHARD_INDEX:-0} + 1))
   partitions=${TEST_TOTAL_SHARDS:-1}
+  # A registry manifest does not establish that these sources still build.
   "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
     PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
-    CRANE="${crane_command}" "test-${selection}-images"
+    CRANE="${crane_command}" "rebuild-${selection}-images"
 else
   target=${selection//\//_}
   case "${arch}" in
