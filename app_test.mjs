@@ -35,7 +35,7 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
   context.navigator = { clipboard: { writeText: async value => { copied = value; } } };
   vm.runInContext('appendRangeDiffCommand(parentInput, refinementComparison(nodeInput))', context);
   const [description, input, copy, message] = context.parentInput.children[0].children;
-  const expected = `git range-diff ${before}^! ${after}^!`;
+  const expected = `git range-diff --creation-factor=999 ${before}^! ${after}^!`;
   assert.match(description.textContent, /Earlier revision 7e371d8ac → current revision ca492fef9/);
   assert.equal(input.value, expected);
   assert.equal(input.readOnly, true);

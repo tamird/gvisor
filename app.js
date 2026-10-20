@@ -1007,8 +1007,9 @@ function refinementComparison(node) {
   if (!revision || revision.after.head !== node.head ||
       node.github && node.github.head !== revision.after.head) return null;
   const range = ({ head, base }) => base ? `${base}..${head}` : `${head}^!`;
+  const options = !revision.before.base && !revision.after.base ? " --creation-factor=999" : "";
   return {
-    command: `git range-diff ${range(revision.before)} ${range(revision.after)}`,
+    command: `git range-diff${options} ${range(revision.before)} ${range(revision.after)}`,
     description: `Earlier revision ${revision.before.head.slice(0, 9)} → current revision ${revision.after.head.slice(0, 9)}`,
   };
 }
