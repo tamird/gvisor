@@ -170,7 +170,7 @@ const ATTENTION_REASONS = [
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Unpublished proposal decision" },
-  { id: "maintainer-ci-retry", owner: "maintainer", title: "Maintainer CI retry needed" },
+  { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
   { id: "maintainer-response", owner: "maintainer", title: "Review follow-up" },
@@ -268,8 +268,9 @@ function attentionReasons(node, owner) {
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const sourceRecovery = sourceAuthenticationRecovery(node);
   if (sourceRecovery) add("maintainer-ci-retry", sourceRecovery.detail, "Maintainer CI configuration");
-  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state) && !sourceRecovery?.ids.has(check.id));
-  if (publicFailures.length) add("author-public-checks", publicFailures.map(check => `${check.name}: ${check.state}`).join("; "));
+  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
+  const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
+  if (authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
   if (approvalGates.length) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);

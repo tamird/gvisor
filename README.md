@@ -195,14 +195,15 @@ own returned head SHA before publication.
 A curated `ciRecovery` record can identify a diagnosed dependency-download
 failure whose retry returned HTTP 403. It binds the source and import heads,
 the exact public Actions job and check ID, and any explicitly linked status
-IDs. Only those still-failing identities route to **Maintainer CI retry needed**;
+IDs. Only those still-failing identities route to **CI configuration or retry**;
 other failures remain agent work. Missing IDs, incomplete evidence, changed
 heads, or successful/superseding checks invalidate the exception. Raw check
 results remain visible. This record never comes from parsing comments or prose.
 
 The same record can identify inspected source-check logs that report a missing
 API key. It binds the current source head and each exact Actions check ID and
-job URL, routing those failures to **Maintainer CI configuration**. It does not
+job URL, routing those failures to **CI configuration or retry** with their
+specific authentication need. It does not
 infer why the credential is absent. Uncovered failures remain agent work, and
 the same identity, completeness and supersession checks apply.
 

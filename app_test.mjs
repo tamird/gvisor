@@ -385,6 +385,7 @@ test('proven source authentication failures are maintainer work without hiding u
   assert.equal(reason.owner, 'maintainer'); assert.equal(reason.title, 'Maintainer CI configuration');
   assert.match(reason.detail, /missing API key/);
   assert.ok(!idsFor(node).includes('author-public-checks'));
+  assert.ok(reasonsFor(node).every(reason => reason.owner !== 'agent'));
   assert.equal(node.github.checks.state, 'FAILURE');
   node.github.checks.contexts.push({ ...serviceStatus('lint', 'FAILURE'), id: 'uninspected' }); node.github.checks.total++;
   assert.ok(idsFor(node).includes('maintainer-ci-retry'));
