@@ -4081,9 +4081,10 @@ func TestPartialSegmentDelayed(t *testing.T) {
 				}
 				t.Run(fmt.Sprintf("%s/gso=%t/%s", option, gso, test.name), func(t *testing.T) {
 					want := test.wantCork
-					if option == "nagle" {
+					switch option {
+					case "nagle":
 						want = test.wantNagle
-					} else if option == "nodelay" {
+					case "nodelay":
 						want = test.wantNoDelay
 						if gso {
 							want = test.wantNoDelayGSO
