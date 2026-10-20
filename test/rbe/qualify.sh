@@ -1500,6 +1500,8 @@ PY
         # The unmodified suite needs native test wrappers and run_under tools.
         # Prefer ARM remote tools while Docker executes the tests on this host.
         execution_config=rbe-arm64
+        # Source-image builds need this host's native ARM Docker daemon.
+        options+=(--strategy=SourceImageOCI=local)
       fi
     elif [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
