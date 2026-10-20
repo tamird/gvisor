@@ -112,6 +112,11 @@ type sender struct {
 	// queued behind blocked data; finSent guards closing ACK completions.
 	finSent bool
 
+	// smallSegmentEnd is the sequence number after the last newly sent
+	// partial-MSS segment, including a partial tail in a GSO packet. Minshall's
+	// variant of Nagle holds another small segment until this one is ACKed.
+	smallSegmentEnd seqnum.Value
+
 	// lr is the loss recovery algorithm used by the sender.
 	lr lossRecovery
 
@@ -280,7 +285,8 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 			},
 			RTO: 1 * time.Second,
 		},
-		gso: ep.gso.Type != stack.GSONone,
+		smallSegmentEnd: iss + 1,
+		gso:             ep.gso.Type != stack.GSONone,
 		writeList: protectedWriteList{
 			set: make(map[*segment]struct{}),
 		},
@@ -871,7 +877,8 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 				nSeg.DecRef()
 			}
 			if !nextTooBig {
-				nagle := s.Outstanding > 0 && s.ep.ops.GetDelayOption()
+				nagle := s.Outstanding > 0 && s.ep.ops.GetDelayOption() &&
+					s.SndUna.LessThan(s.smallSegmentEnd) && !s.SndNxt.LessThan(s.smallSegmentEnd)
 				cork := s.ep.ops.GetCorkOption()
 				if nagle || cork {
 					// GSO can send several segments at once. Send its full-MSS
@@ -1007,6 +1014,9 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 	// retransmitting some previously sent data).
 	if s.SndNxt.LessThan(segEnd) {
 		s.SndNxt = segEnd
+		if newData && seg.payloadSize()%s.MaxPayloadSize != 0 {
+			s.smallSegmentEnd = segEnd
+		}
 	}
 
 	return true

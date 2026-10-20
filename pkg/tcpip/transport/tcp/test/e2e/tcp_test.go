@@ -3915,6 +3915,120 @@ func TestMSSNotDelayed(t *testing.T) {
 	}
 }
 
+// TestMinshallPartialSegment checks that Nagle waits for an outstanding small
+// segment, rather than for every outstanding full segment.
+func TestMinshallPartialSegment(t *testing.T) {
+	const maxPayload = 100
+	for _, gso := range []bool{false, true} {
+		for _, prefix := range []int{0, maxPayload} {
+			t.Run(fmt.Sprintf("gso=%t/full-prefix=%d", gso, prefix), func(t *testing.T) {
+				acknowledged := make(chan seqnum.Value, 16)
+				c := context.NewWithOpts(t, context.Options{
+					EnableV4: true,
+					MTU:      e2e.DefaultMTU,
+					// Timers must not release or retransmit the held data.
+					Clock: faketime.NewManualClock(),
+					Probe: func(state *tcp.TCPEndpointState) {
+						select {
+						case acknowledged <- state.Sender.SndUna:
+						default:
+						}
+					},
+				})
+				defer c.Cleanup()
+				c.SetGSOEnabled(gso)
+				c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1 /* epRcvBuf */, []byte{
+					header.TCPOptionMSS, 4, byte(maxPayload / 256), byte(maxPayload % 256),
+				})
+				c.EP.SocketOptions().SetDelayOption(true)
+				data := make([]byte, prefix+3*maxPayload+3)
+				for i := range data {
+					data[i] = byte(i)
+				}
+				written, received := 0, 0
+				write := func(size int) {
+					t.Helper()
+					if got, err := c.EP.Write(bytes.NewReader(data[written:written+size]), tcpip.WriteOptions{}); err != nil {
+						t.Fatalf("Write failed: %s", err)
+					} else if want := int64(size); got != want {
+						t.Fatalf("Write = %d, want %d", got, want)
+					}
+					written += size
+				}
+				receive := func(size int) {
+					t.Helper()
+					for size != 0 {
+						packetSize := size
+						if !gso {
+							packetSize = min(packetSize, maxPayload)
+						}
+						c.ReceiveAndCheckPacket(data, received, packetSize)
+						received += packetSize
+						size -= packetSize
+					}
+				}
+				noPacket := func() {
+					t.Helper()
+					ep := c.EP.(*tcp.Endpoint)
+					ep.LockUser()
+					defer ep.UnlockUser()
+					if packet := c.GetPacketNonBlocking(); packet != nil {
+						defer packet.Release()
+						t.Fatalf("unexpected packet: %x", packet.AsSlice())
+					}
+				}
+				ack := func(count int) {
+					t.Helper()
+					c.SendAck(seqnum.Value(context.TestInitialSequenceNumber).Add(1), count)
+					want := c.IRS.Add(1 + seqnum.Size(count))
+					deadline := time.After(5 * time.Second)
+					for {
+						select {
+						case got := <-acknowledged:
+							if got == want {
+								return
+							}
+						case <-deadline:
+							t.Fatalf("ACK of %d bytes was not processed", count)
+						}
+					}
+				}
+
+				if prefix != 0 {
+					write(prefix)
+					receive(prefix)
+				}
+				// Both an idle connection and one with only full segments in
+				// flight must send the split write's short tail without an ACK.
+				write(2*maxPayload + 1)
+				receive(2*maxPayload + 1)
+				smallEnd := received
+				// Sending another full segment must not replace the small end.
+				write(maxPayload)
+				receive(maxPayload)
+				write(1)
+				noPacket()
+				// A partial ACK must not release the next small write. Wait for
+				// the real ACK handler before checking the absence of output.
+				ack(smallEnd - 1)
+				noPacket()
+				// ACKing the small tail releases it even though the later full
+				// segment remains unacknowledged.
+				ack(smallEnd)
+				receive(1)
+				write(1)
+				noPacket()
+				ack(received - 1)
+				noPacket()
+				ack(received)
+				receive(1)
+				noPacket()
+				ack(received)
+			})
+		}
+	}
+}
+
 func TestPartialSegmentDelayed(t *testing.T) {
 	const maxPayload = 100
 	type sendCounts struct {
@@ -3929,31 +4043,36 @@ func TestPartialSegmentDelayed(t *testing.T) {
 				dataSize       int
 				queuedPrefix   int
 				openWindow     bool
-				wantHeld       sendCounts
+				wantCork       sendCounts
+				wantNagle      sendCounts
 				wantNoDelay    sendCounts
 				wantNoDelayGSO sendCounts
 			}{
 				{
 					name: "full-and-partial", window: 30000, dataSize: 201,
-					wantHeld:       sendCounts{first: 200},
+					wantCork:       sendCounts{first: 200},
+					wantNagle:      sendCounts{first: 200},
 					wantNoDelay:    sendCounts{first: 201},
 					wantNoDelayGSO: sendCounts{first: 201},
 				},
 				{
 					name: "window-budget", window: 151, dataSize: 201, openWindow: true,
-					wantHeld:       sendCounts{first: 100, afterWindow: 100},
+					wantCork:       sendCounts{first: 100, afterWindow: 100},
+					wantNagle:      sendCounts{first: 100, afterWindow: 101},
 					wantNoDelay:    sendCounts{first: 100, afterWindow: 101},
 					wantNoDelayGSO: sendCounts{first: 150, afterWindow: 51},
 				},
 				{
 					name: "window-filled-short", window: 51, dataSize: 50,
-					wantHeld:       sendCounts{first: 50},
+					wantCork:       sendCounts{first: 50},
+					wantNagle:      sendCounts{first: 50},
 					wantNoDelay:    sendCounts{first: 50},
 					wantNoDelayGSO: sendCounts{first: 50},
 				},
 				{
 					name: "next-write-too-big", window: 201, dataSize: 250, queuedPrefix: 50, openWindow: true,
-					wantHeld: sendCounts{first: 100, afterWindow: 100},
+					wantCork:  sendCounts{first: 100, afterWindow: 100},
+					wantNagle: sendCounts{first: 100, afterWindow: 100},
 				},
 			} {
 				if option == "nodelay" && test.queuedPrefix != 0 {
@@ -3961,8 +4080,10 @@ func TestPartialSegmentDelayed(t *testing.T) {
 					continue
 				}
 				t.Run(fmt.Sprintf("%s/gso=%t/%s", option, gso, test.name), func(t *testing.T) {
-					want := test.wantHeld
-					if option == "nodelay" {
+					want := test.wantCork
+					if option == "nagle" {
+						want = test.wantNagle
+					} else if option == "nodelay" {
 						want = test.wantNoDelay
 						if gso {
 							want = test.wantNoDelayGSO
@@ -4039,8 +4160,9 @@ func TestPartialSegmentDelayed(t *testing.T) {
 					receive(want.first)
 					noPacket()
 					if test.openWindow {
-						// Reopen the window without acknowledging the full segments.
-						// The deferred tail must still obey Nagle/CORK on this visit.
+						// Reopen the window, ACKing only the initial byte. Nagle
+						// releases a tail if no other small segment is outstanding;
+						// CORK still holds it.
 						c.SendAck(iss, 1)
 						receive(want.afterWindow)
 						noPacket()
