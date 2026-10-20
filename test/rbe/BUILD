@@ -306,7 +306,10 @@ go_test(
         runtime = None,
         tags = ["manual"],
     )
-    for suffix in ["amd64", "arm64"]
+    for suffix in [
+        "amd64",
+        "arm64",
+    ]
 ]
 
 [
