@@ -239,6 +239,19 @@ gh workflow run build.yml --repo tamird/gvisor \
   -f lanes='smoke workflows' -f architecture=all
 ```
 
+Remote `architecture=all` selections use the Actions coordinator directly,
+with a 120-minute work deadline, 145-minute step limit and 155-minute job limit.
+Compilation and test execution stay on their declared RBE workers; each test
+retains its existing deadline. The same lane and architecture validation applies,
+including the explicit reports of unavailable worker requirements. For example:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref "$QUALIFICATION_REF" \
+  -f lanes='unit release-repository syscalls' \
+  -f architecture=all -f execution=remote
+```
+
 The `build` and `test` lanes accept explicit space-separated labels through
 `targets`. They use the Actions coordinator for long remote operations, with
 the same configured-output and test-report retention as the named lanes:
