@@ -59,7 +59,7 @@ if [[ ${mode} == test ]]; then
   partitions=${TEST_TOTAL_SHARDS:-1}
   # A registry manifest does not establish that these sources still build.
   # List the selection first so a failure also records unattempted images.
-  "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
+  "${make}" --keep-going -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
     PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
     CRANE="${crane_command}" "list-${selection}-images" "rebuild-${selection}-images"
 else
