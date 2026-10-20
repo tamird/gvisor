@@ -75,7 +75,7 @@ test('promotion uses an exact-head branch refinement when the PR comparison is s
     vm.runInContext('updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
     assert.equal(vm.runInContext('model.nodes.length', context), 1);
     const command = vm.runInContext('refinementComparison(model.nodes[0])?.command ?? null', context);
-    assert.equal(command, expectedBefore ? `git range-diff ${expectedBefore}^! ${after}^!` : null);
+    assert.equal(command, expectedBefore ? `git range-diff --creation-factor=999 ${expectedBefore}^! ${after}^!` : null);
   }
 });
 
