@@ -223,7 +223,7 @@ function reviewAttention(pr, owner) {
 }
 function blockedImportRetry(node, imported) {
   const recovery = node.ciRecovery, pr = node.github;
-  if (!recovery || !pr || pr.revisionChanged || pr.status !== "open" || recovery.sourceHead !== pr.head
+  if (recovery?.kind !== "dependency-download-retry-denied" || !pr || pr.revisionChanged || pr.status !== "open" || recovery.sourceHead !== pr.head
       || !imported.matchesSourceHead || imported.sourceHead !== pr.head || !["open", "draft"].includes(imported.status)
       || recovery.importHead !== imported.head || recovery.importNumber !== imported.number || !completeChecks(imported)) return null;
   const expected = [{ id: recovery.checkId, name: recovery.checkName, kind: "check-run" },
@@ -236,6 +236,18 @@ function blockedImportRetry(node, imported) {
   }
   return { ids: new Set(expected.map(item => item.id)), jobURL: recovery.jobURL,
     detail: `Import #${imported.number}: ${recovery.checkName} failed while downloading a dependency. The agent’s retry request returned HTTP 403. A maintainer needs to retry the workflow or check Actions access.` };
+}
+function sourceAuthenticationRecovery(node) {
+  const recovery = node.ciRecovery, pr = node.github;
+  if (recovery?.kind !== "source-check-authentication" || !pr || pr.revisionChanged || pr.status !== "open"
+      || recovery.sourceHead !== pr.head || !completeChecks(pr)) return null;
+  for (const signal of recovery.checks) {
+    const matching = pr.checks.contexts.filter(check => check.kind === "check-run" && check.name === signal.name);
+    if (matching.length !== 1 || matching[0].id !== signal.id || !FAILURE_STATES.has(matching[0].state)
+        || matching[0].url !== signal.jobURL || matching[0].appSlug !== "github-actions") return null;
+  }
+  return { ids: new Set(recovery.checks.map(item => item.id)),
+    detail: `${recovery.checks.map(item => item.name).join("; ")}: the inspected Actions logs report a missing API key. A maintainer needs to correct CI authentication. The failed check results remain visible.` };
 }
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
@@ -254,7 +266,9 @@ function attentionReasons(node, owner) {
   const contexts = pr.checks?.contexts || [];
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
-  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state));
+  const sourceRecovery = sourceAuthenticationRecovery(node);
+  if (sourceRecovery) add("maintainer-ci-retry", sourceRecovery.detail, "Maintainer CI configuration");
+  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state) && !sourceRecovery?.ids.has(check.id));
   if (publicFailures.length) add("author-public-checks", publicFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
   if (approvalGates.length) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
@@ -1266,20 +1280,32 @@ function validateRegistry(candidate) {
         || Date.parse(patch.submittedAt) > Date.parse(patch.verifiedAt) || Date.parse(patch.verifiedAt) > Date.parse(candidate.meta.updatedAt)))
       throw new Error("Invalid approved patch equivalence");
     const recovery = node.ciRecovery;
-    if (recovery !== undefined && (!recovery || node.type !== "pr" || node.repo !== candidate.meta.repo
-        || recovery.kind !== "dependency-download-retry-denied" || recovery.httpStatus !== 403
-        || !/^[a-f0-9]{40}$/.test(recovery.sourceHead) || !/^[a-f0-9]{40}$/.test(recovery.importHead)
+    if (recovery !== undefined) {
+      if (!recovery || node.type !== "pr" || !Object.hasOwn(policies, node.repo)
+          || !/^[a-f0-9]{40}$/.test(recovery.sourceHead)
+          || !Number.isFinite(Date.parse(recovery.observedAt)) || Date.parse(recovery.observedAt) > Date.parse(candidate.meta.updatedAt))
+        throw new Error("Invalid CI recovery record");
+      if (recovery.kind === "source-check-authentication") {
+        if (recovery.reason !== "missing-api-key" || !Array.isArray(recovery.checks) || !recovery.checks.length
+            || !recovery.checks.every(item => item && [item.id, item.name].every(value => typeof value === "string" && value.trim())
+              && Number.isSafeInteger(item.workflowRun) && item.workflowRun > 0 && Number.isSafeInteger(item.job) && item.job > 0
+              && item.jobURL === `https://github.com/${node.repo}/actions/runs/${item.workflowRun}/job/${item.job}`)
+            || new Set(recovery.checks.map(item => item.id)).size !== recovery.checks.length
+            || new Set(recovery.checks.map(item => item.name)).size !== recovery.checks.length)
+          throw new Error("Invalid CI recovery record");
+      } else if (recovery.kind !== "dependency-download-retry-denied" || node.repo !== candidate.meta.repo || recovery.httpStatus !== 403
+        || !/^[a-f0-9]{40}$/.test(recovery.importHead)
         || !Number.isSafeInteger(recovery.importNumber) || recovery.importNumber <= 0
         || !Number.isSafeInteger(recovery.workflowRun) || recovery.workflowRun <= 0
         || !Number.isSafeInteger(recovery.job) || recovery.job <= 0
         || recovery.jobURL !== `https://github.com/${candidate.meta.repo}/actions/runs/${recovery.workflowRun}/job/${recovery.job}`
         || ![recovery.checkId, recovery.checkName].every(value => typeof value === "string" && value.trim())
-        || !Number.isFinite(Date.parse(recovery.observedAt)) || Date.parse(recovery.observedAt) > Date.parse(candidate.meta.updatedAt)
         || !Array.isArray(recovery.statuses)
         || !recovery.statuses.every(item => item && [item.id, item.name].every(value => typeof value === "string" && value.trim()))
         || new Set(recovery.statuses.map(item => item.name)).size !== recovery.statuses.length
-        || new Set([recovery.checkId, ...recovery.statuses.map(item => item.id)]).size !== recovery.statuses.length + 1))
+        || new Set([recovery.checkId, ...recovery.statuses.map(item => item.id)]).size !== recovery.statuses.length + 1)
       throw new Error("Invalid CI recovery record");
+    }
   }
   const ids = new Set(candidate.nodes.map((node) => node.id));
   if (ids.size !== candidate.nodes.length) throw new Error("Registry contains duplicate identities");

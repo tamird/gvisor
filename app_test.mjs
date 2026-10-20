@@ -366,6 +366,73 @@ function deniedImportRetry() {
   return node;
 }
 
+function sourceAuthenticationFailure() {
+  const node = attentionNode(13849);
+  node.repo = 'buildbuddy-io/buildbuddy'; node.id = 'pr:buildbuddy-io/buildbuddy:13849';
+  node.url = 'https://github.com/buildbuddy-io/buildbuddy/pull/13849';
+  node.ciRecovery = { kind: 'source-check-authentication', reason: 'missing-api-key', sourceHead: node.github.head,
+    observedAt: '2026-10-13T17:35:00Z', checks: [{ id: 'source-check', name: 'build', workflowRun: 39303727616,
+      job: 118523915013, jobURL: 'https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727616/job/118523915013' }] };
+  node.github.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [
+    { id: 'source-check', name: 'build', kind: 'check-run', appSlug: 'github-actions', state: 'FAILURE', purpose: 'validation', url: node.ciRecovery.checks[0].jobURL },
+  ] };
+  return node;
+}
+
+test('proven source authentication failures are maintainer work without hiding unrelated source failures', () => {
+  const node = sourceAuthenticationFailure();
+  const reason = reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry');
+  assert.equal(reason.owner, 'maintainer'); assert.equal(reason.title, 'Maintainer CI configuration');
+  assert.match(reason.detail, /missing API key/);
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  assert.equal(node.github.checks.state, 'FAILURE');
+  node.github.checks.contexts.push({ ...serviceStatus('lint', 'FAILURE'), id: 'uninspected' }); node.github.checks.total++;
+  assert.ok(idsFor(node).includes('maintainer-ci-retry'));
+  assert.match(reasonsFor(node).find(reason => reason.id === 'author-public-checks').detail, /lint/);
+});
+
+test('source authentication recovery expires when its head or check evidence changes', () => {
+  const mutations = [
+    node => { node.github.head = 'c'.repeat(40); },
+    node => { node.github.checks.contexts[0].id = 'new-job'; },
+    node => { delete node.github.checks.contexts[0].id; },
+    node => { node.github.checks.contexts[0].url += '?different'; },
+    node => { node.github.checks.contexts[0].appSlug = 'another-app'; },
+    node => { node.github.checks.complete = false; },
+    node => { node.github.checks.contexts.push({ ...node.github.checks.contexts[0], id: 'new-job', state: 'IN_PROGRESS' }); node.github.checks.total++; },
+  ];
+  for (const mutate of mutations) {
+    const node = sourceAuthenticationFailure(); mutate(node);
+    assert.ok(!idsFor(node).includes('maintainer-ci-retry'), mutate.toString());
+    assert.ok(idsFor(node).includes('author-public-checks'), mutate.toString());
+  }
+  const node = sourceAuthenticationFailure(); node.github.checks.contexts[0].state = 'SUCCESS';
+  assert.ok(!idsFor(node).includes('maintainer-ci-retry'));
+  delete node.ciRecovery; node.github.checks.contexts[0].state = 'FAILURE'; node.summary = 'Missing API key';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+});
+
+test('source authentication schema requires known repository and unique exact job identities', () => {
+  const mutations = [
+    node => { node.ciRecovery.kind = 'unknown'; },
+    node => { node.ciRecovery.reason = 'source defect'; },
+    node => { node.ciRecovery.sourceHead = 'unknown'; },
+    node => { node.ciRecovery.observedAt = '2027-01-01T00:00:00Z'; },
+    node => { node.ciRecovery.checks = []; },
+    node => { node.ciRecovery.checks[0].jobURL = 'https://example.com/log'; },
+    node => { node.ciRecovery.checks.push({ ...node.ciRecovery.checks[0] }); },
+  ];
+  for (const mutate of [null, ...mutations]) {
+    const context = client(); context.nodeInput = sourceAuthenticationFailure();
+    context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-13T18:00:00Z',
+      repositories: { 'google/gvisor': 'copybara', 'buildbuddy-io/buildbuddy': 'none' } }, nodes: [context.nodeInput], groups: [], edges: [] };
+    if (mutate) {
+      mutate(context.nodeInput);
+      assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid CI recovery/, mutate.toString());
+    } else vm.runInContext('validateRegistry(registryInput)', context);
+  }
+});
+
 test('denied exact import retry is maintainer work while unrelated failures stay agent work', () => {
   const node = deniedImportRetry();
   assert.ok(idsFor(node).includes('maintainer-ci-retry'));

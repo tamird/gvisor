@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T08:23:47.511275+00:00",
+    "updatedAt": "2026-10-20T08:39:33.110347+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4736,21 +4736,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "seccomp-cgo-thread-clone",
-      "head": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
+      "head": "868cb9391354098621f5ea3d212e2cb35c2a1270",
       "title": "Allow libc thread creation in cgo filters",
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-20T08:23:47.511275+00:00",
-      "summary": "Root assigned the new #15498 source/import conflict to Hostinet in gvisor-pr14353. The newly merged master changes gofer cgoFilters from a global into a conditional function; Hostinet owns the bounded rebase and root will independently review full range-diff/applicability before an exact-lease update. Preserve matching import15718/fada green checks and startup lazy initialization. No comment or renewed review request for an unchanged logical patch.\n\nThe08:09 primary snapshot newly reports both sourceb33e9c5be3 and matching green import15718/fada888 as CONFLICTING/DIRTY after master advanced through #15859. Root has been notified for bounded source-conflict assessment; no source mutation, retry or public comment has occurred. Prior matching import checks remain green.\n\nAt the 03:00 UTC snapshot, matching import #15718 at fada8880d18c7e7e69f7548aa3a88ac5bfc726b4 has passing generate, Gazelle, public and internal checks. Source b33e9c5be3 remains unchanged; its separate older Copybara feedback failure is retained. Earlier checkout HTTP403 and clone-cleanup failures remain historical evidence. The quiet rebase preserved the approved patch and posted no reviewer notice.",
+      "updatedAt": "2026-10-20T08:39:33.110347+00:00",
+      "summary": "Mechanical rebase delivered at868cb9391354098621f5ea3d212e2cb35c2a1270 on publicd5b092c053. Root and WorkMap verified the original approved patch: five file blobs are unchanged and the same14 gofer clone-rule lines move one indentation level into the upstream lazy cgoFilters function. Original Etienne approval remains historical; this is independently reviewed patch equivalence, not a new current-head review. Exact current Gazelle job118529612966 requests only the inherited tools/nogo/check production //pkg/zip deletion, already carried by green shared correction16031. No seccomp source defect or further rebase is indicated. Old green import15718/fada888 still imports b33 and does not match868. No new runtime execution or public comment.\n\nRoot assigned the new #15498 source/import conflict to Hostinet in gvisor-pr14353. The newly merged master changes gofer cgoFilters from a global into a conditional function; Hostinet owns the bounded rebase and root will independently review full range-diff/applicability before an exact-lease update. Preserve matching import15718/fada green checks and startup lazy initialization. No comment or renewed review request for an unchanged logical patch.\n\nThe08:09 primary snapshot newly reports both sourceb33e9c5be3 and matching green import15718/fada888 as CONFLICTING/DIRTY after master advanced through #15859. Root has been notified for bounded source-conflict assessment; no source mutation, retry or public comment has occurred. Prior matching import checks remain green.\n\nAt the 03:00 UTC snapshot, matching import #15718 at fada8880d18c7e7e69f7548aa3a88ac5bfc726b4 has passing generate, Gazelle, public and internal checks. Source b33e9c5be3 remains unchanged; its separate older Copybara feedback failure is retained. Earlier checkout HTTP403 and clone-cleanup failures remain historical evidence. The quiet rebase preserved the approved patch and posted no reviewer notice.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
-        "observedAt": "2026-10-20T08:13:26.992290+00:00",
-        "disposition": "Assigned source conflict resolution; independent range review pending",
-        "nextAction": "Hostinet resolves the source overlap with merged master in gvisor-pr14353; root independently reviews the complete resolution and patch equivalence before any exact-lease publication. Preserve current green import and startup lazy-init behavior; no comment/re-review nag.",
+        "owner": "Etienne / existing ZIP correction16031",
+        "disposition": "Rebase delivered; inherited Gazelle correction awaiting import16031",
+        "sourceHead": "868cb9391354098621f5ea3d212e2cb35c2a1270",
+        "observedAt": "2026-10-20T08:37:21.294777+00:00",
+        "nextAction": "Land the existing shared ZIP dependency correction16031; retain current Gazelle failure and old15718 import separately. No duplicate topic amendment, rebase or public ping.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15718"
+          "https://github.com/google/gvisor/pull/15498",
+          "https://github.com/tamird/gvisor/commit/868cb9391354098621f5ea3d212e2cb35c2a1270",
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/actions/runs/39393250007/job/118529612966"
         ]
       },
       "number": 15498,
@@ -4794,15 +4797,15 @@
         }
       ],
       "approvedPatch": {
-        "head": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
+        "head": "868cb9391354098621f5ea3d212e2cb35c2a1270",
         "approvedHead": "e9b0e1eb831c5e43e1a9c2b4a6376c95f66380d4",
         "reviewId": "PRR_kwDOB9IlXs8AAAABSzDieQ",
         "reviewer": "EtiennePerot",
         "submittedAt": "2026-10-17T05:35:55Z",
-        "verifiedAt": "2026-10-20T00:22:18.000313+00:00",
-        "method": "stable-patch-id",
+        "verifiedAt": "2026-10-20T08:37:21.294777+00:00",
+        "method": "reviewed-context-only",
         "oldPatchId": "273ed9bacacda1ea5481b7e687b3323c17e85161",
-        "newPatchId": "273ed9bacacda1ea5481b7e687b3323c17e85161"
+        "newPatchId": "2e4bb4aa7dd510ac582699cc2c15f7279ece5d26"
       }
     },
     {
@@ -5752,7 +5755,7 @@
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T08:22:04.861111+00:00",
+        "observedAt": "2026-10-20T08:33:46.635337+00:00",
         "disposition": "Licensing complete; full Node runtime collecting",
         "nextAction": "Node owns Actions39388037075 collection and fresh canonical inventory/TAP reconciliation. Licensing implementation and canonical policy verification are complete; retain prior failures and proposal history. No upstream submission is authorized by this fork update.",
         "evidence": [
@@ -11397,17 +11400,15 @@
       "group": "buildbuddy",
       "status": "open",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849",
-      "updatedAt": "2026-10-20T08:23:47.511275+00:00",
-      "summary": "At08:20 UTC both existing review threads are resolved without new comment text. Two actual public Actions attempt2 jobs at unchanged1ace223d00 now fail for missing API credentials: PR build exits34 during remote action access before test execution; ARM root job runs both selected test targets successfully, then exits38 on unauthenticated BEP upload. These are separate from Darwin approval gates and the earlier source-bound race/lint validation. Root has the bounded log diagnosis for workflow-owner action; no cause for absent credentials, source regression or successful workflow is inferred. Windows remains running in this snapshot.\n\nCurrent public Darwin ERROR statuses explicitly require an approving review; these are unexecuted approval gates, while twelve other statuses are queued. The exact-head remote race/lint validation below is separate from those public checks.\n\nThe user-requested WaitGroup/errors.Join amendment is published at 1ace223d00 and independently source-reviewed. Both full workspace/executor race owners pass: 52 named positives and one existing case-insensitive-filesystem skip. The original aggregate FAIL is preserved because its wrapper selected the removed BuildFix lint tool. A same-head command-only recovery using the current BuildDepsFix and StarlarkFix tools passes, with no test rerun and no manual collection. The PR description and both existing review replies were corrected in place and read back; no duplicate comment was added. Public CI remains separate.\n\nThe user-requested upload-error amendment is published at 1ace223d00: WaitGroup joins every independent upload, errors.Join preserves stdout, stderr, tree and auxiliary failures, and successful log digests remain available. Two independent source reviews passed. The existing workspace/executor race suites and lint are collecting at this exact source; no terminal validation result yet.\n\nThe final user-approved restoration is published at 7656cdae61. The executor matches qualified 4f306 except the explanatory nil-safe protobuf-getter comment; the plain error group, caller context and tests remain unchanged from race-qualified 7c1bdbe82a. That remote validation passed two owners/two attempts with 50 named cases, one existing case-insensitive-filesystem skip and lint. The PR body and existing reply reflect the final behavior; no duplicate comment was posted. Current public checks remain separate from this source-bound validation.\n\nThe 7c1bdbe82a amendment passed both owning suites with the race configuration: two owners, two attempts, 50 passing named cases and one existing case-insensitive-filesystem skip, plus lint. The user then approved restoring the original captured response with an explanatory nil-safe protobuf-getter comment, while retaining the plain error group and caller context. Independent source review confirms the restored executor matches previously qualified 4f306 except that comment; Hostinet is publishing this final plumbing refinement and correcting the existing reply. Earlier validation remains tied to its tested source.\n\nThe explicit-response and caller-context refinement is now published at 7c1bdbe82a. Hostinet\u2019s existing remote validation ff95f4a9 is active; its result and the corresponding correction to prior thread prose are pending. The earlier 26-case result remains at 4f3069a053.\n\nA new user-directed refinement is now active with Hostinet: pass the response explicitly to the error closure and use a plain error group with the caller context for uploads. The previous direct-assignment amendment and replies remain recorded, but the new source/lifetime/error-semantics review, remote validation and corresponding reply correction are still pending. No contributor approval is required for this authorized revision.\n\nBoth review threads now have verified replies in review 5573348673: direct response-field assignments are published at 4f3069a053, and the reply explains why diagnostic log uploads retain the caller context after output-tree cancellation. The focused workspace validation passes 26 cases and lint, retaining one existing case-insensitive-filesystem skip. Public Darwin approval gates and pending checks remain separate; unresolved thread flags do not mean the author has not responded.\n\nThe direct-assignment amendment is published at 4f3069a053. Hostinet owns the current remote validation and responses to both existing review threads; the child-context question remains explicitly assigned.\n\nNew review feedback asks whether shared assignments should move inside the goroutines and whether the auxiliary-log loop should own a child errgroup. Three public Actions checks failed at this head; their failure causes have not yet been diagnosed. Root is reviewing the feedback before any amendment or reply.\n\nPrior validation: Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip.",
+      "updatedAt": "2026-10-20T08:39:33.110347+00:00",
+      "summary": "Exact1ace223d source-check failures are diagnosed as missing API-key authentication. The build job executes zero tests; the ARM job completes both test targets but fails its BEP upload authentication. Maintainers own CI authentication/configuration; no source defect or credential-absence cause is established. Raw failures stay visible, Darwin approval gates remain separate, and no retry, secret change or public comment was made.\n\nAt08:20 UTC both existing review threads are resolved without new comment text. Two actual public Actions attempt2 jobs at unchanged1ace223d00 now fail for missing API credentials: PR build exits34 during remote action access before test execution; ARM root job runs both selected test targets successfully, then exits38 on unauthenticated BEP upload. These are separate from Darwin approval gates and the earlier source-bound race/lint validation. Root has the bounded log diagnosis for workflow-owner action; no cause for absent credentials, source regression or successful workflow is inferred. Windows remains running in this snapshot.\n\nCurrent public Darwin ERROR statuses explicitly require an approving review; these are unexecuted approval gates, while twelve other statuses are queued. The exact-head remote race/lint validation below is separate from those public checks.\n\nThe user-requested WaitGroup/errors.Join amendment is published at 1ace223d00 and independently source-reviewed. Both full workspace/executor race owners pass: 52 named positives and one existing case-insensitive-filesystem skip. The original aggregate FAIL is preserved because its wrapper selected the removed BuildFix lint tool. A same-head command-only recovery using the current BuildDepsFix and StarlarkFix tools passes, with no test rerun and no manual collection. The PR description and both existing review replies were corrected in place and read back; no duplicate comment was added. Public CI remains separate.\n\nThe user-requested upload-error amendment is published at 1ace223d00: WaitGroup joins every independent upload, errors.Join preserves stdout, stderr, tree and auxiliary failures, and successful log digests remain available. Two independent source reviews passed. The existing workspace/executor race suites and lint are collecting at this exact source; no terminal validation result yet.\n\nThe final user-approved restoration is published at 7656cdae61. The executor matches qualified 4f306 except the explanatory nil-safe protobuf-getter comment; the plain error group, caller context and tests remain unchanged from race-qualified 7c1bdbe82a. That remote validation passed two owners/two attempts with 50 named cases, one existing case-insensitive-filesystem skip and lint. The PR body and existing reply reflect the final behavior; no duplicate comment was posted. Current public checks remain separate from this source-bound validation.\n\nThe 7c1bdbe82a amendment passed both owning suites with the race configuration: two owners, two attempts, 50 passing named cases and one existing case-insensitive-filesystem skip, plus lint. The user then approved restoring the original captured response with an explanatory nil-safe protobuf-getter comment, while retaining the plain error group and caller context. Independent source review confirms the restored executor matches previously qualified 4f306 except that comment; Hostinet is publishing this final plumbing refinement and correcting the existing reply. Earlier validation remains tied to its tested source.\n\nThe explicit-response and caller-context refinement is now published at 7c1bdbe82a. Hostinet\u2019s existing remote validation ff95f4a9 is active; its result and the corresponding correction to prior thread prose are pending. The earlier 26-case result remains at 4f3069a053.\n\nA new user-directed refinement is now active with Hostinet: pass the response explicitly to the error closure and use a plain error group with the caller context for uploads. The previous direct-assignment amendment and replies remain recorded, but the new source/lifetime/error-semantics review, remote validation and corresponding reply correction are still pending. No contributor approval is required for this authorized revision.\n\nBoth review threads now have verified replies in review 5573348673: direct response-field assignments are published at 4f3069a053, and the reply explains why diagnostic log uploads retain the caller context after output-tree cancellation. The focused workspace validation passes 26 cases and lint, retaining one existing case-insensitive-filesystem skip. Public Darwin approval gates and pending checks remain separate; unresolved thread flags do not mean the author has not responded.\n\nThe direct-assignment amendment is published at 4f3069a053. Hostinet owns the current remote validation and responses to both existing review threads; the child-context question remains explicitly assigned.\n\nNew review feedback asks whether shared assignments should move inside the goroutines and whether the auxiliary-log loop should own a child errgroup. Three public Actions checks failed at this head; their failure causes have not yet been diagnosed. Root is reviewing the feedback before any amendment or reply.\n\nPrior validation: Preserve successful stdout, stderr and auxiliary-log digests when output-tree upload fails. The before-fix regression reproduces lost diagnostics; both corrected owning race suites pass 50 cases with one existing filesystem skip.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Public CI authentication failures diagnosed; root notified",
+        "owner": "BuildBuddy maintainers",
+        "disposition": "Maintainer CI authentication/configuration",
         "sourceHead": "1ace223d00cf9acb20fe8fbf1a7ce23276a41ccf",
-        "observedAt": "2026-10-20T08:23:47.254750+00:00",
-        "nextAction": "Root has the exact public job diagnosis for maintainer workflow credential/configuration action before a useful rerun. Do not amend source, change credentials or retry blindly. Preserve separate Darwin approving-review gates, later Windows result, and exact-head qualified race/lint evidence; both existing review threads are now resolved.",
+        "observedAt": "2026-10-20T08:37:21.294777+00:00",
+        "nextAction": "Correct missing API-key authentication for the two exact Actions jobs; other checks and review gates remain independently visible.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/5ea1b276-3cac-43cd-be32-ef52803ddfb2",
-          "https://app.buildbuddy.io/invocation/ddabae63-a44b-40a9-bb00-5ed2f9be88a3",
           "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727616/job/118523915013",
           "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727143/job/118523909814"
         ]
@@ -11441,7 +11442,29 @@
           "label": "Exact-head public build fails remote authentication",
           "url": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727616/job/118523915013"
         }
-      ]
+      ],
+      "ciRecovery": {
+        "kind": "source-check-authentication",
+        "reason": "missing-api-key",
+        "sourceHead": "1ace223d00cf9acb20fe8fbf1a7ce23276a41ccf",
+        "observedAt": "2026-10-20T08:37:21.294777+00:00",
+        "checks": [
+          {
+            "id": "CR_kwDODlcBtc8AAAAbmJNrBQ",
+            "name": "build",
+            "workflowRun": 39303727616,
+            "job": 118523915013,
+            "jobURL": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727616/job/118523915013"
+          },
+          {
+            "id": "CR_kwDODlcBtc8AAAAbmJNWtg",
+            "name": "test",
+            "workflowRun": 39303727143,
+            "job": 118523909814,
+            "jobURL": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/39303727143/job/118523909814"
+          }
+        ]
+      }
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13850",
@@ -12822,8 +12845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
       "status": "Superseded by Node26 upgrade; full validation running",
-      "updatedAt": "2026-10-20T08:10:46.619332+00:00",
-      "summary": "The reviewed fork licensing update is complete at df0025d651f6931786a7c0d549c2fe327407e2a9: the canonical unfiltered licensecheck suite passed all137 XML records, including actual TestLicensePolicy, with one uncached remote attempt and no gaps or skips. Its catalog is exactly the prior complete8af3 output (552 npm rows:544 automatic/eight manual,38 notice sources); the policy adds eight npm exceptions, removes five unnecessary APT exceptions and updates four exact license sets without changing the global allowlist or artifact pins. The prior17-problem audit FAIL and original seven-package proposal remain historical evidence. The self-imposed separate permission gate was lifted under existing authority; no contributor decision or further license audit remains. Full Node26 Actions39388037075 at665f is independently running under Node ownership; this licensing result gives no runtime credit.\n\nFull Node26 qualification now uses the existing GitHub Actions coordinator: run39388037075, exact665f, attempt1 accepted07:40:15 UTC; Node owns sole collector3156 and strict fresh inventory/TAP reconciliation. Builds and TestRunner work remain remote, with unchanged20 runtime owners \u00d78shards plus lint and1800-second owner deadlines; existing coordinator bounds are120-minute work/145-minute step/155-minute job. No execution credit yet. Original93279 remains INCOMPLETE/missing bundle after proven one-hour free_tier_limit, with no retained runtime results; image survival remains unknown. The separate combined one-enumeration npm audit8af3 at580ab is live under Hostinet; its five owning checks passed141 records. Prior e380 completed552 classifications but policy verification timed out, so no final policy list or catalog adoption is claimed.\n\nFull Node26 invocation 93279 at665f ended with an INCOMPLETE collection receipt at07:21:01 UTC: the parent disconnected and qualification.tar.gz was unavailable. Collector31021 is closed. Hostinet owns bounded recovery of child/action evidence; no new execution, runtime credit or retry is claimed. The original receipt is retained. The separate npm audit e380 completed all552 classifications but failed Verify enumeration before policy; a combined one-enumeration fetch-verify correction is under independent review. The coordinator reports COMPLETED/status4 deadline exceeded/exit-2 after3,611.847s. Applied executor metadata now proves --timeout=1h0m0s and --timeout_reason=free_tier_limit, with Action timeout3,610s despite the requested95-minute bound (fc68d12a, root-reviewed). Node owns read-only selection of the existing GitHub Actions coordinator route with RBE work; Hostinet owns child-survival evidence. No unchanged retry or new authorization question.\n\nPending contributor policy decision: seven package-specific Node26 test-tool license exceptions, requested once: doc/node_modules/@orama/core 1.2.19 (AGPL-3.0); doc/node_modules/@orama/oramacore-events-parser 0.0.5 (AGPL-3.0); doc/node_modules/lightningcss-wasm 1.32.0 (MPL-2.0); eslint/node_modules/caniuse-lite 1.0.30001814 (CC-BY-4.0); eslint/node_modules/minimatch 10.2.5 (BlueOak-1.0.0); eslint/node_modules/spdx-exceptions 2.5.0 (CC-BY-3.0); eslint/node_modules/spdx-license-ids 3.0.23 (CC0-1.0). No exception or catalog adoption is authorized until the existing decision is answered. Isolated remote installation/testing is already authorized; the failed seed-only audit is not a complete policy conclusion. This is a policy proposal with no proposed policy commit; no commit identity is fabricated.\n\nThe shared HTTP error-context correction be948 passed five owning checks with 137 positive records. Canonical audit e380 then completed Fetch: all 552 npm entries were classified (544 automatic and eight explicitly manual), with 38 immutable notice sources and no missing or unclassified entries. Subsequent Verify failed while reading the checksum-bound Node source archive, before policy evaluation; the raw result remains FAIL/COMPLETE and there is no final policy list. Nine existing APT Python entries changed only license classification and retrieval date, with unchanged artifact identities; 1,623 prior entries were unchanged. Independent compact review accepted these phase and timing bindings. Hostinet and Node own the existing source-reuse investigation; no unchanged fourth audit was submitted. Full Node26 run 93279 remains independently active at 665f. Proc locking e5d6 is independently qualified by 12 owners and 154 positive records, including native/directfs/shared ProcTest.Create; contributor review now targets a28c and supersedes c29.\n\nCandidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.",
+      "updatedAt": "2026-10-20T08:39:33.110347+00:00",
+      "summary": "Node26 full qualification is PASS/COMPLETE at665f6390cfbf8db999d42326ab45c079f923860d, Actions39388037075 attempt1. All21 owners/161 attempts completed. Fresh built inventory6385 contains all32 restored Git-source cases; after16 explicit CSV exclusions, each filesystem mode selects6369 cases:6058 expected-outcome successes,307 runtime skips and4 classifier exclusions. No failed, missing or duplicate case assignments. Strict named reconciliation completed08:27:50.672692 UTC, distinct from the automatic outer receipt08:23:14.640691; one verified CSV-path recovery/manual reconciliation is retained. Licensing is complete separately atdf0025d65: actual TestLicensePolicy and136 other suite records pass against the reviewed8-add/5-remove/4-update policy and generated catalog. No contributor policy decision remains. Root accepted exact source applicability; no global all-case or unexecuted skip credit. Hostinet owns upstream upgrade composition and plain-Docker validation planning; no upstream PR yet.\n\nPreserved earlier evidence: original22.2 and first26.12 runtime failures; b049 image-order failure; d316 five failure families;93279 coordinator free_tier_limit/missing-bundle failure; all failed npm audits including complete552-entry audit8af3 with17 original policy mismatches. Backport proposals d064/eb95 and the seven-package policy question are superseded. Existing source/results remain in their compact receipts; runtime acceptance6cf340d5, final applicability31b547eb and policy acceptance d9bacd0e are separate.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12875,19 +12898,15 @@
         }
       ],
       "followup": {
-        "owner": "node_tls_sni",
-        "disposition": "Licensing complete; full Node runtime collecting",
+        "owner": "hostinet_delivery",
+        "disposition": "Full runtime and licensing qualified; public upgrade preparation active",
         "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T08:08:52.946917+00:00",
-        "nextAction": "Node owns Actions39388037075 collection and fresh canonical inventory/TAP reconciliation. Licensing implementation and canonical policy verification are complete; retain prior failures and proposal history. No upstream submission is authorized by this fork update.",
+        "observedAt": "2026-10-20T08:37:21.294777+00:00",
+        "nextAction": "Compose the public Node26 upgrade from qualified image/proctor inputs, preserving actual upstream prerequisites and standalone validation limits; no PR before contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/009b27e7cad5330a13671c944a605fe712c4aa65",
-          "https://app.buildbuddy.io/invocation/0a6f56ed-0ec9-4ecb-a5fd-55764eab0df7",
-          "https://github.com/tamird/gvisor/commit/f96ef05281ea5eac14f4440aec7d721bc87fb9e9",
-          "https://app.buildbuddy.io/invocation/0d5da94d-a8ae-47fe-815e-28afd7423c26",
-          "https://app.buildbuddy.io/invocation/93279a99-1c95-4c78-9ba2-405d955252f6",
-          "https://github.com/tamird/gvisor/commit/df0025d651f6931786a7c0d549c2fe327407e2a9",
-          "https://github.com/tamird/gvisor/actions/runs/39388037075"
+          "https://github.com/tamird/gvisor/actions/runs/39388037075",
+          "https://github.com/tamird/gvisor/commit/665f6390cfbf8db999d42326ab45c079f923860d",
+          "https://github.com/tamird/gvisor/commit/df0025d651f6931786a7c0d549c2fe327407e2a9"
         ]
       }
     },

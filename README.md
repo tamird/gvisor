@@ -200,6 +200,12 @@ other failures remain agent work. Missing IDs, incomplete evidence, changed
 heads, or successful/superseding checks invalidate the exception. Raw check
 results remain visible. This record never comes from parsing comments or prose.
 
+The same record can identify inspected source-check logs that report a missing
+API key. It binds the current source head and each exact Actions check ID and
+job URL, routing those failures to **Maintainer CI configuration**. It does not
+infer why the credential is absent. Uncovered failures remain agent work, and
+the same identity, completeness and supersession checks apply.
+
 The browser loads this single published snapshot; **Reload snapshot** downloads
 both the registry and GitHub snapshot without querying GitHub or changing the
 observation time. **Check conflicts on GitHub** in selected PR details makes
