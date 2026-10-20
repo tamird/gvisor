@@ -165,6 +165,7 @@ function checkInfo(pr) {
 
 const ATTENTION_REASONS = [
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
+  { id: "author-ci-remedy", owner: "agent", title: "Merged CI fix needs action" },
   { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
@@ -259,6 +260,29 @@ function actionableComment(node) {
   return pr.feedback.items.find(item => item.kind === "comment"
     && item.id === record.commentId && item.url === record.url) || null;
 }
+function sourceFixRecovery(node, nodes = model?.nodes || []) {
+  const recovery = node.ciRecovery, pr = node.github;
+  if (recovery?.kind !== "shared-source-fix" || !pr || pr.status !== "open" || pr.revisionChanged
+      || recovery.sourceHead !== pr.head || node.head && node.head !== pr.head) return null;
+  for (const signal of recovery.checks) {
+    const checked = signal.number === pr.number ? pr : pr.imports.find(item => item.number === signal.number
+      && item.matchesSourceHead && item.sourceHead === pr.head && item.status === "open");
+    if (!checked || checked.head !== signal.head || !completeChecks(checked)) return null;
+    const matching = checked.checks.contexts.filter(check => check.kind === "check-run" && check.name === signal.name);
+    if (matching.length !== 1 || matching[0].id !== signal.id || matching[0].url !== signal.jobURL
+        || matching[0].appSlug !== "github-actions" || !FAILURE_STATES.has(matching[0].state)) return null;
+  }
+  const remedy = nodes.find(item => item.id === recovery.remedy)?.github;
+  if (!remedy || remedy.repo !== prRepo(pr) || remedy.revisionChanged) return null;
+  if (remedy.status === "open") return { state: "waiting", remedy: recovery.remedy };
+  if (remedy.status !== "merged") return null;
+  if (!remedy.mergeCommit || remedy.mergeCommit !== recovery.fixCommit)
+    return { state: "inspect", remedy: recovery.remedy, mergedAt: remedy.mergedAt, sourceHead: pr.head,
+      detail: `CI remedy #${remedy.number} merged. Verify its actual merge commit and whether ${pr.head.slice(0, 9)} contains it, then determine whether this source needs a rebase. The old wait is no longer sufficient.` };
+  if (recovery.sourceContainsFix !== false || pr.head === remedy.mergeCommit) return null;
+  return { state: "ready", remedy: recovery.remedy, mergedAt: remedy.mergedAt, sourceHead: pr.head,
+    detail: `CI remedy #${remedy.number} merged as ${recovery.fixCommit.slice(0, 9)}. Verified ancestry shows ${pr.head.slice(0, 9)} lacks it; rebase this source branch and verify its new checks. Existing failures and review holds remain visible.` };
+}
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
     if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
@@ -274,6 +298,8 @@ function attentionReasons(node, owner) {
     return reasons;
   }
   const contexts = pr.checks?.contexts || [];
+  const sourceFix = sourceFixRecovery(node);
+  if (["inspect", "ready"].includes(sourceFix?.state)) add("author-ci-remedy", sourceFix.detail);
   const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
   const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
   const sourceRecovery = sourceAuthenticationRecovery(node);
@@ -1315,6 +1341,22 @@ function validateRegistry(candidate) {
               && item.jobURL === `https://github.com/${node.repo}/actions/runs/${item.workflowRun}/job/${item.job}`)
             || new Set(recovery.checks.map(item => item.id)).size !== recovery.checks.length)
           throw new Error("Invalid CI recovery record");
+      } else if (recovery.kind === "shared-source-fix") {
+        const remedy = candidate.nodes.find(item => item.id === recovery.remedy);
+        const ancestry = [recovery.fixCommit, recovery.sourceContainsFix, recovery.ancestryURL];
+        if (remedy?.type !== "pr" || remedy.repo !== node.repo || remedy.id === node.id
+            || !candidate.edges.some(edge => edge.from === remedy.id && edge.to === node.id && edge.type === "blocked_by")
+            || ancestry.some(value => value !== undefined) && (!/^[a-f0-9]{40}$/.test(recovery.fixCommit)
+              || typeof recovery.sourceContainsFix !== "boolean"
+              || recovery.ancestryURL !== `https://github.com/${node.repo}/compare/${recovery.fixCommit}...${recovery.sourceHead}`)
+            || !Array.isArray(recovery.checks) || !recovery.checks.length
+            || !recovery.checks.every(item => item && Number.isSafeInteger(item.number) && item.number > 0
+              && /^[a-f0-9]{40}$/.test(item.head) && (item.number !== node.number || item.head === recovery.sourceHead)
+              && [item.id, item.name].every(value => typeof value === "string" && value.trim())
+              && Number.isSafeInteger(item.workflowRun) && item.workflowRun > 0 && Number.isSafeInteger(item.job) && item.job > 0
+              && item.jobURL === `https://github.com/${node.repo}/actions/runs/${item.workflowRun}/job/${item.job}`)
+            || new Set(recovery.checks.map(item => item.id)).size !== recovery.checks.length)
+          throw new Error("Invalid shared source fix recovery");
       } else if (recovery.kind !== "dependency-download-retry-denied" || node.repo !== candidate.meta.repo || recovery.httpStatus !== 403
         || !/^[a-f0-9]{40}$/.test(recovery.importHead)
         || !Number.isSafeInteger(recovery.importNumber) || recovery.importNumber <= 0
@@ -1406,6 +1448,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       const observation = item.mergeabilityObservation;
       if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation time");
       if (item.base != null && !/^[a-f0-9]{40}$/.test(item.base)) throw new Error("Invalid PR base");
+      if (item.mergeCommit != null && !/^[a-f0-9]{40}$/.test(item.mergeCommit)) throw new Error("Invalid PR merge commit");
       if (item.headRepo != null && (typeof item.headRepo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(item.headRepo))) throw new Error("Invalid PR head repository");
       if (observation != null && (!["MERGEABLE", "CONFLICTING"].includes(observation.state) ||
           !/^[a-f0-9]{40}$/.test(observation.head) || (observation.base != null && !/^[a-f0-9]{40}$/.test(observation.base)) ||

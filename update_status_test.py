@@ -24,6 +24,7 @@ def raw_pr(number: int, state: str = "OPEN", *, author: str = "tamird", head: in
         "state": state, "isDraft": False, "headRefName": f"topic-{number}", "headRefOid": oid,
         "baseRefOid": "f" * 40, "updatedAt": OLD, "createdAt": OLD,
         "mergedAt": OLD if state == "MERGED" else None,
+        "mergeCommit": {"oid": "e" * 40} if state == "MERGED" else None,
         "closedAt": OLD if state != "OPEN" else None,
         "headRepository": {"nameWithOwner": "tamird/gvisor", "owner": {"login": "tamird"}},
         "repository": {"nameWithOwner": "google/gvisor"}, "author": {"login": author},
@@ -123,6 +124,7 @@ class CollectorHistoryTest(unittest.TestCase):
 
     def test_retention_reopening_closure_and_active_imports(self) -> None:
         current = self.collect()
+        self.assertEqual(next(pr for pr in current["prs"] if pr["number"] == 4)["mergeCommit"], "e" * 40)
         self.assertEqual(self.inventory_pages, 2)
         self.assertEqual(set(self.requested), {2, 3, 4, 5, 6, 101, 103, 105})
         self.assertEqual(len(self.requested), 8)

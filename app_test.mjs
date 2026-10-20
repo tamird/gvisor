@@ -215,6 +215,95 @@ function reasonsFor(node) {
 function idsFor(node) { return reasonsFor(node).map(reason => reason.id); }
 function serviceStatus(name, state) { return { name, state, kind: 'status', purpose: 'validation', url: null }; }
 
+function sharedFixContext(importOnly = false) {
+  const context = client(), node = attentionNode(16051), remedy = attentionNode(16048);
+  node.repo = remedy.repo = node.github.repo = remedy.github.repo = 'google/gvisor';
+  const checked = importOnly ? attentionImport(node, 16050) : node.github;
+  if (importOnly) node.github.imports.push(checked);
+  const signal = { number: checked.number, head: checked.head, id: 'gazelle-1', name: 'gazelle',
+    workflowRun: 123, job: 456, jobURL: 'https://github.com/google/gvisor/actions/runs/123/job/456' };
+  checked.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [
+    { id: signal.id, name: signal.name, url: signal.jobURL, state: 'FAILURE', kind: 'check-run', appSlug: 'github-actions' }] };
+  const fix = 'c'.repeat(40);
+  node.ciRecovery = { kind: 'shared-source-fix', sourceHead: node.github.head, observedAt: '2026-10-12T12:00:00Z',
+    remedy: remedy.id, fixCommit: fix, sourceContainsFix: false,
+    ancestryURL: `https://github.com/google/gvisor/compare/${fix}...${node.github.head}`, checks: [signal] };
+  node.followup = { owner: 'already-assigned', sourceHead: node.github.head };
+  remedy.github.status = 'merged'; remedy.github.mergeCommit = fix; remedy.github.mergedAt = '2026-10-12T13:00:00Z';
+  context.nodeInput = node; context.remedyInput = remedy; context.checkedInput = checked;
+  context.registryInput = { ...context.registryInput, nodes: [node, remedy], groups: [],
+    edges: [{ from: remedy.id, to: node.id, type: 'blocked_by' }] };
+  vm.runInContext('registry = registryInput; model = { nodes: registryInput.nodes };', context);
+  return context;
+}
+
+test('merged CI remedy releases an exact source or import failure despite an existing owner', () => {
+  for (const importOnly of [false, true]) {
+    const context = sharedFixContext(importOnly);
+    vm.runInContext('validateRegistry(registryInput)', context);
+    const recovery = () => vm.runInContext('sourceFixRecovery(nodeInput)?.state', context);
+    const reasons = () => JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+    assert.equal(recovery(), 'ready');
+    assert.ok(reasons().some(reason => reason.id === 'author-ci-remedy' && reason.owner === 'agent'));
+    assert.ok(reasons().some(reason => reason.id === (importOnly ? 'maintainer-import-checks' : 'author-public-checks')));
+    context.remedyInput.github.status = 'open';
+    assert.equal(recovery(), 'waiting');
+    assert.ok(!reasons().some(reason => reason.id === 'author-ci-remedy'));
+  }
+});
+
+test('an open remedy releases inspection without predicting its future merge commit', () => {
+  const context = sharedFixContext(), recovery = context.nodeInput.ciRecovery;
+  context.remedyInput.github.status = 'open';
+  delete recovery.fixCommit; delete recovery.sourceContainsFix; delete recovery.ancestryURL;
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.equal(vm.runInContext('sourceFixRecovery(nodeInput).state', context), 'waiting');
+  context.remedyInput.github.status = 'merged';
+  assert.equal(vm.runInContext('sourceFixRecovery(nodeInput).state', context), 'inspect');
+  assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "author-ci-remedy")', context));
+  recovery.fixCommit = 'd'.repeat(40); recovery.sourceContainsFix = false;
+  recovery.ancestryURL = `https://github.com/google/gvisor/compare/${recovery.fixCommit}...${recovery.sourceHead}`;
+  assert.equal(vm.runInContext('sourceFixRecovery(nodeInput).state', context), 'inspect');
+  recovery.fixCommit = context.remedyInput.github.mergeCommit;
+  recovery.ancestryURL = `https://github.com/google/gvisor/compare/${recovery.fixCommit}...${recovery.sourceHead}`;
+  assert.equal(vm.runInContext('sourceFixRecovery(nodeInput).state', context), 'ready');
+  recovery.sourceContainsFix = true;
+  assert.equal(vm.runInContext('sourceFixRecovery(nodeInput)', context), null);
+});
+
+test('stale or superseding evidence cannot release a rebase and never hides failures', () => {
+  for (const mutate of [
+    c => { c.nodeInput.github.head = 'd'.repeat(40); },
+    c => { c.nodeInput.head = 'd'.repeat(40); },
+    c => { c.nodeInput.github.revisionChanged = true; },
+    c => { c.nodeInput.ciRecovery.sourceContainsFix = true; },
+    c => { c.remedyInput.github.status = 'closed'; },
+    c => { c.checkedInput.checks.complete = false; },
+    c => { c.checkedInput.checks.contexts[0].id = 'new-failure'; },
+    c => { c.checkedInput.checks.contexts[0].state = 'SUCCESS'; },
+    c => { c.checkedInput.checks.contexts[0].state = 'PENDING'; },
+    c => { c.checkedInput.checks.contexts[0].url += '0'; },
+    c => { c.checkedInput.checks.contexts.push({ ...c.checkedInput.checks.contexts[0], id: 'another' }); c.checkedInput.checks.total++; },
+    c => { c.checkedInput.matchesSourceHead = false; },
+  ]) {
+    const context = sharedFixContext(true); mutate(context);
+    assert.equal(vm.runInContext('sourceFixRecovery(nodeInput)', context), null, mutate.toString());
+    assert.ok(!vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "author-ci-remedy")', context));
+  }
+  const context = sharedFixContext();
+  context.checkedInput.checks.contexts[0].id = 'new-failure';
+  assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "author-public-checks")', context));
+  for (const mutate of [
+    c => { c.registryInput.edges = []; },
+    c => { c.nodeInput.ciRecovery.sourceContainsFix = 'unknown'; },
+    c => { c.nodeInput.ciRecovery.ancestryURL = 'https://github.com/google/gvisor'; },
+    c => { c.nodeInput.ciRecovery.checks[0].head = 'unknown'; },
+  ]) {
+    const changed = sharedFixContext(); mutate(changed);
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', changed), /Invalid shared source fix/, mutate.toString());
+  }
+});
+
 function assignedCommentNode() {
   const node = attentionNode(15926); node.repo = 'google/gvisor';
   const comment = { kind: 'comment', id: 'comment-1', url: `${node.url}#issuecomment-6295602307`,

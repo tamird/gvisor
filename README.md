@@ -218,6 +218,17 @@ invalidates the exception. The record does not infer why the credential is
 absent. Uncovered failures remain agent work. The same identity, completeness
 and supersession checks apply.
 
+A `shared-source-fix` recovery binds a diagnosed failure to its remedy PR through
+an existing `blocked_by` edge. It records the exact source head and failed source
+or matching-import check identities. An open remedy remains a wait. Its merge
+releases an inspection action without requiring advance knowledge of the merge
+commit. Once ancestry is verified against the actual merge commit, a missing fix
+releases a rebase; a contained fix needs no repeat. Missing or mismatched ancestry
+remains an inspection, not another wait. Changed heads or superseding/incomplete
+check evidence expire this action; ordinary failures and review holds remain visible.
+The queue audit lists released actions even when a followup owner is recorded:
+an old assignment is not evidence that a newly released action has been handled.
+
 The browser loads this single published snapshot; **Reload snapshot** downloads
 both the registry and GitHub snapshot without querying GitHub or changing the
 observation time. **Check conflicts on GitHub** in selected PR details makes

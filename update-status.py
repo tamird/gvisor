@@ -32,7 +32,7 @@ commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
 } } } }
 """
 FIELDS = """
-number title url state isDraft headRefName headRefOid baseRefOid updatedAt createdAt mergedAt closedAt
+number title url state isDraft headRefName headRefOid baseRefOid updatedAt createdAt mergedAt closedAt mergeCommit { oid }
 headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
@@ -182,6 +182,7 @@ def normalize(pr: dict) -> dict:
         "headRepo": (pr["headRepository"] or {}).get("nameWithOwner"),
         "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
         "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
+        "mergeCommit": (pr.get("mergeCommit") or {}).get("oid"),
         "githubReviewDecision": pr["reviewDecision"],
         "reviewsComplete": not pr["reviews"]["pageInfo"]["hasPreviousPage"],
         "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
