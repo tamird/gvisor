@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T05:39:55.492607+00:00",
+    "updatedAt": "2026-10-20T05:49:01.536600+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5744,7 +5744,7 @@
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T05:37:27.208206+00:00",
+        "observedAt": "2026-10-20T05:43:38.340535+00:00",
         "disposition": "Read-only npm audit failed; notice/parser correction and classification review active",
         "nextAction": "Hostinet owns archive-layout and missing-notice correction; Node independently reviews two unexpected classifier results. The actual audit produced 480 npm rows and 72 missing entries, with six raw policy diagnostics. All 1,632 previous catalog entries and tracked policy/source remain unchanged. Preserve both earlier configuration failures. Combined source 7e7d7501ca is published preparation only. Procfs c29d, seven package exceptions and profiler 06fd retain their existing contributor decisions; no install, policy adoption or upstream PR before approval.",
         "evidence": [
