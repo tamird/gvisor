@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T04:42:22.329046+00:00",
+    "updatedAt": "2026-10-20T04:50:27.779391+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5711,17 +5711,18 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Selected integration qualified; Node26 source corrections active",
-      "summary": "Node26 full continuation d316c3f5 at fa2ed8208a is terminal FAIL/COMPLETE, with complete inner accounting. All 21 owners and 161 attempts were collected. Per mode, 6,337 selections reconcile as 6,022 expected-outcome successes, 306 runtime skips, four classifier exclusions and five failures; four ok-TODO annotations per mode are included within the successes. There are no missing or duplicate identities in the 6,353-ID built inventory. Automatic collection took 22.870677 seconds; one local reconciliation and zero manual collections are explicit. Source-image construction passed in 2,293.261 seconds, but runtime qualification has not passed. Original image and runtime failures remain retained.\n\nBounded source corrections are active. Hostinet prepares the missing source/test prerequisites and the exact upstream root-fixture correction; installing the new npm prerequisites is explicitly held pending policy disposition for the actual out-of-policy license sets. Node owns the procfs ENOENT compatibility investigation. Root reproduced the profiler fixture timeout natively and verified the current JS: label correction in 1.189 seconds with the official Node binary; this focused diagnosis does not clear the original gVisor failure. The Node upstream proposal and image patch remain separate. No full retry has started.\n\nPublished combined source 941df83a64377f38dedd7170e8c4a28e20fecef8 contains selected runtime integration 385c, qualified ZIP cfcd and the reviewed fa2 Docker build-order change. Selected integration has 19 disjoint owners and 314 positives, preserving the original routing failure, one route correction and one collector reattachment. ZIP qualification has 21 uncached owners/267 positives plus three canonical Gazelle/query/root commands and 568 declared roots (561 candidates plus seven dispositions). Those collectors are closed. These are source-bound selected checks, not a full CodeQL scan or blanket current-source PASS.\n\nEarlier build, unit, Java, Node22, RSEQ, TSC, netlink and runtime evidence remains bound to its individual source and original failures/skips. RSEQ has 54 named runtime positives plus lint; TSC mapped-tail checks cover the later host and generated boundary regression, not a rerun on the original failed host. Current public Ollama 0.40.6 matches qualified sources. GPU, other version/source gaps and 18 unavailable NVIDIA comparisons remain separate. Superseded Node Brotli/error-serdes backport proposals need no contributor decision.",
-      "updatedAt": "2026-10-20T04:42:22.329046+00:00",
+      "summary": "The Node upgrade now has two existing user decisions pending: review/open the independently reviewed one-line profiler proposal06fd109feb9, and approve the concrete seven package-specific npm license exceptions. The profiler proposal is published on tamird/node with matching tracking; no upstream PR has been opened. Its native official-binary before/after proof does not clear the original gVisor failure. The npm proposal audits both canonical lock cohorts (552 entries), including explicit optional/platform scope, through the existing catalog/policy mechanism; no global allowlist change or prerequisite installation is authorized by this status. Procfs creation-family correction remains active agent work. The superseded error-serdes backport remains historical and needs no decision.\n\nNode26 full continuation d316c3f5 at fa2ed8208a is terminal FAIL/COMPLETE, with complete inner accounting. All 21 owners and 161 attempts were collected. Per mode, 6,337 selections reconcile as 6,022 expected-outcome successes, 306 runtime skips, four classifier exclusions and five failures; four ok-TODO annotations per mode are included within the successes. There are no missing or duplicate identities in the 6,353-ID built inventory. Automatic collection took 22.870677 seconds; one local reconciliation and zero manual collections are explicit. Source-image construction passed in 2,293.261 seconds, but runtime qualification has not passed. Original image and runtime failures remain retained.\n\nBounded source corrections are active. Hostinet prepares the missing source/test prerequisites and the exact upstream root-fixture correction; installing the new npm prerequisites is explicitly held pending policy disposition for the actual out-of-policy license sets. Node owns the procfs ENOENT compatibility investigation. Root reproduced the profiler fixture timeout natively and verified the current JS: label correction in 1.189 seconds with the official Node binary; this focused diagnosis does not clear the original gVisor failure. The Node upstream proposal and image patch remain separate. No full retry has started.\n\nPublished combined source 941df83a64377f38dedd7170e8c4a28e20fecef8 contains selected runtime integration 385c, qualified ZIP cfcd and the reviewed fa2 Docker build-order change. Selected integration has 19 disjoint owners and 314 positives, preserving the original routing failure, one route correction and one collector reattachment. ZIP qualification has 21 uncached owners/267 positives plus three canonical Gazelle/query/root commands and 568 declared roots (561 candidates plus seven dispositions). Those collectors are closed. These are source-bound selected checks, not a full CodeQL scan or blanket current-source PASS.\n\nEarlier build, unit, Java, Node22, RSEQ, TSC, netlink and runtime evidence remains bound to its individual source and original failures/skips. RSEQ has 54 named runtime positives plus lint; TSC mapped-tail checks cover the later host and generated boundary regression, not a rerun on the original failed host. Current public Ollama 0.40.6 matches qualified sources. GPU, other version/source gaps and 18 unavailable NVIDIA comparisons remain separate. Superseded Node Brotli/error-serdes backport proposals need no contributor decision.",
+      "updatedAt": "2026-10-20T04:50:27.779391+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T04:40:10.959950+00:00",
-        "disposition": "Node26 source corrections active; npm policy disposition pending",
-        "nextAction": "Complete the bounded source corrections and explicit dependency-policy disposition, then qualify the corrected source through the existing reviewed path. Preserve the completed full-run failure and exact inventory; no blind full replay or blanket PASS.",
+        "observedAt": "2026-10-20T04:50:18.716724+00:00",
+        "disposition": "Node26 source corrections active; profiler and npm decisions pending",
+        "nextAction": "Continue the assigned procfs and npm generator source work. Root owns the already-sent profiler review/open-PR and seven package-exception decisions; do not repeat questions or open a PR/install held prerequisites before the respective approval. Preserve original runtime failures and exact evidence.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624",
-          "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8"
+          "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8",
+          "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea"
         ]
       },
       "evidence": [
@@ -6948,6 +6949,10 @@
         {
           "label": "Current combined qualification source",
           "url": "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8"
+        },
+        {
+          "label": "Node profiler proposal; contributor review pending",
+          "url": "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea"
         }
       ]
     },
@@ -12690,8 +12695,8 @@
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
       "status": "Superseded by Node26 upgrade; runtime failures under diagnosis",
-      "updatedAt": "2026-10-20T04:28:07.926795+00:00",
-      "summary": "The superseding Node26 full continuation d316c3f5 is terminal FAIL/COMPLETE with complete named accounting; existing owners are diagnosing its five failure families. The old d064 backport stays superseded, with no contributor decision or PR.\n\nThe superseding Node26 full continuation is d316c3f5 atfa2ed8208a after the reviewed make-order correction. Originala6d2 failed before all runtime owners; no new runtime success is claimed until the active continuation finishes. The d064 backport remains superseded with no contributor decision or PR.\n\nThe contributor requested a released Node upgrade instead of this backport. Proposal d064da903e is superseded; no contributor decision or PR remains pending for it. Hostinet\u2019s Node26.12 integration b049 is in full qualification after its owning checks and canonical metadata smoke passed. The old Node22.2 full run689 has closed raw FAIL/COMPLETE, with identity collisions and one worker timeout retained. Historical d064 evidence remains: both named error-serdes cases completed in original integration2f148 run2b66, verified from exact46-name batch completion logs. That generic-lane request actually selected396 cases per mode because its filter was not forwarded. The focused named proof required one manual two-object recovery and does not establish full-suite coverage.",
+      "updatedAt": "2026-10-20T04:50:27.779391+00:00",
+      "summary": "The Node upgrade now has two existing user decisions pending: review/open the independently reviewed one-line profiler proposal06fd109feb9, and approve the concrete seven package-specific npm license exceptions. The profiler proposal is published on tamird/node with matching tracking; no upstream PR has been opened. Its native official-binary before/after proof does not clear the original gVisor failure. The npm proposal audits both canonical lock cohorts (552 entries), including explicit optional/platform scope, through the existing catalog/policy mechanism; no global allowlist change or prerequisite installation is authorized by this status. Procfs creation-family correction remains active agent work. The superseded error-serdes backport remains historical and needs no decision.\n\nThe superseding Node26 full continuation d316c3f5 is terminal FAIL/COMPLETE with complete named accounting; existing owners are diagnosing its five failure families. The old d064 backport stays superseded, with no contributor decision or PR.\n\nThe superseding Node26 full continuation is d316c3f5 atfa2ed8208a after the reviewed make-order correction. Originala6d2 failed before all runtime owners; no new runtime success is claimed until the active continuation finishes. The d064 backport remains superseded with no contributor decision or PR.\n\nThe contributor requested a released Node upgrade instead of this backport. Proposal d064da903e is superseded; no contributor decision or PR remains pending for it. Hostinet\u2019s Node26.12 integration b049 is in full qualification after its owning checks and canonical metadata smoke passed. The old Node22.2 full run689 has closed raw FAIL/COMPLETE, with identity collisions and one worker timeout retained. Historical d064 evidence remains: both named error-serdes cases completed in original integration2f148 run2b66, verified from exact46-name batch completion logs. That generic-lane request actually selected396 cases per mode because its filter was not forwarded. The focused named proof required one manual two-object recovery and does not establish full-suite coverage.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12704,16 +12709,21 @@
         {
           "label": "Upstream Node correction",
           "url": "https://github.com/nodejs/node/commit/b875f2d7d"
+        },
+        {
+          "label": "Node profiler proposal; contributor review pending",
+          "url": "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea"
         }
       ],
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Backport superseded; Node26 failures under source diagnosis",
+        "disposition": "Node26 source corrections active; profiler and npm decisions pending",
         "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T04:20:50.974678+00:00",
-        "nextAction": "The superseding Node26 run d316c3f5 is terminal FAIL/COMPLETE with complete inventory; existing owners diagnose its five failure families. Retain superseded d064 evidence; no backport decision or PR.",
+        "observedAt": "2026-10-20T04:50:18.716724+00:00",
+        "nextAction": "Continue the assigned procfs and npm generator source work. Root owns the already-sent profiler review/open-PR and seven package-exception decisions; do not repeat questions or open a PR/install held prerequisites before the respective approval. Preserve original runtime failures and exact evidence.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
+          "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
+          "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea"
         ]
       }
     },
