@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T10:17:16.598262+00:00",
+    "updatedAt": "2026-10-20T10:31:57.388095+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5728,14 +5728,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Selected integration and full Node26 qualified",
-      "summary": "Fork reporter upkeep is complete: phase-count commit136bb6d1 adds per-invocation expected-owner and executed-attempt counts without changing aggregate status or coverage gates. Actions39402991792 passes all 93 existing reporter tests, one owner/attempt with no gaps or skips. The exact commit is integrated on qualification/conntrack-netip; its validation branch is not an upstream proposal or contributor backlog. This does not replace the separately observed current-upstream-refresh source identity.\n\nFull Node 26.12.0 Actions run 39388037075 is independently accepted PASS/COMPLETE at exact source 665f6390c: 21 owners and 161 attempts, with strict inner accounting complete. Fresh built inventory has 6385 identities; each mode selects 6369 = 6058 completed expected-outcome successes + 307 runtime skips + 4 classifier exclusions, with no missing, duplicate or failed cases. Four expected-flaky annotations are a subset of successes. All 32 restored test names are actually completed in both modes; the root-only rmSync case is explicitly skipped. Automatic outer receipt at 08:23:14 is separate from named inner reconciliation at 08:27:50; one manual CSV-path reconciliation is retained, with no manual collection. The source image completed in 2017.125668 seconds. Current df0025 licensing applicability is exact and limited to five licensing files; public proposal/plain-Docker validation remains separate. Original free-tier coordinator deadline, image and runtime failures remain unchanged.\n\nThe reviewed fork licensing update is complete at df0025d651f6931786a7c0d549c2fe327407e2a9: the canonical unfiltered licensecheck suite passed all137 XML records, including actual TestLicensePolicy, with one uncached remote attempt and no gaps or skips. Its catalog is exactly the prior complete8af3 output (552 npm rows:544 automatic/eight manual,38 notice sources); the policy adds eight npm exceptions, removes five unnecessary APT exceptions and updates four exact license sets without changing the global allowlist or artifact pins. The prior17-problem audit FAIL and original seven-package proposal remain historical evidence. The self-imposed separate permission gate was lifted under existing authority; no contributor decision or further license audit remains. Full Node26 Actions39388037075 at665f is independently running under Node ownership; this licensing result gives no runtime credit. At08:04:24 UTC, the nine exact NVIDIA public source tags remained absent; the18 architecture-specific source comparisons stay externally unavailable, with no dependency pin, exclusion or runtime qualification change.\n\nFull Node26 qualification now uses the existing GitHub Actions coordinator: run39388037075, exact665f, attempt1 accepted07:40:15 UTC; Node owns sole collector3156 and strict fresh inventory/TAP reconciliation. Builds and TestRunner work remain remote, with unchanged20 runtime owners \u00d78shards plus lint and1800-second owner deadlines; existing coordinator bounds are120-minute work/145-minute step/155-minute job. No execution credit yet. Original93279 remains INCOMPLETE/missing bundle after proven one-hour free_tier_limit, with no retained runtime results; image survival remains unknown. The separate combined one-enumeration npm audit8af3 at580ab is live under Hostinet; its five owning checks passed141 records. Prior e380 completed552 classifications but policy verification timed out, so no final policy list or catalog adoption is claimed.\n\nFull Node26 invocation 93279 at665f ended with an INCOMPLETE collection receipt at07:21:01 UTC: the parent disconnected and qualification.tar.gz was unavailable. Collector31021 is closed. Hostinet owns bounded recovery of child/action evidence; no new execution, runtime credit or retry is claimed. The original receipt is retained. The separate npm audit e380 completed all552 classifications but failed Verify enumeration before policy; a combined one-enumeration fetch-verify correction is under independent review. The coordinator reports COMPLETED/status4 deadline exceeded/exit-2 after3,611.847s. Applied executor metadata now proves --timeout=1h0m0s and --timeout_reason=free_tier_limit, with Action timeout3,610s despite the requested95-minute bound (fc68d12a, root-reviewed). Node owns read-only selection of the existing GitHub Actions coordinator route with RBE work; Hostinet owns child-survival evidence. No unchanged retry or new authorization question.\n\nThe shared HTTP error-context correction be948 passed five owning checks with 137 positive records. Canonical audit e380 then completed Fetch: all 552 npm entries were classified (544 automatic and eight explicitly manual), with 38 immutable notice sources and no missing or unclassified entries. Subsequent Verify failed while reading the checksum-bound Node source archive, before policy evaluation; the raw result remains FAIL/COMPLETE and there is no final policy list. Nine existing APT Python entries changed only license classification and retrieval date, with unchanged artifact identities; 1,623 prior entries were unchanged. Independent compact review accepted these phase and timing bindings. Hostinet and Node own the existing source-reuse investigation; no unchanged fourth audit was submitted. Full Node26 run 93279 remains independently active at 665f. Proc locking e5d6 is independently qualified by 12 owners and 154 positive records, including native/directfs/shared ProcTest.Create; contributor review now targets a28c and supersedes c29.\n\nCandidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.\n\nEarlier selected integration385c and ZIPcfcd retain their source-specific qualified results and original recovery evidence. This is not a blanket current-source PASS; GPU, version/source gaps and18 unavailable NVIDIA comparisons remain separate.",
-      "updatedAt": "2026-10-20T10:00:01.118901+00:00",
+      "summary": "Public Node legacy-Docker validation and the standalone classifier checks are complete. The complete Node upgrade and classifier proposal are contributor approved with explicit land-before prerequisites; separate generic licensing proposals remain pending. Qualification evidence retains its original tested source and result identities.\n\nFork reporter upkeep is complete: phase-count commit136bb6d1 adds per-invocation expected-owner and executed-attempt counts without changing aggregate status or coverage gates. Actions39402991792 passes all 93 existing reporter tests, one owner/attempt with no gaps or skips. The exact commit is integrated on qualification/conntrack-netip; its validation branch is not an upstream proposal or contributor backlog. This does not replace the separately observed current-upstream-refresh source identity.\n\nFull Node 26.12.0 Actions run 39388037075 is independently accepted PASS/COMPLETE at exact source 665f6390c: 21 owners and 161 attempts, with strict inner accounting complete. Fresh built inventory has 6385 identities; each mode selects 6369 = 6058 completed expected-outcome successes + 307 runtime skips + 4 classifier exclusions, with no missing, duplicate or failed cases. Four expected-flaky annotations are a subset of successes. All 32 restored test names are actually completed in both modes; the root-only rmSync case is explicitly skipped. Automatic outer receipt at 08:23:14 is separate from named inner reconciliation at 08:27:50; one manual CSV-path reconciliation is retained, with no manual collection. The source image completed in 2017.125668 seconds. Current df0025 licensing applicability is exact and limited to five licensing files; public proposal/plain-Docker validation remains separate. Original free-tier coordinator deadline, image and runtime failures remain unchanged.\n\nThe reviewed fork licensing update is complete at df0025d651f6931786a7c0d549c2fe327407e2a9: the canonical unfiltered licensecheck suite passed all137 XML records, including actual TestLicensePolicy, with one uncached remote attempt and no gaps or skips. Its catalog is exactly the prior complete8af3 output (552 npm rows:544 automatic/eight manual,38 notice sources); the policy adds eight npm exceptions, removes five unnecessary APT exceptions and updates four exact license sets without changing the global allowlist or artifact pins. The prior17-problem audit FAIL and original seven-package proposal remain historical evidence. The self-imposed separate permission gate was lifted under existing authority; no contributor decision or further license audit remains. Full Node26 Actions39388037075 at665f is independently running under Node ownership; this licensing result gives no runtime credit. At08:04:24 UTC, the nine exact NVIDIA public source tags remained absent; the18 architecture-specific source comparisons stay externally unavailable, with no dependency pin, exclusion or runtime qualification change.\n\nFull Node26 qualification now uses the existing GitHub Actions coordinator: run39388037075, exact665f, attempt1 accepted07:40:15 UTC; Node owns sole collector3156 and strict fresh inventory/TAP reconciliation. Builds and TestRunner work remain remote, with unchanged20 runtime owners \u00d78shards plus lint and1800-second owner deadlines; existing coordinator bounds are120-minute work/145-minute step/155-minute job. No execution credit yet. Original93279 remains INCOMPLETE/missing bundle after proven one-hour free_tier_limit, with no retained runtime results; image survival remains unknown. The separate combined one-enumeration npm audit8af3 at580ab is live under Hostinet; its five owning checks passed141 records. Prior e380 completed552 classifications but policy verification timed out, so no final policy list or catalog adoption is claimed.\n\nFull Node26 invocation 93279 at665f ended with an INCOMPLETE collection receipt at07:21:01 UTC: the parent disconnected and qualification.tar.gz was unavailable. Collector31021 is closed. Hostinet owns bounded recovery of child/action evidence; no new execution, runtime credit or retry is claimed. The original receipt is retained. The separate npm audit e380 completed all552 classifications but failed Verify enumeration before policy; a combined one-enumeration fetch-verify correction is under independent review. The coordinator reports COMPLETED/status4 deadline exceeded/exit-2 after3,611.847s. Applied executor metadata now proves --timeout=1h0m0s and --timeout_reason=free_tier_limit, with Action timeout3,610s despite the requested95-minute bound (fc68d12a, root-reviewed). Node owns read-only selection of the existing GitHub Actions coordinator route with RBE work; Hostinet owns child-survival evidence. No unchanged retry or new authorization question.\n\nThe shared HTTP error-context correction be948 passed five owning checks with 137 positive records. Canonical audit e380 then completed Fetch: all 552 npm entries were classified (544 automatic and eight explicitly manual), with 38 immutable notice sources and no missing or unclassified entries. Subsequent Verify failed while reading the checksum-bound Node source archive, before policy evaluation; the raw result remains FAIL/COMPLETE and there is no final policy list. Nine existing APT Python entries changed only license classification and retrieval date, with unchanged artifact identities; 1,623 prior entries were unchanged. Independent compact review accepted these phase and timing bindings. Hostinet and Node own the existing source-reuse investigation; no unchanged fourth audit was submitted. Full Node26 run 93279 remains independently active at 665f. Proc locking e5d6 is independently qualified by 12 owners and 154 positive records, including native/directfs/shared ProcTest.Create; contributor review now targets a28c and supersedes c29.\n\nCandidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.\n\nEarlier selected integration385c and ZIPcfcd retain their source-specific qualified results and original recovery evidence. This is not a blanket current-source PASS; GPU, version/source gaps and18 unavailable NVIDIA comparisons remain separate.",
+      "updatedAt": "2026-10-20T10:31:57.388095+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Selected runtime and licensing qualification complete; public delivery work separate",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T10:09:14.439734+00:00",
-        "nextAction": "Preserve source-bound completed evidence while Hostinet validates the public Node image builder and Node prepares generic licensing prerequisites. No duplicate full runtime replay or license audit is required.",
+        "observedAt": "2026-10-20T10:30:15.558526+00:00",
+        "nextAction": "Preserve completed source-bound runtime, public legacy-Docker and licensing evidence. Approved Node/classifier delivery now waits on upstream prerequisites; remaining qualification review is bounded to the existing lane inventory, with no duplicate full run.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39388037075",
           "https://github.com/tamird/gvisor/commit/df0025d651f6931786a7c0d549c2fe327407e2a9"
@@ -13296,32 +13296,33 @@
       "id": "branch:upgrade/nodejs-26.12.0",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "upgrade/nodejs-26.12.0",
-      "head": "4b4be636405594d798f3197885869cdd66b1c17f",
+      "ref": "upgrade/nodejs-26.12.0-reviewed",
+      "head": "4624725855c2650587f81828d182ed66fdcd5f7e",
       "title": "Upgrade Node.js runtime tests to 26.12.0",
-      "url": "https://github.com/tamird/gvisor/commit/4b4be636405594d798f3197885869cdd66b1c17f",
+      "url": "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e",
       "group": "runtime",
-      "status": "Agent delivery preparation: qualified image and runtime",
-      "updatedAt": "2026-10-20T10:17:16.598262+00:00",
+      "status": "Contributor approved; waiting for SNI, procfs and licensing prerequisites",
+      "updatedAt": "2026-10-20T10:31:57.388095+00:00",
       "refinement": {
         "before": {
-          "head": "b9d9dec695a6d6e8a28a08b8586d147662989f36"
+          "head": "4b4be636405594d798f3197885869cdd66b1c17f"
         },
         "after": {
-          "head": "4b4be636405594d798f3197885869cdd66b1c17f"
+          "head": "4624725855c2650587f81828d182ed66fdcd5f7e"
         }
       },
-      "summary": "The public Node catalog child 8aa91dcff7ea6b0c8c8d8f188aa4a4458d41c38b is published on upgrade/nodejs-26.12.0-licenses, parent4b4. Independent source review confirms the exact 552 generated npm rows and eight prior grants, preserving all195 existing public rows, five exceptions and the allowlist. The exact ab1e0708 offline TestLicensePolicy run now passes: one uncached owner/attempt and one positive against all747 catalog rows/13 exceptions, with no gaps or skips. Independent compact review verifies source/request/receipt/member hashes and separate4.509609-second automatic/86.802357-second owner timing. This supplies no new Fetch/Verify, HTTP, classifier or image/runtime proof. This child will fold into the existing Node upgrade after prerequisite mechanisms/classifier, not a standalone catalog proposal or new contributor question.\n\nPublic proposal 4b4be6364 now has both accepted full Node26 runtime evidence and canonical legacy-Docker image evidence. The single uncached image owner at 121e/Actions39397545416 used the exact public Makefile and all seven image inputs with DOCKER_BUILDKIT=0, Docker24.0.9; it produced v26.12.0 and all four canonical tags. This is image proof, with zero added runtime-case credit and no registry push. The original runtime skips/exclusions and failed attempts remain retained. Delivery preparation still tracks SNI #15960, proc a28 and the separate public licensing mechanism/catalog prerequisites; no full-upgrade contributor review or upstream PR yet.\n\nPublished Node 26.12.0 upgrade proposal incorporates the exact independently qualified 665f image and proctor inputs; only the timeout patch purpose header is explanatory. Public 4b4be6364 is on d5b and preserves the original b9d9 proposal. It updates image, runtime targets, public CI commands and the unchanged exclusion CSV together; canonical exact-case discovery preserves extensions and configured WPT variants. Full 665f runtime proof is accepted separately, with skips/exclusions retained; public plain-Docker image validation is still pending. Delivery depends on SNI #15960, the procfs correction and licensing support/catalog prerequisites. Hostinet owns source/build preparation; no contributor question or upstream PR yet. Refinement command: git range-diff --creation-factor=999 b9d9dec695a6d6e8a28a08b8586d147662989f36^! 4b4be636405594d798f3197885869cdd66b1c17f^!.\n\n",
+      "summary": "Contributor approved the complete Node 26.12.0 proposal 462472585 at 10:27 UTC: open after SNI #15960, procfs creation and the public licensing prerequisites land. This single commit combines the qualified image/proctor upgrade with the exact 552 npm catalog rows and eight grants; its tree equals the accepted 8aa catalog child. The full runtime, canonical legacy-Docker image and offline public policy proofs remain separately bound to their tested sources. No new execution occurred for consolidation. The earlier 4b4 upgrade and 8aa catalog refs remain preserved, with no separate catalog proposal. Delivery is authorized after prerequisites; no repeat contributor review is needed for the unchanged tree. Refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 4b4be6364^! 462472585^!.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Runtime and public builder qualification complete; delivery prerequisites remain",
-        "sourceHead": "4b4be636405594d798f3197885869cdd66b1c17f",
-        "observedAt": "2026-10-20T10:00:00.868617+00:00",
-        "nextAction": "Prepare the existing public upgrade packet with SNI/proc and licensing prerequisites. Keep the three licensing contributor decisions separate from full-upgrade readiness.",
+        "disposition": "Approved complete Node activation waits for prerequisite merges",
+        "sourceHead": "4624725855c2650587f81828d182ed66fdcd5f7e",
+        "observedAt": "2026-10-20T10:31:04.422941+00:00",
+        "nextAction": "After SNI #15960, procfs creation and generic licensing/classifier prerequisites land, refresh and publish the approved upgrade with source-equivalence review. Preserve #15146 hold and existing independent contributor decisions.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4b4be636405594d798f3197885869cdd66b1c17f",
+          "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e",
           "https://github.com/tamird/gvisor/actions/runs/39388037075",
-          "https://github.com/tamird/gvisor/actions/runs/39397545416"
+          "https://github.com/tamird/gvisor/actions/runs/39397545416",
+          "https://app.buildbuddy.io/invocation/ab1e0708-9f27-4a92-a9de-d044f403e32c"
         ]
       },
       "evidence": [
@@ -13332,6 +13333,10 @@
         {
           "label": "Exact public Node catalog: offline policy PASS",
           "url": "https://app.buildbuddy.io/invocation/ab1e0708-9f27-4a92-a9de-d044f403e32c"
+        },
+        {
+          "label": "Approved complete Node upgrade and catalog",
+          "url": "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e"
         }
       ]
     },
@@ -13432,6 +13437,36 @@
         "head": "8facdc0012a7714662f8c40a9cc5db1030ee2864",
         "url": "https://github.com/tamird/gvisor/commit/8facdc0012a7714662f8c40a9cc5db1030ee2864"
       }
+    },
+    {
+      "id": "branch:fix/license-python-bsd-notices",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/license-python-bsd-notices",
+      "head": "c8e5ec0c2630418262f4273bf756aac74d34e7a1",
+      "title": "Recognize full Python and BSD notice variants",
+      "url": "https://github.com/tamird/gvisor/commit/c8e5ec0c2630418262f4273bf756aac74d34e7a1",
+      "group": "release",
+      "status": "Contributor approved; waiting for #15146",
+      "updatedAt": "2026-10-20T10:31:57.388095+00:00",
+      "summary": "Contributor approved the exact published classifier c8e5ec0c2 at 10:27 UTC: open after #15146 lands. The explicit hold on #15146 remains. One unfiltered uncached coordinator checker owner passes 26 records, including all nine required classifier/metadata names; canonical buildifier exits zero. Final compact outcome b68478da21 preserves the original result/timing and explicitly binds the public BUILD and both notice fixtures. No HTTP audit, new Nogo cohort, catalog adoption or Node runtime claim. Upstream publication is authorized once the prerequisite lands; no repeat contributor review is required for the unchanged patch.\n\n",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "Approved delivery waits for held classifier-registry prerequisite",
+        "sourceHead": "c8e5ec0c2630418262f4273bf756aac74d34e7a1",
+        "observedAt": "2026-10-20T10:31:04.422941+00:00",
+        "nextAction": "Open this approved unchanged proposal after #15146 lands. Preserve its explicit hold; no new contributor question or upstream PR now.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c8e5ec0c2630418262f4273bf756aac74d34e7a1",
+          "https://app.buildbuddy.io/invocation/9e02b747-303a-4bc7-aa97-430537889dc5"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Existing focused checker/lint validation",
+          "url": "https://app.buildbuddy.io/invocation/9e02b747-303a-4bc7-aa97-430537889dc5"
+        }
+      ]
     }
   ],
   "edges": [
@@ -15142,6 +15177,24 @@
       "to": "branch:upgrade/nodejs-26.12.0",
       "type": "depends_on",
       "reason": "Node26 public license records require this mechanism; full upgrade delivery remains separately prepared."
+    },
+    {
+      "from": "pr:15146",
+      "to": "branch:fix/license-python-bsd-notices",
+      "type": "depends_on",
+      "reason": "The standalone generic patterns use the classifier registry supplied by the exact held #15146 source."
+    },
+    {
+      "from": "branch:fix/license-python-bsd-notices",
+      "to": "branch:upgrade/nodejs-26.12.0",
+      "type": "depends_on",
+      "reason": "The public Node activation includes notices requiring these generic recognizers; catalog policy proof alone does not supply the classifier mechanism."
+    },
+    {
+      "from": "branch:proc-directory-creation",
+      "to": "branch:upgrade/nodejs-26.12.0",
+      "type": "depends_on",
+      "reason": "The approved Node upgrade waits for the separately qualified procfs creation behavior to land."
     }
   ],
   "investigations": [
