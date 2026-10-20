@@ -196,15 +196,24 @@ func TestNpmLicenseFetch(t *testing.T) {
 	for _, test := range []struct {
 		name       string
 		d          dep
+		root       string
 		previous   Entry
 		want       Licenses
 		wantCommit string
 	}{
-		{"parent", parent, Entry{}, Licenses{"BSD-3-Clause"}, ""},
-		{"bundled child", child, Entry{}, Licenses{"MIT"}, ""},
-		{"explicit notice", parent, entry, Licenses{"MIT"}, noticeCommit},
+		{"parent", parent, "package", Entry{}, Licenses{"BSD-3-Clause"}, ""},
+		{"bundled child", child, "package", Entry{}, Licenses{"MIT"}, ""},
+		{"named archive root", parent, "example", Entry{}, Licenses{"BSD-3-Clause"}, ""},
+		{"bundled child under named root", child, "example", Entry{}, Licenses{"MIT"}, ""},
+		{"explicit notice", parent, "package", entry, Licenses{"MIT"}, noticeCommit},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			archiveFiles := slices.Clone(files)
+			for i := range archiveFiles {
+				archiveFiles[i].name = strings.Replace(archiveFiles[i].name, "package/", test.root+"/", 1)
+			}
+			body = npmTestArchive(t, archiveFiles...)
+			test.d.integrity = npmTestIntegrity(body)
 			result, err := fetchNpmLicense(test.d, test.previous, get)
 			if err != nil {
 				t.Fatal(err)
@@ -215,7 +224,7 @@ func TestNpmLicenseFetch(t *testing.T) {
 			if got, want := result.commit, test.wantCommit; got != want {
 				t.Errorf("notice commit = %q, want %q", got, want)
 			}
-			if got, want := result.sha256, entry.SHA256; got != want {
+			if got, want := result.sha256, fmt.Sprintf("%x", sha256.Sum256(body)); got != want {
 				t.Errorf("fetched SHA256 = %q, want %q", got, want)
 			}
 		})
@@ -237,6 +246,11 @@ func TestNpmLicenseFetch(t *testing.T) {
 		{files[:1], "no package license notice"},
 		{append(slices.Clone(files), files[1]), "duplicate or nonregular npm notice/manifest"},
 		{[]npmTarFile{{"package/package.json", `{"name":"different","version":"1.0.0"}`}, files[1]}, "differs from locked example@1.0.0"},
+		{append(slices.Clone(files), npmTarFile{"other/LICENSE", bsdText}), "npm archive has multiple roots"},
+		{append(slices.Clone(files), npmTarFile{"package/../LICENSE", bsdText}), "invalid npm archive path"},
+		{append(slices.Clone(files), npmTarFile{"/package/LICENSE", bsdText}), "invalid npm archive path"},
+		{append(slices.Clone(files), npmTarFile{`package\LICENSE`, bsdText}), "invalid npm archive path"},
+		{[]npmTarFile{{"package.json", `{"name":"example","version":"1.0.0"}`}}, "npm archive entry has no leading directory"},
 	} {
 		body = npmTestArchive(t, test.files...)
 		parent.integrity = npmTestIntegrity(body)
