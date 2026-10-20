@@ -42,6 +42,12 @@ capture owner uses each `testResult`'s original reports.
   `docker-stderr.txt` is the unchanged stderr suffix from PGO KVM run
   39092637450's ffmpeg owner. Bazel appended the Docker image-pull messages
   after the benchmark's stdout; its separate provenance records that artifact.
+* `node-tap`: two unchanged batch artifacts from invocation
+  `4ae56120-c5a2-451f-8334-5103d32be7d8`. Batch 150 completed all 50 selected
+  cases, including HTTP cork. Batch 0 completed 49 of 50 selections, with five
+  explicit skips; the remaining name was a recursively discovered fixture
+  outside Node's canonical suites. Both include the real success footer.
+  The original aggregate remains failed; the fixture must stay unaccounted.
 
 Other tests deliberately mutate these inputs to exercise source/configuration
 mismatches, missing results, report corruption, resumable capture, wrapper errors,

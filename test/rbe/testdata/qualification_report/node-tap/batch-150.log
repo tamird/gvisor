@@ -1,0 +1,261 @@
+Batch:
+parallel/test-http-expect-continue.js
+parallel/test-http-head-response-has-no-body-end.js
+parallel/test-http-highwatermark.js
+parallel/test-http-information-processing.js
+parallel/test-http-keep-alive-max-requests.js
+parallel/test-http-localaddress-bind-error.js
+parallel/test-http-missing-header-separator-lf.js
+parallel/test-http-outgoing-end-cork.js
+parallel/test-http-outgoing-message-capture-rejection.js
+parallel/test-http-parser-finish-error.js
+parallel/test-http-pause.js
+parallel/test-http-remove-connection-header-persists-connection.js
+parallel/test-http-request-invalid-method-error.js
+parallel/test-http-response-cork.js
+parallel/test-http-response-writehead-returns-this.js
+parallel/test-http-server-connection-list-when-close.js
+parallel/test-http-server-incomingmessage-destroy.js
+parallel/test-http-server-non-utf8-header.js
+parallel/test-http-server-request-timeout-keepalive.js
+parallel/test-http-server.js
+parallel/test-http-status-code.js
+parallel/test-http-unix-socket-keep-alive.js
+parallel/test-http-url.parse-auth-with-header-in-request.js
+parallel/test-http-write-callbacks.js
+parallel/test-http2-autoselect-protocol.js
+parallel/test-http2-client-destroy.js
+parallel/test-http2-client-rststream-before-connect.js
+parallel/test-http2-client-upload.js
+parallel/test-http2-compat-method-connect.js
+parallel/test-http2-compat-serverresponse-createpushresponse.js
+parallel/test-http2-compat-serverresponse-settimeout.js
+parallel/test-http2-compat-short-stream-client-server.js
+parallel/test-http2-connect-method.js
+parallel/test-http2-createwritereq.js
+parallel/test-http2-forget-closed-streams.js
+parallel/test-http2-info-headers.js
+parallel/test-http2-max-concurrent-streams.js
+parallel/test-http2-multi-content-length.js
+parallel/test-http2-options-max-reserved-streams.js
+parallel/test-http2-ping.js
+parallel/test-http2-res-writable-properties.js
+parallel/test-http2-respond-file-fd-errors.js
+parallel/test-http2-respond-no-data.js
+parallel/test-http2-server-http1-client.js
+parallel/test-http2-server-set-header.js
+parallel/test-http2-server-unknown-protocol.js
+parallel/test-http2-socket-proxy-handler-for-has.js
+parallel/test-http2-too-many-headers.js
+parallel/test-http2-util-nghttp2error.js
+parallel/test-https-agent-additional-options.js
+Output:
+2026/10/20 01:29:34 INFO Proctor checking in 2026-10-20 01:29:34.754296296 +0000 UTC m=+15.002975443
+2026/10/20 01:29:49 INFO Proctor checking in 2026-10-20 01:29:49.761227013 +0000 UTC m=+30.009906171
+TAP version 13
+1..50
+ok 1 parallel/test-http-highwatermark
+  ---
+  duration_ms: 567.51800
+  ...
+ok 2 parallel/test-http-information-processing
+  ---
+  duration_ms: 567.91500
+  ...
+ok 3 parallel/test-http-head-response-has-no-body-end
+  ---
+  duration_ms: 573.36400
+  ...
+ok 4 parallel/test-http-keep-alive-max-requests
+  ---
+  duration_ms: 571.11800
+  ...
+ok 5 parallel/test-http-missing-header-separator-lf
+  ---
+  duration_ms: 565.63600
+  ...
+ok 6 parallel/test-http-localaddress-bind-error
+  ---
+  duration_ms: 570.46500
+  ...
+ok 7 parallel/test-http-expect-continue
+  ---
+  duration_ms: 672.29900
+  ...
+ok 8 parallel/test-http-request-invalid-method-error
+  ---
+  duration_ms: 267.80800
+  ...
+ok 9 parallel/test-http-outgoing-end-cork
+  ---
+  duration_ms: 333.45800
+  ...
+ok 10 parallel/test-http-parser-finish-error
+  ---
+  duration_ms: 332.36200
+  ...
+ok 11 parallel/test-http-response-cork
+  ---
+  duration_ms: 289.53000
+  ...
+ok 12 parallel/test-http-remove-connection-header-persists-connection
+  ---
+  duration_ms: 470.97500
+  ...
+ok 13 parallel/test-http-response-writehead-returns-this
+  ---
+  duration_ms: 274.94500
+  ...
+ok 14 parallel/test-http-server-incomingmessage-destroy
+  ---
+  duration_ms: 276.46400
+  ...
+ok 15 parallel/test-http-server-non-utf8-header
+  ---
+  duration_ms: 279.08400
+  ...
+ok 16 parallel/test-http-outgoing-message-capture-rejection
+  ---
+  duration_ms: 678.29600
+  ...
+ok 17 parallel/test-http-pause
+  ---
+  duration_ms: 673.42900
+  ...
+ok 18 parallel/test-http-server
+  ---
+  duration_ms: 223.80800
+  ...
+ok 19 parallel/test-http-status-code
+  ---
+  duration_ms: 275.21200
+  ...
+ok 20 parallel/test-http-unix-socket-keep-alive
+  ---
+  duration_ms: 524.75200
+  ...
+ok 21 parallel/test-http2-client-destroy
+  ---
+  duration_ms: 342.16200
+  ...
+ok 22 parallel/test-http2-client-rststream-before-connect
+  ---
+  duration_ms: 354.83300
+  ...
+ok 23 parallel/test-http2-client-upload
+  ---
+  duration_ms: 344.85200
+  ...
+ok 24 parallel/test-http2-compat-method-connect
+  ---
+  duration_ms: 282.09500
+  ...
+ok 25 parallel/test-http2-compat-serverresponse-createpushresponse
+  ---
+  duration_ms: 278.02000
+  ...
+ok 26 parallel/test-http2-compat-serverresponse-settimeout
+  ---
+  duration_ms: 449.25000
+  ...
+ok 27 parallel/test-http2-connect-method
+  ---
+  duration_ms: 234.96000
+  ...
+ok 28 parallel/test-http2-compat-short-stream-client-server
+  ---
+  duration_ms: 690.78300
+  ...
+ok 29 parallel/test-http2-createwritereq
+  ---
+  duration_ms: 1028.43300
+  ...
+ok 30 parallel/test-http2-info-headers
+  ---
+  duration_ms: 274.17700
+  ...
+ok 31 parallel/test-http2-max-concurrent-streams
+  ---
+  duration_ms: 349.45900
+  ...
+ok 32 parallel/test-http2-multi-content-length
+  ---
+  duration_ms: 342.55400
+  ...
+ok 33 parallel/test-http2-options-max-reserved-streams
+  ---
+  duration_ms: 277.13600
+  ...
+ok 34 parallel/test-http2-ping
+  ---
+  duration_ms: 354.59100
+  ...
+ok 35 parallel/test-http2-res-writable-properties
+  ---
+  duration_ms: 351.58800
+  ...
+ok 36 parallel/test-http-server-connection-list-when-close
+  ---
+  duration_ms: 5426.68900
+  ...
+ok 37 parallel/test-http2-respond-file-fd-errors
+  ---
+  duration_ms: 280.91300
+  ...
+ok 38 parallel/test-http-url.parse-auth-with-header-in-request
+  ---
+  duration_ms: 5374.36900
+  ...
+ok 39 parallel/test-http-write-callbacks
+  ---
+  duration_ms: 5366.21000
+  ...
+ok 40 parallel/test-http2-server-http1-client
+  ---
+  duration_ms: 276.40000
+  ...
+ok 41 parallel/test-http2-respond-no-data
+  ---
+  duration_ms: 341.82900
+  ...
+ok 42 parallel/test-http2-autoselect-protocol
+  ---
+  duration_ms: 5359.54000
+  ...
+2026/10/20 01:30:04 INFO Proctor checking in 2026-10-20 01:30:04.76577875 +0000 UTC m=+45.014457908
+ok 43 parallel/test-http2-server-set-header
+  ---
+  duration_ms: 277.50300
+  ...
+ok 44 parallel/test-http2-util-nghttp2error
+  ---
+  duration_ms: 186.01700
+  ...
+ok 45 parallel/test-http2-too-many-headers
+  ---
+  duration_ms: 276.39700
+  ...
+ok 46 parallel/test-http2-socket-proxy-handler-for-has
+  ---
+  duration_ms: 341.58600
+  ...
+ok 47 parallel/test-https-agent-additional-options
+  ---
+  duration_ms: 521.49800
+  ...
+ok 48 parallel/test-http2-server-unknown-protocol
+  ---
+  duration_ms: 929.07700
+  ...
+ok 49 parallel/test-http2-forget-closed-streams
+  ---
+  duration_ms: 12090.49000
+  ...
+2026/10/20 01:30:19 INFO Proctor checking in 2026-10-20 01:30:19.767773278 +0000 UTC m=+60.016452427
+ok 50 parallel/test-http-server-request-timeout-keepalive
+  ---
+  duration_ms: 30332.94900
+  ...
+
+All tests passed.
+

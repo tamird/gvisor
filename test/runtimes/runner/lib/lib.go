@@ -260,7 +260,7 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 				case <-done:
 					// Keep per-test results for successful batches too: the wrapper's
 					// status alone cannot distinguish executed tests from harness skips.
-					if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" {
+					if dir, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR"); ok {
 						name := filepath.Join(dir, fmt.Sprintf("batch-%d.log", i))
 						contents := fmt.Sprintf("Batch:\n%s\nOutput:\n%s\n", strings.Join(tcs, "\n"), output)
 						if err := os.WriteFile(name, []byte(contents), 0644); err != nil {

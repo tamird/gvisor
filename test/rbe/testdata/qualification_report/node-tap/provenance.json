@@ -1,0 +1,39 @@
+{
+  "source": "54fd64f6dc8e9a35b4baca38d90326813c297e6a",
+  "invocation_id": "4ae56120-c5a2-451f-8334-5103d32be7d8",
+  "bundle_sha256": "a3a6db625ca42110c9c1856c8b3111ac91938baf193b1dda6f23d97f3b5f7520",
+  "member_prefix": "invocation-ErFKwm/reports/k8-fastbuild-ST-98680bcfc8db/testlogs/test/runtimes/nodejs22.2.0_directfs_9_owned/test.outputs/",
+  "scope": "Unmodified authentic pinned Node TAP batch bytes. Original aggregate FAIL is preserved: batch0 contains an unaccounted recursively discovered fixture. Batch150 closes every selected result and includes cork. No synthetic preselection exclusion records.",
+  "files": [
+    {
+      "file": "batch-0.log",
+      "bytes": 6779,
+      "sha256": "15e029f470e25181f1a5d78512cbfa5057db005585e9065aeeb5bf15b59a9856",
+      "selected": 50,
+      "closed_frames": 49,
+      "expected_outcome_successes": 44,
+      "skipped": {
+        "async-hooks/test-graph.http.js": "skip IPv6 support required",
+        "async-hooks/test-graph.tls-write.js": "skip IPv6 support required",
+        "es-module/test-esm-encoded-path-native.js": "skip 0",
+        "es-module/test-esm-preserve-symlinks-main.js": "skip 0",
+        "parallel/test-child-process-exec-any-shells-windows.js": "skip Windows specific test."
+      },
+      "expected_flaky": {},
+      "missing": [
+        "fixtures/test-runner/default-behavior/node_modules/test-nm.js"
+      ]
+    },
+    {
+      "file": "batch-150.log",
+      "bytes": 6997,
+      "sha256": "2a1f52b02ae473e2038f7141187a5e12b1c5c87ff0551b0dfd353c7cd1526863",
+      "selected": 50,
+      "closed_frames": 50,
+      "expected_outcome_successes": 50,
+      "skipped": {},
+      "expected_flaky": {},
+      "missing": []
+    }
+  ]
+}
