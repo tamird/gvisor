@@ -302,9 +302,12 @@ else:
             uname.write_text(f"""#!{sys.executable}
 import os
 import sys
-if sys.argv[1:] != ['-m']:
+if sys.argv[1:] == ['-m']:
+    print(os.environ['TEST_HOST_ARCH'])
+elif sys.argv[1:] == ['-s']:
+    print('Linux')
+else:
     raise SystemExit('Unexpected uname arguments')
-print(os.environ['TEST_HOST_ARCH'])
 """)
             uname.chmod(0o755)
             arguments_path = temporary / "arguments.json"
