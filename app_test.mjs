@@ -274,7 +274,7 @@ test('verified unchanged approval routes imports without rewriting fresh review 
   checkRejected(changed);
   context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-13T12:00:00Z' }, nodes: [node], edges: [], groups: [] };
   vm.runInContext('validateRegistry(registryInput)', context);
-  pr.checkedAt = '2026-10-13T09:00:00Z';
+  for (const item of [pr, ...pr.imports]) item.checkedAt = '2026-10-13T09:00:00Z';
   context.snapshotInput.registryDate = context.registryInput.meta.updatedAt;
   context.snapshotInput.prs = [pr];
   for (const state of ['awaiting-import', 'waiting-merge']) {
