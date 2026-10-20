@@ -12,6 +12,7 @@ go_library(
         "classify.go",
         "licensecheck.go",
         "modules.go",
+        "npm.go",
         "wheels.go",
     ],
     importpath = "gvisor.dev/gvisor/tools/licensecheck",
@@ -34,6 +35,7 @@ go_test(
         "apt_test.go",
         "licensecheck_test.go",
         "modules_test.go",
+        "npm_test.go",
         "wheels_test.go",
     ],
     data = [

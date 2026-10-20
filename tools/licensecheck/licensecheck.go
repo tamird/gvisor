@@ -19,8 +19,9 @@
 // bazel_deps, the http_archive/http_file repos declared in MODULE.bazel, and
 // the Go repos imported from the go_deps extension, unioned with go.mod's
 // requirements, independently resolved module proxies, and the packages exposed
-// by imported pip and apt hubs, plus QEMU user-mode archives. Fetch reads each
-// dependency's license text from the Go module proxy, pinned package archives,
+// by imported pip and apt hubs, QEMU user-mode archives, and the canonical npm
+// locks in the Node runtime image source. Fetch reads each dependency's license
+// text from the Go module proxy, pinned package archives,
 // or GitHub, classifies it, and
 // records it in a YAML file. Verify checks that the YAML file has an entry for
 // every dependency, without fetching licenses.
@@ -77,13 +78,15 @@ type Entry struct {
 	Retrieved  string   `yaml:"retrieved"`
 	Commit     string   `yaml:"commit"`
 	SHA256     string   `yaml:"sha256"`
+	Integrity  string   `yaml:"integrity,omitempty"`
 	License    Licenses `yaml:"license"`
 
 	// ManuallyAudited preserves reviewed terms that automatic discovery misses.
 	ManuallyAudited bool `yaml:"manually_audited,omitempty"`
 
 	// LicenseSource pins the notice for an executable distributed by a
-	// differently licensed builder repository. It is bound to Version/SHA256.
+	// differently licensed builder repository. It is bound to Version/SHA256
+	// and, for npm archives, the canonical lock's Integrity.
 	LicenseSource string `yaml:"license_source,omitempty"`
 }
 
@@ -162,16 +165,20 @@ const (
 	kindArchive
 	kindWheel
 	kindApt
+	kindNpm
 )
 
 // dep is a single external dependency.
 type dep struct {
 	name       string
 	kind       depKind
-	version    string // kindGoModule.
+	version    string // kindGoModule or kindNpm.
 	modulePath string // kindGoModule: module path, independent of the audit name.
-	url        string // kindArchive, kindWheel or kindApt.
+	url        string // kindArchive, kindWheel, kindApt or kindNpm.
 	sha256     string // Bazel's pinned artifact hash.
+	integrity  string // kindNpm: the canonical lock's SRI pin.
+	npmPath    string // kindNpm: bundled package path within the parent archive.
+	npmName    string // kindNpm: package manifest name.
 	aptRepo    string // kindApt: imported repository reference.
 	aptArch    string // kindApt: selected target architecture, including for Architecture: all.
 	aptPackage string // kindApt: binary package name owning usr/share/doc/<name>/copyright.
@@ -186,12 +193,15 @@ func (d dep) source() string {
 		}
 		return d.version
 	}
+	if d.npmPath != "" {
+		return d.url + "#" + d.npmPath
+	}
 	return d.url
 }
 
 const (
 	yamlHeader = `# Licenses of gVisor's external dependencies, as declared in MODULE.bazel and
-# go.mod.
+# go.mod, and the canonical npm locks of the Node runtime images.
 # Regenerate with: make run TARGETS=//tools/licensecheck/main:licensecheck ARGS=--mode=fetch
 # Check completeness with ARGS=--mode=verify.
 # Reviewed entries are retained on fetch failures only when the source and any
@@ -287,10 +297,11 @@ func Fetch(p Paths) error {
 			Retrieved:     today,
 			Commit:        r.fetched.commit,
 			SHA256:        r.fetched.sha256,
+			Integrity:     d.integrity,
 			License:       r.fetched.license,
 			LicenseSource: oldByName[d.name].LicenseSource,
 		}
-		if o, ok := oldByName[d.name]; ok && o.Version == e.Version && o.SHA256 == e.SHA256 {
+		if o, ok := oldByName[d.name]; ok && o.Version == e.Version && o.SHA256 == e.SHA256 && o.Integrity == e.Integrity {
 			// Commit lookup is best-effort. A missing response does not
 			// invalidate known metadata for the same module archive.
 			if d.kind == kindGoModule && e.Commit == "" && e.SHA256 != "" {
@@ -339,7 +350,8 @@ func pinnedManualEntries(deps []dep, byName map[string]Entry) (map[string]Entry,
 // sources without an archive pin therefore retain their version/URL check.
 func (d dep) canRetain(e Entry) bool {
 	return len(e.License) > 0 && e.Version == d.source() &&
-		(d.sha256 == "" || e.SHA256 == d.sha256)
+		(d.sha256 == "" || e.SHA256 == d.sha256) && e.Integrity == d.integrity &&
+		(d.kind != kindNpm || artifactSHA256RE.MatchString(e.SHA256))
 }
 
 // Verify checks that the YAML file has a well-formed, up-to-date entry for
@@ -407,7 +419,13 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 			if d.sha256 != "" && e.SHA256 != d.sha256 {
 				problems = append(problems, fmt.Sprintf("%s was audited with sha256 %q, but is now pinned to %q", d.name, e.SHA256, d.sha256))
 			}
-			if e.manuallyAudited() && d.sha256 == "" {
+			if e.Integrity != d.integrity {
+				problems = append(problems, fmt.Sprintf("%s was audited with integrity %q, but is now pinned to %q", d.name, e.Integrity, d.integrity))
+			}
+			if d.kind == kindNpm && !artifactSHA256RE.MatchString(e.SHA256) {
+				problems = append(problems, fmt.Sprintf("%s has no audited npm archive SHA256", d.name))
+			}
+			if e.manuallyAudited() && d.sha256 == "" && d.integrity == "" {
 				problems = append(problems, fmt.Sprintf("%s has manually audited terms without an artifact checksum pin", d.name))
 			}
 			for i, license := range e.License {
@@ -565,6 +583,11 @@ func enumerate(p Paths) ([]dep, error) {
 	for path, version := range goVersions {
 		deps = append(deps, dep{name: path, kind: kindGoModule, version: version, modulePath: path})
 	}
+	npm, err := enumerateNodeNpm()
+	if err != nil {
+		return nil, err
+	}
+	deps = append(deps, npm...)
 	slices.SortFunc(deps, func(a, b dep) int { return strings.Compare(a.name, b.name) })
 	for i := 1; i < len(deps); i++ {
 		if deps[i].name == deps[i-1].name {
@@ -832,6 +855,9 @@ type fetchResult struct {
 // fetchLicense returns the upstream commit, artifact hash, and licenses of a
 // dependency.
 func fetchLicense(d dep, previous Entry) (*fetched, error) {
+	if d.kind == kindNpm {
+		return fetchNpmLicense(d, previous, httpGet)
+	}
 	commit, err := licenseSourceCommit(d, previous)
 	if err != nil {
 		return nil, err
@@ -877,7 +903,11 @@ func licenseSourceCommit(d dep, e Entry) (string, error) {
 	if e.LicenseSource == "" {
 		return "", nil
 	}
-	if d.kind != kindArchive || !artifactSHA256RE.MatchString(d.sha256) || e.Version != d.source() || e.SHA256 != d.sha256 {
+	pinned := d.kind == kindArchive && artifactSHA256RE.MatchString(d.sha256) && e.SHA256 == d.sha256
+	if d.kind == kindNpm {
+		pinned = validNpmIntegrity(d.integrity) && e.Integrity == d.integrity && artifactSHA256RE.MatchString(e.SHA256)
+	}
+	if !pinned || e.Version != d.source() {
 		return "", errors.New("license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source")
 	}
 	owner, repo, commit, err := parseGitHubURL(e.LicenseSource)

@@ -11,14 +11,16 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /root
 ARG VERSION=v26.12.0
-ARG COMMIT=26e72d85a611e222e3f06025de8a3c496923bacd
-ARG SHA256=75d385191001d110a6bfc9c057d9b2e6ba2f63134b0de0e1bb1f52917c2ff83f
 # Distribution tarballs omit Corepack and several test files.
-RUN curl --fail --location -o node-${VERSION}.tar.gz https://codeload.github.com/nodejs/node/tar.gz/${COMMIT} \
- && echo "${SHA256}  node-${VERSION}.tar.gz" | sha256sum --check - \
+COPY source.sha256 /tmp/source.sha256
+RUN read -r checksum archive < /tmp/source.sha256 \
+ && commit=${archive#node-} \
+ && commit=${commit%.tar.gz} \
+ && curl --fail --location -o "${archive}" "https://codeload.github.com/nodejs/node/tar.gz/${commit}" \
+ && sha256sum --check /tmp/source.sha256 \
  && mkdir node-${VERSION} \
- && tar -zxf node-${VERSION}.tar.gz --strip-components=1 -C node-${VERSION} \
- && rm -f node-${VERSION}.tar.gz
+ && tar -zxf "${archive}" --strip-components=1 -C node-${VERSION} \
+ && rm -f "${archive}" /tmp/source.sha256
 
 # Patch in a timeout increase to reduce test flakiness on gVisor
 WORKDIR /root/node-${VERSION}
