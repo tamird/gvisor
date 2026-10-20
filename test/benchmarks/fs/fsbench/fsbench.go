@@ -152,7 +152,8 @@ func RunWithDifferentFilesystems(ctx context.Context, b *testing.B, machine harn
 			}
 
 			if variant.fsType == harness.FuseFS {
-				startFUSE(ctx, b, container, prefix, &cu)
+				// Stop monitoring FUSE before metrics collection stops the container.
+				defer startFUSE(ctx, b, container, prefix)()
 			}
 
 			cpCmd := fmt.Sprintf("cp -r %s %s/.", bm.WorkDir, prefix)
@@ -204,7 +205,7 @@ func RunWithDifferentFilesystems(ctx context.Context, b *testing.B, machine harn
 	}
 }
 
-func startFUSE(ctx context.Context, b *testing.B, container *dockerutil.Container, dir string, cu *cleanup.Cleanup) {
+func startFUSE(ctx context.Context, b *testing.B, container *dockerutil.Container, dir string) func() {
 	b.Helper()
 	const readyFile = "/tmp/gvisor-fuse-ready"
 	ctx, cancel := context.WithCancel(ctx)
@@ -219,12 +220,13 @@ func startFUSE(ctx context.Context, b *testing.B, container *dockerutil.Containe
 		close(exited)
 		cancel()
 	}()
-	cu.Add(func() {
+	cu := cleanup.Make(func() {
 		cancel()
 		if err := <-exited; err != nil && !errors.Is(err, context.Canceled) {
 			b.Error(err)
 		}
 	})
+	defer cu.Clean()
 
 	// A late mount can hide files copied into the original tmpfs. Wait for the
 	// server's mount-ready signal before populating the benchmark filesystem.
@@ -237,4 +239,5 @@ func startFUSE(ctx context.Context, b *testing.B, container *dockerutil.Containe
 			b.Fatalf("waiting for FUSE mount: %v", err)
 		}
 	}
+	return cu.Release()
 }
