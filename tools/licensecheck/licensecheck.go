@@ -222,6 +222,10 @@ func Fetch(p Paths) error {
 	if err != nil {
 		return err
 	}
+	return fetch(p, deps)
+}
+
+func fetch(p Paths, deps []dep) error {
 	old, err := readEntries(p.YAML)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
@@ -361,6 +365,26 @@ func Verify(p Paths) error {
 	if err != nil {
 		return err
 	}
+	return verify(p, deps)
+}
+
+// FetchAndVerify rewrites and checks the catalog against one enumeration of
+// the declared dependencies. Verification still runs when fetching fails.
+func FetchAndVerify(p Paths) error {
+	deps, err := enumerate(p)
+	if err != nil {
+		return err
+	}
+	return fetchAndVerify(p, deps)
+}
+
+func fetchAndVerify(p Paths, deps []dep) error {
+	fetchErr := fetch(p, deps)
+	verifyErr := verify(p, deps)
+	return errors.Join(fetchErr, verifyErr)
+}
+
+func verify(p Paths, deps []dep) error {
 	entries, err := readEntries(p.YAML)
 	if err != nil {
 		return err

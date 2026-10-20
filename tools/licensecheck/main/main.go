@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	mode     = flag.String("mode", "", "one of: fetch, verify")
+	mode     = flag.String("mode", "", "one of: fetch, verify, fetch-verify")
 	goMod    = flag.String("go_mod", "go.mod", "path to go.mod")
 	yamlPath = flag.String("yaml", "tools/licensecheck/dependencies.yaml", "path to the license YAML file")
 	policy   = flag.String("policy", "governance/licensing.yaml", "path to the licensing policy YAML file")
@@ -32,7 +32,7 @@ var (
 
 func main() {
 	flag.Parse()
-	if wd := os.Getenv("BUILD_WORKSPACE_DIRECTORY"); wd != "" {
+	if wd, ok := os.LookupEnv("BUILD_WORKSPACE_DIRECTORY"); ok {
 		if err := os.Chdir(wd); err != nil {
 			fmt.Fprintf(os.Stderr, "licensecheck: %v\n", err)
 			os.Exit(1)
@@ -49,8 +49,10 @@ func main() {
 		err = licensecheck.Fetch(p)
 	case "verify":
 		err = licensecheck.Verify(p)
+	case "fetch-verify":
+		err = licensecheck.FetchAndVerify(p)
 	default:
-		fmt.Fprintln(os.Stderr, "usage: licensecheck --mode=fetch|verify")
+		fmt.Fprintln(os.Stderr, "usage: licensecheck --mode=fetch|verify|fetch-verify")
 		os.Exit(2)
 	}
 	if err != nil {

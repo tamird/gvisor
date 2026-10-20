@@ -516,6 +516,80 @@ func TestLicensePolicy(t *testing.T) {
 	}
 }
 
+func TestFetchAndVerify(t *testing.T) {
+	entry := Entry{
+		Dependency: "bundle", Version: "https://example.com/bundle.tar.gz",
+		Retrieved: "2026-10-20", SHA256: strings.Repeat("a", 64),
+		License: Licenses{"MIT"}, ManuallyAudited: true,
+	}
+	stale := entry
+	stale.Dependency = "stale"
+	for _, test := range []struct {
+		name        string
+		entries     []Entry
+		allowed     string
+		wantErrors  []string
+		wantEntries int
+	}{
+		{
+			name:    "fetch removes stale entry before verification",
+			entries: []Entry{entry, stale}, allowed: "MIT", wantEntries: 1,
+		},
+		{
+			name:    "verification rejects policy after successful fetch",
+			entries: []Entry{entry, stale}, allowed: "Apache-2.0",
+			wantErrors: []string{"1 problems; regenerate"}, wantEntries: 1,
+		},
+		{
+			// This unsupported archive URL fails before network I/O. Verify
+			// must still reject its absence from the resulting empty catalog.
+			name:    "fetch and verification failures are both retained",
+			allowed: "MIT",
+			wantErrors: []string{
+				"cannot fetch licenses for bundle; fix the reported source or notice errors",
+				"1 problems; regenerate",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			dir := t.TempDir()
+			p := Paths{
+				YAML:   filepath.Join(dir, "dependencies.yaml"),
+				Policy: filepath.Join(dir, "licensing.yaml"),
+			}
+			if err := writeEntries(p.YAML, test.entries); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(p.Policy, []byte("allowed_licenses: ["+test.allowed+"]\n"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			deps := []dep{{name: entry.Dependency, kind: kindArchive, url: entry.Version, sha256: entry.SHA256}}
+			err := fetchAndVerify(p, deps)
+			if len(test.wantErrors) == 0 {
+				if err != nil {
+					t.Fatalf("fetchAndVerify: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Fatalf("fetchAndVerify succeeded, want errors %v", test.wantErrors)
+				}
+				for _, want := range test.wantErrors {
+					if got := err.Error(); !strings.Contains(got, want) {
+						t.Errorf("fetchAndVerify error = %q, want %q", got, want)
+					}
+				}
+			}
+			entries, err := readEntries(p.YAML)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := len(entries), test.wantEntries; got != want {
+				t.Errorf("catalog entries = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
 func TestCheckPolicy(t *testing.T) {
 	entries := []Entry{
 		{Dependency: "a", License: Licenses{"MIT"}},
