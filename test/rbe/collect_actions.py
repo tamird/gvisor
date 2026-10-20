@@ -43,6 +43,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
     bound_attempt = run_attempt
     selected_artifact: dict[str, object] | None = None
     watch_exit = None
+    watch_exits: list[int] = []
     attached_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     report.write_json(output("-collector.json"), {
         "run": run, "source": source, "collector_attached_at": attached_at,
@@ -82,15 +83,27 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
         metadata = api(path)
         observe(metadata)
         if metadata.get("status") != "completed":
+            deadline = time.monotonic() + 10000
             with output("-watch.log").open("w") as log:
-                watch = subprocess.run(
-                    ["gh", "run", "watch", str(run), "--repo", "tamird/gvisor",
-                     "--interval", str(poll_interval), "--exit-status"],
-                    stdout=log, stderr=subprocess.STDOUT, timeout=10000,
-                )
-            watch_exit = watch.returncode
-            metadata = api(path)
-            observe(metadata)
+                # A disconnected watch does not stop the workflow. Reattach
+                # within the original deadline, preserving all watch output.
+                for attempt in range(3):
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    log.write(f"Watch attempt {attempt + 1}\n")
+                    log.flush()
+                    watch = subprocess.run(
+                        ["gh", "run", "watch", str(run), "--repo", "tamird/gvisor",
+                         "--interval", str(poll_interval), "--exit-status"],
+                        stdout=log, stderr=subprocess.STDOUT, timeout=remaining,
+                    )
+                    watch_exit = watch.returncode
+                    watch_exits.append(watch_exit)
+                    metadata = api(path)
+                    observe(metadata)
+                    if metadata.get("status") == "completed":
+                        break
         if metadata.get("status") != "completed":
             raise ValueError("Workflow is still live; retain its handle rather than restarting")
         workflow["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -141,7 +154,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
                    "actions_artifact": selected_artifact,
                    "source_verified": type(workflow.get("id")) is int and workflow["id"] == run
                    and workflow.get("head_sha") == source,
-                   "watch_exit": watch_exit, "collector_attached_at": attached_at,
+                   "watch_exit": watch_exit, "watch_exits": watch_exits, "collector_attached_at": attached_at,
                    "poll_interval_seconds": poll_interval,
                    "collection_finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat()})
     report.write_json(output("-receipt.json"), result)
