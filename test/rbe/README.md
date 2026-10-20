@@ -280,8 +280,10 @@ Select their `_amd64` or `_arm64` frontends so the existing declared root or
 nonroot identity reaches the matching Actions runner. Compilation remains on
 RBE, while the ordinary local-test bound and report retention apply.
 
-The `test` and `container-v1` lanes accept an optional `test_filter`, forwarded
-as one Bazel `--test_filter` argument. Direct callers use `--test-filter=REGEX`.
+The `test`, `container-v1` and `docker` lanes accept an optional
+`test_filter`, forwarded as one Bazel `--test_filter` argument. Direct
+callers use `--test-filter=REGEX`. Use `docker` for its native ARM Docker
+fixture.
 Use `container-v1` for its existing root coordinator and KVM guest; the explicit
 test lane does not grant that guest device access. Record the selected cases
 when reporting a filtered result. Other named profiles reject this option,

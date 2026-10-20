@@ -267,6 +267,7 @@ class SyscallBucketsTest(unittest.TestCase):
             ["--arch=arm64", "--syscall-bucket=0", owner, "syscalls-rc"],
             ["--arch=arm64", owner, "syscalls"],
             ["--arch=arm64", owner, "unit"],
+            ["--arch=arm64", "--test-filter=TestOnly", "cpu-images"],
             ["--arch=arm64", "--test-target=--invalid", "syscalls-rc"],
         ):
             with self.subTest(arguments=arguments):
@@ -339,22 +340,28 @@ else:
                         self.assertEqual((report / "canonical-targets").read_text().splitlines(), owners)
                         self.assertEqual((report / "selected-targets").read_text().splitlines(), selected)
 
-            for architecture, execution, lane in (
-                ("arm64", "local", "docker"),
-                ("arm64", "local", "cpu-images"),
-                ("arm64", "local", "gpu-images"),
-                ("amd64", "local", "cpu-images"),
-                ("arm64", "remote", "cpu-images"),
-                ("amd64", "remote", "cpu-images"),
+            compose_filter = "^TestDockerWith(VFS|Overlay)$/^docker_compose_build_host_network$"
+            for architecture, execution, lane, test_filter in (
+                ("arm64", "local", "docker", ""),
+                ("arm64", "local", "docker", compose_filter),
+                ("amd64", "remote", "docker", compose_filter),
+                ("amd64", "remote", "test", compose_filter),
+                ("arm64", "local", "cpu-images", ""),
+                ("arm64", "local", "gpu-images", ""),
+                ("amd64", "local", "cpu-images", ""),
+                ("arm64", "remote", "cpu-images", ""),
+                ("amd64", "remote", "cpu-images", ""),
             ):
-                with self.subTest(architecture=architecture, execution=execution, lane=lane):
+                with self.subTest(architecture=architecture, execution=execution, lane=lane, test_filter=test_filter):
                     arguments_path.unlink(missing_ok=True)
                     environment["TEST_HOST_ARCH"] = "aarch64" if architecture == "arm64" else "x86_64"
                     target = f"//test/rbe:gcsfuse_{architecture}_test"
-                    selected = ["--test-target=" + target] if lane == "cpu-images" else []
+                    if lane in ("docker", "test"):
+                        target = "//test/image:image_test_owned"
+                    selected = ["--test-target=" + target] if lane in ("cpu-images", "docker", "test") else []
                     result = subprocess.run(
                         ["bash", "test/rbe/qualify.sh", "--arch=" + architecture,
-                         "--test-execution=" + execution, *selected, lane],
+                         "--test-execution=" + execution, "--test-filter=" + test_filter, *selected, lane],
                         cwd=root, env=environment, capture_output=True, text=True, check=False, timeout=30,
                     )
                     if architecture == "amd64" and execution == "local":
@@ -364,6 +371,8 @@ else:
                         continue
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     arguments = json.loads(arguments_path.read_text())
+                    self.assertEqual([arg for arg in arguments if arg.startswith("--test_filter=")],
+                                     ["--test_filter=" + test_filter] if test_filter else [])
                     self.assertEqual("--strategy=SourceImageOCI=local" in arguments,
                                      architecture == "arm64" and execution == "local")
                     self.assertIn("--config=rbe-arm64" if architecture == "arm64" else "--config=rbe", arguments)
