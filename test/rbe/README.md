@@ -1282,30 +1282,33 @@ is present. Qualification covers outputs built from source on RBE;
 externally produced staged release bundles are outside its scope. Make's
 separate staged-binary support remains available.
 
-The CPU and GPU/ML image-source lanes retain the public manifest-or-build checks:
+The CPU and GPU/ML image-source lanes build the public image selections:
 
 ```sh
 test/rbe/qualify.sh cpu-images gpu-images
 ```
 
-They select the existing `tools/images.mk test-cpu-images` and `test-gpu-images`
+They select the `tools/images.mk rebuild-cpu-images` and `rebuild-gpu-images`
 owners through `//test/docker:cpu_image_sources_amd64_test` and
 `//test/docker:gpu_image_sources_amd64_test`, or the corresponding `arm64_test`
 targets with `--arch=arm64`. With `--arch=all`, both public profiles are analyzed
 and their target-configured variants use the same worker-capacity selection as
 smoke, Docker and bwrap. Each architecture runs natively, using the public
-four AMD64 or two ARM64 partitions as Bazel test shards. Make retains image
-discovery, complete-context hashing and the manifest check: a missing manifest
-builds the image from its Dockerfile; a manifest hit does not prove a fresh
-image build. Base-image and package downloads retain their network behavior.
+four AMD64 or two ARM64 partitions as Bazel test shards. Each shard records
+its complete image selection before building, then continues independent
+builds after a failure while retaining Make's nonzero exit status. Images
+with Dockerfiles are built even if a matching registry image exists.
+Bazel-native images load their declared source-built archive instead.
+Base-image and package downloads retain their network behavior.
 The GPU/ML cohort includes Make's TPU images and preserves its `NON_TEST_IMAGES`
-exclusions. These checks build images when needed; they do not run their GPU/TPU
+exclusions. These checks build images; they do not run their GPU/TPU
 workloads or require accelerator devices. ARM64 image checks can use
 `execution=local` in the [GitHub Actions frontend](#github-actions-frontend).
 
 The action uses declared Make and crane tools with a private native-runc Docker
 daemon. It needs no gVisor release or preloaded images. Complete contexts are
-materialized from the declared `//images:source_contexts` archive so Make's
+materialized from the declared `//images:cpu_source_contexts` or
+`//images:gpu_source_contexts` archive so Make's
 `find -type f` hash sees physical source files. The archive declares regular
 file modes and the tracked executable overrides; this avoids Bazel marking
 every remote input executable. The current contexts contain no symlinks; new
@@ -1320,17 +1323,17 @@ budget; cancellation leaves incomplete qualification. Fully remote ARM64 image
 checks require ARM64 Firecracker workers. The Actions route instead runs the
 selected image-check owners on its native ARM64 runner.
 
-Runtime suites consume Docker archives through `source_image_archive`. The
-same canonical Make context hash and architecture select a published cache
-image or a Dockerfile build. A cache hit is exported with the declared crane
-tool into an OCI layout. If that command fails, Make builds the same context
-with declared Buildx and a BuildKit container pinned by the MODULE digest.
+Runtime suites consume Docker archives through `source_image_archive`.
+It invokes the canonical Make rebuild target for the selected context and
+architecture, using declared Buildx and a BuildKit container pinned by the
+MODULE digest. The source action does not read a published image as a
+substitute for building its Dockerfile.
 Buildx uses the caller's Docker daemon, including ordinary non-root Docker
 users, and removes its task-specific builder afterward. It does not require a
 global BuildKit socket or a separately installed Docker CLI plugin.
 
-The cache path writes the declared OCI layout directly. A source build streams
-BuildKit's OCI tar output through the declared BSD tar extractor into task-owned
+The source build streams BuildKit's OCI tar output through the declared
+BSD tar extractor into task-owned
 scratch, then copies the completed layout to its declared output. This keeps
 output writes outside the live BuildKit session, whose health checks timed out
 during earlier large exports. The cause of those stalls remains unverified.
@@ -1340,16 +1343,16 @@ before deleting scratch. Both pipeline processes and the output copy must
 succeed before the source action publishes its output. Stock `oci_load`
 produces the Docker archive with Make's source-hash and `latest` aliases; the
 public archive label exposes only that tar file. The source action needs a
-Docker-capable worker for cache misses. Archive conversion needs no daemon and
+Docker-capable worker. Archive conversion needs no daemon and
 uses the ordinary remote executor. Neither archive construction nor loading
-requires a GPU. The cache read uses command-local HTTP/1 after the bounded
-transfer comparison; this does not identify a specific HTTP/2 defect.
+requires a GPU.
 
 The Dockerfile producer retains network access and disables disk and remote
 result caching because Dockerfile tags and package mirrors are mutable. A
-cache hit does not qualify source construction. `//test/rbe:source_image_miss_load_test`
-uses a marked Redis context with the unchanged Dockerfile to exercise a miss;
-its recorded producer log must show the miss and build.
+cache hit does not qualify source construction.
+`//test/rbe:source_image_miss_load_test` uses a marked Redis context with
+the unchanged Dockerfile to check the resulting archive and Docker load.
+Its recorded producer log must show the actual source build.
 `source_image_docker_user_test` invokes the same builder helper as UID 65534
 with the daemon socket's group, private writable state and no effective
 capabilities. This checks Docker-user compatibility, not Docker isolation.
