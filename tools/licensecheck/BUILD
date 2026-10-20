@@ -35,10 +35,12 @@ go_test(
     ],
     embed = [":licensecheck"],
     embedsrcs = [
+        "testdata/bsd-omitted-noun.txt",
         "testdata/bsd.txt",
         "testdata/llvm.txt",
         "testdata/openssl.txt",
         "testdata/overflow-readme.txt",
+        "testdata/python.txt",
         "testdata/udiff-bsd.txt",
         "testdata/udiff-mit.txt",
     ],

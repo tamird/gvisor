@@ -141,6 +141,8 @@ func TestModuleLicenses(t *testing.T) {
 // Complete notices copied from the inputs that exposed classifier mistakes:
 // bsd.txt and openssl.txt: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt
 // llvm.txt: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT
+// bsd-omitted-noun.txt: https://github.com/fb55/entities/blob/9f7ca4c7b/LICENSE
+// python.txt: https://github.com/nodeca/argparse/blob/e37356387/LICENSE
 var (
 	//go:embed testdata/bsd.txt
 	bsdText string
@@ -148,12 +150,24 @@ var (
 	opensslText string
 	//go:embed testdata/llvm.txt
 	llvmText string
+	//go:embed testdata/python.txt
+	pythonText string
+	//go:embed testdata/bsd-omitted-noun.txt
+	bsdOmittedNounText string
 )
 
 func TestClassify(t *testing.T) {
 	apache, _, ok := strings.Cut(llvmText, "---- LLVM Exceptions to the Apache 2.0 License ----")
 	if !ok {
 		t.Fatal("LLVM fixture has no exception boundary")
+	}
+	bsdWithoutDisclaimer, _, ok := strings.Cut(bsdOmittedNounText, "THIS IS PROVIDED")
+	if !ok {
+		t.Fatal("BSD fixture has no disclaimer boundary")
+	}
+	beforeCWI, cwi, ok := strings.Cut(pythonText, "CWI LICENSE AGREEMENT FOR PYTHON 0.9.0 THROUGH 1.2")
+	if !ok {
+		t.Fatal("Python fixture has no CWI boundary")
 	}
 	for _, test := range []struct {
 		name, text string
@@ -162,6 +176,14 @@ func TestClassify(t *testing.T) {
 		{"separate grants", opensslText + bsdText + opensslText, Licenses{"BSD-3-Clause", "OpenSSL"}},
 		{"llvm", llvmText, Licenses{"Apache-2.0 WITH LLVM-exception", "NCSA"}},
 		{"apache without exception", apache, Licenses{"Apache-2.0"}},
+		{"bsd omitted noun", bsdOmittedNounText, Licenses{"BSD-2-Clause"}},
+		{"bsd explicit noun", strings.ReplaceAll(bsdOmittedNounText, "THIS", "THIS SOFTWARE"), Licenses{"BSD-2-Clause"}},
+		{"bsd without disclaimer", bsdWithoutDisclaimer, nil},
+		{"python stack", pythonText, Licenses{"Python-2.0.1"}},
+		{"python CWI only", cwi, Licenses{"HPND"}},
+		{"python without CWI", beforeCWI, nil},
+		{"python altered CNRI terms", strings.Replace(pythonText,
+			"governed by the federal\nintellectual property law", "governed by imaginary law", 1), Licenses{"HPND"}},
 		{"unknown", "All rights reserved. Do not redistribute.", nil},
 		{"reference", "See https://opensource.org/licenses/MIT for background.", nil},
 		{"title", "GNU General Public License Version 2, June 1991", nil},
@@ -190,7 +212,7 @@ func TestVerifyProblems(t *testing.T) {
 	if problems := verifyProblems(deps, entries); len(problems) != 0 {
 		t.Errorf("verifyProblems on up-to-date entries = %v, want none", problems)
 	}
-	for _, id := range []License{"NOASSERTION", "Apache-2.0 WITH LLVM-exception", "GPL-2.0", "GPL-2.0-only", "GPL-2.0-or-later"} {
+	for _, id := range []License{"NOASSERTION", "Apache-2.0 WITH LLVM-exception", "Python-2.0.1", "GPL-2.0", "GPL-2.0-only", "GPL-2.0-or-later"} {
 		entries[0].License = Licenses{id}
 		if problems := verifyProblems(deps, entries); len(problems) != 0 {
 			t.Errorf("verifyProblems with explicit %s = %v", id, problems)
