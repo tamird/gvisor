@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-19T23:48:16.485224+00:00",
+    "updatedAt": "2026-10-20T00:01:20.268118+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5626,23 +5626,18 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
-      "summary": "Hostinet now owns the bounded discovery-test diagnosis for older import15687/build50720. The exact subprocess error remains hidden by the existing fallback; no source correction or retry is yet qualified. WorkMap retains sole periodic monitoring.\n\nThe older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
+      "updatedAt": "2026-10-20T00:01:20.268118+00:00",
+      "summary": "The temporary exact-import diagnostic reproduced an actual pre-discovery dynamic-linker failure: posix_error_test exits127 with empty stdout because libposix_error cannot resolve absl lts20260817 FastIntToBuffer. This is below the fallback parser; owning shared-library dependency and artifact provenance remain to be diagnosed. Original public failure and hosted-environment limits are retained.\n\nHostinet now owns the bounded discovery-test diagnosis for older import15687/build50720. The exact subprocess error remains hidden by the existing fallback; no source correction or retry is yet qualified. WorkMap retains sole periodic monitoring.\n\nThe older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
-        "disposition": "Owning discovery test diagnosis active",
         "owner": "hostinet_delivery",
+        "disposition": "Reproduced dynamic-linker startup failure; shared-library provenance diagnosis pending",
         "sourceHead": "0729cdc9c742b6ab664b8f636ef550b3b165ab8a",
-        "observedAt": "2026-10-19T22:50:00Z",
-        "nextAction": "Hostinet owns a diagnostic source change exposing the actual discovery subprocess error at the existing regression boundary; root allocates correction after evidence. Preserve older50720 failure and current0729 approved-patch provenance independently.",
+        "observedAt": "2026-10-19T23:52:40.903911+00:00",
+        "nextAction": "Continue root-assigned shared-library dependency/artifact provenance diagnosis. No production or cache cause is inferred from the hosted dynamic-linker failure.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15562",
-          "https://github.com/tamird/gvisor/commit/d7ffb314ab008b4ee47b4cd3f192a0f25c7f46be",
-          "https://github.com/google/gvisor/pull/15562#issuecomment-6183843885",
-          "https://github.com/google/gvisor/pull/15687",
-          "https://github.com/google/gvisor/pull/15772"
-        ],
-        "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE"
+          "https://github.com/tamird/gvisor/commit/7fab6a4a68721df9c918125e51a9bfafcb3d6227",
+          "https://buildkite.com/gvisor/pipeline/builds/50720"
+        ]
       },
       "number": 15562,
       "reviewDecision": "REVIEW_REQUIRED",
@@ -5679,7 +5674,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-19T23:44:56.870445+00:00",
+        "observedAt": "2026-10-19T23:55:15.640545+00:00",
         "disposition": "All currently executable unit-runtime cases and owner obligations complete; external NVIDIA comparisons remain",
         "nextAction": "Retain the18 NVIDIA comparison instances until their exact public sources become available; root owns the pending contributor decision for qualified RACK proposal8643925c. Preserve raw failures, all84 skips and original execution-source bindings.",
         "evidence": [
@@ -10496,21 +10491,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "hostinet-port-range",
-      "head": "194f76d6969a39915bf9caaddfdaf35642da2644",
+      "head": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
       "title": "Report the host's ephemeral port range in hostinet",
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-19T23:48:16.485224+00:00",
-      "summary": "Root assigned the existing #15931 conflict/rebase action to Hostinet in the released pr14353 checkout. The current public head remains 194f76d696; exact source and any conflict resolution require review before publication.\n\nRead the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
+      "updatedAt": "2026-10-20T00:01:20.268118+00:00",
+      "summary": "The quiet rebase is published at 5c36118d69d861a79bd6f97df9b77e0a64d44ddf and GitHub reports MERGEABLE. Independent review verified that all145 added/removed source lines match the prior patch; only upstream import context changed. Public checks are newly running; no new comment or runtime result is claimed.\n\nRoot assigned the existing #15931 conflict/rebase action to Hostinet in the released pr14353 checkout. The current public head remains 194f76d696; exact source and any conflict resolution require review before publication.\n\nRead the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Assigned current conflict/rebase source work",
-        "sourceHead": "194f76d6969a39915bf9caaddfdaf35642da2644",
-        "observedAt": "2026-10-19T23:48:16.084697+00:00",
-        "nextAction": "Resolve the current rebase against fresh upstream, preserve semantics and obtain independent review of any nontrivial resolution before exact-lease publication.",
+        "owner": "work_map_current",
+        "disposition": "Context-only rebase delivered; ordinary current-head checks and review follow-up",
+        "sourceHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
+        "observedAt": "2026-10-19T23:54:37.789260+00:00",
+        "nextAction": "Follow exact current-head checks, human feedback and import progression through the existing watcher.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15931"
+          "https://github.com/google/gvisor/pull/15931",
+          "https://github.com/tamird/gvisor/commit/5c36118d69d861a79bd6f97df9b77e0a64d44ddf"
         ]
       },
       "evidence": [
