@@ -77,6 +77,8 @@ func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
 			"-timeoutFactor:5",            // Extend the default timeout (2 min) of all tests by this factor.
 			"-verbose:all",                // Verbose output.
 			javaTimeLimit,                 // Exclude tests with a declared timeout of zero or over 200s.
+			// Use the image's NSS package for the JDK's PKCS11 test fixture.
+			"-Djdk.test.lib.artifacts.nsslib-linux_x64=/usr/lib/x86_64-linux-gnu",
 		},
 		tests...,
 	)
