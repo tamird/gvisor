@@ -21,7 +21,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"slices"
 )
 
 var nodejsTestRegEx = regexp.MustCompile(`^test-[^-].+\.js$`)
@@ -39,15 +38,22 @@ func (nodejsRunner) ListTests() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing Node tests: %w", err)
 	}
-	var tests []string
-	if err := json.Unmarshal(output, &tests); err != nil {
+	var inventory []struct {
+		Name string `json:"name"`
+		File string `json:"file"`
+	}
+	if err := json.Unmarshal(output, &inventory); err != nil {
 		return nil, fmt.Errorf("decoding Node test inventory: %w", err)
 	}
 	// Keep the existing filename scope, but let Node's suite configuration
 	// determine which files are tests rather than recursively finding fixtures.
-	return slices.DeleteFunc(tests, func(name string) bool {
-		return !nodejsTestRegEx.MatchString(filepath.Base(name))
-	}), nil
+	var tests []string
+	for _, test := range inventory {
+		if nodejsTestRegEx.MatchString(filepath.Base(test.File)) {
+			tests = append(tests, test.Name)
+		}
+	}
+	return tests, nil
 }
 
 // TestCmds implements TestRunner.TestCmds.
@@ -56,6 +62,6 @@ func (nodejsRunner) TestCmds(tests []string) []*exec.Cmd {
 }
 
 func nodejsCommand(tests ...string) *exec.Cmd {
-	args := append([]string{filepath.Join("tools", "test.py"), "--timeout=180", "--progress=tap"}, tests...)
-	return exec.Command("/usr/bin/python3.10", args...)
+	args := append([]string{filepath.Join("tools", "test.py"), "--timeout=180", "--progress=tap", "--exact-tests"}, tests...)
+	return exec.Command("/usr/bin/python3", args...)
 }

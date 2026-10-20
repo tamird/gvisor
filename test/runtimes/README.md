@@ -30,7 +30,7 @@ Language | Version | Running the test suite
 -------- | ------- | ---------------------------------
 Go       | 1.22    | `make go1.22-runtime-tests`
 Java     | 21      | `make java21-runtime-tests`
-NodeJS   | 22.2.0  | `make nodejs22.2.0-runtime-tests`
+NodeJS   | 26.12.0 | `make nodejs26.12.0-runtime-tests`
 Php      | 8.5.11  | `make php8.5.11-runtime-tests`
 Python   | 3.12.3  | `make python3.12.3-runtime-tests`
 

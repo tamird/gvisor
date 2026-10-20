@@ -1,0 +1,172 @@
+# Preserve exact configured cases across discovery, selection and TAP output.
+# Node's ordinary selectors and reporting erase .js/.mjs distinctions, while
+# WPT expands one wrapper into multiple query variants. Keep those identities
+# at their owning source and report canonical classifier exclusions separately.
+# https://github.com/nodejs/node/blob/26e72d85a/tools/test.py
+# https://github.com/nodejs/node/blob/26e72d85a/test/wpt/testcfg.py
+--- a/tools/test.py
++++ b/tools/test.py
+@@ -30,6 +30,7 @@
+ 
+ from __future__ import print_function
+ from typing import Dict
++import json
+ import logging
+ import argparse
+ import os
+@@ -368,7 +369,8 @@
+     # Print test name as (for example) "parallel/test-assert".  Tests that are
+     # scraped from the addons documentation are all named test.js, making it
+     # hard to decipher what test is running when only the filename is printed.
+-    command = output.test.GetReportingName(output.command)
++    command = (output.test.GetTestIdentifier() if output.test.context.exact_tests
++               else output.test.GetReportingName(output.command))
+ 
+     if output.UnexpectedOutput():
+       status_line = 'not ok %i %s' % (self._done, command)
+@@ -576,6 +578,12 @@
+     self.max_virtual_memory = None
+     self.serial_id = 0
+     self.thread_id = 0
++
++  def GetTestIdentifier(self):
++    name = os.path.relpath(self.file, self.context.test_root).replace(os.sep, '/')
++    if ',' in name or any(char.isspace() for char in name):
++      raise ValueError('Test identifier cannot use comma or whitespace: %r' % name)
++    return name
+ 
+   def GetReportingName(self, command):
+     prefix = abspath(join(dirname(__file__), '../test')) + os.sep
+@@ -1402,6 +1410,10 @@
+   result.add_argument("-p", "--progress",
+       help="The style of progress indicator (%s)" % ", ".join(PROGRESS_INDICATORS.keys()),
+       choices=list(PROGRESS_INDICATORS.keys()), default="mono")
++  result.add_argument("--list-tests", help="List canonical test identities as JSON",
++      default=False, action="store_true")
++  result.add_argument("--exact-tests", help="Select exact canonical test identities",
++      default=False, action="store_true")
+   result.add_argument("--report", help="Print a summary of the tests to be run",
+       default=False, action="store_true")
+   result.add_argument("-s", "--suite", help="A test suite",
+@@ -1678,7 +1690,19 @@
+   repositories += [TestRepository(a) for a in options.suite]
+ 
+   root = LiteralTestSuite(repositories, test_root)
+-  paths = ArgsToTestPaths(test_root, args, suites)
++  if options.list_tests:
++    paths = ArgsToTestPaths(test_root, suites, suites)
++  elif options.exact_tests:
++    if not args or len(args) != len(set(args)):
++      raise ValueError('Exact test selection is empty or has duplicate identifiers')
++    selected_suites = sorted({name.split('/', 1)[0] for name in args})
++    if not set(selected_suites) <= set(suites):
++      raise ValueError('Exact test selection names an unknown suite')
++    # Enumerate each selected suite once, without interpreting case identities
++    # as patterns or erasing .js/.mjs distinctions and WPT query variants.
++    paths = ArgsToTestPaths(test_root, selected_suites, suites)
++  else:
++    paths = ArgsToTestPaths(test_root, args, suites)
+ 
+   # Check for --valgrind option. If enabled, we overwrite the special
+   # command flag with a command that uses the run-valgrind.py script.
+@@ -1717,6 +1741,18 @@
+   else:
+     context.default_mode = 'none'
+ 
++  context.test_root = test_root
++  context.exact_tests = options.exact_tests
++  if options.list_tests:
++    cases = [case for path in paths for arch in options.arch for mode in options.mode
++             for case in root.ListTests([], path, context, arch, mode)]
++    inventory = [{'name': case.GetTestIdentifier(),
++                  'file': os.path.relpath(case.file, test_root)} for case in cases]
++    if not inventory or len({item['name'] for item in inventory}) != len(inventory):
++      raise ValueError('Canonical test inventory is empty or has duplicate identifiers')
++    print(json.dumps(sorted(inventory, key=lambda item: item['name'])))
++    return 0
++
+   if options.error_reporter:
+     context.use_error_reporter = True
+ 
+@@ -1731,6 +1767,8 @@
+   all_unused = [ ]
+   unclassified_tests = [ ]
+   globally_unused_rules = None
++  configured_ids = set()
++  selected_ids = set(args) if options.exact_tests else set()
+ 
+   for arch in options.arch:
+     for mode in options.mode:
+@@ -1754,6 +1792,16 @@
+       }
+       for path in paths:
+         test_list = root.ListTests([], path, context, arch, mode)
++        if options.exact_tests:
++          selected = []
++          for case in test_list:
++            identifier = case.GetTestIdentifier()
++            if identifier in configured_ids:
++              raise ValueError('Duplicate configured test identifier: ' + identifier)
++            configured_ids.add(identifier)
++            if identifier in selected_ids:
++              selected.append(case)
++          test_list = selected
+         unclassified_tests += test_list
+         cases, unused_rules = config.ClassifyTests(test_list, env)
+         if globally_unused_rules is None:
+@@ -1763,6 +1811,12 @@
+               globally_unused_rules.intersection(unused_rules))
+         all_cases += cases
+         all_unused.append(unused_rules)
++
++  if options.exact_tests:
++    if selected_ids - configured_ids:
++      raise ValueError('Unknown exact test identifiers: %r' % sorted(selected_ids - configured_ids))
++    if options.progress == 'tap':
++      logger.info('# gvisor-node-exact-ids')
+ 
+   # We want to skip the inspector tests if node was built without the inspector.
+   has_inspector = Execute([vm,
+@@ -1810,13 +1864,18 @@
+   def should_keep(case):
+     if any(s in case.file or s in '/'.join(case.path)
+            for s in options.skip_tests):
+-      return False
++      reason = '--skip-tests'
+     elif SKIP in case.outcomes:
+-      return False
++      reason = 'status-file SKIP'
+     elif (options.flaky_tests == SKIP) and (set([SLOW, FLAKY]) & case.outcomes):
+-      return False
++      reason = '--flaky-tests=skip'
+     else:
+       return True
++    if options.exact_tests and options.progress == 'tap':
++      logger.info('# gvisor-node-skip %s', json.dumps({
++        'name': case.GetTestIdentifier(), 'reason': reason,
++      }))
++    return False
+ 
+   cases_to_run = [
+     test_case for test_case in all_cases if should_keep(test_case)
+--- a/test/wpt/testcfg.py
++++ b/test/wpt/testcfg.py
+@@ -3,6 +3,7 @@
+ import re
+ import shlex
+ import sys
++from urllib.parse import quote
+ 
+ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+ import testpy
+@@ -18,6 +19,10 @@
+         path, file, arch, mode, context, config, config.additional_flags)
+     self.group = group
+     self.parallel = not serial
++
++  def GetTestIdentifier(self):
++    # Preserve distinct WPT queries through proctor's comma/whitespace interface.
++    return super().GetTestIdentifier() + '/' + quote(self.group['id'], safe='/')
+ 
+   def GetName(self):
+     return '/'.join(self.path)
