@@ -76,11 +76,23 @@ the link above. The collector records actual GraphQL cost and remaining budget.
 Manual collection uses the same script and is only needed for development or
 recovery; do not run a competing periodic publisher. Run it after registry edits,
 then review and commit the resulting
-`github-status.json` with those changes. The browser requires matching registry
-dates and falls back honestly during a partial deployment. This is
-a public-data update, not a build. The script needs Python 3.10+ and `gh`; it
-never reads or writes credentials. A complete repository-wide open-PR inventory
-discovers new author PRs and reopening of any tracked source or import. Detail
+`github-status.json` with those changes. After the final commit, require a clean
+tracked tree and run the current browser validator in the same command as the
+push:
+
+```sh
+git diff --quiet HEAD -- . &&
+node metadata-preflight.mjs . &&
+git push origin HEAD:gh-pages
+```
+
+Keep both checks when using an authorized alternate push transport. An earlier
+preflight receipt does not validate later edits; refresh the paired snapshot
+after registry changes and repeat this final check. The browser requires
+matching registry dates and falls back honestly during a partial deployment.
+This is a public-data update, not a build. The script needs Python 3.10+ and
+`gh`; it never reads or writes credentials. A complete repository-wide open-PR
+inventory discovers new author PRs and reopening of any tracked source or import. Detail
 queries refresh open PRs, previously active PRs whose closure needs confirming,
 newly tracked PRs, and their active or newly discovered imports. Known active
 imports are refreshed even when their source PR is closed. Linked capacity
