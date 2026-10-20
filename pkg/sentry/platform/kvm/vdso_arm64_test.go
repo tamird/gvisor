@@ -20,6 +20,8 @@ package kvm
 import (
 	"encoding/binary"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 )
@@ -145,6 +147,14 @@ func TestPatchHostVDSOARM64(t *testing.T) {
 	const testOffset = uint64(0x123456789abcdef0)
 	patch, err := patchVDSOTSCOffsetARM64(after, testOffset)
 	if err != nil {
+		if dir, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR"); ok {
+			path := filepath.Join(dir, "host-vdso.so")
+			if err := os.WriteFile(path, before, 0600); err != nil {
+				t.Errorf("retaining host [vdso]: %v", err)
+			} else {
+				t.Logf("Retained unmodified host [vdso] at %s", path)
+			}
+		}
 		t.Fatalf("patchVDSOTSCOffsetARM64 on the host [vdso] failed: %v", err)
 	}
 	if len(patch.sites) == 0 {
