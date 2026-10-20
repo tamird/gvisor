@@ -356,15 +356,20 @@ def docker_command_test(name, architectures = [], **kwargs):
         kwargs,
     )
 
-def _image_context_architecture_impl(settings, attr):
+def _image_source_configuration_impl(settings, attr):
     if attr.architecture == "x86_64":
-        return amd64_config(settings, attr)
-    return arm64_config(settings, attr)
+        configuration = amd64_config(settings, attr)
+    else:
+        configuration = arm64_config(settings, attr)
+    # Runtime tests set their own timeout. It must not split an image producer
+    # shared with ordinary build targets into separate configured actions.
+    configuration["//command_line_option:test_timeout"] = "-1"
+    return configuration
 
-_image_context_architecture = transition(
-    implementation = _image_context_architecture_impl,
+_image_source_configuration = transition(
+    implementation = _image_source_configuration_impl,
     inputs = [],
-    outputs = arch_config,
+    outputs = arch_config + ["//command_line_option:test_timeout"],
 )
 
 def _image_source_command_impl(ctx):
@@ -412,7 +417,7 @@ image_source_command = rule(
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image_class": attr.string(default = "cpu", values = ["cpu", "gpu"], doc = "Selects Make's CPU or GPU/ML test-image cohort."),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
-        "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_source_configuration),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
     },
@@ -477,12 +482,13 @@ def _source_image_layout_impl(ctx):
 
 _source_image_layout = rule(
     implementation = _source_image_layout_impl,
+    cfg = _image_source_configuration,
     doc = "Builds the Make-selected Dockerfile into an OCI layout.",
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
         "remote": attr.bool(default = True, doc = "Use a remote Docker worker; false requires Docker on the native coordinator."),
-        "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
