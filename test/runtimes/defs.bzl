@@ -107,7 +107,10 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
     """
     if partitions < 1:
         fail("runtime tests require at least one partition")
-    result_tags = ["jtreg-results"] if kwargs.get("lang") == "java" else []
+    result_tags = {
+        "java": ["jtreg-results"],
+        "nodejs": ["nodejs-results"],
+    }.get(kwargs.get("lang"), [])
     _runtime_test(
         name = name,
         image = name,  # Resolved as images/runtimes/%s.
