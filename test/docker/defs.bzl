@@ -361,6 +361,7 @@ def _image_source_configuration_impl(settings, attr):
         configuration = amd64_config(settings, attr)
     else:
         configuration = arm64_config(settings, attr)
+
     # Runtime tests set their own timeout. It must not split an image producer
     # shared with ordinary build targets into separate configured actions.
     configuration["//command_line_option:test_timeout"] = "-1"
