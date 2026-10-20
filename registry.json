@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T17:35:36.830105+00:00",
+    "updatedAt": "2026-10-20T17:48:30.322408+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2594,20 +2594,20 @@
       "url": "https://github.com/google/gvisor/pull/15188",
       "group": "tests",
       "status": "open",
-      "summary": "Matching import16035 advanced to8171a283. Its new Gazelle118777076181 fails only on the shared unused production //pkg/zip dependency; current generate118777074974 is still running. Prior3dfcd cleanup failure remains historical and is not carried onto this new import head.\n\nRefreshed import #16035 at 3dfcd2e8 fails generate job 118763669063 only after successful export and local go-branch push: finish removes the temporary clone, then rm reports repository: Directory not empty. This is the retained shared cleanup symptom, with writer/cause still unproven. The existing #15598 remedy remains the owner; no duplicate source patch or unchanged retry.\n\nExact current Gazelle job 118763669136 at import #16035 (3dfcd2e8) fails only on removal of the unused production //pkg/zip dependency in tools/nogo/check/BUILD, the shared #16031 correction. No independent source defect or retry is established.\n\nThe approved source patch was refreshed onto current master at 9e4c812a82, preserving the exact patch. Import #15257 has now been regenerated at c3f137cfd4 and explicitly names this current source. Fresh source checks pass. The regenerated import still has pending checks and no reported failure. Current check details and observation times are in the paired snapshot; no merge is established.\n\nEarlier source-specific history (states below apply to the named old heads):\n\nAt the 20:40 scan, the maintainer import state changed: #15257 at a990ad3eb7cc2fb56f57638f416b11a1fbb0f97b (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. Etienne\u2019s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 now matches this source; its latest internal build failed without a public cause while its public pipeline remains pending. Current check states are retained in the paired snapshot.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
+      "summary": "Exact current import16035/8171 generate118777074974 exported, committed and pushed its local go branch at17:36:55, then failed removing the disposable repository with Directory not empty. Log53d16568 establishes the same cleanup symptom; source of the writer remains unknown. Shared Gazelle16031 and existing cleanup mitigation15598 remain separate.\n\nMatching import16035 advanced to8171a283. Its new Gazelle118777076181 fails only on the shared unused production //pkg/zip dependency; current generate118777074974 is still running. Prior3dfcd cleanup failure remains historical and is not carried onto this new import head.\n\nRefreshed import #16035 at 3dfcd2e8 fails generate job 118763669063 only after successful export and local go-branch push: finish removes the temporary clone, then rm reports repository: Directory not empty. This is the retained shared cleanup symptom, with writer/cause still unproven. The existing #15598 remedy remains the owner; no duplicate source patch or unchanged retry.\n\nExact current Gazelle job 118763669136 at import #16035 (3dfcd2e8) fails only on removal of the unused production //pkg/zip dependency in tools/nogo/check/BUILD, the shared #16031 correction. No independent source defect or retry is established.\n\nThe approved source patch was refreshed onto current master at 9e4c812a82, preserving the exact patch. Import #15257 has now been regenerated at c3f137cfd4 and explicitly names this current source. Fresh source checks pass. The regenerated import still has pending checks and no reported failure. Current check details and observation times are in the paired snapshot; no merge is established.\n\nEarlier source-specific history (states below apply to the named old heads):\n\nAt the 20:40 scan, the maintainer import state changed: #15257 at a990ad3eb7cc2fb56f57638f416b11a1fbb0f97b (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. Etienne\u2019s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 now matches this source; its latest internal build failed without a public cause while its public pipeline remains pending. Current check states are retained in the paired snapshot.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-20T17:35:36.830105+00:00",
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00",
       "followup": {
-        "disposition": "Current import pending generation; shared Gazelle correction remains",
+        "disposition": "Current import repeats existing post-push clone-cleanup symptom",
         "owner": "work_map_current",
-        "nextAction": "Follow exact current import checks and existing shared corrections; no duplicate source fix or retry.",
+        "nextAction": "Monitor exact current import checks and existing shared corrections; no duplicate fix, retry or reviewer request.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39465893363/job/118777076181"
+          "https://github.com/google/gvisor/actions/runs/39465893357/job/118777074974"
         ],
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
         "sourceHead": "9e4c812a82770b2a084f66471e6732aef75de5fa",
-        "observedAt": "2026-10-20T17:30:21.187940+00:00"
+        "observedAt": "2026-10-20T17:43:35.505010+00:00"
       },
       "head": "9e4c812a82770b2a084f66471e6732aef75de5fa",
       "evidence": [
@@ -2622,6 +2622,10 @@
         {
           "label": "Exact current import diagnosis",
           "url": "https://github.com/google/gvisor/actions/runs/39465893363/job/118777076181"
+        },
+        {
+          "label": "Current import disposition",
+          "url": "https://github.com/google/gvisor/actions/runs/39465893357/job/118777074974"
         }
       ]
     },
@@ -4985,19 +4989,18 @@
       "title": "Bound bitmap list parsing by its declared size",
       "url": "https://github.com/google/gvisor/pull/15453",
       "group": "runtime",
-      "status": "open",
-      "summary": "Current bitmap import #15962 refreshed to cb1309f9 and still matches source 71a39f84. Its new generate job 118755923268 now passed. Gazelle job 118755923582 requests exactly the inherited unused production //pkg/zip deletion covered by #16031. The prior import cleanup failure remains historical, not a failure for cb130. No new bitmap source patch or retry is needed.\n\nCurrent bitmap import #15962 refreshed to cb1309f9 and still matches source 71a39f84. Its new Gazelle job 118755923582 requests exactly the inherited unused production //pkg/zip deletion covered by #16031. The new generate job was still running at the 16:53 observation; the prior import cleanup failure remains historical, not a failure claim for cb130. No new bitmap source patch or retry is needed.\n\nAt current import #15962 (af0b), generate job 118715809026 completes the generated Go commit and local branch push, then fails temporary-clone removal with Directory not empty. The log does not identify the writer. Pending #15598 remains the existing clone-lifetime correction; root owns its bounded applicability review. The independent Gazelle failure remains shared #16031. No bitmap source defect or unchanged retry is inferred.\n\nAt current import15962/af0b, generate job118715809026 completes the generated Go commit and local branch push, then fails temporary-clone removal with Directory not empty. Its log does not identify a writer. Pending #15598 remains the existing disposable-clone lifetime correction; root owns bounded applicability. The Gazelle failure independently remains shared16031. No bitmap source defect or unchanged retry is inferred.\n\nCurrent import15962 at af0b8998c9 matches source71a39f8405. Its exact Gazelle job118715807303 fails only because tools/nogo/check/BUILD retains the unused production //pkg/zip dependency. This is the already prepared shared correction #16031, not a bitmap-parser failure. Other new-head checks remain pending; earlier checkout HTTP403 evidence is preserved separately.\n\nAt the22:26 UTC snapshot, matching import15962 atb9a5236538 has successful public checks. The source separately reports failed internal Copybara checks for a20:58 run without a public diagnostic URL. These are distinct observations; no topic source correction is inferred from the unavailable internal details.\n\nThe patch approved by parth-opensrc on 2026-10-18T19:13:29Z at 9cb7831f3f is independently verified unchanged at 71a39f8405. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nCurrent matching import #15962 at 2d577e5262 has a Buildkite checkout failure. The inspected failed job in build 51361 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed.",
-      "updatedAt": "2026-10-20T17:14:41.172607+00:00",
+      "status": "merged",
+      "summary": "Source #15453 merged at17:30:30UTC after matching import15962 merged at17:30:27. Earlier import cleanup/Gazelle findings are historical. No existing registry dependency edge identifies a newly released descendant.\n\nCurrent bitmap import #15962 refreshed to cb1309f9 and still matches source 71a39f84. Its new generate job 118755923268 now passed. Gazelle job 118755923582 requests exactly the inherited unused production //pkg/zip deletion covered by #16031. The prior import cleanup failure remains historical, not a failure for cb130. No new bitmap source patch or retry is needed.\n\nCurrent bitmap import #15962 refreshed to cb1309f9 and still matches source 71a39f84. Its new Gazelle job 118755923582 requests exactly the inherited unused production //pkg/zip deletion covered by #16031. The new generate job was still running at the 16:53 observation; the prior import cleanup failure remains historical, not a failure claim for cb130. No new bitmap source patch or retry is needed.\n\nAt current import #15962 (af0b), generate job 118715809026 completes the generated Go commit and local branch push, then fails temporary-clone removal with Directory not empty. The log does not identify the writer. Pending #15598 remains the existing clone-lifetime correction; root owns its bounded applicability review. The independent Gazelle failure remains shared #16031. No bitmap source defect or unchanged retry is inferred.\n\nAt current import15962/af0b, generate job118715809026 completes the generated Go commit and local branch push, then fails temporary-clone removal with Directory not empty. Its log does not identify a writer. Pending #15598 remains the existing disposable-clone lifetime correction; root owns bounded applicability. The Gazelle failure independently remains shared16031. No bitmap source defect or unchanged retry is inferred.\n\nCurrent import15962 at af0b8998c9 matches source71a39f8405. Its exact Gazelle job118715807303 fails only because tools/nogo/check/BUILD retains the unused production //pkg/zip dependency. This is the already prepared shared correction #16031, not a bitmap-parser failure. Other new-head checks remain pending; earlier checkout HTTP403 evidence is preserved separately.\n\nAt the22:26 UTC snapshot, matching import15962 atb9a5236538 has successful public checks. The source separately reports failed internal Copybara checks for a20:58 run without a public diagnostic URL. These are distinct observations; no topic source correction is inferred from the unavailable internal details.\n\nThe patch approved by parth-opensrc on 2026-10-18T19:13:29Z at 9cb7831f3f is independently verified unchanged at 71a39f8405. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nCurrent matching import #15962 at 2d577e5262 has a Buildkite checkout failure. The inspected failed job in build 51361 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed.",
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "71a39f8405a27fe1f504ac541d942bb0632e4d33",
-        "observedAt": "2026-10-20T15:44:39.777177+00:00",
-        "disposition": "Shared Gazelle correction and disposable-clone cleanup failure",
-        "nextAction": "Track shared16031 and15598 through existing review/import monitoring. Root owns cleanup applicability; preserve exact current logs without duplicate topic fixes.",
+        "observedAt": "2026-10-20T17:43:35.505010+00:00",
+        "disposition": "Merged; matching import15962 merged",
+        "nextAction": "No further delivery or outreach. No recorded descendant edge was released by this merge.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39448248329/job/118715809026",
-          "https://github.com/google/gvisor/pull/15598",
-          "https://github.com/google/gvisor/pull/16031"
+          "https://github.com/google/gvisor/pull/15453",
+          "https://github.com/google/gvisor/pull/15962"
         ]
       },
       "evidence": [
@@ -5767,7 +5770,7 @@
         "owner": "root",
         "disposition": "Focused source-image validation active",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T17:31:56.830863+00:00",
+        "observedAt": "2026-10-20T17:42:16.800644+00:00",
         "nextAction": "Hostinet owns focused GCS FUSE quick checks followed by one AMD source-archive/version test and one native ARM image singleton. Root separately owns AMD cohort source construction; Node owns the three missing image-output scopes. Preserve the 67 completed ARM CPU outputs and accepted GPU/runtime proofs; no repeated contributor decision.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39388037075",
@@ -7755,20 +7758,20 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15643",
       "status": "open",
-      "updatedAt": "2026-10-20T17:35:36.830105+00:00",
-      "summary": "Current import15998/bcacba1c generate118769318806 successfully exported, committed and pushed the local go branch at17:21:58, then failed removing repository/.git with Directory not empty. This is the existing disposable-clone cleanup symptom tracked by15598; writer/cause remains unknown. Internal Buildkite passed; shared Gazelle correction16031 remains separate.\n\nCurrent import #15998 at bcacba1c has an exact Gazelle diagnosis at job 118769320044: only removal of the inherited unused production //pkg/zip dependency in tools/nogo/check/BUILD. This remains the shared #16031 correction, with no new source-specific defect or retry.\n\nThe patch approved by xinzhong on 2026-10-12T22:09:26Z at c3d62b50f4 is independently verified unchanged at 2435d010d3. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 2435d010d366 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved native TCP timestamp-readiness correction is published as PR #15643 at the exact reviewed head. The native RC comparison retains 189 baseline passes and one missing-SO_TIMESTAMP failure; all 190 cases and clang-tidy pass after the correction. IPv6 needed 126 untimestamped probes before readiness; IPv4 needed none. The original ancillary-message assertions remain the test behavior.",
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00",
+      "summary": "Import15998 advanced from cleanup-failed bcac to2b7430b4; fresh current checks are pending. The exact earlier cleanup/Gazelle evidence remains historical and is not attributed to the new head.\n\nCurrent import15998/bcacba1c generate118769318806 successfully exported, committed and pushed the local go branch at17:21:58, then failed removing repository/.git with Directory not empty. This is the existing disposable-clone cleanup symptom tracked by15598; writer/cause remains unknown. Internal Buildkite passed; shared Gazelle correction16031 remains separate.\n\nCurrent import #15998 at bcacba1c has an exact Gazelle diagnosis at job 118769320044: only removal of the inherited unused production //pkg/zip dependency in tools/nogo/check/BUILD. This remains the shared #16031 correction, with no new source-specific defect or retry.\n\nThe patch approved by xinzhong on 2026-10-12T22:09:26Z at c3d62b50f4 is independently verified unchanged at 2435d010d3. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 2435d010d366 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved native TCP timestamp-readiness correction is published as PR #15643 at the exact reviewed head. The native RC comparison retains 189 baseline passes and one missing-SO_TIMESTAMP failure; all 190 cases and clang-tidy pass after the correction. IPv6 needed 126 untimestamped probes before readiness; IPv4 needed none. The original ancillary-message assertions remain the test behavior.",
       "followup": {
-        "disposition": "Shared Gazelle and existing disposable-clone cleanup disposition",
+        "disposition": "Regenerated matching import; current checks pending",
         "owner": "work_map_current",
         "sourceHead": "2435d010d366a806d652554bc9c032ef9821a561",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Follow exact current import checks and existing shared corrections; no duplicate source fix or retry.",
+        "nextAction": "Monitor exact current import checks and existing shared corrections; no duplicate fix, retry or reviewer request.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39463674830/job/118769318806"
+          "https://github.com/google/gvisor/pull/15998"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-20T17:30:21.187940+00:00"
+        "observedAt": "2026-10-20T17:43:35.505010+00:00"
       },
       "number": 15643,
       "reviewDecision": null,
@@ -7788,6 +7791,10 @@
         {
           "label": "Exact current import diagnosis",
           "url": "https://github.com/google/gvisor/actions/runs/39463674830/job/118769318806"
+        },
+        {
+          "label": "Current import disposition",
+          "url": "https://github.com/google/gvisor/pull/15998"
         }
       ],
       "approvedPatch": {
@@ -10397,32 +10404,37 @@
       "url": "https://github.com/google/gvisor/pull/15926",
       "group": "runtime",
       "status": "open",
-      "summary": "Hostinet is diagnosing the requested no-GSO partial-segment behavior in the current Nagle proposal. This assigned source work remains open despite the existing GitHub approval and green import checks; its exact maintainer comment remains linked. No amendment or public reply has been made.\n\nNew maintainer feedback at 16:18:11 UTC challenges the tail-of-split-write Nagle behavior: a partial segment may wait even when only full-sized segments are outstanding. The reviewer requests an idle connection test without GSO and suggests tracking the last partial segment only if the test confirms the issue. This is an unresolved source/test question, not an established diagnosis or a completed amendment. Root assigned Hostinet the bounded diagnosis; earlier approved delivery and qualification remain recorded.\n\nThe approved cleanup refinement is delivered as PR #15926 at signed head 68ad541b0 after prerequisite #15635 merged. The rebase onto 207afc4e7 has an identical single-commit range-diff from approved 283d099f5; sender behavior and tests are unchanged. Retained cleanup-integration validation covers 13 fresh remote owners and 795 named XML entries with no failures or skips. That evidence remains integration-scoped. The original approved 1c683 branch is preserved.",
-      "updatedAt": "2026-10-20T16:35:01.951986+00:00",
+      "summary": "The user approved publishing signed Minshall amendment 463fc7eae, updating #15926 and sending the prepared reply (call_WxnbWYM63GvkRgfF6QMDONkt, item 1). Hostinet owns delivery; the current public source remains 68ad until verified publication. Four regression subcases fail on old production and pass after correction. Two full TCP suites provide 425 runtime positives; all three analyzer owners and canonical lint are complete after the isolated QF1003 recovery. Original FAIL outcomes remain retained, and the composed evidence is distinguished from a single all-green run.\n\nHostinet is diagnosing the requested no-GSO partial-segment behavior in the current Nagle proposal. This assigned source work remains open despite the existing GitHub approval and green import checks; its exact maintainer comment remains linked. No amendment or public reply has been made.\n\nNew maintainer feedback at 16:18:11 UTC challenges the tail-of-split-write Nagle behavior: a partial segment may wait even when only full-sized segments are outstanding. The reviewer requests an idle connection test without GSO and suggests tracking the last partial segment only if the test confirms the issue. This is an unresolved source/test question, not an established diagnosis or a completed amendment. Root assigned Hostinet the bounded diagnosis; earlier approved delivery and qualification remain recorded.\n\nThe approved cleanup refinement is delivered as PR #15926 at signed head 68ad541b0 after prerequisite #15635 merged. The rebase onto 207afc4e7 has an identical single-commit range-diff from approved 283d099f5; sender behavior and tests are unchanged. Retained cleanup-integration validation covers 13 fresh remote owners and 795 named XML entries with no failures or skips. That evidence remains integration-scoped. The original approved 1c683 branch is preserved.",
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Hostinet owns bounded Minshall source/regression diagnosis",
+        "disposition": "Contributor-approved Minshall amendment; owner publishing",
         "sourceHead": "68ad541b085d8c0a800b3fb85b6903ad3e396a44",
-        "observedAt": "2026-10-20T16:19:58.572308+00:00",
-        "nextAction": "Hostinet assesses the requested no-GSO partial-segment regression and Linux Minshall behavior in root-assigned gvisor-15049. Preserve prior source-specific qualification. No public reply or amendment has been made.",
+        "observedAt": "2026-10-20T17:48:30.058066+00:00",
+        "nextAction": "Hostinet publishes exact 463fc7eae, updates the body and posts the authorized reviewer reply, then verifies the provider head/body. Preserve original approval and failed-run provenance.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15926",
-          "https://github.com/google/gvisor/pull/15635",
-          "https://app.buildbuddy.io/invocation/f6fb4e81-b218-47b3-914f-2b4450d4c534",
+          "https://github.com/tamird/gvisor/commit/463fc7eae9749d008428d9c2abf6df6b75ce22d7",
           "https://github.com/google/gvisor/pull/15926#issuecomment-6295602307"
-        ],
-        "actionableComment": {
-          "head": "68ad541b085d8c0a800b3fb85b6903ad3e396a44",
-          "commentId": "IC_kwDOB9IlXs8AAAABdz9Egw",
-          "url": "https://github.com/google/gvisor/pull/15926#issuecomment-6295602307"
-        }
+        ]
       },
       "evidence": [
         {
           "label": "Maintainer asks for no-GSO partial-segment regression",
           "url": "https://github.com/google/gvisor/pull/15926#issuecomment-6295602307"
+        },
+        {
+          "label": "Qualified Minshall amendment proposal",
+          "url": "https://github.com/tamird/gvisor/commit/463fc7eae9749d008428d9c2abf6df6b75ce22d7"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "68ad541b085d8c0a800b3fb85b6903ad3e396a44"
+        },
+        "after": {
+          "head": "463fc7eae9749d008428d9c2abf6df6b75ce22d7"
+        }
+      }
     },
     {
       "id": "branch:buildkite-gofer-failure-logs",
@@ -11373,21 +11385,18 @@
       "url": "https://github.com/google/gvisor/pull/15941",
       "status": "open",
       "number": 15941,
-      "updatedAt": "2026-10-20T17:21:55.614321+00:00",
-      "summary": "Current import #16063 at 3e80653f has an exact Gazelle diagnosis at job 118766356253: only removal of the inherited unused production //pkg/zip dependency in tools/nogo/check/BUILD. This remains the shared #16031 correction, with no new source-specific defect or retry.\n\nEtiennePerot submitted a fresh APPROVED review5578692176 on exact currentfa1d at22:50:11 UTC, after the substantive COPY amendment. The stale-approval review hold is now cleared by that actual review. No further ping is needed; ordinary import monitoring continues. The source export-cleanup failure remains separate.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nAt current head fa1d285ec590, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at fa1d285ec590 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved legacy-builder amendment is published on PR #15941 at dc4d23d300ebc3e1e17b59f682ecaee0ec42a64b. The single commit uses COPY with the unchanged strict patch and cleanup, and its Dockerfile explains why public CI cannot use RUN --mount. The requested explanatory paragraph was removed from the commit message and PR body; the approved concise reply is posted and verified. No contributor decision remains.\n\nThe complete image built with BuildKit explicitly disabled in native8936f740-8d8e-4ff8-bdea-f080adb058fc atfc4. The final amendment adds only a Dockerfile comment beyond that executable recipe; its changed context hash was not rebuilt. This remains source-image build evidence, not a PHP runtime-suite pass. Original public51257 failures are retained; inaccessible internal32962 remains unexplained.",
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00",
+      "summary": "PHP import16063 advanced to d7196892 after the earlier revision passed generate/go checks. Fresh current checks are pending; no new source failure or repeated review request is established.\n\nCurrent import #16063 at 3e80653f has an exact Gazelle diagnosis at job 118766356253: only removal of the inherited unused production //pkg/zip dependency in tools/nogo/check/BUILD. This remains the shared #16031 correction, with no new source-specific defect or retry.\n\nEtiennePerot submitted a fresh APPROVED review5578692176 on exact currentfa1d at22:50:11 UTC, after the substantive COPY amendment. The stale-approval review hold is now cleared by that actual review. No further ping is needed; ordinary import monitoring continues. The source export-cleanup failure remains separate.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nAt current head fa1d285ec590, public Go generation and its local branch push completed, then temporary-clone cleanup failed with \u201cDirectory not empty\u201d. This is related to the existing #15598 disposable-clone maintenance mitigation. The log does not identify a surviving writer or establish a topic-specific compile/test failure. Raw public failure remains visible.\n\nThe published mechanical rebase is at fa1d285ec590 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe approved legacy-builder amendment is published on PR #15941 at dc4d23d300ebc3e1e17b59f682ecaee0ec42a64b. The single commit uses COPY with the unchanged strict patch and cleanup, and its Dockerfile explains why public CI cannot use RUN --mount. The requested explanatory paragraph was removed from the commit message and PR body; the approved concise reply is posted and verified. No contributor decision remains.\n\nThe complete image built with BuildKit explicitly disabled in native8936f740-8d8e-4ff8-bdea-f080adb058fc atfc4. The final amendment adds only a Dockerfile comment beyond that executable recipe; its changed context hash was not rebuilt. This remains source-image build evidence, not a PHP runtime-suite pass. Original public51257 failures are retained; inaccessible internal32962 remains unexplained.",
       "followup": {
         "owner": "maintainer",
-        "disposition": "Current COPY amendment approved; import progress pending",
+        "disposition": "Approved COPY amendment; regenerated import checks pending",
         "sourceHead": "fa1d285ec59078532c856fc616cc996e1f242062",
-        "observedAt": "2026-10-19T22:50:11Z",
-        "nextAction": "Monitor import progress through the existing sweep. Etienne approved exact currentfa1d in review5578692176 after the COPY fix; no reapproval request is outstanding. Keep separate source export-cleanup failure and existing15598 candidate mitigation visible without claiming cause.",
+        "observedAt": "2026-10-20T17:43:35.505010+00:00",
+        "nextAction": "Monitor exact current import checks and existing shared corrections; no duplicate fix, retry or reviewer request.",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/fa1d285ec59078532c856fc616cc996e1f242062",
-          "https://github.com/google/gvisor/pull/15941#issuecomment-6274694098",
-          "https://github.com/google/gvisor/actions/runs/39304124908/job/118236633996",
-          "https://github.com/google/gvisor/pull/15598"
+          "https://github.com/google/gvisor/pull/16063"
         ]
       },
       "refinement": {
@@ -11426,6 +11435,10 @@
         {
           "label": "Exact current import Gazelle diagnosis",
           "url": "https://github.com/google/gvisor/actions/runs/39462804715/job/118766356253"
+        },
+        {
+          "label": "Current import disposition",
+          "url": "https://github.com/google/gvisor/pull/16063"
         }
       ]
     },
@@ -14120,6 +14133,45 @@
           "url": "https://github.com/google/gvisor/actions/runs/39458595875/job/118751826351"
         }
       ]
+    },
+    {
+      "id": "branch:gcsfuse-test-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "gcsfuse-test-image",
+      "head": "449d72cb27506cc46138123227842b81e9d61bf0",
+      "title": "Update the GCS FUSE test image bases",
+      "url": "https://github.com/tamird/gvisor/commit/449d72cb27506cc46138123227842b81e9d61bf0",
+      "group": "rbe",
+      "status": "Approved; publication in progress",
+      "summary": "The user approved opening the exact GCS FUSE proposal 449d72cb2 (call_WxnbWYM63GvkRgfF6QMDONkt, item 0); Hostinet owns delivery. The two base-image replacements resolve the observed Debian Bullseye package-download failure. Focused AMD64 and native ARM64 source builds, archive load and GCSFUSEVersion bodies passed with source-to-archive-to-TestRunner bindings. Both build logs resolve gcsfuse v2.12.2; the CLI reports version unknown (Go 1.27.3). Mutable apt and go install inputs remain. No bucket, cloud credentials or GCS application runtime was exercised.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "449d72cb27506cc46138123227842b81e9d61bf0",
+        "observedAt": "2026-10-20T17:48:30.058066+00:00",
+        "disposition": "Contributor approved; owner delivering the standalone PR",
+        "nextAction": "Hostinet opens the approved standalone PR and verifies its exact published head and body. No further approval question or workload is needed.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/449d72cb27506cc46138123227842b81e9d61bf0",
+          "https://github.com/tamird/gvisor/actions/runs/39460462415",
+          "https://github.com/tamird/gvisor/actions/runs/39463969140"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact standalone proposal",
+          "url": "https://github.com/tamird/gvisor/commit/449d72cb27506cc46138123227842b81e9d61bf0"
+        },
+        {
+          "label": "AMD64 source/archive/load qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39460462415"
+        },
+        {
+          "label": "Native ARM source/archive/load qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39463969140"
+        }
+      ],
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00"
     }
   ],
   "edges": [
@@ -21614,8 +21666,8 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-20T17:35:36.830105+00:00",
-      "summary": "SGLang remains FAIL with no usable output. Provider issue#13877 is now posted after authorization: the requested enable-vfs=true action booted without VFS and filled a2,021,142,528-byte workspace while its80GiB root had space; a successful CUDA control with identical platform hash/resources booted with VFS. Public code can disable requested VFS via local configuration, but the deployed flags/revision remain unknown. No supported hosted VFS selector or unchanged retry has been established.\n\nEarlier investigation evidence:\n\nPyTorch source-output proof210fd0df independently passes at ca463/Actions39455880938: one uncached source action exported OCI, authenticated conversion and BEP join archive36c689a2 (10,760,602,112 bytes). Source/archive output only; no GPU device, application runtime or reproducibility claim. Automatic41.0253s and later owner373.129556s remain distinct.\n\nEarlier investigation evidence:\n\nARM source-to-consumer recovery is complete at e2b1/Actions39464357220: local native ARM SourceImageOCI produced the OCI directory, remote manifest/tar actions produced archive12a7b8c3 (2,727,424 bytes), and its exact runfiles ancestry reaches the Docker TestRunner that loaded it and passed both UDS bodies. Outcome92b5f428/provenancee8588d55 independently accepted; 34.830244s automatic and724.525388s later owner audit remain separate. Go compilation was1300 remote cache hits, not a fresh compilation claim. Original no-strategy failure and one local seal transport correction remain retained.\n\nEarlier investigation evidence:\n\nBuildBuddy #13778 is merged, observed at 16:18:50 UTC on 20 October, with reported head bc6b008502. Its existing source-review follow-up is closed. This is source delivery evidence; deployed executor behavior and the pre-existing rotated lease-ID issue remain separate. No source-image retry or capacity claim follows from the merge alone.\n\nEarlier investigation evidence:\n\nBuildBuddy13778 now has head770ef8ff48 and reports MERGEABLE at the15:17UTC observation. In a new15:12UTC reply, bduffany says a8ab129e54 addresses stale cleanup, including when a newer lease has already released the task; rotated lease-ID loss is tracked as pre-existing internal issue8592. These are author statements awaiting the existing review process, not independently verified fixes or deployed-capacity guarantees. By the15:27UTC observation, the named GitHub workflow checks completed successfully. This is current-head CI evidence, not proof of deployed service behavior. No image retry is justified by this source update alone.\n\nEarlier investigation evidence:\n\nSource-image reuse finding at3a73 is retained in source-image-reuse-finding.json (84116828). Every default producer receives the full image-source archive, so unrelated image changes affect its inputs; explicit no-cache also prevents ordinary action reuse, and each execution removes its disposable BuildKit builder. The existing declared source_image_archive already shares output among consumers in one invocation. Root owns the follow-up: narrow declared contexts per image, then make base/package/source/tool inputs immutable before enabling ordinary Bazel reuse. Narrow contexts alone do not remove no-cache execution; removing no-cache alone would hide mutable inputs. No implementation, cache/storage change or measured savings is claimed.\n\nEarlier investigation evidence:\n\nBuildBuddy13778 now has head770ef8ff48 and reports MERGEABLE at the15:17UTC observation. In a new15:12UTC reply, bduffany says a8ab129e54 addresses stale cleanup, including when a newer lease has already released the task; rotated lease-ID loss is tracked as pre-existing internal issue8592. These are author statements awaiting the existing review process, not independently verified fixes or deployed-capacity guarantees. Current checks are running or passing; no new failure was observed. No image retry is justified by this source update alone.\n\nEarlier investigation evidence:\n\nAt approximately 10:02 UTC, the personal tamird/gvisor fork has zero configured self-hosted Actions runners. GitHub currently limits hosted GPU/larger runners to Team/Enterprise organizations, and its documented GPU option is T4 16GB rather than the public L4/COS target. This rules out directly selecting a hosted GPU label on the existing personal fork; it does not rule out other cloud routes or prove all twenty GPU roots impossible. No provisioning, account change or workload was performed.\n\nEarlier investigation evidence:\n\nFresh Ollama regular and singlemodel production passes at 4db44d480c with two build owners, zero tests and no gaps; exact canonical integration b8804147f6 is published. The separate full six-model native Ollama archive/load result passes at f265932d8c. Full native Triton archive/integrity passes at d8b59d69bc, and fresh Docker load passes at 3609a10b54, with its receipt verified 3.808640 seconds after the build event and no post-finish manual collection. Original export, provider and failed load attempts remain recorded. The fresh production run makes no Docker-load or GPU inference claim; twenty GPU/driver runtime roots remain unqualified.",
+      "updatedAt": "2026-10-20T17:48:30.322408+00:00",
+      "summary": "Current Node26 recovery488a1aa34 passed independent source review: all eight approved image/proctor inputs and552/eight license additions are exact, all1632/815 previous catalog/policy blocks remain unchanged, and qualified Node completion accounting is restored while retaining newer phase/entrypoint behavior. The test-only AMD CPU overlay consumes the declared Node archive; its producer still uses raw source contexts, so the graph is acyclic. Node owns the released checker run2ba9dedd; runtime evidence is not yet renewed.\n\nEarlier investigation evidence:\n\nSGLang remains FAIL with no usable output. Provider issue#13877 is now posted after authorization: the requested enable-vfs=true action booted without VFS and filled a2,021,142,528-byte workspace while its80GiB root had space; a successful CUDA control with identical platform hash/resources booted with VFS. Public code can disable requested VFS via local configuration, but the deployed flags/revision remain unknown. No supported hosted VFS selector or unchanged retry has been established.\n\nEarlier investigation evidence:\n\nPyTorch source-output proof210fd0df independently passes at ca463/Actions39455880938: one uncached source action exported OCI, authenticated conversion and BEP join archive36c689a2 (10,760,602,112 bytes). Source/archive output only; no GPU device, application runtime or reproducibility claim. Automatic41.0253s and later owner373.129556s remain distinct.\n\nEarlier investigation evidence:\n\nARM source-to-consumer recovery is complete at e2b1/Actions39464357220: local native ARM SourceImageOCI produced the OCI directory, remote manifest/tar actions produced archive12a7b8c3 (2,727,424 bytes), and its exact runfiles ancestry reaches the Docker TestRunner that loaded it and passed both UDS bodies. Outcome92b5f428/provenancee8588d55 independently accepted; 34.830244s automatic and724.525388s later owner audit remain separate. Go compilation was1300 remote cache hits, not a fresh compilation claim. Original no-strategy failure and one local seal transport correction remain retained.\n\nEarlier investigation evidence:\n\nBuildBuddy #13778 is merged, observed at 16:18:50 UTC on 20 October, with reported head bc6b008502. Its existing source-review follow-up is closed. This is source delivery evidence; deployed executor behavior and the pre-existing rotated lease-ID issue remain separate. No source-image retry or capacity claim follows from the merge alone.\n\nEarlier investigation evidence:\n\nBuildBuddy13778 now has head770ef8ff48 and reports MERGEABLE at the15:17UTC observation. In a new15:12UTC reply, bduffany says a8ab129e54 addresses stale cleanup, including when a newer lease has already released the task; rotated lease-ID loss is tracked as pre-existing internal issue8592. These are author statements awaiting the existing review process, not independently verified fixes or deployed-capacity guarantees. By the15:27UTC observation, the named GitHub workflow checks completed successfully. This is current-head CI evidence, not proof of deployed service behavior. No image retry is justified by this source update alone.\n\nEarlier investigation evidence:\n\nSource-image reuse finding at3a73 is retained in source-image-reuse-finding.json (84116828). Every default producer receives the full image-source archive, so unrelated image changes affect its inputs; explicit no-cache also prevents ordinary action reuse, and each execution removes its disposable BuildKit builder. The existing declared source_image_archive already shares output among consumers in one invocation. Root owns the follow-up: narrow declared contexts per image, then make base/package/source/tool inputs immutable before enabling ordinary Bazel reuse. Narrow contexts alone do not remove no-cache execution; removing no-cache alone would hide mutable inputs. No implementation, cache/storage change or measured savings is claimed.\n\nEarlier investigation evidence:\n\nBuildBuddy13778 now has head770ef8ff48 and reports MERGEABLE at the15:17UTC observation. In a new15:12UTC reply, bduffany says a8ab129e54 addresses stale cleanup, including when a newer lease has already released the task; rotated lease-ID loss is tracked as pre-existing internal issue8592. These are author statements awaiting the existing review process, not independently verified fixes or deployed-capacity guarantees. Current checks are running or passing; no new failure was observed. No image retry is justified by this source update alone.\n\nEarlier investigation evidence:\n\nAt approximately 10:02 UTC, the personal tamird/gvisor fork has zero configured self-hosted Actions runners. GitHub currently limits hosted GPU/larger runners to Team/Enterprise organizations, and its documented GPU option is T4 16GB rather than the public L4/COS target. This rules out directly selecting a hosted GPU label on the existing personal fork; it does not rule out other cloud routes or prove all twenty GPU roots impossible. No provisioning, account change or workload was performed.\n\nEarlier investigation evidence:\n\nFresh Ollama regular and singlemodel production passes at 4db44d480c with two build owners, zero tests and no gaps; exact canonical integration b8804147f6 is published. The separate full six-model native Ollama archive/load result passes at f265932d8c. Full native Triton archive/integrity passes at d8b59d69bc, and fresh Docker load passes at 3609a10b54, with its receipt verified 3.808640 seconds after the build event and no post-finish manual collection. Original export, provider and failed load attempts remain recorded. The fresh production run makes no Docker-load or GPU inference claim; twenty GPU/driver runtime roots remain unqualified.",
       "findings": [
         {
           "text": "On October 19 at20:06:27 UTC, BuildBuddy #13779 merged at ec0f08bc90140229ccc60b3156c503b391a259f5. The ordinary20:10 provider read still shows #13769/#13778 open and issue #13789 open with no comments. This is a source dependency update; deployed-worker adoption and causality for the original no-result failure remain unverified. No workload retry follows from the merge.",
@@ -21977,7 +22029,7 @@
           ]
         }
       ],
-      "nextStep": "Root follows provider routing/configuration issue13877; this blocks SGLang only.",
+      "nextStep": "Node owns quick checks and the gated representative runtime; preserve existing upstream prerequisite approvals and old failures.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
@@ -22094,6 +22146,10 @@
         {
           "label": "Hosted VFS routing discrepancy",
           "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13877"
+        },
+        {
+          "label": "Current Node source and archive integration",
+          "url": "https://github.com/tamird/gvisor/commit/488a1aa34b22dbe9f4062e9d6ebc3e527f7dabbc"
         }
       ]
     },
