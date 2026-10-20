@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T05:28:43.488080+00:00",
+    "updatedAt": "2026-10-20T05:39:55.492607+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2492,7 +2492,24 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-unit-platform-matrix",
       "group": "rbe",
       "status": "validated",
-      "summary": "Published head d90dfe0c1 passes all 639 selected owners in one mixed-platform unit invocation: all 330 original owners and 309 ARM64 additions, with 659 remote uncached shard actions. Canonical roots, exclusions and non-test build targets are preserved. Four ARM64 Firecracker owners remain omitted for provider capacity; the existing KVM filter excludes one further ARM owner. Eighteen non-Go/C++ owners remain AMD64 only. The earlier ffff73510 run remains failed at 638 of 639 because of the seccomp generator mismatch. Qualification c2d28e639 includes the validated source."
+      "summary": "Bounded design review at exact 941df83a is complete without a source change. Existing test frontends already own architecture transitions and placement. Removing manual from generated variants would change ordinary wildcard/filter behavior across callers; adding package/sibling suites introduces bookkeeping and cannot assume an unsuffixed owner for existing _64k declarations. Root accepted retaining the working one-invocation unit --arch=all route, including its canonical roots, filters and configured evidence. No new framework, source patch or workload follows from this review; historical qualification remains source-bound.\n\nPublished head d90dfe0c1 passes all 639 selected owners in one mixed-platform unit invocation: all 330 original owners and 309 ARM64 additions, with 659 remote uncached shard actions. Canonical roots, exclusions and non-test build targets are preserved. Four ARM64 Firecracker owners remain omitted for provider capacity; the existing KVM filter excludes one further ARM owner. Eighteen non-Go/C++ owners remain AMD64 only. The earlier ffff73510 run remains failed at 638 of 639 because of the seccomp generator mismatch. Qualification c2d28e639 includes the validated source.",
+      "updatedAt": "2026-10-20T05:39:55.492607+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "941df83a64377f38dedd7170e8c4a28e20fecef8",
+        "observedAt": "2026-10-20T05:37:27.208206+00:00",
+        "disposition": "Bounded design review complete; existing mixed-platform route retained",
+        "nextAction": "Keep the existing one-invocation unit --arch=all route. No selector rewrite or new workload is queued from this review; any later extraction must preserve ordinary wildcard/manual/filter behavior and offer a concrete simplification.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/blob/941df83a64377f38dedd7170e8c4a28e20fecef8/tools/bazeldefs/test_architectures.bzl"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Reviewed architecture declaration seam",
+          "url": "https://github.com/tamird/gvisor/blob/941df83a64377f38dedd7170e8c4a28e20fecef8/tools/bazeldefs/test_architectures.bzl"
+        }
+      ]
     },
     {
       "id": "pr:15187",
@@ -5722,19 +5739,20 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Selected integration qualified; Node26 source corrections active",
-      "summary": "The procfs lookup-order correction is qualified at 2f8a: native Linux, gVisor systrap directfs and shared gofer each passed ProcTest.Create, and nine Go/Nogo/lint owners passed 151 records including all 12 readonly/synthetic controls. Independent review accepted final standalone c29d9fcbe240bbce1795dbc0f347f335de7cd4f3 with exact source/edit-stream applicability and explicit upstream toolchain limits. Root requested contributor review once at 05:29 UTC for opening that PR; no PR has been opened. Original compile and native errno failures remain preserved. Hostinet retains the read-only npm audit; installation/policy adoption remains held.\n\nNode26 source work has two new bounded results: npm adapter034f passed five uncached owners/128 XML positives (3.808s automatic verification, no policy/install credit); procfs integratione9c1 passed nine uncached Go/Nogo/lint owners/151 records, including all12 required readonly and synthetic-mountpoint records (5.397s automatic verification). The separate syscall run failed to compile a nonexistent test matcher before any body ran; its correction uses the existing EXPECT_NO_ERRNO helper and is undergoing focused validation. The first read-only npm audit at034f/native39a03bb1 failed before Fetch/Verify because nested make used a Bazel without the existing BuildBuddy rc. Hostinet is correcting only the Make BAZEL override to preserve the established wrapper/rc; the temporary catalog and tracked policy/source remained unchanged. Seven package exceptions and profiler06fd still await their existing user decisions; no npm installation, policy adoption or full Node retry is claimed.\n\nThe Node upgrade now has two existing user decisions pending: review/open the independently reviewed one-line profiler proposal06fd109feb9, and approve the concrete seven package-specific npm license exceptions. The profiler proposal is published on tamird/node with matching tracking; no upstream PR has been opened. Its native official-binary before/after proof does not clear the original gVisor failure. The npm proposal audits both canonical lock cohorts (552 entries), including explicit optional/platform scope, through the existing catalog/policy mechanism; no global allowlist change or prerequisite installation is authorized by this status. Procfs creation-family correction remains active agent work. The superseded error-serdes backport remains historical and needs no decision.\n\nNode26 full continuation d316c3f5 at fa2ed8208a is terminal FAIL/COMPLETE, with complete inner accounting. All 21 owners and 161 attempts were collected. Per mode, 6,337 selections reconcile as 6,022 expected-outcome successes, 306 runtime skips, four classifier exclusions and five failures; four ok-TODO annotations per mode are included within the successes. There are no missing or duplicate identities in the 6,353-ID built inventory. Automatic collection took 22.870677 seconds; one local reconciliation and zero manual collections are explicit. Source-image construction passed in 2,293.261 seconds, but runtime qualification has not passed. Original image and runtime failures remain retained.\n\nBounded source corrections are active. Hostinet prepares the missing source/test prerequisites and the exact upstream root-fixture correction; installing the new npm prerequisites is explicitly held pending policy disposition for the actual out-of-policy license sets. Node owns the procfs ENOENT compatibility investigation. Root reproduced the profiler fixture timeout natively and verified the current JS: label correction in 1.189 seconds with the official Node binary; this focused diagnosis does not clear the original gVisor failure. The Node upstream proposal and image patch remain separate. No full retry has started.\n\nPublished combined source 941df83a64377f38dedd7170e8c4a28e20fecef8 contains selected runtime integration 385c, qualified ZIP cfcd and the reviewed fa2 Docker build-order change. Selected integration has 19 disjoint owners and 314 positives, preserving the original routing failure, one route correction and one collector reattachment. ZIP qualification has 21 uncached owners/267 positives plus three canonical Gazelle/query/root commands and 568 declared roots (561 candidates plus seven dispositions). Those collectors are closed. These are source-bound selected checks, not a full CodeQL scan or blanket current-source PASS.\n\nEarlier build, unit, Java, Node22, RSEQ, TSC, netlink and runtime evidence remains bound to its individual source and original failures/skips. RSEQ has 54 named runtime positives plus lint; TSC mapped-tail checks cover the later host and generated boundary regression, not a rerun on the original failed host. Current public Ollama 0.40.6 matches qualified sources. GPU, other version/source gaps and 18 unavailable NVIDIA comparisons remain separate. Superseded Node Brotli/error-serdes backport proposals need no contributor decision.",
-      "updatedAt": "2026-10-20T05:28:43.488080+00:00",
+      "summary": "Actual canonical npm Fetch/Verify at source 034f, invocation 52622, is FAIL/COMPLETE: 480 generated npm entries plus 72 missing entries cover the 552 declared lock entries; Verify reported six raw disallowed-license diagnostics. Independent compact review authenticated all 11 bundled members and verified all 1,632 previous catalog rows unchanged. Automatic verification took 6.372408 seconds, owner reconciliation 275.711762 seconds, with no manual collection. Hostinet owns archive/notice correction and Node reviews unexpected classifications. Missing entries receive no license credit, and classifier labels do not constitute legal approval. No package installation, policy exception or catalog adoption occurred. Root published combined preparation 7e7d7501ca0becc989c9e0da646e435b4e33825a with reviewed image/adapter and qualified procfs changes; this introduces no new Node runtime result.\n\nThe procfs lookup-order correction is qualified at 2f8a: native Linux, gVisor systrap directfs and shared gofer each passed ProcTest.Create, and nine Go/Nogo/lint owners passed 151 records including all 12 readonly/synthetic controls. Independent review accepted final standalone c29d9fcbe240bbce1795dbc0f347f335de7cd4f3 with exact source/edit-stream applicability and explicit upstream toolchain limits. Root requested contributor review once at 05:29 UTC for opening that PR; no PR has been opened. Original compile and native errno failures remain preserved. Hostinet retains the read-only npm audit; installation/policy adoption remains held.\n\nNode26 source work has two new bounded results: npm adapter034f passed five uncached owners/128 XML positives (3.808s automatic verification, no policy/install credit); procfs integratione9c1 passed nine uncached Go/Nogo/lint owners/151 records, including all12 required readonly and synthetic-mountpoint records (5.397s automatic verification). The separate syscall run failed to compile a nonexistent test matcher before any body ran; its correction uses the existing EXPECT_NO_ERRNO helper and is undergoing focused validation. The first read-only npm audit at034f/native39a03bb1 failed before Fetch/Verify because nested make used a Bazel without the existing BuildBuddy rc. Hostinet is correcting only the Make BAZEL override to preserve the established wrapper/rc; the temporary catalog and tracked policy/source remained unchanged. Seven package exceptions and profiler06fd still await their existing user decisions; no npm installation, policy adoption or full Node retry is claimed.\n\nThe Node upgrade now has two existing user decisions pending: review/open the independently reviewed one-line profiler proposal06fd109feb9, and approve the concrete seven package-specific npm license exceptions. The profiler proposal is published on tamird/node with matching tracking; no upstream PR has been opened. Its native official-binary before/after proof does not clear the original gVisor failure. The npm proposal audits both canonical lock cohorts (552 entries), including explicit optional/platform scope, through the existing catalog/policy mechanism; no global allowlist change or prerequisite installation is authorized by this status. Procfs creation-family correction remains active agent work. The superseded error-serdes backport remains historical and needs no decision.\n\nNode26 full continuation d316c3f5 at fa2ed8208a is terminal FAIL/COMPLETE, with complete inner accounting. All 21 owners and 161 attempts were collected. Per mode, 6,337 selections reconcile as 6,022 expected-outcome successes, 306 runtime skips, four classifier exclusions and five failures; four ok-TODO annotations per mode are included within the successes. There are no missing or duplicate identities in the 6,353-ID built inventory. Automatic collection took 22.870677 seconds; one local reconciliation and zero manual collections are explicit. Source-image construction passed in 2,293.261 seconds, but runtime qualification has not passed. Original image and runtime failures remain retained.\n\nBounded source corrections are active. Hostinet prepares the missing source/test prerequisites and the exact upstream root-fixture correction; installing the new npm prerequisites is explicitly held pending policy disposition for the actual out-of-policy license sets. Node owns the procfs ENOENT compatibility investigation. Root reproduced the profiler fixture timeout natively and verified the current JS: label correction in 1.189 seconds with the official Node binary; this focused diagnosis does not clear the original gVisor failure. The Node upstream proposal and image patch remain separate. No full retry has started.\n\nPublished combined source 941df83a64377f38dedd7170e8c4a28e20fecef8 contains selected runtime integration 385c, qualified ZIP cfcd and the reviewed fa2 Docker build-order change. Selected integration has 19 disjoint owners and 314 positives, preserving the original routing failure, one route correction and one collector reattachment. ZIP qualification has 21 uncached owners/267 positives plus three canonical Gazelle/query/root commands and 568 declared roots (561 candidates plus seven dispositions). Those collectors are closed. These are source-bound selected checks, not a full CodeQL scan or blanket current-source PASS.\n\nEarlier build, unit, Java, Node22, RSEQ, TSC, netlink and runtime evidence remains bound to its individual source and original failures/skips. RSEQ has 54 named runtime positives plus lint; TSC mapped-tail checks cover the later host and generated boundary regression, not a rerun on the original failed host. Current public Ollama 0.40.6 matches qualified sources. GPU, other version/source gaps and 18 unavailable NVIDIA comparisons remain separate. Superseded Node Brotli/error-serdes backport proposals need no contributor decision.",
+      "updatedAt": "2026-10-20T05:39:55.492607+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T05:28:43.239697+00:00",
-        "disposition": "Procfs contributor review requested; canonical read-only npm audit active",
-        "nextAction": "Await the existing contributor decision on procfs c29d9fcbe240bbce1795dbc0f347f335de7cd4f3 before opening a PR. Compare the initial and final proposals with git range-diff 0a9dd50fe^! c29d9fcbe^!. Hostinet owns canonical npm Fetch/Verify after two preserved configuration failures, using the existing license rc and immutable lock mode against a temporary catalog. Seven license exceptions and profiler publication remain existing user decisions; no policy adoption or npm installation before approval.",
+        "observedAt": "2026-10-20T05:37:27.208206+00:00",
+        "disposition": "Read-only npm audit failed; notice/parser correction and classification review active",
+        "nextAction": "Hostinet owns archive-layout and missing-notice correction; Node independently reviews two unexpected classifier results. The actual audit produced 480 npm rows and 72 missing entries, with six raw policy diagnostics. All 1,632 previous catalog entries and tracked policy/source remain unchanged. Preserve both earlier configuration failures. Combined source 7e7d7501ca is published preparation only. Procfs c29d, seven package exceptions and profiler 06fd retain their existing contributor decisions; no install, policy adoption or upstream PR before approval.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624",
           "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8",
           "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea",
-          "https://github.com/tamird/gvisor/commit/c29d9fcbe240bbce1795dbc0f347f335de7cd4f3"
+          "https://github.com/tamird/gvisor/commit/c29d9fcbe240bbce1795dbc0f347f335de7cd4f3",
+          "https://github.com/tamird/gvisor/commit/7e7d7501ca0becc989c9e0da646e435b4e33825a"
         ]
       },
       "evidence": [
@@ -6973,6 +6991,10 @@
         {
           "label": "Qualified native and gVisor procfs comparison",
           "url": "https://app.buildbuddy.io/invocation/fb981c26-5237-4f9f-bf9f-dd449038abe4"
+        },
+        {
+          "label": "Actual read-only npm Fetch/Verify audit",
+          "url": "https://app.buildbuddy.io/invocation/52622a1e-c78a-447c-afe5-cc94e85e5eba"
         }
       ]
     },
@@ -9420,8 +9442,8 @@
       "url": "https://github.com/google/gvisor/pull/15859",
       "group": "runtime",
       "status": "open",
-      "summary": "At the 03:00 UTC snapshot, matching import #16041 at 89e34851c6e861c9a8197c74c53d988b68505d93 has passing generate, Gazelle and public Buildkite checks, but internal build #33207 failed. Its internal failure details are unavailable; no source defect or relationship to the historical cleanup failure is established. Source 7941bdca9 preserves the previously approved patch. Earlier #15861 clone-cleanup failure remains linked to #15598 as a candidate mitigation, with the writer unknown.",
-      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
+      "summary": "Matching import 16041 advanced to 189464df0b on public base 760b, preserving source 7941bdca98. Its new Gazelle failure is independently diagnosed from job118471719901: the sole emitted hunk removes the unused production //pkg/zip dependency from tools/nogo/check. This is the existing shared correction in green import16031 under Etienne, not a new gofer topic defect. Public Buildkite51500 and internal33213 were pending at the 05:36 snapshot; old private33207 remains historical and its cause unobserved. Preserve the source and active import without a duplicate comment or rebase.\n\nAt the 03:00 UTC snapshot, matching import #16041 at 89e34851c6e861c9a8197c74c53d988b68505d93 has passing generate, Gazelle and public Buildkite checks, but internal build #33207 failed. Its internal failure details are unavailable; no source defect or relationship to the historical cleanup failure is established. Source 7941bdca9 preserves the previously approved patch. Earlier #15861 clone-cleanup failure remains linked to #15598 as a candidate mitigation, with the writer unknown.",
+      "updatedAt": "2026-10-20T05:39:55.492607+00:00",
       "refinement": {
         "before": {
           "head": "78abb01a0ac542aa97f49168b3af698ff1025392"
@@ -9433,11 +9455,16 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "7941bdca9889cc4a27faca6b166c79b5b92b2598",
-        "observedAt": "2026-10-20T03:00:37.771638+00:00",
-        "disposition": "Current matching import has an internal failure; public checks pass",
-        "nextAction": "Keep exact #16041/89e internal33207 failure visible. Accessible internal diagnostics or a maintainer explanation are needed to identify the next correction; do not invent a cause, repeat the quiet rebase, or post an unauthorized reminder. Continue the existing bounded sweep.",
+        "observedAt": "2026-10-20T05:39:39.576339+00:00",
+        "disposition": "Refreshed matching import awaits shared ZIP correction; new public/internal checks pending",
+        "nextAction": "Preserve current source and active import; shared correction16031 belongs to Etienne under existing report6278816021. Continue current51500/internal33213 checks through ordinary sweep; do not reuse old33207 failure as current or issue a duplicate comment/rebase.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16041"
+          "https://github.com/google/gvisor/pull/16041",
+          "https://github.com/google/gvisor/actions/runs/39375210832/job/118471719901",
+          "https://github.com/google/gvisor/pull/16031",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
+          "https://buildkite.com/gvisor/pipeline/builds/51500",
+          "https://buildkite.com/gvisor/internal/builds/33213"
         ]
       },
       "evidence": [
@@ -9452,6 +9479,10 @@
         {
           "label": "Current import cleanup failure",
           "url": "https://github.com/google/gvisor/actions/runs/39321237932/job/118295529189"
+        },
+        {
+          "label": "Exact current-import Gazelle failure",
+          "url": "https://github.com/google/gvisor/actions/runs/39375210832/job/118471719901"
         }
       ],
       "approvedPatch": {
