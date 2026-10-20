@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -72,7 +73,7 @@ func TestFetchPreservesManualArtifact(t *testing.T) {
 			}
 			// Successful discovery of the repository's MIT notice must not
 			// overwrite the artifact's complete manually audited terms.
-			retrieve := func(d dep) (*fetched, error) {
+			retrieve := func(d dep, _ Entry) (*fetched, error) {
 				licenses, err := classify(udiffMIT)
 				return &fetched{sha256: d.sha256, license: licenses}, err
 			}
@@ -114,6 +115,7 @@ func TestFetchRejectsInvalidManualAudit(t *testing.T) {
 		name, url, hash string
 		licenses        Licenses
 		manual          bool
+		source          string
 		duplicate       bool
 		wantErr         string
 	}{
@@ -148,12 +150,25 @@ func TestFetchRejectsInvalidManualAudit(t *testing.T) {
 			duplicate: true,
 			wantErr:   "duplicate entry for bundle in %s",
 		},
+		{
+			name: "manual notice commit", url: url, hash: hash, manual: true,
+			licenses: Licenses{"MIT"},
+			source:   "https://raw.githubusercontent.com/example/upstream/0123456789abcdef0123456789abcdef01234567/LICENSE",
+			wantErr:  "re-audit the license of bundle: bundle: license_source commit does not match the audited commit",
+		},
+		{
+			name: "mutable manual notice", url: url, hash: hash,
+			licenses: Licenses{"LicenseRef-Tool"},
+			source:   "https://raw.githubusercontent.com/example/upstream/main/LICENSE",
+			wantErr:  "re-audit the license of bundle: bundle: license_source must identify a GitHub notice pinned to a full commit",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			p := Paths{YAML: filepath.Join(t.TempDir(), "dependencies.yaml")}
 			original := Entry{
 				Dependency: "bundle", Version: url, Retrieved: "2026-10-02",
 				SHA256: hash, License: test.licenses, ManuallyAudited: test.manual,
+				LicenseSource: test.source,
 			}
 			entries := []Entry{original}
 			wantErr := test.wantErr
@@ -169,7 +184,7 @@ func TestFetchRejectsInvalidManualAudit(t *testing.T) {
 				t.Fatal(err)
 			}
 			deps := []dep{{name: "bundle", kind: kindArchive, url: test.url, sha256: test.hash}}
-			err = fetch(p, deps, func(d dep) (*fetched, error) {
+			err = fetch(p, deps, func(d dep, _ Entry) (*fetched, error) {
 				t.Error("retrieved a notice before rejecting the invalid manual audit")
 				return nil, fmt.Errorf("unexpected notice retrieval for %s", d.name)
 			})
@@ -182,6 +197,151 @@ func TestFetchRejectsInvalidManualAudit(t *testing.T) {
 			}
 			if !bytes.Equal(before, after) {
 				t.Error("fetch rewrote the invalid catalog")
+			}
+		})
+	}
+}
+
+func TestLicenseSourceIdentity(t *testing.T) {
+	const artifact = "https://github.com/example/builder/releases/download/v1/tool.tar.gz"
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact")))
+	changedHash := fmt.Sprintf("%x", sha256.Sum256([]byte("changed artifact")))
+	for _, test := range []struct {
+		name, url, hash, source string
+		kind                    depKind
+		wantCommit, wantErr     string
+	}{
+		{name: "pinned", kind: kindArchive, url: artifact, hash: hash, source: source, wantCommit: commit},
+		{name: "automatic", kind: kindArchive, url: artifact, hash: hash},
+		{
+			name: "changed URL", kind: kindArchive, url: artifact + "?changed", hash: hash, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "changed digest", kind: kindArchive, url: artifact, hash: changedHash, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "unpinned artifact", kind: kindArchive, url: artifact, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "Go module", kind: kindGoModule, url: artifact, hash: hash, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "mutable notice", kind: kindArchive, url: artifact, hash: hash, source: strings.ReplaceAll(source, commit, "main"),
+			wantErr: "license_source must identify a GitHub notice pinned to a full commit",
+		},
+		{
+			name: "HTML notice", kind: kindArchive, url: artifact, hash: hash, source: "https://github.com/example/upstream/blob/" + commit + "/COPYING",
+			wantErr: "license_source must identify a GitHub notice pinned to a full commit",
+		},
+		{
+			name: "notice traversal", kind: kindArchive, url: artifact, hash: hash, source: strings.ReplaceAll(source, "/COPYING", "/../main/COPYING"),
+			wantErr: "license_source must name a recognized raw GitHub root notice",
+		},
+		{
+			name: "encoded traversal", kind: kindArchive, url: artifact, hash: hash, source: strings.ReplaceAll(source, "/COPYING", "/%2e%2e/main/COPYING"),
+			wantErr: "license_source must name a recognized raw GitHub root notice",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			d := dep{name: "tool", kind: test.kind, url: test.url, sha256: test.hash}
+			e := Entry{Version: artifact, SHA256: hash, LicenseSource: test.source}
+			got, err := licenseSourceCommit(d, e)
+			if test.wantErr != "" {
+				if err == nil || err.Error() != test.wantErr {
+					t.Fatalf("licenseSourceCommit = %q, %v; want error %q", got, err, test.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := test.wantCommit; got != want {
+				t.Errorf("licenseSourceCommit = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestFetchLicenseSource(t *testing.T) {
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact")))
+	for _, test := range []struct {
+		name        string
+		manual      bool
+		licenses    Licenses
+		retrieveErr error
+		wantErr     string
+	}{
+		{name: "automatic", licenses: Licenses{"BSD-3-Clause"}},
+		{
+			name: "unavailable notice", licenses: Licenses{"BSD-3-Clause"},
+			retrieveErr: errors.New("notice unavailable"),
+			wantErr:     "cannot fetch licenses for tool; fix the reported source or notice errors",
+		},
+		{name: "manual standard terms", manual: true, licenses: Licenses{"Apache-2.0", "BSD-3-Clause"}},
+		{name: "manual local reference", licenses: Licenses{"LicenseRef-Tool", "MIT"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			p := Paths{YAML: filepath.Join(t.TempDir(), "dependencies.yaml")}
+			d := dep{name: "tool", kind: kindArchive, url: "https://example.com/tool.tar.gz", sha256: hash}
+			original := Entry{
+				Dependency: d.name, Version: d.url, SHA256: hash,
+				Retrieved: "2026-10-02", Commit: commit, License: test.licenses,
+				ManuallyAudited: test.manual, LicenseSource: source,
+			}
+			if err := writeEntries(p.YAML, []Entry{original}); err != nil {
+				t.Fatal(err)
+			}
+			err := fetch(p, []dep{d}, func(d dep, _ Entry) (*fetched, error) {
+				if test.retrieveErr != nil {
+					return nil, test.retrieveErr
+				}
+				licenses, err := classify(udiffMIT)
+				return &fetched{commit: commit, sha256: d.sha256, license: licenses}, err
+			})
+			if test.wantErr != "" {
+				if err == nil || err.Error() != test.wantErr {
+					t.Fatalf("fetch = %v, want %q", err, test.wantErr)
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+			entries, err := readEntries(p.YAML)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := len(entries), 1; got != want {
+				t.Fatalf("catalog has %d entries, want %d", got, want)
+			}
+			if test.wantErr != "" || original.manuallyAudited() {
+				if got, want := entries[0], original; !reflect.DeepEqual(got, want) {
+					t.Errorf("retained entry = %+v, want unchanged %+v", got, want)
+				}
+			} else {
+				if got, want := entries[0].License, (Licenses{"MIT"}); !slices.Equal(got, want) {
+					t.Errorf("automatic licenses = %v, want %v", got, want)
+				}
+				if got, want := entries[0].LicenseSource, source; got != want {
+					t.Errorf("notice source = %q, want %q", got, want)
+				}
+			}
+			if got, want := verifyProblems([]dep{d}, entries), []string(nil); !slices.Equal(got, want) {
+				t.Errorf("verifyProblems = %v, want %v", got, want)
+			}
+			if original.manuallyAudited() || test.wantErr != "" {
+				return
+			}
+			entries[0].Commit = strings.Repeat("a", 40)
+			want := []string{"tool: license_source commit does not match the audited commit"}
+			if got := verifyProblems([]dep{d}, entries); !slices.Equal(got, want) {
+				t.Errorf("verifyProblems with mismatched commit = %v, want %v", got, want)
 			}
 		})
 	}

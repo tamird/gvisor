@@ -27,6 +27,9 @@
 // @google_root_pem) are maintained by hand: Fetch preserves an existing entry
 // whenever fetching fails. Explicitly audited entries also retain their terms
 // when automatic discovery would succeed, until their artifact pin changes.
+// An explicit license_source is immutable provenance for a manual audit. For
+// automatic entries, it selects the notice to fetch and classify; errors from
+// that source fail the audit instead of falling back to repository terms.
 package licensecheck
 
 import (
@@ -74,6 +77,14 @@ type Entry struct {
 
 	// ManuallyAudited preserves reviewed terms that automatic discovery misses.
 	ManuallyAudited bool `yaml:"manually_audited,omitempty"`
+
+	// LicenseSource binds an immutable upstream notice to Version and SHA256.
+	// Commit records the notice's revision, which may be from a different
+	// repository than the artifact URL.
+	// Manual audits retain their complete terms after validating this binding.
+	// Automatic entries fetch and classify this notice instead of the license
+	// of the repository that distributes the artifact.
+	LicenseSource string `yaml:"license_source,omitempty"`
 }
 
 func (e Entry) manuallyAudited() bool {
@@ -218,6 +229,8 @@ const (
 # by --mode=fetch, so you can hand-edit the file for these.
 # Entries marked manually_audited or containing LicenseRef identifiers require
 # re-audit when their artifact pin changes.
+# license_source pins an upstream notice for an artifact. Manual audits retain
+# their reviewed terms; automatic entries fetch and classify the pinned notice.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -232,7 +245,7 @@ func Fetch(p Paths) error {
 	return fetch(p, deps, fetchLicense)
 }
 
-func fetch(p Paths, deps []dep, retrieve func(dep) (*fetched, error)) error {
+func fetch(p Paths, deps []dep, retrieve func(dep, Entry) (*fetched, error)) error {
 	old, err := readEntries(p.YAML)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
@@ -265,7 +278,7 @@ func fetch(p Paths, deps []dep, retrieve func(dep) (*fetched, error)) error {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			f, err := retrieve(d)
+			f, err := retrieve(d, oldByName[d.name])
 			results[i] = result{f, err}
 		}(i, d)
 	}
@@ -282,7 +295,11 @@ func fetch(p Paths, deps []dep, retrieve func(dep) (*fetched, error)) error {
 		}
 		r := results[i]
 		if r.err != nil {
-			if e, ok := oldByName[d.name]; ok && len(e.License) > 0 {
+			if e := oldByName[d.name]; e.LicenseSource != "" {
+				// Preserve the explicit binding even on failure so the next
+				// audit cannot silently revert to repository discovery.
+				entries = append(entries, e)
+			} else if e, ok := oldByName[d.name]; ok && len(e.License) > 0 {
 				fmt.Fprintf(os.Stderr, "%-60s %s (kept existing entry: %v)\n", d.name, e.License, r.err)
 				entries = append(entries, e)
 				continue
@@ -292,12 +309,13 @@ func fetch(p Paths, deps []dep, retrieve func(dep) (*fetched, error)) error {
 			continue
 		}
 		e := Entry{
-			Dependency: d.name,
-			Version:    d.source(),
-			Retrieved:  today,
-			Commit:     r.fetched.commit,
-			SHA256:     r.fetched.sha256,
-			License:    r.fetched.license,
+			Dependency:    d.name,
+			Version:       d.source(),
+			Retrieved:     today,
+			Commit:        r.fetched.commit,
+			SHA256:        r.fetched.sha256,
+			License:       r.fetched.license,
+			LicenseSource: oldByName[d.name].LicenseSource,
 		}
 		if o, ok := oldByName[d.name]; ok && o.Version == e.Version && o.SHA256 == e.SHA256 {
 			// Commit lookup is best-effort. A missing response does not
@@ -318,7 +336,7 @@ func fetch(p Paths, deps []dep, retrieve func(dep) (*fetched, error)) error {
 		return err
 	}
 	if len(failed) > 0 {
-		return fmt.Errorf("cannot fetch licenses for %s; add entries to %s by hand", strings.Join(failed, ", "), p.YAML)
+		return fmt.Errorf("cannot fetch licenses for %s; fix the reported source or notice errors", strings.Join(failed, ", "))
 	}
 	return nil
 }
@@ -391,6 +409,11 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 		case len(e.License) == 0:
 			problems = append(problems, fmt.Sprintf("%s has no license", d.name))
 		default:
+			if commit, err := licenseSourceCommit(d, e); err != nil {
+				problems = append(problems, fmt.Sprintf("%s: %v", d.name, err))
+			} else if commit != "" && commit != e.Commit {
+				problems = append(problems, fmt.Sprintf("%s: license_source commit does not match the audited commit", d.name))
+			}
 			if e.Version != d.source() {
 				problems = append(problems, fmt.Sprintf("%s was audited at %q, but is now %q", d.name, e.Version, d.source()))
 			}
@@ -704,7 +727,22 @@ type fetched struct {
 
 // fetchLicense returns the upstream commit, artifact hash, and licenses of a
 // dependency.
-func fetchLicense(d dep) (*fetched, error) {
+func fetchLicense(d dep, previous Entry) (*fetched, error) {
+	commit, err := licenseSourceCommit(d, previous)
+	if err != nil {
+		return nil, err
+	}
+	if commit != "" {
+		body, err := httpGet(previous.LicenseSource, nil)
+		if err != nil {
+			return nil, err
+		}
+		licenses, err := classify(string(body))
+		if err != nil {
+			return nil, err
+		}
+		return &fetched{commit: commit, sha256: d.sha256, license: licenses}, nil
+	}
 	if d.kind == kindGoModule {
 		return fetchGoModule(d.name, d.version)
 	}
@@ -714,6 +752,31 @@ func fetchLicense(d dep) (*fetched, error) {
 	}
 	f.sha256 = d.sha256
 	return f, nil
+}
+
+var artifactSHA256RE = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
+// licenseSourceCommit validates the notice's immutable identity and its binding
+// to the artifact. Manual audits use this as provenance without reclassification;
+// automatic entries fetch this exact notice.
+func licenseSourceCommit(d dep, e Entry) (string, error) {
+	if e.LicenseSource == "" {
+		return "", nil
+	}
+	if d.kind != kindArchive || !artifactSHA256RE.MatchString(d.sha256) ||
+		e.SHA256 != d.sha256 || e.Version != d.source() {
+		return "", errors.New("license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source")
+	}
+	owner, repo, commit, err := parseGitHubURL(e.LicenseSource)
+	if err != nil || !commitRE.MatchString(commit) {
+		return "", errors.New("license_source must identify a GitHub notice pinned to a full commit")
+	}
+	prefix := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/", owner, repo, commit)
+	name, ok := strings.CutPrefix(e.LicenseSource, prefix)
+	if !ok || !slices.Contains(licenseFileNames, name) {
+		return "", errors.New("license_source must name a recognized raw GitHub root notice")
+	}
+	return commit, nil
 }
 
 // licenseFileNames are candidate root paths for GitHub raw-file requests.
