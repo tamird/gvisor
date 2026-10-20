@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T02:54:00.448888+00:00",
+    "updatedAt": "2026-10-20T03:05:15.752193+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4690,14 +4690,14 @@
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-20T01:10:32.929687+00:00",
-      "summary": "Matching import#15718 refreshed again to05a9c0922 at01:02:30 for unchanged source b33e9c5be; new generate and Buildkite checks are pending. The prior a8e import failed disposable-clone cleanup and lacked existing #15598 maintenance disabling; its exact failure remains retained separately from the older checkout403. No new source amendment, rebase or cause/writer claim is justified while the matching import progresses.",
+      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
+      "summary": "At the 03:00 UTC snapshot, matching import #15718 at fada8880d18c7e7e69f7548aa3a88ac5bfc726b4 has passing generate, Gazelle, public and internal checks. Source b33e9c5be3 remains unchanged; its separate older Copybara feedback failure is retained. Earlier checkout HTTP403 and clone-cleanup failures remain historical evidence. The quiet rebase preserved the approved patch and posted no reviewer notice.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "b33e9c5be3c586bab8d413ae9e3a40c7d5ae0152",
-        "observedAt": "2026-10-20T01:08:50.356213+00:00",
-        "disposition": "New exact-current import execution pending; prior cleanup failure retained",
-        "nextAction": "Follow new matching import#15718/05a9c0922 for unchanged b33e source through the existing sweep; it was introduced01:02:30 and its generate/pipelines are pending. Preserve prior import a8e cleanup failure and older checkout403. Existing #15598 mitigation remains separately green/open with matching#15996; do not repeat a rebase, add a topic correction, or infer the earlier writer/cause.",
+        "observedAt": "2026-10-20T03:00:37.771638+00:00",
+        "disposition": "Matching import checks green; earlier failures retained",
+        "nextAction": "Follow matching #15718/fada through the existing import sweep. Preserve the older source feedback and failed import executions separately. No repeated rebase, retry, source amendment or public reminder.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15718"
         ]
@@ -5681,14 +5681,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Node upgrade and public source qualification active",
-      "summary": "Full Node22.2 run68993309 atcfab is closed raw FAIL/COMPLETE with inner accounting INCOMPLETE. Independent review authenticated the built inventory,321 retained member bindings and all compact counts. Each mode selected3937 cases: directfs has3803 unambiguous expected successes,122 runtime skips,4 classifier exclusions and8 ambiguous identities; goferfs has3802 successes, the same exclusions/ambiguities and one actual worker-arraybuffer-zerofill timeout. Eight .js/.mjs filename families affect16 shards and receive no ambiguous-case credit. The automatic receipt took9.251532 seconds; owner reconciliation took another335.408724 seconds, with no manual collection and one local reconciliation. No timeout cause or controlled image-build speedup is claimed. Hostinet owns the user-requested Node26.12 upgrade and exact configured-case identity correction. Both eb95 Brotli and d064 error-serdes backport proposals are superseded; preserve their evidence, with no pending contributor question or PR.\n\nRSEQ qualification remains complete at82b895:54 named runtime positives plus lint on the established AMD64 and ARM64 guest routes, with exact-source and toolchain limits retained. Portable ace40f56d awaits the already-sent contributor decision. TSC2f4de results are independently bound: AMD64 has204 passing records and4 disassembly-expectation failures; native ARM64 has139 passes,3 expectation failures and one actual host VDSO allocation failure. Both ARM EL2 KVM owners passed16 named records. Node owns narrow LLVM-expectation corrections and exact failed-host ELF retention for the unresolved allocation issue; no complete TSC qualification is claimed. Root public-runtime373dd checks retained234 positives across23 ordinary owners, with two benchmark-only wire owners correctly rejected in ordinary test mode. The established8-owner benchmark cohort subsequently passed72 one-iteration rows with actual Linux/amd64 and Linux/arm64 evidence. Both original loading and ordinary-test failures remain. Root owns a bounded netlink operstate-wait correction after the selected native case observed asynchronous carrier-state propagation; six-variant validation is pending. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and NVIDIA availability limits remain. Prior full build, unit, Java and runtime records retain their original source/result scopes rather than claiming all-current qualification.\n\nNode 26.12 integration b049f290 has passed its five owning checks (six XML positives and 98 reporter methods) and the source-inventory/exact-selector metadata smoke. The smoke lists 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs using the official binary and Python 3.10; it does not qualify the Ubuntu 26.04 built image or runtime bodies. Both compact gates are independently verified. The authorized full run a6d2cfa3-1745-4c63-a40d-a73030cc16d8 is live at b049f290 under Hostinet\u2019s sole collector; no runtime result is claimed yet.",
-      "updatedAt": "2026-10-20T02:54:00.448888+00:00",
+      "summary": "Node 26.12 integration b049f290 is running its full qualification as invocation a6d2cfa3 under Hostinet\u2019s sole collector. Its five owning checks passed six XML positives and 98 reporter methods; the official-binary metadata smoke verified 7,621 canonical cases, 6,387 source files and 6,353 proctor-scoped IDs. Built-image inventory and runtime bodies remain pending. Both older Brotli/error-serdes backport proposals are superseded by the requested upgrade, with no pending contributor decision or PR. The prior Node22.2 full run689 remains raw FAIL/inner INCOMPLETE: per mode 3,937 selections, 122 runtime skips, four classifier exclusions and eight ambiguous identities; directfs has 3,803 unambiguous successes, goferfs 3,802 plus one worker-arraybuffer timeout. Ambiguous identities receive no credit, and no timeout cause or controlled build speedup is claimed.\n\nTSC original2f4 results remain source-bound. The LLVM expectation continuation at9da passed all three AMD owners/21 records. ARM passed15 records but still failed on the real host VDSO allocation; its exact8KiB ELF is retained. Node owns a narrow full-mapping zero-tail allocator correction with generated boundary regressions. Earlier EL2 KVM results retain16 positives; they do not waive native-host compatibility. Root\u2019s public-runtime373dd checks retain234 positives across23 ordinary owners; the two benchmark-only wire owners are separately completed by the established8-owner/72-row cohort. Netlink38eb passed all six selected native/directfs/shared cases; its original rawFAIL was solely comment formatting. The comment-only819172 continuation passed both lint owners without repeating runtime cases.\n\nRSEQ82b remains qualified for54 named runtime cases plus lint, with standaloneace40 awaiting the already-sent contributor decision. Current public Ollama0.40.6 matches qualified sources; GPU, other version/source and18 unavailable NVIDIA comparisons remain bounded gaps. Earlier build, unit, Java and runtime records retain their exact sources and original failures/skips; this is not a blanket current-source PASS.",
+      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T02:47:32.395659+00:00",
-        "disposition": "Node upgrade, TSC host compatibility and netlink fixture validation active",
-        "nextAction": "Hostinet owns Node26.12 configured-case integration and validation. Node owns the unresolved native ARM host VDSO layout issue and narrow expectation continuations. Root owns netlink operstate wait validation and public-runtime evidence composition. Preserve original raw failures and skips; do not transfer source-specific or guest results into a whole-current qualification claim.",
+        "observedAt": "2026-10-20T03:00:37.771638+00:00",
+        "disposition": "Node26 full runtime and ARM VDSO correction active; netlink focused validation complete",
+        "nextAction": "Hostinet owns the live Node26 full run. Node owns the ARM VDSO mapped-tail correction and focused validation. Root owns netlink contributor delivery and public-runtime evidence composition. Preserve original raw failures and all remaining skips; do not transfer a guest or metadata result into complete current-source coverage.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/68993309-3173-4938-ac7f-4399447df983"
         ]
@@ -9340,8 +9340,8 @@
       "url": "https://github.com/google/gvisor/pull/15859",
       "group": "runtime",
       "status": "open",
-      "summary": "At the 00:45 UTC observation, import #16041 is open at 066a745fa and explicitly matches current source 7941bdca9; its checks are pending. Earlier failed import executions remain historical evidence. No new maintainer review or public notice accompanied this observed progression.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nThe patch approved by EtiennePerot on 2026-10-16T08:44:49Z at d99ab14c22 is independently verified unchanged at 7941bdca98. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nCurrent matching import #15861 at 8f006730b8 completes Go export and its local push, then fails temporary-clone cleanup with Directory not empty. Existing #15598 addresses this failure boundary; the surviving writer remains unproved. Internal Copybara failure details remain unavailable, and no topic source defect is established.",
-      "updatedAt": "2026-10-20T00:48:06.083755+00:00",
+      "summary": "At the 03:00 UTC snapshot, matching import #16041 at 89e34851c6e861c9a8197c74c53d988b68505d93 has passing generate, Gazelle and public Buildkite checks, but internal build #33207 failed. Its internal failure details are unavailable; no source defect or relationship to the historical cleanup failure is established. Source 7941bdca9 preserves the previously approved patch. Earlier #15861 clone-cleanup failure remains linked to #15598 as a candidate mitigation, with the writer unknown.",
+      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
       "refinement": {
         "before": {
           "head": "78abb01a0ac542aa97f49168b3af698ff1025392"
@@ -9353,9 +9353,9 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "7941bdca9889cc4a27faca6b166c79b5b92b2598",
-        "observedAt": "2026-10-20T00:45:26.785197+00:00",
-        "disposition": "Exact-current import checks pending",
-        "nextAction": "Follow matching import#16041 through existing sweep. Preserve earlier failed executions and act on genuinely new current-head failures; no duplicate rebase or reviewer notice.",
+        "observedAt": "2026-10-20T03:00:37.771638+00:00",
+        "disposition": "Current matching import has an internal failure; public checks pass",
+        "nextAction": "Keep exact #16041/89e internal33207 failure visible. Accessible internal diagnostics or a maintainer explanation are needed to identify the next correction; do not invent a cause, repeat the quiet rebase, or post an unauthorized reminder. Continue the existing bounded sweep.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16041"
         ]
@@ -9928,24 +9928,24 @@
       "url": "https://github.com/google/gvisor/pull/15919",
       "group": "analysis",
       "status": "open",
-      "summary": "Refreshed import#15984/f3af7e482 still fails Gazelle with the same one-line production //pkg/zip removal. The existing authorized report6278816021 remains with Etienne/Copybara; this confirms an unresolved reported defect and does not reopen a source correction.\n\nThe user-authorized Gazelle correction request is posted and verified at comment6278816021 on #15919. Current source98bc and originally imported source7847 already lack the redundant production //pkg/zip dependency; import88d adds it. The remaining correction is Etienne's internal one-line deletion and subsequent Gazelle verification. The user's requested action is complete; no contributor decision, agent source amendment, or further public reminder is pending.\n\nThe latest import #15984 at88d06cc3 still fails Gazelle on the established redundant //pkg/zip dependency in the production tools/nogo/check library. Its recorded source remains7847dc30, while current source #15919 is98bc7fc0. The exact new job log requests the same one-line dependency removal. This does not establish a new defect in the current source; root owns import reconciliation, and the earlier public reply draft remains unposted. #15868 still requires the actual #15919 merge.\n\nThe published mechanical rebase is at 98bc7fc081ce on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nPublic import #15984 at085df06c4 has an import-only Gazelle defect: it adds //pkg/zip to the production check library as well as check_test. All five Go-source blobs match the approved source, and only check_test.go imports pkg/zip. The source PR already has the correct test-only dependency. Root prepared a factual reply requesting the maintainer/internal-export correction and has asked for authorization to post; no source amendment or blind rerun is needed. Landing and dependent #15868 formatting remain held.\n\nThe shared pkg/zip proxy provides inlineable wrappers and the two named aliases used by current consumers. The existing unsafe import analyzer becomes checkimports, retaining unsafe filename exemptions while permitting archive/zip only in the exact proxy package. Four maintained consumer files migrate. Qualified-harness composition 3c34c5f3 passes thirteen selected owners and 110 cases, including the analyzer bootstrap and consumer builds. The isolated forbidden-import witness fails facts_nogo with the expected checkimports diagnostic on both CPUs; its native failure is retained. The contributor approved publication after making the proxy consumers use consistent standard/nonstandard import groups. That correction removes one blank line in licensecheck; it is the same import shape already validated in the formatter tree. The corrected independent proposal is published as #15919 at 7847dc30fe, with one commit and the prepared description verified. Maintainer review and current-head CI remain separate. EtiennePerot approved exact 7847dc30fe at 06:39:06 UTC. Current source checks and both Copybara statuses are successful; landing remains pending.",
+      "summary": "Current older-source import #15984 at f9a4a74b99dc3bfad963ffc8b68de7922a88b38f has passing generate and internal build #33208, but Gazelle still requests deletion of the redundant production //pkg/zip dependency. The source PR remains 98bc7fc081ce3c3638c389c00aa2338dbe251276 and does not contain that imported dependency. The authorized correction request was delivered to Etienne in comment6278816021; the next action transferred to the import maintainer, and the defect remains unrepaired. No duplicate source amendment or public reminder is needed.",
       "followup": {
         "owner": "EtiennePerot",
-        "disposition": "Authorized correction request delivered; internal import fix pending",
+        "disposition": "Authorized import correction request delivered; Gazelle defect remains",
         "sourceHead": "98bc7fc081ce3c3638c389c00aa2338dbe251276",
-        "observedAt": "2026-10-20T00:58:20.047031+00:00",
-        "nextAction": "Etienne/Copybara import maintainer owns removal of the redundant production //pkg/zip dependency, as requested in authorized comment6278816021. Refreshed older-source import#15984/f3af7e482 still reproduces that exact Gazelle hunk; no source amendment or repeat public reminder is needed. Reporting transferred the next action; the import defect is not repaired.",
+        "observedAt": "2026-10-20T03:00:37.771638+00:00",
+        "nextAction": "Etienne/Copybara import maintainer owns the exact production //pkg/zip deletion requested in authorized comment6278816021. Current #15984/f9a reproduces it in Gazelle job118416286782; its later internal success does not fix the Gazelle result. Continue ordinary readback without a duplicate comment.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39293864159/job/118201208380",
           "https://github.com/google/gvisor/pull/15984",
           "https://github.com/tamird/gvisor/commit/98bc7fc081ce3c3638c389c00aa2338dbe251276",
           "https://github.com/google/gvisor/pull/15919#issuecomment-6274690804",
-          "https://github.com/google/gvisor/actions/runs/39331257471/job/118329714179"
-        ],
-        "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "UNKNOWN"
+          "https://github.com/google/gvisor/actions/runs/39331257471/job/118329714179",
+          "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
+          "https://github.com/google/gvisor/actions/runs/39357715867/job/118416286782"
+        ]
       },
-      "updatedAt": "2026-10-20T00:58:20.306390+00:00",
+      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
       "number": 15919,
       "evidence": [
         {
@@ -12617,8 +12617,8 @@
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
       "status": "Agent revision in progress",
-      "updatedAt": "2026-10-20T02:21:06.301349+00:00",
-      "summary": "The contributor requested a released Node upgrade instead of the standalone error-serdes backport. Proposal d064da903e is superseded as the current delivery approach; root and Hostinet are checking the newer release and affected test patches. No PR will be opened for the backport. Its completed focused qualification remains historical evidence, while the already-running Node 22.2 full qualification continues independently.\n\nBackports the upstream Node error-serialization regression fix: sequential placement, a bounded JS stack and removal of its flaky designation. Both named cases completed in original integration2f148 run2b66, proved by recovered exact46-name batches ending46/46 expected-outcome successes. The generic test lane did not forward the planned filter, so396 cases were selected per mode; other batches retain wrapper-only credit. Parent result is PASS/COMPLETE, while named proof arrived328.695981 seconds after execution with one manual two-object recovery. This is focused qualification, not a full Node suite claim. The contributor review question has been asked and remains pending.",
+      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
+      "summary": "The contributor requested a released Node upgrade instead of this backport. Proposal d064da903e is superseded; no contributor decision or PR remains pending for it. Hostinet\u2019s Node26.12 integration b049 is in full qualification after its owning checks and canonical metadata smoke passed. The old Node22.2 full run689 has closed raw FAIL/COMPLETE, with identity collisions and one worker timeout retained. Historical d064 evidence remains: both named error-serdes cases completed in original integration2f148 run2b66, verified from exact46-name batch completion logs. That generic-lane request actually selected396 cases per mode because its filter was not forwarded. The focused named proof required one manual two-object recovery and does not establish full-suite coverage.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12635,10 +12635,10 @@
       ],
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Contributor-directed Node upgrade investigation; backport proposal superseded",
+        "disposition": "Backport superseded; Node26 full qualification active",
         "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T02:20:48.814045+00:00",
-        "nextAction": "Prepare the released Node upgrade and reconcile the existing patches with the upstream release. Retain the backport commit and focused evidence; do not ask the superseded contributor question again or open its PR. Let the existing full Node 22.2 run finish.",
+        "observedAt": "2026-10-20T03:05:15.502493+00:00",
+        "nextAction": "Hostinet owns Node26.12 full qualification at b049 under invocationa6d2. Retain the d064 backport and its focused historical evidence; no pending contributor decision and no PR for this superseded proposal. The old Node22.2 full run689 is closed FAIL/COMPLETE.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d"
         ]
@@ -12685,6 +12685,50 @@
           "https://github.com/tamird/gvisor/commit/ace40f56d2d11427d027e125bd33eaec3b19f2b4",
           "https://github.com/tamird/gvisor/actions/runs/39356295903",
           "https://github.com/tamird/gvisor/actions/runs/39356299077"
+        ]
+      }
+    },
+    {
+      "id": "branch:fix/netlink-operstate-wait",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/netlink-operstate-wait",
+      "head": "624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
+      "title": "Wait for veth operational state in the netlink test",
+      "url": "https://github.com/tamird/gvisor/commit/624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
+      "summary": "Wait for Linux\u2019s asynchronous veth operational-state update before asserting IF_OPER_UP. The existing test uses a five-second monotonic polling budget and preserves missing-response, malformed-attribute and final-state failures. All six selected native/systrap direct/shared variants passed at integration38eb3280fe on AMD64 and ARM64 RC TCG. That run remains raw FAIL solely for comment formatting; the comment-only81917272 continuation passed buildifier and clang-format without repeating runtime cases. The exact standalone624b09d5b is published and the contributor review question has been sent once. No upstream PR is open.",
+      "evidence": [
+        {
+          "label": "Exact contributor-review commit",
+          "url": "https://github.com/tamird/gvisor/commit/624b09d5bb57f61d8f2ca51b500297b14c4ad0fb"
+        },
+        {
+          "label": "Six runtime cases passed; original formatting failure retained",
+          "url": "https://app.buildbuddy.io/invocation/00278c16-afb9-4e92-9228-163c9af0cc3d"
+        },
+        {
+          "label": "Comment-only lint recovery passed",
+          "url": "https://app.buildbuddy.io/invocation/4cc5f2f9-7c37-4588-8f1c-755123cd5f01"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
+        "url": "https://github.com/tamird/gvisor/commit/624b09d5bb57f61d8f2ca51b500297b14c4ad0fb"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Qualified netlink fixture correction awaiting contributor decision",
+        "sourceHead": "624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
+        "observedAt": "2026-10-20T03:05:15.502493+00:00",
+        "nextAction": "Await the already-sent contributor decision before opening the PR. Preserve original failure, six runtime positives at38eb and the comment-only lint recovery at819172; no repeated runtime validation or public comment.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
+          "https://app.buildbuddy.io/invocation/00278c16-afb9-4e92-9228-163c9af0cc3d",
+          "https://app.buildbuddy.io/invocation/4cc5f2f9-7c37-4588-8f1c-755123cd5f01"
         ]
       }
     }
