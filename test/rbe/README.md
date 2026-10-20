@@ -69,6 +69,14 @@ Repeat `--bazel-option` for multiple options, using `--FLAG=VALUE` for values.
 These arguments retain command-line precedence and literal characters such as
 `#`; hosted runner `extra_bazel_args` are instead interpreted as rc-file entries.
 
+For remote `--arch=all test`, select existing architecture frontends or a suite
+that contains them. The combined graph retains those declared platforms;
+it does not duplicate arbitrary targets for both CPUs. For example, select
+`//test/rbe:platform_matrix` to run its two native owners on each CPU. Additional
+explicit targets, such as the workflow checks, join the same verified graph.
+Configured expected owners and actual execution records establish which
+architectures ran.
+
 ## Qualification reports
 
 `actions.sh` captures reports for both hosted Bazel and Actions coordinators.
