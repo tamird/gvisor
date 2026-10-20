@@ -239,7 +239,7 @@ if [[ $# == 1 && $1 == amd64 ]]; then
   set --
   for lane in "${lanes[@]}"; do
     # Explicit-target, host-dependent and alternate-kernel lanes are selected separately.
-    if [[ $lane != build && $lane != test && $lane != kvm && $lane != syscalls-kvm && $lane != moby && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
+    if [[ $lane != build && $lane != test && $lane != pgo && $lane != kvm && $lane != syscalls-kvm && $lane != moby && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
   done
 fi
 if (( $# == 0 )); then
