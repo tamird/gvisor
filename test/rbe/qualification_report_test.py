@@ -1500,9 +1500,18 @@ class QualificationReportTest(unittest.TestCase):
         # Run the actual shell entry point and reporter. Only Git identity and
         # Bazel are fixtures; the real timeout interrupts a waiting child.
         bazel_options = ["--config=plugin-tldk", "--define=literal=before#after with spaces"]
-        for phase in ("preflight", "execution", "command-pass", "command-fail", "command-timeout"):
-            with self.subTest(phase=phase):
-                workspace = self.root / phase
+        cases = (
+            ("preflight", None),
+            ("execution", "parallel/test-http-outgoing-end-cork.js"),
+            ("execution", ""),
+            ("execution", None),
+            ("command-pass", None),
+            ("command-fail", None),
+            ("command-timeout", None),
+        )
+        for index, (phase, runtime_filter) in enumerate(cases):
+            with self.subTest(phase=phase, runtime_filter=runtime_filter):
+                workspace = self.root / str(index)
                 scripts = workspace / "test/rbe"
                 scripts.mkdir(parents=True)
                 for name in (
@@ -1544,7 +1553,10 @@ from pathlib import Path
 import signal
 import sys
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
-    stream.write(json.dumps(sys.argv[1:]) + '\\n')
+    stream.write(json.dumps({
+        'arguments': sys.argv[1:],
+        'runtime_filter': os.environ.get('RUNTIME_TESTS_FILTER'),
+    }) + '\\n')
 if os.environ['TEST_PHASE'].startswith('command-'):
     Path(os.environ['TEST_WORK_STARTED']).touch()
     if os.environ['TEST_PHASE'] == 'command-timeout':
@@ -1602,6 +1614,9 @@ signal.pause()
                     "TEST_WORK_STARTED": str(started),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
+                environment.pop("RUNTIME_TESTS_FILTER", None)
+                if runtime_filter is not None:
+                    environment["RUNTIME_TESTS_FILTER"] = runtime_filter
                 options = [] if phase.startswith("command-") else [f"--bazel-option={option}" for option in bazel_options]
                 result = subprocess.run(
                     ["bash", "test/rbe/actions.sh", *options],
@@ -1610,8 +1625,13 @@ signal.pause()
                 self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
                 self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
                 if phase == "execution":
-                    commands = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
+                    observations = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
+                    commands = [row["arguments"] for row in observations]
                     self.assertEqual(len(commands), 2, commands)
+                    for row in observations:
+                        self.assertEqual(row["runtime_filter"], runtime_filter)
+                        self.assertEqual("--test_env=RUNTIME_TESTS_FILTER" in row["arguments"],
+                                         runtime_filter is not None)
                     for command in commands:
                         for option in bazel_options:
                             self.assertIn(option, command)
