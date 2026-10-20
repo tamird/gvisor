@@ -113,7 +113,7 @@ source_image_archive(
 )
 
 # All containerd versions share this output instead of rebuilding the harness
-# in each test daemon. Other images and the ARM64 archive retain their pins.
+# in each test daemon.
 source_image_archive(
     name = "containerd_harness_source_amd64",
     testonly = True,
