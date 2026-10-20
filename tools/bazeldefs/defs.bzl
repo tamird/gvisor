@@ -329,6 +329,6 @@ bpf_program = rule(
             default = "@kernel_headers//:kernel_headers_directory",
             providers = [DirectoryInfo],
         ),
-        "_libbpf": attr.label(default = "@libbpf//:bpf", providers = [CcInfo]),
+        "_libbpf": attr.label(default = "@libbpf//:bpf_headers", providers = [CcInfo]),
     },
 )
