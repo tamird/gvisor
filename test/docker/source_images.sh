@@ -26,7 +26,7 @@ contexts=$(realpath "$6")
 selection=$7
 case "${mode}" in
   test)
-    test "$#" -eq 7
+    test "$#" -ge 7
     if [[ -n ${TEST_SHARD_STATUS_FILE:-} ]]; then
       touch "${TEST_SHARD_STATUS_FILE}"
     fi
@@ -54,6 +54,23 @@ printf -v crane_command '%q' "${crane}"
 export MAKE="${make}"
 cd "${work}"
 if [[ ${mode} == test ]]; then
+  selection_options=()
+  if (( $# > 7 )); then
+    shift 7
+    # Validate against Make's complete class before applying its partitioning.
+    # A missing or wrong-class image must not become an empty successful check.
+    available_images=$("${make}" --no-print-directory -s -f "${makefile}" \
+      ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 PARTITION=1 TOTAL_PARTITIONS=1 \
+      "list-${selection}-images")
+    for image in "$@"; do
+      if [[ -z ${image} || ${image} == *[[:space:]]* ]] || \
+          ! grep -Fxq -- "${image}" <<< "${available_images}"; then
+        printf 'Image %s is not in the %s image cohort for %s.\n' "${image}" "${selection}" "${arch}" >&2
+        exit 1
+      fi
+    done
+    selection_options=("${selection^^}_TEST_IMAGES=$*")
+  fi
   # Bazel shards are zero-based; canonical Make partitions are one-based.
   partition=$((${TEST_SHARD_INDEX:-0} + 1))
   partitions=${TEST_TOTAL_SHARDS:-1}
@@ -61,7 +78,8 @@ if [[ ${mode} == test ]]; then
   # List the selection first so a failure also records unattempted images.
   "${make}" --keep-going -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
     PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
-    CRANE="${crane_command}" "list-${selection}-images" "rebuild-${selection}-images"
+    CRANE="${crane_command}" "${selection_options[@]}" \
+    "list-${selection}-images" "rebuild-${selection}-images"
 else
   target=${selection//\//_}
   case "${arch}" in

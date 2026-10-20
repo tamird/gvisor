@@ -387,7 +387,7 @@ def _image_source_command_impl(ctx):
         "\n".join([
             "#!/bin/bash",
             "set -euo pipefail",
-            'exec /bin/bash %s test %s "${TEST_SRCDIR:?}/%s/%s" "${TEST_SRCDIR}/%s/crane" %s %s %s' % (
+            'exec /bin/bash %s test %s "${TEST_SRCDIR:?}/%s/%s" "${TEST_SRCDIR}/%s/crane" %s %s %s %s' % (
                 shell.quote(ctx.file._script.short_path),
                 shell.quote(ctx.attr.architecture),
                 tool_root,
@@ -396,6 +396,7 @@ def _image_source_command_impl(ctx):
                 shell.quote(ctx.file._makefile.short_path),
                 shell.quote(ctx.file.contexts.short_path),
                 shell.quote(ctx.attr.image_class),
+                " ".join([shell.quote(image) for image in ctx.attr.images]),
             ),
             "",
         ]),
@@ -417,6 +418,7 @@ image_source_command = rule(
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image_class": attr.string(default = "cpu", values = ["cpu", "gpu"], doc = "Selects Make's CPU or GPU/ML test-image cohort."),
+        "images": attr.string_list(doc = "Optional canonical Make image names within image_class; empty selects the full cohort."),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_source_configuration),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
