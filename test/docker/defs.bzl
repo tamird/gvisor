@@ -8,9 +8,23 @@ load("@rules_oci//oci:defs.bzl", "oci_load")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "select_arch", "transition_allowlist")
 load("//tools:defs.bzl", "go_test")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
+
+# Conversion only reads OCI content and writes a compressed Docker archive.
+# Keep it on the ordinary executor used by the completed large-image exports.
+SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
+    "//tools/bazeldefs:rbe": dict(
+        docker_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ).items() + [("workload-isolation-type", "oci")],
+    ),
+    "//conditions:default": {},
+})
 
 # Match the source-context transition: an AMD64 image remains AMD64 even when
 # its consumer is built for another CPU or with the Go race detector enabled.
@@ -58,12 +72,12 @@ def docker_image_archive(name, image, architecture, source = None):
     )
 
 def docker_image_archives(name, extra_images = [], source_archives = {}):
-    """Declares Docker-format archives for the suite's image inputs.
+    """Builds source images used by the Docker suites.
 
     Args:
       name: Prefix for the archive targets.
       extra_images: Archives consumed directly without loading them into Docker.
-      source_archives: Image names mapped to architecture-to-archive label maps.
+      source_archives: Existing producers to share, keyed by image and architecture.
     """
     images = {image: True for cohort in COHORT_IMAGES.values() for image in cohort}
     images.update({image: True for image in AMD64_RUNTIME_IMAGES})
@@ -72,11 +86,38 @@ def docker_image_archives(name, extra_images = [], source_archives = {}):
         image_name = _image_name(image)
         architectures = ["amd64"] if image in AMD64_IMAGES else ["amd64", "arm64"]
         for arch in architectures:
+            prefix = name + "_" + image_name + "_" + arch
+            source = source_archives.get(image, {}).get(arch)
+            if source == None:
+                source = ":" + prefix + "_source"
+                cpu = {"amd64": "x86_64", "arm64": "aarch64"}[arch]
+                source_image_archive(
+                    name = prefix + "_source",
+                    testonly = True,
+                    architecture = cpu,
+                    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+                    exec_compatible_with = [
+                        "@platforms//os:linux",
+                        "@platforms//cpu:" + cpu,
+                    ],
+                    exec_properties = docker_test_exec_properties(
+                        exec_group = "",
+                        free_disk = "40GB",
+                        memory = "8GB",
+                        start_daemon = True,
+                    ) if arch == "amd64" else {},
+                    image = image,
+                    # The configured remote pool has no ARM Docker workers.
+                    # Use the native coordinator for this action, retaining
+                    # RBE compilation and archive conversion.
+                    remote = arch == "amd64",
+                    tags = ["manual"],
+                )
             docker_image_archive(
-                name = name + "_" + image_name + "_" + arch,
+                name = prefix,
                 image = image,
                 architecture = arch,
-                source = source_archives.get(image, {}).get(arch),
+                source = source,
             )
 
 def _daemon_config_impl(ctx):
@@ -381,6 +422,11 @@ image_source_command = rule(
     ],
 )
 
+def _native_source_image_resources(_os, _input_count):
+    # Several Docker builds can otherwise exceed the coordinator's memory
+    # while Bazel only accounts for their small client processes.
+    return {"cpu": 2, "memory": 8192}
+
 def _source_image_layout_impl(ctx):
     make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)
     if make.target == None or make.env != {"MAKE": make.path}:
@@ -422,6 +468,7 @@ def _source_image_layout_impl(ctx):
             "no-cache": "1",
             "no-sandbox": "1",
         },
+        resource_set = None if ctx.attr.remote else _native_source_image_resources,
     )
     return [
         DefaultInfo(files = depset([layout])),

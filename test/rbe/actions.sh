@@ -65,7 +65,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
         options+=("--${lanes[0]}-target=$target")
       done
       ;;
-    syscalls|syscalls-save|syscalls-kvm|syscalls-rc|pgo|cpu-images)
+    syscalls|syscalls-save|syscalls-kvm|syscalls-rc|pgo|docker|cpu-images)
       for target in "${selected_targets[@]}"; do
         options+=("--test-target=$target")
       done
@@ -76,7 +76,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
       done
       ;;
     *)
-      printf 'Explicit targets require the build, test, syscall, KVM syscall, RC syscall, CPU image or benchmarks lane.\n' >&2
+      printf 'Explicit targets require the build, test, syscall, KVM syscall, RC syscall, Docker, CPU image or benchmarks lane.\n' >&2
       exit 2
       ;;
   esac
@@ -247,7 +247,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
             ( $qualification_container == true || ${lanes[*]} == test ||
               ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-kvm ||
               ${lanes[*]} == syscalls-save || ${lanes[*]} == syscalls-resume ||
-              ${lanes[*]} == pgo || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ) ) ]]; then
+              ${lanes[*]} == pgo || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports

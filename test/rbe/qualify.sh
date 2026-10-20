@@ -206,7 +206,7 @@ if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1
   fi
   case "$1" in
     build) explicit_targets=("${build_targets[@]}"); conflicting_targets=${#test_targets[@]} ;;
-    test|pgo|cpu-images) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
+    test|pgo|docker|cpu-images) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
     syscalls|syscalls-save|syscalls-kvm|syscalls-rc)
       if [[ -n $syscall_bucket || ( $1 != syscalls-rc && $test_execution != local ) ]]; then
         printf 'Explicit syscall owners require a local syscall or RC profile without buckets.\n' >&2
@@ -355,6 +355,10 @@ run_license_check() (
 # combined invocations.
 shared_test_targets() {
   local target_arch=$2
+  if (( ${#test_targets[@]} )); then
+    targets=("${test_targets[@]}")
+    return
+  fi
   case "$1" in
     do) targets=(//:do_tests) ;;
     docker) targets=(//test/docker:owned_tests) ;;
@@ -406,13 +410,7 @@ shared_test_targets() {
     podman) targets=(//test/podman:podman_test) ;;
     syzkaller) targets=(//test/syzkaller:smoke_test) ;;
     go-export) targets=(//tools/go_export:all_test) ;;
-    cpu-images)
-      if (( ${#test_targets[@]} )); then
-        targets=("${test_targets[@]}")
-      else
-        targets=("//test/docker:cpu_image_sources_${target_arch}_test")
-      fi
-      ;;
+    cpu-images) targets=("//test/docker:cpu_image_sources_${target_arch}_test") ;;
     gpu-images) targets=("//test/docker:gpu_image_sources_${target_arch}_test") ;;
     cos-metadata) targets=(//test/gpu:cos_gpu_compatibility_test) ;;
     language-directfs|language-goferfs) targets=("//test/runtimes:${1#language-}_tests") ;;

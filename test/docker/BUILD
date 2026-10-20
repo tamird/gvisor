@@ -1,9 +1,9 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "pkg_tar")
-load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
-load(":defs.bzl", "amd64_image_archive", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
+load(":defs.bzl", "SOURCE_ARCHIVE_EXEC_PROPERTIES", "amd64_image_archive", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -18,20 +18,6 @@ filegroup(
         "@platforms//cpu:aarch64": ["@buildx_linux_arm64//file"],
     }),
 )
-
-# Conversion only reads OCI content and writes a compressed Docker archive.
-# Keep it on the ordinary executor used by the completed large-image exports.
-SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
-    "//tools/bazeldefs:rbe": dict(
-        docker_exec_properties(
-            exec_group = "",
-            free_disk = "80GB",
-            memory = "12GB",
-            vfs = True,
-        ).items() + [("workload-isolation-type", "oci")],
-    ),
-    "//conditions:default": {},
-})
 
 # ARM64 Docker production runs on the native Actions coordinator. Compilation
 # and the daemon-free archive conversion retain their remote execution paths.

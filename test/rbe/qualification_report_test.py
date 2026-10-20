@@ -1427,6 +1427,7 @@ class QualificationReportTest(unittest.TestCase):
             ("execution", "all", ""),
             ("execution", "all", None),
             ("image-selection", "arm64", None),
+            ("docker-selection", "arm64", None),
             ("command-pass", "amd64", None),
             ("command-fail", "amd64", None),
             ("command-timeout", "amd64", None),
@@ -1517,10 +1518,16 @@ signal.pause()
                 configured = next(event for event in analysis if "configured" in event)
                 configured["configured"].setdefault("tag", []).append("jtreg-results")
                 tagged = configured["id"]["targetConfigured"]["label"]
+                lane = "test"
                 target = "//test/syscalls:exec_binary_test_native_amd64"
-                if phase == "image-selection":
-                    target = "//test/rbe:gcsfuse_arm64_test"
+                if phase.endswith("-selection"):
+                    lane, target = {
+                        "image-selection": ("cpu-images", "//test/rbe:gcsfuse_arm64_test"),
+                        "docker-selection": ("docker", "//test/e2e:uds_proxy_test_owned"),
+                    }[phase]
                     analysis = json.loads(json.dumps(analysis).replace(tagged, target))
+                elif phase.startswith("command-"):
+                    lane = "gazelle"
                 analysis_path = workspace / "analysis.jsonl"
                 analysis_path.write_text("".join(json.dumps(event) + "\n" for event in analysis))
                 source = (FIXTURES / "pass/final-head.txt").read_text().strip()
@@ -1533,7 +1540,7 @@ signal.pause()
                     "QUALIFICATION_COMMIT": source,
                     "QUALIFICATION_EXECUTION": "remote",
                     "QUALIFICATION_ARCH": architecture,
-                    "QUALIFICATION_LANES": "gazelle" if phase.startswith("command-") else "cpu-images" if phase == "image-selection" else "test",
+                    "QUALIFICATION_LANES": lane,
                     "QUALIFICATION_TARGETS": "" if phase.startswith("command-") else target,
                     "QUALIFICATION_HEADER_BASE": "",
                     "QUALIFICATION_BENCHMARK_MANIFEST": "",
@@ -1552,14 +1559,14 @@ signal.pause()
                 environment.pop("RUNTIME_TESTS_FILTER", None)
                 if runtime_filter is not None:
                     environment["RUNTIME_TESTS_FILTER"] = runtime_filter
-                options = [] if phase.startswith("command-") or phase == "image-selection" else [f"--bazel-option={option}" for option in bazel_options]
+                options = [f"--bazel-option={option}" for option in bazel_options] if lane == "test" else []
                 result = subprocess.run(
                     ["bash", "test/rbe/actions.sh", *options],
                     cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
                 self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
                 self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
-                if phase == "image-selection":
+                if phase.endswith("-selection"):
                     observations = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
                     commands = [row["arguments"] for row in observations if "test" in row["arguments"]]
                     self.assertEqual(len(commands), 2, commands)
