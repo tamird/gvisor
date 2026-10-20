@@ -2948,11 +2948,6 @@ exceptions:
       - ISC
       - MIT
     exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/libpython3-stdlib
-    license:
-      - HPND
-      - MIT
-    exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libpython3.10-minimal
     license:
       - BSD-2-Clause
@@ -2962,6 +2957,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libpython3.10-stdlib
@@ -2973,6 +2969,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libquadmath0
@@ -3075,26 +3072,6 @@ exceptions:
       - ISC
       - MIT
     exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3
-    license:
-      - HPND
-      - MIT
-    exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3-distutils
-    license:
-      - HPND
-      - PSF-2.0
-    exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3-lib2to3
-    license:
-      - HPND
-      - PSF-2.0
-    exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3-minimal
-    license:
-      - HPND
-      - MIT
-    exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/python3.10
     license:
       - BSD-2-Clause
@@ -3104,6 +3081,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/python3.10-minimal
@@ -3115,6 +3093,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/readline-common
@@ -4760,6 +4739,56 @@ exceptions:
       Syzkaller build with this complete observed license set. Some notices
       explicitly concern C++ sources or binary Python distributions; the set
       does not establish which grants apply to the compiled Go packages.
+  - dependency: npm/nodejs26.12.0/doc/node_modules/@orama/core
+    license: AGPL-3.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 documentation
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/doc/node_modules/@orama/oramacore-events-parser
+    license: AGPL-3.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 documentation
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/doc/node_modules/lightningcss-wasm
+    license: MPL-2.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 documentation
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/caniuse-lite
+    license: CC-BY-4.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/minimatch
+    license: BlueOak-1.0.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/spdx-exceptions
+    license: CC-BY-3.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/spdx-license-ids
+    license: CC0-1.0
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+  - dependency: npm/nodejs26.12.0/eslint/node_modules/uri-js
+    license: BSD-2-Clause-Views
+    exception_rationale: >-
+      Used by the locked prerequisites for Node.js 26.12 ESLint rule
+      tests in the runtime test image, not linked into runsc or supplied
+      as a declared input to gVisor release artifacts.
+      The full notice includes the BSD views and conclusions clause;
+      the package manifest uses the shorter BSD-2-Clause identifier.
   - dependency: nvidia_driver_535_129_03
     license: &nvidia_driver_licenses
       - GPL-2.0
