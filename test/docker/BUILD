@@ -462,9 +462,10 @@ source_image_archive(
         "@platforms//cpu:x86_64",
     ],
     exec_properties = docker_test_exec_properties(
+        cpu = 8,
         exec_group = "",
         free_disk = "80GB",
-        memory = "12GB",
+        memory = "24GB",
         start_daemon = True,
     ),
     image = "runtimes/nodejs22.2.0",

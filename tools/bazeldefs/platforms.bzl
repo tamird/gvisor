@@ -27,14 +27,14 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
-def docker_test_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False, start_daemon = False):
+def docker_test_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False, start_daemon = False, cpu = 4):
     """Selects Docker VM properties when remote execution is enabled."""
     return select({
-        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group, vfs, start_daemon),
+        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group, vfs, start_daemon, cpu = cpu),
         "//conditions:default": {},
     })
 
-def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False, start_daemon = False):
+def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False, start_daemon = False, cpu = 4):
     """Returns a remote VM with Docker tools for an owned daemon.
 
     Args:
@@ -45,13 +45,14 @@ def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = 
         separate workspace disk; free_disk only sizes the root filesystem.
         https://github.com/buildbuddy-io/buildbuddy/blob/5608c55ae/enterprise/server/remote_execution/containers/firecracker/firecracker.go#L1593
       start_daemon: Start the worker's native Docker daemon before the action.
+      cpu: VM CPU budget; defaults to 4.
 
     Returns:
       Execution properties for the selected VM and execution group.
     """
     prefix = exec_group + "." if exec_group else ""
     properties = {
-        prefix + "EstimatedCPU": "4",
+        prefix + "EstimatedCPU": str(cpu),
         prefix + "EstimatedMemory": memory if memory != None else "4GB",
         prefix + "EstimatedFreeDiskBytes": free_disk,
         prefix + "container-image": RBE_DOCKER_TOOLS_IMAGE,
