@@ -2140,8 +2140,11 @@ signal.pause()
                 metadata = {**retained, "head_sha": producer["sources"][0], "conclusion": conclusion}
                 artifacts = {"artifacts": [{"id": 1, "name": "qualification-amd64", "expired": False,
                                             "digest": "sha256:" + report.file_record(artifact)["sha256"]}]}
-                responses = [json.dumps(value).encode() for value in (metadata, artifacts)]
+                pending = {**metadata, "status": "in_progress", "conclusion": None}
+                responses = [json.dumps(value).encode() for value in (pending, pending, metadata, artifacts)]
                 def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                    if command[:3] == ["gh", "run", "watch"]:
+                        return subprocess.CompletedProcess(command, 1)
                     stdout.write(artifact.read_bytes())
                     return subprocess.CompletedProcess(command, 0)
                 with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
@@ -2152,7 +2155,20 @@ signal.pause()
                 for field in ("case_counts", "failures", "missing", "zero_case_owners", "native_exits"):
                     self.assertEqual(value[field], producer[field])
                 self.assertTrue(value["source_verified"])
+                self.assertEqual(value["watch_exits"], [1, 1])
                 shutil.rmtree(invocation)
+
+    def test_actions_collection_retains_live_run_after_watch_failures(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        pending = {**retained, "status": "in_progress", "conclusion": None}
+        with (mock.patch.object(collect_actions.subprocess, "check_output", return_value=json.dumps(pending).encode()),
+              mock.patch.object(collect_actions.subprocess, "run", return_value=subprocess.CompletedProcess([], 1))):
+            value = collect_actions.collect_actions(retained["id"], retained["head_sha"], "amd64", self.root / "actions")
+        self.assertEqual(value["status"], "INCOMPLETE")
+        self.assertEqual(value["watch_exits"], [1, 1, 1])
+        self.assertEqual(value["workflow"]["id"], retained["id"])
+        self.assertIsNone(value["actions_artifact"])
+        self.assertIn("Workflow is still live", value["collection_error"])
 
     def test_actions_collection_rejects_prior_attempt_artifacts(self) -> None:
         retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
