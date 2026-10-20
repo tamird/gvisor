@@ -69,7 +69,7 @@ func (fs *Filesystem) stepExistingLocked(ctx context.Context, rp *vfs.ResolvingP
 		rp.Advance()
 		return parent, false, nil
 	}
-	if len(name) > linux.NAME_MAX {
+	if len(name) > linux.NAME_MAX && !fs.NoNegativeDentries {
 		return nil, false, linuxerr.ENAMETOOLONG
 	}
 	next, err := fs.revalidateChildLocked(ctx, rp.VirtualFilesystem(), d, name)
@@ -232,13 +232,17 @@ func (fs *Filesystem) walkParentDirLocked(ctx context.Context, rp *vfs.Resolving
 	return d, nil
 }
 
-// checkCreateLocked checks that a file named rp.Component() may be created in
-// directory parent, then returns rp.Component().
+// checkCreateLocked checks that a file named name may be created in parent.
+// forSyntheticMountpoint permits creating a synthetic mountpoint even if the
+// filesystem does not create negative dentries.
 //
 // Preconditions:
-//   - Filesystem.mu must be locked for at least reading.
-//   - isDir(parentInode) == true.
-func checkCreateLocked(ctx context.Context, creds *auth.Credentials, name string, parent *Dentry) error {
+//   - Filesystem.mu must be locked for writing.
+//   - parent.dirMu must not be locked.
+//   - parent.isDir().
+//
+// Postcondition: Caller must call fs.processDeferredDecRefs*.
+func checkCreateLocked(ctx context.Context, creds *auth.Credentials, name string, parent *Dentry, forSyntheticMountpoint bool) error {
 	// Order of checks is important. First check if parent directory can be
 	// executed, then check for existence, and lastly check if mount is writable.
 	if err := parent.inode.CheckPermissions(ctx, creds, vfs.MayExec); err != nil {
@@ -247,10 +251,20 @@ func checkCreateLocked(ctx context.Context, creds *auth.Credentials, name string
 	if name == "." || name == ".." {
 		return linuxerr.EEXIST
 	}
+	if parent.fs.NoNegativeDentries && !forSyntheticMountpoint {
+		_, err := parent.fs.revalidateChildLocked(ctx, parent.fs.vfsfs.VirtualFilesystem(), parent, name)
+		if err != nil {
+			return err
+		}
+		return linuxerr.EEXIST
+	}
 	if len(name) > linux.NAME_MAX {
 		return linuxerr.ENAMETOOLONG
 	}
-	if _, ok := parent.children[name]; ok {
+	parent.dirMu.Lock()
+	_, exists := parent.children[name]
+	parent.dirMu.Unlock()
+	if exists {
 		return linuxerr.EEXIST
 	}
 	if parent.VFSDentry().IsDead() {
@@ -416,12 +430,12 @@ func (fs *Filesystem) LinkAt(ctx context.Context, rp *vfs.ResolvingPath, vd vfs.
 	if err := vfs.MayLink(rp.Credentials(), inode.Mode(), nil, inode.UID(), inode.GID()); err != nil {
 		return err
 	}
-	parent.dirMu.Lock()
-	defer parent.dirMu.Unlock()
 	pc := rp.Component()
-	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent); err != nil {
+	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent, false); err != nil {
 		return err
 	}
+	parent.dirMu.Lock()
+	defer parent.dirMu.Unlock()
 	if rp.MustBeDir() {
 		return linuxerr.ENOENT
 	}
@@ -455,12 +469,12 @@ func (fs *Filesystem) MkdirAt(ctx context.Context, rp *vfs.ResolvingPath, opts v
 		return err
 	}
 
-	parent.dirMu.Lock()
-	defer parent.dirMu.Unlock()
 	pc := rp.Component()
-	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent); err != nil {
+	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent, opts.ForSyntheticMountpoint); err != nil {
 		return err
 	}
+	parent.dirMu.Lock()
+	defer parent.dirMu.Unlock()
 	if err := rp.Mount().CheckBeginWrite(); err != nil {
 		return err
 	}
@@ -492,12 +506,12 @@ func (fs *Filesystem) MknodAt(ctx context.Context, rp *vfs.ResolvingPath, opts v
 		return err
 	}
 
-	parent.dirMu.Lock()
-	defer parent.dirMu.Unlock()
 	pc := rp.Component()
-	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent); err != nil {
+	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent, false); err != nil {
 		return err
 	}
+	parent.dirMu.Lock()
+	defer parent.dirMu.Unlock()
 	if rp.MustBeDir() {
 		return linuxerr.ENOENT
 	}
@@ -626,7 +640,7 @@ afterTrailingSymlink:
 	if pc == "." || pc == ".." {
 		return nil, linuxerr.EISDIR
 	}
-	if len(pc) > linux.NAME_MAX {
+	if len(pc) > linux.NAME_MAX && !fs.NoNegativeDentries {
 		return nil, linuxerr.ENAMETOOLONG
 	}
 	if parent.VFSDentry().IsDead() {
@@ -647,7 +661,7 @@ afterTrailingSymlink:
 		start = parent
 		goto afterTrailingSymlink
 	}
-	if linuxerr.Equals(linuxerr.ENOENT, err) {
+	if linuxerr.Equals(linuxerr.ENOENT, err) && !fs.NoNegativeDentries {
 		// Already checked for searchability above; now check for writability.
 		if err := parent.inode.CheckPermissions(ctx, rp.Credentials(), vfs.MayWrite); err != nil {
 			return nil, err
@@ -804,7 +818,7 @@ func (fs *Filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 		return linuxerr.ENAMETOOLONG
 	}
 
-	err = checkCreateLocked(ctx, rp.Credentials(), newName, dstDir)
+	err = checkCreateLocked(ctx, rp.Credentials(), newName, dstDir, false)
 	switch {
 	case err == nil:
 		// Ok, continue with rename as replacement.
@@ -1031,13 +1045,13 @@ func (fs *Filesystem) SymlinkAt(ctx context.Context, rp *vfs.ResolvingPath, targ
 	if err != nil {
 		return err
 	}
-	parent.dirMu.Lock()
-	defer parent.dirMu.Unlock()
 
 	pc := rp.Component()
-	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent); err != nil {
+	if err := checkCreateLocked(ctx, rp.Credentials(), pc, parent, false); err != nil {
 		return err
 	}
+	parent.dirMu.Lock()
+	defer parent.dirMu.Unlock()
 	if rp.MustBeDir() {
 		return linuxerr.ENOENT
 	}
