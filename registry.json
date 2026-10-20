@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-20T06:56:55.903299+00:00",
+    "updatedAt": "2026-10-20T07:16:43.984325+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5743,14 +5743,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-upstream-refresh",
       "status": "Selected integration qualified; full Node26 validation running",
-      "summary": "Candidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.\n\nEarlier selected integration385c and ZIPcfcd retain their source-specific qualified results and original recovery evidence. This is not a blanket current-source PASS; GPU, version/source gaps and18 unavailable NVIDIA comparisons remain separate.",
-      "updatedAt": "2026-10-20T06:56:55.903299+00:00",
+      "summary": "The shared HTTP error-context correction be948 passed five owning checks with 137 positive records. Canonical audit e380 then completed Fetch: all 552 npm entries were classified (544 automatic and eight explicitly manual), with 38 immutable notice sources and no missing or unclassified entries. Subsequent Verify failed while reading the checksum-bound Node source archive, before policy evaluation; the raw result remains FAIL/COMPLETE and there is no final policy list. Nine existing APT Python entries changed only license classification and retrieval date, with unchanged artifact identities; 1,623 prior entries were unchanged. Independent compact review accepted these phase and timing bindings. Hostinet and Node own the existing source-reuse investigation; no unchanged fourth audit was submitted. Full Node26 run 93279 remains independently active at 665f. Proc locking e5d6 is independently qualified by 12 owners and 154 positive records, including native/directfs/shared ProcTest.Create; contributor review now targets a28c and supersedes c29.\n\nCandidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.\n\nEarlier selected integration385c and ZIPcfcd retain their source-specific qualified results and original recovery evidence. This is not a blanket current-source PASS; GPU, version/source gaps and18 unavailable NVIDIA comparisons remain separate.",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-20T06:56:18.263329+00:00",
-        "disposition": "Full Node26 running; candidate audit retry failed before classification",
-        "nextAction": "Hostinet owns the continuing full Node26 run93279a99 and the exact error-context correction for audit retry625c. Preserve incomplete seed-only classification and both failed audit attempts; root authorized one reviewed recovery after the error-context correction; submission remains pending. Node owns separately reviewed procfs locking validation at e5d6. Policy/catalog decisions remain separate from authorized runtime execution.",
+        "observedAt": "2026-10-20T07:06:37.595518+00:00",
+        "disposition": "Full Node26 running; npm classification complete, policy verification failed before evaluation",
+        "nextAction": "Hostinet owns full 93279 at 665f. Node and Hostinet are reviewing canonical source reuse after e380 completed classification but failed Verify enumeration. Preserve the full candidate and original failures; policy/catalog adoption remains a separate contributor decision. Proc locking is qualified and a28c awaits contributor review.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d0af7f97-4a4e-4fb3-a206-401cfff70624",
           "https://github.com/tamird/gvisor/commit/941df83a64377f38dedd7170e8c4a28e20fecef8",
@@ -7010,6 +7010,10 @@
         {
           "label": "Candidate audit retry failed before classification",
           "url": "https://app.buildbuddy.io/invocation/625c1b91-7fee-4368-b2e8-74b6d6790cd0"
+        },
+        {
+          "label": "Reviewed HTTP-context audit recovery",
+          "url": "https://app.buildbuddy.io/invocation/e3806130-bff0-466f-8ddf-7f106cf35a7c"
         }
       ]
     },
@@ -12786,8 +12790,8 @@
       "url": "https://github.com/tamird/gvisor/commit/d064da903e7c595268c73c4ae3dddf7118e95a8d",
       "group": "runtime",
       "status": "Superseded by Node26 upgrade; full validation running",
-      "updatedAt": "2026-10-20T06:56:55.903299+00:00",
-      "summary": "Candidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "Pending contributor policy decision: seven package-specific Node26 test-tool license exceptions, requested once: doc/node_modules/@orama/core 1.2.19 (AGPL-3.0); doc/node_modules/@orama/oramacore-events-parser 0.0.5 (AGPL-3.0); doc/node_modules/lightningcss-wasm 1.32.0 (MPL-2.0); eslint/node_modules/caniuse-lite 1.0.30001814 (CC-BY-4.0); eslint/node_modules/minimatch 10.2.5 (BlueOak-1.0.0); eslint/node_modules/spdx-exceptions 2.5.0 (CC-BY-3.0); eslint/node_modules/spdx-license-ids 3.0.23 (CC0-1.0). No exception or catalog adoption is authorized until the existing decision is answered. Isolated remote installation/testing is already authorized; the failed seed-only audit is not a complete policy conclusion. This is a policy proposal with no proposed policy commit; no commit identity is fabricated.\n\nThe shared HTTP error-context correction be948 passed five owning checks with 137 positive records. Canonical audit e380 then completed Fetch: all 552 npm entries were classified (544 automatic and eight explicitly manual), with 38 immutable notice sources and no missing or unclassified entries. Subsequent Verify failed while reading the checksum-bound Node source archive, before policy evaluation; the raw result remains FAIL/COMPLETE and there is no final policy list. Nine existing APT Python entries changed only license classification and retrieval date, with unchanged artifact identities; 1,623 prior entries were unchanged. Independent compact review accepted these phase and timing bindings. Hostinet and Node own the existing source-reuse investigation; no unchanged fourth audit was submitted. Full Node26 run 93279 remains independently active at 665f. Proc locking e5d6 is independently qualified by 12 owners and 154 positive records, including native/directfs/shared ProcTest.Create; contributor review now targets a28c and supersedes c29.\n\nCandidate audit retry625c completed with FAIL before npm classification: a response-body read exceeded the existing HTTP budget; the exact source path identifies the checksum-pinned Node archive, while the raw error omitted its URL. The following Verify completed the same enumeration in32.887s, but the candidate still contains only46 seeded rows out of552; this is not a completed license-policy audit. Hostinet owns the error-context correction, with root authorized one reviewed recovery after the error-context correction; no recovery has been submitted yet. Full Node26 invocation93279a99 at665f remains independently active. Procfs locking sourcee5d6 has passed source and packet review for the existing9+3 validation; execution remains pending.\n\nCandidate audit0d5 collected completely but canonical Fetch stopped during nested make mod on a timeout fetching pinned googleapis2193a2bf. No npm classification completed; Verify saw only the46 seeded rows out of552 and supplies no new license-policy conclusion. Hostinet owns the bounded recovery. Independent full Node26 invocation93279a99 at665f remains active; its result is still pending. The source-unchanged canonical retry was accepted at06:37:38 UTC under invocation625c1b91-7fee-4368-b2e8-74b6d6790cd0; Hostinet owns sole collector40714, with original528554c7 failure preserved. Separately, root accepted a procfs locking refinement for Node-owned validation through the existing nine package/analyzer/lint owners and three syscall routes. The live full-runtime source665f and earlier qualified c29d proposal remain unchanged; no new refinement execution result is claimed.\n\nGeneric Python/BSD classifier f96ef05281ea5eac14f4440aec7d721bc87fb9e9 passed five uncached owning checks with 135 positive records: 131 suite records, three Nogo records and buildifier. All seven new classifier cases and the metadata control passed; independent review authenticated the source, receipt and seven retained members. Automatic verification took 6.355599 seconds, owner sealing 8.545086 seconds, with no manual collection. The read-only candidate audit0d5da94d at665f remains active. The fresh full Node26 run at665f was accepted at06:20:48 UTC as invocation93279a99-1c95-4c78-9ba2-405d955252f6 under Hostinet's sole collector; all20 runtime owners\u00d78 shards plus lint are requested, with fresh built inventory and actual completion still pending. The inferred installation/runtime hold was lifted because no user, repository or automatic-review rule required it; package-specific policy exceptions remain separate contributor decisions.\n\nOriginal Node26 d316 remains FAIL/COMPLETE with complete named accounting; the original npm audit remains FAIL/COMPLETE at480 recorded plus72 missing entries. Qualified procfs c29d and profiler06fd retain their existing contributor questions. The Node error-serdes and Brotli backports remain superseded. No new runtime result or policy/catalog adoption is claimed.",
       "evidence": [
         {
           "label": "Exact contributor-review commit and rationale",
@@ -12816,14 +12820,22 @@
         {
           "label": "Candidate audit retry failed before classification",
           "url": "https://app.buildbuddy.io/invocation/625c1b91-7fee-4368-b2e8-74b6d6790cd0"
+        },
+        {
+          "label": "Reviewed HTTP-context audit recovery",
+          "url": "https://app.buildbuddy.io/invocation/e3806130-bff0-466f-8ddf-7f106cf35a7c"
+        },
+        {
+          "label": "Current unchanged policy at reviewed source",
+          "url": "https://github.com/tamird/gvisor/blob/665f6390cfbf8db999d42326ab45c079f923860d/governance/licensing.yaml"
         }
       ],
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Full Node26 running; candidate audit retry failed before classification",
+        "disposition": "Full Node26 running; npm classification complete, policy verification failed before evaluation",
         "sourceHead": "d064da903e7c595268c73c4ae3dddf7118e95a8d",
-        "observedAt": "2026-10-20T06:51:50.202772+00:00",
-        "nextAction": "Hostinet owns the continuing full Node26 run93279a99 and the exact error-context correction for audit retry625c. Preserve incomplete seed-only classification and both failed audit attempts; root authorized one reviewed recovery after the error-context correction; submission remains pending. Node owns separately reviewed procfs locking validation at e5d6. Policy/catalog decisions remain separate from authorized runtime execution.",
+        "observedAt": "2026-10-20T07:02:32.399130+00:00",
+        "nextAction": "Hostinet owns full 93279 at 665f. Node and Hostinet are reviewing canonical source reuse after e380 completed classification but failed Verify enumeration. Preserve the full candidate and original failures; policy/catalog adoption remains a separate contributor decision. Proc locking is qualified and a28c awaits contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/009b27e7cad5330a13671c944a605fe712c4aa65",
           "https://app.buildbuddy.io/invocation/0a6f56ed-0ec9-4ecb-a5fd-55764eab0df7",
@@ -12887,8 +12899,8 @@
       "url": "https://github.com/tamird/gvisor/commit/624b09d5bb57f61d8f2ca51b500297b14c4ad0fb",
       "group": "runtime",
       "status": "Contributor review pending",
-      "updatedAt": "2026-10-20T03:05:15.752193+00:00",
-      "summary": "Wait for Linux\u2019s asynchronous veth operational-state update before asserting IF_OPER_UP. The existing test uses a five-second monotonic polling budget and preserves missing-response, malformed-attribute and final-state failures. All six selected native/systrap direct/shared variants passed at integration38eb3280fe on AMD64 and ARM64 RC TCG. That run remains raw FAIL solely for comment formatting; the comment-only81917272 continuation passed buildifier and clang-format without repeating runtime cases. The exact standalone624b09d5b is published and the contributor review question has been sent once. No upstream PR is open.",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The earlier proposal revision is retained through an explicit old/new range-diff action; the existing exact-head contributor question and qualification limits remain unchanged.\n\nWait for Linux\u2019s asynchronous veth operational-state update before asserting IF_OPER_UP. The existing test uses a five-second monotonic polling budget and preserves missing-response, malformed-attribute and final-state failures. All six selected native/systrap direct/shared variants passed at integration38eb3280fe on AMD64 and ARM64 RC TCG. That run remains raw FAIL solely for comment formatting; the comment-only81917272 continuation passed buildifier and clang-format without repeating runtime cases. The exact standalone624b09d5b is published and the contributor review question has been sent once. No upstream PR is open.",
       "evidence": [
         {
           "label": "Exact contributor-review commit",
@@ -12919,6 +12931,14 @@
           "https://app.buildbuddy.io/invocation/00278c16-afb9-4e92-9228-163c9af0cc3d",
           "https://app.buildbuddy.io/invocation/4cc5f2f9-7c37-4588-8f1c-755123cd5f01"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "217e61fd0c5e297cdea86c34903759eb661a1042"
+        },
+        "after": {
+          "head": "624b09d5bb57f61d8f2ca51b500297b14c4ad0fb"
+        }
       }
     },
     {
@@ -12931,8 +12951,8 @@
       "url": "https://github.com/tamird/gvisor/commit/378545976dd3ed7f8e6583d61d124cc3d26cd58e",
       "group": "runtime",
       "status": "Contributor review pending",
-      "updatedAt": "2026-10-20T03:57:24.765234+00:00",
-      "summary": "Use verified zero tail across the full executable VDSO mapping, retaining live-section, metadata-overlap and nonzero-padding rejection. Exact three-file standalone patch matches qualified b10 source. Focused AMD checks passed26 records and ARM checks21, including generated two-page boundary regressions. The later ARM host7.0 differs from original6.17; the captured old ELF and failure are retained, with no claim of old-host after-execution. Root sent the contributor decision once; no upstream PR is open.",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The earlier proposal revision is retained through an explicit old/new range-diff action; the existing exact-head contributor question and qualification limits remain unchanged.\n\nUse verified zero tail across the full executable VDSO mapping, retaining live-section, metadata-overlap and nonzero-padding rejection. Exact three-file standalone patch matches qualified b10 source. Focused AMD checks passed26 records and ARM checks21, including generated two-page boundary regressions. The later ARM host7.0 differs from original6.17; the captured old ELF and failure are retained, with no claim of old-host after-execution. Root sent the contributor decision once; no upstream PR is open.",
       "evidence": [
         {
           "label": "Exact contributor-review commit",
@@ -12961,6 +12981,248 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/378545976dd3ed7f8e6583d61d124cc3d26cd58e"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "ef7b73558caf437f57b67a9cb80bb7cdd69f44b1"
+        },
+        "after": {
+          "head": "378545976dd3ed7f8e6583d61d124cc3d26cd58e"
+        }
+      }
+    },
+    {
+      "id": "branch:proc-directory-creation",
+      "type": "branch",
+      "title": "Preserve procfs lookup errors during creation",
+      "repo": "tamird/gvisor",
+      "ref": "review/proc-creation-locking",
+      "head": "a28c64f74b4f9a5e1653da4edc5ea404f647d120",
+      "url": "https://github.com/tamird/gvisor/commit/a28c64f74b4f9a5e1653da4edc5ea404f647d120",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The refined procfs creation proposal a28c preserves Linux lookup errors for mkdir, symlink, mknod and O_CREAT, including missing overlong names, while retaining internal synthetic mountpoints. Compared with c29 it restores the original caller-held directory lock for ordinary creation and releases it only for procfs revalidation. Exact integration e5d6 passed12 configured owners/154 positive records: nine proc/kernfs/analyzer/lint owners plus actual native, directfs and shared ProcTest.Create cases. Both components passed independent evidence review. Root requested contributor review once for a28c, explicitly superseding the pending c29 question; no upstream PR has been opened. No measured performance, standalone-binary equivalence or full Node runtime result is claimed.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "a28c64f74b4f9a5e1653da4edc5ea404f647d120",
+        "observedAt": "2026-10-20T07:07:49.468837+00:00",
+        "disposition": "Refined contributor review requested; supersedes c29 question",
+        "nextAction": "Await the existing contributor decision on exact a28c before opening an upstream PR. Retain c29-to-a28 refinement and source-specific 12-owner validation; current full Node run remains independent."
+      },
+      "evidence": [
+        {
+          "label": "Prior qualified proposal",
+          "url": "https://github.com/tamird/gvisor/commit/c29d9fcbe240bbce1795dbc0f347f335de7cd4f3"
+        },
+        {
+          "label": "Owning checks: nine owners,151 positives",
+          "url": "https://app.buildbuddy.io/invocation/19218fcc-7593-4ba4-ba25-1506052fe83d"
+        },
+        {
+          "label": "Native/directfs/shared syscall comparison",
+          "url": "https://app.buildbuddy.io/invocation/7cc39fb7-3bfb-42aa-a3a8-507e2b04ce31"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "c29d9fcbe240bbce1795dbc0f347f335de7cd4f3"
+        },
+        "after": {
+          "head": "a28c64f74b4f9a5e1653da4edc5ea404f647d120"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "a28c64f74b4f9a5e1653da4edc5ea404f647d120",
+        "url": "https://github.com/tamird/gvisor/commit/a28c64f74b4f9a5e1653da4edc5ea404f647d120"
+      }
+    },
+    {
+      "id": "branch:review/hermetic-bpf-headers",
+      "type": "branch",
+      "title": "Remove libbpf implementation analysis from BPF headers",
+      "repo": "tamird/gvisor",
+      "ref": "review/hermetic-bpf-headers",
+      "head": "0975ddf1b2cec1c5af952d089c963a40f60aa4e6",
+      "url": "https://github.com/tamird/gvisor/commit/0975ddf1b2cec1c5af952d089c963a40f60aa4e6",
+      "group": "bazel",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The exact header-only amendment0975 is awaiting the existing contributor decision to update #15337, its description and the prepared reply. Equivalent integration83c passed seven BPF builds per architecture, both configured graph checks excluding elfutils/libbpf_impl, and buildifier. Public a616 remains unchanged; current import failures and the separate shared ZIP/Gazelle correction remain visible.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "0975ddf1b2cec1c5af952d089c963a40f60aa4e6",
+        "observedAt": "2026-10-20T07:11:57.055594+00:00",
+        "disposition": "Contributor review requested; publication decision pending",
+        "nextAction": "Await the existing contributor decision for this exact proposal. Preserve prior evidence and current public source; do not repeat the question or publish an upstream PR/amendment before approval."
+      },
+      "evidence": [
+        {
+          "label": "Exact proposal",
+          "url": "https://github.com/tamird/gvisor/commit/0975ddf1b2cec1c5af952d089c963a40f60aa4e6"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "0975ddf1b2cec1c5af952d089c963a40f60aa4e6",
+        "url": "https://github.com/tamird/gvisor/commit/0975ddf1b2cec1c5af952d089c963a40f60aa4e6"
+      },
+      "refinement": {
+        "before": {
+          "head": "a6168c6433e14cb816e2dcc08d2899889dbc5d6b"
+        },
+        "after": {
+          "head": "0975ddf1b2cec1c5af952d089c963a40f60aa4e6"
+        }
+      }
+    },
+    {
+      "id": "branch:node/test-tick-processor-function-label",
+      "type": "branch",
+      "title": "Match the Node profiler fixture to current function labels",
+      "repo": "tamird/node",
+      "ref": "test-tick-processor-function-label",
+      "head": "06fd109feb94e1f58d59b3acbd784c25741cd9ea",
+      "url": "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea",
+      "group": "runtime",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The one-line Node test expectation changes LazyCompile to the current JS function label. Native diagnostic532c showed the original180s failure and corrected1.189s body success. Root requested review/open-PR authorization once for exact06fd; no upstream PR has been opened. This native fixture proof does not clear the separate Node26 gVisor runtime result.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "06fd109feb94e1f58d59b3acbd784c25741cd9ea",
+        "observedAt": "2026-10-20T07:11:57.055594+00:00",
+        "disposition": "Contributor review requested; publication decision pending",
+        "nextAction": "Await the existing contributor decision for this exact proposal. Preserve prior evidence and current public source; do not repeat the question or publish an upstream PR/amendment before approval."
+      },
+      "evidence": [
+        {
+          "label": "Exact proposal",
+          "url": "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "06fd109feb94e1f58d59b3acbd784c25741cd9ea",
+        "url": "https://github.com/tamird/node/commit/06fd109feb94e1f58d59b3acbd784c25741cd9ea"
+      }
+    },
+    {
+      "id": "branch:fix/rack-reorder-test",
+      "type": "branch",
+      "title": "Restore the RACK reordering test",
+      "repo": "tamird/gvisor",
+      "ref": "fix/rack-reorder-test",
+      "head": "8643925c8874de893b4971b810841098ff16aa33",
+      "url": "https://github.com/tamird/gvisor/commit/8643925c8874de893b4971b810841098ff16aa33",
+      "group": "tests",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The proposed fixture replaces an unconditional skip with a manual-clock SACK/cumulative-ACK sequence and unchanged production RACK code. Qualified integration6c8c passed all18 RACK methods per architecture plus owning Nogo/buildifier; the negative mutation failed the exact final reordering assertion on both architectures. Root requested contributor review once; no upstream PR. The prior529906 revision differs only in its message.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "8643925c8874de893b4971b810841098ff16aa33",
+        "observedAt": "2026-10-20T07:11:57.055594+00:00",
+        "disposition": "Contributor review requested; publication decision pending",
+        "nextAction": "Await the existing contributor decision for this exact proposal. Preserve prior evidence and current public source; do not repeat the question or publish an upstream PR/amendment before approval."
+      },
+      "evidence": [
+        {
+          "label": "Exact proposal",
+          "url": "https://github.com/tamird/gvisor/commit/8643925c8874de893b4971b810841098ff16aa33"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "8643925c8874de893b4971b810841098ff16aa33",
+        "url": "https://github.com/tamird/gvisor/commit/8643925c8874de893b4971b810841098ff16aa33"
+      },
+      "refinement": {
+        "before": {
+          "head": "529906e97ae44579992a00baa464ecb92119fe2f"
+        },
+        "after": {
+          "head": "8643925c8874de893b4971b810841098ff16aa33"
+        }
+      }
+    },
+    {
+      "id": "branch:review/go-export-sidecars",
+      "type": "branch",
+      "title": "Export generated Go module sidecar sources",
+      "repo": "tamird/gvisor",
+      "ref": "review/go-export-sidecars",
+      "head": "7709f36fdf22e4116ce8c06c7e97d7d5ac784111",
+      "url": "https://github.com/tamird/gvisor/commit/7709f36fdf22e4116ce8c06c7e97d7d5ac784111",
+      "group": "release",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The proposed #15106 amendment includes required Go/C sidecar inputs in the exported module. Its retained validation covers three owning tests/seven positives, actual archive parity2496/2496 and final canonical formatting. The exact three formatting hunks separate runtime/archive-tested d2e4 from final7709. Root requested publication/reply approval once; public fc959 remains unchanged.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "7709f36fdf22e4116ce8c06c7e97d7d5ac784111",
+        "observedAt": "2026-10-20T07:11:57.055594+00:00",
+        "disposition": "Contributor review requested; publication decision pending",
+        "nextAction": "Await the existing contributor decision for this exact proposal. Preserve prior evidence and current public source; do not repeat the question or publish an upstream PR/amendment before approval."
+      },
+      "evidence": [
+        {
+          "label": "Exact proposal",
+          "url": "https://github.com/tamird/gvisor/commit/7709f36fdf22e4116ce8c06c7e97d7d5ac784111"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "7709f36fdf22e4116ce8c06c7e97d7d5ac784111",
+        "url": "https://github.com/tamird/gvisor/commit/7709f36fdf22e4116ce8c06c7e97d7d5ac784111"
+      },
+      "refinement": {
+        "before": {
+          "head": "fc9590023c2424202c5683e4e9d4fa39f4bdfb89"
+        },
+        "after": {
+          "head": "7709f36fdf22e4116ce8c06c7e97d7d5ac784111"
+        }
+      }
+    },
+    {
+      "id": "branch:review/kcov-state-restore-test",
+      "type": "branch",
+      "title": "Exercise KCOV state across save and restore",
+      "repo": "tamird/gvisor",
+      "ref": "review/kcov-state-restore-test",
+      "head": "0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc",
+      "url": "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc",
+      "group": "tests",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-20T07:16:43.984325+00:00",
+      "summary": "The direct save/restore regression proposal0b449 is separate from the already delivered public alias amendmentacc355 on #15956. Exact standalone source was validated with TestKcovSaveRestore and its two owning Nogo targets on AMD64 and ARM64; deleting only the afterLoad memory-file assignment produced the expected failure. Contributor review for the new test remains pending. The refinement compares the original5f903 proposal with0b449; it does not present the public alias as unpublished.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc",
+        "observedAt": "2026-10-20T07:11:57.055594+00:00",
+        "disposition": "Contributor review requested; publication decision pending",
+        "nextAction": "Await the existing contributor decision for this exact proposal. Preserve prior evidence and current public source; do not repeat the question or publish an upstream PR/amendment before approval."
+      },
+      "evidence": [
+        {
+          "label": "Exact proposal",
+          "url": "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc",
+        "url": "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
+      },
+      "refinement": {
+        "before": {
+          "head": "5f90385cdcab4b42d4f027dbd54921332c1512e7"
+        },
+        "after": {
+          "head": "0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
+        }
       }
     }
   ],
@@ -14596,6 +14858,37 @@
       "type": "blocked_by",
       "reason": "The observed Windows concurrent-scan timeout has an existing fixture remedy. Its separate-source Windows PASS does not clear this PR failure until incorporation and rerun; no tasksize code dependency is asserted.",
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
+    },
+    {
+      "from": "branch:proc-directory-creation",
+      "to": "branch:rbe-current-integration",
+      "type": "includes",
+      "reason": "Source-equivalent procfs lock refinement is qualified separately; current Node665f runtime remains independent and uses the preserved prior correction.",
+      "evidence": "https://github.com/tamird/gvisor/commit/a28c64f74b4f9a5e1653da4edc5ea404f647d120"
+    },
+    {
+      "from": "branch:review/hermetic-bpf-headers",
+      "to": "pr:15337",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Source-qualified proposal is pending contributor authorization; public source remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/0975ddf1b2cec1c5af952d089c963a40f60aa4e6"
+    },
+    {
+      "from": "branch:review/go-export-sidecars",
+      "to": "pr:15106",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Source-qualified proposal is pending contributor authorization; public source remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/7709f36fdf22e4116ce8c06c7e97d7d5ac784111"
+    },
+    {
+      "from": "branch:review/kcov-state-restore-test",
+      "to": "pr:15956",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Source-qualified proposal is pending contributor authorization; public source remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
     }
   ],
   "investigations": [
