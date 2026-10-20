@@ -93,4 +93,8 @@ if (( statuses[1] != 0 )); then
 fi
 printf 'Source builder image %s: ' "${image}"
 docker image inspect --format '{{.Id}}' "${image}"
+# The exported layout no longer needs the builder's layer cache. Release it
+# before temporarily storing two copies of the completed image.
+"${buildx}" rm --force "${builder}"
+created=false
 cp -R -- "${staged_layout}/." "${layout}/"
