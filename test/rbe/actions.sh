@@ -199,13 +199,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           ;;
       esac
     else
-      # Keep long guest tests and source-image builds observable even when a
-      # hosted coordinator disconnects. Actions owns coordination; actions
-      # retain their remote execution requirements and declared deadlines.
+      # Keep mixed graphs, long guest tests and source-image builds observable
+      # even when a hosted coordinator disconnects. qualify.sh validates the
+      # selected lanes and retains their execution requirements and deadlines.
       case "$QUALIFICATION_ARCH:${lanes[*]}" in
-        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test|amd64:build-all|amd64:pgo) ;;
+        all:*|arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test|amd64:build-all|amd64:pgo) ;;
         *)
-          printf 'The Actions remote coordinator supports ARM64 guest profiles, explicit build/test targets or AMD64 build-all.\n' >&2
+          printf 'The Actions remote coordinator supports mixed architecture profiles, ARM64 guests, explicit build/test targets or AMD64 build-all/PGO.\n' >&2
           exit 2
           ;;
       esac
@@ -222,11 +222,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # the nonroot server.
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
-    case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:syscalls-save|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|amd64:pgo|arm64:docker|arm64:cpu-images|arm64:gpu-images)
-        qualification_root_bazel=true
-        ;;
-    esac
+    if [[ $QUALIFICATION_EXECUTION == local ]]; then
+      case "$QUALIFICATION_ARCH:${lanes[*]}" in
+        amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:syscalls-save|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|amd64:pgo|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+          qualification_root_bazel=true
+          ;;
+      esac
+    fi
     export qualification_root_bazel
     qualification_container=false
     case "${lanes[*]}" in
@@ -248,7 +250,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
-    if [[ ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == pgo || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
+    if [[ $QUALIFICATION_EXECUTION == local &&
+          ( ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == pgo || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ) ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
       [[ -S /var/run/docker.sock ]]
