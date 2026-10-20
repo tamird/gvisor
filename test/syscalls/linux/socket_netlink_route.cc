@@ -18,6 +18,7 @@
 #include <poll.h>
 #include <sched.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -3205,10 +3206,21 @@ TEST(NetlinkRouteTest, LinkInfoKind) {
   ASSERT_NO_ERRNO(
       NetlinkRequestAckOrError(fd, kSeq + 1, &br_req, br_req.hdr.nlmsg_len));
 
+  FileDescriptor sock =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_DGRAM, 0));
   std::vector<Link> links = ASSERT_NO_ERRNO_AND_VALUE(DumpLinks(fd));
   std::map<std::string, std::string> link_kinds;
   for (const Link& link : links) {
     link_kinds[link.name] = link.kind;
+
+    // Veth and bridge interfaces support multicast by default; loopback does
+    // not. Both netlink and SIOCGIFFLAGS must report the same capability.
+    const unsigned int multicast = link.name == "lo" ? 0 : IFF_MULTICAST;
+    EXPECT_EQ(link.flags & IFF_MULTICAST, multicast) << link.name;
+    struct ifreq ifr = {};
+    strncpy(ifr.ifr_name, link.name.c_str(), IFNAMSIZ);
+    ASSERT_THAT(ioctl(sock.get(), SIOCGIFFLAGS, &ifr), SyscallSucceeds());
+    EXPECT_EQ(ifr.ifr_flags & IFF_MULTICAST, multicast) << link.name;
   }
 
   EXPECT_EQ(link_kinds["veth1"], "veth");
