@@ -28,8 +28,8 @@ _RUNTIMES = {
         shard_count = most_shards,
         source_archive = "//test/docker:java_source_amd64",
     ),
-    "nodejs22.2.0": dict(
-        exclude_file = "exclude/nodejs22.2.0.csv",
+    "nodejs26.12.0": dict(
+        exclude_file = "exclude/nodejs26.12.0.csv",
         lang = "nodejs",
         # The pinned large-Blob test holds a 2GiB buffer and a Blob; its
         # sandbox was OOM-killed with the default 4GB VM budget.

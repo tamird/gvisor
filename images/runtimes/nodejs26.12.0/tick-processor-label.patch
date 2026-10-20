@@ -1,0 +1,14 @@
+# Match the current V8 JavaScript function label in profiler output.
+# V8 label change: https://github.com/nodejs/node/commit/6bd756d7c
+diff --git a/test/tick-processor/test-tick-processor-unknown.js b/test/tick-processor/test-tick-processor-unknown.js
+--- a/test/tick-processor/test-tick-processor-unknown.js
++++ b/test/tick-processor/test-tick-processor-unknown.js
+@@ -14,7 +14,7 @@ const base = require('./tick-processor-base.js');
+ // Unknown checked for to prevent flakiness, if pattern is not found,
+ // then a large number of unknown ticks should be present
+ base.runTest({
+-  pattern: /LazyCompile.*\[eval]:1|.*% {2}UNKNOWN/,
++  pattern: /JS:.*\[eval]:1|.*% {2}UNKNOWN/,
+   code: `function f() {
+            for (let i = 0; i < 1000000; i++) {
+              i++;

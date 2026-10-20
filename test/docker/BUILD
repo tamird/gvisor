@@ -276,11 +276,30 @@ bzl_library(
     ],
 )
 
+# Build Node once with its producer's memory budget. CPU shards load the
+# declared archive through Make instead of compiling it in their smaller VMs.
+# The producer still uses raw source_contexts, so this overlay is acyclic.
+pkg_files(
+    name = "nodejs_image_context",
+    testonly = True,
+    srcs = [":nodejs_source_amd64"],
+    renames = {":nodejs_source_amd64": "images/runtimes/nodejs26.12.0/image.tar"},
+    tags = ["manual"],
+)
+
+pkg_tar(
+    name = "cpu_source_contexts_amd64",
+    testonly = True,
+    srcs = [":nodejs_image_context"],
+    tags = ["manual"],
+    deps = ["//images:cpu_source_contexts"],
+)
+
 image_source_command(
     name = "cpu_image_sources_amd64",
     testonly = True,
     architecture = "x86_64",
-    contexts = "//images:cpu_source_contexts",
+    contexts = ":cpu_source_contexts_amd64",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -496,12 +515,13 @@ source_image_archive(
         "@platforms//cpu:x86_64",
     ],
     exec_properties = docker_test_exec_properties(
+        cpu = 8,
         exec_group = "",
         free_disk = "80GB",
-        memory = "12GB",
+        memory = "24GB",
         start_daemon = True,
     ),
-    image = "runtimes/nodejs22.2.0",
+    image = "runtimes/nodejs26.12.0",
     tags = ["manual"],
 )
 
