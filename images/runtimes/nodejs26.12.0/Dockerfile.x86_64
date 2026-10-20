@@ -1,0 +1,63 @@
+FROM ubuntu:26.04
+RUN apt-get update && apt-get install -y \
+  cargo \
+  curl \
+  dumb-init \
+  g++ \
+  make \
+  patch \
+  python3 \
+  rustc
+
+WORKDIR /root
+ARG VERSION=v26.12.0
+# Distribution tarballs omit Corepack and several test files.
+COPY source.sha256 /tmp/source.sha256
+RUN read -r checksum archive < /tmp/source.sha256 \
+ && commit=${archive#node-} \
+ && commit=${commit%.tar.gz} \
+ && curl --fail --location -o "${archive}" "https://codeload.github.com/nodejs/node/tar.gz/${commit}" \
+ && sha256sum --check /tmp/source.sha256 \
+ && mkdir node-${VERSION} \
+ && tar -zxf "${archive}" --strip-components=1 -C node-${VERSION} \
+ && rm -f "${archive}" /tmp/source.sha256
+
+# Patch in a timeout increase to reduce test flakiness on gVisor
+WORKDIR /root/node-${VERSION}
+COPY timeouts.patch /tmp/timeouts.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/timeouts.patch \
+  && rm -f /tmp/timeouts.patch
+
+# Fail if Rust is unavailable instead of silently disabling Temporal support.
+RUN ./configure --v8-enable-temporal-support
+# Addon documentation generation requires an available Node executable.
+RUN make -j $(nproc) all \
+  && make -j $(nproc) test-build
+
+# Prepare the locked dependencies used by documentation and ESLint tests.
+RUN make tools/doc/node_modules
+# Use the ESLint target's npm command without ignoring installation errors.
+RUN cd tools/eslint \
+  && PATH="/root/node-${VERSION}/out/Release:${PATH}" \
+    ../../node ../../deps/npm/bin/npm-cli.js ci --omit=dev
+
+# Use node --check on the files we patched
+RUN out/Release/node --check test/common/index.js
+
+COPY test-selection.patch /tmp/test-selection.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/test-selection.patch \
+  && rm -f /tmp/test-selection.patch
+
+COPY rm-sync-root.patch /tmp/rm-sync-root.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/rm-sync-root.patch \
+  && out/Release/node --check test/parallel/test-fs-rmSync-special-char-additional-error.js \
+  && rm -f /tmp/rm-sync-root.patch
+
+COPY tick-processor-label.patch /tmp/tick-processor-label.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/tick-processor-label.patch \
+  && out/Release/node --check test/tick-processor/test-tick-processor-unknown.js \
+  && rm -f /tmp/tick-processor-label.patch
+
+# Including dumb-init emulates the Linux "init" process, preventing the failure
+# of tests involving worker processes.
+ENTRYPOINT ["/usr/bin/dumb-init"]
