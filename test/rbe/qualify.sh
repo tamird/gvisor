@@ -195,8 +195,8 @@ if (( ${#benchmark_targets[@]} )) && [[ $arch != amd64 || $test_execution != loc
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
   exit 2
 fi
-if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1 ) ) ]]; then
-  printf 'A test filter requires the explicit test or container-v1 lane.\n' >&2
+if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1 && ${1:-} != docker ) ) ]]; then
+  printf 'A test filter requires the explicit test, container-v1 or Docker lane.\n' >&2
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
@@ -1121,9 +1121,6 @@ run_lane() (
       options=("${bazel_options[@]}")
       language_test_options
       targets=("${test_targets[@]}")
-      if [[ -n $test_filter ]]; then
-        options+=("--test_filter=$test_filter")
-      fi
       if [[ $test_execution == local ]]; then
         # Architecture frontends retain the existing root/nobody test identity;
         # only TestRunners are local. Compilation remains on the RBE platform.
@@ -1461,6 +1458,9 @@ PY
       ;;
   esac
   if [[ $command == test ]]; then
+    if [[ -n $test_filter ]]; then
+      options+=("--test_filter=$test_filter")
+    fi
     # The repository test consumes the public release packages, whose owning
     # build keeps Bazel's default stripping policy.
     if [[ $lane != release-repository ]]; then
