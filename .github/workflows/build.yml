@@ -161,17 +161,20 @@ jobs:
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        # This validation branch bridges the hosted worker's small output disk.
-        # Only image construction uses this runner's native Docker daemon.
-        docker_root=$(docker info --format '{{.DockerRootDir}}')
-        for path in "${TMPDIR:-/tmp}" "$GITHUB_WORKSPACE" "$docker_root"; do
-          available=$(df -B1 --output=avail "$path" | tail -n 1)
-          printf 'Available bytes at %s: %s\n' "$path" "$available"
-          (( available >= 80000000000 ))
-        done
-        bash test/rbe/actions.sh \
-          --bazel-option=--spawn_strategy=remote,local \
-          --bazel-option=--strategy=SourceImageOCI=local
+        options=()
+        if [[ $QUALIFICATION_LANES == build && $QUALIFICATION_TARGETS == //test/docker:gpu_sglang_source_amd64 ]]; then
+          # SGLang's layout exceeds the hosted worker's output disk. Build it
+          # with this runner's native Docker daemon and sufficient disk space.
+          docker_root=$(docker info --format '{{.DockerRootDir}}')
+          for path in "${TMPDIR:-/tmp}" "$GITHUB_WORKSPACE" "$docker_root"; do
+            available=$(df -B1 --output=avail "$path" | tail -n 1)
+            printf 'Available bytes at %s: %s\n' "$path" "$available"
+            (( available >= 80000000000 ))
+          done
+          options+=(--bazel-option=--spawn_strategy=remote,local
+            --bazel-option=--strategy=SourceImageOCI=local)
+        fi
+        bash test/rbe/actions.sh "${options[@]}"
 
     - name: Retain the qualification verdict and evidence bundle
       if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
