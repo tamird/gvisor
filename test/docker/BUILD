@@ -33,6 +33,34 @@ SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
     "//conditions:default": {},
 })
 
+# ARM64 Docker production runs on the native Actions coordinator. Compilation
+# and the daemon-free archive conversion retain their remote execution paths.
+[
+    source_image_archive(
+        name = "gcsfuse_source_" + suffix,
+        testonly = True,
+        architecture = architecture,
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:" + architecture,
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "40GB",
+            memory = "8GB",
+            start_daemon = True,
+        ) if suffix == "amd64" else {},
+        image = "fuse/gcs",
+        remote = suffix == "amd64",
+        tags = ["manual"],
+    )
+    for suffix, architecture in [
+        ("amd64", "x86_64"),
+        ("arm64", "aarch64"),
+    ]
+]
+
 # A context-only marker changes the canonical directory hash without changing
 # the Redis Dockerfile. Its apt RUN exercises the source build on a cache miss.
 pkg_files(

@@ -65,7 +65,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
         options+=("--${lanes[0]}-target=$target")
       done
       ;;
-    syscalls|syscalls-save|syscalls-kvm|syscalls-rc|pgo)
+    syscalls|syscalls-save|syscalls-kvm|syscalls-rc|pgo|cpu-images)
       for target in "${selected_targets[@]}"; do
         options+=("--test-target=$target")
       done
@@ -76,7 +76,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
       done
       ;;
     *)
-      printf 'Explicit targets require the build, test, syscall, KVM syscall, RC syscall or benchmarks lane.\n' >&2
+      printf 'Explicit targets require the build, test, syscall, KVM syscall, RC syscall, CPU image or benchmarks lane.\n' >&2
       exit 2
       ;;
   esac

@@ -417,7 +417,11 @@ def _source_image_layout_impl(ctx):
         progress_message = "Constructing source image %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
         # Dockerfile base tags and package mirrors are mutable network inputs.
         # Share this action among consumers, but do not reuse remote/disk results.
-        execution_requirements = {"no-cache": "1"},
+        execution_requirements = {"no-cache": "1"} if ctx.attr.remote else {
+            "local": "1",
+            "no-cache": "1",
+            "no-sandbox": "1",
+        },
     )
     return [
         DefaultInfo(files = depset([layout])),
@@ -430,6 +434,7 @@ _source_image_layout = rule(
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
+        "remote": attr.bool(default = True, doc = "Use a remote Docker worker; false requires Docker on the native coordinator."),
         "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),

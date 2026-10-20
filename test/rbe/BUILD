@@ -286,6 +286,64 @@ go_test(
     tags = ["manual"],
 )
 
+# Exercise the packaged binary without invoking the bucket-mutating entrypoint.
+go_test(
+    name = "gcsfuse_image_test",
+    srcs = [
+        "gcsfuse_image_test.go",
+        "source_archive_common_test.go",
+        "source_archive_test.go",
+    ],
+    rundir = ".",
+    tags = ["manual"],
+)
+
+[
+    docker_daemon_config(
+        name = "gcsfuse_" + suffix + "_config",
+        testonly = True,
+        images = ["//test/docker:gcsfuse_source_" + suffix],
+        runtime = None,
+        tags = ["manual"],
+    )
+    for suffix in ["amd64", "arm64"]
+]
+
+[
+    docker_command_test(
+        name = "gcsfuse_" + suffix + "_test",
+        size = "medium",
+        command = ":gcsfuse_image_test",
+        command_args = [
+            "-test.v",
+            "--archive=$(rootpath //test/docker:gcsfuse_source_" + suffix + ")",
+            "--image=fuse/gcs",
+        ],
+        data = ["//test/docker:gcsfuse_source_" + suffix],
+        docker_config = ":gcsfuse_" + suffix + "_config",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:" + architecture,
+        ],
+        exec_properties = docker_test_exec_properties(
+            free_disk = "20GB",
+            memory = "4GB",
+        ),
+        tags = [
+            "external",
+            "manual",
+        ],
+        target_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:" + architecture,
+        ],
+    )
+    for suffix, architecture in [
+        ("amd64", "x86_64"),
+        ("arm64", "aarch64"),
+    ]
+]
+
 # Measure and verify the same archive before allocating Docker's expanded image.
 # Test actions stream the archive without extraction; compilation keeps its
 # normal execution properties. The Triton owner is used after native assembly.
