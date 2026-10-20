@@ -72,6 +72,8 @@ Repeat --benchmark-target to select members of the continuous suite, retaining
 their original workloads and timeouts. Other suite members remain unexecuted.
 The test lane runs explicitly selected tests on remote workers, or on the
 matching Actions host with --test-execution=local and architecture frontends.
+With remote --arch=all, explicit tests retain their graph-declared platforms;
+ordinary labels are not duplicated for another architecture.
 The build lane builds explicitly selected targets without running tests.
 Repeat --bazel-option to pass long-form options directly to Bazel in either
 explicit lane. Use --FLAG=VALUE to keep each option and its value together.
@@ -198,8 +200,8 @@ if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
-  if [[ $# != 1 || ( $arch == all && ${1:-} != syscalls-rc ) ]]; then
-    printf 'Explicit targets require one supported lane; both architectures require syscalls-rc.\n' >&2
+  if [[ $# != 1 || ( $arch == all && ${1:-} != test && ${1:-} != syscalls-rc ) ]]; then
+    printf 'Explicit targets require one supported lane; all architectures support test or syscalls-rc.\n' >&2
     exit 2
   fi
   case "$1" in
@@ -274,7 +276,7 @@ for lane in "$@"; do
   fi
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-rc|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|gazelle|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
+      test|presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-rc|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|gazelle|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -840,6 +842,13 @@ run_platform_matrix() (
   done
   for lane in "$@"; do
     case "$lane" in
+      test)
+        # Declared frontends own their platform transitions. Expand suites and
+        # compare their configured owners with the final combined selection.
+        include_public_profiles=true
+        options+=("${bazel_options[@]}")
+        printf '%s\n' "${test_targets[@]}" >> "$selection_dir/shared-targets"
+        ;;
       nogo)
         # Each existing Nogo owner already analyzes both architectures. Select
         # its leaves without applying the positive tag filter to other lanes.
@@ -1014,7 +1023,7 @@ PY
         # Let Bazel expand explicit suites, including their manual members,
         # before comparing their selection under the combined lane's filters.
         analyze_profile "$selection_dir/shared-targets" "$selection_dir/shared-profile.json" \
-          --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only
+          --config=rbe-matrix --config=x86_64 --strip=never "${bazel_options[@]}" --build_tests_only
         verification_options+=(--profile "$selection_dir/shared-profile.json")
       fi
       : > "$selection_dir/verification-targets"
