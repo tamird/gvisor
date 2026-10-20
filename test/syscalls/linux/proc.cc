@@ -503,8 +503,7 @@ TEST(ProcTest, Create) {
   };
   check();
   // O_CREAT without O_EXCL still opens an existing file.
-  EXPECT_THAT(Open("/proc/version", O_CREAT | O_RDONLY, 0600),
-              IsPosixErrorOk());
+  EXPECT_NO_ERRNO(Open("/proc/version", O_CREAT | O_RDONLY, 0600));
   // A missing procfs child fails lookup before the parent's write permissions
   // are checked.
   AutoCapability cap1(CAP_DAC_OVERRIDE, false);
