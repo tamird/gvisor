@@ -57,7 +57,6 @@ def select_system(linux = ["__linux__"], darwin = [], **_kwargs):
 arch_config = [
     "@io_bazel_rules_go//go/config:race",
     "//command_line_option:cpu",
-    "//command_line_option:crosstool_top",
     "//command_line_option:platforms",
 ]
 
@@ -67,7 +66,6 @@ def arm64_config(_settings, _attr):
         # Targets with an explicit race attribute still use instrumentation.
         "@io_bazel_rules_go//go/config:race": False,
         "//command_line_option:cpu": "aarch64",
-        "//command_line_option:crosstool_top": "@crosstool//:toolchains",
         # Permit targets that explicitly enable race instrumentation to use cgo.
         # Ordinary targets still inherit the pure build setting from .bazelrc.
         "//command_line_option:platforms": "//tools/bazeldefs:linux_arm64",
@@ -78,7 +76,6 @@ def amd64_config(_settings, _attr):
         # See above.
         "@io_bazel_rules_go//go/config:race": False,
         "//command_line_option:cpu": "k8",
-        "//command_line_option:crosstool_top": "@crosstool//:toolchains",
         # See above.
         "//command_line_option:platforms": "//tools/bazeldefs:linux_amd64",
     }
