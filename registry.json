@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T15:46:23.775842+00:00",
+    "updatedAt": "2026-10-21T17:06:49.278563+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10916,40 +10916,36 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/state-codec-consolidation",
-      "head": "e780baf3a62e77ea4be52eaa1e3998e855d81d25",
+      "head": "f65f0db5ebab296bfc82add78817451328d53d58",
       "title": "Integrate typed arrays into the state rewrite",
-      "url": "https://github.com/tamird/gvisor/commit/e780baf3a62e77ea4be52eaa1e3998e855d81d25",
+      "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58",
       "group": "runtime",
-      "status": "Agent validation: matched benchmark pending",
-      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
-      "summary": "The published simplification removes the generated Capture path and whole-package compiler/importer model, reusing the existing common Sink path and homogeneous primitive storage. Normal and race correctness gates are accepted. The owner is measuring the revised common path against the preserved aggregate with the existing matched benchmark harness; those results remain pending. The contributor requested this architectural reassessment, and no contributor decision is pending on the new revision. Historical measurements below remain bound to their original sources.\n\nHistorical proposal and review evidence:\n\nThe contributor decision on this proposal remains pending. Its startup prerequisite #15814 is authored by Etienne Perot and is separately awaiting his response to our October 15 review: make the registration test repeatable, consolidate registration ownership, and explain the lazy-metadata behavior and startup measurement. Both #15648 and #15814 remain open. These are publication holds. The qualified fork already includes both prerequisite compositions, and its current-consumer, aggregate and startup evidence is complete. Further architecture work remains authorized; the bounded follow-up assessment identified no new concrete hypothesis or missing experiment.\n\nThe complete integrated state proposal 3a38641f0 now has a matched comparison against its current prerequisite base. Exact arms fdc73917e and 6b522949e share the same fixtures and qualification infrastructure; twelve balanced adjacent pairs across four Save/Load fixtures produced 104 fresh children, including 96 measured observations. UDP Save is 10.73% faster, UDP Load is 14.44% faster, and adoption Load is 7.89% faster (all p<.001). Adoption Save timing is inconclusive (p=.060). UDP Save allocated bytes fall by 21.34% and UDP Load bytes by 14.96%, with allocation counts unchanged. Adoption Save uses 2.53% fewer bytes and 12.94% fewer allocations; adoption Load uses 7.07% fewer bytes and 17.93% fewer allocations. Wire sizes are unchanged. These results compare the full proposal with its prerequisite base; earlier scalar-stage samples remain separate. The matched startup run also passed: CLI medians are 2.380 versus 2.397 ms (p=.410), and StartupEmpty medians are 283.7 versus 265.8 ms (p=.198); neither establishes a timing difference. State initialization remains 3,032 bytes and 13 allocations in both runsc and Sentry. Production file growth is 98,304 bytes for AMD64 runsc, 253,952 for AMD64 Sentry, 131,072 for ARM64 runsc and 262,144 for ARM64 Sentry. The complete proposal packet is published, and the contributor review request is pending. Upstream submission also requires #15648 and #15814 to land. The published 44-path proposal and its four current-consumer links plus nine checkpoint/cycle smoke entries remain qualified. The preserved predecessor is 67c4ddcf6; the exact refinement command remains available.",
+      "status": "Needs contributor review",
+      "updatedAt": "2026-10-21T17:02:05.482646+00:00",
+      "summary": "The signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. Contributor review has been requested for this exact revision; upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
       "refinement": {
         "before": {
           "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b"
         },
         "after": {
-          "head": "e780baf3a62e77ea4be52eaa1e3998e855d81d25"
+          "head": "f65f0db5ebab296bfc82add78817451328d53d58"
         }
       },
       "followup": {
         "owner": "root",
-        "disposition": "Correctness accepted; matched comparison underway",
-        "sourceHead": "e780baf3a62e77ea4be52eaa1e3998e855d81d25",
-        "observedAt": "2026-10-21T15:42:01.457765+00:00",
-        "nextAction": "Finish the existing matched old/new benchmark comparison, assess the simplified common path and prepare a concrete revised proposal. Preserve the original measurement identities and prerequisite holds.",
+        "disposition": "Exact revised proposal awaiting contributor decision",
+        "sourceHead": "f65f0db5ebab296bfc82add78817451328d53d58",
+        "observedAt": "2026-10-21T17:02:05.482646+00:00",
+        "nextAction": "Await the requested review of f65f0db5, then publish only after #15648 and #15814 land. The final source and validation are complete.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b",
-          "https://app.buildbuddy.io/invocation/8c112347-ac8d-4247-ac23-f9072e4da856",
-          "https://github.com/tamird/gvisor/commit/67c4ddcf6ff517a8a8c44d30a325201b976caaf4",
+          "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58",
           "https://github.com/google/gvisor/pull/15648",
-          "https://github.com/google/gvisor/pull/15814",
-          "https://app.buildbuddy.io/invocation/417a6ac3-b6b0-4861-815e-c02557dd1431",
-          "https://app.buildbuddy.io/invocation/057306de-648f-41e3-b4b4-d7d92a31c3d5"
+          "https://github.com/google/gvisor/pull/15814"
         ]
       },
       "evidence": [
         {
-          "label": "Integrated state proposal; exact current refinement",
+          "label": "Preserved aggregate before architectural simplification",
           "url": "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b"
         },
         {
@@ -10985,13 +10981,26 @@
           "url": "https://app.buildbuddy.io/invocation/d0ae2992-cd6f-4f86-98e3-e35112ba698f"
         },
         {
-          "label": "Current matched common-path comparison",
+          "label": "Preserved initial matched-comparison setup failure",
           "url": "https://app.buildbuddy.io/invocation/3b5d466e-197a-4ec9-b7e9-234cbe14939d"
+        },
+        {
+          "label": "Final signed proposal and full description",
+          "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58"
+        },
+        {
+          "label": "Accepted matched common-path comparison",
+          "url": "https://app.buildbuddy.io/invocation/da05f9e0-ee3a-482e-a7b3-ed8a61b29836"
+        },
+        {
+          "label": "Final executable-identity applicability",
+          "url": "https://app.buildbuddy.io/invocation/bbfbe3d2-9ef5-418b-b9d1-82c419bdc9ef"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b",
-        "url": "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b"
+      "contributorReview": {
+        "status": "pending",
+        "head": "f65f0db5ebab296bfc82add78817451328d53d58",
+        "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58"
       }
     },
     {
@@ -13717,19 +13726,23 @@
       "type": "branch",
       "repo": "tamird/buildbuddy",
       "ref": "remote-bazel-authenticated-attribution",
-      "head": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
+      "head": "40444be8ea76cb8b7cf2d21b61267429bf6061ee",
       "title": "Attribute Remote Bazel builds to the API-key user",
       "group": "buildbuddy",
-      "status": "Upstream PR open; current-head remote validation passed",
+      "status": "Review feedback addressed; awaiting maintainer review",
       "url": "https://github.com/tamird/buildbuddy/tree/remote-bazel-authenticated-attribution",
-      "summary": "The cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
-      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+      "summary": "The three requested changes are published as a separate seventh commit, 40444be8, preserving the six existing topic commits. Explicit BUILD_USER values, including an empty value, override the default; workflows use their owning organization; and default USER metadata precedes caller arguments. All three reviewer replies now link the passing focused regression and lint. Threads remain available for the reviewer to resolve.\n\nThe original four-owner run at 5df17494 recorded 113 positive cases and failed only the new assertion about normalized empty-user metadata. The unchanged server intentionally falls back to workspace identity for empty metadata. The test-only correction checks the actual child BuildMetadata USER key and value, preserving named/default identity checks. At final 40444be8, the unsharded parent and all three subcases plus canonical lint pass. The other original passing owners and shards retain their original source identity; this is not a same-head full-suite claim. The original failure is preserved.\n\nHistorical attribution validation remains linked below: 57-case results at fed809/ca07 and the 36-case LookupEnv result at bf7 retain their original source applicability. Public CI and maintainer approval are separate from these remote checks.",
+      "updatedAt": "2026-10-21T17:02:05.482646+00:00",
       "followup": {
-        "owner": "Root",
-        "disposition": "Maintainer review",
-        "sourceHead": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
-        "observedAt": "2026-10-19T14:15:21.653714+00:00",
-        "nextAction": "Follow upstream review and public checks for the validated current amendment; no contributor decision is pending."
+        "owner": "work_map_current",
+        "disposition": "All three requested amendments published and replied to",
+        "sourceHead": "40444be8ea76cb8b7cf2d21b61267429bf6061ee",
+        "observedAt": "2026-10-21T17:02:05.482646+00:00",
+        "nextAction": "Follow new maintainer feedback and public checks on the published head. No contributor decision or further reply is pending.",
+        "evidence": [
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
+          "https://app.buildbuddy.io/invocation/b18e2c46-c9f4-4c98-8d3d-cf58c424e9c8"
+        ]
       },
       "evidence": [
         {
@@ -13743,6 +13756,30 @@
         {
           "label": "Current attribution cleanup validation PASS",
           "url": "https://app.buildbuddy.io/invocation/0449dba2-d697-4c28-84f5-bd4639255941"
+        },
+        {
+          "label": "Separate commit addressing the three review comments",
+          "url": "https://github.com/tamird/buildbuddy/commit/40444be8ea76cb8b7cf2d21b61267429bf6061ee"
+        },
+        {
+          "label": "Focused final regression and lint PASS",
+          "url": "https://app.buildbuddy.io/invocation/b18e2c46-c9f4-4c98-8d3d-cf58c424e9c8"
+        },
+        {
+          "label": "Preserved original full-run assertion failure",
+          "url": "https://app.buildbuddy.io/invocation/29f5724c-074f-4ec8-8a15-fbb56d6f8b5d"
+        },
+        {
+          "label": "Published reviewer reply",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855#discussion_r4339294938"
+        },
+        {
+          "label": "Published reviewer reply",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855#discussion_r4339295058"
+        },
+        {
+          "label": "Published reviewer reply",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855#discussion_r4339295155"
         }
       ]
     },
@@ -13778,21 +13815,21 @@
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13855,
       "ref": "remote-bazel-authenticated-attribution",
-      "head": "ca07e1537b0258bc6fe9ae7a06d675bd7125398d",
+      "head": "40444be8ea76cb8b7cf2d21b61267429bf6061ee",
       "title": "Attribute Remote Bazel builds to the API-key user",
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
-      "status": "Upstream PR open; current-head remote validation passed",
-      "summary": "The latest published attribution head is b5e6c9df9d. Its final changes clarify mixed-version compatibility in comments; authenticated API-key attribution and executable behavior remain unchanged. The qualified LookupEnv behavior is still source-bound to bf7a47e3df, with later comment/test-removal applicability stated separately.\n\nThe LookupEnv refinement is remotely qualified at bf7a47e3df: two test owners, eight attempts and 36 named cases, plus lint, with no gaps or skips. The published eb265eafda adds an authenticated-filter rationale and removes the redundant seven-line test; executable production code is unchanged. Exact test evidence remains at bf7, and earlier failures are preserved. Automatic verification took 2.300712 seconds after the final lint command; the 208.024634-second interval from test completion includes lint.\n\nThe cleanup at current PR head ca07e1537b0258bc6fe9ae7a06d675bd7125398d passes its exact three-owner validation: nine attempts and all 57 named cases, unchanged membership from the prior qualified result, plus lint. Independent compact verification found no missing cases, skips or errors. Automatic verification completed 5.176751 seconds after the final lint command; the 220.481922-second interval from test completion includes lint, and final owner reconciliation took 243.316682 seconds. Earlier fixture failures remain retained. Upstream review and public CI remain separate from this remote validation.\n\nThe authorized attribution cleanup is published on upstream PR #13855 at ca07e1537b0258bc6fe9ae7a06d675bd7125398d. It removes the redundant CLI username default and resolves the runner display username once while preserving OS fallback for clients without a supplied identity. Two independent source reviews passed. The same three-owner remote validation and lint are running; the prior 57-case success remains bound to fed809. Current public Darwin ERROR statuses are explicit approving-review gates, with checks not yet run; they are not green checks or executed test failures.\n\nUpstream PR #13855 is open at exact fed809dda10775e347486ac8b8c0399e8d87b4c1. Remote validation passes all three owners, nine attempts and 57 XML cases, with lint PASS and no missing or skipped tests. The first fixture failure remains retained separately; the production attribution change was unchanged by its correction.",
+      "status": "Review feedback addressed; awaiting maintainer review",
+      "summary": "The three requested changes are published as a separate seventh commit, 40444be8, preserving the six existing topic commits. Explicit BUILD_USER values, including an empty value, override the default; workflows use their owning organization; and default USER metadata precedes caller arguments. All three reviewer replies now link the passing focused regression and lint. Threads remain available for the reviewer to resolve.\n\nThe original four-owner run at 5df17494 recorded 113 positive cases and failed only the new assertion about normalized empty-user metadata. The unchanged server intentionally falls back to workspace identity for empty metadata. The test-only correction checks the actual child BuildMetadata USER key and value, preserving named/default identity checks. At final 40444be8, the unsharded parent and all three subcases plus canonical lint pass. The other original passing owners and shards retain their original source identity; this is not a same-head full-suite claim. The original failure is preserved.\n\nHistorical attribution validation remains linked below: 57-case results at fed809/ca07 and the 36-case LookupEnv result at bf7 retain their original source applicability. Public CI and maintainer approval are separate from these remote checks.",
       "followup": {
-        "owner": "root",
-        "disposition": "Authorized attribution refinement complete; current-head review pending",
-        "sourceHead": "b5e6c9df9dc32d7ca1ff235522daba4dfe7e488c",
-        "observedAt": "2026-10-19T15:04:20.886299+00:00",
-        "nextAction": "Follow current public review and checks. Preserve the tested bf7 source versus subsequent comment/test-removal applicability, and distinguish Darwin approval gates from executed tests.",
+        "owner": "work_map_current",
+        "disposition": "All three requested amendments published and replied to",
+        "sourceHead": "40444be8ea76cb8b7cf2d21b61267429bf6061ee",
+        "observedAt": "2026-10-21T17:02:05.482646+00:00",
+        "nextAction": "Follow new maintainer feedback and public checks on the published head. No contributor decision or further reply is pending.",
         "evidence": [
           "https://github.com/buildbuddy-io/buildbuddy/pull/13855",
-          "https://app.buildbuddy.io/invocation/f3934fdb-9939-438f-bf6d-5e9d6563d23e"
+          "https://app.buildbuddy.io/invocation/b18e2c46-c9f4-4c98-8d3d-cf58c424e9c8"
         ]
       },
       "evidence": [
@@ -13811,9 +13848,33 @@
         {
           "label": "LookupEnv validation PASS; published-source applicability recorded",
           "url": "https://app.buildbuddy.io/invocation/f3934fdb-9939-438f-bf6d-5e9d6563d23e"
+        },
+        {
+          "label": "Separate commit addressing the three review comments",
+          "url": "https://github.com/tamird/buildbuddy/commit/40444be8ea76cb8b7cf2d21b61267429bf6061ee"
+        },
+        {
+          "label": "Focused final regression and lint PASS",
+          "url": "https://app.buildbuddy.io/invocation/b18e2c46-c9f4-4c98-8d3d-cf58c424e9c8"
+        },
+        {
+          "label": "Preserved original full-run assertion failure",
+          "url": "https://app.buildbuddy.io/invocation/29f5724c-074f-4ec8-8a15-fbb56d6f8b5d"
+        },
+        {
+          "label": "Published reviewer reply",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855#discussion_r4339294938"
+        },
+        {
+          "label": "Published reviewer reply",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855#discussion_r4339295058"
+        },
+        {
+          "label": "Published reviewer reply",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13855#discussion_r4339295155"
         }
       ],
-      "updatedAt": "2026-10-19T15:10:46.579237+00:00"
+      "updatedAt": "2026-10-21T17:02:05.482646+00:00"
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13858",
@@ -16418,18 +16479,17 @@
       "title": "Build the integration test C image with rules_img",
       "url": "https://github.com/tamird/gvisor/commit/55f4bfaeaa583faaa3e6902c4e95765842562695",
       "group": "bazel",
-      "status": "Dependency availability blocks validation",
-      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
-      "summary": "The reviewed migration builds all nine existing C helpers from their unchanged sources and declares the GNU runtime, shell/network utilities, legacy firewall entry points and nonroot account. Canonical formatting passed, but subsequent runs stopped on exact Ubuntu snapshot package/index HTTP 502/503 errors before image compilation. No archive, runtime or catalog acceptance is claimed. The owner is preparing the actual consumer route and has separately fixed preparation reporting so a pre-phase dependency failure retains authenticated source identity and zero executed owners. That reporting fix does not repair or replace the original failed results. The independent rewinddir allocation fix is qualified separately.",
+      "status": "Pinned libelf1 download blocks validation",
+      "updatedAt": "2026-10-21T17:05:28.764185+00:00",
+      "summary": "The reviewed migration builds all nine existing C helpers from their unchanged sources and declares the GNU runtime, shell/network utilities, legacy firewall entry points and nonroot account. The two previously blocked pinned endpoints recovered to HTTP 200 at 16:54 UTC. The unchanged 55f4bfae gate resumed once as 02d85350: dependency preparation and canonical buildifier passed, then archive analysis failed because the pinned libelf1_0.186-1ubuntu0.1_amd64.deb returned HTTP 503. The complete result retains source identity and native exit 1, with zero configured build owners and no image outputs. No archive, runtime or catalog acceptance is claimed.\n\nEarlier Ubuntu package/index HTTP 502/503 failures remain preserved separately. The preparation-reporting correction does not repair those results. The owner will establish availability of the exact new artifact before another build attempt; actual image consumers and canonical catalog validation remain pending. The rewinddir allocation fix is independently qualified and delivered as PR #16101.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Waiting for dependency endpoint recovery; runtime route prepared separately",
+        "disposition": "Exact pinned libelf1 artifact unavailable; execution closed",
         "sourceHead": "55f4bfaeaa583faaa3e6902c4e95765842562695",
-        "observedAt": "2026-10-21T15:42:01.457765+00:00",
-        "nextAction": "Use one bounded availability check before any same-source retry; retain the exact package/index failures and do not repeat unavailable submissions. After the owning compiler/archive gate succeeds, validate actual image consumers and the canonical catalog.",
+        "observedAt": "2026-10-21T17:05:28.764185+00:00",
+        "nextAction": "Establish availability of the exact libelf1 artifact before any same-source build retry. Preserve the failed analysis; actual consumer/runtime and catalog qualification remain pending.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/4d304d56-6472-4a3c-9a1b-a12d5d523bc8",
-          "https://app.buildbuddy.io/invocation/5fc3c58f-36ea-46a0-9c75-86de482db4c2"
+          "https://app.buildbuddy.io/invocation/02d85350-227e-4078-9e6f-5556465aca4d"
         ]
       },
       "evidence": [
@@ -16440,6 +16500,14 @@
         {
           "label": "Qualified preparation-reporting correction",
           "url": "https://github.com/tamird/gvisor/commit/9fab2a3456aa646d2b9ea2a4b6e9700640ba7bb9"
+        },
+        {
+          "label": "Same-source build after pinned endpoint recovery",
+          "url": "https://app.buildbuddy.io/invocation/02d85350-227e-4078-9e6f-5556465aca4d"
+        },
+        {
+          "label": "Exact pinned libelf1 artifact returning HTTP 503",
+          "url": "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_amd64.deb"
         }
       ]
     },
@@ -16447,21 +16515,23 @@
       "id": "branch:rules-img-hackbench-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-hackbench-image",
-      "head": "3c5d84337f4bfecaa366cd71b28cd985385d4118",
+      "ref": "rules-img-hackbench-image-audited",
+      "head": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
       "title": "Build the hackbench image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/3c5d84337f4bfecaa366cd71b28cd985385d4118",
+      "url": "https://github.com/tamird/gvisor/commit/8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
       "group": "bazel",
-      "status": "Agent validation: canonical catalog pending",
-      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
-      "summary": "The source-built hackbench proposal uses pinned rt-tests 2.2, a static C binary and the existing shared GNU runtime. Independent qualification accepts both-architecture image construction, actual AMD64 Make reloads, both existing native-runc benchmark cases and the GNU profile-helper fixture. The shared extraction refactor preserves the complete 32-entry profile-helper filesystem and runtime configuration against cc4 on both architectures; archive byte hashes differ. The initial formatter failure is preserved. Canonical catalog validation remains separate; these smoke measurements make no comparative performance or ARM execution claim.",
+      "status": "Contributor approved; awaiting prerequisites",
+      "updatedAt": "2026-10-21T17:06:49.278563+00:00",
+      "summary": "The final signed proposal 8e1dc1ed builds pinned rt-tests 2.2 hackbench with the static C toolchain and the shared GNU runtime. The contributor approved this exact revision; delivery follows the approved native-Go image foundation and its recorded prerequisites. Both-architecture image construction, actual AMD64 Make reloads, both existing native-runc benchmark cases and the GNU profile-helper fixture are accepted. The shared extraction refactor preserves the complete 32-entry profile-helper filesystem and runtime configuration against cc4 on both architectures; archive byte hashes differ.\n\nThe 245-entry catalog preserves all 244 foundation entries and adds the audited rt_tests record. Canonical retention and full Verify passed using the exact source archive/COPYING audit; unseeded Fetch remains a preserved failure because its kernel.org archive resolver is unsupported. This is manual audit retention, not fresh automatic classification. The formatter failure is also retained. No comparative performance, ARM runtime, systrap or GPU claim is made.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Runtime accepted; canonical catalog validation",
-        "sourceHead": "3c5d84337f4bfecaa366cd71b28cd985385d4118",
-        "observedAt": "2026-10-21T15:42:01.457765+00:00",
-        "nextAction": "Complete the existing canonical catalog Fetch/Verify, then prepare the exact proposal for contributor review. Preserve the shared native-image prerequisite and original formatter failure.",
+        "owner": "root",
+        "disposition": "Exact proposal approved; prerequisite landing hold",
+        "sourceHead": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
+        "observedAt": "2026-10-21T17:06:49.278563+00:00",
+        "nextAction": "Open the reviewed 8e1dc1ed proposal after its native-Go image foundation and inherited image/license prerequisites land. Do not request the same contributor review again.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/8e1dc1ed07d594d9703abd8be1f681fe3ef559e3",
+          "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd",
           "https://app.buildbuddy.io/invocation/ce077af2-fedf-4968-90ba-046013679088"
         ]
       },
@@ -16473,6 +16543,10 @@
         {
           "label": "Accepted image/runtime qualification",
           "url": "https://app.buildbuddy.io/invocation/ce077af2-fedf-4968-90ba-046013679088"
+        },
+        {
+          "label": "Final audited proposal and description",
+          "url": "https://github.com/tamird/gvisor/commit/8e1dc1ed07d594d9703abd8be1f681fe3ef559e3"
         }
       ]
     },
