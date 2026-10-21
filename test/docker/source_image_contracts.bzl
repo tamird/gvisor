@@ -136,7 +136,10 @@ def _source_image_contracts_impl(target, ctx):
             image_class = command.image_class,
             images = tuple(command.images),
             contexts = command.contexts,
-            context_images = tuple(ctx.rule.attr.contexts[_ImageInputsInfo].images.to_list()),
+            context_images = tuple(depset(transitive = [
+                dependency[_ImageInputsInfo].images
+                for dependency in ctx.rule.attr.contexts
+            ]).to_list()),
         )])
     else:
         transitive = []
