@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T10:10:31.809412+00:00",
+    "updatedAt": "2026-10-21T10:44:03.310773+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25385,10 +25385,19 @@
       "title": "Migrate Docker image construction to rules_img",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-21T07:41:08.242773+00:00",
-      "summary": "The user explicitly requested a future migration of Docker image construction to rules_img, aiming for declared image builds that fit remote build execution. This is a branchless investigation and migration goal; implementation has not begun. Evaluate supported image construction, input declaration, platform behavior, caching and source-to-consumer evidence before claiming an improvement. Existing source qualification remains current and retains its exact input scope.",
-      "nextStep": "Root will scope the migration against the existing image producer and consumer contracts. No immediate implementation or replacement of qualified paths is requested.",
-      "evidence": [],
+      "updatedAt": "2026-10-21T10:44:03.310773+00:00",
+      "summary": "The first rules_img group is published at 312eb320721, replacing basic/alpine, basic/busybox and basic/tmpfile Dockerfiles while retaining the pinned bases. The six archive builds and existing Make source-image smoke passed; independent result verification is pending. The reporter gate exposed misplaced cached-archive test setup and formatting issues; a narrow correction is prepared and the failed result is retained. Runtime and license validation remain with their existing owners. No full migration or performance improvement is claimed.",
+      "nextStep": "Validate the corrected reporter fixture and complete the actual consumer and license gates before extending migration to package-based benchmark images.",
+      "evidence": [
+        {
+          "label": "Published first image group",
+          "url": "https://github.com/tamird/gvisor/commit/312eb3207215e2707c32acb3233531708b836ed8"
+        },
+        {
+          "label": "Actual consumer validation",
+          "url": "https://app.buildbuddy.io/invocation/b5ac5750-aca5-4d6b-b3c5-f64e264466c1"
+        }
+      ],
       "findings": [
         {
           "text": "Current rules_oci 2.3.3 downloads full pinned base layers during analysis even when only source-image contract outputs are requested. The fixed native graph has 25,848,917,719 compressed unique blob bytes: its 40GB request exhausted disk, while the 200GB retry measured about 187.334GB free and passed the capacity preflight. This is a concrete motivation to investigate repository-fetch and analysis costs; it does not establish that rules_img avoids them.",
@@ -25403,7 +25412,83 @@
             }
           ]
         }
-      ]
+      ],
+      "group": "bazel"
+    },
+    {
+      "id": "investigation:go-merge-declarations",
+      "title": "Replace deprecated Go AST package merging",
+      "status": "active",
+      "group": "analysis",
+      "owner": "node_tls_sni",
+      "updatedAt": "2026-10-21T10:41:28.355482+00:00",
+      "summary": "The independent replacement for ast.Package and ast.MergePackageFiles is published at 83e32857808. It collects sorted declarations directly, preserving imports, declaration comments and combined build constraints while retaining legal init functions and generic receiver methods. Remote validation passed with 15 owners and 53 positive records, including compiled multi-file initialization, maintained template consumers and both analyzer architectures. Contributor review of this exact change has been requested; no upstream PR is open.",
+      "nextStep": "Await the contributor decision for the reviewed and qualified commit, then deliver the approved change upstream.",
+      "evidence": [
+        {
+          "label": "Published AST merge replacement",
+          "url": "https://github.com/tamird/gvisor/commit/83e32857808ea0d76b422272475efd3074bc3266"
+        },
+        {
+          "label": "Owning remote validation",
+          "url": "https://app.buildbuddy.io/invocation/f2570450-6bdb-4f78-acd0-b6b500b07f1d"
+        },
+        {
+          "label": "Deprecation-policy followup",
+          "url": "https://github.com/google/gvisor/pull/16085"
+        }
+      ],
+      "findings": []
+    },
+    {
+      "id": "investigation:nogo-export-data",
+      "title": "Use supported Nogo type export data",
+      "status": "active",
+      "group": "analysis",
+      "owner": "hostinet_delivery",
+      "updatedAt": "2026-10-21T10:41:28.355482+00:00",
+      "summary": "The producer and consumer migration is published at 8a90b879f89. Nogo writes supported gcexportdata output from its existing type checks and reads it directly, while retaining compiled archives for binary analyzers. Independent review covers generated and standard-library exports, canonical import identity and target configuration. The prepared remote qualification selects eight normal-mode owners and five race-mode owners; race execution is gated on normal-mode success.",
+      "nextStep": "Verify the normal-mode owning tests and both analyzer architectures, then run the reviewed race-mode subset. Preserve any failure before preparing contributor review.",
+      "evidence": [
+        {
+          "label": "Published Nogo export migration",
+          "url": "https://github.com/tamird/gvisor/commit/8a90b879f890be4e4d2dca56992ae1ab3bea3a1e"
+        },
+        {
+          "label": "Deprecation-policy followup",
+          "url": "https://github.com/google/gvisor/pull/16085"
+        },
+        {
+          "label": "Supported export reader and writer at the pinned x/tools version",
+          "url": "https://github.com/golang/tools/blob/v0.51.0/go/gcexportdata/gcexportdata.go"
+        }
+      ],
+      "findings": []
+    },
+    {
+      "id": "investigation:ipv6-quoted-extension-headers",
+      "title": "Handle IPv6 extension headers in quoted errors",
+      "status": "active",
+      "group": "runtime",
+      "owner": "node_tls_sni",
+      "updatedAt": "2026-10-21T10:41:28.355482+00:00",
+      "summary": "The user requested a separate IPv6 follow-up to #16085. That cleanup preserves the existing NextHeader behavior; it does not introduce a parsing regression. Existing quoted-error and NAT paths assume the transport header begins immediately after the IPv6 base header or handle only an immediate fragment header. Implementation is assigned on fix/ipv6-quoted-extension-headers, with shared iterator reuse and focused NAT regression coverage under design. No corrected source or runtime result is claimed yet.",
+      "nextStep": "Make quoted-error tuple lookup and NAT rewriting agree on the transport protocol and offset after supported extension headers. Preserve valid truncated quotations and first or atomic fragments, reject incomplete headers and non-first fragments, and verify the owning NAT regression before publication.",
+      "evidence": [
+        {
+          "label": "Separate follow-up from the deprecation cleanup",
+          "url": "https://github.com/google/gvisor/pull/16085"
+        },
+        {
+          "label": "Quoted IPv6 error handling",
+          "url": "https://github.com/google/gvisor/blob/37bbffde6725962148a255ed55ef1227bb81890e/pkg/tcpip/network/ipv6/icmp.go#L163"
+        },
+        {
+          "label": "Existing NAT ICMP regression",
+          "url": "https://github.com/google/gvisor/blob/37bbffde6725962148a255ed55ef1227bb81890e/pkg/tcpip/tests/integration/iptables_test.go#L2190"
+        }
+      ],
+      "findings": []
     }
   ]
 }
