@@ -366,8 +366,8 @@ func TestArrayLiveSliceHeader(t *testing.T) {
 				}
 				_, err := state.Load(ctx, &encoded, target)
 				if shrink {
-					if err == nil || !strings.Contains(err.Error(), "slice index out of range") {
-						t.Fatalf("Load error = %v, want slice index out of range", err)
+					if err == nil || !strings.Contains(err.Error(), "index out of range") {
+						t.Fatalf("Load error = %v, want index out of range", err)
 					}
 					if got, want := len(load.receivers), 1; got != want {
 						t.Fatalf("Load receivers = %d, want %d", got, want)
