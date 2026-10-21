@@ -14,7 +14,7 @@
 
 """Image obligations exported from the configured build graph for qualification."""
 
-_ImageArchiveInfo = provider(
+ImageArchiveInfo = provider(
     doc = "An image archive and its configured producer identity.",
     fields = {
         "image": "Canonical image name, architecture and declared archive file.",
@@ -50,7 +50,7 @@ _ImageInputsInfo = provider(
 def _declared_image_archive_impl(ctx):
     archive = ctx.file.archive
     dependency = ctx.attr.archive[DefaultInfo]
-    inherited = ctx.attr.archive[_ImageArchiveInfo].image if _ImageArchiveInfo in ctx.attr.archive else None
+    inherited = ctx.attr.archive[ImageArchiveInfo].image if ImageArchiveInfo in ctx.attr.archive else None
     architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(ctx.attr.architecture, ctx.attr.architecture)
     if inherited != None and (inherited.name != ctx.attr.image or inherited.architecture != architecture):
         fail("archive aliases must preserve the declared image and architecture")
@@ -73,7 +73,7 @@ def _declared_image_archive_impl(ctx):
             files = depset([archive]),
             runfiles = runfiles,
         ),
-        _ImageArchiveInfo(image = struct(
+        ImageArchiveInfo(image = struct(
             name = ctx.attr.image,
             architecture = architecture,
             archive = archive,
@@ -120,10 +120,10 @@ def _image_record(image, pins, indexes):
     }
 
 def _source_image_contracts_impl(target, ctx):
-    if _ImageArchiveInfo in target:
+    if ImageArchiveInfo in target:
         # The archive's build can itself consume images. Those are producer
         # inputs, not additional archives the test is expected to load.
-        images = depset([target[_ImageArchiveInfo].image])
+        images = depset([target[ImageArchiveInfo].image])
         commands = depset()
     elif ImageSourceCommandInfo in target:
         # Context archives can contain images outside this command's selected

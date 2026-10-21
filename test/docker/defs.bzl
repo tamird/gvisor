@@ -11,7 +11,7 @@ load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
-load(":source_image_contracts.bzl", "ImageSourceCommandInfo", "declared_image_archive")
+load(":source_image_contracts.bzl", "ImageArchiveInfo", "ImageSourceCommandInfo", "declared_image_archive")
 
 # Conversion only reads OCI content and writes a compressed Docker archive.
 # Keep it on the ordinary executor used by the completed large-image exports.
@@ -32,35 +32,16 @@ SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
 # with_cfg requires its internal rule to be bound globally for Bazel:
 # https://github.com/fmeum/with_cfg.bzl/blob/a33b1b2d2/with_cfg/private/with_cfg.bzl#L86-L89
 # buildifier: disable=unused-variable
-_amd64_image_archive, _amd64_image_archive_transition = with_cfg(native.filegroup).set(
+amd64_image_archive, _amd64_image_archive_transition = with_cfg(
+    native.alias,
+    extra_providers = [ImageArchiveInfo],
+).set(
     "cpu",
     "k8",
 ).set(
     "platforms",
     [Label("//tools/bazeldefs:linux_amd64")],
 ).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
-
-def amd64_image_archive(name, image, layout, **kwargs):
-    """Preserves the image identity across its AMD64 archive transition.
-
-    Args:
-      name: Public archive target.
-      image: Image name relative to gvisor.dev/images.
-      layout: Native OCI layout assembled into the archive.
-      **kwargs: Archive filegroup inputs and common target attributes.
-    """
-    common = {key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
-    _amd64_image_archive(name = name + "_configured", **kwargs)
-    _amd64_image_archive(name = name + "_layout_configured", srcs = [layout], **common)
-    declared_image_archive(
-        name = name,
-        archive = ":" + name + "_configured",
-        architecture = "amd64",
-        image = image,
-        origin = "native-oci",
-        layout = ":" + name + "_layout_configured",
-        **common
-    )
 
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")

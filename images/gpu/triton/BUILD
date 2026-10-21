@@ -91,6 +91,7 @@ oci_image(
 
 image_outputs(
     name = "image_archive",
+    architecture = "amd64",
     content_tag = True,
     exec_properties = _IMAGE_EXEC_PROPERTIES,
     image = ":image",

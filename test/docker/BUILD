@@ -206,45 +206,35 @@ source_image_archive(
 amd64_image_archive(
     name = "gpu_ollama_client_source_amd64",
     testonly = True,
-    srcs = ["//images/gpu/ollama/client:image_archive"],
-    image = "gpu/ollama/client",
-    layout = "//images/gpu/ollama/client:image_archive_layout",
+    actual = "//images/gpu/ollama/client:image_archive",
     tags = ["manual"],
 )
 
 amd64_image_archive(
     name = "profile_helper_source_amd64",
     testonly = True,
-    srcs = ["//images/benchmarks/profile-helper:image_archive"],
-    image = "benchmarks/profile-helper",
-    layout = "//images/benchmarks/profile-helper:image_archive_layout",
+    actual = "//images/benchmarks/profile-helper:image_archive",
     tags = ["manual"],
 )
 
 amd64_image_archive(
     name = "gpu_ollama_bench_source_amd64",
     testonly = True,
-    srcs = ["//images/gpu/ollama/bench:image_archive"],
-    image = "gpu/ollama/bench",
-    layout = "//images/gpu/ollama/bench:image_archive_layout",
+    actual = "//images/gpu/ollama/bench:image_archive",
     tags = ["manual"],
 )
 
 amd64_image_archive(
     name = "gpu_triton_source_amd64",
     testonly = True,
-    srcs = ["//images/gpu/triton:image_archive"],
-    image = "gpu/triton",
-    layout = "//images/gpu/triton:image_archive_layout",
+    actual = "//images/gpu/triton:image_archive",
     tags = ["manual"],
 )
 
 amd64_image_archive(
     name = "gpu_ollama_small_source_amd64",
     testonly = True,
-    srcs = ["//images/gpu/ollama/bench/small:image_archive"],
-    image = "gpu/ollama/bench/small",
-    layout = "//images/gpu/ollama/bench/small:image_archive_layout",
+    actual = "//images/gpu/ollama/bench/small:image_archive",
     tags = ["manual"],
 )
 

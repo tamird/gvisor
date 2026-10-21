@@ -2,9 +2,11 @@
 
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
+load("//test/docker:source_image_contracts.bzl", "declared_image_archive")
+load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "pkg_tar")
 
-def image_outputs(name, image, content_tag = False, exec_properties = {}):
+def image_outputs(name, image, content_tag = False, exec_properties = {}, architecture = None):
     """Exposes one image per images/<path> package to tests and Make.
 
     Args:
@@ -12,6 +14,7 @@ def image_outputs(name, image, content_tag = False, exec_properties = {}):
       image: The package's oci_image target.
       content_tag: Include the immutable image digest tag before latest.
       exec_properties: Resources for materializing the Docker archive.
+      architecture: Fixed image architecture, or None for the configured CPU.
     """
     package = native.package_name()
     repo_tags = ["gvisor.dev/%s:latest" % package]
@@ -34,18 +37,21 @@ def image_outputs(name, image, content_tag = False, exec_properties = {}):
         tags = ["manual"],
     )
 
-    # Qualification joins this exact configured layout to its stock archive.
     native.filegroup(
-        name = name + "_layout",
-        srcs = [image],
-        tags = ["manual"],
-        visibility = ["//test/docker:__pkg__"],
-    )
-
-    native.filegroup(
-        name = name,
+        name = name + "_tarball",
         srcs = [":load_image"],
         output_group = "tarball",
+        tags = ["manual"],
+    )
+
+    # Make contexts and Docker consumers share this configured identity.
+    declared_image_archive(
+        name = name,
+        archive = ":" + name + "_tarball",
+        architecture = architecture if architecture != None else select_arch(amd64 = "amd64", arm64 = "arm64"),
+        image = package.removeprefix("images/"),
+        origin = "native-oci",
+        layout = image,
         tags = ["manual"],
         visibility = ["//test/docker:__pkg__"],
     )

@@ -21,6 +21,8 @@ bzl_library(
     srcs = ["oci.bzl"],
     visibility = ["//images:__subpackages__"],
     deps = [
+        "//test/docker:source_image_contracts_bzl",
+        "//tools:arch_bzl",
         "//tools:defs_bzl",
         "@rules_oci//oci:defs",
         "@rules_pkg//pkg:bzl_srcs",
