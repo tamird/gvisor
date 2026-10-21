@@ -1,0 +1,17 @@
+# Preserve the Docker recipe's ARM-compatible LuaJIT API and header fixes.
+
+--- a/src/hdr_histogram.c
++++ b/src/hdr_histogram.c
+@@ -10 +9,0 @@
+-#include <x86intrin.h>
+--- a/src/script.c
++++ b/src/script.c
+@@ -30 +30 @@
+-static const struct luaL_reg addrlib[] = {
++static const struct luaL_Reg addrlib[] = {
+@@ -36 +36 @@
+-static const struct luaL_reg statslib[] = {
++static const struct luaL_Reg statslib[] = {
+@@ -42 +42 @@
+-static const struct luaL_reg threadlib[] = {
++static const struct luaL_Reg threadlib[] = {

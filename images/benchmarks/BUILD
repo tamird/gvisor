@@ -158,3 +158,59 @@ image_outputs(
     image = ":hackbench_image",
     image_name = "benchmarks/hackbench",
 )
+
+# The embedded Lua module is discovered with dlsym, so wrk2 uses the shared
+# loader/libc layer rather than a fully static executable. LuaJIT and OpenSSL
+# are linked into the binary; only math and exception unwinding remain here.
+package_layer(
+    name = "wrk2_runtime_layer",
+    members = [
+        "./lib/{triplet}/libm.so.6",
+        "./lib/{triplet}/libgcc_s.so.1",
+        "./usr/share/doc/libgcc-s1",
+        "./usr/share/doc/gcc-12-base/copyright",
+    ],
+    packages = [
+        # The libgcc-s1 documentation link resolves to this notice.
+        "@helper_image_packages//gcc-12-base:data",
+        # Math functions used by wrk2 and LuaJIT; libc/loader are shared below.
+        "@helper_image_packages//libc6:data",
+        # LuaJIT's Linux exception unwinder.
+        "@helper_image_packages//libgcc-s1:data",
+    ],
+)
+
+image_layer(
+    name = "wrk2_layer",
+    srcs = {
+        "/usr/bin/wrk2": "@wrk2//:wrk2",
+        "/usr/share/doc/wrk2/LICENSE": "@wrk2//:LICENSE",
+        "/usr/share/doc/wrk2/NOTICE": "@wrk2//:NOTICE",
+        "/usr/share/doc/luajit/COPYRIGHT": "@luajit//:COPYRIGHT",
+        "/usr/share/doc/openssl/LICENSE.txt": "@openssl//:LICENSE.txt",
+        "/usr/share/doc/zlib/LICENSE": "@zlib//:LICENSE",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/bin/wrk2": file_metadata(mode = "0755")},
+)
+
+image_manifest(
+    name = "wrk2_image",
+    base = "//images:helper_base",
+    cmd = ["/usr/bin/wrk2"],
+    layers = [
+        "//images:helper_coreutils_runtime",
+        ":wrk2_runtime_layer",
+        ":wrk2_layer",
+    ],
+    tags = ["manual"],
+    # Match the Linux event loop, executable and selected package architecture.
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+image_outputs(
+    name = "wrk2",
+    image = ":wrk2_image",
+    image_name = "benchmarks/wrk2",
+)

@@ -58,6 +58,18 @@ layer, adding only `sleep`, the static benchmark binary, and its license.
 The image is available as `//images/benchmarks:hackbench_archive`; Make uses
 `hackbench_context` under the existing `benchmarks/hackbench` name.
 
+## wrk2 image
+
+The HTTP benchmark uses the recipe's pinned wrk2 and LuaJIT sources, compiled
+with the selected C toolchain. LuaJIT's host generators retain the target
+architecture while its embedded Lua module is compiled from portable C data.
+The image shares the helper base and C runtime, adding only the math and
+unwind libraries required by the benchmark. Dynamic symbol lookup for the
+embedded module remains available; no compiler or package manager is shipped.
+
+`//images/benchmarks:wrk2_archive` and `wrk2_context` preserve the existing
+`benchmarks/wrk2` image name and Kubernetes benchmark arguments.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.
