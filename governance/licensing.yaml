@@ -427,23 +427,6 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
-  - dependency: iperf
-    license:
-      - FSFUL
-      - FSFULLR
-      - GPL-2.0-or-later
-      - GPL-3.0-or-later
-      - ISC
-      - LGPL-2.0-or-later
-      - NCSA
-      - X11
-    exception_rationale: >-
-      Iperf is a standalone benchmark executable, not linked into gVisor.
-      Its pinned source has NCSA and ISC grants and bundled LGPL getopt;
-      the image retains their notices and the LGPL 2.1 license text.
-      The archive also contains unused Autotools inputs under GNU terms
-      with Autoconf exceptions, FSF unlimited-copying grants and X11
-      terms. These build scripts are neither executed nor packaged.
   - dependency: kythe_release
     license:
       - Apache-2.0

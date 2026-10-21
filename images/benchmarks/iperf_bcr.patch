@@ -1,0 +1,21 @@
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -3,6 +3,8 @@
+ load("@rules_license//rules:license.bzl", "license")
+-
++
+ package(default_applicable_licenses = [":license"])
++
++exports_files(["LICENSE"])
+-
++
+ license(
+     name = "license",
+@@ -13,6 +15,7 @@
+ cc_binary(
+     name = "iperf3",
+     srcs = ["src/main.c"],
++    features = ["fully_static_link"],
+     visibility = ["//visibility:public"],
+     deps = [":libiperf"],
+ )
