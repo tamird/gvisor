@@ -56,7 +56,7 @@ python3 update-status.py
 ```
 
 The scheduled [Refresh work map workflow](https://github.com/tamird/gvisor/actions/workflows/work-map.yml)
-is configured for every 30 minutes (GitHub may delay or omit scheduled jobs) and also supports manual
+is configured for every 10 minutes (GitHub may delay or omit scheduled jobs) and also supports manual
 dispatch. It uses the repository's `GITHUB_TOKEN` to read public metadata, then
 validates it with the unchanged client validator in `metadata-preflight.mjs`.
 Only a complete, valid `github-status.json` is committed. If a site update
@@ -64,10 +64,13 @@ lands during collection, the workflow checks out that revision and collects
 again, up to three attempts. It never merges a snapshot collected against an
 older registry or forces a push. Continued site changes defer collection to
 the next scheduled refresh; authentication and unchanged-head push failures
-remain errors. Scheduled and manual runs share one concurrency group. The
-token never reaches the browser. Its commit
+remain errors. Scheduled and manual runs share one concurrency group. During active
+owner monitoring, check snapshot age at the same ten-minute cadence; if stale
+and no refresh is active, dispatch this workflow once. This uses the existing
+collector and does not create a second scheduled monitor. The token never reaches
+the browser. Its commit
 explicitly requests the existing Pages build because token-authored pushes do
-not trigger Pages builds automatically. Two scheduled builds per hour stay
+not trigger Pages builds automatically. Six scheduled builds per hour stay
 below Pages' soft ten-build limit; manual dispatches and source publications
 also consume that allowance. Failed collection/publication keeps the previous
 snapshot visible with its original timestamp; workflow failures are visible at
