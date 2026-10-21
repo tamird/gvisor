@@ -174,7 +174,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
-  { id: "maintainer-triaged", owner: "maintainer", title: "Triaged external follow-up" },
+  { id: "maintainer-triaged", owner: "maintainer", title: "Awaiting maintainer follow-up" },
   { id: "maintainer-response", owner: "maintainer", title: "Review follow-up" },
   { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
   { id: "maintainer-import-label", owner: "maintainer", title: "Needs import label" },

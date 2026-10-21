@@ -382,7 +382,7 @@ test('retained triaged reasons consistently move to external follow-up without r
   assert.equal(triaged.length, 1); assert.equal(triaged[0].id, 'maintainer-triaged');
   assert.equal(triaged[0].entries.length, 3);
   const text = vm.runInContext('attentionText(attentionGroups(sourcesInput, "tamird"), registryInput.meta.updatedAt)', context);
-  assert.match(text, /Needs maintainer attention: Triaged external follow-up/);
+  assert.match(text, /Needs maintainer attention: Awaiting maintainer follow-up/);
   assert.ok(!text.includes('Agent work'));
   assert.equal(text.split('https://').length - 1, 3);
   const elements = Object.fromEntries(['show-resolved', 'state-filters', 'all-reasons', 'legacy-state-filter',
