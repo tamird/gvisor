@@ -5,6 +5,7 @@
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
+# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -1554,6 +1555,16 @@
   commit: 56172d41b117cc2c2f99f65fe0a790c8d7d7ea66
   sha256: d728ff392fc5b6f676a30c36e9d0a5b85f6f2e06b4ebbb121c27d965cbdffa11
   license: MIT
+- dependency: iperf
+  version: https://github.com/esnet/iperf/releases/download/3.18/iperf-3.18.tar.gz
+  retrieved: "2026-10-21"
+  commit: 2a2984488d6de8f7a2d1f5938e03ca7be57e227c
+  sha256: c0618175514331e766522500e20c94bfb293b4424eb27d7207fb427b88d20bab
+  license:
+    - BSD-3-Clause
+    - BSD-3-Clause-LBNL
+    - HPND
+    - MIT
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"
@@ -1612,6 +1623,12 @@
   commit: 55f93686c01528224f448c19128836e7df245f72
   sha256: b8cb0ef2dd7f57f18933997c9934bb1fa962594f701cd5a8d3c2c80541559372
   license: MIT
+- dependency: openssl
+  version: https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz
+  retrieved: "2026-10-21"
+  commit: db2ac4f6ebd8f3d7b2a60882992fbea1269114e2
+  sha256: 777cd596284c883375a2a7a11bf5d2786fc5413255efab20c50d6ffe6d020b7e
+  license: Apache-2.0
 - dependency: platforms
   version: https://github.com/bazelbuild/platforms/releases/download/1.1.0/platforms-1.1.0.tar.gz
   retrieved: "2026-09-25"

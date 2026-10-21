@@ -16,6 +16,8 @@ bazel_dep(name = "tar.bzl", version = "0.10.4")
 bazel_dep(name = "rules_cc", version = "0.2.22")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
+bazel_dep(name = "iperf", version = "3.18.0")
+bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
 
 # gRPC's older minimum imports a removed Google APIs extension repository.
 bazel_dep(name = "envoy_api", version = "0.0.0-20260130-84e8436")
@@ -43,6 +45,20 @@ single_version_override(
         "//tools:rules_go_export.patch",
     ],
     version = "0.63.0",
+)
+
+# Link iperf3 statically for the helper image and export its license text.
+single_version_override(
+    module_name = "iperf",
+    patch_strip = 1,
+    patches = ["//images/benchmarks:iperf_static_binary_license.patch"],
+)
+
+# Export the linked OpenSSL license text for inclusion in the image.
+single_version_override(
+    module_name = "openssl",
+    patch_strip = 1,
+    patches = ["//images/benchmarks:openssl_license.patch"],
 )
 
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
