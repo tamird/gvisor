@@ -71,3 +71,18 @@ go_test(
         "//pkg/waiter",
     ],
 )
+
+# Common measurement-only fixture for the receive-list subtree.
+go_test(
+    name = "udp_test",
+    size = "small",
+    srcs = ["codec_queue_benchmark_test.go"],
+    embed = [":udp"],
+    deps = [
+        "//pkg/buffer",
+        "//pkg/state",
+        "//pkg/tcpip",
+        "//pkg/tcpip/header",
+        "//pkg/tcpip/stack",
+    ],
+)
