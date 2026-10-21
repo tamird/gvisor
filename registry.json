@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T17:09:26.035859+00:00",
+    "updatedAt": "2026-10-21T17:46:07.311350+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -9328,11 +9328,11 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15670",
       "status": "open",
-      "updatedAt": "2026-10-21T03:55:05.364810+00:00",
-      "summary": "The October 21 exact-head status read confirms that the remaining failure is Google internal CI after successful import into its internal review system. The status provides only an internal target, and the complete public import inventory has no matching public PR/log. This is an unavailable internal failure detail, not an identified public source defect. Current 923b3b3e29 remains approved; the unresolved inline observation requests no amendment. Supported-GPU execution remains separately unverified.\n\nThe rebased current head received Etienne’s approval. His unresolved inline observation says “Well this is... a thing”, followed13 seconds later by approval; it contains no requested source change. The previously disclosed lack of supported-GPU execution remains a limitation.\n\nThe published mechanical rebase is at 923b3b3e2940 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThis independent proposal on current upstream extracts the declared CUDA helper builds, shared source-context archive and Make staging already used by the qualification integration. The repository Go SDK builds static helpers for both architectures. Both CUDA Make entrypoints stage those helpers before computing image tags. It supplies the missing upstream staging prerequisite for the later Ollama cleanup.\n\nInitial validation 13fac passed both architecture context/static-ELF checks, both actual Make entrypoints and canonical tag comparison. Its two new analyzer owners failed on existing CUDA helper issues, including ExitCode holding a mutex while calling Done. Amended source e0b99d0c6 applies the two previously qualified helper corrections. Corrected continuation aa027674 passes both architecture context/static-ELF checks, both actual Make entrypoints and canonical tags, and both analyzer owners with four source-bound architecture findings. Original source/native/archive joins and saved-result review are closed. No Docker image construction or GPU execution is claimed.\n\nThe older 52f47d076 shared-containerd proposal remains preserved. The contributor approved the proposal with the requested ExitCode refinement: copy c.started under its mutex, unlock, then branch on the local value. The prior branch already read the field under lock. Public amendment eba5e3c83 contains only that two-file clarification. Its source and run 9826d598 are independently verified: both fresh analyzer owners pass with four source-bound architecture findings. Earlier context and Make results remain pinned to e0b99d0c6. The authorized independent proposal is now PR #15670 at exact eba5e3c83: one commit and eight files, with the reviewed description and attribution verified. GitHub reports it mergeable. At the 15:01 UTC observation, all fourteen visible checks are complete: ten successful and four skipped. No maintainer feedback or landing is recorded. The existing watcher owns subsequent checks and review events.",
+      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
+      "summary": "The 17:34 UTC snapshot records a new internal Copybara failure for a run created at 17:12:43 UTC, with no public diagnostic URL. Current 923b3b3e29 remains approved, the sole unresolved inline requests no amendment, and no new public source failure is established. Await accessible internal evidence or substantive maintainer feedback; supported-GPU execution remains unverified.\n\nThe rebased current head received Etienne’s approval. His unresolved inline observation says “Well this is... a thing”, followed13 seconds later by approval; it contains no requested source change. The previously disclosed lack of supported-GPU execution remains a limitation.\n\nThe published mechanical rebase is at 923b3b3e2940 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThis independent proposal on current upstream extracts the declared CUDA helper builds, shared source-context archive and Make staging already used by the qualification integration. The repository Go SDK builds static helpers for both architectures. Both CUDA Make entrypoints stage those helpers before computing image tags. It supplies the missing upstream staging prerequisite for the later Ollama cleanup.\n\nInitial validation 13fac passed both architecture context/static-ELF checks, both actual Make entrypoints and canonical tag comparison. Its two new analyzer owners failed on existing CUDA helper issues, including ExitCode holding a mutex while calling Done. Amended source e0b99d0c6 applies the two previously qualified helper corrections. Corrected continuation aa027674 passes both architecture context/static-ELF checks, both actual Make entrypoints and canonical tags, and both analyzer owners with four source-bound architecture findings. Original source/native/archive joins and saved-result review are closed. No Docker image construction or GPU execution is claimed.\n\nThe older 52f47d076 shared-containerd proposal remains preserved. The contributor approved the proposal with the requested ExitCode refinement: copy c.started under its mutex, unlock, then branch on the local value. The prior branch already read the field under lock. Public amendment eba5e3c83 contains only that two-file clarification. Its source and run 9826d598 are independently verified: both fresh analyzer owners pass with four source-bound architecture findings. Earlier context and Make results remain pinned to e0b99d0c6. The authorized independent proposal is now PR #15670 at exact eba5e3c83: one commit and eight files, with the reviewed description and attribution verified. GitHub reports it mergeable. At the 15:01 UTC observation, all fourteen visible checks are complete: ten successful and four skipped. No maintainer feedback or landing is recorded. The existing watcher owns subsequent checks and review events.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Approved current head; internal CI failure has no public diagnostic",
+        "disposition": "Approved current head; new internal failure has no public diagnostic",
         "sourceHead": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
         "reviewedAt": "2026-10-12T15:01:00.049846+00:00",
         "nextAction": "Follow internal-import progress and substantive maintainer feedback. No matching public import or accessible failure log is exposed; do not infer a source repair or repeated rebase. Preserve the supported-GPU execution limitation and the approval-associated observation without inventing an amendment request.",
@@ -9347,7 +9347,7 @@
           "https://github.com/google/gvisor/pull/15670#issuecomment-6274687495"
         ],
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-21T03:52:32.145880+00:00",
+        "observedAt": "2026-10-21T17:34:29.563394+00:00",
         "reviewDecision": "APPROVED",
         "attentionDispositions": [
           {
@@ -10916,29 +10916,30 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/state-codec-consolidation",
-      "head": "f65f0db5ebab296bfc82add78817451328d53d58",
+      "head": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
       "title": "Integrate typed arrays into the state rewrite",
-      "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58",
+      "url": "https://github.com/tamird/gvisor/commit/c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
       "group": "runtime",
-      "status": "Agent work: contributor requested revision",
-      "updatedAt": "2026-10-21T17:09:26.035859+00:00",
-      "summary": "The signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. The contributor requested revision of this exact proposal: quantify final-versus-original-baseline performance and explain the added code, design motivation and review structure. Root owns the revision and Node is reusing the existing matched harness for the direct baseline comparison. Upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
+      "status": "Agent work: destination-driven restore design review",
+      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
+      "summary": "The contributor requested another architecture review: restore currently selects handling from encoded kinds even when the destination Go type is known. The owner is examining whether the existing common path can make that contract simpler. This is agent work; no contributor approval or new decision is pending.\n\nThe published c774ad4 revision removes 272 net obsolete test/BUILD lines and restores the original registration tests without changing production behavior. Its four normal owners and two race owners pass; the two original lazy-registration race skips remain explicit. The direct comparison against the original shared prerequisite baseline is accepted: 12 balanced blocks show save/load medians 4.53%/7.92% lower for the adopted array fixture and 10.68%/13.88% lower for the UDP queue fixture. Each native benchstat time comparison has p<0.001; these are scoped serialization measurements, not whole-application startup claims. Wire bytes are unchanged.\n\nPreserved proposal history:\n\nThe signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. The contributor requested revision of this exact proposal: quantify final-versus-original-baseline performance and explain the added code, design motivation and review structure. Root owns the revision and Node is reusing the existing matched harness for the direct baseline comparison. Upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
       "refinement": {
         "before": {
           "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b"
         },
         "after": {
-          "head": "f65f0db5ebab296bfc82add78817451328d53d58"
+          "head": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda"
         }
       },
       "followup": {
         "owner": "root",
-        "disposition": "Contributor requested quantified comparison and explanation",
-        "sourceHead": "f65f0db5ebab296bfc82add78817451328d53d58",
-        "observedAt": "2026-10-21T17:09:26.035859+00:00",
-        "nextAction": "Complete the existing matched original-baseline versus final comparison and revise the design explanation and review guidance. Preserve the exact f65 source and prior accepted evidence; no contributor decision is pending while this work is underway.",
+        "disposition": "Contributor challenged destination-type restore architecture",
+        "sourceHead": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
+        "observedAt": "2026-10-21T17:44:40.987622+00:00",
+        "nextAction": "Address the destination-type versus encoded-kind design question and revise the explanation. Preserve accepted correctness and scoped baseline measurements; request contributor review only when the revised proposal is concrete.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58",
+          "https://github.com/tamird/gvisor/commit/c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
+          "https://app.buildbuddy.io/invocation/7dbad531-e117-472b-b348-7c1a1d999e82",
           "https://github.com/google/gvisor/pull/15648",
           "https://github.com/google/gvisor/pull/15814"
         ]
@@ -10995,11 +10996,19 @@
         {
           "label": "Final executable-identity applicability",
           "url": "https://app.buildbuddy.io/invocation/bbfbe3d2-9ef5-418b-b9d1-82c419bdc9ef"
+        },
+        {
+          "label": "Revised source after test cleanup",
+          "url": "https://github.com/tamird/gvisor/commit/c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda"
+        },
+        {
+          "label": "Direct original-baseline comparison",
+          "url": "https://app.buildbuddy.io/invocation/7dbad531-e117-472b-b348-7c1a1d999e82"
         }
       ],
       "contributorChangesRequested": {
-        "head": "f65f0db5ebab296bfc82add78817451328d53d58",
-        "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58"
+        "head": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
+        "url": "https://github.com/tamird/gvisor/commit/c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda"
       }
     },
     {
@@ -16478,17 +16487,20 @@
       "title": "Build the integration test C image with rules_img",
       "url": "https://github.com/tamird/gvisor/commit/55f4bfaeaa583faaa3e6902c4e95765842562695",
       "group": "bazel",
-      "status": "Pinned libelf1 download blocks validation",
-      "updatedAt": "2026-10-21T17:05:28.764185+00:00",
-      "summary": "The reviewed migration builds all nine existing C helpers from their unchanged sources and declares the GNU runtime, shell/network utilities, legacy firewall entry points and nonroot account. The two previously blocked pinned endpoints recovered to HTTP 200 at 16:54 UTC. The unchanged 55f4bfae gate resumed once as 02d85350: dependency preparation and canonical buildifier passed, then archive analysis failed because the pinned libelf1_0.186-1ubuntu0.1_amd64.deb returned HTTP 503. The complete result retains source identity and native exit 1, with zero configured build owners and no image outputs. No archive, runtime or catalog acceptance is claimed.\n\nEarlier Ubuntu package/index HTTP 502/503 failures remain preserved separately. The preparation-reporting correction does not repair those results. The owner will establish availability of the exact new artifact before another build attempt; actual image consumers and canonical catalog validation remain pending. The rewinddir allocation fix is independently qualified and delivered as PR #16101.",
+      "status": "Agent validation: exact-package mirror recovery",
+      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
+      "summary": "All nine unchanged C helpers now have retained build outputs for AMD64 and ARM64. The compile-only qualification has 18 exact default-output/hash joins and verifies each ELF architecture and static linkage. This does not establish image, Make, runtime or license correctness.\n\nThe latest image build at exact 55f4bfae still failed on the pinned libelf1 snapshot URL (HTTP 503; subsequent HEAD 500). Ubuntu’s canonical archive now serves that exact package with the same locked SHA256. A peer-reviewed, qualification-only Bazel downloader configuration redirects only the two observed failing AMD64 .deb URLs to their canonical archive, retaining the original URL as fallback. Source indices, package versions, lock identities and all owning checks remain unchanged. The existing image recovery e4fccb3f was submitted once at 17:44 UTC through the maintained collector. Actual consumers and canonical catalog validation remain pending.\n\nEarlier failures remain preserved; the independently delivered rewinddir allocation fix is PR #16101.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Exact pinned libelf1 artifact unavailable; execution closed",
+        "disposition": "Compiler evidence complete; same-source image recovery underway",
         "sourceHead": "55f4bfaeaa583faaa3e6902c4e95765842562695",
-        "observedAt": "2026-10-21T17:05:28.764185+00:00",
-        "nextAction": "Establish availability of the exact libelf1 artifact before any same-source build retry. Preserve the failed analysis; actual consumer/runtime and catalog qualification remain pending.",
+        "observedAt": "2026-10-21T17:44:40.987622+00:00",
+        "nextAction": "Collect the existing mirror recovery, then validate actual consumers and the canonical package catalog. Preserve the snapshot failure and compile-only scope.",
         "evidence": [
-          "https://app.buildbuddy.io/invocation/02d85350-227e-4078-9e6f-5556465aca4d"
+          "https://github.com/tamird/gvisor/commit/55f4bfaeaa583faaa3e6902c4e95765842562695",
+          "https://app.buildbuddy.io/invocation/5afe0295-239f-4469-9d2a-eedf93f04318",
+          "https://app.buildbuddy.io/invocation/02d85350-227e-4078-9e6f-5556465aca4d",
+          "https://app.buildbuddy.io/invocation/e4fccb3f-727f-43b6-b681-db34528aec85"
         ]
       },
       "evidence": [
@@ -16507,6 +16519,14 @@
         {
           "label": "Exact pinned libelf1 artifact returning HTTP 503",
           "url": "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_amd64.deb"
+        },
+        {
+          "label": "Both-architecture C helper outputs and static ELF checks",
+          "url": "https://app.buildbuddy.io/invocation/5afe0295-239f-4469-9d2a-eedf93f04318"
+        },
+        {
+          "label": "Same-source recovery with exact package mirrors",
+          "url": "https://app.buildbuddy.io/invocation/e4fccb3f-727f-43b6-b681-db34528aec85"
         }
       ]
     },
@@ -16588,6 +16608,104 @@
         }
       ],
       "number": 16101
+    },
+    {
+      "id": "pr:15814",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15814,
+      "head": "344906981e5d3bdb70d4e6366e5d261adcf6c510",
+      "title": "Verify registered state types in race builds only",
+      "url": "https://github.com/google/gvisor/pull/15814",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-21T17:32:58.496516+00:00",
+      "summary": "Existing external prerequisite for the state codec proposal. The direct provider read confirms Etienne Perot’s PR remains open; no merge is recorded. Its source is maintained by the upstream author. The ordinary snapshot tracks actual CI, feedback and landing state so the dependent proposal is not released from a stale prose-only prerequisite.",
+      "followup": {
+        "owner": "maintainers",
+        "disposition": "External state prerequisite remains open",
+        "sourceHead": "344906981e5d3bdb70d4e6366e5d261adcf6c510",
+        "observedAt": "2026-10-21T17:32:58.496516+00:00",
+        "nextAction": "Await the upstream author and maintainer review or landing; no delegated source amendment, comment or merge action is authorized.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15814"
+        ]
+      },
+      "ref": "ckpt-type-reg"
+    },
+    {
+      "id": "branch:rules-img-hey",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-hey",
+      "head": "6e0276becd22261ab9fd2f0422229079084afb8c",
+      "title": "Build the hey image from pinned Go source",
+      "url": "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c",
+      "group": "bazel",
+      "status": "Runtime validation underway; catalog passed",
+      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
+      "summary": "The migration embeds the pinned upstream hey command through a scoped Gazelle library and repository Go toolchain, then assembles it with the existing lean helper base. The stable image name and Make context interface are preserved. Initial visibility and buildifier failures remain retained. The current source adds only the scoped lint annotation to the corrected canonical main-repository visibility. Canonical catalog Fetch/Verify passed on the same graph; the unchanged runtime fixture is now running on the final source. Actual HTTP/TLS requests, parser behavior, archive identity and Make reloads remain pending; no TLS trust-store verification is claimed.",
+      "followup": {
+        "owner": "node_tls_sni",
+        "disposition": "Runtime validation underway; catalog passed",
+        "sourceHead": "6e0276becd22261ab9fd2f0422229079084afb8c",
+        "observedAt": "2026-10-21T17:44:40.987622+00:00",
+        "nextAction": "Collect the current runtime invocation and reconcile its exact source with the canonical catalog result before contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Current published implementation",
+          "url": "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c"
+        },
+        {
+          "label": "Current unchanged fixture runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/3434ef66-59df-4d0d-88d2-d7c8b1cebfb6"
+        },
+        {
+          "label": "Canonical catalog qualification",
+          "url": "https://app.buildbuddy.io/invocation/543a9b91-1c0d-4fc5-aeb3-7cb25218b583"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-iperf-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-iperf-image",
+      "head": "13830a48512a4bb6e104ad798f1dfa2744d4ad33",
+      "title": "Build the iperf image from pinned source",
+      "url": "https://github.com/tamird/gvisor/commit/13830a48512a4bb6e104ad798f1dfa2744d4ad33",
+      "group": "bazel",
+      "status": "Agent validation: exact-package mirror recovery",
+      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
+      "summary": "The migration builds pinned iperf source for the existing grouped image and Make interface. The first runtime qualification passed preparation and buildifier but failed AMD image analysis on the pinned base-files package snapshot URL (HTTP 502). Partial compilation was logged, but no binary/archive identity or runtime coverage was retained. The canonical Ubuntu archive serves the exact locked bytes; the existing downloader configuration permits one bounded same-source recovery. Catalog verification remains a separate owning result. The final source 13830a48 only reorders an existing policy block for canonical Verify; image source remains byte-identical to 97d0.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "Agent validation: exact-package mirror recovery",
+        "sourceHead": "13830a48512a4bb6e104ad798f1dfa2744d4ad33",
+        "observedAt": "2026-10-21T17:44:40.987622+00:00",
+        "nextAction": "Complete the reviewed same-source mirror recovery and canonical catalog verification; preserve the failed runtime and all original target obligations.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/97d0c0b052d62605d105c56b264e2ba94f11cf35"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Current published implementation",
+          "url": "https://github.com/tamird/gvisor/commit/97d0c0b052d62605d105c56b264e2ba94f11cf35"
+        },
+        {
+          "label": "Preserved pinned-package runtime failure",
+          "url": "https://app.buildbuddy.io/invocation/6af6f3ed-a2b9-41c0-8aef-665848320798"
+        },
+        {
+          "label": "Policy-order correction on unchanged image source",
+          "url": "https://github.com/tamird/gvisor/commit/13830a48512a4bb6e104ad798f1dfa2744d4ad33"
+        }
+      ]
     }
   ],
   "edges": [
@@ -18079,7 +18197,7 @@
       "from": "pr:15648",
       "to": "branch:diagnostics/state-integrated-array-proposal",
       "type": "depends_on",
-      "reason": "The complete state proposal retains the existing Nogo source-order prerequisite in both comparison arms. The separate startup prerequisite #15814 remains explicit in the proposal details.",
+      "reason": "The complete state proposal retains the existing Nogo source-order prerequisite in its source ancestry and both comparison arms.",
       "evidence": [
         "https://github.com/google/gvisor/pull/15648",
         "https://github.com/google/gvisor/pull/15814"
@@ -18582,6 +18700,29 @@
       "type": "depends_on",
       "reason": "Hackbench reuses the declared APT machinery and shared lean GNU runtime introduced by the native Go image proposal. Its extraction refactor preserves the qualified helper filesystem.",
       "evidence": "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
+    },
+    {
+      "from": "pr:15814",
+      "to": "branch:diagnostics/state-integrated-array-proposal",
+      "type": "depends_on",
+      "reason": "The complete state proposal retains the startup prerequisite in its source ancestry and comparison baseline.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15814"
+      ]
+    },
+    {
+      "from": "branch:native-go-images",
+      "to": "branch:rules-img-hey",
+      "type": "depends_on",
+      "reason": "The implementation reuses this existing image foundation and its shared build/runtime interfaces.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c"
+    },
+    {
+      "from": "branch:rules-img-hackbench-image",
+      "to": "branch:rules-img-iperf-image",
+      "type": "depends_on",
+      "reason": "The implementation reuses this existing image foundation and its shared build/runtime interfaces.",
+      "evidence": "https://github.com/tamird/gvisor/commit/97d0c0b052d62605d105c56b264e2ba94f11cf35"
     }
   ],
   "investigations": [
