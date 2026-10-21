@@ -35,49 +35,81 @@ func dataValue(value wire.Object) wire.Object {
 	}
 }
 
-// restoreValue owns every encoded-kind operation, for generated fields,
-// manual Source calls, graph objects and dynamic interface/map storage alike.
+// restoreValue selects the operation from the destination's Go type and checks
+// that the encoded value has the corresponding wire representation. Generated
+// fields, manual loaders and dynamically allocated graph objects share this path.
 func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value, encoded wire.Object) {
-	switch value := dataValue(encoded).(type) {
-	case wire.Nil:
+	value := dataValue(encoded)
+	if _, ok := value.(wire.Nil); ok {
 		return
-	case *wire.Ref:
-		ds.restoreReference(target, value)
-	case wire.Bool:
-		target.SetBool(bool(value))
-	case wire.Int:
-		target.SetInt(int64(value))
-		checkInt(int64(value), target.Int())
-	case wire.Uint:
-		target.SetUint(uint64(value))
-		checkUint(uint64(value), target.Uint())
-	case wire.Float32:
-		target.SetFloat(float64(value))
-	case wire.Float64:
-		target.SetFloat(float64(value))
-		checkFloat(float64(value), target.Float())
-	case *wire.Complex64:
-		target.SetComplex(complex128(*value))
-	case *wire.Complex128:
-		target.SetComplex(complex128(*value))
-		checkComplex(complex128(*value), target.Complex())
-	case *wire.String:
-		target.SetString(string(*value))
-	case *wire.Slice:
-		if objectID(value.Ref.Root) != 0 {
-			ds.assignSlice(target, value)
-		}
-	case wire.Array:
-		ds.restoreArray(ods, target, value)
-	case *wire.Map:
-		ds.restoreMap(ods, target, value)
-	case *wire.Struct:
-		ds.decodeStruct(ods, target, value)
-	case *wire.Interface:
-		ds.decodeInterface(ods, target, value)
-	default:
-		Failf("unknown object %#v for %q", encoded, target.Type().Name())
 	}
+	if wrapped, ok := value.(*wire.Interface); ok {
+		// Manual loaders may unwrap an interface into its concrete type.
+		// decodeInterface checks assignability at that boundary.
+		ds.decodeInterface(ods, target, wrapped)
+		return
+	}
+	switch target.Kind() {
+	case reflect.Bool:
+		target.SetBool(bool(requireWire[wire.Bool](value)))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v := int64(requireWire[wire.Int](value))
+		target.SetInt(v)
+		checkInt(v, target.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		v := uint64(requireWire[wire.Uint](value))
+		target.SetUint(v)
+		checkUint(v, target.Uint())
+	case reflect.Float32, reflect.Float64:
+		if v, ok := value.(wire.Float32); ok {
+			target.SetFloat(float64(v))
+		} else {
+			v := float64(requireWire[wire.Float64](value))
+			target.SetFloat(v)
+			checkFloat(v, target.Float())
+		}
+	case reflect.Complex64, reflect.Complex128:
+		if v, ok := value.(*wire.Complex64); ok {
+			target.SetComplex(complex128(*v))
+		} else {
+			v := complex128(*requireWire[*wire.Complex128](value))
+			target.SetComplex(v)
+			checkComplex(v, target.Complex())
+		}
+	case reflect.String:
+		target.SetString(string(*requireWire[*wire.String](value)))
+	case reflect.Pointer:
+		ds.restoreReference(target, requireWire[*wire.Ref](value))
+	case reflect.Slice:
+		if slice, ok := value.(*wire.Slice); ok {
+			if objectID(slice.Ref.Root) != 0 {
+				ds.assignSlice(target, slice)
+			}
+		} else {
+			// Manual savers can encode an array into an existing slice.
+			ds.restoreArray(ods, target, requireWire[wire.Array](value))
+		}
+	case reflect.Array:
+		ds.restoreArray(ods, target, requireWire[wire.Array](value))
+	case reflect.Map:
+		if ref, ok := value.(*wire.Ref); ok {
+			ds.restoreReference(target, ref)
+		} else {
+			ds.restoreMap(ods, target, requireWire[*wire.Map](value))
+		}
+	case reflect.Struct:
+		ds.decodeStruct(ods, target, requireWire[*wire.Struct](value))
+	default:
+		Failf("cannot restore %T into %s", value, target.Type())
+	}
+}
+
+func requireWire[T wire.Object](value wire.Object) T {
+	v, ok := value.(T)
+	if !ok {
+		Failf("expected %s, got %T", reflect.TypeFor[T](), value)
+	}
+	return v
 }
 
 // restoreReference retains register/Dots/assignment order and the destination's

@@ -289,10 +289,8 @@ func TestLegacyValueDestinations(t *testing.T) {
 	}{
 		{"array_in_slice", &[2]int64{17, 29}, nil, &[]int64{0, 0}, []int64{17, 29}},
 		{"empty_array_in_nil_slice", &[0]int64{}, nil, new([]int64), []int64(nil)},
-		{"empty_array_in_empty_string", &[0]int64{}, nil, new(string), ""},
 		{"interface_in_scalar", &integerInterface, nil, new(int64), int64(17)},
 		{"nil_interface_in_scalar", &nilInterface, nil, new(int64(23)), int64(23)},
-		{"empty_map_in_slice", nil, &wire.Map{}, &[]int64{23}, []int64{23}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
@@ -319,7 +317,7 @@ func TestLegacyValueDestinations(t *testing.T) {
 }
 
 func TestZeroReferencesLeaveDestination(t *testing.T) {
-	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Ref{}, &wire.Slice{}, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}} {
+	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}} {
 		// A non-nil channel is otherwise an unsupported decode destination.
 		integer, channel := int64(17), make(chan int)
 		for _, destination := range []any{&integer, &channel} {
@@ -338,5 +336,34 @@ func TestZeroReferencesLeaveDestination(t *testing.T) {
 				t.Errorf("zero %T changed destination to %v, want %v", encoded, got, want)
 			}
 		}
+	}
+}
+
+// Empty collections and zero references must still match the destination type.
+func TestWrongDestinationShape(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		encoded     wire.Object
+		destination any
+		wantErr     string
+	}{
+		{"array_in_string", &wire.ObjectArray{}, new(string), "expected *wire.String"},
+		{"map_in_slice", &wire.Map{}, new([]int64), "expected wire.Array"},
+		{"reference_in_integer", &wire.Ref{}, new(int64), "expected wire.Int"},
+		{"slice_in_integer", &wire.Slice{}, new(int64), "expected wire.Int"},
+		{"reference_in_channel", &wire.Ref{}, new(chan int), "cannot restore *wire.Ref into chan int"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writer := wire.Writer{Writer: &buf}
+			if err := WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, test.encoded)
+			if _, err := Load(t.Context(), &buf, test.destination); err == nil || !strings.Contains(err.Error(), test.wantErr) {
+				t.Fatalf("Load error = %v, want %q", err, test.wantErr)
+			}
+		})
 	}
 }
