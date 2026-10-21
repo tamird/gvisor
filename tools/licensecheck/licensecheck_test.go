@@ -24,9 +24,10 @@ import (
 	"testing"
 )
 
-// Complete notices copied from the inputs that exposed classifier mistakes:
+// Complete notices covering license discovery and classification:
 // bsd.txt and openssl.txt: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt
 // llvm.txt: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT
+// luajit.txt: https://github.com/LuaJIT/LuaJIT/blob/224129a8e/COPYRIGHT
 var (
 	//go:embed testdata/bsd.txt
 	bsdText string
@@ -34,6 +35,8 @@ var (
 	opensslText string
 	//go:embed testdata/llvm.txt
 	llvmText string
+	//go:embed testdata/luajit.txt
+	luajitText string
 )
 
 func TestClassify(t *testing.T) {
@@ -47,6 +50,7 @@ func TestClassify(t *testing.T) {
 	}{
 		{"separate grants", opensslText + bsdText + opensslText, Licenses{"BSD-3-Clause", "OpenSSL"}},
 		{"llvm", llvmText, Licenses{"Apache-2.0 WITH LLVM-exception", "NCSA"}},
+		{"luajit copyright", luajitText, Licenses{"MIT"}},
 		{"apache without exception", apache, Licenses{"Apache-2.0"}},
 		{"unknown", "All rights reserved. Do not redistribute.", nil},
 		{"reference", "See https://opensource.org/licenses/MIT for background.", nil},

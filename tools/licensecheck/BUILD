@@ -42,6 +42,7 @@ go_test(
         "testdata/apt-lock.json",
         "testdata/bsd.txt",
         "testdata/llvm.txt",
+        "testdata/luajit.txt",
         "testdata/openssl.txt",
     ],
     library = ":licensecheck",
