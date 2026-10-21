@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T21:00:19.337883+00:00",
+    "updatedAt": "2026-10-21T21:14:51.573805+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2074,19 +2074,20 @@
       "title": "Return ENOENT for missing original destinations",
       "url": "https://github.com/google/gvisor/pull/15169",
       "group": "runtime",
-      "status": "open",
-      "summary": "The patch approved by milantracy on 2026-10-01T06:44:17Z at d601665d76 is independently verified unchanged at bac3659cc1. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nCurrent matching import #15994 at db9f601e51 has a Buildkite checkout failure. The inspected failed job in build 51364 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. The separate current-head Go-export cleanup failure remains linked to existing #15598.",
+      "status": "merged",
+      "summary": "Merged upstream on 2026-10-21T21:04:27Z as 10b197ed1e63cb618d31f3fd91ce46453dd0a40e. Delivery is complete; prior source-bound import and validation evidence remains below. No further author or reviewer action is pending.\n\nPreserved earlier observations:\n\nThe patch approved by milantracy on 2026-10-01T06:44:17Z at d601665d76 is independently verified unchanged at bac3659cc1. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nCurrent matching import #15994 at db9f601e51 has a Buildkite checkout failure. The inspected failed job in build 51364 cannot clone google/gvisor because GitHub returns HTTP 403, before its source commands run. The cause of that response remains unknown; this is not evidence of a topic-code failure. Other job failures have not been exhaustively diagnosed. The separate current-head Go-export cleanup failure remains linked to existing #15598.",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-19T21:36:45.846198+00:00",
+      "updatedAt": "2026-10-21T21:14:51.573805+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "bac3659cc12edc23634d905b76fe9f4476940b00",
-        "observedAt": "2026-10-19T21:07:57.057911+00:00",
-        "disposition": "Current import checkout HTTP403; earlier source-bound failures retained",
-        "nextAction": "Track shared checkout infrastructure and exact-head CI through the existing sweep; no blind retry or source amendment. Preserve any separate earlier source diagnosis.",
+        "observedAt": "2026-10-21T21:07:12.225813+00:00",
+        "disposition": "Merged upstream; delivery complete",
+        "nextAction": "No action unless a new independent issue is reported.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/51364#01a155ef-6079-4bd0-8001-1d697b2ba6f0",
-          "https://github.com/google/gvisor/pull/15994"
+          "https://github.com/google/gvisor/pull/15994",
+          "https://github.com/google/gvisor/commit/10b197ed1e63cb618d31f3fd91ce46453dd0a40e"
         ]
       },
       "head": "bac3659cc12edc23634d905b76fe9f4476940b00",
@@ -2106,6 +2107,10 @@
         {
           "label": "Current import checkout failure",
           "url": "https://buildkite.com/gvisor/pipeline/builds/51364#01a155ef-6079-4bd0-8001-1d697b2ba6f0"
+        },
+        {
+          "label": "Upstream merge",
+          "url": "https://github.com/google/gvisor/commit/10b197ed1e63cb618d31f3fd91ce46453dd0a40e"
         }
       ],
       "approvedPatch": {
@@ -16589,14 +16594,14 @@
       "url": "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
       "group": "bazel",
       "status": "Agent work: same-worker cgroup startup diagnosis",
-      "updatedAt": "2026-10-21T21:00:19.337883+00:00",
-      "summary": "The procps image fixes the missing sysctl command, but three cgroup-enabled rootful cases still fail with gofer startup ENOENT; seven records pass and none skip. The old-image control passed on a separate worker with identical runtime bytes, which does not identify the failing syscall. A reviewed four-arm comparison is now running on one worker: old/new images, each untraced and traced from the initial runtime exec. It keeps the original runtime and sidecars fixed, requires the exact corrected image identity, and freshly rebuilds the old source with its pinned Bionic base. Native failures and trace outcomes remain separate; no cause or passing runtime is inferred before completion. The 372-entry canonical catalog and both-CPU archive evidence remain accepted.\n\nPreserved earlier observations:\n\nThe reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker’s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
+      "updatedAt": "2026-10-21T21:14:51.573805+00:00",
+      "summary": "The first same-worker diagnostic attempt a303e962 ended with an authenticated setup failure before any of the four test arms ran. Both comparison images and all runtime bytes were bound, but the isolated trace-tool dependency guard rejected a path whose actual mapping was not retained. No image or syscall conclusion follows. The reviewed setup-only recovery records both loader listings before validation, accepts only the exact copied loader or immediate isolated-library files, and checks tooling before expensive image preparation. Retry ce8cbdec is now running with the same diagnostic source 08cf, runtime bytes, image requirements, four test arms and limits. Earlier procps runtime failures, the old-image control and accepted archive/catalog evidence remain separate.\n\nPreserved earlier observations:\n\nThe procps image fixes the missing sysctl command, but three cgroup-enabled rootful cases still fail with gofer startup ENOENT; seven records pass and none skip. The old-image control passed on a separate worker with identical runtime bytes, which does not identify the failing syscall. A reviewed four-arm comparison is now running on one worker: old/new images, each untraced and traced from the initial runtime exec. It keeps the original runtime and sidecars fixed, requires the exact corrected image identity, and freshly rebuilds the old source with its pinned Bionic base. Native failures and trace outcomes remain separate; no cause or passing runtime is inferred before completion. The 372-entry canonical catalog and both-CPU archive evidence remain accepted.\n\nPreserved earlier observations:\n\nThe reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker’s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Compare old/new images on one worker and identify startup failure stage",
+        "disposition": "Collect same-worker trace recovery after isolated-tool preflight correction",
         "sourceHead": "6bee555dad8d7b78a44057ca92827d0f0e18b7de",
-        "observedAt": "2026-10-21T21:00:19.337883+00:00",
-        "nextAction": "Collect the four actual attempts and clone/exec traces from a303e962. Preserve native failures, image identities and instrumentation limits before proposing a source correction.",
+        "observedAt": "2026-10-21T21:14:51.573805+00:00",
+        "nextAction": "Reconcile ce8cbdec against the four actual old/new traced and untraced attempts, preserving native failures and tool/trace completeness. Do not infer a failure stage from the earlier zero-arm setup failure.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
           "https://app.buildbuddy.io/invocation/718c961b-d2b2-46e4-9d48-e6be2378020b",
@@ -16605,7 +16610,8 @@
           "https://app.buildbuddy.io/invocation/ce6eeb97-db88-4bd5-b8c7-a85a3e52edfd",
           "https://app.buildbuddy.io/invocation/8ff0aeb9-ff70-417a-ae50-17fe86fb86c3",
           "https://github.com/tamird/gvisor/commit/08cf4ab642c7ed01f4d64b252af7f50e7816b3ef",
-          "https://app.buildbuddy.io/invocation/a303e962-dcd6-4f82-9c5d-db9eebb2158e"
+          "https://app.buildbuddy.io/invocation/a303e962-dcd6-4f82-9c5d-db9eebb2158e",
+          "https://app.buildbuddy.io/invocation/ce8cbdec-4c4c-40a0-94f1-9a6414621beb"
         ]
       },
       "evidence": [
@@ -16688,6 +16694,10 @@
         {
           "label": "Same-worker old/new traced and untraced comparison",
           "url": "https://app.buildbuddy.io/invocation/a303e962-dcd6-4f82-9c5d-db9eebb2158e"
+        },
+        {
+          "label": "Same-source isolated-tool diagnostic recovery",
+          "url": "https://app.buildbuddy.io/invocation/ce8cbdec-4c4c-40a0-94f1-9a6414621beb"
         }
       ]
     },
@@ -16842,19 +16852,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-iperf3-image-independent",
-      "head": "ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f",
+      "head": "2fe6d9b0913fb53484b078f8630ef8db1e7081ee",
       "title": "Build the iperf image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f",
+      "url": "https://github.com/tamird/gvisor/commit/2fe6d9b0913fb53484b078f8630ef8db1e7081ee",
       "group": "bazel",
-      "status": "Agent validation: regenerate independent BCR image catalog",
-      "updatedAt": "2026-10-21T21:00:19.337883+00:00",
-      "summary": "The BCR iperf3 runtime gate passed: both CPU binary/archive/context outputs are bound to their actual build records, both archived binaries are static and match the declared outputs, license bytes match, Make rebuild/cached reload preserves identity, and all eight existing native opt benchmark cases complete one positive iteration. These are functional checks, not a performance comparison or ARM execution. The unchanged ten-path Iperf source delta is now extracted onto approved native-Go foundation 4094323, removing the unused hackbench dependency. Canonical full Fetch and Verify will regenerate the reduced dependency graph before the revised contributor proposal; earlier failures remain preserved.\n\nPreserved earlier observations:\n\nThe BCR iperf3 revision has passed the existing parser/analyzer checks and canonical Verify of its complete 247-entry catalog. Both CPU image builds completed. The first static-ELF check found dynamic linkage; an explicit static link option is now published and both configured link actions plus the AMD64 static ELF check passed. Validation then exposed a wrapper path error reading an external LICENSE relative to the checkout. The owner is correcting that resolver against the existing Bazel execution root before completing both-CPU archive inspection, Make reload and eight native benchmark cases. Original failures are retained; there is no complete image/runtime or contributor-readiness claim yet.\n\nPreserved earlier observations:\n\nThe contributor-requested BCR revision is published as 6c4fcc182f5b. It uses the BCR iperf3 executable and updates the actual benchmark command and aggregate JSON parsing. The reviewed remote packet checks both CPU archives, exact static executable and license bytes, Make reload, existing unit/analyzer owners and eight native benchmark cases in opt mode. Validation is pending; the previous iperf2 results are not credit for this revision.\n\nPreserved previous proposal:\n\nThe final proposal builds pinned iperf source using the existing grouped image and Make interface. Both CPU binary/archive/context outputs have exact configured BEP identities; remote inspection verifies static binaries and archive equality. Make rebuild and cached reload preserve the image ID. All eight existing native benchmark cases completed one positive iteration, establishing functional coverage rather than a performance comparison. Canonical Fetch/Verify passed for the complete 246-entry catalog. The exact-package mirror recovered the original snapshot HTTP502 without changing source versions or hashes. Original failed runs remain retained.",
+      "status": "Awaiting contributor review of completed BCR revision",
+      "updatedAt": "2026-10-21T21:14:51.573805+00:00",
+      "summary": "The completed BCR iperf3 revision is published at 2fe6d9b091 on the approved native-Go foundation 4094323, with no hackbench dependency. Both CPU builds and archive identities, static ELF checks, Make reload identity, and all eight existing native opt benchmark cases have passed. Full canonical Fetch and Verify also pass on the reduced graph: all 244 foundation catalog blocks are unchanged and only Iperf and OpenSSL are added. The contributor has now been asked to review this exact final proposal; approval is pending. These functional checks establish no ARM execution or performance comparison. Earlier failed attempts remain preserved.\n\nPreserved earlier observations:\n\nThe BCR iperf3 runtime gate passed: both CPU binary/archive/context outputs are bound to their actual build records, both archived binaries are static and match the declared outputs, license bytes match, Make rebuild/cached reload preserves identity, and all eight existing native opt benchmark cases complete one positive iteration. These are functional checks, not a performance comparison or ARM execution. The unchanged ten-path Iperf source delta is now extracted onto approved native-Go foundation 4094323, removing the unused hackbench dependency. Canonical full Fetch and Verify will regenerate the reduced dependency graph before the revised contributor proposal; earlier failures remain preserved.\n\nPreserved earlier observations:\n\nThe BCR iperf3 revision has passed the existing parser/analyzer checks and canonical Verify of its complete 247-entry catalog. Both CPU image builds completed. The first static-ELF check found dynamic linkage; an explicit static link option is now published and both configured link actions plus the AMD64 static ELF check passed. Validation then exposed a wrapper path error reading an external LICENSE relative to the checkout. The owner is correcting that resolver against the existing Bazel execution root before completing both-CPU archive inspection, Make reload and eight native benchmark cases. Original failures are retained; there is no complete image/runtime or contributor-readiness claim yet.\n\nPreserved earlier observations:\n\nThe contributor-requested BCR revision is published as 6c4fcc182f5b. It uses the BCR iperf3 executable and updates the actual benchmark command and aggregate JSON parsing. The reviewed remote packet checks both CPU archives, exact static executable and license bytes, Make reload, existing unit/analyzer owners and eight native benchmark cases in opt mode. Validation is pending; the previous iperf2 results are not credit for this revision.\n\nPreserved previous proposal:\n\nThe final proposal builds pinned iperf source using the existing grouped image and Make interface. Both CPU binary/archive/context outputs have exact configured BEP identities; remote inspection verifies static binaries and archive equality. Make rebuild and cached reload preserve the image ID. All eight existing native benchmark cases completed one positive iteration, establishing functional coverage rather than a performance comparison. Canonical Fetch/Verify passed for the complete 246-entry catalog. The exact-package mirror recovered the original snapshot HTTP502 without changing source versions or hashes. Original failed runs remain retained.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Runtime accepted; regenerate catalog for independent image foundation",
-        "sourceHead": "ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f",
-        "observedAt": "2026-10-21T21:00:19.337883+00:00",
-        "nextAction": "Finish canonical full Fetch/Verify on ccd0, then present the completed BCR revision for contributor review. No repeated runtime workload for unchanged owning source.",
+        "disposition": "Completed BCR revision awaits contributor review",
+        "sourceHead": "2fe6d9b0913fb53484b078f8630ef8db1e7081ee",
+        "observedAt": "2026-10-21T21:14:51.573805+00:00",
+        "nextAction": "Await the requested contributor decision on exact 2fe6d9b091. If approved, deliver after the existing image and license prerequisites land; do not repeat the review request.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295",
           "https://registry.bazel.build/modules/iperf",
@@ -16862,7 +16872,9 @@
           "https://app.buildbuddy.io/invocation/85a083fe-21bc-462f-ac0c-702fb065344e",
           "https://github.com/tamird/gvisor/commit/1b8618835f8e146c92380834c5c1eee4bba66544",
           "https://app.buildbuddy.io/invocation/b9372053-859b-4a72-9f7b-12a884ca72be",
-          "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
+          "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f",
+          "https://github.com/tamird/gvisor/commit/2fe6d9b0913fb53484b078f8630ef8db1e7081ee",
+          "https://app.buildbuddy.io/invocation/267acaba-6e3a-4394-8280-c3d3c1d3bc45"
         ]
       },
       "evidence": [
@@ -16897,11 +16909,20 @@
         {
           "label": "Independent source extraction on approved native-Go foundation",
           "url": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
+        },
+        {
+          "label": "Final independent BCR contributor proposal",
+          "url": "https://github.com/tamird/gvisor/commit/2fe6d9b0913fb53484b078f8630ef8db1e7081ee"
+        },
+        {
+          "label": "Full reduced-graph Fetch and Verify passed",
+          "url": "https://app.buildbuddy.io/invocation/267acaba-6e3a-4394-8280-c3d3c1d3bc45"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "7fc0ec3ee46139b3aa307cd08364377c1d688295",
-        "url": "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295"
+      "contributorReview": {
+        "status": "pending",
+        "head": "2fe6d9b0913fb53484b078f8630ef8db1e7081ee",
+        "url": "https://github.com/tamird/gvisor/commit/2fe6d9b0913fb53484b078f8630ef8db1e7081ee"
       }
     }
   ],
