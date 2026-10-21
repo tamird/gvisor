@@ -5,6 +5,7 @@
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
+# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -591,6 +592,1406 @@
   commit: ""
   sha256: cfd99d1ca41e710fdd3f68bfdc4d36dd24e14377656764f00b215b89cf6976e8
   license: Zlib
+- dependency: apt/integration_test_packages/amd64/base-files
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/base-files/base-files_12ubuntu4.7_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 543f50e12da693710e1d606af61029fa599cde7eb0eaee2c0e34fa47848f4533
+  license:
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/amd64/bash
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/bash/bash_5.1-6ubuntu1.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ada09ec56baa774af85b01ab8aad32f10ce82aeccbd2889110db318d46e26914
+  license:
+    - BSD-4-Clause-UC
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/amd64/coreutils
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/coreutils/coreutils_8.32-4.1ubuntu1.4_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 647ae75c608700f7cf144b1076138032ce023680f2d8c16061fb84e3787ae50c
+  license:
+    - BSD-3-Clause
+    - GFDL-1.2-no-invariants-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - ISC
+- dependency: apt/integration_test_packages/amd64/dash
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/dash/dash_0.5.11+git20210903+057cd650a4ed-3build1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a539a1fc715f9f52cf9159e1f2c8d254a611d1f2c176a25ca7d99372fa76f4b8
+  license:
+    - BSD-3-Clause
+    - FSFUL
+    - FSFULLR
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/debconf
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/debconf/debconf_1.5.79ubuntu1_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 395a65b3a9539304391456d4d0e5531f4249f297b6e67eb0fcaf2ff77ddc3dc3
+  license: BSD-2-Clause
+- dependency: apt/integration_test_packages/amd64/debianutils
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/debianutils/debianutils_5.5-1ubuntu2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a285df5a72f6eadd75a042c148f4a26c6bead543e73077f12d8d0069b315082d
+  license: GPL-2.0
+- dependency: apt/integration_test_packages/amd64/dpkg
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/dpkg/dpkg_1.21.1ubuntu2.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 8759f60fc173cb4ab85599dd66a633dce9473b9c7655128863a214325f52a7bd
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/gcc-12-base
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/gcc-12-base_12.3.0-1ubuntu1~22.04.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 7f9253b7e0976f0526fc21346c73ee006e185a7b2f2f865048ea78a2af55bc8d
+  license:
+    - Artistic-1.0-Perl
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GFDL-1.2
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - HPND
+    - LGPL-2.0-or-later
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
+    - NCSA
+    - Spencer-94
+    - Unicode-DFS-2015
+    - Zlib
+- dependency: apt/integration_test_packages/amd64/init-system-helpers
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/init-system-helpers/init-system-helpers_1.62_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 810bc27b9b3cecab056d80d726de535ca68f00fcd955683bf46674d779f4e710
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/iproute2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iproute2/iproute2_5.15.0-1ubuntu2.2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9e9d6354e9d32683e56191ef6638e37e73698daa9b7765e2563b38eff34b0890
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/amd64/iptables
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/iptables_1.8.7-1ubuntu5.2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a14fe8043d9032bc134626e64a9d008ab77d63ebb17d4a37f1f1f7c64c76792d
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/iputils-ping
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iputils/iputils-ping_20211215-1ubuntu0.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 5883d183de4fbe0c9021468c6b1922c4bef1a258e60e7da16340e8d1f14d828b
+  license:
+    - BSD-3-Clause
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - Rdisc
+- dependency: apt/integration_test_packages/amd64/libacl1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/acl/libacl1_2.3.1-1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 4db2c64ec74f673ed022e92cce7b83d0cbe0b779e02ca60a56ba59ae07754e05
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libattr1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/attr/libattr1_2.5.1-1ubuntu0.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: f2b5a86842c411dde933ac2315570ce529ea930cd848258cfd909ef221f8feb1
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libaudit-common
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit-common_3.0.7-1ubuntu0.1_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 3e4e8586db5f57f431954a9125556fe6df86610592c0cf46ba1127fae8871e3f
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
+- dependency: apt/integration_test_packages/amd64/libaudit1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit1_3.0.7-1ubuntu0.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 00d7eb086dedc85bd5b9cbde650a1c71460499cb62e439acb761bc7bcb4eaaac
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
+- dependency: apt/integration_test_packages/amd64/libblkid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libblkid1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: bf9ab18457e0a10879951b01c87156bdf503bdeb0f87ae0f0f81ec62cb000279
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libbpf0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libb/libbpf/libbpf0_0.5.0-1ubuntu22.04.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: d5883b9906b3bdac371ccc12d618547f0fd680c1967b3081419ce2791eba1271
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-only
+- dependency: apt/integration_test_packages/amd64/libbsd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libb/libbsd/libbsd0_0.11.5-1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 09367acdf59f28ffb71ba7bc36c516cff03b2765930cf9be7bb7ea7273e4c312
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - Beerware
+    - ISC
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libbz2-1.0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/bzip2/libbz2-1.0_1.0.8-5ubuntu0.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 2fd35bb1ac601fa1bf35da2fa08dba3541766ca791927342b5efcb18ef17aecb
+  license:
+    - GPL-2.0
+    - bzip2-1.0.6
+- dependency: apt/integration_test_packages/amd64/libc6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/glibc/libc6_2.35-0ubuntu3.15_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 79e35256227e16a607c154cdeb8d76ff12d20e31de286ea7fd9ad3b96fe0452d
+  license:
+    - BSD-3-Clause
+    - GFDL-1.3
+    - GPL-2.0
+    - GPL-2.0-only
+    - HPND
+    - ISC
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - Spencer-94
+- dependency: apt/integration_test_packages/amd64/libcap-ng0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap-ng/libcap-ng0_0.7.9-2.2build3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 124d0c8748a841f279e996298ef8aac69a249e294792f4b5e16dc00496f1d3ac
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libcap2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap2/libcap2_2.44-1ubuntu0.22.04.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: c497efb7fa3cd19a7ff297d95c7c5d678063c80c9fc230c9d034a8ee02ca8446
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/libcap2-bin
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap2/libcap2-bin_2.44-1ubuntu0.22.04.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 206f2bb13e84966c0c2cafb49019889a67056feb467d6deace26ce6eba70bc8c
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/libcrypt1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libcrypt1_4.4.27-1_amd64.deb
+  retrieved: "2026-10-03"
+  commit: ""
+  sha256: 3fa566e9f861a08736cbc5a97562d9d6e4f0c00450fbeafcb6d7583423b04a98
+  license: LicenseRef-libxcrypt-4.4.27
+- dependency: apt/integration_test_packages/amd64/libdb5.3
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/db5.3/libdb5.3_5.3.28+dfsg1-0.8ubuntu3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ce60e446c9cb0e94bb4b4d0fe4f969e772edec250deb186bacf955e4d196548b
+  license: BSD-3-Clause
+- dependency: apt/integration_test_packages/amd64/libelf1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 2cc781614b045b450a1e073ee3b0902f393ee58ede1d2ea4526ad805fcccf538
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+- dependency: apt/integration_test_packages/amd64/libgcc-s1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/libgcc-s1_12.3.0-1ubuntu1~22.04.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: d383e642d83263147f7b4b69fb92cf1036e5246c6be3accf10b77f986684589a
+  license:
+    - Artistic-1.0-Perl
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GFDL-1.2
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - HPND
+    - LGPL-2.0-or-later
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
+    - NCSA
+    - Spencer-94
+    - Unicode-DFS-2015
+    - Zlib
+- dependency: apt/integration_test_packages/amd64/libgcrypt20
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libg/libgcrypt20/libgcrypt20_1.9.4-3ubuntu3.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 8f16329a0aabf4900271a3687890721bbef307e60983acae5b92eeff12e799b3
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libgmp10
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gmp/libgmp10_6.2.1+dfsg-3ubuntu1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: d199a77e11701d4d620dd4f62e05740e3072dce893856ea3bbaa6ae9fa19fef1
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+- dependency: apt/integration_test_packages/amd64/libgpg-error0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libg/libgpg-error/libgpg-error0_1.43-3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 1fbacdf9bd1e431cee874a697b339f6f925182bc79bba5a112b53669b33265c5
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libidn2-0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libi/libidn2/libidn2-0_2.3.2-2build1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: bc935e1871aa4a75d3f4ff549af32b7316aecfbea2200d85055878767b8398c8
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+- dependency: apt/integration_test_packages/amd64/libip4tc2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libip4tc2_1.8.7-1ubuntu5.2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 4553f8a7089312da5e8ffcae9db70c0ff54858d23e6892db7bfcaac2449d235d
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/libip6tc2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libip6tc2_1.8.7-1ubuntu5.2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 76cdfc9065400fa58b233957691ee31e278ae20ed555f8f9e0329d4123b62153
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/liblz4-1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/l/lz4/liblz4-1_1.9.3-2build2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ac9b54d0feb840345060c74fb687675c5e1eb2b195effafae38c5f9991041e98
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/amd64/liblzma5
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/x/xz-utils/liblzma5_5.2.5-2ubuntu1.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: af77f099e7fa95a31267023535832804382fa66572a6b38002187be6e15116cb
+  license:
+    - FSFULLR
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libmd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libm/libmd/libmd0_1.0.4-1build1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: bcdad5e400aeb660f0337a1c5c1a77e3effa91d0803e64ce2d000e9006f67cdb
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - Beerware
+    - ISC
+- dependency: apt/integration_test_packages/amd64/libmnl0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libm/libmnl/libmnl0_1.0.4-3build2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: e0ed2e88526830896a9efcef75a3d019b40cdac5a56d6605c426296979708f4a
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libmount1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libmount1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9f69b37420731477105d94c6bf2139437be04bef7c46ba7ffcaf3741e301bdba
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libncurses6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libncurses6_6.3-2ubuntu0.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 38f97a45931ab6f296be017344afc45e5ccbf83f24896f79625318691a9bebf8
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libncursesw6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libncursesw6_6.3-2ubuntu0.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 734107c126c2685508e4186f6be65f4edc0d393f1bc1cb4c307a76d1beb09496
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libnetfilter-conntrack3
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libn/libnetfilter-conntrack/libnetfilter-conntrack3_1.0.9-1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 49a31bd83385cfcb630194b9bcf119af681f08a65c86a437423e344e6b4bc806
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/libnfnetlink0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libn/libnfnetlink/libnfnetlink0_1.0.1-3build3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9c7b2e9fa8f60bd1d0a85d5082cdec10ec1aa7be3ad8c0e4265c28cc8e72ec9a
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/amd64/libnftnl11
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libn/libnftnl/libnftnl11_1.2.1-1build1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a2c19952be8ca65e3464773009490701a0a49e1ef984d9140158371f909f2606
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/libpam0g
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pam/libpam0g_1.4.0-11ubuntu2.8_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: faaf4b6d1bfb33a7fc4e195448439c202869d67c8de17c4ecd29b7719e0ac4d6
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/amd64/libpcre2-8-0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 01a5a74f3d305cad32fffffdc200c2a92fd8e5a01bff97de76ac598fb444d53e
+  license: BSD-3-Clause
+- dependency: apt/integration_test_packages/amd64/libprocps8
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/procps/libprocps8_3.3.17-6ubuntu2.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a7d32ba1d7d4516b77354d3b2d34d218098b321933f792785029f313b918d163
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/libselinux1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libs/libselinux/libselinux1_3.3-1build2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: b96c6b40ee2388bd51341cb11c0f1d5bcca29b9180b6e3a77a06b881f2913f7e
+  license:
+    - GPL-2.0
+    - LGPL-2.1
+    - libselinux-1.0
+- dependency: apt/integration_test_packages/amd64/libsmartcols1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libsmartcols1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ffcfe348fe320833df0231b46de8d130843532d30f4fce2975b696702c13856f
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libsystemd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libsystemd0_249.11-0ubuntu3.22_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 4fae4644bcfd86f891faae12cedbf30aca280cf76a034768aec3a03fe42ddc25
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libtinfo6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libtinfo6_6.3-2ubuntu0.3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 3b8dff43a31168f5020928f2ab9a97324c5b47ae708311781f6bd01306c96214
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libudev1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libudev1_249.11-0ubuntu3.22_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 48e47354d8d421b59bc2aac1437bc6b22ba04526963e4a73f9313b0dd518556b
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libunistring2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libu/libunistring/libunistring2_1.0-1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 988fb59de6a0a313844277e8a6e45d3dc16f5ea75a603a46b16b936426f0ac65
+  license:
+    - FSFULLR
+    - GFDL-1.2
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libuuid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 97eaa1090c2e7ddaad55d58f9d0d7907d64b70f89228405d68a7ce7d56a89d67
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/libxtables12
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libxtables12_1.8.7-1ubuntu5.2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: c2e99be5d2f06ce776883c3d11dbe58f1c735e2ad9acd9ea2faa584829eddb16
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/amd64/libzstd1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libz/libzstd/libzstd1_1.4.8+dfsg-3build1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ae7db00ce8b093e50c994518b90203544e063b4bc574836a048bb142b950b2c9
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - MIT
+    - Zlib
+- dependency: apt/integration_test_packages/amd64/lsb-base
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/l/lsb/lsb-base_11.1.0ubuntu4_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 23ac3e99b0c2cd0179a7f40fa5a24248345e16c515f222164dad2a638b4f04cf
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/amd64/mawk
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/m/mawk/mawk_1.3.4.20200120-3_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 73aea4eef18e9960e04ea2de58c3ee1bb552af6c1dc889ab33c6c896d3387c97
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/amd64/netbase
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/netbase/netbase_6.3_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 480bbd894069e5da7a25f070ea0ebaded7f64bdd34a119558cc2fe7137762a79
+  license: GPL-2.0
+- dependency: apt/integration_test_packages/amd64/perl-base
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/perl/perl-base_5.34.0-3ubuntu1.9_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 966bbdd49966b37912496526de94cb5d197c6d1ce457b6c330204ef36c9b3a6e
+  license:
+    - Artistic-1.0-Perl
+    - Artistic-2.0
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - CC0-1.0
+    - FSFAP
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0
+    - GPL-3.0-or-later
+    - HPND
+    - LGPL-2.1
+    - MIT
+    - Spencer-86
+    - Unicode-DFS-2015
+    - Zlib
+    - bzip2-1.0.6
+- dependency: apt/integration_test_packages/amd64/procps
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/procps/procps_3.3.17-6ubuntu2.1_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: e204381ea55b600a1fb3556d6aec9cfb1eef1c4a2247dee641f00211311b9922
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/amd64/tar
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/t/tar/tar_1.34+dfsg-1ubuntu0.1.22.04.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9e7a93d96b2c3ed82aa5959933bec3e5082c264b0ae45e86ab450f83886faace
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/amd64/util-linux
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/util-linux_2.37.2-4ubuntu3.6_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9c852ffb8b350157ad938be483c7157627bfd553e93937910ac47280068ff165
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/amd64/zlib1g
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/z/zlib/zlib1g_1.2.11.dfsg-2ubuntu9.2_amd64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9dc17e51a1be2d9ed63b7b84ef0e4e29c5abe6f1bc62cb03e7181483cce8a2f2
+  license: Zlib
+- dependency: apt/integration_test_packages/arm64/base-files
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/base-files/base-files_12ubuntu4.7_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: efeb75569bd6b3dae48094109c95f02d057cf5178c090c1a13670c613b101ec1
+  license:
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/arm64/bash
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/bash/bash_5.1-6ubuntu1.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 822f13fe9ab951346bca677e4e6860a8e995405c661ed7a4e29f9db5ad898724
+  license:
+    - BSD-4-Clause-UC
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/arm64/coreutils
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/coreutils/coreutils_8.32-4.1ubuntu1.4_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 75b3d90ac8c9ccb7b046b7a21799f7cf434025c54f5633a706853c15742de399
+  license:
+    - BSD-3-Clause
+    - GFDL-1.2-no-invariants-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - ISC
+- dependency: apt/integration_test_packages/arm64/dash
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/dash/dash_0.5.11+git20210903+057cd650a4ed-3build1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: f0fbe9c11fc95291a6f9db517f94fec56a6534461d1d70c0da402ac2e89d8389
+  license:
+    - BSD-3-Clause
+    - FSFUL
+    - FSFULLR
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/debconf
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/debconf/debconf_1.5.79ubuntu1_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 395a65b3a9539304391456d4d0e5531f4249f297b6e67eb0fcaf2ff77ddc3dc3
+  license: BSD-2-Clause
+- dependency: apt/integration_test_packages/arm64/debianutils
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/debianutils/debianutils_5.5-1ubuntu2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 829460c98c24183696042b201cbe2f813421c1d3d5d3f6e1cf819b392e4920d1
+  license: GPL-2.0
+- dependency: apt/integration_test_packages/arm64/dpkg
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/dpkg/dpkg_1.21.1ubuntu2.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 5ddd0d969425aa8876e13aa5262894125a619e049194eeefaee17acaee5188a5
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/gcc-12-base
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/gcc-12-base_12.3.0-1ubuntu1~22.04.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: b2bc566681989941dd059d6391b01c41854857f26d83c53358287d620dfb0fd4
+  license:
+    - Artistic-1.0-Perl
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GFDL-1.2
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - HPND
+    - LGPL-2.0-or-later
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
+    - NCSA
+    - Spencer-94
+    - Unicode-DFS-2015
+    - Zlib
+- dependency: apt/integration_test_packages/arm64/init-system-helpers
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/init-system-helpers/init-system-helpers_1.62_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 810bc27b9b3cecab056d80d726de535ca68f00fcd955683bf46674d779f4e710
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/iproute2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iproute2/iproute2_5.15.0-1ubuntu2.2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 41e9e6853de7ab859e1fb7a7662e717a0a328bd2f78988ab38a737fb2017ae74
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/arm64/iptables
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/iptables_1.8.7-1ubuntu5.2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9d88e2931ea8c7d2d566e0f5c97f28af95c5e84a620ceeecb574bb9661ed8f99
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/iputils-ping
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iputils/iputils-ping_20211215-1ubuntu0.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 2f64bb8c034e5491c15cfe56ded4d60c15331c64ce2afa3f3c0c73c9b824d7e4
+  license:
+    - BSD-3-Clause
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - Rdisc
+- dependency: apt/integration_test_packages/arm64/libacl1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/acl/libacl1_2.3.1-1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 328e91b2d6e8ee44ad669fc7276b74f208bc781baf1ecdd7dbf5f092f8b41712
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libattr1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/attr/libattr1_2.5.1-1ubuntu0.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 11c3e5e0ed9c29349a9be201d52b9bdf0cb6a42e31d353031aabf2fe5d17b03e
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libaudit-common
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit-common_3.0.7-1ubuntu0.1_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 3e4e8586db5f57f431954a9125556fe6df86610592c0cf46ba1127fae8871e3f
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
+- dependency: apt/integration_test_packages/arm64/libaudit1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/a/audit/libaudit1_3.0.7-1ubuntu0.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 963474b42258e8caa15eec1db61d8424fd6b7ef717ca4e371b3240506854b3fe
+  license:
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0-only
+    - LGPL-2.1
+- dependency: apt/integration_test_packages/arm64/libblkid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libblkid1_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 2682e7f03f3d0a991e06bd2cb69a69c4cc80b3cdfc12a9a64b6f343b1cc056a3
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libbpf0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libb/libbpf/libbpf0_0.5.0-1ubuntu22.04.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: f5af5e4e32d29c2dce882374bffe2d10e6b3b1d2332085d1a4dc8676b0cf40e7
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-only
+- dependency: apt/integration_test_packages/arm64/libbsd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libb/libbsd/libbsd0_0.11.5-1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 19703bfe6fde9a161e42f5107451a46cc182a62dd0621a55d06aec7dc372991d
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - Beerware
+    - ISC
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libbz2-1.0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/bzip2/libbz2-1.0_1.0.8-5ubuntu0.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: facd10a2446b6c75a95fcbaedf2303126ac2f669413f423dabda41047539f8a9
+  license:
+    - GPL-2.0
+    - bzip2-1.0.6
+- dependency: apt/integration_test_packages/arm64/libc6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/glibc/libc6_2.35-0ubuntu3.15_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: dd88cc85dcfbac19c0c9b606676b7b1b87f851d75afa5c830fc5ba1293a30833
+  license:
+    - BSD-3-Clause
+    - GFDL-1.3
+    - GPL-2.0
+    - GPL-2.0-only
+    - HPND
+    - ISC
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - Spencer-94
+- dependency: apt/integration_test_packages/arm64/libcap-ng0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap-ng/libcap-ng0_0.7.9-2.2build3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 884c8bc87da241abaa2b0ca80162486cf66eff67dfc545bea56622e1170e9ee5
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libcap2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap2/libcap2_2.44-1ubuntu0.22.04.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 7a8eb6549355a16f327ede574f12e6ebed983b52ab38ce4a618e6e9274b9d4f5
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/libcap2-bin
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libc/libcap2/libcap2-bin_2.44-1ubuntu0.22.04.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 71eee97adfee4eb34d6ace5c9e52a690318ef3d8b1152a3fd055c223f951ae37
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/libcrypt1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libcrypt1_4.4.27-1_arm64.deb
+  retrieved: "2026-10-03"
+  commit: ""
+  sha256: fb5f8d59de95bbb118a635e83e2a92077e13c6d297980dae3119df057bf88111
+  license: LicenseRef-libxcrypt-4.4.27
+- dependency: apt/integration_test_packages/arm64/libdb5.3
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/d/db5.3/libdb5.3_5.3.28+dfsg1-0.8ubuntu3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: e5b672aeaca690b3b7ee97b03dbc07ddb49be7b6ea0a770fa6707666ca1cef59
+  license: BSD-3-Clause
+- dependency: apt/integration_test_packages/arm64/libelf1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 6184340bfaadbbc8895622b7737fdcac08e74f99efa7f416a187709993bc0a8b
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+- dependency: apt/integration_test_packages/arm64/libgcc-s1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/libgcc-s1_12.3.0-1ubuntu1~22.04.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 46626e1af6b159061e055f843654ee1f0f1e65fa280331ed47ee76ba1b1f6045
+  license:
+    - Artistic-1.0-Perl
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GFDL-1.2
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - HPND
+    - LGPL-2.0-or-later
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
+    - NCSA
+    - Spencer-94
+    - Unicode-DFS-2015
+    - Zlib
+- dependency: apt/integration_test_packages/arm64/libgcrypt20
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libg/libgcrypt20/libgcrypt20_1.9.4-3ubuntu3.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: bd98a709641e7e61c8798bb84030886a96fd56424b053a6e9996a8391ce20597
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libgmp10
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gmp/libgmp10_6.2.1+dfsg-3ubuntu1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 32233a3bf7c8b19e86ef3629334f0bece716bb163605d12e0d3a443d57a401d7
+  license:
+    - GPL-2.0
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+- dependency: apt/integration_test_packages/arm64/libgpg-error0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libg/libgpg-error/libgpg-error0_1.43-3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ffa9029cdeb2786e0db1f614f3d2205f75f466a66b25e22aa89ecdf814491875
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libidn2-0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libi/libidn2/libidn2-0_2.3.2-2build1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: aeb29cc8deedc0710a97e44088ef0271dfe1197e77c0a0fc0c5602e14aeb938f
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+- dependency: apt/integration_test_packages/arm64/libip4tc2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libip4tc2_1.8.7-1ubuntu5.2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 7cd2c4ada6fab830b421a83ea90edda2b4cd257f169062338618828d56875654
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/libip6tc2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libip6tc2_1.8.7-1ubuntu5.2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: d9af8651dd6f2017a822ab469680b05a03457376ba70222e6633c4652be3b112
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/liblz4-1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/l/lz4/liblz4-1_1.9.3-2build2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 3e2274893e0963c758f0d18ba80d033736909373247a7deb211e9ff590a09133
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/arm64/liblzma5
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/x/xz-utils/liblzma5_5.2.5-2ubuntu1.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 97f4c7e360aa229d3bf0a5b56b204652ce4f1704536dc0256c0e2537b356f397
+  license:
+    - FSFULLR
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libmd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libm/libmd/libmd0_1.0.4-1build1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 6f87f19f71411a94ae370f7f9bcf4c7dfb5d4393f11de99634ac3137448ad678
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - Beerware
+    - ISC
+- dependency: apt/integration_test_packages/arm64/libmnl0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libm/libmnl/libmnl0_1.0.4-3build2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 225e80ab05283fca43a3d6c717d33f92703893c4fb725a3c4c6c6ced536c31e2
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libmount1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libmount1_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a0a733b6fe171af62dc034eebe439ba680a108ae23e518c637e7adfe42236c01
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libncurses6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libncurses6_6.3-2ubuntu0.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 5a6fdc731d7c5f2c180de3367b8b482fe108369e5af3125104db4f8151fce9bc
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libncursesw6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libncursesw6_6.3-2ubuntu0.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 587257cb8455cf87dc963bc73cec4142ecba187cc9de7d3973f07b245d8bc6d7
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libnetfilter-conntrack3
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libn/libnetfilter-conntrack/libnetfilter-conntrack3_1.0.9-1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a10d7730122adc40ad41ca9f4aed3c30506e9fc2e67b537536ebeef9264b68f2
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/libnfnetlink0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libn/libnfnetlink/libnfnetlink0_1.0.1-3build3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 5bc00880ab301fef48bebdfd4435c7e4ef40364175fa035f936aeebe2b3c2b86
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/arm64/libnftnl11
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libn/libnftnl/libnftnl11_1.2.1-1build1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9335b6383d301b952a1a5aa5e39c77159d6451106d54bb8f37eb2e4931a0b35b
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/libpam0g
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pam/libpam0g_1.4.0-11ubuntu2.8_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: f61ae0342dfba2b6c6b61f3d46925371434a4719a251f7585f9baa1341fcc9e2
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/arm64/libpcre2-8-0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: b85beefd54108f1c34a89cb26688eb1b2eeaa099e4995091295a1d39f9c67a91
+  license: BSD-3-Clause
+- dependency: apt/integration_test_packages/arm64/libprocps8
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/procps/libprocps8_3.3.17-6ubuntu2.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: af989708c63833697b9bbd4da9704399919cc0f0d6ac337ce876e51a24f85c1a
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/libselinux1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libs/libselinux/libselinux1_3.3-1build2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 3a0726b2174a40fa28e74712867aa6e40d3d725543e8f668af9e9e59a28c817c
+  license:
+    - GPL-2.0
+    - LGPL-2.1
+    - libselinux-1.0
+- dependency: apt/integration_test_packages/arm64/libsmartcols1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libsmartcols1_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 3571702e852987ec2603e84e05a77465b27d1c8a3eebc2b74d4c6379aed10d2e
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libsystemd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libsystemd0_249.11-0ubuntu3.22_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9805c8c136fd41d9bff355297fdf6f811529960908711f647e38e1fd39a198ec
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libtinfo6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libtinfo6_6.3-2ubuntu0.3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 971b5fd1cf8f7d68ba00f40d8eec6474fae6a6adbe19883aa42dd2b74c672e4a
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libudev1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libudev1_249.11-0ubuntu3.22_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: ec814eee0c7a398e031ece85d07c0108c16f609fb033d7b77700e9106ce86130
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libunistring2
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libu/libunistring/libunistring2_1.0-1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 59e4af5c1fac70d1fbc19f3c732331ace8449f1f7112887e7b56b8370bd8942b
+  license:
+    - FSFULLR
+    - GFDL-1.2
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libuuid1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 2478ccd8df956d8e5cf087bff1471bcd9991838be9c7999e5737d092034c492d
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/libxtables12
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iptables/libxtables12_1.8.7-1ubuntu5.2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 1e224fa12afd5bf4c8b5afe1803c6af04fd296ecd081fdd6a2df0e8dbe2027e1
+  license:
+    - Artistic-1.0-Perl
+    - GPL-2.0
+    - GPL-2.0-or-later
+- dependency: apt/integration_test_packages/arm64/libzstd1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libz/libzstd/libzstd1_1.4.8+dfsg-3build1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 0102eb80384c2432c4be819663341a1c4e511d05f13ec1467643696531ec6491
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - MIT
+    - Zlib
+- dependency: apt/integration_test_packages/arm64/lsb-base
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/l/lsb/lsb-base_11.1.0ubuntu4_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 23ac3e99b0c2cd0179a7f40fa5a24248345e16c515f222164dad2a638b4f04cf
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/arm64/mawk
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/m/mawk/mawk_1.3.4.20200120-3_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 05464e1bea28b2e930de24bda2257136b47caa52bf99c172f2a4eab7fe694921
+  license:
+    - GPL-2.0
+    - GPL-2.0-only
+- dependency: apt/integration_test_packages/arm64/netbase
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/netbase/netbase_6.3_all.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 480bbd894069e5da7a25f070ea0ebaded7f64bdd34a119558cc2fe7137762a79
+  license: GPL-2.0
+- dependency: apt/integration_test_packages/arm64/perl-base
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/perl/perl-base_5.34.0-3ubuntu1.9_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 9e276fc3089df7aa2f4404f1450c06fd261a907aecf7237577c01d5bb4ef99cb
+  license:
+    - Artistic-1.0-Perl
+    - Artistic-2.0
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - CC0-1.0
+    - FSFAP
+    - GPL-1.0
+    - GPL-1.0-or-later
+    - GPL-2.0
+    - GPL-3.0-or-later
+    - HPND
+    - LGPL-2.1
+    - MIT
+    - Spencer-86
+    - Unicode-DFS-2015
+    - Zlib
+    - bzip2-1.0.6
+- dependency: apt/integration_test_packages/arm64/procps
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/procps/procps_3.3.17-6ubuntu2.1_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 1427d78e933d0b47b562ffba54f21c8eb4b3141ca1d6d4ca97e649fda5693608
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/integration_test_packages/arm64/tar
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/t/tar/tar_1.34+dfsg-1ubuntu0.1.22.04.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: a6e8a42c2be5fdabf51578cc416714cca62f099cde841c3143178919150bda0f
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/integration_test_packages/arm64/util-linux
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/u/util-linux/util-linux_2.37.2-4ubuntu3.6_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 7802e3573582011b2a2b232f305190b6e29cc27055eff6076183083290caa509
+  license:
+    - BSD-3-Clause
+    - BSD-4-Clause-UC
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - LGPL-3.0-or-later
+    - MIT
+- dependency: apt/integration_test_packages/arm64/zlib1g
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/z/zlib/zlib1g_1.2.11.dfsg-2ubuntu9.2_arm64.deb
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: cfd99d1ca41e710fdd3f68bfdc4d36dd24e14377656764f00b215b89cf6976e8
+  license: Zlib
 - dependency: bazel_lib
   version: https://github.com/bazel-contrib/bazel-lib/releases/download/v3.2.2/bazel-lib-v3.2.2.tar.gz
   retrieved: "2026-10-06"
@@ -971,13 +2372,13 @@
   license: BSD-3-Clause
 - dependency: github.com/google/btree
   version: v1.1.2
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-21"
   commit: 8e29150ba321eef204059de2ab494f179b6cff2c
   sha256: faee8550c5fffb4ae1dadde5ccaccb13298726f9fad226bb4eed0c03c90a481d
   license: Apache-2.0
 - dependency: github.com/google/gnostic-models
   version: v0.6.8
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-21"
   commit: 577692584cdf09674595bba0c182d0e8a44655d3
   sha256: 5276180bd184f64676867fc2f64a583175968c507d404be6b7f1261ead229484
   license: Apache-2.0
@@ -1049,7 +2450,7 @@
   license: BSD-3-Clause
 - dependency: github.com/googleapis/gnostic
   version: v0.5.5
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-21"
   commit: 1550ae29653d42db69c8a98d368648be7f2c488d
   sha256: 50fab68c592e8c8038b48b3c7b68d8f56297a58da28194ace2a43a9866c4025b
   license: Apache-2.0
@@ -1067,8 +2468,8 @@
   license: BSD-3-Clause
 - dependency: github.com/imdario/mergo
   version: v0.3.5
-  retrieved: "2026-08-27"
-  commit: 9316a62528ac99aaecb4e47eadd6dc8aa6533d58
+  retrieved: "2026-10-21"
+  commit: ""
   sha256: 7e9a0a74ebfb0e2d1cde49fe5e7c8f54975b16601ceaa4a308887790e4f101dc
   license: BSD-3-Clause
 - dependency: github.com/josharian/intern
@@ -1235,7 +2636,7 @@
   license: MIT
 - dependency: github.com/spf13/pflag
   version: v1.0.5
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-21"
   commit: 2e9d26c8c37aae03e3f9d4e90b7116f5accb7cab
   sha256: fc6e704f2f6a84ddcdce6de0404e5340fa20c8676181bf5d381b17888107ba84
   license: BSD-3-Clause

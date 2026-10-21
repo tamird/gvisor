@@ -49,6 +49,20 @@ The grouped packages expose `//images/benchmarks:profile_helper_archive` and
 for Make. The stable image names remain `benchmarks/profile-helper` and
 `gpu/ollama/client`.
 
+## Integration test image
+
+`//images/basic:integration_test_image` builds the nine existing C helpers with
+Bazel's C toolchain and packages them in `/root`, alongside the ping scripts and
+copy-up fixture. The image retains the `nonroot` account (UID 1338, GID 1337) and
+its copy of `host_connect` in `/home/nonroot`.
+
+The runtime uses the declared Ubuntu Jammy snapshot. Bash, Dash, GNU coreutils,
+util-linux, iputils, iproute2, iptables and procps retain their complete package
+dependency closure and notices. Package installation scripts do not run; the
+image explicitly selects the legacy iptables entry points required by the
+tests. `//images/basic:integration_test_archives` builds the AMD64 and ARM64
+archives together through the existing architecture transition.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.
