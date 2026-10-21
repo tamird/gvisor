@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T08:40:03.502390+00:00",
+    "updatedAt": "2026-10-21T10:10:31.809412+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16007,37 +16007,32 @@
       ]
     },
     {
-      "id": "branch:fix/fsbench-fuse-ready",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16091",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/fsbench-fuse-ready",
-      "head": "62d5914cad3d7c5e9d0135f0240ae3a01623c8e5",
+      "head": "c2957046f4549e264181370c7747c3f5e99fb311",
       "title": "Wait for FUSE before copying benchmark inputs",
-      "url": "https://github.com/tamird/gvisor/commit/62d5914cad3d7c5e9d0135f0240ae3a01623c8e5",
+      "url": "https://github.com/google/gvisor/pull/16091",
       "group": "tests",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-21T02:05:18.683968+00:00",
-      "summary": "The contributor review request has been sent for the published standalone FUSE readiness change. It waits for the helper to finish mounting before copying benchmark inputs and observes early helper exit. The current qualified fork passes both exact Ruby clean/dirty FUSE leaves with positive one-iteration measurements, package success and source/archive/load provenance (bc24db36); seven cleanup/reporting checks also pass (d4ddaab9). Original missing-file and cleanup-status137 failures remain preserved. This proposal is awaiting the existing contributor decision; the three full local benchmark cohorts are a separate qualification obligation.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "62d5914cad3d7c5e9d0135f0240ae3a01623c8e5",
-        "url": "https://github.com/tamird/gvisor/commit/62d5914cad3d7c5e9d0135f0240ae3a01623c8e5"
-      },
+      "status": "open",
+      "updatedAt": "2026-10-21T10:10:31.809412+00:00",
+      "summary": "The user-approved FUSE readiness change is delivered as #16091 at signed c2957046f4549e264181370c7747c3f5e99fb311. Its one-commit, two-file patch and message are byte-identical to approved 62d5914cad3d7c5e9d0135f0240ae3a01623c8e5 after refreshing onto upstream 37bbffde6725. Independent source review and exact public head/body/patch readback passed. The two Go postimages match qualified 25e1c37002: focused Ruby clean/dirty FUSE runtime and seven source/reporting checks remain accepted on that recorded source, with original failures preserved. No new execution at the refreshed public head is claimed. The contributor decision and delivery are complete; current-head CI and maintainer review are separate.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor decision pending; concrete published proposal requested once",
-        "sourceHead": "62d5914cad3d7c5e9d0135f0240ae3a01623c8e5",
-        "observedAt": "2026-10-21T01:58:10.825773+00:00",
-        "nextAction": "Await the existing contributor decision for this exact standalone commit; do not re-ask. Full local cohort qualification remains separately owned and gated on collector lifetime correction.",
+        "owner": "work_map_current",
+        "disposition": "Delivered; current-head public CI and maintainer review remain",
+        "sourceHead": "c2957046f4549e264181370c7747c3f5e99fb311",
+        "observedAt": "2026-10-21T10:09:32.093153+00:00",
+        "nextAction": "Follow #16091 through the existing current-head CI and review cadence when observation resumes. No contributor question, merge, duplicate reviewer request or ordinary polling restart for this publication.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/62d5914cad3d7c5e9d0135f0240ae3a01623c8e5",
-          "https://app.buildbuddy.io/invocation/777aa4fe-b03c-416f-b6c1-33f3ae3d59a2",
-          "https://app.buildbuddy.io/invocation/d8b31329-0d3a-418e-8b3e-f90764fdbb50"
+          "https://github.com/google/gvisor/pull/16091",
+          "https://github.com/tamird/gvisor/commit/c2957046f4549e264181370c7747c3f5e99fb311",
+          "https://github.com/tamird/gvisor/commit/62d5914cad3d7c5e9d0135f0240ae3a01623c8e5"
         ]
       },
       "evidence": [
         {
-          "label": "Exact standalone proposal and commit message",
+          "label": "Exact user-approved standalone proposal",
           "url": "https://github.com/tamird/gvisor/commit/62d5914cad3d7c5e9d0135f0240ae3a01623c8e5"
         },
         {
@@ -16047,8 +16042,17 @@
         {
           "label": "Seven cleanup/reporting checks",
           "url": "https://app.buildbuddy.io/invocation/d8b31329-0d3a-418e-8b3e-f90764fdbb50"
+        },
+        {
+          "label": "Verified authorized upstream delivery",
+          "url": "https://github.com/google/gvisor/pull/16091"
+        },
+        {
+          "label": "Refreshed signed source; approved patch unchanged",
+          "url": "https://github.com/tamird/gvisor/commit/c2957046f4549e264181370c7747c3f5e99fb311"
         }
-      ]
+      ],
+      "number": 16091
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13826",
