@@ -2948,11 +2948,6 @@ exceptions:
       - ISC
       - MIT
     exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/libpython3-stdlib
-    license:
-      - HPND
-      - MIT
-    exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libpython3.10-minimal
     license:
       - BSD-2-Clause
@@ -2962,6 +2957,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libpython3.10-stdlib
@@ -2973,6 +2969,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/libquadmath0
@@ -3075,26 +3072,6 @@ exceptions:
       - ISC
       - MIT
     exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3
-    license:
-      - HPND
-      - MIT
-    exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3-distutils
-    license:
-      - HPND
-      - PSF-2.0
-    exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3-lib2to3
-    license:
-      - HPND
-      - PSF-2.0
-    exception_rationale: *apt_qemu_build_deps_rationale
-  - dependency: apt/qemu_build_deps/amd64/python3-minimal
-    license:
-      - HPND
-      - MIT
-    exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/python3.10
     license:
       - BSD-2-Clause
@@ -3104,6 +3081,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/python3.10-minimal
@@ -3115,6 +3093,7 @@ exceptions:
       - GPL-2.0-or-later
       - HPND
       - MIT
+      - Python-2.0.1
       - Zlib
     exception_rationale: *apt_qemu_build_deps_rationale
   - dependency: apt/qemu_build_deps/amd64/readline-common
