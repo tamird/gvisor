@@ -193,6 +193,8 @@ image_layer(
     create_parent_directories = "enabled",
     default_metadata = file_metadata(mode = "0644"),
     file_metadata = {"/usr/bin/wrk2": file_metadata(mode = "0755")},
+    # The Lua module is embedded in the executable, which needs no runfiles.
+    include_runfiles = False,
 )
 
 image_manifest(
