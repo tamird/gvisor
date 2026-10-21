@@ -17,6 +17,8 @@ package integration
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -71,6 +73,41 @@ func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string
 			ReadOnly: true,
 		})
 	}
+	if identityFile, diagnostic := os.LookupEnv("GVISOR_DIAGNOSTIC_RUNTIME_IDENTITIES"); diagnostic {
+		if !filepath.IsAbs(identityFile) {
+			return "", fmt.Errorf("diagnostic runtime identities require an absolute path")
+		}
+		data, err := os.ReadFile(identityFile)
+		if err != nil {
+			return "", err
+		}
+		var expected map[string]struct {
+			Bytes  int    `json:"bytes"`
+			SHA256 string `json:"sha256"`
+		}
+		if err := json.Unmarshal(data, &expected); err != nil {
+			return "", err
+		}
+		files := map[string]string{"runsc": runscRealPath}
+		for _, m := range sidecarMounts {
+			files[filepath.Base(m.Target)] = m.Source
+		}
+		if len(expected) != len(files) {
+			return "", fmt.Errorf("runtime identity count: got %d files, want %d", len(files), len(expected))
+		}
+		for name, path := range files {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return "", err
+			}
+			want, ok := expected[name]
+			digest := fmt.Sprintf("%x", sha256.Sum256(data))
+			if !ok || len(data) != want.Bytes || digest != want.SHA256 {
+				return "", fmt.Errorf("runtime identity mismatch: %s (%d bytes, %s)", path, len(data), digest)
+			}
+			logger.Logf("Diagnostic mounted runtime: %s, %d bytes, %s", path, len(data), digest)
+		}
+	}
 	d := dockerutil.MakeNativeContainer(ctx, logger)
 	defer d.CleanUp(ctx)
 	opts := dockerutil.RunOpts{
@@ -123,8 +160,35 @@ func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string
 		command = append(command, fmt.Sprintf("printf '%%s ' %q", arg))
 	}
 	args = append(args, "/bin/sh", "-c", strings.Join(command, " && "))
+	// Qualification-only instrumentation leaves the runtime and its sidecars at
+	// their original paths. The untraced runs use the original command unchanged.
+	tool, tracing := os.LookupEnv("GVISOR_DIAGNOSTIC_STRACE")
+	if tracing {
+		outputRoot, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
+		if !ok || !filepath.IsAbs(outputRoot) || !filepath.IsAbs(tool) {
+			return "", fmt.Errorf("diagnostic tracing requires absolute tool and Bazel output paths")
+		}
+		output, err := os.MkdirTemp(outputRoot, "strace-")
+		if err != nil {
+			return "", fmt.Errorf("creating trace output: %w", err)
+		}
+		opts.Mounts = append(opts.Mounts,
+			mount.Mount{Type: mount.TypeBind, Source: tool, Target: "/diagnostic-tool", ReadOnly: true},
+			mount.Mount{Type: mount.TypeBind, Source: output, Target: "/diagnostic-output"},
+		)
+		args = append([]string{
+			"/diagnostic-tool/loader", "--library-path", "/diagnostic-tool/lib",
+			"/diagnostic-tool/strace", "-ff", "-yy", "-ttt", "-s", "256",
+			"-e", "trace=%process,%file,%desc,%creds,setns,unshare,mount,umount2,prctl",
+			"-o", "/diagnostic-output/trace",
+		}, args...)
+	}
 	logger.Logf("Running: %v", args)
 	got, err := d.Run(ctx, opts, args...)
+	if tracing {
+		state, err := d.Status(ctx)
+		logger.Logf("Diagnostic tracer container status: %+v; inspect error: %v", state, err)
+	}
 	got = strings.TrimSpace(got)
 	if err != nil {
 		return got, err
