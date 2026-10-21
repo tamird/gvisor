@@ -53,6 +53,7 @@ BAZEL_IMAGE_CONTEXTS := \
   basic_busybox=//images/basic:busybox_context \
   basic_tmpfile=//images/basic:tmpfile_context \
   benchmarks_hackbench=//images/benchmarks:hackbench_context \
+  benchmarks_iperf=//images/benchmarks:iperf_context \
   benchmarks_profile-helper=//images/benchmarks:profile_helper_context \
   gpu_ollama_client=//images/gpu/ollama:client_context
 ifeq ($(ARCH),x86_64)

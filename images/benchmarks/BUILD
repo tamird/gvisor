@@ -158,3 +158,68 @@ image_outputs(
     image = ":hackbench_image",
     image_name = "benchmarks/hackbench",
 )
+
+cc_binary(
+    name = "iperf",
+    srcs = [
+        "iperf/config.h",
+        "@iperf//:sources",
+    ],
+    copts = ["-O2"],
+    defines = [
+        "HAVE_CONFIG_H",
+        "_GNU_SOURCE",
+    ],
+    includes = ["iperf"],
+    linkopts = [
+        "-lm",
+        "-lrt",
+    ],
+    static = True,
+    # config.h describes the Linux interfaces used by both supported CPUs.
+    target_compatible_with = ["@platforms//os:linux"],
+    deps = ["@iperf//:headers"],
+)
+
+image_layer(
+    name = "iperf_layer",
+    srcs = {
+        "/usr/bin/iperf": ":iperf",
+        "/usr/share/doc/iperf/COPYING": "@iperf//:COPYING",
+        "/usr/share/doc/iperf/NOTICE": "iperf/NOTICE",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/bin/iperf": file_metadata(mode = "0755")},
+)
+
+# The bundled getopt is LGPL-2-or-later; retain its full LGPL 2.1 license
+# alongside the upstream notices, using the already-declared package.
+package_layer(
+    name = "iperf_licenses_layer",
+    members = [
+        "./usr/share/common-licenses/GPL-2",
+        "./usr/share/common-licenses/LGPL-2.1",
+        "./usr/share/doc/base-files/copyright",
+    ],
+    packages = ["@helper_image_packages//base-files:data"],
+)
+
+image_manifest(
+    name = "iperf_image",
+    base = "//images:helper_base",
+    cmd = ["/usr/bin/iperf"],
+    layers = [
+        ":iperf_licenses_layer",
+        ":iperf_layer",
+    ],
+    tags = ["manual"],
+    # Match the executable's Linux platform, independently of the build host.
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+image_outputs(
+    name = "iperf",
+    image = ":iperf_image",
+    image_name = "benchmarks/iperf",
+)

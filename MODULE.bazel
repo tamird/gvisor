@@ -119,6 +119,16 @@ http_archive(
     urls = ["https://www.kernel.org/pub/linux/utils/rt-tests/older/rt-tests-2.2.tar.xz"],
 )
 
+### iperf
+# iperf2 source used by the network benchmarks, matching Ubuntu Jammy.
+http_archive(
+    name = "iperf",
+    build_file = "//images/benchmarks:iperf.BUILD",
+    sha256 = "13aa15a35830e265b05a9e63ceef806d16798e144204a135488899012528aa38",
+    strip_prefix = "iperf-2.1.5+dfsg1",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/universe/i/iperf/iperf_2.1.5%2Bdfsg1.orig.tar.xz"],
+)
+
 ### Python
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
