@@ -59,6 +59,7 @@ MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
 RUNTIME_RESULT_TAGS = {"jtreg-results"} | NODE_RESULT_TAGS
+SOURCE_IMAGE_ASPECT = "//test/docker:source_image_contracts.bzl%source_image_contracts"
 EVENT_KEYS = {
     "id", "children", "started", "finished", "configured", "completed",
     "testResult", "testSummary", "aborted", "namedSetOfFiles",
@@ -206,6 +207,8 @@ def declared_output_groups(targets: dict[str, unit_matrix.ConfiguredTarget]) -> 
     """Read the small report output groups explicitly requested by each owner."""
     groups = set()
     for label, target in targets.items():
+        if SOURCE_IMAGE_ASPECT in target.aspects:
+            groups.add((Owner(label, target.configuration), "source_image_contracts"))
         for tag in target.tags:
             if not tag.startswith("qualification-output-group="):
                 continue
@@ -231,7 +234,10 @@ def advertised_build_outputs(events: Path, groups: set[tuple[Owner, str]]) -> li
                 if name in sets:
                     raise ValueError(f"Duplicate build output file set: {name}")
                 sets[name] = mapping(event["namedSetOfFiles"])
-            if "completed" not in event or mapping(identity.get("targetCompleted")).get("aspect"):
+            if "completed" not in event:
+                continue
+            aspect = mapping(identity.get("targetCompleted")).get("aspect")
+            if aspect and aspect != SOURCE_IMAGE_ASPECT:
                 continue
             owner = Owner.parse(identity["targetCompleted"])
             for raw in sequence(mapping(event["completed"]).get("outputGroup", [])):
@@ -239,6 +245,8 @@ def advertised_build_outputs(events: Path, groups: set[tuple[Owner, str]]) -> li
                 key = owner, string(group.get("name"))
                 if key not in groups:
                     continue
+                if (key[1] == "source_image_contracts") != (aspect == SOURCE_IMAGE_ASPECT):
+                    raise ValueError(f"Build output group has the wrong aspect: {key}")
                 if key in selected or group.get("incomplete", False):
                     raise ValueError(f"Duplicate or incomplete build output group: {key}")
                 selected[key] = group
@@ -1198,6 +1206,11 @@ def audit_source_images(execution: Path, decoder: Path, canonical: Path, manifes
                     "source": original.get("source"), "audit_status": "INCOMPLETE", "errors": [diagnostic]}
         result = source_image_audit(raw, canonical, manifest, expectations)
         result["compact_execution"] = inputs
+        by_path = {item["path"]: item for item in result["inputs"]}
+        result["input_roles"] = {"execution": inputs[0], **{
+            name: by_path[str(path)] for name, path in (
+                ("verdict", canonical), ("manifest", manifest), ("expectations", expectations))
+            if str(path) in by_path}}
         # Keep the decoded content identity, not the removed temporary path.
         for item in result["inputs"]:
             if item["path"] == str(raw):
@@ -1767,18 +1780,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if info["execution_finished_at"] is not None else None}
 
 
-def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
+def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_exit: int,
+                       errors: list[str]) -> dict[str, object]:
     """Keep original command exits distinct from the enclosing runner's exit."""
-    rows = []
-    errors = []
-    for invocation in sorted(directory.rglob("invocation-*")):
-        if not invocation.is_dir():
-            continue
-        path = invocation / "verdict.json"
-        try:
-            rows.append({"path": str(path.relative_to(directory)), "verdict": read_json(path), **file_record(path)})
-        except (OSError, ValueError) as error:
-            errors.append(str(error))
     if not rows:
         errors.append("No invocation verdicts were retained")
     sources = {string(mapping(row["verdict"]).get("source")) for row in rows}
@@ -1804,7 +1808,7 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
         coordinator_failed = True
     else:
         status = "PASS"
-    result = {"schema_version": 1, "status": status, "sources": sorted(sources), "native_exit": native_exit,
+    return {"schema_version": 1, "status": status, "sources": sorted(sources), "native_exit": native_exit,
               "native_exits": native_exits, "runner_exit": runner_exit, "coordinator_failed": coordinator_failed,
               "capture_exit": capture_exit, "invocations": rows, "errors": errors,
               "expected": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("expected", []))],
@@ -1823,7 +1827,9 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
               "missing": [item for row in verdicts for item in sequence(row.get("missing", []))],
               "skips": [item for row in verdicts for item in sequence(row.get("skips", []))],
               "verdict_available_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
-    write_json(directory / "verdict.json", result)
+
+
+def archive_evidence(directory: Path, output: Path) -> None:
     # The archive must be outside its input directory, and symlinks cannot
     # introduce private files from outside the owned artifact directory.
     try:
@@ -1838,7 +1844,137 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
                 raise ValueError(f"Symlink in evidence directory: {path}")
             if path.is_file():
                 archive.add(path, arcname=str(path.relative_to(directory)), recursive=False)
+
+
+def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
+    rows = []
+    errors = []
+    for invocation in sorted(directory.rglob("invocation-*")):
+        if not invocation.is_dir():
+            continue
+        path = invocation / "verdict.json"
+        try:
+            rows.append({"path": str(path.relative_to(directory)), "verdict": read_json(path), **file_record(path)})
+        except (OSError, ValueError) as error:
+            errors.append(str(error))
+    result = summarize_verdicts(rows, runner_exit, capture_exit, errors)
+    metadata = directory / "matrix-row.json"
+    if metadata.exists():
+        try:
+            result["matrix_row"] = read_json(metadata)
+            result["matrix_row_evidence"] = file_record(metadata)
+        except (OSError, ValueError) as error:
+            errors.append(f"Matrix row metadata: {error}")
+            if result["status"] != "FAIL":
+                result["status"] = "INCOMPLETE"
+    lanes = directory / "lane-results.jsonl"
+    if lanes.exists():
+        try:
+            result["lane_results"] = [mapping(json.loads(line)) for line in lanes.read_text().splitlines()]
+            result["lane_results_evidence"] = file_record(lanes)
+        except (OSError, ValueError) as error:
+            errors.append(f"Lane completion metadata: {error}")
+            if result["status"] != "FAIL":
+                result["status"] = "INCOMPLETE"
+    audits = directory / "matrix-audits.json"
+    if audits.exists():
+        try:
+            result["matrix_audits"] = sequence(read_json(audits).get("audits"))
+            result["matrix_audit_evidence"] = file_record(audits)
+        except (OSError, ValueError) as error:
+            errors.append(f"Matrix audit metadata: {error}")
+            if result["status"] != "FAIL":
+                result["status"] = "INCOMPLETE"
+    write_json(directory / "verdict.json", result)
+    archive_evidence(directory, output)
     return result
+
+
+def bundle_members(artifact: Path, names: set[str], *, verify: dict[str, dict[str, object]] | None = None,
+                   deadline: float | None = None, first: bool = False) -> dict[str, bytes]:
+    """Retain small reports and stream-hash other inputs in one bounded pass."""
+    verify = verify or {}
+    wanted = names | verify.keys()
+    if any(not name or name.startswith("/") or any(part in ("", ".", "..") for part in name.split("/")) for name in wanted):
+        raise ValueError("Invalid bundle member path")
+    result = {}
+    seen = set()
+    total = 0
+    if not wanted:
+        return result
+
+    def retain(name: str, size: int, stream: BinaryIO) -> None:
+        nonlocal total
+        if name in seen or (name in names and size > MAX_REPORT_BYTES) or total + size > MAX_TOTAL_REPORT_BYTES:
+            raise ValueError(f"Duplicate bundle member or report size bound: {name}")
+        digest = hashlib.sha256()
+        chunks = []
+        length = 0
+        reader = DeadlineReader(stream, deadline)
+        for chunk in iter(lambda: reader.read(1024 * 1024), b""):
+            digest.update(chunk)
+            length += len(chunk)
+            if name in names:
+                chunks.append(chunk)
+        if length != size:
+            raise ValueError(f"Bundle member size differs: {name}")
+        if name in verify and {"sha256": digest.hexdigest(), "bytes": length} != {
+                key: verify[name].get(key) for key in ("sha256", "bytes")}:
+            raise ValueError(f"Retained audit input differs from its digest/size: {name}")
+        if name in names:
+            result[name] = b"".join(chunks)
+        seen.add(name)
+        total += size
+        check_deadline(deadline)
+
+    def read_tar(stream: BinaryIO, selected: set[str]) -> None:
+        with tarfile.open(fileobj=DeadlineReader(stream, deadline), mode="r|gz") as archive:
+            for member in archive:
+                if member.name not in selected:
+                    continue
+                if not member.isfile():
+                    raise ValueError(f"Bundle member is not a regular file: {member.name}")
+                with archive.extractfile(member) as source:
+                    retain(member.name, member.size, source)
+                if first and selected <= seen:
+                    return
+
+    if zipfile.is_zipfile(artifact):
+        with zipfile.ZipFile(artifact) as archive:
+            # Composition checks the nested original in full. Receipt retains
+            # its established fast path to the separately uploaded verdict.
+            if not first and "qualification.tar.gz" in archive.namelist():
+                if archive.namelist().count("qualification.tar.gz") != 1:
+                    raise ValueError("Duplicate nested qualification bundle")
+                with archive.open("qualification.tar.gz") as stream:
+                    read_tar(stream, wanted)
+            else:
+                direct = wanted & {name.removeprefix("qualification/") for name in archive.namelist()
+                                   if name.startswith("qualification/")}
+                for name in sorted(direct):
+                    full_name = "qualification/" + name
+                    member = archive.getinfo(full_name)
+                    if archive.namelist().count(full_name) != 1 or member.is_dir():
+                        raise ValueError(f"Duplicate or invalid bundle member: {name}")
+                    with archive.open(member) as stream:
+                        retain(name, member.file_size, stream)
+                if remaining := wanted - seen:
+                    with archive.open("qualification.tar.gz") as stream:
+                        read_tar(stream, remaining)
+    else:
+        with artifact.open("rb") as stream:
+            read_tar(stream, wanted)
+    if missing := wanted - seen:
+        raise ValueError(f"Bundle members are missing: {sorted(missing)}")
+    return result
+
+
+def bundle_member(artifact: Path, name: str, *, deadline: float | None = None) -> bytes:
+    return bundle_members(artifact, {name}, deadline=deadline)[name]
+
+
+def producer_verdict(artifact: Path, *, deadline: float | None = None) -> dict[str, object]:
+    return mapping(json.loads(bundle_members(artifact, {"verdict.json"}, deadline=deadline, first=True)["verdict.json"]))
 
 
 def receipt(artifact: Path, sha256: str, expected_source: str,
@@ -1847,35 +1983,7 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
     identity = file_record(artifact, deadline=deadline)
     if identity["sha256"] != sha256.removeprefix("sha256:"):
         raise ValueError("Artifact SHA256 differs from the expected digest")
-    # Reconciliation already happened on the coordinator. Read only its
-    # verdict, from either the Actions upload or the native Remote Bazel bundle.
-    def read_producer(stream: BinaryIO) -> dict[str, object]:
-        reader = DeadlineReader(stream, deadline)
-        value = mapping(json.loads(b"".join(iter(lambda: reader.read(1024 * 1024), b""))))
-        check_deadline(deadline)
-        return value
-
-    if zipfile.is_zipfile(artifact):
-        with zipfile.ZipFile(artifact) as archive:
-            member = archive.getinfo("qualification/verdict.json")
-            if member.file_size > MAX_REPORT_BYTES:
-                raise ValueError("Producer verdict exceeds the report size bound")
-            with archive.open(member) as stream:
-                producer = read_producer(stream)
-    else:
-        with artifact.open("rb") as source, tarfile.open(fileobj=DeadlineReader(source, deadline), mode="r|gz") as archive:
-            for member in archive:
-                if member.name != "verdict.json":
-                    continue
-                if not member.isfile():
-                    raise ValueError("Producer verdict is not a regular file")
-                if member.size > MAX_REPORT_BYTES:
-                    raise ValueError("Producer verdict exceeds the report size bound")
-                with archive.extractfile(member) as stream:
-                    producer = read_producer(stream)
-                break
-            else:
-                raise ValueError("Producer verdict is missing from the bundle")
+    producer = producer_verdict(artifact, deadline=deadline)
     if producer.get("schema_version") != 1 or producer.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
         raise ValueError("Unsupported producer verdict")
     if producer.get("sources") != [expected_source]:
@@ -1906,6 +2014,323 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
             "expected_labels": labels, "expected_owner_count": len(expected),
             "executed_attempt_count": len(sequence(producer["executed"])), "invocations": invocations,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+
+
+def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, object]:
+    """Read complete configured contracts, including empty and dynamic-builder roots."""
+    verdict = read_json(canonical)
+    expected_rows = sequence(verdict.get("expected"))
+    expected = {Owner(string(mapping(raw).get("label")), string(mapping(raw).get("configuration")))
+                for raw in expected_rows}
+    if len(expected) != len(expected_rows):
+        raise ValueError("Duplicate configured owners in canonical verdict")
+    configured = {}
+    owners = {}
+    for raw in sequence(verdict.get("build_outputs")):
+        item = mapping(raw)
+        if item.get("group") != "source_image_contracts":
+            continue
+        owner = Owner.parse(item.get("identity"))
+        path = (manifest.parent / string(item.get("path"))).resolve()
+        path.relative_to(manifest.parent.resolve())
+        if file_record(path) != {"sha256": item.get("sha256"), "bytes": item.get("bytes")}:
+            raise ValueError("Source-image contract differs from retained build output")
+        contract = read_json(path)
+        if contract.get("schema_version") != 1 or contract.get("owner") != owner.label or owner in configured:
+            raise ValueError(f"Wrong or duplicate configured source-image contract: {owner}")
+        images = [mapping(image) for image in sequence(contract.get("images"))]
+        for image in images:
+            if (image.keys() != {"name", "architecture", "archive"} or not string(image["name"])
+                    or image["architecture"] not in ("amd64", "arm64") or not string(image["archive"])):
+                raise ValueError(f"Invalid declared source image: {image}")
+        if len(images) != len({(image["name"], image["architecture"], image["archive"]) for image in images}):
+            raise ValueError(f"Duplicate declared source images for {owner}")
+        commands = [mapping(command) for command in sequence(contract.get("source_commands"))]
+        for command in commands:
+            if (command.keys() != {"owner", "architecture", "image_class", "images"}
+                    or not string(command["owner"]) or command["architecture"] not in ("x86_64", "aarch64")
+                    or command["image_class"] not in ("cpu", "gpu")
+                    or any(not string(image) for image in sequence(command["images"]))):
+                raise ValueError(f"Invalid declared image-source command: {command}")
+        names = sorted({string(image["name"]) for image in images})
+        owners[owner.label] = sorted(set(owners.get(owner.label, [])) | set(names))
+        configured[owner] = {**asdict(owner), "images": images, "source_commands": commands,
+                             "contract": {"path": str(path), **file_record(path)}}
+    if not expected or configured.keys() != expected:
+        raise ValueError("Source-image contracts differ from complete configured owners")
+    return {"owners": owners, "configured_owners": [configured[owner] for owner in sorted(configured)]}
+
+
+def source_image_row(directory: Path, decoder: Path) -> dict[str, object]:
+    """Audit every execution phase before the row's existing bundle step."""
+    metadata = read_json(directory / "matrix-row.json")
+    row = mapping(metadata.get("row"))
+    required = sequence(row.get("required_audits"))
+    audits = []
+    if required:
+        if required != ["source-images"]:
+            raise ValueError(f"Unsupported required row audits: {required}")
+        audit = {"id": "source-images", **{key: metadata[key] for key in ("source", "run_id", "run_attempt")},
+                 "row_id": row["id"], "status": "PASS", "invocations": [], "errors": []}
+        for invocation in sorted(directory.glob("invocation-*")):
+            if not invocation.is_dir():
+                continue
+            canonical = invocation / "verdict.json"
+            try:
+                value = read_json(canonical)
+                if value.get("command_kind") not in ("test", "benchmark", "build"):
+                    continue
+                if value.get("source") != metadata["source"]:
+                    raise ValueError("Invocation source differs from row metadata")
+                entry = {"path": str(canonical.relative_to(directory)), "inputs": {}}
+                audit["invocations"].append(entry)
+                manifest = manifest_path(invocation / "events.jsonl")
+                expectations = invocation / "source-image-expectations.json"
+                write_json(expectations, source_image_expectations(canonical, manifest))
+                execution = invocation / "execution.binpb"
+                entry["inputs"] = {name: {"path": str(path.relative_to(directory)), **file_record(path)}
+                                   for name, path in (("expectations", expectations), ("execution", execution),
+                                                      ("verdict", canonical), ("manifest", manifest))}
+                evidence = invocation / "source-image-audit.json"
+                result = audit_source_images(execution, decoder, canonical, manifest, expectations)
+                write_json(evidence, result)
+                entry["evidence"] = {"path": str(evidence.relative_to(directory)), **file_record(evidence)}
+                if result.get("audit_status") != "PASS":
+                    raise ValueError(f"Source-image audit incomplete: {canonical}")
+            except (OSError, ValueError, KeyError) as error:
+                audit["status"] = "INCOMPLETE"
+                audit["errors"].append(str(error))
+        if not audit["invocations"]:
+            audit["status"] = "INCOMPLETE"
+            audit["errors"].append("No execution phases were retained for the required source-image audit")
+        audits.append(audit)
+    result = {"schema_version": 1, "audits": audits}
+    write_json(directory / "matrix-audits.json", result)
+    return result
+
+
+def matrix_plan(value: dict[str, object]) -> dict[str, dict[str, object]]:
+    """Validate composition identity; lane and resource policy belong to the planner."""
+    if value.get("schema_version") != 1 or re.fullmatch(r"[0-9a-f]{40}", string(value.get("source"))) is None:
+        raise ValueError("Expected a versioned matrix plan with a full source SHA")
+    if re.fullmatch(r"[1-9][0-9]*", string(value.get("run_id"))) is None:
+        raise ValueError("Matrix run_id must be a canonical positive decimal string")
+    if type(value.get("run_attempt")) is not int or value["run_attempt"] <= 0:
+        raise ValueError("Matrix run_attempt must be a positive integer")
+    mapping(value.get("side_inputs"))
+    rows = {}
+    for raw in sequence(value.get("rows")):
+        row = mapping(raw)
+        name = string(row.get("id"))
+        if re.fullmatch(r"[a-z0-9][a-z0-9_-]*", name) is None or name in rows:
+            raise ValueError(f"Invalid or duplicate matrix row: {name}")
+        for key in ("lanes", "required_kinds", "required_audits"):
+            values = [string(item) for item in sequence(row.get(key))]
+            if len(values) != len(set(values)) or any(not item for item in values):
+                raise ValueError(f"Duplicate or empty {key} for row {name}")
+        if not sequence(row["lanes"]):
+            raise ValueError(f"Matrix row has no lanes: {name}")
+        kinds = set(sequence(row["required_kinds"]))
+        if not kinds or not kinds <= {"test", "benchmark", "build", "analysis", "command"}:
+            raise ValueError(f"Invalid required command kinds for row {name}")
+        rows[name] = row
+    if not rows:
+        raise ValueError("Matrix plan has no required rows")
+    return rows
+
+
+def audit_member(members: dict[str, bytes], raw: object) -> dict[str, object]:
+    descriptor = mapping(raw)
+    body = members[string(descriptor.get("path"))]
+    if (hashlib.sha256(body).hexdigest(), len(body)) != (descriptor.get("sha256"), descriptor.get("bytes")):
+        raise ValueError(f"Audit member digest/size differs: {descriptor.get('path')}")
+    return mapping(json.loads(body))
+
+
+def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identity: dict[str, object],
+                  row: dict[str, object]) -> list[dict[str, object]]:
+    """Require complete per-invocation audits without replacing workload status."""
+    wanted = set(sequence(row["required_audits"]))
+    audits = [mapping(raw) for raw in sequence(producer.get("matrix_audits", []))]
+    if len(audits) != len({string(audit.get("id")) for audit in audits}) or {audit.get("id") for audit in audits} != wanted:
+        raise ValueError("Required audit IDs are missing, duplicated or unexpected")
+    phases = {string(mapping(raw).get("path")): mapping(raw) for raw in sequence(producer["invocations"])
+              if mapping(mapping(raw).get("verdict")).get("command_kind") in ("test", "benchmark", "build")}
+    for audit in audits:
+        if audit["id"] != "source-images":
+            raise ValueError(f"Unsupported required audit: {audit['id']}")
+        if any(audit.get(key) != value for key, value in identity.items()) or audit.get("row_id") != row["id"]:
+            raise ValueError("Audit source/run/row identity differs")
+        entries = [mapping(raw) for raw in sequence(audit.get("invocations"))]
+        if (not phases or len(entries) != len({string(entry.get("path")) for entry in entries})
+                or {entry.get("path") for entry in entries} != phases.keys()):
+            raise ValueError("Audit invocation coverage differs from the row's execution phases")
+        for entry in entries:
+            phase = phases[string(entry["path"])]
+            inputs = mapping(entry.get("inputs"))
+            if inputs.keys() != {"expectations", "execution", "verdict", "manifest"}:
+                raise ValueError("Audit requires expectations, execution, verdict and manifest identities")
+            canonical = mapping(inputs["verdict"])
+            if canonical.get("path") != entry["path"] or any(canonical.get(key) != phase.get(key) for key in ("sha256", "bytes")):
+                raise ValueError("Audit canonical verdict differs from its authenticated invocation")
+            value = audit_member(members, entry.get("evidence"))
+            if value.get("source") != identity["source"] or value.get("canonical_status") != mapping(phase["verdict"])["status"]:
+                raise ValueError("Audit source or canonical status differs")
+            retained_inputs = mapping(value.get("input_roles"))
+            for name, raw in inputs.items():
+                descriptor = mapping(raw)
+                retained = mapping(retained_inputs.get(name))
+                relative = Path(string(descriptor.get("path"))).parts
+                actual = Path(string(retained.get("path"))).parts
+                if (not relative or actual[-len(relative):] != relative
+                        or any(retained.get(key) != descriptor.get(key) for key in ("sha256", "bytes"))):
+                    raise ValueError(f"Audit does not bind its declared {name} input role/path")
+            if value.get("audit_status") != "PASS":
+                raise ValueError(f"Required source-image audit is {value.get('audit_status', 'missing')}: {entry['path']}")
+        if audit.get("status") != "PASS":
+            raise ValueError(f"Required audit is {audit.get('status', 'missing')}: {audit['id']}")
+    return audits
+
+
+def compose(plan_path: Path, results_path: Path, directory: Path, output: Path) -> dict[str, object]:
+    """Compose exactly the planned rows from authenticated, unchanged child bundles."""
+    errors: list[str] = []
+    invocations: list[dict[str, object]] = []
+    observations = []
+    plan: dict[str, object] = {}
+    results: dict[str, object] = {}
+    failed = False
+    required: dict[str, dict[str, object]] = {}
+    observed: set[str] = set()
+    try:
+        plan = read_json(plan_path)
+        required = matrix_plan(plan)
+        plan_identity = file_record(plan_path)
+        identity = {key: plan[key] for key in ("source", "run_id", "run_attempt")}
+        results = read_json(results_path)
+        failed = results.get("matrix_result") in ("failure", "cancelled")
+        if results.get("matrix_result") not in ("success", "failure", "cancelled", "skipped"):
+            errors.append("Missing or invalid matrix job result")
+        if results.get("matrix_result") == "skipped":
+            errors.append("Matrix jobs were skipped")
+        if results.get("transfer_result") != "success":
+            errors.append("Artifact transfer did not complete successfully")
+        if (results.get("schema_version") != 1 or results.get("plan_sha256") != plan_identity["sha256"]
+                or any(results.get(key) != value for key, value in identity.items())):
+            raise ValueError("Result manifest identifies a different plan/source/run/attempt")
+        for raw in sequence(results.get("rows")):
+            record = mapping(raw)
+            name = string(record.get("id"))
+            observation: dict[str, object] = {"id": name, "status": "INCOMPLETE"}
+            observations.append(observation)
+            try:
+                if name not in required or name in observed:
+                    raise ValueError(f"Unexpected or duplicate result row: {name}")
+                observed.add(name)
+                descriptor = mapping(record.get("artifact"))
+                artifact = (results_path.parent / string(descriptor.get("path"))).resolve()
+                artifact.relative_to(results_path.parent.resolve())
+                child = receipt(artifact, string(descriptor.get("sha256")), string(plan["source"]))
+                observation["receipt"] = child
+                observation["status"] = child["status"]
+                failed |= child["status"] == "FAIL"
+                if mapping(child["artifact"])["bytes"] != descriptor.get("bytes"):
+                    raise ValueError("Row artifact size differs")
+                producer = producer_verdict(artifact)
+                metadata = mapping(producer.get("matrix_row"))
+                expected_metadata = {"schema_version": 1, "plan_sha256": plan_identity["sha256"],
+                                     **identity, "side_inputs": plan["side_inputs"], "row": required[name]}
+                if metadata != expected_metadata:
+                    raise ValueError("Authenticated row metadata differs from its plan")
+                child_path = directory / "rows" / name / ("qualification.zip" if zipfile.is_zipfile(artifact) else "qualification.tar.gz")
+                child_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(artifact, child_path)
+                retained_artifact = {"path": str(child_path.relative_to(directory)), **file_record(child_path)}
+                if any(retained_artifact[key] != mapping(child["artifact"])[key] for key in ("sha256", "bytes")):
+                    raise ValueError("Child artifact changed while retaining it")
+                observation["artifact"] = retained_artifact
+                phases = [mapping(item) for item in sequence(producer["invocations"])]
+                if len(phases) != len({string(phase.get("path")) for phase in phases}):
+                    raise ValueError("Duplicate invocation paths in row")
+                for phase in phases:
+                    if mapping(phase["verdict"]).get("source") != plan["source"]:
+                        raise ValueError("Invocation source differs from the plan")
+                    invocations.append({**phase, "artifact": retained_artifact,
+                                        "path": f"rows/{name}/" + string(phase["path"])})
+                member_names = {"verdict.json"} | {string(phase.get("path")) for phase in phases}
+                inputs = {}
+                for audit in sequence(producer.get("matrix_audits", [])):
+                    for raw_entry in sequence(mapping(audit).get("invocations", [])):
+                        entry = mapping(raw_entry)
+                        member_names.add(string(mapping(entry.get("evidence")).get("path")))
+                        for raw_input in mapping(entry.get("inputs")).values():
+                            descriptor = mapping(raw_input)
+                            path = string(descriptor.get("path"))
+                            if path in inputs and inputs[path] != descriptor:
+                                raise ValueError(f"Conflicting audit input descriptors: {path}")
+                            inputs[path] = descriptor
+                members = bundle_members(artifact, member_names, verify=inputs)
+                if mapping(json.loads(members["verdict.json"])) != producer:
+                    raise ValueError("Nested producer verdict differs from its receipt")
+                for phase in phases:
+                    phase_body = members[string(phase.get("path"))]
+                    if (hashlib.sha256(phase_body).hexdigest(), len(phase_body)) != (phase.get("sha256"), phase.get("bytes")):
+                        raise ValueError("Invocation verdict differs from its retained digest/size")
+                    if mapping(json.loads(phase_body)) != phase["verdict"]:
+                        raise ValueError("Embedded invocation verdict differs from its retained member")
+                completed_lanes = []
+                for raw in sequence(producer.get("lane_results", [])):
+                    lane = mapping(raw)
+                    if type(lane.get("native_exit")) is not int or lane["native_exit"] < 0:
+                        raise ValueError("Invalid lane native exit")
+                    failed |= lane["native_exit"] != 0
+                    names = [string(name) for name in sequence(lane.get("lanes"))]
+                    if not names:
+                        raise ValueError("Empty completed lane group")
+                    completed_lanes.extend(names)
+                if (len(completed_lanes) != len(set(completed_lanes))
+                        or set(completed_lanes) != set(sequence(required[name]["lanes"]))):
+                    raise ValueError("Completed lanes differ from the exact planned lane set")
+                kinds = {mapping(phase["verdict"]).get("command_kind") for phase in phases}
+                if missing_kinds := set(sequence(required[name]["required_kinds"])) - kinds:
+                    raise ValueError(f"Missing required command kinds: {sorted(missing_kinds)}")
+                for phase in phases:
+                    value = mapping(phase["verdict"])
+                    if value.get("command_kind") in ("test", "benchmark") and (not sequence(value.get("expected")) or not sequence(value.get("executed"))):
+                        raise ValueError("Test/benchmark phase has no configured owners or executed attempts")
+                if child["status"] != "PASS":
+                    errors.append(f"Row {name} retains {child['status']}")
+                observation["audits"] = matrix_audits(members, producer, identity, required[name])
+            except (OSError, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
+                observation["error"] = str(error)
+                errors.append(f"Row {name}: {error}")
+        if missing := required.keys() - observed:
+            errors.append(f"Missing result rows: {sorted(missing)}")
+    except (OSError, ValueError, KeyError) as error:
+        errors.append(str(error))
+    try:
+        result = summarize_verdicts(invocations, 0, 0, errors)
+    except (ValueError, KeyError) as error:
+        errors.append(f"Malformed invocation accounting: {error}")
+        result = summarize_verdicts([], 0, 0, errors)
+    if failed:
+        result["status"] = "FAIL"
+    elif errors and result["status"] != "FAIL":
+        result["status"] = "INCOMPLETE"
+    # Even an entirely missing matrix retains the requested source, never
+    # invented invocation or coverage records.
+    result["sources"] = [plan["source"]] if re.fullmatch(r"[0-9a-f]{40}", str(plan.get("source", ""))) else []
+    result["matrix"] = {"plan": {"path": "plan.json", **file_record(plan_path)},
+                        "results": {"path": "results.json", **file_record(results_path)},
+                        "required_rows": sorted(required), "rows": observations,
+                        "matrix_result": results.get("matrix_result"), "transfer_result": results.get("transfer_result"),
+                        "artifact_verification": "Received child bytes are bound to the digest supplied by the transport; transport verification remains separate."}
+    directory.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(plan_path, directory / "plan.json")
+    shutil.copyfile(results_path, directory / "results.json")
+    write_json(directory / "verdict.json", result)
+    archive_evidence(directory, output)
+    return result
 
 
 def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, output: Path,
@@ -2079,6 +2504,15 @@ def main() -> int:
     images = commands.add_parser("source-images", help="Audit declared source/archive/load obligations in one authenticated invocation")
     for name in ("execution-log", "decoder", "verdict", "manifest", "expectations", "output"):
         images.add_argument("--" + name, type=Path, required=True)
+    image_contracts = commands.add_parser("source-image-expectations", help="Read source-owned configured image contracts")
+    for name in ("verdict", "manifest", "output"):
+        image_contracts.add_argument("--" + name, type=Path, required=True)
+    row_audit = commands.add_parser("source-image-row", help="Audit all declared execution phases before bundling a matrix row")
+    for name in ("directory", "decoder"):
+        row_audit.add_argument("--" + name, type=Path, required=True)
+    matrix = commands.add_parser("compose", help="Compose exactly the planned qualification rows")
+    for name in ("plan", "results", "directory", "output"):
+        matrix.add_argument("--" + name, type=Path, required=True)
     command_check = commands.add_parser("command-verdict")
     for name in ("context", "output"):
         command_check.add_argument("--" + name, type=Path, required=True)
@@ -2106,6 +2540,25 @@ def main() -> int:
     native.add_argument("--target", action="append")
     native.add_argument("--timeout-seconds", type=float, required=True)
     args = parser.parse_args()
+    if args.command == "source-image-expectations":
+        try:
+            write_json(args.output, source_image_expectations(args.verdict, args.manifest))
+        except (OSError, ValueError, KeyError) as error:
+            parser.error(str(error))
+        return 0
+    if args.command == "source-image-row":
+        try:
+            result = source_image_row(args.directory, args.decoder)
+        except (OSError, ValueError, KeyError) as error:
+            parser.error(str(error))
+        return int(any(mapping(audit).get("status") != "PASS" for audit in sequence(result["audits"])))
+    if args.command == "compose":
+        try:
+            result = compose(args.plan, args.results, args.directory, args.output)
+        except (OSError, ValueError, KeyError) as error:
+            parser.error(str(error))
+        print(f"{result['status']}: {args.output}")
+        return int(result["status"] != "PASS")
     if args.command == "source-images":
         result = audit_source_images(args.execution_log, args.decoder, args.verdict, args.manifest, args.expectations)
         write_json(args.output, result)

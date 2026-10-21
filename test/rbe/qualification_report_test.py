@@ -2175,6 +2175,463 @@ signal.pause()
         self.assertEqual(value["invocations"], [])
         self.assertEqual((value["native_exit"], value["runner_exit"]), (None, 19))
 
+    def test_source_images_accept_configured_empty_mixed_and_build_obligations(self) -> None:
+        for scope in ("empty", "mixed", "build"):
+            with self.subTest(scope=scope):
+                invocation = self.source_image_fixture()
+                try:
+                    baseline = self.source_image_audit(invocation)
+                    image, = baseline["images"]
+                    canonical = report.read_json(invocation / "verdict.json")
+                    owner, = canonical["expected"]
+                    declared = {"name": image["image"], "architecture": "amd64", "archive": image["archive"]["path"]}
+                    configured = [{**owner, "images": [declared], "source_commands": []}]
+                    owners = {owner["label"]: [declared["name"]]}
+                    if scope == "empty":
+                        configured[0]["images"] = []
+                        owners[owner["label"]] = []
+                        # Only the non-image graph projection is applicable to
+                        # this source audit; canonical test status is separate.
+                        records, _ = report.compact_records(invocation / "execution.json")
+                        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in records.values()))
+                    elif scope == "mixed":
+                        empty = {"label": "//unit:no_image", "configuration": "other-config"}
+                        canonical["expected"].append(empty)
+                        canonical["executed"].append({**canonical["executed"][0], "owner": empty})
+                        configured.append({**empty, "images": [], "source_commands": []})
+                        owners[empty["label"]] = []
+                    else:
+                        canonical.update(command_kind="build", executed=[])
+                    report.write_json(invocation / "verdict.json", canonical)
+                    report.write_json(invocation / "expectations.json", {"owners": owners, "configured_owners": configured})
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual((value["audit_status"], value["canonical_status"]), ("PASS", "PASS"), value)
+                    self.assertEqual(len(value["images"]), int(scope != "empty"))
+                    self.assertEqual(len(value["consumers"]), int(scope == "mixed"))
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_source_images_reject_incomplete_configured_obligations(self) -> None:
+        for damage, expected_error in (
+                ("missing-owner", "differ from configured owners"),
+                ("configuration", "differ from configured owners"),
+                ("archive", "archive identities differ"),
+                ("build-unconfigured", "Build image audits require"),
+                ("empty-unconfigured", "Empty image obligations require"),
+                ("dynamic", "Dynamic source-image commands")):
+            with self.subTest(damage=damage):
+                invocation = self.source_image_fixture()
+                try:
+                    image, = self.source_image_audit(invocation)["images"]
+                    canonical = report.read_json(invocation / "verdict.json")
+                    owner, = canonical["expected"]
+                    configured = {**owner, "images": [{"name": image["image"], "architecture": "amd64",
+                                                        "archive": image["archive"]["path"]}], "source_commands": []}
+                    contract = {"owners": {owner["label"]: [image["image"]]}, "configured_owners": [configured]}
+                    if damage == "missing-owner":
+                        contract["configured_owners"] = []
+                    elif damage == "configuration":
+                        configured["configuration"] = "other-config"
+                    elif damage == "archive":
+                        configured["images"][0]["archive"] = "bazel-out/other/image.tar"
+                    elif damage == "build-unconfigured":
+                        canonical.update(command_kind="build", executed=[])
+                        contract.pop("configured_owners")
+                    elif damage == "empty-unconfigured":
+                        contract = {"owners": {owner["label"]: []}}
+                    else:
+                        configured["source_commands"] = [{"owner": owner["label"], "architecture": "x86_64",
+                                                          "image_class": "cpu", "images": []}]
+                    report.write_json(invocation / "verdict.json", canonical)
+                    report.write_json(invocation / "expectations.json", contract)
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual(value["audit_status"], "INCOMPLETE", value)
+                    self.assertIn(expected_error, "\n".join(value["errors"]))
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_source_images_keep_no_image_benchmark_measurement_obligations(self) -> None:
+        invocation = self.source_image_fixture()
+        canonical = report.read_json(invocation / "verdict.json")
+        contract = report.read_json(invocation / "expectations.json")
+        owner, = canonical["expected"]
+        contract["owners"][owner["label"]] = []
+        contract["configured_owners"] = [{**owner, "images": [], "source_commands": []}]
+        records, spawns = report.compact_records(invocation / "execution.json")
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns if spawn.get("mnemonic") != "SourceImageOCI")]))
+        report.write_json(invocation / "expectations.json", contract)
+        value = self.source_image_audit(invocation)
+        self.assertEqual(value["audit_status"], "PASS", value)
+        contract["benchmarks"][owner["label"]][0]["name"] = "BenchmarkRequiredButAbsent"
+        report.write_json(invocation / "expectations.json", contract)
+        value = self.source_image_audit(invocation)
+        self.assertEqual(value["audit_status"], "INCOMPLETE", value)
+        self.assertIn("Measured benchmark names differ", "\n".join(value["errors"]))
+        canonical.update(command_kind="build", executed=[])
+        report.write_json(invocation / "verdict.json", canonical)
+        value = self.source_image_audit(invocation)
+        self.assertEqual(value["audit_status"], "INCOMPLETE", value)
+        self.assertIn("benchmark", "\n".join(value["errors"]).lower())
+
+    def source_contract_fixture(self) -> tuple[Path, Path, Path]:
+        invocation, _, _ = self.build_output_fixture()
+        events = self.events(invocation)
+        target = next(event["id"]["targetCompleted"] for event in events if "completed" in event)
+        identity = {**target, "aspect": report.SOURCE_IMAGE_ASPECT}
+        contract = invocation / "owner.source-images.json"
+        report.write_json(contract, {"schema_version": 1, "owner": target["label"],
+                                     "images": [], "source_commands": []})
+        digest = report.file_record(contract)
+        events.extend([
+            {"id": {"targetConfigured": {"label": target["label"], "aspect": report.SOURCE_IMAGE_ASPECT}},
+             "configured": {"targetKind": "filegroup rule"}, "children": [{"targetCompleted": identity}]},
+            {"id": {"targetCompleted": identity}, "completed": {"success": True, "outputGroup": [
+                {"name": "source_image_contracts", "fileSets": [{"id": "source-contract"}]}]}},
+            {"id": {"namedSet": {"id": "source-contract"}}, "namedSetOfFiles": {"files": [
+                {"name": contract.name, "uri": contract.as_uri(), "digest": digest["sha256"],
+                 "length": str(digest["bytes"])}]}},
+        ])
+        self.write_events(invocation, events)
+        return invocation, self.analysis(invocation), contract
+
+    def test_source_contract_capture_retains_aspect_and_ordinary_outputs(self) -> None:
+        invocation, analysis, _ = self.source_contract_fixture()
+        value = report.preflight(analysis, 0, "build")
+        self.assertEqual(value["output_options"],
+                         ["--output_groups=+default,+source_image_contracts", "--remote_download_outputs=toplevel"])
+        captured = report.capture(invocation / "events.jsonl", invocation / "captured.jsonl", invocation,
+                                  invocation / "reports", expected_analysis=(analysis,))
+        self.assertEqual(captured["errors"], [], captured)
+        self.assertEqual(self.verdict(invocation, analysis=analysis)["status"], "PASS")
+        expectations = report.source_image_expectations(
+            invocation / "verdict.json", report.manifest_path(invocation / "captured.jsonl"))
+        configured, = expectations["configured_owners"]
+        self.assertEqual((configured["images"], configured["source_commands"]), ([], []))
+        self.assertEqual(expectations["owners"], {configured["label"]: []})
+        self.assertEqual({row["group"] for row in captured["build_outputs"]}, {"default", "source_image_contracts"})
+
+    def test_source_contract_missing_or_wrong_aspect_cannot_pass(self) -> None:
+        for damage in ("missing", "wrong-aspect", "changed-bytes"):
+            with self.subTest(damage=damage):
+                invocation, analysis, contract = self.source_contract_fixture()
+                try:
+                    events = self.events(invocation)
+                    completed = next(event for event in events if event.get("id", {}).get("targetCompleted", {}).get("aspect"))
+                    if damage == "missing":
+                        completed["completed"]["outputGroup"] = []
+                    elif damage == "wrong-aspect":
+                        completed["id"]["targetCompleted"].pop("aspect")
+                    else:
+                        contract.write_text("changed after advertisement")
+                    self.write_events(invocation, events)
+                    report.capture(invocation / "events.jsonl", invocation / "captured.jsonl", invocation,
+                                   invocation / "reports", expected_analysis=(analysis,))
+                    value = self.verdict(invocation, analysis=analysis)
+                    self.assertEqual(value["status"], "INCOMPLETE", value)
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_source_contracts_bind_configuration_and_preserve_dynamic_builders(self) -> None:
+        invocation, analysis, _ = self.source_contract_fixture()
+        report.capture(invocation / "events.jsonl", invocation / "captured.jsonl", invocation,
+                       invocation / "reports", expected_analysis=(analysis,))
+        original = self.verdict(invocation, analysis=analysis)
+        first, = [row for row in original["build_outputs"] if row["group"] == "source_image_contracts"]
+        owner, = original["expected"]
+        second_path = invocation / "second-contract.json"
+        image = {"name": "basic/alpine", "architecture": "arm64", "archive": "bazel-out/arm64/bin/image.tar"}
+        command = {"owner": "//images:cpu", "architecture": "aarch64", "image_class": "cpu", "images": []}
+        report.write_json(second_path, {"schema_version": 1, "owner": owner["label"],
+                                        "images": [image], "source_commands": [command]})
+        second = {**first, "identity": {"label": owner["label"], "configuration": {"id": "other-config"}},
+                  "path": second_path.name, **report.file_record(second_path)}
+        value = {**original, "expected": [owner, {**owner, "configuration": "other-config"}],
+                 "build_outputs": [first, second]}
+        report.write_json(invocation / "verdict.json", value)
+        manifest = report.manifest_path(invocation / "captured.jsonl")
+        actual = report.source_image_expectations(invocation / "verdict.json", manifest)
+        by_config = {row["configuration"]: row for row in actual["configured_owners"]}
+        self.assertEqual(by_config[owner["configuration"]]["images"], [])
+        self.assertEqual(by_config["other-config"]["images"], [image])
+        self.assertEqual(by_config["other-config"]["source_commands"], [command])
+        for outputs in ([first], [first, first], [first, {**second, "identity": first["identity"]}]):
+            report.write_json(invocation / "verdict.json", {**value, "build_outputs": outputs})
+            with self.subTest(outputs=outputs), self.assertRaises(ValueError):
+                report.source_image_expectations(invocation / "verdict.json", manifest)
+
+    def matrix_fixture(self, name: str = "pass", row_count: int = 1) -> tuple[Path, Path, dict[str, object]]:
+        invocation = self.fixture("pass" if name == "all-skipped" else name)
+        if name == "all-skipped":
+            (invocation / "test.xml").write_text(
+                '<testsuite><testcase name="unavailable"><skipped>environment</skipped></testcase></testsuite>')
+        self.capture(invocation)
+        original = self.verdict(invocation)
+        plan = {"schema_version": 1, "profile": "full", "source": original["source"], "run_id": "123",
+                "run_attempt": 1, "side_inputs": {"clock_source": "kvm-clock"},
+                "rows": [{"id": f"row-{index}", "lanes": ["test"], "required_kinds": ["test"], "required_audits": []}
+                         for index in range(row_count)]}
+        plan_path = self.root / "matrix-plan.json"
+        report.write_json(plan_path, plan)
+        identity = {key: plan[key] for key in ("source", "run_id", "run_attempt")}
+        plan_hash = report.file_record(plan_path)["sha256"]
+        results = {"schema_version": 1, **identity, "plan_sha256": plan_hash,
+                   "matrix_result": "success", "transfer_result": "success", "rows": []}
+        (self.evidence / "lane-results.jsonl").write_text(json.dumps({"lanes": ["test"], "native_exit": original["native_exit"]}) + "\n")
+        for row in plan["rows"]:
+            report.write_json(self.evidence / "matrix-row.json", {
+                "schema_version": 1, **identity, "plan_sha256": plan_hash,
+                "side_inputs": plan["side_inputs"], "row": row})
+            artifact = self.root / (row["id"] + ".tar.gz")
+            report.bundle(self.evidence, original["native_exit"], original["capture_exit"], artifact)
+            results["rows"].append({"id": row["id"], "artifact": {"path": artifact.name, **report.file_record(artifact)}})
+        results_path = self.root / "matrix-results.json"
+        report.write_json(results_path, results)
+        return plan_path, results_path, original
+
+    def test_matrix_cli_composes_rows_and_retains_authenticated_children(self) -> None:
+        plan, results, original = self.matrix_fixture(row_count=2)
+        output = self.root / "matrix.tar.gz"
+        directory = self.root / "composed"
+        command = subprocess.run([sys.executable, report.__file__, "compose", "--plan", str(plan),
+                                  "--results", str(results), "--directory", str(directory), "--output", str(output)],
+                                 capture_output=True, text=True, check=False)
+        self.assertEqual(command.returncode, 0, command.stderr + command.stdout)
+        value = report.receipt(output, report.file_record(output)["sha256"], original["source"])
+        self.assertEqual((value["status"], value["expected_owner_count"], value["executed_attempt_count"]), ("PASS", 2, 2))
+        self.assertEqual(value["case_counts"], {key: count * 2 for key, count in original["case_counts"].items()})
+        self.assertEqual(len({row["path"] for row in value["invocations"]}), 2)
+        for row in value["matrix"]["rows"]:
+            descriptor = row["artifact"]
+            retained = report.bundle_member(output, descriptor["path"])
+            self.assertEqual((hashlib.sha256(retained).hexdigest(), len(retained)),
+                             (descriptor["sha256"], descriptor["bytes"]))
+            self.assertEqual(row["receipt"]["status"], "PASS")
+
+    def test_matrix_preserves_failed_incomplete_and_zero_case_rows(self) -> None:
+        for name, status in (("fail", "FAIL"), ("incomplete", "FAIL"), ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):
+            with self.subTest(name=name):
+                plan, results, original = self.matrix_fixture(name, row_count=2)
+                try:
+                    manifest = report.read_json(results)
+                    manifest["rows"].pop()  # Missing siblings must not erase a retained failure.
+                    report.write_json(results, manifest)
+                    value = report.compose(plan, results, self.root / "composed", self.root / "matrix.tar.gz")
+                    self.assertEqual(value["status"], status, value)
+                    for key in ("case_counts", "failures", "missing", "skips", "zero_case_owners", "all_skipped_owners"):
+                        self.assertEqual(value[key], original[key], key)
+                    self.assertIn("Missing result rows", "\n".join(value["errors"]))
+                finally:
+                    shutil.rmtree(self.evidence)
+                    self.evidence.mkdir()
+                    shutil.rmtree(self.root / "composed")
+
+    def test_matrix_rejects_wrong_identity_coverage_or_transfer(self) -> None:
+        for fault in ("duplicate", "extra", "missing", "plan", "source", "attempt", "digest", "size", "transfer", "row", "side-inputs", "query-only", "partial-lanes", "duplicate-lanes"):
+            with self.subTest(fault=fault):
+                plan, results, _ = self.matrix_fixture()
+                try:
+                    manifest = report.read_json(results)
+                    if fault == "duplicate":
+                        manifest["rows"] *= 2
+                    elif fault == "extra":
+                        manifest["rows"].append({"id": "unexpected"})
+                    elif fault == "missing":
+                        manifest["rows"] = []
+                    elif fault == "plan":
+                        manifest["plan_sha256"] = "0" * 64
+                    elif fault == "source":
+                        manifest["source"] = "0" * 40
+                    elif fault == "attempt":
+                        manifest["run_attempt"] += 1
+                    elif fault == "digest":
+                        manifest["rows"][0]["artifact"]["sha256"] = "0" * 64
+                    elif fault == "size":
+                        manifest["rows"][0]["artifact"]["bytes"] += 1
+                    elif fault == "transfer":
+                        manifest["transfer_result"] = "failure"
+                    else:
+                        metadata = report.read_json(self.evidence / "matrix-row.json")
+                        if fault == "row":
+                            metadata["row"]["id"] = "different-row"
+                        elif fault == "side-inputs":
+                            metadata["side_inputs"] = {}
+                        elif fault in ("partial-lanes", "duplicate-lanes"):
+                            record = json.dumps({"lanes": ["test"], "native_exit": 0}) + "\n"
+                            (self.evidence / "lane-results.jsonl").write_text("" if fault == "partial-lanes" else record * 2)
+                        else:
+                            invocation = self.evidence / "invocation-pass"
+                            context = report.read_json(invocation / "context.json")
+                            context.update(command_kind="command", executed_arguments="arguments.json")
+                            report.write_json(invocation / "context.json", context)
+                            report.write_json(invocation / "arguments.json", ["query", "tests(//test/benchmarks:continuous_tests)"])
+                            (invocation / "stdout.log").write_text("//benchmarks:owner\n")
+                            (invocation / "stderr.log").write_text("")
+                            report.write_json(invocation / "verdict.json", report.command_verdict(invocation / "context.json"))
+                        report.write_json(self.evidence / "matrix-row.json", metadata)
+                        artifact = self.root / manifest["rows"][0]["artifact"]["path"]
+                        report.bundle(self.evidence, 0, 0, artifact)
+                        manifest["rows"][0]["artifact"].update(report.file_record(artifact))
+                    report.write_json(results, manifest)
+                    value = report.compose(plan, results, self.root / "composed", self.root / "matrix.tar.gz")
+                    self.assertEqual(value["status"], "INCOMPLETE", value)
+                    if fault == "query-only":
+                        self.assertIn("Missing required command kinds", "\n".join(value["errors"]))
+                        self.assertEqual(value["case_counts"], {})
+                finally:
+                    shutil.rmtree(self.evidence)
+                    self.evidence.mkdir()
+                    shutil.rmtree(self.root / "composed")
+
+    def test_matrix_audits_require_each_execution_phase_and_bound_inputs(self) -> None:
+        invocation = self.source_image_fixture()
+        value = self.source_image_audit(invocation)
+        self.assertEqual(value["audit_status"], "PASS", value)
+        value["input_roles"] = {name: {"path": str(path), **report.file_record(path)}
+                                for name, path in (("execution", invocation / "execution.json"),
+                                                   ("verdict", invocation / "verdict.json"),
+                                                   ("manifest", invocation / "manifest.json"),
+                                                   ("expectations", invocation / "expectations.json"))}
+        evidence = invocation / "audit.json"
+        report.write_json(evidence, value)
+        canonical = invocation / "verdict.json"
+        relative = str(canonical.relative_to(self.evidence))
+        phase = {"path": relative, **report.file_record(canonical), "verdict": report.read_json(canonical)}
+        identity = {"source": value["source"], "run_id": "123", "run_attempt": 1}
+        row = {"id": "images", "required_audits": ["source-images"]}
+        entry = {"path": relative, "inputs": {
+            name: {"path": str(path.relative_to(self.evidence)), **report.file_record(path)}
+            for name, path in (("expectations", invocation / "expectations.json"), ("execution", invocation / "execution.json"),
+                              ("verdict", canonical), ("manifest", invocation / "manifest.json"))},
+            "evidence": {"path": str(evidence.relative_to(self.evidence)), **report.file_record(evidence)}}
+        audit = {"id": "source-images", **identity, "row_id": "images", "status": "PASS", "invocations": [entry]}
+        producer = {"invocations": [phase], "matrix_audits": [audit]}
+        artifact = self.root / "audit.tar.gz"
+        report.archive_evidence(self.evidence, artifact)
+        members = report.bundle_members(artifact, {entry["evidence"]["path"]})
+        self.assertEqual(report.matrix_audits(members, producer, identity, row), [audit])
+        for damage in ("missing", "duplicate", "partial", "input", "roles", "status"):
+            changed = json.loads(json.dumps(producer))
+            if damage == "missing":
+                changed["matrix_audits"] = []
+            elif damage == "duplicate":
+                changed["matrix_audits"] *= 2
+            elif damage == "partial":
+                changed["invocations"].append({**phase, "path": "invocation-other/verdict.json"})
+            elif damage == "input":
+                changed["matrix_audits"][0]["invocations"][0]["inputs"]["execution"]["sha256"] = "0" * 64
+            elif damage == "roles":
+                inputs = changed["matrix_audits"][0]["invocations"][0]["inputs"]
+                inputs["execution"], inputs["manifest"] = inputs["manifest"], inputs["execution"]
+            else:
+                changed["matrix_audits"][0]["status"] = "INCOMPLETE"
+            with self.subTest(damage=damage), self.assertRaises(ValueError):
+                report.matrix_audits(members, changed, identity, row)
+
+    def test_matrix_job_failure_preserves_incomplete_coverage(self) -> None:
+        plan, results, _ = self.matrix_fixture()
+        manifest = report.read_json(results)
+        manifest["rows"] = []
+        for conclusion in ("failure", "cancelled"):
+            manifest["matrix_result"] = conclusion
+            report.write_json(results, manifest)
+            value = report.compose(plan, results, self.root / "composed", self.root / "matrix.tar.gz")
+            self.assertEqual((value["status"], value["expected"], value["executed"]), ("FAIL", [], []))
+            self.assertIn("Missing result rows", "\n".join(value["errors"]))
+
+    def test_bundle_members_streams_requested_reports_once(self) -> None:
+        invocation = self.fixture()
+        artifact, _ = self.artifact(invocation, native=True)
+        names = {"verdict.json", "invocation-pass/verdict.json", "invocation-pass/reports/test.xml"}
+        with mock.patch.object(report.tarfile, "open", wraps=tarfile.open) as opened:
+            members = report.bundle_members(artifact, names)
+        self.assertEqual(opened.call_count, 1)
+        self.assertEqual(members, {name: (self.evidence / name).read_bytes() for name in names})
+
+    def test_bundle_members_rejects_missing_changed_and_duplicate_audit_inputs(self) -> None:
+        invocation = self.fixture()
+        artifact, _ = self.artifact(invocation, native=True)
+        path = invocation / "test.log"
+        name = str(path.relative_to(self.evidence))
+        identity = report.file_record(path)
+        original = path.read_bytes()
+        for damage in ("missing", "changed", "duplicate-root", "duplicate-input"):
+            with self.subTest(damage=damage):
+                if damage == "missing":
+                    path.unlink()
+                elif damage == "changed":
+                    path.write_bytes(b"different input")
+                with tarfile.open(artifact, "w:gz") as archive:
+                    for member in sorted(self.evidence.rglob("*")):
+                        if member.is_file():
+                            archive.add(member, arcname=str(member.relative_to(self.evidence)), recursive=False)
+                    if damage.startswith("duplicate"):
+                        duplicate = self.evidence / "verdict.json" if damage == "duplicate-root" else path
+                        archive.add(duplicate, arcname=str(duplicate.relative_to(self.evidence)), recursive=False)
+                with self.assertRaises(ValueError):
+                    report.bundle_members(artifact, {"verdict.json"}, verify={name: identity})
+                path.write_bytes(original)
+
+    def test_matrix_uses_real_dispatch_plan_for_command_row(self) -> None:
+        invocation = self.fixture()
+        context = report.read_json(invocation / "context.json")
+        context.update(command_kind="command", executed_arguments="arguments.json")
+        report.write_json(invocation / "context.json", context)
+        report.write_json(invocation / "arguments.json", ["run", "//:gazelle"])
+        (invocation / "stdout.log").write_text("canonical command completed\n")
+        (invocation / "stderr.log").write_text("")
+        original = report.command_verdict(invocation / "context.json")
+        report.write_json(invocation / "verdict.json", original)
+        plan = report.unit_matrix.dispatch_plan(
+            profile="single", source=original["source"], run_id="123", run_attempt=1,
+            lanes=["gazelle"], architecture="amd64", execution="remote", requirements="",
+            targets=[], test_filter="", syscall_bucket="", header_base="", cos_sha256="",
+            cos_gzip_base64="", clock_source="calibrated", known_lanes=["gazelle"],
+            pgo_manifest=LIFECYCLE_MANIFEST.with_name("pgo.json"))
+        plan_path = self.root / "actual-plan.json"
+        report.write_json(plan_path, plan)
+        row, = plan["rows"]
+        identity = {key: plan[key] for key in ("source", "run_id", "run_attempt")}
+        metadata = {"schema_version": 1, **identity, "plan_sha256": report.file_record(plan_path)["sha256"],
+                    "side_inputs": plan["side_inputs"], "row": row}
+        report.write_json(self.evidence / "matrix-row.json", metadata)
+        (self.evidence / "lane-results.jsonl").write_text(json.dumps({"lanes": row["lanes"], "native_exit": 0}) + "\n")
+        artifact = self.root / "command.tar.gz"
+        report.bundle(self.evidence, 0, 0, artifact)
+        results = self.root / "actual-results.json"
+        report.write_json(results, {"schema_version": 1, **identity, "plan_sha256": metadata["plan_sha256"],
+                                   "matrix_result": "success", "transfer_result": "success", "rows": [
+                                       {"id": row["id"], "artifact": {"path": artifact.name, **report.file_record(artifact)}}]})
+        value = report.compose(plan_path, results, self.root / "composed", self.root / "composed.tar.gz")
+        self.assertEqual((value["status"], value["case_counts"]), ("PASS", {}), value)
+        command, = value["commands"]
+        self.assertEqual((command["bazel_command"], command["native_exit"]), ("run", 0))
+
+    def test_row_audit_preserves_unsupported_or_missing_phase(self) -> None:
+        invocation, analysis, _ = self.source_contract_fixture()
+        report.capture(invocation / "events.jsonl", invocation / "captured.jsonl", invocation,
+                       invocation / "reports", expected_analysis=(analysis,))
+        original = self.verdict(invocation, analysis=analysis)
+        # The production wrapper uses events.jsonl for its captured projection.
+        shutil.copyfile(report.manifest_path(invocation / "captured.jsonl"),
+                        report.manifest_path(invocation / "events.jsonl"))
+        report.write_json(self.evidence / "matrix-row.json", {
+            "source": original["source"], "run_id": "123", "run_attempt": 1,
+            "row": {"id": "images", "required_audits": ["source-images"]}})
+        (invocation / "execution.binpb").write_bytes(b"retained compact log")
+        for status in ("PASS", "INCOMPLETE"):
+            with mock.patch.object(report, "audit_source_images", return_value={"audit_status": status}) as audit:
+                value = report.source_image_row(self.evidence, self.root / "bb")
+            self.assertEqual(value["audits"][0]["status"], status, value)
+            entry, = value["audits"][0]["invocations"]
+            self.assertEqual(entry["path"], "invocation-pass/verdict.json")
+            self.assertEqual(audit.call_args.args[:1], (invocation / "execution.binpb",))
+            self.assertEqual(report.read_json(invocation / "verdict.json"), original)
+        (invocation / "execution.binpb").unlink()
+        value = report.source_image_row(self.evidence, self.root / "bb")
+        self.assertEqual(value["audits"][0]["status"], "INCOMPLETE", value)
+        self.assertEqual(report.read_json(invocation / "verdict.json"), original)
+
     def artifact(self, invocation: Path, *, native: bool = False) -> tuple[Path, dict[str, object]]:
         self.capture(invocation)
         value = self.verdict(invocation)
