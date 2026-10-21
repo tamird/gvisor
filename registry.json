@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T21:46:13.801490+00:00",
+    "updatedAt": "2026-10-21T22:12:08.937250+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16613,15 +16613,15 @@
       "title": "Build the integration test C image with rules_img",
       "url": "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
       "group": "bazel",
-      "status": "Agent work: same-worker cgroup startup diagnosis",
-      "updatedAt": "2026-10-21T21:46:13.801490+00:00",
-      "summary": "Same-worker comparison 38e3810f is complete with all four actual attempts and exact prepared 55f runtime bytes. Both the fresh original-source image and exact new image pass the untraced rootful/no-network path, including its two existing nested controls (eight positive XML records total). Both traced arms successfully clone into the cgroup and exec the gofer through /proc/self/exe, then fail later because systrap attachment returns operation not permitted under tracing (four failed XML records). The aggregate canonical result remains FAIL and the traces are complete. The earlier gofer ENOENT was not reproduced; this observation establishes neither an image-file cause nor full image qualification. The earlier procps runtime failures remain preserved and require integration assessment before any further affected checks.\n\nPreserved earlier observations:\n\nThe first trace recovery ce8cbdec completed with four actual attempts and eight failed child/parent XML records. Every arm stopped at the mounted-runtime identity guard before starting its container, so there are zero traces and no image or syscall-stage conclusion. Setup had prepared the exact required 55f runtime, but the test selected separately rebuilt diagnostic runfiles. The qualification-only correction e420aa027d now selects the absolute prepared directory from its existing identity manifest before the unchanged file-count, hash and mount checks; ordinary test discovery is unchanged. The independently reviewed recovery 38e3810f is running with the same four old/new traced and untraced arms, fixed runtime bytes, image requirements and limits. Earlier setup, runtime and archive/catalog results remain separate.\n\nPreserved earlier observations:\n\nThe first same-worker diagnostic attempt a303e962 ended with an authenticated setup failure before any of the four test arms ran. Both comparison images and all runtime bytes were bound, but the isolated trace-tool dependency guard rejected a path whose actual mapping was not retained. No image or syscall conclusion follows. The reviewed setup-only recovery records both loader listings before validation, accepts only the exact copied loader or immediate isolated-library files, and checks tooling before expensive image preparation. Retry ce8cbdec is now running with the same diagnostic source 08cf, runtime bytes, image requirements, four test arms and limits. Earlier procps runtime failures, the old-image control and accepted archive/catalog evidence remain separate.\n\nPreserved earlier observations:\n\nThe procps image fixes the missing sysctl command, but three cgroup-enabled rootful cases still fail with gofer startup ENOENT; seven records pass and none skip. The old-image control passed on a separate worker with identical runtime bytes, which does not identify the failing syscall. A reviewed four-arm comparison is now running on one worker: old/new images, each untraced and traced from the initial runtime exec. It keeps the original runtime and sidecars fixed, requires the exact corrected image identity, and freshly rebuilds the old source with its pinned Bionic base. Native failures and trace outcomes remain separate; no cause or passing runtime is inferred before completion. The 372-entry canonical catalog and both-CPU archive evidence remain accepted.\n\nPreserved earlier observations:\n\nThe reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker’s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
+      "status": "Agent work: full runtime reproduces gofer startup failure",
+      "updatedAt": "2026-10-21T22:12:08.937250+00:00",
+      "summary": "The complete existing nested-runtime parent was rerun without tracing against the exact new image and the same seven prepared runtime binaries. Run 0b23ab26 completed with seven positive and four failed XML records, including the failed parent; no cases were skipped. The three cgroup-enabled Rootful variants again fail starting the gofer with /proc/self/exe ENOENT. The no-cgroup Rootful and both Rootless variants pass, including existing negative controls. All mounted runtime, image, source and lock identities passed their checks. This preserves the earlier isolated new-image success but prevents delivery readiness; the discrepancy is under source/environment investigation, with no speculative package or runtime change. Canonical archives and the full 372-entry catalog remain accepted separately.\n\nPreserved earlier observations:\n\nSame-worker comparison 38e3810f is complete with all four actual attempts and exact prepared 55f runtime bytes. Both the fresh original-source image and exact new image pass the untraced rootful/no-network path, including its two existing nested controls (eight positive XML records total). Both traced arms successfully clone into the cgroup and exec the gofer through /proc/self/exe, then fail later because systrap attachment returns operation not permitted under tracing (four failed XML records). The aggregate canonical result remains FAIL and the traces are complete. The earlier gofer ENOENT was not reproduced; this observation establishes neither an image-file cause nor full image qualification. The earlier procps runtime failures remain preserved and require integration assessment before any further affected checks.\n\nPreserved earlier observations:\n\nThe first trace recovery ce8cbdec completed with four actual attempts and eight failed child/parent XML records. Every arm stopped at the mounted-runtime identity guard before starting its container, so there are zero traces and no image or syscall-stage conclusion. Setup had prepared the exact required 55f runtime, but the test selected separately rebuilt diagnostic runfiles. The qualification-only correction e420aa027d now selects the absolute prepared directory from its existing identity manifest before the unchanged file-count, hash and mount checks; ordinary test discovery is unchanged. The independently reviewed recovery 38e3810f is running with the same four old/new traced and untraced arms, fixed runtime bytes, image requirements and limits. Earlier setup, runtime and archive/catalog results remain separate.\n\nPreserved earlier observations:\n\nThe first same-worker diagnostic attempt a303e962 ended with an authenticated setup failure before any of the four test arms ran. Both comparison images and all runtime bytes were bound, but the isolated trace-tool dependency guard rejected a path whose actual mapping was not retained. No image or syscall conclusion follows. The reviewed setup-only recovery records both loader listings before validation, accepts only the exact copied loader or immediate isolated-library files, and checks tooling before expensive image preparation. Retry ce8cbdec is now running with the same diagnostic source 08cf, runtime bytes, image requirements, four test arms and limits. Earlier procps runtime failures, the old-image control and accepted archive/catalog evidence remain separate.\n\nPreserved earlier observations:\n\nThe procps image fixes the missing sysctl command, but three cgroup-enabled rootful cases still fail with gofer startup ENOENT; seven records pass and none skip. The old-image control passed on a separate worker with identical runtime bytes, which does not identify the failing syscall. A reviewed four-arm comparison is now running on one worker: old/new images, each untraced and traced from the initial runtime exec. It keeps the original runtime and sidecars fixed, requires the exact corrected image identity, and freshly rebuilds the old source with its pinned Bionic base. Native failures and trace outcomes remain separate; no cause or passing runtime is inferred before completion. The 372-entry canonical catalog and both-CPU archive evidence remain accepted.\n\nPreserved earlier observations:\n\nThe reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker’s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Paired diagnostic complete; original ENOENT not reproduced",
+        "disposition": "Full runtime failure retained; cause unresolved",
         "sourceHead": "6bee555dad8d7b78a44057ca92827d0f0e18b7de",
-        "observedAt": "2026-10-21T21:46:13.801490+00:00",
-        "nextAction": "Assess the passing same-worker selected controls with the earlier failed runtime owner. Preserve traced systrap failures and exact syscall boundaries; do not attribute the original ENOENT to image files or claim the full remaining runtime suite passed.",
+        "observedAt": "2026-10-21T22:12:08.937250+00:00",
+        "nextAction": "Compare the full-parent failure with the retained isolated passing control. Preserve actual runtime/image identities and original failures; identify the responsible mechanism before another recovery. The final source composition is staged but not contributor-ready.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
           "https://app.buildbuddy.io/invocation/718c961b-d2b2-46e4-9d48-e6be2378020b",
@@ -16633,7 +16633,8 @@
           "https://app.buildbuddy.io/invocation/a303e962-dcd6-4f82-9c5d-db9eebb2158e",
           "https://app.buildbuddy.io/invocation/ce8cbdec-4c4c-40a0-94f1-9a6414621beb",
           "https://github.com/tamird/gvisor/commit/e420aa027deff407e967f5733d54bfb4cc1d8300",
-          "https://app.buildbuddy.io/invocation/38e3810f-7f58-42cb-992e-8b0db2d274f4"
+          "https://app.buildbuddy.io/invocation/38e3810f-7f58-42cb-992e-8b0db2d274f4",
+          "https://app.buildbuddy.io/invocation/0b23ab26-91f7-4b09-ae24-31073ceda6b1"
         ]
       },
       "evidence": [
@@ -16728,6 +16729,10 @@
         {
           "label": "Same-worker trace comparison with exact prepared runtime",
           "url": "https://app.buildbuddy.io/invocation/38e3810f-7f58-42cb-992e-8b0db2d274f4"
+        },
+        {
+          "label": "Complete existing parent reproduces gofer startup failure",
+          "url": "https://app.buildbuddy.io/invocation/0b23ab26-91f7-4b09-ae24-31073ceda6b1"
         }
       ]
     },
@@ -16953,6 +16958,40 @@
         {
           "label": "Approved proposal with requested static-link explanation",
           "url": "https://github.com/tamird/gvisor/commit/309a60834cbe1e7c02f7763f98548b51a16d49ab"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-wrk2-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-wrk2-image",
+      "head": "ad60b31646f983e3626d28229ecf7a6e845e52a6",
+      "title": "Build the wrk2 image from pinned source",
+      "url": "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6",
+      "group": "bazel",
+      "status": "Agent work: source and runtime qualification",
+      "updatedAt": "2026-10-21T22:12:08.937250+00:00",
+      "summary": "The assigned wrk2 migration preserves the existing pinned wrk2 and LuaJIT sources, with explicit target-specific host generators for AMD64 and ARM64. It reuses the shared runtime/package assembly, declared OpenSSL/zlib dependencies and stable Make image interface. The latest remote run stopped before compilation because the shared runtime refers to libgcc-s1 without declaring that package. The owner is preparing the narrow package declaration correction before retrying the existing both-architecture image and native HTTP checks. Earlier formatting and repository-patch failures are preserved; the current source adds only the reviewed missing Git file boundaries to the source patch. The separate canonical catalog recovery adds ordinary COPYRIGHT filename discovery to the license checker. Compilation, runtime and catalog success remain pending; no ARM execution, full Kubernetes or performance claim is made.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "ad60b31646f983e3626d28229ecf7a6e845e52a6",
+        "observedAt": "2026-10-21T22:12:08.937250+00:00",
+        "disposition": "Latest analysis failed; narrow declared-package correction in progress",
+        "nextAction": "Declare the exact required libgcc runtime packages, independently review the correction, then recover the same runtime and full catalog checks. Preserve all failed attempts and prepare contributor review only after qualification.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6",
+          "https://app.buildbuddy.io/invocation/db2a0f9f-5487-4041-b6c3-5c599d0ac83c"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Current source",
+          "url": "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6"
+        },
+        {
+          "label": "Current owning qualification",
+          "url": "https://app.buildbuddy.io/invocation/db2a0f9f-5487-4041-b6c3-5c599d0ac83c"
         }
       ]
     }
@@ -18972,6 +19011,13 @@
       "type": "depends_on",
       "reason": "The independent BCR image reuses the approved native-Go image foundation at 4094323; the unused hackbench dependency has been removed.",
       "evidence": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
+    },
+    {
+      "from": "branch:rules-img-hackbench-image",
+      "to": "branch:rules-img-wrk2-image",
+      "type": "depends_on",
+      "reason": "The wrk2 change reuses the shared package extraction introduced by the hackbench proposal and its inherited declared runtime foundation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6"
     }
   ],
   "investigations": [
