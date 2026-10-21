@@ -216,9 +216,10 @@ the producer's `verdict_available_at` and each invocation's original
 INCOMPLETE result writes a receipt and exits nonzero; an identity mismatch
 rejects the artifact.
 
-For source-built Docker consumers, `source-images` audits one invocation from
-that authenticated bundle. Supply the retained compact execution log, that
-invocation's verdict and capture manifest, and an existing BuildBuddy CLI:
+For image consumers and image-building tests, `source-images` audits one
+invocation from that authenticated bundle. Supply the retained compact execution
+log, that invocation's verdict and capture manifest, and an existing BuildBuddy
+CLI:
 
 ```sh
 python3 test/rbe/qualification_report.py source-images \
@@ -228,20 +229,36 @@ python3 test/rbe/qualification_report.py source-images \
   --expectations "$source_image_expectations" --output "$image_audit"
 ```
 
-The expectations JSON has an `owners` object mapping every selected label to
-its complete list of required image names, such as `benchmarks/iperf`. Derive
-these obligations from the selected source declarations before inspecting
-successful loads. An optional `benchmarks` object uses the existing benchmark
-expectations format (`name`, `count`, `units`, optional `iterations`) to require
-specific positive measured cases. The audit reuses the reporter's benchmark
-parser, including its rejection of partial output from a failed package.
+`source-image-expectations` derives the expectations JSON from the retained
+`source_image_contracts` output group. It binds every configured owner,
+including owners with no image dependencies, to its declared archives and
+image-building commands. Registry dependencies also retain their manifest
+pins and selected layout indexes. These obligations come from the build graph,
+before inspecting successful loads. An optional `benchmarks` object uses the
+existing benchmark expectations format (`name`, `count`, `units`, optional
+`iterations`) to require specific positive measured cases. The audit reuses the
+reporter's benchmark parser, including its rejection of partial output from a
+failed package.
 
-The audit follows compact input-set and runfiles edges from uncached source
-actions through stock archive conversions to each configured test attempt. It
-requires the captured log to record loading that declared archive and image.
-Local TestRunner actions may lack a REAPI digest; their target, strategy,
-configured XML output and input-set identity must still match. Nested container
-load protocols require their own explicit contract and are not inferred here.
+The audit follows compact input-set and runfiles edges through each image's
+declared producer and archive conversion. Source-image builds must execute;
+native OCI assembly and registry-copy actions can use their recorded caches.
+A pinned registry dependency proves which archive was used, not that its
+contents were compiled from source in this invocation.
+
+Docker consumers record the actual archive load. CRI consumers record the
+selected containerd configuration and successful imports; archives staged for
+optional use remain distinct from required imports. Each observation must
+match the configured test's inputs. Local TestRunner actions may lack a REAPI
+digest; their target, strategy, XML output and input-set identity must still
+match.
+
+Image-building tests retain their complete selection and per-image build,
+load and inspect results. The audit binds those bytes to the TestRunner's
+output digests and its declared source-context archive, then checks that all
+shards cover the selected cohort exactly once. An archive loaded from that
+context must trace back to its declared producer and match the recorded
+digest. Building the test executable alone cannot satisfy these obligations.
 
 Audit status is separate from the unchanged canonical verdict. Missing evidence
 cannot pass, and an original workload failure retains its status and native
