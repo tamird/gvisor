@@ -36,6 +36,7 @@ py_test(
         "license.bazelrc",
         "qualification.bazelrc",
         "qualify.sh",
+        "//:github_workflows",
         "//test/benchmarks:lifecycle.json",
     ] + glob(["testdata/qualification_report/**"]),
     imports = ["."],

@@ -31,6 +31,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import textwrap
 import time
 from typing import BinaryIO, TextIO
 import unittest
@@ -2995,6 +2996,40 @@ signal.pause()
             self.assertEqual((hashlib.sha256(retained).hexdigest(), len(retained)),
                              (descriptor["sha256"], descriptor["bytes"]))
             self.assertEqual(row["receipt"]["status"], "PASS")
+
+    def test_matrix_workflow_discovers_flat_and_named_artifacts(self) -> None:
+        workflow = Path(__file__).parents[2] / ".github/workflows/build.yml"
+        script = textwrap.dedent(workflow.read_text().split("python3 - <<'PYTHON'\n", 1)[1].split("\n        PYTHON", 1)[0])
+        for row_count, flat, status in ((1, True, "PASS"), (2, True, "INCOMPLETE"), (2, False, "PASS")):
+            with self.subTest(rows=row_count, flat=flat):
+                plan_path, results_path, original = self.matrix_fixture(row_count=row_count)
+                try:
+                    plan = report.read_json(plan_path)
+                    records = report.read_json(results_path)["rows"]
+                    for record in records[:1] if flat else records:
+                        received = self.root / "rows"
+                        if not flat:
+                            received /= f"qualification-row-{record['id']}-attempt-{plan['run_attempt']}"
+                        received.mkdir(parents=True, exist_ok=True)
+                        artifact = self.root / record["artifact"]["path"]
+                        shutil.copyfile(artifact, received / "qualification.tar.gz")
+                        (received / "qualification").mkdir()
+                        (received / "qualification/verdict.json").write_bytes(report.bundle_member(artifact, "verdict.json"))
+                    command = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, check=False,
+                        env=os.environ | {"RUNNER_TEMP": str(self.root), "QUALIFICATION_PLAN_JSON": plan_path.read_text().rstrip("\n"),
+                                          "QUALIFICATION_MATRIX_RESULT": "success", "QUALIFICATION_TRANSFER_RESULT": "success"})
+                    self.assertEqual(command.returncode, 0, command.stderr)
+                    value = report.compose(plan_path, results_path, self.root / "composed", self.root / "matrix.tar.gz")
+                    self.assertEqual(value["status"], status, value)
+                    self.assertEqual(len(value["matrix"]["rows"]), 1 if flat else row_count)
+                    self.assertEqual(value["case_counts"]["passed"], original["case_counts"]["passed"] * (1 if flat else row_count))
+                    if status == "INCOMPLETE":
+                        self.assertIn("Missing result rows: ['row-1']", value["errors"])
+                finally:
+                    shutil.rmtree(self.root / "rows", ignore_errors=True)
+                    shutil.rmtree(self.root / "composed", ignore_errors=True)
+                    shutil.rmtree(self.evidence)
+                    self.evidence.mkdir()
 
     def test_matrix_preserves_failed_incomplete_and_zero_case_rows(self) -> None:
         for name, status in (("fail", "FAIL"), ("incomplete", "FAIL"), ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):

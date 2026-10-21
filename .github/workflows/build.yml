@@ -248,16 +248,25 @@ jobs:
         (directory / 'matrix-plan.json').write_bytes(plan_bytes)
         plan = json.loads(plan_bytes)
         rows = []
-        for path in sorted((directory / 'rows').glob('qualification-row-*-attempt-*')):
+        received = directory / 'rows'
+        candidates = []
+        # download-artifact extracts a single match directly into its destination.
+        # The composer authenticates this metadata against the retained child tar.
+        if (received / 'qualification.tar.gz').is_file():
+            verdict = json.loads((received / 'qualification/verdict.json').read_text())
+            candidates.append((verdict['matrix_row']['row']['id'], received))
+        for path in sorted(received.glob('qualification-row-*-attempt-*')):
             prefix, suffix = 'qualification-row-', '-attempt-' + str(plan['run_attempt'])
             if not path.name.endswith(suffix):
                 raise ValueError('Unexpected artifact attempt: ' + path.name)
+            candidates.append((path.name[len(prefix):-len(suffix)], path))
+        for row_id, path in candidates:
             artifact = path / 'qualification.tar.gz'
             if not artifact.is_file():
                 continue  # Exact-set composition records the missing result.
             with artifact.open('rb') as stream:
                 digest = hashlib.file_digest(stream, 'sha256').hexdigest()
-            rows.append({'id': path.name[len(prefix):-len(suffix)], 'artifact': {
+            rows.append({'id': row_id, 'artifact': {
                 'path': str(artifact.relative_to(directory)), 'sha256': digest,
                 'bytes': artifact.stat().st_size}})
         result = {key: plan[key] for key in ('schema_version', 'source', 'run_id', 'run_attempt')}
