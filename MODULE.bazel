@@ -865,7 +865,7 @@ go_deps.gazelle_override(
     directives = [
         "gazelle:go_naming_convention go_default_library",
         # Embed the upstream command in the pure/static image binary.
-        "gazelle:go_visibility @//images/benchmarks:__pkg__",
+        "gazelle:go_visibility @@//images/benchmarks:__pkg__",
     ],
     path = "github.com/rakyll/hey",
 )
