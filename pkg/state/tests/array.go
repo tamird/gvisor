@@ -138,10 +138,10 @@ type arraySliceLoadState struct {
 	receivers   []*arraySliceLoadWord
 }
 
-// A handwritten saver can supply an Array to an ordinary generated slice
-// field. Use the public producer so the fixture cannot invent invalid wire
-// constructors or heterogeneous array framing.
-// +stateify savable
+// A handwritten saver can supply an Array to a slice field. Use the public
+// producer so the fixture cannot invent invalid wire constructors or
+// heterogeneous array framing.
+// +stateify type
 type arraySliceLoad struct {
 	ignored uint64 `state:"nosave"`
 	values  []arraySliceLoadWord
@@ -151,6 +151,10 @@ func (v *arraySliceLoad) StateSave(s state.Sink) {
 	var values [2]arraySliceLoadWord
 	copy(values[:], v.values)
 	s.SaveValue(0, values)
+}
+
+func (v *arraySliceLoad) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &v.values)
 }
 
 // +stateify savable

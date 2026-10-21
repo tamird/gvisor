@@ -14,8 +14,6 @@ go_library(
         "load.go",
         "map.go",
         "record.go",
-        "record_mode_norace.go",
-        "record_mode_race.go",
         "reference_array.go",
         "register.go",
         "struct.go",
@@ -49,6 +47,7 @@ go_test(
     deps = [
         "//pkg/state",
         "//pkg/state/wire",
+        "//pkg/sync",
         "//pkg/tcpip",
     ],
 )

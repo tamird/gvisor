@@ -147,10 +147,8 @@ type countedSave struct {
 	calls  *int `state:"nosave"`
 }
 
-// The receiver shadows a scalar name in the generated methods, which must
-// select the checked field width without emitting a bare builtin type name.
-func (int64 *countedSave) beforeSave() {
-	*int64.calls++
+func (v *countedSave) beforeSave() {
+	*v.calls++
 }
 
 // +stateify savable

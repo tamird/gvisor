@@ -14,96 +14,17 @@
 
 package tests
 
-// This file deliberately shadows a predeclared type name with an import. The
-// state encoder must preserve the field type, independent of its spelling.
 import (
 	"context"
-	int64 "time"
 
 	"gvisor.dev/gvisor/pkg/state"
 )
 
-type recordSigned int16
-type recordUnsigned uint64
-type recordSignedAlias = recordSigned
-
-// +stateify savable
-type primitiveRecord struct {
-	signed        recordSignedAlias
-	unsigned      recordUnsigned
-	imported      int64.Duration
-	text          string
-	enabled       bool
-	narrow        float32
-	wide          float64
-	narrowComplex complex64
-	wideComplex   complex128
-}
-
-// These names would collide with a fixed generated wire import and its first
-// alternate. The ordinary renderer accepts both the type and receiver names.
-// +stateify savable
-type statewire struct{ value recordSigned }
-
-func (statewire1 *statewire) beforeSave() {}
-
-func (stateSnapshotObject *primitiveRecord) beforeSave() {}
-
-type recordBool bool
-type recordString string
-type recordFloat float64
-type recordComplex complex128
-type recordSlice []recordSigned
-type recordMap map[recordSigned]recordUnsigned
-
-// The receiver must not shadow the state package in generated Save or Load.
-// Defined field types exercise scalar widths and aggregate destinations.
-// +stateify savable
-type statePackageReceiver struct {
-	value    int          `state:".(stateObject)"`
-	object   []state.Type `state:".([]state.Type)"`
-	enabled  recordBool
-	text     recordString
-	fraction recordFloat
-	complex  recordComplex
-	pointer  referenceIntPointer
-	slice    recordSlice
-	mapping  recordMap
-}
-
-// The replacement receiver must not shadow this custom value's type either.
-type stateObject int
-
-func (state *statePackageReceiver) beforeSave() {}
-
-func (state *statePackageReceiver) saveValue() stateObject {
-	return stateObject(state.value)
-}
-
-func (state *statePackageReceiver) loadValue(_ context.Context, value stateObject) {
-	state.value = int(value)
-}
-
-// Signature types do not share the receiver's body scope. The generated
-// LoadValue body must keep the state import visible for this custom type.
-// A slice retains its interface element type when SaveValue receives it as any.
-func (state *statePackageReceiver) saveObject() []state.Type { return state.object }
-
-func (state *statePackageReceiver) loadObject(_ context.Context, value []state.Type) {
-	state.object = value
-}
-
-// The forwarding owner deliberately precedes its underlying type's
-// registration. Capture must not depend on init statement order.
+// The forwarding owner precedes its underlying type's registration. Capture
+// must not depend on init statement order.
 // +stateify savable
 // +stateify identtype
 type forwardedRecord recordParent
-
-// The receiver deliberately shadows its own type name. Generated forwarding
-// methods must preserve this spelling without using the type in their bodies.
-func (forwardedRecord *forwardedRecord) recordValue() int {
-	return forwardedRecord.value
-}
 
 // +stateify savable
 type recordParent struct {
@@ -112,9 +33,7 @@ type recordParent struct {
 }
 
 // +stateify savable
-type configuredRecord struct {
-	value recordModeValue
-}
+type recordChild struct{ value int }
 
 // +stateify type
 type composedRecord struct {
@@ -128,7 +47,7 @@ func (r *composedRecord) StateSave(s state.Sink) {
 	// Forwarding must replace even a zero prefix without clearing siblings.
 	s.Save(0, &r.before)
 	s.Save(1, &r.before)
-	child := statewire{value: recordSigned(r.value)}
+	child := recordChild{value: r.value}
 	if r.replace {
 		child.value++
 	}
@@ -146,10 +65,3 @@ func (r *composedRecord) StateLoad(_ context.Context, s state.Source) {
 	s.Load(2, &r.after)
 	s.Load(3, &r.replace)
 }
-
-// +stateify savable
-type ordinaryStateReceiver struct {
-	value int
-}
-
-func (state *ordinaryStateReceiver) beforeSave() {}

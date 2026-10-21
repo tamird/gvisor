@@ -25,6 +25,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/wire"
+	"gvisor.dev/gvisor/pkg/sync"
 )
 
 var allArrayPrimitives = []any{
@@ -353,17 +354,17 @@ func TestArrayRegistrationAfterEarlyLoad(t *testing.T) {
 	}
 }
 
-// TestArrayLiveSliceHeader covers the generated and manual/dynamic entries to
-// the same legacy Array-to-slice operation. A first hook changes the actual
-// header, so a captured []T view would restore the wrong second receiver.
+// TestArrayLiveSliceHeader covers root and field destinations for the same
+// Array-to-slice operation. A first hook changes the actual header, so a
+// captured []T view would restore the wrong second receiver.
 func TestArrayLiveSliceHeader(t *testing.T) {
-	for _, generated := range []bool{false, true} {
+	for _, field := range []bool{false, true} {
 		for _, shrink := range []bool{false, true} {
-			t.Run(fmt.Sprintf("generated=%t/shrink=%t", generated, shrink), func(t *testing.T) {
+			t.Run(fmt.Sprintf("field=%t/shrink=%t", field, shrink), func(t *testing.T) {
 				values := [2]arraySliceLoadWord{{value: 7}, {value: 11}}
 				var encoded bytes.Buffer
 				var saved any = &values
-				if generated {
+				if field {
 					saved = &arraySliceLoad{values: values[:]}
 				}
 				if _, err := state.Save(t.Context(), &encoded, saved); err != nil {
@@ -378,7 +379,7 @@ func TestArrayLiveSliceHeader(t *testing.T) {
 				}
 				ctx := context.WithValue(t.Context(), arraySliceLoadKey{}, &load)
 				var target any = &loaded.values
-				if generated {
+				if field {
 					target = &loaded
 				}
 				_, err := state.Load(ctx, &encoded, target)
@@ -429,7 +430,7 @@ func TestEarlyLoadFields(t *testing.T) {
 	if got, want := loaded, want; got != want {
 		t.Errorf("registered loaded fields = %+v, want %+v", got, want)
 	}
-	if stateRaceEnabled {
+	if sync.RaceEnabled {
 		if earlyFieldsError == nil {
 			t.Fatal("early Save/Load succeeded without race-mode registration")
 		}

@@ -275,17 +275,6 @@ func main() {
 	// While we do this, figure out the right receiver name. If there are
 	// multiple distinct receivers, then we will just pick the last one.
 	simpleMethods := make(map[method]struct{})
-	// Generated method bodies must not shadow custom field types or imports.
-	names := make(map[string]struct{})
-	for _, file := range files {
-		ast.Inspect(file, func(node ast.Node) bool {
-			if ident, ok := node.(*ast.Ident); ok {
-				names[ident.Name] = struct{}{}
-			}
-			return true
-		})
-	}
-	freshReceiver := unusedName("stateObject", names)
 	receiverNames := make(map[string]string)
 	for _, f := range files {
 		// Go over all functions.
@@ -353,10 +342,6 @@ func main() {
 
 			for _, gs := range d.Specs {
 				ts := gs.(*ast.TypeSpec)
-				// An alias does not declare a new Go type or method owner.
-				if ts.Assign.IsValid() {
-					continue
-				}
 				recv, ok := receiverNames[ts.Name.Name]
 				if !ok {
 					// Maybe no methods were defined?
@@ -369,16 +354,6 @@ func main() {
 						fmt.Fprintf(os.Stderr, "Cannot use `+stateify identtype` on a struct type (%v); must be a type definition of an identical type.", ts.Name.Name)
 						os.Exit(1)
 					}
-
-					// State helpers and custom value types occur inside method bodies.
-					if statePrefix == recv+"." || statePrefix == "" && (recv == "IsZeroValue" || recv == "Failf") {
-						recv = freshReceiver
-					}
-					scanFields(x, scanFunctions{value: func(_ string, typ string) {
-						if typeUsesName(typ, recv) {
-							recv = freshReceiver
-						}
-					}})
 
 					// Record the slot for each field.
 					fieldCount := 0
@@ -447,11 +422,7 @@ func main() {
 					// and perform the value loads last. There should be no dependency
 					// on this specific behavior, but the ability to specify slots
 					// allows a manual implementation to be order-dependent.
-					_, hasStateSave := simpleMethods[method{
-						typeName:   ts.Name.Name,
-						methodName: "StateSave",
-					}]
-					if generateSaverLoader && !hasStateSave {
+					if generateSaverLoader {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
 						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
 						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
@@ -549,43 +520,5 @@ func main() {
 			fmt.Fprintf(outputFile, "	%s\n", ic)
 		}
 		fmt.Fprintf(outputFile, "}\n")
-	}
-}
-
-// typeUsesName checks lexical type-expression names, not selector members.
-// Retained custom LoadValue types are emitted inside the receiver's scope.
-func typeUsesName(expression, name string) bool {
-	expr, err := parser.ParseExpr(expression)
-	if err != nil {
-		panic(fmt.Sprintf("invalid custom type %q: %v", expression, err))
-	}
-	found := false
-	var visit func(ast.Node) bool
-	visit = func(node ast.Node) bool {
-		switch node := node.(type) {
-		case *ast.Ident:
-			found = found || node.Name == name
-		case *ast.Field:
-			ast.Inspect(node.Type, visit)
-			return false
-		case *ast.SelectorExpr:
-			ast.Inspect(node.X, visit)
-			return false
-		}
-		return true
-	}
-	ast.Inspect(expr, visit)
-	return found
-}
-
-// unusedName reserves a new generated identifier against existing scope names.
-func unusedName(base string, used map[string]struct{}) string {
-	name := base
-	for suffix := 1; ; suffix++ {
-		if _, exists := used[name]; !exists {
-			used[name] = struct{}{}
-			return name
-		}
-		name = fmt.Sprintf("%s%d", base, suffix)
 	}
 }
