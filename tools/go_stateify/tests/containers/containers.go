@@ -46,12 +46,11 @@ type Recursive map[key]recursiveValues
 // +stateify type
 type recursiveValues []Recursive
 
-// NewRecursive returns a graph containing a cycle through a private slice.
+// NewRecursive returns an acyclic graph with a shared child through private slices.
 func NewRecursive() Recursive {
-	root := make(Recursive)
-	root["cycle"] = recursiveValues{root}
-	return root
+	child := Recursive{"leaf": nil}
+	return Recursive{"first": {child}, "second": {child}}
 }
 
-// Cycle returns the map reached through the private slice type.
-func (r Recursive) Cycle() Recursive { return r["cycle"][0] }
+// Child returns the map reached through a named private slice.
+func (r Recursive) Child(name string) Recursive { return r[key(name)][0] }

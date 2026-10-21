@@ -25,37 +25,43 @@ import (
 
 // loadEmitter preserves static field types at the existing StateLoad boundary.
 // Projections produce zero child values, including private imported types;
-// operations never retain these samples. Structs and interfaces enter the
-// shared value loader, and structs' StateLoad methods select their own fields.
+// operations never retain these samples. Structs pass their actual receiver
+// to the shared struct loader; interfaces retain the dynamic value boundary.
 type loadEmitter struct {
 	out          io.Writer
 	pkg          *types.Package
 	info         *types.Info
-	used         map[string]bool
+	used         map[string]struct{}
 	declarations bytes.Buffer
+	families     map[types.Type]string
 }
 
 func newLoadEmitter(out io.Writer, pkg *types.Package, info *types.Info) *loadEmitter {
-	used := make(map[string]bool)
+	used := make(map[string]struct{})
 	for _, name := range pkg.Scope().Names() {
-		used[name] = true
+		used[name] = struct{}{}
 	}
 	for _, imported := range pkg.Imports() {
-		used[imported.Name()] = true
+		used[imported.Name()] = struct{}{}
 	}
-	return &loadEmitter{out: out, pkg: pkg, info: info, used: used}
+	return &loadEmitter{out: out, pkg: pkg, info: info, used: used, families: make(map[types.Type]string)}
 }
 
 func (e *loadEmitter) name(base string) string {
 	name := base
-	for n := 1; e.used[name]; n++ {
+	for n := 1; ; n++ {
+		if _, exists := e.used[name]; !exists {
+			e.used[name] = struct{}{}
+			return name
+		}
 		name = fmt.Sprintf("%s%d", base, n)
 	}
-	e.used[name] = true
-	return name
 }
 
-func scalarOperation(t types.Type) string {
+func leafOperation(t types.Type) string {
+	if _, ok := t.Underlying().(*types.Struct); ok {
+		return "StructOps"
+	}
 	if basic, ok := t.Underlying().(*types.Basic); ok {
 		switch {
 		case basic.Info()&types.IsBoolean != 0:
@@ -93,12 +99,12 @@ func containerChildren(t types.Type) []types.Type {
 	}
 }
 
-func recursiveContainer(t types.Type, active map[types.Type]bool) bool {
+func recursiveContainer(t types.Type, active map[types.Type]struct{}) bool {
 	t = types.Unalias(t)
-	if active[t] {
+	if _, exists := active[t]; exists {
 		return true
 	}
-	active[t] = true
+	active[t] = struct{}{}
 	defer delete(active, t)
 	for _, child := range containerChildren(t) {
 		if recursiveContainer(child, active) {
@@ -117,11 +123,11 @@ func (e *loadEmitter) field(spec *ast.TypeSpec, field, target string, slot int, 
 	if member == nil {
 		return fmt.Errorf("no checked field %s.%s", spec.Name, field)
 	}
-	e.used[strings.Split(target, ".")[0]] = true
-	e.used[strings.TrimSuffix(prefix, ".")] = true
+	e.used[strings.Split(target, ".")[0]] = struct{}{}
+	e.used[strings.TrimSuffix(prefix, ".")] = struct{}{}
 	fmt.Fprintln(e.out, " {")
 	var operation string
-	if recursiveContainer(member.Type(), make(map[types.Type]bool)) {
+	if recursiveContainer(member.Type(), make(map[types.Type]struct{})) {
 		factory := e.recursiveOperation(member.Type(), "stateLoad"+spec.Name.Name+field, prefix)
 		operation = factory + "(&" + target + ")"
 	} else {
@@ -153,7 +159,7 @@ func (e *loadEmitter) operation(t types.Type, target, prefix string) string {
 	case *types.Array:
 		return fmt.Sprintf("%sArrayOps(&%s, %s[:], %s)", prefix, target, target, child(underlying.Elem(), "SliceTypes", target+"[:]"))
 	default:
-		return fmt.Sprintf("%s%s(&%s)", prefix, scalarOperation(t), target)
+		return fmt.Sprintf("%s%s(&%s)", prefix, leafOperation(t), target)
 	}
 }
 
@@ -162,6 +168,10 @@ func (e *loadEmitter) operation(t types.Type, target, prefix string) string {
 // container instantiation without spelling those children's names. All nodes
 // share the same finite parameter list; their methods delegate to runtime ops.
 func (e *loadEmitter) recursiveOperation(root types.Type, base, prefix string) string {
+	root = types.Unalias(root)
+	if factory, exists := e.families[root]; exists {
+		return factory
+	}
 	indices := make(map[types.Type]int)
 	var nodes []types.Type
 	var visit func(types.Type)
@@ -178,10 +188,10 @@ func (e *loadEmitter) recursiveOperation(root types.Type, base, prefix string) s
 	}
 	visit(root)
 	parameter := func(t types.Type) string { return fmt.Sprintf("T%d", indices[types.Unalias(t)]) }
-	keys := make(map[types.Type]bool)
+	keys := make(map[types.Type]struct{})
 	for _, t := range nodes {
 		if m, ok := t.Underlying().(*types.Map); ok {
-			keys[types.Unalias(m.Key())] = true
+			keys[types.Unalias(m.Key())] = struct{}{}
 		}
 	}
 	var parameters, constraints []string
@@ -189,7 +199,7 @@ func (e *loadEmitter) recursiveOperation(root types.Type, base, prefix string) s
 		constraint := "any"
 		switch underlying := t.Underlying().(type) {
 		case *types.Basic:
-			if scalarOperation(t) != "ValueOps" {
+			if leafOperation(t) != "ValueOps" {
 				constraint = "~" + underlying.Name()
 			}
 		case *types.Map:
@@ -201,7 +211,7 @@ func (e *loadEmitter) recursiveOperation(root types.Type, base, prefix string) s
 		case *types.Array:
 			constraint = fmt.Sprintf("~[%d]%s", underlying.Len(), parameter(underlying.Elem()))
 		}
-		if keys[t] {
+		if _, isKey := keys[t]; isKey {
 			constraint = "interface { comparable; " + constraint + " }"
 		}
 		parameters = append(parameters, parameter(t))
@@ -210,6 +220,7 @@ func (e *loadEmitter) recursiveOperation(root types.Type, base, prefix string) s
 	arguments := "[" + strings.Join(parameters, ", ") + "]"
 	declaration := "[" + strings.Join(constraints, ", ") + "]"
 	factory := e.name(base)
+	e.families[root] = factory
 	names := make([]string, len(nodes))
 	for i, t := range nodes {
 		if len(containerChildren(t)) != 0 {
@@ -232,7 +243,7 @@ func (e *loadEmitter) recursiveOperation(root types.Type, base, prefix string) s
 			// A separate zero local supplies an otherwise unnameable child.
 			name := e.name("stateChild")
 			fmt.Fprintf(out, " var %s T%d\n", name, index)
-			return fmt.Sprintf("%s%s(&%s)", prefix, scalarOperation(t), name)
+			return fmt.Sprintf("%s%s(&%s)", prefix, leafOperation(t), name)
 		}
 		var operation string
 		switch t := t.Underlying().(type) {

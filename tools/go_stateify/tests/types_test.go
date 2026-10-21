@@ -46,9 +46,9 @@ func TestImportedDestinationTypes(t *testing.T) {
 	if got, want := restored, original; !reflect.DeepEqual(got, want) {
 		t.Fatalf("restored = %#v, want %#v", got, want)
 	}
-	child := restored.Imported.Cycle()
-	delete(restored.Imported, "cycle")
-	if got, want := len(child), 0; got != want {
+	first, second := restored.Imported.Child("first"), restored.Imported.Child("second")
+	delete(first, "leaf")
+	if got, want := len(second), 0; got != want {
 		t.Errorf("recursive alias length = %d, want %d", got, want)
 	}
 	delete(restored.Mapping, "first")

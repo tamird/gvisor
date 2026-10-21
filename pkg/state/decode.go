@@ -388,19 +388,19 @@ func (od *objectDecoder) afterLoad(fn func()) {
 
 // decodeStruct reconciles the schema and invokes the actual receiver. Generated
 // and manual methods return their fields to the same restore engine.
-func (ds *decodeState) decodeStruct(ods *objectDecodeState, object reflect.Value, encoded *wire.Struct) {
+func (ds *decodeState) decodeStruct(ods *objectDecodeState, typ reflect.Type, receiver any, encoded *wire.Struct) {
 	if encoded.TypeID == 0 {
-		if encoded.Fields() == 0 && object.NumField() == 0 {
+		if encoded.Fields() == 0 && typ.NumField() == 0 {
 			return
 		}
-		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, object.Type().Name())
+		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, typ.Name())
 	}
-	rte := ds.types.Lookup(typeID(encoded.TypeID), object.Type())
+	rte := ds.types.Lookup(typeID(encoded.TypeID), typ)
 	ods.typ = typeID(encoded.TypeID)
 	source := Source{internal: objectDecoder{ds: ds, ods: ods, rte: rte, encoded: encoded}}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	switch value := object.Addr().Interface().(type) {
+	switch value := receiver.(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, source)
 	case binaryObject:

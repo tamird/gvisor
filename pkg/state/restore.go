@@ -98,7 +98,7 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value
 			ds.restoreMap(ods, target, requireWire[*wire.Map](value))
 		}
 	case reflect.Struct:
-		ds.decodeStruct(ods, target, requireWire[*wire.Struct](value))
+		ds.decodeStruct(ods, target.Type(), target.Addr().Interface(), requireWire[*wire.Struct](value))
 	default:
 		Failf("cannot restore %T into %s", value, target.Type())
 	}

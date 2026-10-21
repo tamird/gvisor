@@ -168,12 +168,25 @@ func (stringOps[T]) Restore(d Decoder, target *T) {
 
 type valueOps[T any] struct{}
 
-// ValueOps retains the common loader for struct and dynamic destinations.
-// A struct's StateLoad can supply typed operations for its own fields.
+// ValueOps retains the common loader at dynamic and manual boundaries.
 func ValueOps[T any](_ *T) valueOps[T] { return valueOps[T]{} }
 
 func (valueOps[T]) Restore(d Decoder, target *T) {
 	d.ds.restoreValue(d.ods, reflect.ValueOf(target).Elem(), d.encoded)
+}
+
+type structOps[T any] struct{}
+
+// StructOps selects the shared struct loader without reflecting the receiver.
+// T must be a struct; its StateLoad selects operations for its own fields.
+func StructOps[T any](_ *T) structOps[T] { return structOps[T]{} }
+
+func (structOps[T]) Restore(d Decoder, target *T) {
+	typ := reflect.TypeFor[T]()
+	if typ.Kind() != reflect.Struct {
+		Failf("struct operation requires a struct, got %s", typ)
+	}
+	d.ds.decodeStruct(d.ods, typ, target, requireWire[*wire.Struct](d.encoded))
 }
 
 type typedCell[T any, O Destination[T]] struct{}
