@@ -72,6 +72,8 @@ go_library(
         "encode.go",
         "encode_unsafe.go",
         "ods_list.go",
+        "restore.go",
+        "restore_collections.go",
         "state.go",
         "state_norace.go",
         "state_race.go",
@@ -95,4 +97,5 @@ go_test(
     size = "small",
     srcs = ["types_test.go"],
     embed = [":state"],
+    deps = ["//pkg/state/wire"],
 )

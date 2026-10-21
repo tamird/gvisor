@@ -14,6 +14,12 @@
 
 package tests
 
+import (
+	"context"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
+
 // +stateify savable
 type arrayContainer struct {
 	v [1]any
@@ -32,4 +38,105 @@ type sliceContainer struct {
 // +stateify savable
 type slicePtrContainer struct {
 	v *[]any
+}
+
+// +stateify type
+type arraySigned int16
+
+// +stateify type
+type arrayUnsigned uint32
+
+// +stateify type
+type arrayString string
+
+// +stateify savable
+type arraySnapshotSource struct {
+	values [2]uint64
+}
+
+// +stateify savable
+type arraySnapshotMutator struct {
+	target *arraySnapshotSource
+}
+
+func (m *arraySnapshotMutator) beforeSave() {
+	m.target.values[0] = 99
+}
+
+// +stateify savable
+type arrayTailDiscovery struct {
+	values [][2]uint64
+}
+
+// arrayFloatEncoding compares the two existing public save boundaries without
+// copying their element conversion logic into a test oracle.
+// +stateify type
+type arrayFloatEncoding struct {
+	floats    [4]float32
+	complexes [2]complex64
+	byValue   bool `state:"nosave"`
+}
+
+func (a *arrayFloatEncoding) StateSave(s state.Sink) {
+	if a.byValue {
+		s.SaveValue(0, a.floats)
+		s.SaveValue(1, a.complexes)
+	} else {
+		s.Save(0, &a.floats)
+		s.Save(1, &a.complexes)
+	}
+}
+
+func (a *arrayFloatEncoding) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &a.floats)
+	s.Load(1, &a.complexes)
+}
+
+// +stateify savable
+type countedArrayContainer struct {
+	first    any
+	values   []countedMapWord
+	pointers []*countedMapWord
+	zeros    []registeredMapStruct
+}
+
+// +stateify type
+type arraySliceLoadWord struct{ value uint64 }
+
+func (v *arraySliceLoadWord) StateSave(s state.Sink) { s.Save(0, &v.value) }
+
+func (v *arraySliceLoadWord) StateLoad(ctx context.Context, s state.Source) {
+	s.Load(0, &v.value)
+	load := ctx.Value(arraySliceLoadKey{}).(*arraySliceLoadState)
+	load.receivers = append(load.receivers, v)
+	if len(load.receivers) == 1 {
+		*load.target = load.replacement
+	}
+}
+
+type arraySliceLoadKey struct{}
+
+type arraySliceLoadState struct {
+	target      *[]arraySliceLoadWord
+	replacement []arraySliceLoadWord
+	receivers   []*arraySliceLoadWord
+}
+
+// A handwritten saver can supply an Array to a slice field. Use the public
+// producer so the fixture cannot invent invalid wire constructors or
+// heterogeneous array framing.
+// +stateify type
+type arraySliceLoad struct {
+	ignored uint64 `state:"nosave"`
+	values  []arraySliceLoadWord
+}
+
+func (v *arraySliceLoad) StateSave(s state.Sink) {
+	var values [2]arraySliceLoadWord
+	copy(values[:], v.values)
+	s.SaveValue(0, values)
+}
+
+func (v *arraySliceLoad) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &v.values)
 }

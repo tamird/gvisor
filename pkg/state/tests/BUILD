@@ -13,6 +13,8 @@ go_library(
         "integer.go",
         "load.go",
         "map.go",
+        "record.go",
+        "reference_array.go",
         "register.go",
         "struct.go",
         "tests.go",
@@ -35,7 +37,9 @@ go_test(
         "integer_test.go",
         "load_test.go",
         "map_test.go",
+        "reference_array_test.go",
         "register_test.go",
+        "snapshot_test.go",
         "string_test.go",
         "struct_test.go",
     ],
@@ -43,5 +47,6 @@ go_test(
     deps = [
         "//pkg/state",
         "//pkg/state/wire",
+        "//pkg/tcpip",
     ],
 )

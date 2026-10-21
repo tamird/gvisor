@@ -17,6 +17,8 @@ package tests
 import (
 	"context"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 // +stateify savable
@@ -116,3 +118,89 @@ type multiName struct {
 	x, y    int64
 	z       int32
 }
+
+// snapshotEmbedded requires the parent's saver to include its extra field.
+// +stateify savable
+type snapshotEmbedded struct {
+	inner
+	parent int64
+}
+
+// +stateify savable
+type snapshotPointerEmbedded struct {
+	*inner
+}
+
+// snapshotNilEmbedded tests a promoted method through a nil embedding chain.
+// +stateify savable
+type snapshotNilEmbedded struct {
+	*snapshotPointerEmbedded
+	parent int64
+}
+
+// +stateify savable
+type countedSave struct {
+	value  int64
+	parent *countedSaveParent
+	calls  *int `state:"nosave"`
+}
+
+func (v *countedSave) beforeSave() {
+	*v.calls++
+}
+
+// +stateify savable
+type countedSaveParent struct {
+	child countedSave
+	value int64
+}
+
+// manualForwardedParent captures an external receiver into matching slots.
+// Its child may already have a resolver node even though the receiver does not.
+// +stateify type
+type manualForwardedParent struct {
+	child  countedSave
+	value  int64
+	source *countedSaveParent `state:"nosave"`
+}
+
+func (m *manualForwardedParent) StateSave(s state.Sink) {
+	m.source.StateSave(s)
+}
+
+func (m *manualForwardedParent) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &m.child)
+	s.Load(1, &m.value)
+}
+
+// +stateify savable
+type countedSaveGrandparent struct {
+	parent countedSaveParent
+}
+
+// manualInlineSave saves an external object inline, before or after another
+// saver reaches that same object through a pointer.
+// +stateify type
+type manualInlineSave struct {
+	value *countedSave
+}
+
+func (m *manualInlineSave) StateSave(s state.Sink) {
+	s.Save(0, m.value)
+}
+
+func (m *manualInlineSave) StateLoad(_ context.Context, s state.Source) {
+	m.value = new(countedSave)
+	s.Load(0, m.value)
+}
+
+type zeroSaveCountKey struct{}
+
+// +stateify type
+type countedZeroSave struct{}
+
+func (*countedZeroSave) StateSave(s state.Sink) {
+	*s.Context().Value(zeroSaveCountKey{}).(*int)++
+}
+
+func (*countedZeroSave) StateLoad(context.Context, state.Source) {}
