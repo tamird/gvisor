@@ -35,48 +35,74 @@ func dataValue(value wire.Object) wire.Object {
 	}
 }
 
-// restoreValue owns every encoded-kind operation, for generated fields,
-// manual Source calls, graph objects and dynamic interface/map storage alike.
+// restoreValue adapts graph storage to the same pointer-based destination
+// decoder used by Source.Load. The pointer continues to identify the graph's
+// authoritative allocation.
 func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value, encoded wire.Object) {
-	switch value := dataValue(encoded).(type) {
-	case wire.Nil:
+	// Nil needs no storage. A zero-length array can be represented by Nil
+	// even when the caller supplies a nil pointer to that array.
+	if _, ok := dataValue(encoded).(wire.Nil); ok {
 		return
-	case *wire.Ref:
-		ds.restoreReference(target, value)
-	case wire.Bool:
-		target.SetBool(bool(value))
-	case wire.Int:
-		target.SetInt(int64(value))
-		checkInt(int64(value), target.Int())
-	case wire.Uint:
-		target.SetUint(uint64(value))
-		checkUint(uint64(value), target.Uint())
-	case wire.Float32:
-		target.SetFloat(float64(value))
-	case wire.Float64:
-		target.SetFloat(float64(value))
-		checkFloat(float64(value), target.Float())
-	case *wire.Complex64:
-		target.SetComplex(complex128(*value))
-	case *wire.Complex128:
-		target.SetComplex(complex128(*value))
-		checkComplex(complex128(*value), target.Complex())
-	case *wire.String:
-		target.SetString(string(*value))
-	case *wire.Slice:
-		if objectID(value.Ref.Root) != 0 {
-			ds.assignSlice(target, value)
+	}
+	if !target.CanAddr() || !target.CanInterface() {
+		Failf("destination %s cannot be addressed", target.Type())
+	}
+	ds.decoders.lookup(target.Type()).restore(ds, ods, target.Addr().Interface(), encoded)
+}
+
+func requireWire[T wire.Object](value wire.Object) T {
+	v, ok := value.(T)
+	if !ok {
+		Failf("expected %s, got %T", reflect.TypeFor[T](), value)
+	}
+	return v
+}
+
+func boolDecoder(store func(any, bool)) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(_ *decodeState, _ *objectDecodeState, p any, value wire.Object) {
+		store(p, bool(requireWire[wire.Bool](value)))
+	}
+}
+
+func intDecoder(store func(any, int64) int64) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(_ *decodeState, _ *objectDecodeState, p any, value wire.Object) {
+		v := int64(requireWire[wire.Int](value))
+		checkInt(v, store(p, v))
+	}
+}
+
+func uintDecoder(store func(any, uint64) uint64) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(_ *decodeState, _ *objectDecodeState, p any, value wire.Object) {
+		v := uint64(requireWire[wire.Uint](value))
+		checkUint(v, store(p, v))
+	}
+}
+
+func floatDecoder(store func(any, float64) float64) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(_ *decodeState, _ *objectDecodeState, p any, value wire.Object) {
+		if v, ok := value.(wire.Float32); ok {
+			store(p, float64(v))
+			return
 		}
-	case wire.Array:
-		ds.restoreArray(ods, target, value)
-	case *wire.Map:
-		ds.restoreMap(ods, target, value)
-	case *wire.Struct:
-		ds.decodeStruct(ods, target, value)
-	case *wire.Interface:
-		ds.decodeInterface(ods, target, value)
-	default:
-		Failf("unknown object %#v for %q", encoded, target.Type().Name())
+		v := float64(requireWire[wire.Float64](value))
+		checkFloat(v, store(p, v))
+	}
+}
+
+func complexDecoder(store func(any, complex128) complex128) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(_ *decodeState, _ *objectDecodeState, p any, value wire.Object) {
+		if v, ok := value.(*wire.Complex64); ok {
+			store(p, complex128(*v))
+			return
+		}
+		v := complex128(*requireWire[*wire.Complex128](value))
+		checkComplex(v, store(p, v))
+	}
+}
+
+func stringDecoder(store func(any, string)) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(_ *decodeState, _ *objectDecodeState, p any, value wire.Object) {
+		store(p, string(*requireWire[*wire.String](value)))
 	}
 }
 

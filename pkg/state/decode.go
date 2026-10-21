@@ -149,6 +149,9 @@ type decodeState struct {
 	// types is the type database.
 	types typeDecodeDatabase
 
+	// decoders selects restoration from destination types.
+	decoders DecoderTypes
+
 	// objectByID is the set of objects in progress.
 	objectsByID []*objectDecodeState
 
@@ -317,7 +320,7 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
 	}
-	object := reflect.New(typ).Elem()
+	object := reflect.ValueOf(ds.decoders.lookup(typ).new()).Elem()
 	ods := ds.addObject(id, object)
 	if encoded, ok := ds.deferred[id]; ok {
 		delete(ds.deferred, id)
@@ -351,9 +354,9 @@ func (od *objectDecoder) field(slot int) wire.Object {
 }
 
 // load is helper for the public methods on Source.
-func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func()) {
+func (od *objectDecoder) load(slot int, objPtr any, wait bool, fn func()) {
 	v := od.field(slot)
-	od.ds.restoreValue(od.ods, objPtr.Elem(), v)
+	od.ds.decoders.lookup(reflect.TypeOf(objPtr).Elem()).restore(od.ds, od.ods, objPtr, v)
 	if wait {
 		// Mark this individual object a blocker.
 		od.ds.waitObject(od.ods, v, fn)
@@ -369,19 +372,19 @@ func (od *objectDecoder) afterLoad(fn func()) {
 
 // decodeStruct reconciles the schema and invokes the actual receiver. Generated
 // and manual methods return their fields to the same restore engine.
-func (ds *decodeState) decodeStruct(ods *objectDecodeState, object reflect.Value, encoded *wire.Struct) {
+func (ds *decodeState) decodeStruct(ods *objectDecodeState, pointer any, typ reflect.Type, encoded *wire.Struct) {
 	if encoded.TypeID == 0 {
-		if encoded.Fields() == 0 && object.NumField() == 0 {
+		if encoded.Fields() == 0 && typ.NumField() == 0 {
 			return
 		}
-		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, object.Type().Name())
+		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, typ.Name())
 	}
-	rte := ds.types.Lookup(typeID(encoded.TypeID), object.Type())
+	rte := ds.types.Lookup(typeID(encoded.TypeID), typ)
 	ods.typ = typeID(encoded.TypeID)
 	source := Source{internal: objectDecoder{ds: ds, ods: ods, rte: rte, encoded: encoded}}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	switch value := object.Addr().Interface().(type) {
+	switch value := pointer.(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, source)
 	case binaryObject:
@@ -422,7 +425,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// decode normally. In order to avoid issues with setting value-types,
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
-	object := reflect.New(typ).Elem()
+	object := reflect.ValueOf(ds.decoders.lookup(typ).new()).Elem()
 	defer obj.Set(object)
 	ds.restoreValue(ods, object, value)
 }

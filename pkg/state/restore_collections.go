@@ -16,43 +16,88 @@ package state
 
 import (
 	"reflect"
+	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// restoreMap owns temporary cells and Go's map insertion semantics. Aggregate
-// cells remain distinct because deferred loaders can retain their addresses.
-// Waits precede insertion, which reads the live map header.
-func (ds *decodeState) restoreMap(ods *objectDecodeState, object reflect.Value, encoded *wire.Map) {
-	if object.IsNil() {
-		object.Set(reflect.MakeMap(object.Type()))
+// mapDecoder owns the collection algorithm. Typed and dynamic destinations
+// supply only Go allocation and assignment, not separate restoration paths.
+func mapDecoder(keyType, valueType *valueDecoder, ensure func(any), insert func(any, any, any)) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(ds *decodeState, ods *objectDecodeState, pointer any, value wire.Object) {
+		if ref, ok := value.(*wire.Ref); ok {
+			ds.restoreReference(reflect.ValueOf(pointer).Elem(), ref)
+			return
+		}
+		encoded := requireWire[*wire.Map](value)
+		ensure(pointer)
+		// Aggregate cells remain distinct because deferred loaders can
+		// retain their addresses. Other values are copied on insertion.
+		reuseKey := keyType.typ.Kind() != reflect.Struct && keyType.typ.Kind() != reflect.Array
+		reuseValue := valueType.typ.Kind() != reflect.Struct && valueType.typ.Kind() != reflect.Array
+		var keyCell, valueCell any
+		for i, key := range encoded.Keys {
+			value := encoded.Values[i]
+			if i == 0 || !reuseKey {
+				keyCell = keyType.new()
+			} else {
+				// Nil wire values leave the destination unchanged.
+				keyType.zero(keyCell)
+			}
+			if i == 0 || !reuseValue {
+				valueCell = valueType.new()
+			} else {
+				valueType.zero(valueCell)
+			}
+			keyType.restore(ds, ods, keyCell, key)
+			valueType.restore(ds, ods, valueCell, value)
+			ds.waitObject(ods, key, nil)
+			ds.waitObject(ods, value, nil)
+			// Read the current map header: a loader may have replaced it.
+			insert(pointer, keyCell, valueCell)
+		}
 	}
-	if len(encoded.Keys) == 0 {
+}
+
+func sliceDecoder(element *valueDecoder, length func(any) int, index func(any, int) any, base func(any) unsafe.Pointer) func(*decodeState, *objectDecodeState, any, wire.Object) {
+	return func(ds *decodeState, ods *objectDecodeState, pointer any, value wire.Object) {
+		if slice, ok := value.(*wire.Slice); ok {
+			ds.assignSlice(reflect.ValueOf(pointer).Elem(), slice)
+			return
+		}
+		// A manual saver may supply an array to an existing slice. Element
+		// hooks can replace the slice, so index must read its live header.
+		ds.restoreArray(ods, element, length(pointer), func(i int) any { return index(pointer, i) },
+			func() unsafe.Pointer { return base(pointer) }, requireWire[wire.Array](value))
+	}
+}
+
+func (ds *decodeState) restoreArray(ods *objectDecodeState, element *valueDecoder, length int, index func(int) any, base func() unsafe.Pointer, encoded wire.Array) {
+	if encoded.Len() != length {
+		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
+	}
+	if length == 0 {
 		return
 	}
-	keyType, valueType := object.Type().Key(), object.Type().Elem()
-	// Other kinds are copied into the map; interface values get independent
-	// dynamic storage in decodeInterface.
-	reuseKey := keyType.Kind() != reflect.Struct && keyType.Kind() != reflect.Array
-	reuseValue := valueType.Kind() != reflect.Struct && valueType.Kind() != reflect.Array
-	var keyCell, valueCell reflect.Value
-	for i, key := range encoded.Keys {
-		value := encoded.Values[i]
-		if i == 0 || !reuseKey {
-			keyCell = reflect.New(keyType).Elem()
-		} else {
-			// Nil wire values leave the destination unchanged.
-			keyCell.SetZero()
+	// General arrays arise from interface and custom savers as well as
+	// generated structs. Their elements still use the destination decoder.
+	if values, ok := encoded.(*wire.ObjectArray); ok {
+		for i, value := range values.Contents {
+			element.restore(ds, ods, index(i), value)
+			ds.waitObject(ods, value, nil)
 		}
-		if i == 0 || !reuseValue {
-			valueCell = reflect.New(valueType).Elem()
-		} else {
-			valueCell.SetZero()
-		}
-		ds.restoreValue(ods, keyCell, key)
-		ds.restoreValue(ods, valueCell, value)
-		ds.waitObject(ods, key, nil)
-		ds.waitObject(ods, value, nil)
-		object.SetMapIndex(keyCell, valueCell)
+		return
 	}
+	if values, ok := encoded.(*wire.RefArray); ok {
+		for i := range values.Contents {
+			value := &values.Contents[i]
+			element.restore(ds, ods, index(i), value)
+			ds.waitObject(ods, value, nil)
+		}
+		return
+	}
+	if element.array == nil {
+		Failf("array %T cannot restore elements of %s", encoded, element.typ)
+	}
+	element.array(base(), length, encoded)
 }

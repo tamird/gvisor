@@ -232,9 +232,9 @@ func TestArrayDestinationFlags(t *testing.T) {
 		target  reflect.Value
 		wantErr string
 	}{
-		{"read_only", reflect.ValueOf(&private).Elem().Field(0), "array element of type int64 is not settable"},
-		{"unaddressable_array", reflect.ValueOf([2]int64{17, 29}), "array element of type int64 is not settable"},
-		{"unaddressable_slice", reflect.ValueOf(slice), ""},
+		{"read_only", reflect.ValueOf(&private).Elem().Field(0), "destination [2]int64 cannot be addressed"},
+		{"unaddressable_array", reflect.ValueOf([2]int64{17, 29}), "destination [2]int64 cannot be addressed"},
+		{"slice", reflect.ValueOf(&slice).Elem(), ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			// Use the public parser so this exercises its actual typed payload.
@@ -289,10 +289,8 @@ func TestLegacyValueDestinations(t *testing.T) {
 	}{
 		{"array_in_slice", &[2]int64{17, 29}, nil, &[]int64{0, 0}, []int64{17, 29}},
 		{"empty_array_in_nil_slice", &[0]int64{}, nil, new([]int64), []int64(nil)},
-		{"empty_array_in_empty_string", &[0]int64{}, nil, new(string), ""},
 		{"interface_in_scalar", &integerInterface, nil, new(int64), int64(17)},
 		{"nil_interface_in_scalar", &nilInterface, nil, new(int64(23)), int64(23)},
-		{"empty_map_in_slice", nil, &wire.Map{}, &[]int64{23}, []int64{23}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var buf bytes.Buffer
@@ -319,7 +317,7 @@ func TestLegacyValueDestinations(t *testing.T) {
 }
 
 func TestZeroReferencesLeaveDestination(t *testing.T) {
-	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Ref{}, &wire.Slice{}, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}} {
+	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}} {
 		// A non-nil channel is otherwise an unsupported decode destination.
 		integer, channel := int64(17), make(chan int)
 		for _, destination := range []any{&integer, &channel} {
@@ -338,5 +336,35 @@ func TestZeroReferencesLeaveDestination(t *testing.T) {
 				t.Errorf("zero %T changed destination to %v, want %v", encoded, got, want)
 			}
 		}
+	}
+}
+
+// An empty payload still has to match the destination's representation.
+// Otherwise malformed checkpoints can bypass type validation merely because
+// a collection has no elements or a reference is zero.
+func TestWrongDestinationShape(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		encoded     wire.Object
+		destination any
+	}{
+		{"array_in_string", &wire.ObjectArray{}, new(string)},
+		{"map_in_slice", &wire.Map{}, new([]int64)},
+		{"reference_in_integer", &wire.Ref{}, new(int64)},
+		{"slice_in_integer", &wire.Slice{}, new(int64)},
+		{"reference_in_channel", &wire.Ref{}, new(chan int)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writer := wire.Writer{Writer: &buf}
+			if err := WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, test.encoded)
+			if _, err := Load(t.Context(), &buf, test.destination); err == nil {
+				t.Fatal("Load accepted a payload with the wrong destination type")
+			}
+		})
 	}
 }

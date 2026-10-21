@@ -46,132 +46,46 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 	return reflectValueRWAddr(arr).Elem().Slice3(i, j, k)
 }
 
-// restoreArray owns length checks and the homogeneous wire-kind dispatch.
-// Composite elements can invoke hooks, so their destination is indexed anew
-// for each element. Primitive elements have no graph dependencies or hooks.
-func (ds *decodeState) restoreArray(ods *objectDecodeState, target reflect.Value, encoded wire.Array) {
-	length := target.Len()
-	if encoded.Len() != length {
-		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
+// These bulk operations are selected by the destination element type. They
+// use typed stores, including Go's write barriers for string elements.
+func boolArray[T ~bool](base unsafe.Pointer, length int, encoded wire.Array) {
+	target := unsafe.Slice((*T)(base), length)
+	for i, value := range requireWire[*wire.BoolArray](encoded).Contents {
+		target[i] = T(value)
 	}
-	if length == 0 {
-		// Preserve legacy empty Array operations on other Len-capable types.
-		return
-	}
-	switch values := encoded.(type) {
-	case *wire.ObjectArray:
-		for i, value := range values.Contents {
-			ds.restoreValue(ods, target.Index(i), value)
-			ds.waitObject(ods, value, nil)
-		}
-		return
-	case *wire.RefArray:
-		for i := range values.Contents {
-			value := &values.Contents[i]
-			ds.restoreReference(target.Index(i), value)
-			ds.waitObject(ods, value, nil)
-		}
-		return
-	}
+}
 
-	// The actual reflected flags must allow writes, even for an unexported
-	// field. A slice value itself need not be addressable; its elements must
-	// be. Defined scalar types have the same memory layout as their Kind.
-	element := target.Index(0)
-	if !element.CanSet() {
-		Failf("array element of type %s is not settable", element.Type())
+func intArray[T ~int | ~int8 | ~int16 | ~int32 | ~int64](base unsafe.Pointer, length int, encoded wire.Array) {
+	restoreIntArray(unsafe.Slice((*T)(base), length), requireWire[*wire.IntArray[wire.Int]](encoded).Contents)
+}
+
+func uintArray[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](base unsafe.Pointer, length int, encoded wire.Array) {
+	restoreUintArray(unsafe.Slice((*T)(base), length), requireWire[*wire.UintArray[wire.Uint]](encoded).Contents)
+}
+
+func floatArray[T ~float32 | ~float64](base unsafe.Pointer, length int, encoded wire.Array) {
+	target := unsafe.Slice((*T)(base), length)
+	if values, ok := encoded.(*wire.Float32Array[wire.Float32]); ok {
+		restoreFloatArray(target, values.Contents, false)
+		return
 	}
-	pointer := element.Addr().UnsafePointer()
-	kind := element.Kind()
-	switch values := encoded.(type) {
-	case *wire.BoolArray:
-		if kind == reflect.Bool {
-			copy(unsafe.Slice((*bool)(pointer), length), values.Contents)
-			return
-		}
-	case *wire.IntArray[wire.Int]:
-		switch kind {
-		case reflect.Int:
-			restoreIntArray(unsafe.Slice((*int)(pointer), length), values.Contents)
-		case reflect.Int8:
-			restoreIntArray(unsafe.Slice((*int8)(pointer), length), values.Contents)
-		case reflect.Int16:
-			restoreIntArray(unsafe.Slice((*int16)(pointer), length), values.Contents)
-		case reflect.Int32:
-			restoreIntArray(unsafe.Slice((*int32)(pointer), length), values.Contents)
-		case reflect.Int64:
-			restoreIntArray(unsafe.Slice((*int64)(pointer), length), values.Contents)
-		default:
-			Failf("signed array cannot restore %s", element.Type())
-		}
+	restoreFloatArray(target, requireWire[*wire.Float64Array](encoded).Contents, true)
+}
+
+func complexArray[T ~complex64 | ~complex128](base unsafe.Pointer, length int, encoded wire.Array) {
+	target := unsafe.Slice((*T)(base), length)
+	if values, ok := encoded.(*wire.Complex64Array); ok {
+		restoreComplexArray(target, values.Contents, false)
 		return
-	case *wire.UintArray[wire.Uint]:
-		switch kind {
-		case reflect.Uint:
-			restoreUintArray(unsafe.Slice((*uint)(pointer), length), values.Contents)
-		case reflect.Uint8:
-			restoreUintArray(unsafe.Slice((*uint8)(pointer), length), values.Contents)
-		case reflect.Uint16:
-			restoreUintArray(unsafe.Slice((*uint16)(pointer), length), values.Contents)
-		case reflect.Uint32:
-			restoreUintArray(unsafe.Slice((*uint32)(pointer), length), values.Contents)
-		case reflect.Uint64:
-			restoreUintArray(unsafe.Slice((*uint64)(pointer), length), values.Contents)
-		case reflect.Uintptr:
-			restoreUintArray(unsafe.Slice((*uintptr)(pointer), length), values.Contents)
-		default:
-			Failf("unsigned array cannot restore %s", element.Type())
-		}
-		return
-	case *wire.Float32Array[wire.Float32]:
-		switch kind {
-		case reflect.Float32:
-			restoreFloatArray(unsafe.Slice((*float32)(pointer), length), values.Contents, false)
-		case reflect.Float64:
-			restoreFloatArray(unsafe.Slice((*float64)(pointer), length), values.Contents, false)
-		default:
-			Failf("floating point array cannot restore %s", element.Type())
-		}
-		return
-	case *wire.Float64Array:
-		switch kind {
-		case reflect.Float32:
-			restoreFloatArray(unsafe.Slice((*float32)(pointer), length), values.Contents, true)
-		case reflect.Float64:
-			restoreFloatArray(unsafe.Slice((*float64)(pointer), length), values.Contents, true)
-		default:
-			Failf("floating point array cannot restore %s", element.Type())
-		}
-		return
-	case *wire.Complex64Array:
-		switch kind {
-		case reflect.Complex64:
-			restoreComplexArray(unsafe.Slice((*complex64)(pointer), length), values.Contents, false)
-		case reflect.Complex128:
-			restoreComplexArray(unsafe.Slice((*complex128)(pointer), length), values.Contents, false)
-		default:
-			Failf("complex array cannot restore %s", element.Type())
-		}
-		return
-	case *wire.Complex128Array:
-		switch kind {
-		case reflect.Complex64:
-			restoreComplexArray(unsafe.Slice((*complex64)(pointer), length), values.Contents, true)
-		case reflect.Complex128:
-			restoreComplexArray(unsafe.Slice((*complex128)(pointer), length), values.Contents, true)
-		default:
-			Failf("complex array cannot restore %s", element.Type())
-		}
-		return
-	case *wire.StringArray:
-		if kind == reflect.String {
-			// Typed string assignment retains Go's GC write barriers. No raw
-			// byte copy or pointer-sized store is used for pointerful data.
-			copy(unsafe.Slice((*string)(pointer), length), values.Contents)
-			return
-		}
 	}
-	Failf("array %T cannot restore %s", encoded, target.Type())
+	restoreComplexArray(target, requireWire[*wire.Complex128Array](encoded).Contents, true)
+}
+
+func stringArray[T ~string](base unsafe.Pointer, length int, encoded wire.Array) {
+	target := unsafe.Slice((*T)(base), length)
+	for i, value := range requireWire[*wire.StringArray](encoded).Contents {
+		target[i] = T(value)
+	}
 }
 
 // Narrowing stores precede validation, matching reflect.SetInt/SetUint and

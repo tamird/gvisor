@@ -68,6 +68,7 @@ go_library(
         "addr_set.go",
         "decode.go",
         "decode_unsafe.go",
+        "decoder_types.go",
         "deferred_list.go",
         "encode.go",
         "encode_unsafe.go",

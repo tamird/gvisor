@@ -226,7 +226,7 @@ type Source struct {
 //
 // See Sink.Save for an example.
 func (s Source) Load(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), false, nil)
+	s.internal.load(slot, objPtr, false, nil)
 }
 
 // LoadWait loads the given objects from the map, and marks it as requiring all
@@ -234,7 +234,7 @@ func (s Source) Load(slot int, objPtr any) {
 //
 // See Sink.Save for an example.
 func (s Source) LoadWait(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), true, nil)
+	s.internal.load(slot, objPtr, true, nil)
 }
 
 // LoadValue loads the given object value from the map.
@@ -242,7 +242,7 @@ func (s Source) LoadWait(slot int, objPtr any) {
 // See Sink.SaveValue for an example.
 func (s Source) LoadValue(slot int, objPtr any, fn func(any)) {
 	o := reflect.ValueOf(objPtr)
-	s.internal.load(slot, o, true, func() { fn(o.Elem().Interface()) })
+	s.internal.load(slot, objPtr, true, func() { fn(o.Elem().Interface()) })
 }
 
 // AfterLoad schedules a function execution when all objects have been
