@@ -20,6 +20,12 @@ trap 'exit 143' TERM
 
 lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks pgo containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-fetch license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
+# Planning runs before any host capability checks or Bazel work. The workflow
+# and composer consume the same source-owned row set and routing policy.
+if [[ $# == 1 && $1 == --dispatch-plan ]]; then
+  exec python3 "$(dirname "$0")/unit_matrix.py" dispatch --known-lanes "${lanes[@]}"
+fi
+
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
@@ -27,6 +33,7 @@ Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] [--bazel-option=--FLAG ...] test
        test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=N[,N...]] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
+       test/rbe/qualify.sh --dispatch-plan
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
 target architecture is AMD64. Tests use matching execution workers, except
@@ -1527,12 +1534,20 @@ run_selection() {
     if (( lane_status != 0 )); then
       status=1
     fi
+    if [[ -n ${QUALIFICATION_LANE_RESULTS:-} ]]; then
+      python3 test/rbe/unit_matrix.py lane-result --output "$QUALIFICATION_LANE_RESULTS" \
+        "--native-exit=$lane_status" "$lane" || status=1
+    fi
   done
   if (( ${#matrix_lanes[@]} )); then
     run_platform_matrix "${matrix_lanes[@]}"
     lane_status=$?
     if (( lane_status != 0 )); then
       status=1
+    fi
+    if [[ -n ${QUALIFICATION_LANE_RESULTS:-} ]]; then
+      python3 test/rbe/unit_matrix.py lane-result --output "$QUALIFICATION_LANE_RESULTS" \
+        "--native-exit=$lane_status" "${matrix_lanes[@]}" || status=1
     fi
   fi
   return "$status"

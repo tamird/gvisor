@@ -16,20 +16,160 @@
 """Selection coverage using retained graph-declared syscall partitions."""
 
 import argparse
+import base64
 import contextlib
+import gzip
+import hashlib
 import io
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import unit_matrix
 
 
 FIXTURE = Path(__file__).parent / "testdata/syscall_buckets"
+
+
+class DispatchPlanTest(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.manifest = Path(self.directory.name) / "pgo.json"
+        self.manifest.write_text(json.dumps({"pgo": {
+            "//bench:first_systrap": {"platform": "systrap"},
+            "//bench:second_systrap": {"platform": "systrap"},
+            "//bench:first_kvm": {"platform": "kvm"},
+        }}))
+        # The shell remains the lane-name authority; planning must reject a
+        # selector that the actual entrypoint does not recognize.
+        source = Path(__file__).with_name("qualify.sh").read_text()
+        declaration = next(line for line in source.splitlines() if line.startswith("lanes=("))
+        self.lanes = shlex.split(declaration.removeprefix("lanes=(").removesuffix(")"))
+        catalog = b'[{"name":"cos-fixture","family":"cos-stable"}]'
+        self.inputs = dict(
+            profile="public-cpu", source="a" * 40, run_id="1234", run_attempt=2,
+            lanes=["smoke"], architecture="amd64", execution="remote",
+            requirements="namespace", targets=[], test_filter="", syscall_bucket="",
+            header_base="b" * 40, cos_sha256=hashlib.sha256(catalog).hexdigest(),
+            cos_gzip_base64=base64.b64encode(gzip.compress(catalog)).decode(),
+            clock_source="calibrated", known_lanes=self.lanes, pgo_manifest=self.manifest,
+        )
+
+    def plan(self, **changes):
+        return unit_matrix.dispatch_plan(**(self.inputs | changes))
+
+    def test_full_routes_preserve_native_hosts_and_canonical_pgo_selection(self):
+        plan = self.plan()
+        rows = {row["id"]: row for row in plan["rows"]}
+        self.assertEqual(len(rows), len(plan["rows"]))
+        self.assertEqual(rows["all-local-unit"]["runner"], "ubuntu-24.04-arm")
+        self.assertEqual(rows["all-local-syscalls-rc"]["runner"], "ubuntu-26.04")
+        self.assertEqual(rows["arm64-local-smoke"]["lanes"], ["smoke"])
+        self.assertEqual(rows["amd64-local-container"]["local_test_requirements"], "kvm")
+        self.assertEqual(rows["amd64-remote-pgo"]["targets"], ["//bench:first_systrap", "//bench:second_systrap"])
+        self.assertEqual(rows["amd64-local-pgo"]["targets"], ["//bench:first_kvm"])
+        selected = {lane for row in rows.values() for lane in row["lanes"]}
+        self.assertEqual(selected & {"container-v1-pilot", "syscalls-rc-pilot", "license-fetch"}, set())
+        self.assertEqual(rows["all-remote-startup-posture-benchmarks"]["required_kinds"], ["test"])
+        self.assertEqual(rows["amd64-remote-pgo"]["required_kinds"], ["benchmark"])
+        self.assertEqual(rows["all-remote-nogo-workflows-gazelle-lint-lint-cc-governance"]["required_kinds"], ["build", "command", "test"])
+
+    def test_single_and_full_share_routes_without_expanding_work_deadlines(self):
+        full = {row["id"]: row for row in self.plan()["rows"]}
+        for lane, arch, mode, budget in (
+            ("docker", "amd64", "remote", (2700, 70, 80)),
+            ("license-check", "amd64", "remote", (2700, 70, 80)),
+            ("kvm", "arm64", "remote", (2700, 70, 80)),
+            ("benchmarks", "amd64", "local", (15000, 275, 285)),
+            ("unit", "all", "local", (7200, 145, 155)),
+            ("syscalls-rc", "all", "local", (5400, 115, 120)),
+        ):
+            with self.subTest(lane=lane, arch=arch, mode=mode):
+                row, = self.plan(profile="single", lanes=[lane], architecture=arch, execution=mode)["rows"]
+                self.assertEqual(row, full[row["id"]])
+                self.assertEqual(tuple(row[key] for key in ("work_seconds", "step_minutes", "job_minutes")), budget)
+
+    def test_full_plan_rejects_missing_or_changed_side_inputs_and_narrowing(self):
+        for changes, message in (
+            ({"header_base": ""}, "License headers require the full comparison SHA"),
+            ({"cos_gzip_base64": ""}, "COS metadata requires the complete encoded catalog and its SHA256"),
+            ({"cos_sha256": "0" * 64}, "COS catalog SHA256 does not match its decoded bytes"),
+            ({"targets": ["//pkg:test"]}, "The public CPU profile cannot narrow targets, cases or syscall buckets"),
+            ({"test_filter": "OneCase"}, "The public CPU profile cannot narrow targets, cases or syscall buckets"),
+            ({"syscall_bucket": "0"}, "The public CPU profile cannot narrow targets, cases or syscall buckets"),
+        ):
+            with self.subTest(changes=changes), self.assertRaises(ValueError) as error:
+                self.plan(**changes)
+            self.assertEqual(str(error.exception), message)
+
+    def test_dispatch_identity_requires_positive_exact_types(self):
+        for changes in ({"run_id": "0"}, {"run_id": ""}, {"run_id": "１２"},
+                        {"run_attempt": 0}, {"run_attempt": True}, {"run_attempt": "2"}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError) as error:
+                self.plan(**changes)
+            self.assertEqual(str(error.exception),
+                             "Dispatch requires a full source SHA, positive decimal run ID and positive integer attempt")
+
+    def test_qualifier_plans_without_entering_linux_workload_path(self):
+        environment = os.environ | {
+            "QUALIFICATION_PROFILE": "single", "QUALIFICATION_COMMIT": "a" * 40,
+            "GITHUB_RUN_ID": "1234", "GITHUB_RUN_ATTEMPT": "2",
+            "QUALIFICATION_LANES": "docker", "QUALIFICATION_ARCH": "amd64",
+            "QUALIFICATION_EXECUTION": "remote", "QUALIFICATION_CLOCK_SOURCE": "reference",
+            "QUALIFICATION_LOCAL_TEST_REQUIREMENTS": "namespace", "QUALIFICATION_TARGETS": "",
+            "QUALIFICATION_TEST_FILTER": "TestExample", "QUALIFICATION_SYSCALL_BUCKET": "",
+            "QUALIFICATION_HEADER_BASE": "", "QUALIFICATION_COS_SHA256": "",
+            "QUALIFICATION_COS_GZIP_BASE64": "",
+        }
+        result = subprocess.run(
+            ["/bin/bash", str(Path(__file__).with_name("qualify.sh").resolve()), "--dispatch-plan"],
+            env=environment, cwd=self.directory.name, text=True, capture_output=True, check=True,
+        )
+        self.assertEqual(json.loads(result.stdout), self.plan(
+            profile="single", lanes=["docker"], test_filter="TestExample", clock_source="reference",
+            header_base="", cos_sha256="", cos_gzip_base64="",
+        ))
+
+    def test_running_row_is_bound_to_source_attempt_selection_and_side_inputs(self):
+        plan = self.plan(profile="single", lanes=["docker"], test_filter="TestExample")
+        row, = plan["rows"]
+        directory = Path(self.directory.name)
+        plan_path, output = directory / "plan.json", directory / "matrix-row.json"
+        plan_path.write_text(json.dumps(plan) + "\n")
+        environment = {
+            "QUALIFICATION_COMMIT": plan["source"], "GITHUB_RUN_ID": "1234", "GITHUB_RUN_ATTEMPT": "2",
+            "QUALIFICATION_LANES": "docker", "QUALIFICATION_ARCH": "amd64",
+            "QUALIFICATION_EXECUTION": "remote-actions", "QUALIFICATION_TARGETS": "",
+            "QUALIFICATION_TEST_FILTER": "TestExample", "QUALIFICATION_SYSCALL_BUCKET": "",
+            "QUALIFICATION_LOCAL_TEST_REQUIREMENTS": "namespace", "QUALIFICATION_HEADER_BASE": "b" * 40,
+            "QUALIFICATION_COS_SHA256": self.inputs["cos_sha256"], "QUALIFICATION_CLOCK_SOURCE": "calibrated",
+        }
+        with mock.patch.dict(os.environ, environment, clear=True):
+            unit_matrix.dispatch_row_metadata(plan_path, row["id"], output)
+            result = json.loads(output.read_text())
+            self.assertEqual(result["row"], row)
+            self.assertEqual(result["plan_sha256"], hashlib.sha256(plan_path.read_bytes()).hexdigest())
+            original = output.read_bytes()
+            for name in ("QUALIFICATION_COMMIT", "GITHUB_RUN_ATTEMPT", "QUALIFICATION_TEST_FILTER", "QUALIFICATION_COS_SHA256"):
+                with self.subTest(input=name), mock.patch.dict(os.environ, {name: "changed"}):
+                    with self.assertRaises(ValueError) as error:
+                        unit_matrix.dispatch_row_metadata(plan_path, row["id"], output)
+                    self.assertEqual(str(error.exception), f"Coordinator input {name} differs from dispatch plan")
+                    self.assertEqual(output.read_bytes(), original)
+            for name in ("QUALIFICATION_TARGETS", "QUALIFICATION_SYSCALL_BUCKET"):
+                with self.subTest(missing=name), mock.patch.dict(os.environ):
+                    del os.environ[name]
+                    with self.assertRaises(ValueError) as error:
+                        unit_matrix.dispatch_row_metadata(plan_path, row["id"], output)
+                    self.assertEqual(str(error.exception), f"Coordinator input {name} differs from dispatch plan")
+                    self.assertEqual(output.read_bytes(), original)
 
 
 class SyscallBucketsTest(unittest.TestCase):

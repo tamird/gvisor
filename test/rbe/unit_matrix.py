@@ -18,12 +18,231 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import gzip
+import hashlib
 import json
+import os
 import re
 import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
+
+
+@dataclass(frozen=True)
+class DispatchRow:
+    """One existing qualifier selection and its coordinator requirements."""
+
+    id: str
+    lanes: list[str]
+    architecture: str
+    execution: str
+    coordinator: str
+    runner: str
+    local_test_requirements: str
+    targets: list[str]
+    test_filter: str
+    syscall_bucket: str
+    work_seconds: int
+    step_minutes: int
+    job_minutes: int
+    required_kinds: list[str]
+    required_audits: list[str]
+
+
+def coordinator_policy(lanes: list[str], architecture: str, execution: str,
+                       requirements: str) -> tuple[str, str, int, int, int]:
+    """Shared single/full dispatch policy; rule-owned deadlines are unchanged."""
+    lane = " ".join(lanes)
+    if execution == "remote":
+        long = (architecture == "all" or lane in ("build", "test", "pgo")
+                or (architecture == "amd64" and lane == "build-all")
+                or (architecture == "arm64" and lane in ("syscalls-64k", "syscalls-rc")))
+        # Former hosted-only rows retain their 45-minute work budget, with the
+        # same 25-minute collection reserve used by long Actions coordinators.
+        budget = (7200, 145, 155) if long else (2700, 70, 80)
+        return "remote-actions", "ubuntu-24.04", *budget
+    if execution != "local":
+        raise ValueError(f"Unknown execution route: {execution}")
+    if len(lanes) != 1:
+        raise ValueError("Local execution requires exactly one lane")
+    kvm = lane in ("container", "container-v1", "container-v1-pilot", "kvm",
+                   "syscalls-kvm", "syscalls-rc-pilot", "syscalls-rc", "startup",
+                   "posture", "benchmarks", "pgo") or "kvm" in requirements.split(",")
+    runner = ("ubuntu-26.04" if (architecture == "amd64" or architecture == "all" and lane == "syscalls-rc") and kvm
+              else "ubuntu-24.04-arm" if architecture == "arm64" or architecture == "all" and lane == "unit"
+              else "ubuntu-24.04")
+    if lane == "benchmarks":
+        budget = (15000, 275, 285)
+    elif lane == "pgo" or architecture == "all" and lane == "unit":
+        budget = (7200, 145, 155)
+    elif lane == "container-v1":
+        budget = (8400, 150, 155)
+    elif lane == "syscalls-rc":
+        budget = (5400, 115, 120)
+    elif lane == "container":
+        budget = (4800, 90, 95)
+    elif lane in ("syscalls", "syscalls-save", "syscalls-resume", "syscalls-kvm"):
+        budget = (0, 90, 95)
+    elif lane in ("cpu-images", "gpu-images", "language-goferfs"):
+        budget = (0, 70, 75)
+    elif lane == "container-v1-pilot":
+        budget = (1200, 45, 50)
+    elif lane in ("unit", "syscalls-rc-pilot", "docker", "plugin-network", "nftables", "moby", "kvm"):
+        budget = (0, 45, 50)
+    else:
+        budget = (0, 15, 20)
+    return "local", runner, *budget
+
+
+def dispatch_kinds(lanes: list[str], architecture: str, execution: str) -> list[str]:
+    """Require real work, not just a successful query or analysis preflight."""
+    builds = {"build", "build-all", "presubmit-build", "plugin-build", "codeql",
+              "lint-cc", "python-distributions", "website", "release-artifacts"}
+    commands = {"gazelle", "license-check", "license-fetch"}
+    if architecture == "all" and execution == "remote":
+        # qualify.sh combines compatible lanes into one build or test command.
+        separate = set(lanes) & {"presubmit-build", "lint-cc", "gazelle", "syscalls-rc"}
+        combined = set(lanes) - separate
+        kinds = ({"build" if combined <= builds else "test"} if combined else set())
+        kinds.update("command" if lane in commands else "build" if lane in builds else "test" for lane in separate)
+        return sorted(kinds)
+    return sorted({"benchmark" if lane == "pgo" else "command" if lane in commands
+                   else "build" if lane in builds else "test" for lane in lanes})
+
+
+def dispatch_row(lanes: list[str], architecture: str, execution: str, *,
+                 requirements: str = "namespace", targets: list[str] | None = None,
+                 test_filter: str = "", syscall_bucket: str = "") -> DispatchRow:
+    coordinator, runner, work, step, job = coordinator_policy(lanes, architecture, execution, requirements)
+    selected = targets or []
+    kinds = dispatch_kinds(lanes, architecture, execution)
+    return DispatchRow(
+        id="-".join([architecture, execution, *lanes]), lanes=lanes,
+        architecture=architecture, execution=execution, coordinator=coordinator, runner=runner,
+        local_test_requirements=requirements, targets=selected, test_filter=test_filter,
+        syscall_bucket=syscall_bucket, work_seconds=work, step_minutes=step, job_minutes=job,
+        required_kinds=kinds,
+        # Configured declarations, including explicit empty image sets, own
+        # applicability. A second lane-to-image list would silently go stale.
+        required_audits=["source-images"] if set(kinds) - {"command"} else [],
+    )
+
+
+def public_dispatch_rows(pgo_manifest: Path) -> list[DispatchRow]:
+    """Complete supported CPU routes, using the qualifier's existing selections."""
+    rows = [dispatch_row(lanes.split(), arch, mode) for lanes, arch, mode in (
+        ("presubmit-build", "all", "remote"),
+        ("build-all", "amd64", "remote"),
+        ("nogo workflows gazelle lint lint-cc governance", "all", "remote"),
+        ("release-artifacts release-repository python-distributions website plugin-build go-export codeql", "all", "remote"),
+        ("unit", "all", "local"),
+        ("unit-v1 docker-v1", "all", "remote"),
+        ("smoke smoke-race do bwrap", "all", "remote"),
+        ("overlay swgso hostnet containerd fsstress packetimpact iptables nftables packetdrill kubernetes podman syzkaller", "all", "remote"),
+        ("startup posture benchmarks", "all", "remote"),
+        ("docker", "amd64", "remote"),
+        ("syscalls-rc", "all", "local"),
+        ("license-check", "amd64", "remote"),
+        ("license-headers", "all", "remote"),
+        ("cos-metadata", "all", "remote"),
+    )]
+    for lanes, arch, mode in (
+        ("smoke bwrap docker cpu-images gpu-images", "arm64", "local"),
+        ("container-v1 kvm startup posture portforward root plugin-network moby benchmarks", "amd64", "local"),
+        ("syscalls syscalls-save syscalls-kvm", "amd64", "local"),
+        ("syscalls syscalls-resume", "arm64", "local"),
+        ("syscalls-64k kvm", "arm64", "remote"),
+        ("language-directfs language-goferfs", "all", "remote"),
+        ("language-goferfs", "amd64", "local"),
+    ):
+        rows.extend(dispatch_row([lane], arch, mode) for lane in lanes.split())
+    # The public container-tests selection uses its declared KVM frontends.
+    # container-v1-pilot is optional fork bring-up, not a public pipeline owner.
+    rows.append(dispatch_row(["container"], "amd64", "local", requirements="kvm"))
+    for image_class in ("cpu", "gpu"):
+        row = dispatch_row(["test"], "all", "remote", targets=[f"//test/docker:{image_class}_image_sources_amd64_test"])
+        rows.append(replace(row, id=f"amd64-remote-{image_class}-images"))
+    pgo = json.loads(pgo_manifest.read_text())["pgo"]
+    for platform, mode in (("systrap", "remote"), ("kvm", "local")):
+        targets = sorted(label for label, declaration in pgo.items() if declaration["platform"] == platform)
+        if not targets:
+            raise ValueError(f"PGO manifest has no {platform} owners")
+        rows.append(dispatch_row(["pgo"], "amd64", mode, targets=targets))
+    return rows
+
+
+def dispatch_plan(*, profile: str, source: str, run_id: str, run_attempt: int,
+                  lanes: list[str], architecture: str, execution: str,
+                  requirements: str, targets: list[str], test_filter: str,
+                  syscall_bucket: str, header_base: str, cos_sha256: str,
+                  cos_gzip_base64: str, clock_source: str, known_lanes: list[str],
+                  pgo_manifest: Path) -> dict[str, object]:
+    if (not re.fullmatch(r"[0-9a-f]{40}", source)
+            or not re.fullmatch(r"[1-9][0-9]*", run_id)
+            or type(run_attempt) is not int or run_attempt < 1):
+        raise ValueError("Dispatch requires a full source SHA, positive decimal run ID and positive integer attempt")
+    if clock_source not in ("calibrated", "reference") or architecture not in ("amd64", "arm64", "all"):
+        raise ValueError("Invalid clock source or target architecture")
+    if profile == "public-cpu":
+        if targets or test_filter or syscall_bucket:
+            raise ValueError("The public CPU profile cannot narrow targets, cases or syscall buckets")
+        rows = public_dispatch_rows(pgo_manifest)
+    elif profile == "single":
+        rows = [dispatch_row(lanes, architecture, execution, requirements=requirements,
+                             targets=targets, test_filter=test_filter, syscall_bucket=syscall_bucket)]
+    else:
+        raise ValueError(f"Unknown dispatch profile: {profile}")
+    selected = {lane for row in rows for lane in row.lanes}
+    if not selected or selected - set(known_lanes):
+        raise ValueError(f"Unknown or empty qualification lanes: {sorted(selected - set(known_lanes))}")
+    if "license-headers" in selected and not re.fullmatch(r"[0-9a-f]{40}", header_base):
+        raise ValueError("License headers require the full comparison SHA")
+    if "cos-metadata" in selected:
+        if not re.fullmatch(r"[0-9a-f]{64}", cos_sha256) or not cos_gzip_base64:
+            raise ValueError("COS metadata requires the complete encoded catalog and its SHA256")
+        catalog = gzip.decompress(base64.b64decode(cos_gzip_base64, validate=True))
+        if hashlib.sha256(catalog).hexdigest() != cos_sha256:
+            raise ValueError("COS catalog SHA256 does not match its decoded bytes")
+        if not isinstance(json.loads(catalog), list):
+            raise ValueError("The complete COS catalog must be a JSON list")
+    if len({row.id for row in rows}) != len(rows):
+        raise ValueError("Dispatch row IDs must be unique")
+    return {"schema_version": 1, "profile": profile, "source": source, "run_id": run_id,
+            "run_attempt": run_attempt,
+            "side_inputs": {"header_base": header_base, "cos_catalog_sha256": cos_sha256,
+                            "clock_source": clock_source},
+            "rows": [asdict(row) for row in rows]}
+
+
+def dispatch_row_metadata(plan_path: Path, row_id: str, output: Path) -> bool:
+    """Bind the running coordinator's inputs to its authenticated plan row."""
+    plan_bytes = plan_path.read_bytes()
+    plan = json.loads(plan_bytes)
+    matches = [row for row in plan["rows"] if row["id"] == row_id]
+    if len(matches) != 1:
+        raise ValueError(f"Expected exactly one dispatch row: {row_id}")
+    row = matches[0]
+    expected = {
+        "QUALIFICATION_COMMIT": plan["source"], "GITHUB_RUN_ID": plan["run_id"],
+        "GITHUB_RUN_ATTEMPT": str(plan["run_attempt"]),
+        "QUALIFICATION_LANES": " ".join(row["lanes"]),
+        "QUALIFICATION_ARCH": row["architecture"], "QUALIFICATION_EXECUTION": row["coordinator"],
+        "QUALIFICATION_TARGETS": " ".join(row["targets"]), "QUALIFICATION_TEST_FILTER": row["test_filter"],
+        "QUALIFICATION_SYSCALL_BUCKET": row["syscall_bucket"],
+        "QUALIFICATION_LOCAL_TEST_REQUIREMENTS": row["local_test_requirements"],
+        "QUALIFICATION_HEADER_BASE": plan["side_inputs"]["header_base"],
+        "QUALIFICATION_COS_SHA256": plan["side_inputs"]["cos_catalog_sha256"],
+        "QUALIFICATION_CLOCK_SOURCE": plan["side_inputs"]["clock_source"],
+    }
+    for name, value in expected.items():
+        if os.environ.get(name) != value:
+            raise ValueError(f"Coordinator input {name} differs from dispatch plan")
+    metadata = {key: plan[key] for key in ("schema_version", "source", "run_id", "run_attempt", "side_inputs")}
+    metadata.update(plan_sha256=hashlib.sha256(plan_bytes).hexdigest(), row=row)
+    output.write_text(json.dumps(metadata, indent=2) + "\n")
+    return "source-images" in row["required_audits"]
 
 
 def query_word(value: str) -> str:
@@ -697,6 +916,22 @@ def select_variants(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    dispatch = commands.add_parser("dispatch", help="Plan the single or complete public CPU workflow")
+    dispatch.add_argument("--known-lanes", nargs="+", required=True)
+    dispatch.add_argument("--pgo-manifest", type=Path, default=Path("test/benchmarks/pgo.json"))
+    row_metadata = commands.add_parser("dispatch-row")
+    row_metadata.add_argument("--plan", type=Path, required=True)
+    row_metadata.add_argument("--id", required=True)
+    row_metadata.add_argument("--output", type=Path, required=True)
+    lane_result = commands.add_parser("lane-result", help="Retain a completed qualifier call's exact lane group")
+    lane_result.add_argument("--output", type=Path, required=True)
+    lane_result.add_argument("--native-exit", type=int, required=True)
+    lane_result.add_argument("lanes", nargs="+")
+    policy = commands.add_parser("coordinator-policy")
+    policy.add_argument("--architecture", required=True)
+    policy.add_argument("--execution", choices=("local", "remote"), required=True)
+    policy.add_argument("--requirements", default="namespace")
+    policy.add_argument("lanes", nargs="+")
     buckets = commands.add_parser("syscall-buckets")
     buckets.add_argument("buckets", type=syscall_buckets)
     query = commands.add_parser("query")
@@ -765,7 +1000,34 @@ def main() -> None:
     verify.add_argument("events")
     verify.add_argument("--profile", action="append", help="Successful analysis of additional suite roots")
     args = parser.parse_args()
-    if args.command == "syscall-buckets":
+    if args.command == "dispatch":
+        environment = os.environ
+        plan = dispatch_plan(
+            profile=environment.get("QUALIFICATION_PROFILE", "single"),
+            source=environment["QUALIFICATION_COMMIT"], run_id=environment["GITHUB_RUN_ID"],
+            run_attempt=int(environment["GITHUB_RUN_ATTEMPT"]),
+            lanes=environment.get("QUALIFICATION_LANES", "smoke").split(),
+            architecture=environment.get("QUALIFICATION_ARCH", "amd64"),
+            execution=environment.get("QUALIFICATION_EXECUTION", "remote"),
+            requirements=environment.get("QUALIFICATION_LOCAL_TEST_REQUIREMENTS", "namespace"),
+            targets=environment.get("QUALIFICATION_TARGETS", "").split(),
+            test_filter=environment.get("QUALIFICATION_TEST_FILTER", ""),
+            syscall_bucket=environment.get("QUALIFICATION_SYSCALL_BUCKET", ""),
+            header_base=environment.get("QUALIFICATION_HEADER_BASE", ""),
+            cos_sha256=environment.get("QUALIFICATION_COS_SHA256", ""),
+            cos_gzip_base64=environment.get("QUALIFICATION_COS_GZIP_BASE64", ""),
+            clock_source=environment.get("QUALIFICATION_CLOCK_SOURCE", "calibrated"),
+            known_lanes=args.known_lanes, pgo_manifest=args.pgo_manifest,
+        )
+        print(json.dumps(plan, separators=(",", ":")))
+    elif args.command == "dispatch-row":
+        print("true" if dispatch_row_metadata(args.plan, args.id, args.output) else "false")
+    elif args.command == "lane-result":
+        with args.output.open("a") as output:
+            output.write(json.dumps({"lanes": args.lanes, "native_exit": args.native_exit}) + "\n")
+    elif args.command == "coordinator-policy":
+        print(coordinator_policy(args.lanes, args.architecture, args.execution, args.requirements)[2])
+    elif args.command == "syscall-buckets":
         print(",".join(map(str, args.buckets)))
     elif args.command == "query":
         print(owner_query(args.patterns, args.unit_rc))

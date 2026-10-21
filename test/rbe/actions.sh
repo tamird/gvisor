@@ -116,6 +116,15 @@ cleanup() {
     fi
   fi
   if [[ -n $qualification_artifacts ]]; then
+    if [[ ${qualification_source_images:-false} == true ]]; then
+      # Source provenance is a separate audit, not a rewrite of the workload's
+      # canonical exit. Missing/failed audits make matrix composition incomplete.
+      local audit_status=0
+      timeout --signal=TERM --kill-after=5s 600s \
+        python3 "$qualification_workspace/test/rbe/qualification_report.py" source-image-row \
+        --directory "$qualification_artifacts" --decoder "${QUALIFICATION_DECODER:-}" || audit_status=$?
+      printf '%s\n' "$audit_status" > "$qualification_artifacts/source-image-audit-exit.txt"
+    fi
     # Reconcile on the coordinator and upload one archive. Preserve the original
     # command failure if reporting or final cleanup also fails.
     timeout --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
@@ -150,6 +159,17 @@ cp -- MODULE.bazel.lock "$qualification_artifacts/MODULE.bazel.lock.before"
 git cat-file -p HEAD > "$qualification_artifacts/commit.txt"
 git status --porcelain --untracked-files=no > "$qualification_artifacts/source-before.txt"
 [[ ! -s "$qualification_artifacts/source-before.txt" ]]
+qualification_source_images=false
+if [[ -n ${QUALIFICATION_PLAN_JSON:-} ]]; then
+  printf '%s\n' "$QUALIFICATION_PLAN_JSON" > "$qualification_artifacts/matrix-plan.json"
+  qualification_source_images=$(python3 test/rbe/unit_matrix.py dispatch-row \
+    --plan "$qualification_artifacts/matrix-plan.json" --id "${QUALIFICATION_ROW_ID:?}" \
+    --output "$qualification_artifacts/matrix-row.json")
+fi
+export qualification_source_images
+QUALIFICATION_LANE_RESULTS=$qualification_artifacts/lane-results.jsonl
+export QUALIFICATION_LANE_RESULTS
+: > "$QUALIFICATION_LANE_RESULTS"
 
 # Benchmark observations have a different coverage contract from named tests.
 # Validate and retain the opt-in before any Bazel command can start.
@@ -196,17 +216,6 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       case "${lanes[*]}" in
         unit|container|syscalls|syscalls-save|syscalls-resume|syscalls-kvm)
           options+=("--local-test-requirements=${QUALIFICATION_LOCAL_TEST_REQUIREMENTS-namespace}")
-          ;;
-      esac
-    else
-      # Keep mixed graphs, long guest tests and source-image builds observable
-      # even when a hosted coordinator disconnects. qualify.sh validates the
-      # selected lanes and retains their execution requirements and deadlines.
-      case "$QUALIFICATION_ARCH:${lanes[*]}" in
-        all:*|arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test|amd64:build-all|amd64:pgo) ;;
-        *)
-          printf 'The Actions remote coordinator supports mixed architecture profiles, ARM64 guests, explicit build/test targets or AMD64 build-all/PGO.\n' >&2
-          exit 2
           ;;
       esac
     fi
@@ -302,23 +311,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         printf '%s\n' 'test:buildbuddy_remote_executor --nozip_undeclared_test_outputs'
       fi
     } >> "$qualification_rc"
-    qualification_seconds=0
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ${lanes[*]} == pgo ]]; then
-      qualification_seconds=7200
-    else
-      case "${lanes[*]}" in
-        # Reserve 25 minutes for capture and bundling before the Actions cutoff.
-        benchmarks) qualification_seconds=15000 ;;
-        container) qualification_seconds=4800 ;;
-        # Leave the Actions step time to capture interrupted guest results and
-        # bundle them before GitHub terminates the coordinator.
-        syscalls-rc) qualification_seconds=5400 ;;
-        # One six-GiB KVM guest at a time preserves the test memory budget.
-        # Eight original 900-second shards need two hours before setup/capture.
-        container-v1) qualification_seconds=8400 ;;
-        container-v1-pilot) qualification_seconds=1200 ;;
-      esac
-    fi
+    policy_execution=remote
+    if [[ $QUALIFICATION_EXECUTION == local ]]; then policy_execution=local; fi
+    qualification_seconds=$(python3 test/rbe/unit_matrix.py coordinator-policy \
+      "--architecture=$QUALIFICATION_ARCH" "--execution=$policy_execution" \
+      "--requirements=${QUALIFICATION_LOCAL_TEST_REQUIREMENTS-namespace}" "${lanes[@]}")
     if (( qualification_seconds > 0 )); then
       QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import sys,time; print(time.monotonic()+int(sys.argv[1]))' "$qualification_seconds")
       export QUALIFICATION_WORK_DEADLINE
@@ -450,6 +447,11 @@ bazel() {
       break
     fi
   done
+  if [[ $qualification_source_images == true && $command_only == false && $analysis_only == false ]]; then
+    # Independent analysis must declare the same contract outputs as execution;
+    # otherwise a missing actual contract could look inapplicable.
+    command_args+=(--aspects=//test/docker:source_image_contracts.bzl%source_image_contracts)
+  fi
   if [[ $command_kind == test && -n $qualification_benchmark_manifest ]]; then
     command_args+=(--nocache_test_results)
     while IFS= read -r argument; do
@@ -512,6 +514,13 @@ bazel() {
       qualification_bazel "$@" > "$directory/stdout.log" 2> "$directory/stderr.log" || result=$?
     elif [[ $analysis_only == false ]]; then
       while IFS= read -r argument; do command_args+=("$argument"); done < "$directory/output-options.txt" || return 1
+      if [[ $qualification_source_images == true ]]; then
+        if [[ $qualification_retain_outputs == true ]]; then
+          command_args+=('--remote_download_regex=.*([/]test[.](log|xml)|[/]test[.]outputs/.*|[.]source-images[.]json)$')
+        else
+          command_args+=('--remote_download_regex=.*([/]test[.](log|xml)|[.]source-images[.]json)$')
+        fi
+      fi
       printf '%s\n' "${command_args[@]}" "${target_args[@]}" > "$directory/arguments.txt" || return 1
     fi
     if [[ $command_only == false ]]; then
@@ -595,7 +604,7 @@ CONTEXT
 }
 export -f bazel
 
-if [[ -n $QUALIFICATION_HEADER_BASE ]]; then
+if [[ -n $QUALIFICATION_HEADER_BASE && ( -z ${QUALIFICATION_PLAN_JSON:-} || " ${lanes[*]} " == *" license-headers "* ) ]]; then
   if [[ ! $QUALIFICATION_HEADER_BASE =~ ^[0-9a-f]{40}$ ]]; then
     printf 'Supply the full header comparison commit SHA.\n' >&2
     exit 2
@@ -610,7 +619,7 @@ if [[ -n $QUALIFICATION_HEADER_BASE ]]; then
   options+=("--header-base=$QUALIFICATION_HEADER_BASE")
 fi
 
-if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
+if [[ ( -z ${QUALIFICATION_PLAN_JSON:-} || " ${lanes[*]} " == *" cos-metadata "* ) && ( -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ) ]]; then
   if [[ -z $QUALIFICATION_COS_GZIP_BASE64 || ! $QUALIFICATION_COS_SHA256 =~ ^[0-9a-f]{64}$ ]]; then
     printf 'Supply both a gzip/base64 COS catalog and its uncompressed SHA256.\n' >&2
     exit 2
