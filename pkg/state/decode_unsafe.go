@@ -50,30 +50,11 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 // Composite elements can invoke hooks, so their destination is indexed anew
 // for each element. Primitive elements have no graph dependencies or hooks.
 func (ds *decodeState) restoreArray(ods *objectDecodeState, target reflect.Value, encoded wire.Array) {
-	length := target.Len()
-	if encoded.Len() != length {
-		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
-	}
-	if length == 0 {
-		// Preserve legacy empty Array operations on other Len-capable types.
-		return
-	}
-	switch values := encoded.(type) {
-	case *wire.ObjectArray:
-		for i, value := range values.Contents {
-			ds.restoreValue(ods, target.Index(i), value)
-			ds.waitObject(ods, value, nil)
-		}
-		return
-	case *wire.RefArray:
-		for i := range values.Contents {
-			value := &values.Contents[i]
-			ds.restoreReference(target.Index(i), value)
-			ds.waitObject(ods, value, nil)
-		}
-		return
-	}
+	restoreArrayElements(Decoder{ds: ds, ods: ods}, reflectedArray{target}, reflectedCell{}, encoded)
+}
 
+func restorePrimitiveArray(target reflect.Value, encoded wire.Array) {
+	length := target.Len()
 	// The actual reflected flags must allow writes, even for an unexported
 	// field. A slice value itself need not be addressable; its elements must
 	// be. Defined scalar types have the same memory layout as their Kind.

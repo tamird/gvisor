@@ -132,6 +132,43 @@ func TestMapScalarEntries(t *testing.T) {
 	})
 }
 
+func TestRecursiveMapOperations(t *testing.T) {
+	for _, dynamicFirst := range []bool{false, true} {
+		for _, deferred := range []bool{false, true} {
+			t.Run(fmt.Sprintf("dynamic_first=%t/deferred=%t", dynamicFirst, deferred), func(t *testing.T) {
+				original := recursiveMapContainer{values: recursiveMap{"child": {}}}
+				original.values["self"] = original.values
+				if dynamicFirst {
+					original.dynamic = original.values
+				}
+				var encoded bytes.Buffer
+				if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+					t.Fatal(err)
+				}
+				if deferred {
+					reverseObjectBodies(t, &encoded)
+				}
+				var restored recursiveMapContainer
+				if _, err := state.Load(t.Context(), &encoded, &restored); err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(restored, original) {
+					t.Fatal("recursive map differs")
+				}
+				restored.values["self"]["added"] = recursiveMap{}
+				if _, ok := restored.values["added"]; !ok {
+					t.Fatal("recursive map lost its self reference")
+				}
+				if dynamicFirst {
+					if _, ok := restored.dynamic.(recursiveMap)["added"]; !ok {
+						t.Fatal("dynamic map lost its alias")
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestMapNaNKeys(t *testing.T) {
 	// Identical NaNs compare unequal, so both entries must survive even
 	// though neither can be retrieved using a map lookup.

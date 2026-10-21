@@ -14,7 +14,11 @@
 
 package tests
 
-import "context"
+import (
+	"context"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
 
 // +stateify savable
 type benchStruct struct {
@@ -27,10 +31,21 @@ func (b *benchStruct) afterLoad(context.Context) {
 
 // benchAdopted is first discovered through a pointer, then as an array element.
 //
-// +stateify savable
+// These diagnostic manual methods preserve the existing adoption workload
+// while exercising direct operations before changing the whole generator.
+// +stateify type
 type benchAdopted struct {
 	Value int64
 	saves *int `state:"nosave"`
+}
+
+func (b *benchAdopted) StateSave(s state.Sink) {
+	b.beforeSave()
+	s.Save(0, &b.Value)
+}
+
+func (b *benchAdopted) StateLoad(_ context.Context, s state.Source) {
+	state.LoadField(s, 0, &b.Value, state.IntOps(&b.Value))
 }
 
 func (b *benchAdopted) beforeSave() {
@@ -39,14 +54,38 @@ func (b *benchAdopted) beforeSave() {
 	}
 }
 
-// +stateify savable
+// +stateify type
 type benchAdoptionParent struct {
 	Values []benchAdopted
 	Next   *benchAdoptionParent
 }
 
-// +stateify savable
+func (b *benchAdoptionParent) StateSave(s state.Sink) {
+	s.Save(0, &b.Values)
+	s.Save(1, &b.Next)
+}
+
+func (b *benchAdoptionParent) StateLoad(_ context.Context, s state.Source) {
+	value := state.SliceTypes(b.Values)
+	state.LoadField(s, 0, &b.Values, state.SliceOps(&b.Values, state.ValueOps(&value)))
+	state.LoadField(s, 1, &b.Next, state.PointerOps(&b.Next, state.ValueOps(b)))
+}
+
+// +stateify type
 type benchAdoption struct {
 	Pointers []*benchAdopted
 	Parent   *benchAdoptionParent
+}
+
+func (b *benchAdoption) StateSave(s state.Sink) {
+	s.Save(0, &b.Pointers)
+	s.Save(1, &b.Parent)
+}
+
+func (b *benchAdoption) StateLoad(_ context.Context, s state.Source) {
+	pointer := state.SliceTypes(b.Pointers)
+	var value benchAdopted
+	state.LoadField(s, 0, &b.Pointers, state.SliceOps(&b.Pointers, state.PointerOps(&pointer, state.ValueOps(&value))))
+	var parent benchAdoptionParent
+	state.LoadField(s, 1, &b.Parent, state.PointerOps(&b.Parent, state.ValueOps(&parent)))
 }

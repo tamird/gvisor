@@ -119,11 +119,11 @@ func (ds *decodeState) restoreReference(target reflect.Value, ref *wire.Ref) {
 		return
 	}
 	if target.Kind() == reflect.Map {
-		object := walkChild(ref, ds.register(ref, target.Type()))
+		object := walkChild(ref, ds.register(ref, target.Type(), nil))
 		assignMap(target, object)
 		return
 	}
-	object := ds.register(ref, target.Type().Elem())
+	object := ds.register(ref, target.Type().Elem(), nil)
 	var pointer reflect.Value
 	if len(ref.Dots) != 0 {
 		pointer = reflectValueRWAddr(walkChild(ref, object))

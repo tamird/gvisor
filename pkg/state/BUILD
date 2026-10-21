@@ -69,6 +69,7 @@ go_library(
         "decode.go",
         "decode_unsafe.go",
         "deferred_list.go",
+        "destination.go",
         "encode.go",
         "encode_unsafe.go",
         "ods_list.go",

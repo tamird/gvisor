@@ -109,11 +109,11 @@ func (r *replayLoadStruct) StateSave(s state.Sink) {
 
 func (r *replayLoadStruct) StateLoad(_ context.Context, s state.Source) {
 	r.calls++
-	s.Load(1, &r.second)
-	s.Load(0, &r.first)
-	s.Load(0, &r.repeated)
+	state.LoadField(s, 1, &r.second, state.StringOps(&r.second))
+	state.LoadField(s, 0, &r.first, state.IntOps(&r.first))
+	state.LoadField(s, 0, &r.repeated, state.IntOps(&r.repeated))
 	r.source = s
-	s.AfterLoad(func() { s.Load(1, &r.after) })
+	s.AfterLoad(func() { state.LoadField(s, 1, &r.after, state.StringOps(&r.after)) })
 }
 
 // sharedLayoutFields is first loaded concurrently with different wire field

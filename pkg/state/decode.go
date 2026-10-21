@@ -66,6 +66,10 @@ type objectDecodeState struct {
 	// elements use views into this same storage.
 	object reflect.Value
 
+	// body owns restoration into object. It is consumed before restoration
+	// starts, so a later alias cannot change or replay the operation.
+	body objectBody
+
 	// blockedBy is the number of dependencies this object has.
 	blockedBy int
 
@@ -296,6 +300,7 @@ func (ds *decodeState) addObject(id objectID, object reflect.Value) *objectDecod
 	ods := &objectDecodeState{
 		id:     id,
 		object: object,
+		body:   reflectedBody{},
 	}
 	ods.pendingEntry.ods = ods
 	ods.leafEntry.ods = ods
@@ -308,22 +313,36 @@ func (ds *decodeState) addObject(id objectID, object reflect.Value) *objectDecod
 
 // register publishes the enclosing allocation before restoring a deferred
 // body. Dots always chooses the actual enclosing type, never the child's type.
-func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
+func (ds *decodeState) register(r *wire.Ref, typ reflect.Type, body objectBody) reflect.Value {
 	id := objectID(r.Root)
 	ds.growObjectsByID(id)
 	if ods := ds.objectsByID[id-1]; ods != nil {
+		if len(r.Dots) == 0 && body != nil && ods.body != nil && ods.object.Type() == typ {
+			ods.body = body
+		}
 		return ods.object
 	}
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
+		body = nil
 	}
-	object := reflect.New(typ).Elem()
+	if body == nil {
+		body = reflectedBody{}
+	}
+	object := body.allocate(typ)
 	ods := ds.addObject(id, object)
+	ods.body = body
 	if encoded, ok := ds.deferred[id]; ok {
 		delete(ds.deferred, id)
-		ds.restoreValue(ods, ods.object, encoded)
+		ds.restoreBody(ods, encoded)
 	}
 	return object
+}
+
+func (ds *decodeState) restoreBody(ods *objectDecodeState, encoded wire.Object) {
+	body := ods.body
+	ods.body = nil
+	body.restore(Decoder{ds: ds, ods: ods, encoded: encoded}, ods.object)
 }
 
 // objectDecoder is for decoding structs.
@@ -465,7 +484,7 @@ func (ds *decodeState) assignSlice(obj reflect.Value, x *wire.Slice) {
 	// Note that it's fine to slice the array here and assume that
 	// contents will still be filled in later on.
 	typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-	v := walkChild(&x.Ref, ds.register(&x.Ref, typ))
+	v := walkChild(&x.Ref, ds.register(&x.Ref, typ, nil))
 	obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 }
 
@@ -517,7 +536,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 				ods = ds.lookup(id)
 				if ods != nil {
 					// Decode the object.
-					ds.restoreValue(ods, ods.object, encoded)
+					ds.restoreBody(ods, encoded)
 				} else {
 					// If an object hasn't had interest registered
 					// previously or isn't yet valid, we deferred

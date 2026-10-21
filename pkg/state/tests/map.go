@@ -20,19 +20,46 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 )
 
-// +stateify savable
+// This diagnostic owner uses the operations that generated StateLoad would
+// call. Keep its saved fields identical to the generated representation.
+// +stateify type
 type mapContainer struct {
 	prefix int
 	v      map[int]any
 }
 
+func (m *mapContainer) StateSave(s state.Sink) {
+	s.Save(0, &m.prefix)
+	s.Save(1, &m.v)
+}
+
+func (m *mapContainer) StateLoad(_ context.Context, s state.Source) {
+	key, value := state.MapTypes(m.v)
+	state.LoadField(s, 0, &m.prefix, state.IntOps(&m.prefix))
+	state.LoadField(s, 1, &m.v, state.MapOps(&m.v, state.IntOps(&key), state.ValueOps(&value)))
+}
+
 type namedContainerMap map[int]any
 
-// +stateify savable
+// +stateify type
 type mapPtrContainer struct {
 	v     *map[int]any
 	alias namedContainerMap
 	owner *mapContainer
+}
+
+func (m *mapPtrContainer) StateSave(s state.Sink) {
+	s.Save(0, &m.v)
+	s.Save(1, &m.alias)
+	s.Save(2, &m.owner)
+}
+
+func (m *mapPtrContainer) StateLoad(_ context.Context, s state.Source) {
+	var value map[int]any
+	key, element := state.MapTypes(value)
+	state.LoadField(s, 0, &m.v, state.PointerOps(&m.v, state.MapOps(&value, state.IntOps(&key), state.ValueOps(&element))))
+	state.LoadField(s, 1, &m.alias, state.MapOps(&m.alias, state.IntOps(&key), state.ValueOps(&element)))
+	s.Load(2, &m.owner)
 }
 
 // +stateify savable
@@ -129,11 +156,57 @@ func (v *countedMapWord) StateLoad(ctx context.Context, s state.Source) {
 	s.Load(0, &v.value)
 }
 
-// +stateify savable
+// +stateify type
 type countedMapWordContainer struct {
 	dynamic any
 	values  map[countedMapWord]countedMapWord
 	zeros   map[registeredMapStruct]registeredMapStruct
+}
+
+func (m *countedMapWordContainer) StateSave(s state.Sink) {
+	s.Save(0, &m.dynamic)
+	s.Save(1, &m.values)
+	s.Save(2, &m.zeros)
+}
+
+func (m *countedMapWordContainer) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &m.dynamic)
+	key, value := state.MapTypes(m.values)
+	state.LoadField(s, 1, &m.values, state.MapOps(&m.values, state.ValueOps(&key), state.ValueOps(&value)))
+	zeroKey, zeroValue := state.MapTypes(m.zeros)
+	state.LoadField(s, 2, &m.zeros, state.MapOps(&m.zeros, state.ValueOps(&zeroKey), state.ValueOps(&zeroValue)))
+}
+
+// +stateify type
+type recursiveMap map[string]recursiveMap
+
+// recursiveMapOps is a finite operation for a recursive container. It contains
+// no traversal: child values return to the same shared map loop.
+type recursiveMapOps[M ~map[K]M, K ~string] struct{}
+
+func (recursiveMapOps[M, K]) Restore(d state.Decoder, target *M) {
+	key, _ := state.MapTypes(*target)
+	state.MapOps(target, state.StringOps(&key), recursiveMapOps[M, K]{}).Restore(d, target)
+}
+
+func recursiveOps[M ~map[K]M, K ~string](_ *M) recursiveMapOps[M, K] {
+	return recursiveMapOps[M, K]{}
+}
+
+// +stateify type
+type recursiveMapContainer struct {
+	dynamic any
+	values  recursiveMap
+}
+
+func (m *recursiveMapContainer) StateSave(s state.Sink) {
+	s.Save(0, &m.dynamic)
+	s.Save(1, &m.values)
+}
+
+func (m *recursiveMapContainer) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &m.dynamic)
+	state.LoadField(s, 1, &m.values, recursiveOps(&m.values))
 }
 
 // A manual saver owns custom capture and does not require a saveValues helper.
