@@ -219,7 +219,7 @@ func generate(configPath string, declarationsOnly bool) error {
 			GoVersion:        config.GoVersion,
 			IgnoreFuncBodies: true,
 		}
-		pkg, err := checker.Check(config.ImportPath, fset, files, info)
+		_, err = checker.Check(config.ImportPath, fset, files, info)
 		if err != nil {
 			return fmt.Errorf("type-check stateify package: %w", err)
 		}
@@ -228,11 +228,11 @@ func generate(configPath string, declarationsOnly bool) error {
 				continue
 			}
 			var out bytes.Buffer
-			emitter := newLoadEmitter(&out, pkg, info)
-			if err := render(&out, groupNames[i], groupFiles[i], renderHooks{load: emitter}); err != nil {
+			// Diagnostic control: keep the configured checker and exact fixture,
+			// but select the existing reflective Source.Load/LoadWait renderer.
+			if err := render(&out, groupNames[i], groupFiles[i], renderHooks{}); err != nil {
 				return err
 			}
-			out.Write(emitter.declarations.Bytes())
 			outputs[i] = out.Bytes()
 		}
 	}
