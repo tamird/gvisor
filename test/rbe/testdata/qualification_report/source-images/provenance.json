@@ -1,0 +1,22 @@
+{
+  "source": "25e1c37002cfdb79b10c8f36efe0467f839a4d16",
+  "run": 39531331807,
+  "owner": "//test/benchmarks/network:iperf_test_continuous_kvm_owned",
+  "original_bundle": {
+    "sha256": "8fd53eab6583fb4e15318fe35353fb736b3700f8e211f21586adcef161b276a5",
+    "bytes": 4606006
+  },
+  "original_compact": {
+    "sha256": "aae36f7f232416d8e4304b1c9951b34809b9ab0ab60c32cd5cda3223076aa0ac",
+    "bytes": 3033377
+  },
+  "original_test_log": {
+    "sha256": "52567512330e8f7db3f158b9ea75c0434019427eb2180a4acbbc1f474bd97ad6",
+    "bytes": 4190
+  },
+  "original_test_xml": {
+    "sha256": "e1ff8fddbf862e8b28596e5c64620d2d5427fd1801e2dd053c2a78650eb3b665",
+    "bytes": 523
+  },
+  "projection": "One iperf owner and its source/stock archive spawns. Input sets retain only accepted ancestry edges; directory contents and unrelated spawn fields omitted. XML unchanged. Log retains original archive-load lines, measurements and package PASS. Canonical verdict retains source/status/native exit and exact configured/executed row; expectations copy declared image and measured benchmark identities."
+}

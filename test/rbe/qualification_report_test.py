@@ -108,6 +108,204 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
+    def source_image_fixture(self) -> Path:
+        invocation = self.evidence / "source-images"
+        shutil.copytree(FIXTURES / "source-images", invocation)
+        return invocation
+
+    def source_image_audit(self, invocation: Path) -> dict[str, object]:
+        return report.source_image_audit(invocation / "execution.json", invocation / "verdict.json",
+                                         invocation / "manifest.json", invocation / "expectations.json")
+
+    def test_source_images_bind_local_runfiles_archive_and_measurements(self) -> None:
+        invocation = self.source_image_fixture()
+        value = self.source_image_audit(invocation)
+        self.assertEqual((value["status"], value["audit_status"], value["errors"]), ("PASS", "PASS", []), value)
+        image, = value["images"]
+        consumer, = value["consumers"]
+        loaded, = consumer["images"]
+        self.assertEqual(image["producer"]["runner"], "remote")
+        self.assertEqual((consumer["execution"]["runner"], consumer["execution"]["digest"]), ("docker", None))
+        self.assertEqual(loaded["input_chain"], [45655, 45654, 45653, 45652, 45651, 45647, 45645, 45644, 45563])
+        self.assertEqual(loaded["archive"]["digest"], {
+            "hash": "48350c832feea207a0b685ac577ba689bbbe437352949ca658fb65a46218bc6c", "sizeBytes": "30893056"})
+
+    def test_source_images_reject_missing_or_ambiguous_evidence(self) -> None:
+        for damage, expected_error in (
+                ("load", "Missing actual archive load"),
+                ("other-archive", "Missing actual archive load"),
+                ("runfiles", "Loaded source images differ"),
+                ("xml", "TestRunner XML differs"),
+                ("configuration", "Executed attempts differ"),
+                ("duplicate-attempt", "Missing or duplicate canonical test attempts"),
+                ("duplicate-spawn", "Duplicate or mismatched configured TestRunner"),
+                ("missing-spawn", "Missing configured TestRunners"),
+                ("missing-image", "Source producers differ"),
+                ("required-case", "Measured benchmark names differ"),
+                ("cached-source", "Source image was cached"),
+                ("remote-no-digest", "Missing execution identity")):
+            with self.subTest(damage=damage):
+                invocation = self.source_image_fixture()
+                records, spawns = report.compact_records(invocation / "execution.json")
+                source, = [spawn for spawn in spawns if spawn["mnemonic"] == "SourceImageOCI"]
+                test, = [spawn for spawn in spawns if spawn["mnemonic"] == "TestRunner"]
+                manifest = report.read_json(invocation / "manifest.json")
+                canonical = report.read_json(invocation / "verdict.json")
+                contract = report.read_json(invocation / "expectations.json")
+                owner, = contract["owners"]
+                if damage in ("load", "other-archive", "xml"):
+                    name = "test.xml" if damage == "xml" else "test.log"
+                    row, = [row for row in manifest["reports"] if row["name"] == name]
+                    path = invocation / row["path"]
+                    text = path.read_text()
+                    if damage == "load":
+                        text = text.replace("Loaded declared image archive", "Unobserved archive")
+                    elif damage == "other-archive":
+                        text = text.replace("Loaded image:", "Loaded declared image archive other/tarball.tar:\nLoaded image:", 1)
+                    else:
+                        text += "\n"
+                    path.write_text(text)
+                    row.update(report.file_record(path))
+                elif damage == "runfiles":
+                    records[45644]["inputSet"]["inputIds"] = []
+                elif damage == "configuration":
+                    canonical["executed"][0]["owner"]["configuration"] = "other-configuration"
+                elif damage == "duplicate-attempt":
+                    canonical["executed"].append(canonical["executed"][0])
+                elif damage == "duplicate-spawn":
+                    spawns.append(test)
+                elif damage == "missing-spawn":
+                    spawns.remove(test)
+                elif damage == "missing-image":
+                    contract["owners"][owner].append("benchmarks/missing")
+                elif damage == "required-case":
+                    contract["benchmarks"][owner].append({"name": "BenchmarkMissing", "count": 1, "units": ["ns/op"]})
+                elif damage == "cached-source":
+                    source["cacheHit"] = True
+                elif damage == "remote-no-digest":
+                    test["runner"] = "remote"
+                report.write_json(invocation / "manifest.json", manifest)
+                report.write_json(invocation / "verdict.json", canonical)
+                report.write_json(invocation / "expectations.json", contract)
+                (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                    [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                value = self.source_image_audit(invocation)
+                self.assertEqual((value["status"], value["canonical_status"]), ("INCOMPLETE", "PASS"), value)
+                self.assertIn(expected_error, "\n".join(value["errors"]))
+                shutil.rmtree(invocation)
+
+    def test_source_images_preserve_failure_and_reject_partial_measurements(self) -> None:
+        invocation = self.source_image_fixture()
+        canonical = report.read_json(invocation / "verdict.json")
+        canonical.update(status="FAIL", native_exit=7)
+        report.write_json(invocation / "verdict.json", canonical)
+        value = self.source_image_audit(invocation)
+        self.assertEqual((value["status"], value["native_exit"], value["audit_status"]), ("FAIL", 7, "PASS"))
+        manifest = report.read_json(invocation / "manifest.json")
+        row, = [row for row in manifest["reports"] if row["name"] == "test.log"]
+        log = invocation / row["path"]
+        log.write_text(log.read_text().replace("PASS", "FAIL"))
+        row.update(report.file_record(log))
+        report.write_json(invocation / "manifest.json", manifest)
+        value = self.source_image_audit(invocation)
+        self.assertEqual((value["status"], value["native_exit"], value["audit_status"]), ("FAIL", 7, "INCOMPLETE"))
+        self.assertIn("Benchmark log has a Go package FAIL marker", value["errors"])
+        (invocation / "execution.json").unlink()
+        value = self.source_image_audit(invocation)
+        self.assertEqual((value["status"], value["native_exit"], value["audit_status"]), ("FAIL", 7, "INCOMPLETE"))
+
+    def test_source_images_share_producer_without_pooling_archive_inputs(self) -> None:
+        invocation = self.source_image_fixture()
+        records, spawns = report.compact_records(invocation / "execution.json")
+        # A second configured conversion consumes the same source outputs.
+        # Its archive is not an input of this retained TestRunner.
+        conversion_ids = set(range(45556, 45564)) - {45557}
+        copies = []
+        for identifier in sorted(conversion_ids):
+            row = json.loads(json.dumps(records[identifier]))
+            row["id"] += 100000
+            if "inputSet" in row:
+                for field in ("inputIds", "transitiveSetIds"):
+                    if field in row["inputSet"]:
+                        row["inputSet"][field] = [value + 100000 if value in conversion_ids else value
+                                                  for value in row["inputSet"][field]]
+            if "file" in row:
+                row["file"]["path"] = row["file"]["path"].replace("k8-fastbuild", "k8-dbg")
+            copies.append(row)
+        for spawn in spawns:
+            if spawn["mnemonic"] in ("OCITarballManifest", "OCITarball"):
+                row = json.loads(json.dumps(spawn))
+                row["inputSetId"] += 100000
+                row["outputs"] = [{"outputId": output["outputId"] + 100000} for output in row["outputs"]]
+                copies.append({"spawn": row})
+        with (invocation / "execution.json").open("a") as stream:
+            stream.write("\n".join(json.dumps(row) for row in copies))
+        value = self.source_image_audit(invocation)
+        self.assertEqual(value["errors"], [], value)
+        self.assertEqual(len(value["images"]), 2)
+        consumer, = value["consumers"]
+        loaded, = consumer["images"]
+        self.assertEqual(loaded["input_chain"][-1], 45563)
+        records[45644]["inputSet"]["inputIds"] = [145563]
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns), *copies]))
+        value = self.source_image_audit(invocation)
+        self.assertEqual(value["status"], "INCOMPLETE", value)
+        self.assertIn("Missing actual archive load", "\n".join(value["errors"]))
+
+    def test_source_images_cannot_complete_incomplete_or_unrun_workloads(self) -> None:
+        invocation = self.source_image_fixture()
+        canonical = report.read_json(invocation / "verdict.json")
+        canonical["status"] = "INCOMPLETE"
+        report.write_json(invocation / "verdict.json", canonical)
+        value = self.source_image_audit(invocation)
+        self.assertEqual((value["status"], value["canonical_status"], value["audit_status"]),
+                         ("INCOMPLETE", "INCOMPLETE", "PASS"))
+        # Even a falsely successful verdict with no test attempts cannot
+        # acquire coverage from otherwise complete image/load evidence.
+        canonical.update(status="PASS", executed=[])
+        report.write_json(invocation / "verdict.json", canonical)
+        value = self.source_image_audit(invocation)
+        self.assertEqual((value["status"], value["audit_status"]), ("INCOMPLETE", "INCOMPLETE"))
+        self.assertIn("Missing or duplicate canonical test attempts", value["errors"])
+
+    def test_source_image_decoder_failure_preserves_native_failure(self) -> None:
+        invocation = self.source_image_fixture()
+        canonical = report.read_json(invocation / "verdict.json")
+        canonical.update(status="FAIL", native_exit=7)
+        report.write_json(invocation / "verdict.json", canonical)
+        value = report.audit_source_images(invocation / "execution.json", self.root / "missing-bb",
+                                           invocation / "verdict.json", invocation / "manifest.json",
+                                           invocation / "expectations.json")
+        self.assertEqual((value["status"], value["native_exit"], value["audit_status"]), ("FAIL", 7, "INCOMPLETE"))
+        with mock.patch.object(report.subprocess, "run", side_effect=subprocess.CalledProcessError(
+                2, ["bb", "print"], stderr="Malformed compact execution log")):
+            value = report.audit_source_images(invocation / "execution.json", invocation / "execution.json",
+                                               invocation / "verdict.json", invocation / "manifest.json",
+                                               invocation / "expectations.json")
+        self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 7))
+        self.assertIn("Malformed compact execution log", "\n".join(value["errors"]))
+
+    def test_source_images_bind_generated_xml_to_its_exact_test_log(self) -> None:
+        invocation = self.source_image_fixture()
+        records, spawns = report.compact_records(invocation / "execution.json")
+        test, = [spawn for spawn in spawns if spawn["mnemonic"] == "TestRunner"]
+        xml_path = records[45656]["file"]["path"]
+        test["outputs"] = [{"invalidOutputPath": xml_path} if output.get("outputId") == 45656 else output
+                           for output in test["outputs"]]
+        generator = {"mnemonic": "TestRunner", "targetLabel": test["targetLabel"],
+                     "args": ["external/bazel_tools/tools/test/generate-xml.sh",
+                              xml_path.removesuffix("test.xml") + "test.log", xml_path],
+                     "outputs": [{"outputId": 45656}]}
+        spawns.append(generator)
+        for suffix, expected_status in (("", "PASS"), (".different-shard", "INCOMPLETE")):
+            with self.subTest(suffix=suffix):
+                generator["args"][1] += suffix
+                (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                    [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                value = self.source_image_audit(invocation)
+                self.assertEqual(value["status"], expected_status, value)
+
     def build_output_fixture(self) -> tuple[Path, Path, Path]:
         invocation = self.fixture()
         path = invocation / "analysis.sarif"

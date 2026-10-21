@@ -130,6 +130,41 @@ the producer's `verdict_available_at` and each invocation's original
 INCOMPLETE result writes a receipt and exits nonzero; an identity mismatch
 rejects the artifact.
 
+For source-built Docker consumers, `source-images` audits one invocation from
+that authenticated bundle. Supply the retained compact execution log, that
+invocation's verdict and capture manifest, and an existing BuildBuddy CLI:
+
+```sh
+python3 test/rbe/qualification_report.py source-images \
+  --execution-log "$invocation/execution.binpb" --decoder "$bb_binary" \
+  --verdict "$invocation/verdict.json" \
+  --manifest "$capture_manifest" \
+  --expectations "$source_image_expectations" --output "$image_audit"
+```
+
+The expectations JSON has an `owners` object mapping every selected label to
+its complete list of required image names, such as `benchmarks/iperf`. Derive
+these obligations from the selected source declarations before inspecting
+successful loads. An optional `benchmarks` object uses the existing benchmark
+expectations format (`name`, `count`, `units`, optional `iterations`) to require
+specific positive measured cases. The audit reuses the reporter's benchmark
+parser, including its rejection of partial output from a failed package.
+
+The audit follows compact input-set and runfiles edges from uncached source
+actions through stock archive conversions to each configured test attempt. It
+requires the captured log to record loading that declared archive and image.
+Local TestRunner actions may lack a REAPI digest; their target, strategy,
+configured XML output and input-set identity must still match. Nested container
+load protocols require their own explicit contract and are not inferred here.
+
+Audit status is separate from the unchanged canonical verdict. Missing evidence
+cannot pass, and an original workload failure retains its status and native
+exit even when provenance is complete. Audit every applicable test invocation;
+retain auxiliary command phases and the bundle receipt when composing results.
+This command neither collects artifacts nor submits workloads. Source and
+archive identity do not establish reproducibility of mutable recipe inputs or
+execution on a physical GPU.
+
 For an already submitted Actions workflow, use the same receipt verifier through
 the existing `gh run watch` and artifact-download path:
 

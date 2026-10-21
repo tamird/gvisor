@@ -1,0 +1,316 @@
+{
+  "id": 45538,
+  "directory": {
+    "path": "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_layout.oci"
+  }
+}
+{
+  "id": 45539,
+  "file": {
+    "path": "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_layout.tags.txt",
+    "digest": {
+      "hash": "a4708cb02f7a506b145c7b1b465379e934eeb140903f6f45adef4145b1bff453",
+      "sizeBytes": "94"
+    }
+  }
+}
+{
+  "id": 45556,
+  "inputSet": {
+    "inputIds": [
+      45538,
+      45539
+    ]
+  }
+}
+{
+  "id": 45558,
+  "inputSet": {
+    "transitiveSetIds": [
+      45556
+    ]
+  }
+}
+{
+  "id": 45559,
+  "file": {
+    "path": "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_load/tarball.spec",
+    "digest": {
+      "hash": "88e4db6a0d030a5a70dffa18792dd0bacd675a036f985e658f06a444040ce54e",
+      "sizeBytes": "1076"
+    }
+  }
+}
+{
+  "id": 45560,
+  "file": {
+    "path": "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_load/manifest.json",
+    "digest": {
+      "hash": "6419aa2952afa0da73b02b6257f4af0742abdab0cf450c2135db226c0db7f34f",
+      "sizeBytes": "452"
+    }
+  }
+}
+{
+  "id": 45561,
+  "inputSet": {
+    "inputIds": [
+      45559,
+      45560
+    ],
+    "transitiveSetIds": [
+      45556
+    ]
+  }
+}
+{
+  "id": 45562,
+  "inputSet": {
+    "inputIds": [],
+    "transitiveSetIds": [
+      45561
+    ]
+  }
+}
+{
+  "id": 45563,
+  "file": {
+    "path": "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_load/tarball.tar",
+    "digest": {
+      "hash": "48350c832feea207a0b685ac577ba689bbbe437352949ca658fb65a46218bc6c",
+      "sizeBytes": "30893056"
+    }
+  }
+}
+{
+  "id": 45644,
+  "inputSet": {
+    "inputIds": [
+      45563
+    ]
+  }
+}
+{
+  "id": 45645,
+  "inputSet": {
+    "transitiveSetIds": [
+      45644
+    ]
+  }
+}
+{
+  "id": 45647,
+  "inputSet": {
+    "inputIds": [],
+    "transitiveSetIds": [
+      45645
+    ]
+  }
+}
+{
+  "id": 45651,
+  "inputSet": {
+    "transitiveSetIds": [
+      45647
+    ]
+  }
+}
+{
+  "id": 45652,
+  "inputSet": {
+    "inputIds": [],
+    "transitiveSetIds": [
+      45651
+    ]
+  }
+}
+{
+  "id": 45653,
+  "inputSet": {
+    "transitiveSetIds": [
+      45652
+    ]
+  }
+}
+{
+  "id": 45654,
+  "runfilesTree": {
+    "path": "bazel-out/k8-fastbuild/bin/test/benchmarks/network/iperf_test_continuous_kvm_owned_/iperf_test_continuous_kvm_owned.runfiles",
+    "inputSetId": 45653,
+    "repoMappingManifest": {
+      "digest": {
+        "hash": "976ddf6626b812493f437cfc0e1f52f0e8444713882c08049f7367f279647b65",
+        "sizeBytes": "60"
+      }
+    }
+  }
+}
+{
+  "id": 45655,
+  "inputSet": {
+    "inputIds": [
+      45654
+    ]
+  }
+}
+{
+  "id": 45656,
+  "file": {
+    "path": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.xml",
+    "digest": {
+      "hash": "e1ff8fddbf862e8b28596e5c64620d2d5427fd1801e2dd053c2a78650eb3b665",
+      "sizeBytes": "523"
+    }
+  }
+}
+{
+  "id": 45657,
+  "directory": {
+    "path": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.outputs"
+  }
+}
+{
+  "id": 45658,
+  "file": {
+    "path": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.outputs_manifest/MANIFEST",
+    "digest": {
+      "hash": "94529196cdad2b85b23060438c8b76362d00ab81f621c6bbb9fb05a30a5f7171",
+      "sizeBytes": "13489"
+    }
+  }
+}
+{
+  "spawn": {
+    "args": [
+      "/bin/bash",
+      "test/docker/source_images.sh",
+      "layout",
+      "x86_64",
+      "bazel-out/k8-opt-exec-ST-cb2f41ffb59f/bin/external/make+/make",
+      "external/rules_oci++oci+oci_crane_linux_amd64/crane",
+      "tools/images.mk",
+      "bazel-out/k8-fastbuild/bin/images/source_contexts.tar",
+      "benchmarks/iperf",
+      "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_layout.oci",
+      "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_layout.tags.txt",
+      "external/+_repo_rules2+buildx_linux_amd64/file/buildx",
+      "external/rules_oci++oci+source_buildkit/digest.txt",
+      "test/docker/source_image_build.sh",
+      "external/tar.bzl++toolchains+bsd_tar_toolchains_linux_amd64/tar"
+    ],
+    "inputSetId": 45537,
+    "outputs": [
+      {
+        "outputId": 45538
+      },
+      {
+        "outputId": 45539
+      }
+    ],
+    "targetLabel": "//test/docker:images_benchmarks_iperf_amd64_source_layout",
+    "mnemonic": "SourceImageOCI",
+    "runner": "remote",
+    "digest": {
+      "hash": "fc360dadce53fc7aa39d9c0a75274768e040b0c18ac7aa4ff766feaf9f1eec71",
+      "sizeBytes": "555"
+    }
+  }
+}
+{
+  "spawn": {
+    "args": [
+      "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_load/load.sh"
+    ],
+    "inputSetId": 45558,
+    "outputs": [
+      {
+        "outputId": 45559
+      },
+      {
+        "outputId": 45560
+      }
+    ],
+    "targetLabel": "//test/docker:images_benchmarks_iperf_amd64_source_load",
+    "mnemonic": "OCITarballManifest",
+    "runner": "remote",
+    "digest": {
+      "hash": "8812d465642853d11710271089d12d7c03be627955a22c3376a36d68b2a041d3",
+      "sizeBytes": "544"
+    }
+  }
+}
+{
+  "spawn": {
+    "args": [
+      "external/tar.bzl++toolchains+bsd_tar_toolchains_linux_amd64/tar",
+      "--create",
+      "--no-xattr",
+      "--no-mac-metadata",
+      "--file",
+      "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_load/tarball.tar",
+      "@bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_load/tarball.spec"
+    ],
+    "inputSetId": 45562,
+    "outputs": [
+      {
+        "outputId": 45563
+      }
+    ],
+    "targetLabel": "//test/docker:images_benchmarks_iperf_amd64_source_load",
+    "mnemonic": "OCITarball",
+    "runner": "remote",
+    "digest": {
+      "hash": "eb7ee2706c112ae7897247fd5a4c3a89eb7240e7e1d09b9ca14758b6c38093c8",
+      "sizeBytes": "544"
+    }
+  }
+}
+{
+  "spawn": {
+    "args": [
+      "external/bazel_tools/tools/test/test-setup.sh",
+      "test/rbe/docker_setup",
+      "test/benchmarks/network/iperf_test_continuous_kvm_owned_/iperf_test_continuous_kvm_owned",
+      "--docker_test_config=test/benchmarks/network/iperf_test_continuous_kvm_docker_config.json",
+      "-test.v=test2json",
+      "-test.bench=BenchmarkIperfOneConnection",
+      "-test.benchtime=30s"
+    ],
+    "inputSetId": 45655,
+    "outputs": [
+      {
+        "outputId": 45656
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.exited_prematurely"
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.warnings"
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.raw_splitlogs/test.splitlogs"
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.unused_runfiles_log"
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.infrastructure_failure"
+      },
+      {
+        "outputId": 45657
+      },
+      {
+        "outputId": 45658
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.outputs_manifest/ANNOTATIONS"
+      },
+      {
+        "invalidOutputPath": "bazel-out/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_continuous_kvm_owned/test.outputs_manifest/ANNOTATIONS.pb"
+      }
+    ],
+    "targetLabel": "//test/benchmarks/network:iperf_test_continuous_kvm_owned",
+    "mnemonic": "TestRunner",
+    "runner": "docker"
+  }
+}

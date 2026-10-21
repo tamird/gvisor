@@ -28,7 +28,7 @@ supplied together. Exit values are read from files, not inferred from reports.
 from __future__ import annotations
 
 import argparse
-from collections import Counter
+from collections import Counter, deque
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
@@ -41,7 +41,9 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tarfile
+import tempfile
 import time
 from typing import BinaryIO
 import uuid
@@ -126,6 +128,25 @@ def file_record(path: Path, *, deadline: float | None = None) -> dict[str, objec
 
 def manifest_path(events: Path) -> Path:
     return Path(str(events) + ".manifest.json")
+
+
+def retained_reports(manifest: Path) -> tuple[dict[tuple[Attempt, str], Path], list[str]]:
+    """Read the attempt identities and immutable originals owned by capture."""
+    retained = read_json(manifest)
+    errors = [string(item) for item in sequence(retained.get("errors"))]
+    reports: dict[tuple[Attempt, str], Path] = {}
+    for raw in sequence(retained.get("reports")):
+        try:
+            row = mapping(raw)
+            key = Attempt.parse(row.get("identity")), string(row.get("name"))
+            report = (manifest.parent / string(row.get("path"))).resolve()
+            report.relative_to(manifest.parent.resolve())
+            if key in reports or file_record(report) != {"sha256": row.get("sha256"), "bytes": row.get("bytes")}:
+                raise ValueError(f"Duplicate or changed original report: {key}")
+            reports[key] = report
+        except (OSError, ValueError) as error:
+            errors.append(str(error))
+    return reports, errors
 
 
 def timestamp(value: str) -> datetime.datetime:
@@ -816,6 +837,315 @@ def benchmark_rows(path: Path, pgo: bool = False) -> list[dict[str, object]]:
     return rows
 
 
+def compact_records(path: Path) -> tuple[dict[int, dict[str, object]], list[dict[str, object]]]:
+    """Read concatenated objects from `bb print --raw=true --sort=false`."""
+    decoder = json.JSONDecoder()
+    text = path.read_text()
+    offset = 0
+    records: dict[int, dict[str, object]] = {}
+    spawns = []
+    while offset < len(text):
+        if text[offset].isspace():
+            offset += 1
+            continue
+        raw, offset = decoder.raw_decode(text, offset)
+        record = mapping(raw)
+        if "spawn" in record:
+            spawns.append(mapping(record["spawn"]))
+        identifiers = ([record["id"]] if "id" in record else
+                       [value["id"] for value in record.values() if isinstance(value, dict) and "id" in value])
+        if not identifiers:
+            continue
+        match identifiers:
+            case [identifier] if isinstance(identifier, int) and not isinstance(identifier, bool) and identifier > 0:
+                if identifier in records:
+                    raise ValueError(f"Duplicate execution record: {identifier}")
+                records[identifier] = record
+            case _:
+                raise ValueError(f"Invalid execution record identities: {identifiers}")
+    return records, spawns
+
+
+def input_chain(records: dict[int, dict[str, object]], start: int, target: int) -> list[int] | None:
+    """Follow declared inputs, including runfiles trees, without pooling digests."""
+    parents: dict[int, int | None] = {start: None}
+    pending = deque([start])
+    while pending:
+        current = pending.popleft()
+        if current not in records:
+            raise ValueError(f"Missing execution input record: {current}")
+        if current == target:
+            path = []
+            node: int | None = current
+            while node is not None:
+                path.append(node)
+                node = parents[node]
+            return list(reversed(path))
+        record = records[current]
+        inputs = mapping(record.get("inputSet", {}))
+        edges = sequence(inputs.get("inputIds", [])) + sequence(inputs.get("transitiveSetIds", []))
+        if "runfilesTree" in record:
+            edges.append(mapping(record["runfilesTree"])["inputSetId"])
+        for raw in edges:
+            child = number(raw)
+            if child not in parents:
+                parents[child] = current
+                pending.append(child)
+    return None
+
+
+def source_image_audit(execution: Path, canonical: Path, manifest: Path,
+                       expectations: Path) -> dict[str, object]:
+    """Audit one invocation without replacing its workload verdict.
+
+    The caller authenticates the containing bundle with receipt(), selects each
+    invocation explicitly, and decodes its compact log. Expectations contain an
+    owners mapping from target labels to complete image lists, plus optional
+    benchmarks in the existing declared-benchmark format. They are declared
+    obligations, never inferred from successful observed loads.
+    """
+    verdict: dict[str, object] = {}
+    errors: list[str] = []
+    inputs = []
+    images: list[dict[str, object]] = []
+    consumers: list[dict[str, object]] = []
+    try:
+        verdict = read_json(canonical)
+        for path in (execution, canonical, manifest, expectations):
+            inputs.append({"path": str(path), **file_record(path)})
+        if verdict.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
+            raise ValueError("Missing canonical qualification status")
+        if verdict.get("command_kind") not in ("test", "benchmark"):
+            raise ValueError("Source-image audit requires a test invocation")
+        contract = read_json(expectations)
+        if set(contract) - {"owners", "benchmarks"}:
+            raise ValueError("Source-image expectations require owners and optional benchmarks")
+        wanted = {label: [string(image) for image in sequence(raw)]
+                  for label, raw in mapping(contract.get("owners")).items()}
+        if not wanted or any(not rows or len(rows) != len(set(rows)) for rows in wanted.values()):
+            raise ValueError("Expected nonempty, unique source images for every owner")
+        expected = [Owner(string(mapping(row).get("label")), string(mapping(row).get("configuration")))
+                    for row in sequence(verdict.get("expected"))]
+        if len(expected) != len(set(expected)) or set(wanted) != {owner.label for owner in expected}:
+            raise ValueError("Source-image owners differ from canonical configured owners")
+        required_benchmarks = benchmark_expectations(contract["benchmarks"]) if "benchmarks" in contract else {}
+        if not set(required_benchmarks) <= set(wanted):
+            raise ValueError("Benchmark obligations name an unexpected source-image owner")
+        reports, report_errors = retained_reports(manifest)
+        errors.extend(report_errors)
+        records, spawns = compact_records(execution)
+
+        def outputs(spawn: dict[str, object]) -> list[int]:
+            return [number(mapping(output)["outputId"]) for output in sequence(spawn.get("outputs"))
+                    if "outputId" in mapping(output)]
+
+        def chains(spawn: dict[str, object], identifiers: list[int]) -> list[list[int]] | None:
+            paths = []
+            for identifier in identifiers:
+                if (path := input_chain(records, number(spawn["inputSetId"]), identifier)) is None:
+                    return None
+                paths.append(path)
+            return paths
+
+        def successful(spawn: dict[str, object]) -> None:
+            if number(spawn.get("exitCode", 0)) or spawn.get("status"):
+                raise ValueError(f"Unsuccessful source/archive action: {spawn.get('targetLabel')}")
+
+        def identity(spawn: dict[str, object], *, executed: bool = False) -> dict[str, object]:
+            runner = string(spawn.get("runner"))
+            if executed and (runner not in ("remote", "docker", "local", "linux-sandbox")
+                             or runner == "remote" and not spawn.get("digest")):
+                raise ValueError(f"Missing execution identity: {spawn.get('targetLabel')}: {runner}")
+            return {key: spawn.get(key) for key in ("targetLabel", "inputSetId", "runner", "digest")} | {
+                "exit_code": number(spawn.get("exitCode", 0)), "cache_hit": spawn.get("cacheHit", False),
+                "remote_cache_hit": spawn.get("remoteCacheHit", False)}
+
+        sources = [spawn for spawn in spawns if spawn.get("mnemonic") == "SourceImageOCI"]
+        for source in sources:
+            successful(source)
+            if source.get("cacheHit", False) or source.get("remoteCacheHit", False):
+                raise ValueError(f"Source image was cached: {source.get('targetLabel')}")
+            match sequence(source.get("args")):
+                case [_, "test/docker/source_images.sh", "layout", _, _, _, _, _, str(image), *_]:
+                    pass
+                case _:
+                    raise ValueError("Unsupported source-image command")
+            source_outputs = outputs(source)
+            if not source_outputs:
+                raise ValueError(f"Missing source outputs: {image}")
+            manifests = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCITarballManifest"
+                         and chains(spawn, source_outputs) is not None]
+            if not manifests:
+                raise ValueError(f"Missing archive manifest for {image}")
+            # Runtime and image-context consumers can share a producer while
+            # retaining separately configured stock archive conversions.
+            for conversion in manifests:
+                successful(conversion)
+                conversion_outputs = outputs(conversion)
+                if not conversion_outputs:
+                    raise ValueError(f"Missing archive manifest outputs: {image}")
+                archives = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCITarball"
+                            and chains(spawn, source_outputs + conversion_outputs) is not None]
+                match archives:
+                    case [archive]:
+                        successful(archive)
+                    case _:
+                        raise ValueError(f"Expected one archive action for {image}, got {len(archives)}")
+                match outputs(archive):
+                    case [archive_id]:
+                        archive_file = mapping(records[archive_id].get("file"))
+                    case _:
+                        raise ValueError(f"Expected one archive output for {image}")
+                digest = mapping(archive_file.get("digest"))
+                if (re.fullmatch(r"[0-9a-f]{64}", string(digest.get("hash"))) is None
+                        or number(digest.get("sizeBytes", 0)) <= 0):
+                    raise ValueError(f"Missing archive identity: {image}")
+                images.append({"image": image, "producer": identity(source, executed=True), "archive_action": identity(archive),
+                               "archive_id": archive_id, "archive": archive_file,
+                               "manifest_inputs": chains(conversion, source_outputs),
+                               "archive_inputs": chains(archive, source_outputs + conversion_outputs)})
+        if {row["image"] for row in images} != {image for rows in wanted.values() for image in rows}:
+            raise ValueError("Source producers differ from declared image obligations")
+        expected_attempts = [mapping(row) for row in sequence(verdict.get("executed"))]
+        attempts = {Attempt(Owner(string(mapping(row["owner"])["label"]), string(mapping(row["owner"])["configuration"])),
+                            *(number(row[key]) for key in ("run", "shard", "attempt"))) for row in expected_attempts}
+        if not attempts or len(attempts) != len(expected_attempts):
+            raise ValueError("Missing or duplicate canonical test attempts")
+        if {attempt.owner for attempt in attempts} != set(expected) or any(
+                min(attempt.run, attempt.shard, attempt.attempt) < 1 for attempt in attempts):
+            raise ValueError("Executed attempts differ from configured owners")
+        observations = {Attempt(Owner(string(mapping(row["owner"])["label"]), string(mapping(row["owner"])["configuration"])),
+                                *(number(row[key]) for key in ("run", "shard", "attempt"))): row
+                        for row in expected_attempts}
+        logs = {str(path.relative_to(manifest.parent.resolve())): attempt
+                for (attempt, name), path in reports.items() if name == "test.log"}
+        observed: set[Attempt] = set()
+        for test in (spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"):
+            if sequence(test.get("args"))[:1] == ["external/bazel_tools/tools/test/generate-xml.sh"]:
+                continue
+            files = [mapping(records[identifier].get("file", {})) for identifier in outputs(test)]
+            xml_files = [file for file in files if string(file.get("path", "")).endswith("/test.xml")]
+            if not xml_files:
+                # Some wrappers produce only stdout. Bind Bazel's generated
+                # XML to this exact test log, not another shard of its label.
+                match [mapping(output)["invalidOutputPath"] for output in sequence(test.get("outputs"))
+                       if string(mapping(output).get("invalidOutputPath", "")).endswith("/test.xml")]:
+                    case [str(xml_path)]:
+                        pass
+                    case _:
+                        raise ValueError(f"Missing TestRunner XML identity: {test.get('targetLabel')}")
+                generators = [spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"
+                              and spawn.get("targetLabel") == test.get("targetLabel")
+                              and sequence(spawn.get("args"))[:3] == ["external/bazel_tools/tools/test/generate-xml.sh",
+                                                                     xml_path.removesuffix("test.xml") + "test.log", xml_path]]
+                match generators:
+                    case [generator]:
+                        successful(generator)
+                        xml_files = [mapping(records[identifier].get("file", {})) for identifier in outputs(generator)
+                                     if mapping(records[identifier].get("file", {})).get("path") == xml_path]
+                    case _:
+                        raise ValueError(f"Missing unique XML generator for {xml_path}")
+            match xml_files:
+                case [xml_file]:
+                    log_path = "reports/" + string(xml_file["path"]).removeprefix("bazel-out/").removesuffix("test.xml") + "test.log"
+                case _:
+                    raise ValueError(f"Expected one TestRunner XML: {test.get('targetLabel')}")
+            if log_path not in logs:
+                raise ValueError(f"TestRunner log is not a captured attempt: {log_path}")
+            attempt = logs[log_path]
+            if attempt not in attempts or attempt in observed or test.get("targetLabel") != attempt.owner.label:
+                raise ValueError(f"Duplicate or mismatched configured TestRunner: {attempt}")
+            observed.add(attempt)
+            execution_identity = identity(test, executed=True)
+            if (execution_identity["runner"] != mapping(observations[attempt].get("execution_info")).get("strategy")
+                    or execution_identity["cache_hit"] or execution_identity["remote_cache_hit"]):
+                raise ValueError(f"TestRunner strategy/cache differs from uncached execution: {attempt}")
+            log = reports[attempt, "test.log"]
+            digest = mapping(xml_file.get("digest"))
+            if file_record(reports[attempt, "test.xml"]) != {"sha256": digest.get("hash"), "bytes": number(digest.get("sizeBytes", 0))}:
+                raise ValueError(f"TestRunner XML differs from captured bytes: {attempt}")
+            text = log.read_text()
+            loaded = []
+            for image in images:
+                if (chain := input_chain(records, number(test["inputSetId"]), number(image["archive_id"]))) is None:
+                    continue
+                match string(mapping(image["archive"])["path"]).split("/bin/", 1):
+                    case [_, archive_path]:
+                        pass
+                    case _:
+                        raise ValueError(f"Unsupported archive output path: {image['archive']}")
+                blocks = [body for path, body in re.findall(
+                    r"Loaded declared image archive ([^\r\n]+):\r?\n((?:Loaded image: [^\r\n]+\r?\n)+)", text)
+                          if path == archive_path]
+                tags = sorted({tag for body in blocks for tag in re.findall(r"Loaded image: (\S+)", body)
+                               if tag.startswith(f"gvisor.dev/images/{image['image']}:")})
+                if len(blocks) != 1 or not tags:
+                    raise ValueError(f"Missing actual archive load for {attempt}: {image['image']}")
+                loaded.append({"image": image["image"], "archive": image["archive"], "input_chain": chain, "tags": tags})
+            if Counter(row["image"] for row in loaded) != Counter(wanted[attempt.owner.label]):
+                raise ValueError(f"Loaded source images differ from obligations for {attempt}")
+            if attempt.owner.label in required_benchmarks:
+                # Reuse the canonical parser, including its rejection of
+                # partial measurements in a failed or unfinished package.
+                rows = benchmark_rows(log)
+                leaves = required_benchmarks[attempt.owner.label]
+                wanted_names = {leaf.name for leaf in leaves}
+                names = [string(row["name"]) if row["name"] in wanted_names
+                         else re.sub(r"-\d+$", "", string(row["name"])) for row in rows]
+                if Counter(names) != Counter({leaf.name: leaf.count for leaf in leaves}):
+                    raise ValueError(f"Measured benchmark names differ from obligations for {attempt}")
+                positive = {case.get("name") for case in ET.parse(reports[attempt, "test.xml"]).getroot().iter("testcase")
+                            if not any(case.find(tag) is not None for tag in ("failure", "error", "skipped"))}
+                for name, row in zip(names, rows):
+                    leaf = next(leaf for leaf in leaves if leaf.name == name)
+                    if (name not in positive or set(mapping(row["metrics"])) != set(leaf.units)
+                            or leaf.iterations is not None and row["iterations"] != leaf.iterations):
+                        raise ValueError(f"Benchmark measurement/XML differs from obligations for {attempt}: {name}")
+            consumers.append({**asdict(attempt), "execution": execution_identity, "images": loaded,
+                              "test_log": {"path": log_path, **file_record(log)}})
+        if observed != attempts:
+            raise ValueError(f"Missing configured TestRunners: {sorted(attempts - observed)}")
+    except (OSError, ValueError, KeyError, ET.ParseError) as error:
+        errors.append(str(error))
+    canonical_status = verdict.get("status", "INCOMPLETE")
+    status = canonical_status if canonical_status in ("FAIL", "INCOMPLETE") else "INCOMPLETE" if errors else "PASS"
+    return {"schema_version": 1, "status": status, "audit_status": "INCOMPLETE" if errors else "PASS",
+            "canonical_status": canonical_status, "native_exit": verdict.get("native_exit"), "source": verdict.get("source"),
+            "errors": errors, "images": images, "consumers": consumers,
+            "inputs": inputs}
+
+
+def audit_source_images(execution: Path, decoder: Path, canonical: Path, manifest: Path,
+                        expectations: Path) -> dict[str, object]:
+    """Decode the retained compact log with the caller's existing bb binary."""
+    with tempfile.TemporaryDirectory(prefix="qualification-source-images-") as directory:
+        raw = Path(directory) / "execution.json"
+        try:
+            inputs = [{"path": str(path), **file_record(path)} for path in (execution, decoder)]
+            with raw.open("w") as stream:
+                subprocess.run([str(decoder.resolve()), "print", f"--compact_execution_log={execution.resolve()}",
+                                "--raw=true", "--sort=false"], stdout=stream, stderr=subprocess.PIPE,
+                               text=True, check=True)
+        except (OSError, subprocess.CalledProcessError) as error:
+            try:
+                original = read_json(canonical)
+            except (OSError, ValueError):
+                original = {}
+            diagnostic = str(error)
+            if isinstance(error, subprocess.CalledProcessError) and error.stderr:
+                diagnostic += "\n" + error.stderr
+            return {"schema_version": 1, "status": "FAIL" if original.get("status") == "FAIL" else "INCOMPLETE",
+                    "canonical_status": original.get("status"), "native_exit": original.get("native_exit"),
+                    "source": original.get("source"), "audit_status": "INCOMPLETE", "errors": [diagnostic]}
+        result = source_image_audit(raw, canonical, manifest, expectations)
+        result["compact_execution"] = inputs
+        # Keep the decoded content identity, not the removed temporary path.
+        for item in result["inputs"]:
+            if item["path"] == str(raw):
+                item["path"] = "decoded compact execution log"
+        return result
+
+
 def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     context = read_json(path)
     errors: list[str] = []
@@ -1025,22 +1355,10 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             declared_evidence = {"path": str(declared_benchmarks), **file_record(declared_benchmarks)}
         except (OSError, ValueError) as error:
             errors.append(f"Declared benchmark manifest: {error}")
-    retained = read_json(manifest)
-    errors.extend(string(item) for item in sequence(retained.get("errors")))
-    if retained.get("events") != file_record(events):
+    reports, report_errors = retained_reports(manifest)
+    errors.extend(report_errors)
+    if read_json(manifest).get("events") != file_record(events):
         errors.append("Sanitized BEP digest/size differs from capture manifest")
-    reports: dict[tuple[Attempt, str], Path] = {}
-    for raw in sequence(retained.get("reports")):
-        try:
-            row = mapping(raw)
-            key = Attempt.parse(row.get("identity")), string(row.get("name"))
-            report = (manifest.parent / string(row.get("path"))).resolve()
-            report.relative_to(manifest.parent.resolve())
-            if key in reports or file_record(report) != {"sha256": row.get("sha256"), "bytes": row.get("bytes")}:
-                raise ValueError(f"Duplicate or changed original report: {key}")
-            reports[key] = report
-        except (OSError, ValueError) as error:
-            errors.append(str(error))
     configured: set[Owner] = set()
     announced: set[Attempt] = set()
     completed: dict[Owner, bool] = {}
@@ -1699,6 +2017,9 @@ def main() -> int:
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
     check.add_argument("--expected-benchmarks", type=Path)
     check.add_argument("--declared-benchmarks", type=Path)
+    images = commands.add_parser("source-images", help="Audit declared source/archive/load obligations in one authenticated invocation")
+    for name in ("execution-log", "decoder", "verdict", "manifest", "expectations", "output"):
+        images.add_argument("--" + name, type=Path, required=True)
     command_check = commands.add_parser("command-verdict")
     for name in ("context", "output"):
         command_check.add_argument("--" + name, type=Path, required=True)
@@ -1726,6 +2047,10 @@ def main() -> int:
     native.add_argument("--target", action="append")
     native.add_argument("--timeout-seconds", type=float, required=True)
     args = parser.parse_args()
+    if args.command == "source-images":
+        result = audit_source_images(args.execution_log, args.decoder, args.verdict, args.manifest, args.expectations)
+        write_json(args.output, result)
+        return 0 if result["status"] == "PASS" else number(result.get("native_exit") or 1)
     if args.command == "native-receipt":
         try:
             result = native_receipt(args.invocation_id, args.api_key_file, args.artifact, args.output,
