@@ -1744,6 +1744,13 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *sentryap
 			if err := sandbox.ConfigureCmdForUserNamespace(cmd, c.Spec, userNS); err != nil {
 				return nil, nil, nil, nil, err
 			}
+			if conf.GetHostUDS().AllowOpen() && len(cmd.SysProcAttr.GidMappings) > 0 && specutils.SetgroupsAllowed() {
+				// Connecting to a host socket applies the application's supplementary
+				// groups, which setgroups(2) refuses in a user namespace that denies
+				// it. Allowing it also makes os/exec start the gofer with no
+				// supplementary groups.
+				cmd.SysProcAttr.GidMappingsEnableSetgroups = true
+			}
 		}
 	} else {
 		userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec)
