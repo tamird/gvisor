@@ -369,6 +369,22 @@ image_source_command(
 )
 
 image_source_command(
+    name = "cpu_image_sources_smoke_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    contexts = "//images:cpu_source_contexts",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    images = [
+        "basic_alpine",
+        "benchmarks_profile-helper",
+    ],
+    tags = ["manual"],
+)
+
+image_source_command(
     name = "gpu_image_sources_amd64",
     testonly = True,
     architecture = "x86_64",
@@ -430,6 +446,30 @@ docker_command_test(
     timeout = "eternal",
     architectures = ["amd64"],
     command = ":nodejs_cpu_image_load_amd64",
+    docker_config = ":image_source_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    shard_count = 1,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# Exercise Dockerfile rebuild and declared archive load in one shard.
+docker_command_test(
+    name = "cpu_image_sources_smoke_amd64_test",
+    size = "large",
+    timeout = "long",
+    architectures = ["amd64"],
+    command = ":cpu_image_sources_smoke_amd64",
     docker_config = ":image_source_config",
     exec_compatible_with = [
         "@platforms//os:linux",
