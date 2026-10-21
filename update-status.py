@@ -58,8 +58,8 @@ reviewThreads(first:100) { totalCount pageInfo { hasNextPage } nodes {
 TIMELINE = """
 timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
   pageInfo { hasPreviousPage }
-  nodes { ... on CrossReferencedEvent { source {
-    ... on PullRequest { number url body author { login } repository { nameWithOwner } }
+  nodes { ... on CrossReferencedEvent { id createdAt source { __typename
+    ... on PullRequest { number url title body updatedAt headRefOid author { login } repository { nameWithOwner isPrivate } }
   } } }
 }
 """
@@ -139,6 +139,13 @@ def changed_feedback(current: dict, previous: dict) -> list[dict]:
             if (item.get("author") or {}).get("login") != OWNER and prior.get(item["id"]) != item]
 
 
+def changed_references(current: dict, previous: dict) -> list[dict]:
+    # References are evidence to inspect, not inferred dependencies or imports.
+    prior = {item["id"]: item for item in previous.get("crossReferences", {}).get("items", [])}
+    return [item for item in current.get("crossReferences", {}).get("items", [])
+            if prior.get(item["id"]) != item]
+
+
 def normalize(pr: dict) -> dict:
     commits = pr["commits"]["nodes"]
     if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
@@ -198,6 +205,13 @@ def normalize(pr: dict) -> dict:
         "checks": checks,
     }
 
+    if timeline := pr.get("timelineItems"):
+        normalized["crossReferences"] = {
+            "complete": not timeline["pageInfo"]["hasPreviousPage"],
+            "items": [event for event in timeline["nodes"]
+                      if (source := event.get("source") or {}).get("__typename") == "PullRequest"
+                      and source.get("repository", {}).get("isPrivate") is False],
+        }
     normalized["reviewDecision"] = review_decision(normalized)
     normalized["approvedHead"] = normalized["head"] if normalized["reviewDecision"] == "APPROVED" else None
     approval = effective_approval(normalized)
@@ -315,7 +329,7 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
     open_numbers = open_inventory(repo)
     numbers.update(number for number, author in open_numbers.items() if author == OWNER)
     originals = fetch_numbers(sorted(number for number in numbers
-                                     if needs_refresh(number, prior_sources, open_numbers)), timeline=policy == "copybara", repo=repo)
+                                     if needs_refresh(number, prior_sources, open_numbers)), timeline=True, repo=repo)
     relations = {number: {pr["number"]: pr["sourceHead"]
                           for pr in prior_sources.get(number, {}).get("imports", [])}
                  for number in numbers}
@@ -324,7 +338,9 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
     for number, pr in originals.items():
         matches = {}
         for event in pr.get("timelineItems", {}).get("nodes", []):
-            candidate = event.get("source", {})
+            if policy != "copybara":
+                continue
+            candidate = event.get("source") or {}
             head_owner = (pr["headRepository"] or {}).get("owner", {}).get("login")
             if head := import_source(candidate, pr["url"], head_owner, pr["headRefName"], repo):
                 matches[candidate["number"]] = head
@@ -437,6 +453,11 @@ def main() -> None:
             if changes or not pr["feedback"]["complete"]:
                 print(json.dumps({"repo": pr.get("repo", REPO), "number": pr["number"], "url": pr["url"], "head": pr["head"],
                                   "feedbackComplete": pr["feedback"]["complete"], "feedback": changes}))
+            references = pr.get("crossReferences")
+            changed = changed_references(pr, prior_prs.get((pr.get("repo", REPO), pr["number"]), {}))
+            if references and (changed or not references["complete"]):
+                print(json.dumps({"repo": pr.get("repo", REPO), "number": pr["number"], "url": pr["url"],
+                                  "crossReferencesComplete": references["complete"], "crossReferences": changed}))
 
 
 if __name__ == "__main__":

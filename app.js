@@ -519,6 +519,24 @@ async function refreshConflict(number, repo = registry.meta.repo) {
   }
 }
 
+function appendCrossReferences(section, pr) {
+  const references = pr.crossReferences;
+  if (!references) return;
+  if (references.items.length) {
+    const details = element("details", "review-history");
+    details.append(element("summary", "", `Cross-referenced public PRs (${references.items.length})`),
+      element("p", "detail-meta", "References are evidence to inspect; they do not establish a dependency, replacement or approval."));
+    for (const event of references.items) {
+      const source = event.source;
+      details.append(link(`${source.repository.nameWithOwner}#${source.number} · ${source.title} ↗`, source.url),
+        element("p", "detail-meta", `${source.author?.login || "Unknown author"} · referenced ${date(event.createdAt)} · observed head ${source.headRefOid.slice(0, 9)}`),
+        element("p", "detail-description", source.body));
+    }
+    section.append(details);
+  }
+  if (!references.complete) section.append(element("p", "detail-meta", "Cross-reference inventory incomplete; only the latest 100 timeline references were checked."));
+}
+
 function appendAttributes(container, node) {
   if (node.type !== "pr") return;
   const section = element("section", "detail-section pr-attributes"), pr = node.github;
@@ -555,6 +573,7 @@ function appendAttributes(container, node) {
   if (!pr.labelsComplete) labels.append(element("span", "attribute-unknown", "Label list incomplete"));
   section.append(labels, element("p", "detail-meta", `Snapshot ${date(pr.checkedAt)} · activity ${date(pr.updatedAt)}`), link(`Source head ${pr.head.slice(0, 9)} ↗`, `https://github.com/${node.repo}/commit/${pr.head}`, "detail-meta"));
   appendChecks(section, pr, "Original PR checks");
+  appendCrossReferences(section, pr);
   if (!usesImports(pr)) { container.append(section); return; }
   section.append(element("h4", "", "Verified import PRs"));
   for (const imported of pr.imports) {
@@ -1455,6 +1474,17 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
           !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation");
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
+      const references = item.crossReferences;
+      if (references !== undefined && (!references || typeof references.complete !== "boolean" || !Array.isArray(references.items) ||
+          references.items.length > 100 || new Set(references.items.map(event => event?.id)).size !== references.items.length ||
+          !references.items.every(event => event && typeof event.id === "string" && event.id.trim() && Number.isFinite(Date.parse(event.createdAt)) &&
+            event.source?.__typename === "PullRequest" && Number.isSafeInteger(event.source.number) && event.source.number > 0 &&
+            /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(event.source.repository?.nameWithOwner) &&
+            event.source.repository.isPrivate === false &&
+            event.source.url === `https://github.com/${event.source.repository.nameWithOwner}/pull/${event.source.number}` &&
+            /^[a-f0-9]{40}$/.test(event.source.headRefOid) && Number.isFinite(Date.parse(event.source.updatedAt)) &&
+            typeof event.source.title === "string" && typeof event.source.body === "string" &&
+            (event.source.author == null || typeof event.source.author.login === "string")))) throw new Error("Invalid PR cross-references");
       for (const check of item.checks?.contexts || []) {
         if (check.description != null && typeof check.description !== "string") throw new Error("Invalid check description");
         if (check.id !== undefined && (typeof check.id !== "string" || !check.id.trim())) throw new Error("Invalid check identity");

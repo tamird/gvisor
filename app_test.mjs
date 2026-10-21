@@ -15,6 +15,42 @@ function client() {
   return context;
 }
 
+test('cross-references remain visible evidence without creating graph relationships', () => {
+  const context = client(), pr = attentionNode().github;
+  const event = { id: 'reference-13826', createdAt: '2026-10-16T15:59:46Z', source: {
+    __typename: 'PullRequest', number: 13826, repository: { nameWithOwner: 'buildbuddy-io/buildbuddy', isPrivate: false },
+    url: 'https://github.com/buildbuddy-io/buildbuddy/pull/13826', title: 'Enable vhost-net',
+    body: 'This supersedes #13803. <script>not markup</script>', author: { login: 'bduffany' },
+    headRefOid: 'a'.repeat(40), updatedAt: '2026-10-16T16:00:00Z',
+  } };
+  pr.crossReferences = { complete: false, items: [event] };
+  context.snapshotInput.prs = [pr];
+  context.prInput = pr;
+  const createElement = tag => ({ tag, children: [], append(...children) { this.children.push(...children); } });
+  context.document = { createElement };
+  context.parentInput = createElement('section');
+  vm.runInContext('validateSnapshot(snapshotInput); appendCrossReferences(parentInput, prInput)', context);
+  const [details, incomplete] = context.parentInput.children;
+  assert.match(details.children[1].textContent, /do not establish a dependency, replacement or approval/);
+  assert.equal(details.children[2].href, event.source.url);
+  assert.equal(details.children[4].textContent, event.source.body);
+  assert.match(incomplete.textContent, /inventory incomplete/);
+  assert.equal(context.snapshotInput.prs.length, 1);
+  for (const mutate of [
+    reference => { reference.items.push(structuredClone(event)); },
+    reference => { reference.items[0].source.url = 'https://github.com/other/repo/pull/13826'; },
+    reference => { reference.items[0].source.headRefOid = 'unknown'; },
+    reference => { reference.items[0].source.repository.isPrivate = true; },
+    reference => { reference.complete = 'true'; },
+  ]) {
+    pr.crossReferences = structuredClone({ complete: true, items: [event] });
+    mutate(pr.crossReferences);
+    assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput)', context), /Invalid PR cross-references/);
+  }
+  delete pr.crossReferences;
+  vm.runInContext('validateSnapshot(snapshotInput)', context);
+});
+
 test('branch refinements render and copy the reviewed commit ranges without a PR', async () => {
   const context = client();
   const before = '7e371d8acc44a23b419a84618471efe9ffc51c42';

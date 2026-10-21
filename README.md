@@ -178,6 +178,17 @@ means **No linked PR found**, not “not imported”: an internal Copybara CL/st
 can exist without a public import PR. Titles, labels and comments never invent
 an import relationship or graph edge.
 
+Every refreshed tracked PR also inspects the latest 100 cross-reference events
+and retains public PR sources with their author, body, URL, head and event time.
+Private or unavailable sources are omitted from both the snapshot and log. These
+links appear in PR details; new or changed references are printed by the existing
+collector for owner triage. A missing prior inventory triggers a backfill, and
+truncated timelines remain explicitly incomplete. Known terminal records keep
+their prior observation until reopened. References do not add tracked PRs or
+infer supersession, dependencies, approval or resolution. Those decisions still
+require explicit evidence and a registry update; Copybara's exact-footer rule
+remains separate.
+
 A diagnosed failing import requires an assigned action until a verified
 correction is delivered or a concrete upstream report reaches an identified
 owner. Reporting transfers the next action; it does not mark the failure repaired.

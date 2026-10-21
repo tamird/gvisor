@@ -175,7 +175,7 @@ class CollectorHistoryTest(unittest.TestCase):
                         "nodes": [{"number": 5, "author": {"login": "tamird"}}],
                         "pageInfo": {"hasNextPage": False, "endCursor": None}}}}
             if 'owner:"buildbuddy-io"' in query:
-                self.assertNotIn("CROSS_REFERENCED_EVENT", query)
+                self.assertIn("CROSS_REFERENCED_EVENT", query)
                 return {"repository": {"p5": copy.deepcopy(raw)}}
             return primary_graphql(query, variables)
 
@@ -188,6 +188,64 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertIn("closed", current["workStates"]["pr:5"])
         self.assertIn("maintainer-review", current["workStates"][f"pr:{repo}:5"])
         self.assertEqual(current["repositories"], self.registry["meta"]["repositories"])
+
+    def test_cross_references_surface_without_creating_relationships(self) -> None:
+        repo = "buildbuddy-io/buildbuddy"
+        self.registry["meta"]["repositories"] = {"google/gvisor": "copybara", repo: "none"}
+        self.registry["nodes"].append({"id": f"pr:{repo}:13803", "type": "pr", "repo": repo, "number": 13803})
+        raw = raw_pr(13803)
+        raw.update(repository={"nameWithOwner": repo}, url=f"https://github.com/{repo}/pull/13803")
+        replacement = {"id": "reference-13826", "createdAt": LATER, "source": {
+            "__typename": "PullRequest", "number": 13826, "url": f"https://github.com/{repo}/pull/13826",
+            "title": "Enable vhost-net", "body": "This supersedes #13803.", "updatedAt": LATER,
+            "headRefOid": "a" * 40, "author": {"login": "bduffany"}, "repository": {"nameWithOwner": repo, "isPrivate": False},
+        }}
+        mention = copy.deepcopy(replacement)
+        mention.update(id="unrelated-reference")
+        mention["source"].update(number=99, url="https://github.com/other/repo/pull/99", body="Related discussion #13803.",
+                                 repository={"nameWithOwner": "other/repo", "isPrivate": False}, author={"login": "other"})
+        private = copy.deepcopy(mention)
+        private.update(id="private-reference")
+        private["source"].update(repository={"nameWithOwner": "other/private", "isPrivate": True}, body="Private description")
+        raw["timelineItems"]["nodes"] = [replacement, mention, private,
+                                        {"id": "unavailable-reference", "source": None},
+                                        {"id": "issue-reference", "source": {"__typename": "Issue"}}]
+        original_registry = copy.deepcopy(self.registry)
+        primary_graphql = self.graphql
+
+        def graphql(query: str, variables: dict | None = None) -> dict:
+            if (variables or {}).get("owner") == "buildbuddy-io":
+                return {"repository": {"pullRequests": {"totalCount": 2,
+                        "nodes": [{"number": 13803, "author": {"login": "tamird"}},
+                                  {"number": 13826, "author": {"login": "bduffany"}}],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None}}}}
+            if 'owner:"buildbuddy-io"' in query:
+                self.assertIn("CROSS_REFERENCED_EVENT", query)
+                self.assertNotIn("p13826:", query)
+                return {"repository": {"p13803": copy.deepcopy(raw)}}
+            return primary_graphql(query, variables)
+
+        with mock.patch.object(self, "graphql", side_effect=graphql):
+            for expected in ([replacement, mention], [], [replacement]):
+                with mock.patch("builtins.print") as output:
+                    current = self.collect()
+                pr = next(pr for pr in current["prs"] if pr["repo"] == repo and pr["number"] == 13803)
+                self.assertEqual(pr["crossReferences"], {"complete": True, "items": [replacement, mention]})
+                self.assertEqual(pr["imports"], [])
+                self.assertNotIn(13826, [pr["number"] for pr in current["prs"]])
+                events = [json.loads(call.args[0]) for call in output.call_args_list
+                          if call.args[0].startswith('{') and '"crossReferences"' in call.args[0]]
+                self.assertEqual([event["crossReferences"] for event in events if event["number"] == 13803],
+                                 [expected] if expected else [])
+                self.assertNotIn("Private description", self.path.read_text())
+                self.assertNotIn("Private description", str(output.call_args_list))
+                if not expected:
+                    replacement["source"]["body"] = "Updated supersession explanation."
+            raw["timelineItems"]["pageInfo"]["hasPreviousPage"] = True
+            with mock.patch("builtins.print") as output:
+                current = self.collect()
+            self.assertTrue(any('"crossReferencesComplete": false' in call.args[0] for call in output.call_args_list))
+        self.assertEqual(self.registry, original_registry)
 
 
 class ScopedApprovalTest(unittest.TestCase):
