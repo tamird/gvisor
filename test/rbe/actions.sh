@@ -495,7 +495,7 @@ bazel() {
       --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
     "${capture_options[@]}" || capture_status=$?
     verdict_options+=(--expected-analysis "$directory/expected.jsonl")
-    if [[ $command_kind == build ]]; then capture_options+=(--expected-analysis "$directory/expected.jsonl"); fi
+    capture_options+=(--expected-analysis "$directory/expected.jsonl" --expected-kind "$command_kind")
     if (( capture_status == 0 )); then
       if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
         --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
