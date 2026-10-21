@@ -54,6 +54,7 @@ BAZEL_IMAGE_CONTEXTS := \
   basic_tmpfile=//images/basic:tmpfile_context \
   benchmarks_hackbench=//images/benchmarks:hackbench_context \
   benchmarks_profile-helper=//images/benchmarks:profile_helper_context \
+  benchmarks_wrk2=//images/benchmarks:wrk2_context \
   gpu_ollama_client=//images/gpu/ollama:client_context
 ifeq ($(ARCH),x86_64)
 BAZEL_IMAGE_CONTEXTS += benchmarks_syscallbench=//images/benchmarks:syscallbench_context
