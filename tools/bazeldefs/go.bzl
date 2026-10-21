@@ -317,15 +317,8 @@ def select_goos():
 gotsan_values = None
 gotsan_flag_values = {"@io_bazel_rules_go//go/config:race": "true"}
 
-def go_imports_action(ctx, src, out):
-    """Declares the shared hermetic goimports action.
-
-    Args:
-      ctx: the owning rule context, including its declared _goimports tool.
-      src: the generated input file.
-      out: the final formatted file.
-
-    This helper keeps configured generated sources in their owning rule.
+def _go_imports_impl(ctx):
+    """Hermetic wrapper around goimports.
 
     `goimports` shells out to the `go` command (via golang.org/x/tools internal
     helpers) and therefore requires a usable `go` binary during the action.
@@ -337,9 +330,12 @@ def go_imports_action(ctx, src, out):
     """
     go_ctx = go_context(ctx)
 
+    src = ctx.file.src
+    out = ctx.outputs.out
+
     goimports_tool = ctx.attr._goimports[DefaultInfo].files_to_run
 
-    tools_path = paths.join(ctx.label.name + "_tools", out.basename)
+    tools_path = paths.join(ctx.label.name + "_tools")
 
     # Use a symlink to the `go` binary to avoid exposing undeclared dependencies
     # on other binaries in the same directory in the toolchain.
@@ -379,9 +375,7 @@ def go_imports_action(ctx, src, out):
         progress_message = "GoImports {}".format(src.short_path),
     )
 
-def _go_imports_impl(ctx):
-    go_imports_action(ctx, ctx.file.src, ctx.outputs.out)
-    return DefaultInfo(files = depset([ctx.outputs.out]))
+    return DefaultInfo(files = depset([out]))
 
 _go_imports = go_rule(
     rule,

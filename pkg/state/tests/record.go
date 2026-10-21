@@ -15,7 +15,7 @@
 package tests
 
 // This file deliberately shadows a predeclared type name with an import. The
-// generator must use the checked field type, not the spelling of its AST.
+// state encoder must preserve the field type, independent of its spelling.
 import (
 	"context"
 	int64 "time"
@@ -57,8 +57,7 @@ type recordSlice []recordSigned
 type recordMap map[recordSigned]recordUnsigned
 
 // The receiver must not shadow the state package in generated Save or Load.
-// Defined field types exercise checked scalar widths and aggregate
-// destinations without spelling component types.
+// Defined field types exercise scalar widths and aggregate destinations.
 // +stateify savable
 type statePackageReceiver struct {
 	value    int          `state:".(stateObject)"`
@@ -154,16 +153,3 @@ type ordinaryStateReceiver struct {
 }
 
 func (state *ordinaryStateReceiver) beforeSave() {}
-
-// Typed scalar load calls introduce boolean arguments in the receiver's scope.
-// +stateify savable
-type falseLoadReceiver struct{ value int }
-
-func (false *falseLoadReceiver) beforeSave() {}
-
-// +stateify savable
-type trueLoadReceiver struct {
-	value *int `state:"wait"`
-}
-
-func (true *trueLoadReceiver) beforeSave() {}
