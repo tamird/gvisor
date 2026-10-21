@@ -1,0 +1,23 @@
+{
+  "arguments": [
+    "--bazelrc=/tmp/syscall-applicability-auth-lbnjo4hf/credentials.bazelrc",
+    "mod",
+    "deps",
+    "--lockfile_mode=update",
+    "--noannounce_rc"
+  ],
+  "execution_finished_at": "2026-10-21T14:58:39.617966+00:00",
+  "lock_after": {
+    "bytes": 452471,
+    "sha256": "a65411e8678e3a0c06681b51662622f6e73525b7a74518044c3bb14a4682cc55"
+  },
+  "lock_before": {
+    "bytes": 115001,
+    "sha256": "d6a8630cf31f8a42673d65ecb24f80b712c44231d8f083af3660620ee9134e16"
+  },
+  "native_exit": 2,
+  "source": "55f4bfaeaa583faaa3e6902c4e95765842562695",
+  "started_at": "2026-10-21T14:57:55.271643+00:00",
+  "tracked_lock": false,
+  "tracked_status": ""
+}

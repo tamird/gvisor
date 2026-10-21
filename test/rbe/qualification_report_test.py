@@ -772,6 +772,53 @@ class QualificationReportTest(unittest.TestCase):
                 finally:
                     shutil.rmtree(invocation)
 
+    def test_dependency_preparation_preserves_source_without_execution_credit(self) -> None:
+        for change, status in ((None, "FAIL"), ("collection-error", "FAIL"), ("success", "PASS"),
+                               ("missing-exit", "INCOMPLETE"), ("other-mod-command", "INCOMPLETE")):
+            with self.subTest(change=change):
+                invocation = self.evidence / "invocation-dependency-preparation"
+                shutil.copytree(FIXTURES / "dependency-preparation", invocation)
+                try:
+                    context = report.read_json(invocation / "context.json")
+                    if change in ("success", "other-mod-command"):
+                        (invocation / "native-exit").write_text("0\n")
+                    if change == "missing-exit":
+                        (invocation / "native-exit").unlink()
+                    elif change == "collection-error":
+                        (invocation / "capture-exit").write_text("1\n")
+                        (invocation / "stderr.log").unlink()
+                    elif change == "other-mod-command":
+                        arguments = json.loads((invocation / "arguments.json").read_text())
+                        arguments[arguments.index("deps")] = "graph"
+                        report.write_json(invocation / "arguments.json", arguments)
+                    value = report.command_verdict(invocation / "context.json")
+                    report.write_json(invocation / "verdict.json", value)
+                    self.assertEqual(value["status"], status, value)
+                    if change in (None, "success"):
+                        self.assertEqual(value["errors"], [])
+                    archive = self.root / "preparation.tar.gz"
+                    failed = change in (None, "collection-error")
+                    if failed:
+                        self.assertEqual(value["native_exit"], 2)
+                    combined = report.bundle(self.evidence, 2 if failed else 0, int(change == "collection-error"), archive)
+                    self.assertEqual(combined["status"], status, combined)
+                    self.assertEqual(combined["sources"], [context["expected_source"]])
+                    identity = report.file_record(archive)
+                    receipt = report.receipt(archive, identity["sha256"], context["expected_source"])
+                    self.assertEqual(receipt["status"], status, receipt)
+                    self.assertEqual((receipt["expected_owner_count"], receipt["executed_attempt_count"]), (0, 0))
+                    self.assertEqual(receipt["case_counts"], {})
+                    with self.assertRaisesRegex(ValueError, "Producer target labels differ"):
+                        report.receipt(archive, identity["sha256"], context["expected_source"], ["//:not-executed"])
+                    with tarfile.open(archive) as retained:
+                        for name in ("stdout.log", "stderr.log", "record.json"):
+                            if change == "collection-error" and name == "stderr.log":
+                                continue
+                            self.assertEqual(retained.extractfile("invocation-dependency-preparation/" + name).read(),
+                                             (invocation / name).read_bytes())
+                finally:
+                    shutil.rmtree(invocation)
+
     def test_missing_finish_time_preserves_retained_test_failure(self) -> None:
         invocation = self.fixture("fail")
         self.capture(invocation)

@@ -1,0 +1,70 @@
+INFO: Invocation ID: 6184098e-e06d-4588-8b25-53fee57952fe
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+WARNING: Download from https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/dists/jammy/main/binary-amd64/Packages.xz failed: class java.io.IOException GET returned 503 Service Unavailable
+WARNING: Download from https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/dists/jammy/main/binary-amd64/Packages.bz2 failed: class java.io.IOException GET returned 503 Service Unavailable
+WARNING: Download from https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/dists/jammy/main/binary-amd64/Packages.gz failed: class java.io.IOException GET returned 503 Service Unavailable
+WARNING: Download from https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/dists/jammy/main/Contents-amd64.gz failed: class java.io.IOException GET returned 503 Service Unavailable
+ no actions running
+WARNING: Download from https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/dists/jammy/main/Contents-amd64.xz failed: class java.io.IOException GET returned 503 Service Unavailable
+WARNING: Download from https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/dists/jammy/main/binary-amd64/Packages failed: class java.io.IOException GET returned 503 Service Unavailable
+ERROR: /home/buildbuddy/workspace/output-base/external/rules_distroless+/apt/extensions.bzl:126:9: Traceback (most recent call last):
+	File "/home/buildbuddy/workspace/output-base/external/rules_distroless+/apt/extensions.bzl", line 292, column 41, in _distroless_extension
+		used_keys = _fetch_and_parse_sources(mctx, repo, glock, snapshot_suites, formats)
+	File "/home/buildbuddy/workspace/output-base/external/rules_distroless+/apt/extensions.bzl", line 208, column 59, in _fetch_and_parse_sources
+		(output, url, integrity, ext) = _resolve_downloads(mctx, pkg_tokens, "Packages", dist, comp, arch)
+	File "/home/buildbuddy/workspace/output-base/external/rules_distroless+/apt/extensions.bzl", line 126, column 9, in _resolve_downloads
+		fail("""
+Error in fail: 
+** Tried to download 4 different package indices and all failed.
+
+
+*) Failed 'https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/.../Packages.xz'
+
+Download failed. See warning above for details.
+
+*) Failed 'https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/.../Packages.gz'
+
+Download failed. See warning above for details.
+
+*) Failed 'https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/.../Packages.bz2'
+
+Download failed. See warning above for details.
+
+*) Failed 'https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/.../Packages'
+
+Download failed. See warning above for details.
+        
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ no actions running
+ERROR: error evaluating module extension @@rules_distroless+//apt:extensions.bzl%apt
+ERROR: Results may be incomplete as 1 extension failed.
+

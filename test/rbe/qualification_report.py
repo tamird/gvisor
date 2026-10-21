@@ -1711,9 +1711,11 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     if kind not in ("test", "benchmark", "build", "analysis", "command") or kind != "command" and (kind == "analysis") != analysis:
         errors.append("Command kind does not match original analysis/execution arguments")
     command = next((arg for arg in arguments if not arg.startswith("-")), None)
-    allowed_commands = ("run", "query") if kind == "command" else ("test", "build")
+    allowed_commands = ("run", "query", "mod") if kind == "command" else ("test", "build")
     if command not in allowed_commands or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
+    if command == "mod" and arguments[arguments.index(command):arguments.index(command) + 2] != ["mod", "deps"]:
+        errors.append("Dependency preparation requires the original Bazel mod deps command")
     if kind == "benchmark" and command != "test":
         errors.append("Benchmark evidence requires a Bazel test command")
     if kind == "command" and command == "run" and analysis:
@@ -1740,11 +1742,11 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
 
 
 def command_verdict(context: Path) -> dict[str, object]:
-    """Retain run/query completion without inventing build or test owners."""
+    """Retain run/query/dependency preparation without inventing execution owners."""
     started = time.monotonic()
     info, errors = source_context(context)
     if info["command_kind"] != "command":
-        errors.append("Command evidence requires a run/query source context")
+        errors.append("Command evidence requires a command source context")
     outputs = {}
     for name in ("stdout", "stderr"):
         path = context.parent / (name + ".log")

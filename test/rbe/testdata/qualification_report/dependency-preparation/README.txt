@@ -1,0 +1,2 @@
+Dependency preparation from native bb03a0b8-2714-4b23-a11f-9c446b737da3 at source 55f4bfaeaa583faaa3e6902c4e95765842562695.
+Original stdout/stderr, argv, exit and finish time are retained. The failed mod deps configured and executed no test owners. The source context is reconstructed from the provider source identity, exact Git commit object and canonical preparation record; it was not present in the original failed bundle. Lock generation is explicit preparation, so its record retains before/after identities instead of asserting immutable lock bytes.
