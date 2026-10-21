@@ -13,6 +13,7 @@ bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "pigz", version = "2.8.bcr.2")
 bazel_dep(name = "rules_oci", version = "2.3.3")
+bazel_dep(name = "rules_img", version = "0.3.23")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 bazel_dep(name = "gawk", version = "5.3.2.bcr.7")
@@ -486,6 +487,30 @@ http_archive(
 )
 
 ### Docker integration test images
+# Preserve the existing test distributions while making their layers declared,
+# immutable inputs. Both architectures are assembled without a Docker daemon.
+img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
+
+img_pull(
+    name = "test_alpine",
+    digest = "sha256:b276d875eeed9c7d3f1cfa7edb06b22ed22b14219a7d67c52c56612330348239",
+    layer_handling = "eager",
+    platforms = ["linux/amd64", "linux/arm64"],
+    registry = "index.docker.io",
+    repository = "library/alpine",
+    tag = "3.11.5",
+)
+
+img_pull(
+    name = "test_busybox",
+    digest = "sha256:95cf004f559831017cdf4628aaf1bb30133677be8702a8c5f2994629f637a209",
+    layer_handling = "eager",
+    platforms = ["linux/amd64", "linux/arm64"],
+    registry = "index.docker.io",
+    repository = "library/busybox",
+    tag = "1.31.1",
+)
+
 # BCR has only 2.3.0; use the released archive for newer load-error fixes.
 # Remove this override when BCR publishes 2.3.3 or a newer release.
 # https://github.com/bazel-contrib/rules_oci/releases/tag/v2.3.3
