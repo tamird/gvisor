@@ -51,8 +51,12 @@ def _declared_image_archive_impl(ctx):
     archive = ctx.file.archive
     dependency = ctx.attr.archive[DefaultInfo]
     inherited = ctx.attr.archive[ImageArchiveInfo].image if ImageArchiveInfo in ctx.attr.archive else None
-    architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(ctx.attr.architecture, ctx.attr.architecture)
-    if inherited != None and (inherited.name != ctx.attr.image or inherited.architecture != architecture):
+    image = ctx.attr.image or (inherited.name if inherited != None else "")
+    architecture = ctx.attr.architecture or (inherited.architecture if inherited != None else "")
+    if not image or not architecture:
+        fail("archives without a declared producer require an image and architecture")
+    architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(architecture, architecture)
+    if inherited != None and (inherited.name != image or inherited.architecture != architecture):
         fail("archive aliases must preserve the declared image and architecture")
     origin = ctx.attr.origin or (inherited.origin if inherited != None else "source")
     layout = ctx.file.layout or (inherited.layout if inherited != None else None)
@@ -74,7 +78,7 @@ def _declared_image_archive_impl(ctx):
             runfiles = runfiles,
         ),
         ImageArchiveInfo(image = struct(
-            name = ctx.attr.image,
+            name = image,
             architecture = architecture,
             archive = archive,
             origin = origin,
@@ -90,8 +94,8 @@ declared_image_archive = rule(
     doc = "Preserves a Docker archive's image identity for source qualification.",
     attrs = {
         "archive": attr.label(mandatory = True, allow_single_file = True),
-        "architecture": attr.string(mandatory = True, values = ["amd64", "arm64", "x86_64", "aarch64"]),
-        "image": attr.string(mandatory = True),
+        "architecture": attr.string(values = ["", "amd64", "arm64", "x86_64", "aarch64"], doc = "Image architecture; empty inherits the archive declaration."),
+        "image": attr.string(doc = "Canonical image name; empty inherits the archive declaration."),
         "origin": attr.string(values = ["", "source", "native-oci", "registry"], doc = "Producer kind; empty inherits the archive declaration."),
         "layout": attr.label(allow_single_file = True, doc = "Configured OCI layout for a native assembly or registry dependency."),
         "pin": attr.label(allow_single_file = True, doc = "The registry pull repository's existing digest target."),

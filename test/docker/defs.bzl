@@ -32,7 +32,7 @@ SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
 # with_cfg requires its internal rule to be bound globally for Bazel:
 # https://github.com/fmeum/with_cfg.bzl/blob/a33b1b2d2/with_cfg/private/with_cfg.bzl#L86-L89
 # buildifier: disable=unused-variable
-amd64_image_archive, _amd64_image_archive_transition = with_cfg(
+_amd64_image_archive, _amd64_image_archive_transition = with_cfg(
     native.alias,
     extra_providers = [ImageArchiveInfo],
 ).set(
@@ -42,6 +42,25 @@ amd64_image_archive, _amd64_image_archive_transition = with_cfg(
     "platforms",
     [Label("//tools/bazeldefs:linux_amd64")],
 ).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
+
+def amd64_image_archive(name, actual, **kwargs):
+    """Preserves the public archive owner and its configured producer identity.
+
+    Args:
+      name: Public archive target.
+      actual: Declared archive to build for AMD64.
+      **kwargs: Common target attributes.
+    """
+    common = {key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
+    _amd64_image_archive(name = name + "_configured", actual = actual, **kwargs)
+
+    # Native aliases are transparent to aspects. Keep the public owner on a
+    # rule while inheriting the producer's configured archive and identity.
+    declared_image_archive(
+        name = name,
+        archive = ":" + name + "_configured",
+        **common
+    )
 
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")
