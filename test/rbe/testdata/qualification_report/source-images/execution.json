@@ -1,4 +1,11 @@
 {
+  "invocation": {
+    "hashFunctionName": "SHA-256",
+    "workspaceRunfilesDirectory": "_main",
+    "id": "3b50910b-10d4-457c-9bc6-3e826e330967"
+  }
+}
+{
   "id": 45538,
   "directory": {
     "path": "bazel-out/k8-fastbuild/bin/test/docker/images_benchmarks_iperf_amd64_source_layout.oci"

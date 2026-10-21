@@ -50,9 +50,9 @@ capture owner uses each `testResult`'s original reports.
   The original aggregate remains failed; the fixture must stay unaccounted.
 * `source-images`: one local Docker iperf owner from run 39531331807, with
   its uncached remote source producer and stock archive conversion. The raw
-  compact projection keeps the original IDs and accepted ancestry edges,
-  including the runfiles tree. Unrelated edges and directory contents are
-  omitted. XML is unchanged; the log retains load lines, numeric measurements
+  compact projection keeps the invocation header, original input IDs and
+  accepted ancestry edges, including the runfiles tree. Unrelated edges and
+  directory contents are omitted. XML is unchanged; the log retains load lines, numeric measurements
   and the package PASS marker. The canonical verdict is projected to this
   configured owner. Local TestRunner digest absence is original evidence.
 

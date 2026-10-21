@@ -852,17 +852,16 @@ def compact_records(path: Path) -> tuple[dict[int, dict[str, object]], list[dict
         record = mapping(raw)
         if "spawn" in record:
             spawns.append(mapping(record["spawn"]))
-        identifiers = ([record["id"]] if "id" in record else
-                       [value["id"] for value in record.values() if isinstance(value, dict) and "id" in value])
-        if not identifiers:
+        # ExecLogEntry.id identifies interned inputs. Invocation.id is a UUID,
+        # not an input identity, and must not enter this index.
+        if "id" not in record:
             continue
-        match identifiers:
-            case [identifier] if isinstance(identifier, int) and not isinstance(identifier, bool) and identifier > 0:
-                if identifier in records:
-                    raise ValueError(f"Duplicate execution record: {identifier}")
-                records[identifier] = record
-            case _:
-                raise ValueError(f"Invalid execution record identities: {identifiers}")
+        identifier = record["id"]
+        if type(identifier) is not int or identifier <= 0:
+            raise ValueError(f"Invalid execution record ID: {identifier}")
+        if identifier in records:
+            raise ValueError(f"Duplicate execution record: {identifier}")
+        records[identifier] = record
     return records, spawns
 
 
