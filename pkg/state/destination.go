@@ -105,6 +105,58 @@ func (intOps[T]) Restore(d Decoder, target *T) {
 	checkInt(int64(value), int64(*target))
 }
 
+type boolOps[T ~bool] struct{}
+
+// BoolOps selects a boolean destination without retaining target.
+func BoolOps[T ~bool](_ *T) boolOps[T] { return boolOps[T]{} }
+
+func (boolOps[T]) Restore(d Decoder, target *T) {
+	*target = T(requireWire[wire.Bool](d.encoded))
+}
+
+type uintOps[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr] struct{}
+
+// UintOps selects an unsigned integer destination without retaining target.
+func UintOps[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](_ *T) uintOps[T] {
+	return uintOps[T]{}
+}
+
+func (uintOps[T]) Restore(d Decoder, target *T) {
+	value := requireWire[wire.Uint](d.encoded)
+	*target = T(value)
+	checkUint(uint64(value), uint64(*target))
+}
+
+type floatOps[T ~float32 | ~float64] struct{}
+
+// FloatOps selects a floating-point destination without retaining target.
+func FloatOps[T ~float32 | ~float64](_ *T) floatOps[T] { return floatOps[T]{} }
+
+func (floatOps[T]) Restore(d Decoder, target *T) {
+	if value, ok := d.encoded.(wire.Float32); ok {
+		*target = T(value)
+	} else {
+		value := requireWire[wire.Float64](d.encoded)
+		*target = T(value)
+		checkFloat(float64(value), float64(*target))
+	}
+}
+
+type complexOps[T ~complex64 | ~complex128] struct{}
+
+// ComplexOps selects a complex destination without retaining target.
+func ComplexOps[T ~complex64 | ~complex128](_ *T) complexOps[T] { return complexOps[T]{} }
+
+func (complexOps[T]) Restore(d Decoder, target *T) {
+	if value, ok := d.encoded.(*wire.Complex64); ok {
+		*target = T(*value)
+	} else {
+		value := requireWire[*wire.Complex128](d.encoded)
+		*target = T(*value)
+		checkComplex(complex128(*value), complex128(*target))
+	}
+}
+
 type stringOps[T ~string] struct{}
 
 // StringOps selects a string destination without retaining target.
@@ -142,6 +194,9 @@ func MapTypes[M ~map[K]V, K comparable, V any](_ M) (key K, value V) { return }
 
 // SliceTypes returns a zero element for type inference, without reading s.
 func SliceTypes[S ~[]E, E any](_ S) (element E) { return }
+
+// PointerTypes returns a zero pointee for inference, without dereferencing p.
+func PointerTypes[P ~*E, E any](_ P) (element E) { return }
 
 type mapOps[M ~map[K]V, K comparable, V any, KO Destination[K], VO Destination[V]] struct{}
 
@@ -206,6 +261,25 @@ func (sliceOps[S, E, EO]) Restore(d Decoder, target *S) {
 	// Manual Array-to-slice loads must re-read the actual slice header after
 	// each hook, rather than indexing a snapshot of it.
 	restoreArrayElements(d, typedSlice[S, E]{target}, typedCell[E, EO]{}, requireWire[wire.Array](d.encoded))
+}
+
+type arrayOps[A any, E any, EO Destination[E]] struct{}
+
+// ArrayOps selects a fixed array and its element operation. The view only
+// supplies the element type; neither it nor the destination is retained.
+func ArrayOps[A any, E any, EO Destination[E]](_ *A, _ []E, _ EO) arrayOps[A, E, EO] {
+	return arrayOps[A, E, EO]{}
+}
+
+func (arrayOps[A, E, EO]) Restore(d Decoder, target *A) {
+	// Go has no array-length type parameter. Obtain one view, then use the
+	// same typed element traversal as graph-owned backing arrays.
+	array := reflect.ValueOf(target).Elem()
+	if array.Kind() != reflect.Array || array.Type().Elem() != reflect.TypeFor[E]() {
+		Failf("array operation for %s has element %s", array.Type(), reflect.TypeFor[E]())
+	}
+	elements := array.Slice(0, array.Len()).Interface().([]E)
+	restoreArrayElements(d, typedArray[E]{elements}, typedCell[E, EO]{}, requireWire[wire.Array](d.encoded))
 }
 
 type backingArrayBody[E any, EO Destination[E]] struct{}
