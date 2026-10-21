@@ -110,7 +110,7 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(len(value["executed"]), 1)
 
     def external_fixture(self, name: str) -> Path:
-        invocation = self.evidence / name
+        invocation = self.evidence / ("invocation-" + name)
         shutil.copytree(FIXTURES / "external-labels" / name, invocation)
         context = report.read_json(invocation / "context.json")
         context.pop("lock_before")
