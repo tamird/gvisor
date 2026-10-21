@@ -130,7 +130,7 @@ def manifest_path(events: Path) -> Path:
     return Path(str(events) + ".manifest.json")
 
 
-def retained_reports(manifest: Path) -> tuple[dict[tuple[Attempt, str], Path], list[str]]:
+def retained_reports(manifest: Path) -> tuple[dict[str, object], dict[tuple[Attempt, str], Path], list[str]]:
     """Read the attempt identities and immutable originals owned by capture."""
     retained = read_json(manifest)
     errors = [string(item) for item in sequence(retained.get("errors"))]
@@ -146,7 +146,7 @@ def retained_reports(manifest: Path) -> tuple[dict[tuple[Attempt, str], Path], l
             reports[key] = report
         except (OSError, ValueError) as error:
             errors.append(str(error))
-    return reports, errors
+    return retained, reports, errors
 
 
 def timestamp(value: str) -> datetime.datetime:
@@ -931,7 +931,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
         required_benchmarks = benchmark_expectations(contract["benchmarks"]) if "benchmarks" in contract else {}
         if not set(required_benchmarks) <= set(wanted):
             raise ValueError("Benchmark obligations name an unexpected source-image owner")
-        reports, report_errors = retained_reports(manifest)
+        _, reports, report_errors = retained_reports(manifest)
         errors.extend(report_errors)
         records, spawns = compact_records(execution)
 
@@ -1355,9 +1355,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             declared_evidence = {"path": str(declared_benchmarks), **file_record(declared_benchmarks)}
         except (OSError, ValueError) as error:
             errors.append(f"Declared benchmark manifest: {error}")
-    reports, report_errors = retained_reports(manifest)
+    retained, reports, report_errors = retained_reports(manifest)
     errors.extend(report_errors)
-    if read_json(manifest).get("events") != file_record(events):
+    if retained.get("events") != file_record(events):
         errors.append("Sanitized BEP digest/size differs from capture manifest")
     configured: set[Owner] = set()
     announced: set[Attempt] = set()

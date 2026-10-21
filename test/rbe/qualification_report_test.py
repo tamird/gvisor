@@ -230,7 +230,7 @@ class QualificationReportTest(unittest.TestCase):
                         row["inputSet"][field] = [value + 100000 if value in conversion_ids else value
                                                   for value in row["inputSet"][field]]
             if "file" in row:
-                row["file"]["path"] = row["file"]["path"].replace("k8-fastbuild", "k8-dbg")
+                row["file"]["path"] = row["file"]["path"].replace("source_load/", "other_source_load/")
             copies.append(row)
         for spawn in spawns:
             if spawn["mnemonic"] in ("OCITarballManifest", "OCITarball"):
