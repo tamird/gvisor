@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T14:51:17.244607+00:00",
+    "updatedAt": "2026-10-21T15:11:59.532108+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10395,15 +10395,15 @@
       "title": "Unify generated state capture and restore",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
-      "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
-      "summary": "This retained earlier rewrite generated typed snapshots and restored them through one object graph. Its measured Load regressions led to the subsequent schema-ownership experiment. The current experiment is on the separate review/state-schema-ownership branch and remains under investigation after its complete fixed comparison; this branch identity and its historical evidence are preserved. Nogo source ordering (#15648) remains a prerequisite.",
+      "status": "Preserved investigation history",
+      "updatedAt": "2026-10-21T15:11:59.532108+00:00",
+      "summary": "This predecessor or incremental investigation is preserved as historical evidence. Its findings now feed the single root-owned architecture reassessment of 3a38641f0; this row has no separate active implementation or contributor decision.\n\nHistorical source-specific findings:\n\nThis retained earlier rewrite generated typed snapshots and restored them through one object graph. Its measured Load regressions led to the subsequent schema-ownership experiment. The current experiment is on the separate review/state-schema-ownership branch and remains under investigation after its complete fixed comparison; this branch identity and its historical evidence are preserved. Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
-        "disposition": "Investigating Load regressions",
-        "owner": "restore_integration_review",
+        "disposition": "Preserved history; reassessment owned by integrated proposal",
+        "owner": "root",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
-        "observedAt": "2026-10-15T12:24:31.479528+00:00",
-        "nextAction": "Continue the separate schema-ownership investigation; retain this earlier proposal and its evidence without transferring newer results onto its head.",
+        "observedAt": "2026-10-21T15:11:59.532108+00:00",
+        "nextAction": "No separate action on this historical revision. Follow the single architecture reassessment at https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b. Preserve these findings and source identities.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -10808,15 +10808,15 @@
       "title": "Delete duplicate state slice capture",
       "url": "https://github.com/tamird/gvisor/commit/44045744529ba5c95a96fbefd3175b914167631c",
       "group": "runtime",
-      "status": "Increment and aggregate consumer validation passed",
-      "updatedAt": "2026-10-17T02:00:31.918946+00:00",
-      "summary": "This exact two-file incremental change deletes 16 lines by routing ordinary generated slice fields through the existing Sink.Save/SaveValue path. Its review range is 0fb39effd..440457445. It depends on the preceding shared-store rewrite at 0fb39effd, which has not landed upstream; it is not an independent upstream PR or approved contributor delivery. Correctness and production links pass, while native one-operation allocation observations and the benchmark XML producer failure remain explicitly separate. The coherent aggregate is now published at 67c4ddcf6 and has passed fresh current-consumer compilation and checkpoint smoke; the aggregate remains a design proposal; displaying this increment adds no contributor-review blocker.",
+      "status": "Preserved investigation history",
+      "updatedAt": "2026-10-21T15:11:59.532108+00:00",
+      "summary": "This predecessor or incremental investigation is preserved as historical evidence. Its findings now feed the single root-owned architecture reassessment of 3a38641f0; this row has no separate active implementation or contributor decision.\n\nHistorical source-specific findings:\n\nThis exact two-file incremental change deletes 16 lines by routing ordinary generated slice fields through the existing Sink.Save/SaveValue path. Its review range is 0fb39effd..440457445. It depends on the preceding shared-store rewrite at 0fb39effd, which has not landed upstream; it is not an independent upstream PR or approved contributor delivery. Correctness and production links pass, while native one-operation allocation observations and the benchmark XML producer failure remain explicitly separate. The coherent aggregate is now published at 67c4ddcf6 and has passed fresh current-consumer compilation and checkpoint smoke; the aggregate remains a design proposal; displaying this increment adds no contributor-review blocker.",
       "followup": {
-        "owner": "restore_integration_review",
-        "disposition": "Implementation and aggregate integration",
+        "owner": "root",
+        "disposition": "Preserved history; reassessment owned by integrated proposal",
         "sourceHead": "44045744529ba5c95a96fbefd3175b914167631c",
-        "observedAt": "2026-10-17T02:00:31.918946+00:00",
-        "nextAction": "Continue the integrated proposal at 3a38641f0 and its matched prerequisite-base assessment. Preserve this incremental source and its qualified observations; it remains dependent on the shared-store rewrite.",
+        "observedAt": "2026-10-21T15:11:59.532108+00:00",
+        "nextAction": "No separate action on this historical revision. Follow the single architecture reassessment at https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b. Preserve these findings and source identities.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/44045744529ba5c95a96fbefd3175b914167631c",
           "https://github.com/tamird/gvisor/commit/0fb39effd9b3388f2efae08475af3f228056c0bd",
@@ -10848,9 +10848,9 @@
       "title": "Aggregate state capture and restore rewrite",
       "url": "https://github.com/tamird/gvisor/commit/67c4ddcf6ff517a8a8c44d30a325201b976caaf4",
       "group": "runtime",
-      "status": "Preserved earlier aggregate; successor published",
-      "updatedAt": "2026-10-17T02:00:31.918946+00:00",
-      "summary": "The aggregate state design proposal at 67c4ddcf6 now passes fresh current-consumer integration on composition 2b05eaf212. The canonical producer reports PASS for four AMD64/ARM64 runsc and Sentry builds plus two fresh TestDeadlock/TestCheckpointRestore processes, with nine passing XML entries, no failures or skips, and unchanged source and lockfile. The original zero-process loading failure remains recorded. The complete export retains 44 of the 45 qualified changed paths, excluding only the three-line diagnostic empty benchmark leaf; both adapted build owners are included. The exact proposal comparison remains git range-diff 00d19e629^! 67c4ddcf6^!, with open #15648 and #15814 prerequisites. This closes consumer compilation and checkpoint smoke, not performance readiness. Earlier source-specific comparisons have not demonstrated an end-to-end timing gain, and residual binary growth remains. The aggregate remains an agent-owned design proposal; no contributor-review or upstream-submission request is pending.",
+      "status": "Preserved investigation history",
+      "updatedAt": "2026-10-21T15:11:59.532108+00:00",
+      "summary": "This predecessor or incremental investigation is preserved as historical evidence. Its findings now feed the single root-owned architecture reassessment of 3a38641f0; this row has no separate active implementation or contributor decision.\n\nHistorical source-specific findings:\n\nThe aggregate state design proposal at 67c4ddcf6 now passes fresh current-consumer integration on composition 2b05eaf212. The canonical producer reports PASS for four AMD64/ARM64 runsc and Sentry builds plus two fresh TestDeadlock/TestCheckpointRestore processes, with nine passing XML entries, no failures or skips, and unchanged source and lockfile. The original zero-process loading failure remains recorded. The complete export retains 44 of the 45 qualified changed paths, excluding only the three-line diagnostic empty benchmark leaf; both adapted build owners are included. The exact proposal comparison remains git range-diff 00d19e629^! 67c4ddcf6^!, with open #15648 and #15814 prerequisites. This closes consumer compilation and checkpoint smoke, not performance readiness. Earlier source-specific comparisons have not demonstrated an end-to-end timing gain, and residual binary growth remains. The aggregate remains an agent-owned design proposal; no contributor-review or upstream-submission request is pending.",
       "refinement": {
         "before": {
           "head": "00d19e629a19ecac3692b19a04c97e59b6e7e7c2"
@@ -10860,11 +10860,11 @@
         }
       },
       "followup": {
-        "owner": "restore_integration_review",
-        "disposition": "Preserved predecessor",
+        "owner": "root",
+        "disposition": "Preserved history; reassessment owned by integrated proposal",
         "sourceHead": "67c4ddcf6ff517a8a8c44d30a325201b976caaf4",
-        "observedAt": "2026-10-17T02:00:31.918946+00:00",
-        "nextAction": "Continue the integrated successor at 3a38641f0. Preserve this source and its existing validation; current work is the complete prerequisite-base comparison and matched startup assessment.",
+        "observedAt": "2026-10-21T15:11:59.532108+00:00",
+        "nextAction": "No separate action on this historical revision. Follow the single architecture reassessment at https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b. Preserve these findings and source identities.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/67c4ddcf6ff517a8a8c44d30a325201b976caaf4",
           "https://github.com/google/gvisor/pull/15814",
@@ -10905,9 +10905,9 @@
       "title": "Integrate typed arrays into the state rewrite",
       "url": "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b",
       "group": "runtime",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-18T05:35:01.009362+00:00",
-      "summary": "The contributor decision on this proposal remains pending. Its startup prerequisite #15814 is authored by Etienne Perot and is separately awaiting his response to our October 15 review: make the registration test repeatable, consolidate registration ownership, and explain the lazy-metadata behavior and startup measurement. Both #15648 and #15814 remain open. These are publication holds. The qualified fork already includes both prerequisite compositions, and its current-consumer, aggregate and startup evidence is complete. Further architecture work remains authorized; the bounded follow-up assessment identified no new concrete hypothesis or missing experiment.\n\nThe complete integrated state proposal 3a38641f0 now has a matched comparison against its current prerequisite base. Exact arms fdc73917e and 6b522949e share the same fixtures and qualification infrastructure; twelve balanced adjacent pairs across four Save/Load fixtures produced 104 fresh children, including 96 measured observations. UDP Save is 10.73% faster, UDP Load is 14.44% faster, and adoption Load is 7.89% faster (all p<.001). Adoption Save timing is inconclusive (p=.060). UDP Save allocated bytes fall by 21.34% and UDP Load bytes by 14.96%, with allocation counts unchanged. Adoption Save uses 2.53% fewer bytes and 12.94% fewer allocations; adoption Load uses 7.07% fewer bytes and 17.93% fewer allocations. Wire sizes are unchanged. These results compare the full proposal with its prerequisite base; earlier scalar-stage samples remain separate. The matched startup run also passed: CLI medians are 2.380 versus 2.397 ms (p=.410), and StartupEmpty medians are 283.7 versus 265.8 ms (p=.198); neither establishes a timing difference. State initialization remains 3,032 bytes and 13 allocations in both runsc and Sentry. Production file growth is 98,304 bytes for AMD64 runsc, 253,952 for AMD64 Sentry, 131,072 for ARM64 runsc and 262,144 for ARM64 Sentry. The complete proposal packet is published, and the contributor review request is pending. Upstream submission also requires #15648 and #15814 to land. The published 44-path proposal and its four current-consumer links plus nine checkpoint/cycle smoke entries remain qualified. The preserved predecessor is 67c4ddcf6; the exact refinement command remains available.",
+      "status": "Agent architecture reassessment",
+      "updatedAt": "2026-10-21T15:11:59.532108+00:00",
+      "summary": "The contributor requested architectural revision: the current proposal is too large and additive. Root owns one reassessment of the existing capture/restore paths and the three preserved predecessor investigations. No contributor decision or upstream publication is pending for this revision. Existing qualification and performance results remain bound to their original sources.\n\nHistorical proposal and review evidence:\n\nThe contributor decision on this proposal remains pending. Its startup prerequisite #15814 is authored by Etienne Perot and is separately awaiting his response to our October 15 review: make the registration test repeatable, consolidate registration ownership, and explain the lazy-metadata behavior and startup measurement. Both #15648 and #15814 remain open. These are publication holds. The qualified fork already includes both prerequisite compositions, and its current-consumer, aggregate and startup evidence is complete. Further architecture work remains authorized; the bounded follow-up assessment identified no new concrete hypothesis or missing experiment.\n\nThe complete integrated state proposal 3a38641f0 now has a matched comparison against its current prerequisite base. Exact arms fdc73917e and 6b522949e share the same fixtures and qualification infrastructure; twelve balanced adjacent pairs across four Save/Load fixtures produced 104 fresh children, including 96 measured observations. UDP Save is 10.73% faster, UDP Load is 14.44% faster, and adoption Load is 7.89% faster (all p<.001). Adoption Save timing is inconclusive (p=.060). UDP Save allocated bytes fall by 21.34% and UDP Load bytes by 14.96%, with allocation counts unchanged. Adoption Save uses 2.53% fewer bytes and 12.94% fewer allocations; adoption Load uses 7.07% fewer bytes and 17.93% fewer allocations. Wire sizes are unchanged. These results compare the full proposal with its prerequisite base; earlier scalar-stage samples remain separate. The matched startup run also passed: CLI medians are 2.380 versus 2.397 ms (p=.410), and StartupEmpty medians are 283.7 versus 265.8 ms (p=.198); neither establishes a timing difference. State initialization remains 3,032 bytes and 13 allocations in both runsc and Sentry. Production file growth is 98,304 bytes for AMD64 runsc, 253,952 for AMD64 Sentry, 131,072 for ARM64 runsc and 262,144 for ARM64 Sentry. The complete proposal packet is published, and the contributor review request is pending. Upstream submission also requires #15648 and #15814 to land. The published 44-path proposal and its four current-consumer links plus nine checkpoint/cycle smoke entries remain qualified. The preserved predecessor is 67c4ddcf6; the exact refinement command remains available.",
       "refinement": {
         "before": {
           "head": "67c4ddcf6ff517a8a8c44d30a325201b976caaf4"
@@ -10918,10 +10918,10 @@
       },
       "followup": {
         "owner": "root",
-        "disposition": "Contributor decision pending; maintainer-owned startup prerequisite awaits response",
+        "disposition": "Addressing contributor architecture feedback",
         "sourceHead": "3a38641f03edeb40fd50059cbb1559720f5ad04b",
-        "observedAt": "2026-10-18T05:35:01.009362+00:00",
-        "nextAction": "Await the existing contributor decision and prerequisite merges before upstream publication. The qualified fork already includes both prerequisites; continued architecture work is authorized, but the bounded assessment identified no new concrete experiment. Preserve current results without repeating completed profiles or measurements.",
+        "observedAt": "2026-10-21T15:11:59.532108+00:00",
+        "nextAction": "Reassess consolidation around existing state paths and remove duplicated generated mechanisms; present the resulting concrete revision for review. Preserve historical source/measurement evidence and prerequisite holds.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b",
           "https://app.buildbuddy.io/invocation/8c112347-ac8d-4247-ac23-f9072e4da856",
@@ -10962,8 +10962,7 @@
           "url": "https://app.buildbuddy.io/invocation/057306de-648f-41e3-b4b4-d7d92a31c3d5"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b",
         "url": "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b"
       }
