@@ -475,6 +475,12 @@ exceptions:
       - Unicode-DFS-2015
       - Zlib
     exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/amd64/init-system-helpers
+    license: &integration_test_init_system_helpers_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/amd64/iproute2
     license: &integration_test_iproute2_licenses
       - GPL-2.0
@@ -678,6 +684,15 @@ exceptions:
   - dependency: apt/integration_test_packages/amd64/libpam0g
     license: *integration_test_libnfnetlink0_licenses
     exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/amd64/libprocps8
+    license: &integration_test_libprocps8_licenses
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/amd64/libselinux1
     license: &integration_test_libselinux1_licenses
       - GPL-2.0
@@ -725,6 +740,12 @@ exceptions:
       - MIT
       - Zlib
     exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/amd64/lsb-base
+    license: &integration_test_lsb_base_licenses
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/amd64/mawk
     license: *integration_test_iproute2_licenses
     exception_rationale: *integration_test_runtime
@@ -750,6 +771,9 @@ exceptions:
       - Unicode-DFS-2015
       - Zlib
       - bzip2-1.0.6
+    exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/amd64/procps
+    license: *integration_test_libprocps8_licenses
     exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/amd64/tar
     license: &integration_test_tar_licenses
@@ -781,6 +805,9 @@ exceptions:
     exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/arm64/gcc-12-base
     license: *integration_test_gcc_12_base_licenses
+    exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/arm64/init-system-helpers
+    license: *integration_test_init_system_helpers_licenses
     exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/arm64/iproute2
     license: *integration_test_iproute2_licenses
@@ -881,6 +908,9 @@ exceptions:
   - dependency: apt/integration_test_packages/arm64/libpam0g
     license: *integration_test_libnfnetlink0_licenses
     exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/arm64/libprocps8
+    license: *integration_test_libprocps8_licenses
+    exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/arm64/libselinux1
     license: *integration_test_libselinux1_licenses
     exception_rationale: *integration_test_runtime
@@ -905,6 +935,9 @@ exceptions:
   - dependency: apt/integration_test_packages/arm64/libzstd1
     license: *integration_test_libzstd1_licenses
     exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/arm64/lsb-base
+    license: *integration_test_lsb_base_licenses
+    exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/arm64/mawk
     license: *integration_test_iproute2_licenses
     exception_rationale: *integration_test_runtime
@@ -913,6 +946,9 @@ exceptions:
     exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/arm64/perl-base
     license: *integration_test_perl_base_licenses
+    exception_rationale: *integration_test_runtime
+  - dependency: apt/integration_test_packages/arm64/procps
+    license: *integration_test_libprocps8_licenses
     exception_rationale: *integration_test_runtime
   - dependency: apt/integration_test_packages/arm64/tar
     license: *integration_test_tar_licenses
