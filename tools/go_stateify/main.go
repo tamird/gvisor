@@ -32,10 +32,11 @@ import (
 )
 
 var (
-	fullPkg    string
-	imports    string
-	statePkg   string
-	configPath = flag.String("config", "", "declared package inputs")
+	fullPkg          string
+	imports          string
+	statePkg         string
+	configPath       = flag.String("config", "", "declared package inputs")
+	declarationsOnly = flag.Bool("declarations-only", false, "render declarations before import cleanup")
 )
 
 // resolveTypeName returns a qualified type name.
@@ -181,7 +182,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if err := generate(*configPath); err != nil {
+	if err := generate(*configPath, *declarationsOnly); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

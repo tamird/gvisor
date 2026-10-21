@@ -9,7 +9,12 @@ go_library(
     name = "tests",
     testonly = True,
     srcs = ["types.go"],
-    imports = ["gvisor.dev/gvisor/tools/go_stateify/tests/containers"],
+    imports = [
+        # Historical hints may refer to removed packages; goimports must prune
+        # unused hints before the configured type checker resolves imports.
+        "gvisor.dev/gvisor/pkg/sentry/fs",
+        "gvisor.dev/gvisor/tools/go_stateify/tests/containers",
+    ],
     deps = ["//tools/go_stateify/tests/containers"],
 )
 

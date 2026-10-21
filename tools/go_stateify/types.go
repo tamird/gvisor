@@ -58,8 +58,9 @@ type compilerExport struct {
 }
 
 type sourceGroup struct {
-	Sources []string
-	Output  string
+	Sources      []string
+	Output       string
+	Declarations string
 }
 
 // exportImporter reads the exact compiler exports supplied by Bazel. It never
@@ -97,7 +98,7 @@ func (i *exportImporter) Import(path string) (*types.Package, error) {
 
 // generate resolves the configured package once, using the same generated
 // method declarations that are compiled later. Method bodies are not checked.
-func generate(configPath string) error {
+func generate(configPath string, declarationsOnly bool) error {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return err
@@ -169,16 +170,21 @@ func generate(configPath string) error {
 			}); err != nil {
 				return err
 			}
-			file, err := parser.ParseFile(fset, group.Output, out.Bytes(), 0)
-			if err != nil {
-				return fmt.Errorf("stateify declarations: %w", err)
+			if !declarationsOnly {
+				// Rendered import hints can be obsolete or unused. Type-check
+				// the same declarations after the canonical goimports action,
+				// which removes those hints before resolving compiler exports.
+				file, err := parser.ParseFile(fset, group.Declarations, nil, 0)
+				if err != nil {
+					return fmt.Errorf("stateify declarations: %w", err)
+				}
+				canonical[i] = file
+				files = append(files, file)
 			}
-			canonical[i] = file
-			files = append(files, file)
 		}
 		outputs[i] = out.Bytes()
 	}
-	if len(generatedTypes) != 0 {
+	if !declarationsOnly && len(generatedTypes) != 0 {
 		if len(cgoSources) != 0 {
 			return fmt.Errorf("stateify needs configured cgo-generated inputs for %s: %s", config.ImportPath, cgoSources[0])
 		}
@@ -211,12 +217,10 @@ func generate(configPath string) error {
 		}
 		info := &types.Info{Defs: make(map[*ast.Ident]types.Object), Types: make(map[ast.Expr]types.TypeAndValue)}
 		checker := types.Config{
-			Importer:  &exportImporter{fset: fset, archives: config.Archives, packages: make(map[string]*types.Package)},
-			Sizes:     types.SizesFor("gc", config.GOARCH),
-			GoVersion: config.GoVersion,
-			// goimports prunes the renderer's imports after final generation.
-			DisableUnusedImportCheck: true,
-			IgnoreFuncBodies:         true,
+			Importer:         &exportImporter{fset: fset, archives: config.Archives, packages: make(map[string]*types.Package)},
+			Sizes:            types.SizesFor("gc", config.GOARCH),
+			GoVersion:        config.GoVersion,
+			IgnoreFuncBodies: true,
 		}
 		pkg, err := checker.Check(config.ImportPath, fset, files, info)
 		if err != nil {

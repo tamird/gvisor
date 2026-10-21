@@ -55,18 +55,26 @@ def _go_stateify_impl(ctx):
         if target in ctx.attr.group_sources:
             group_inputs[ctx.attr.group_sources[target]].extend([f.path for f in target[DefaultInfo].files.to_list()])
     groups = []
+    declaration_groups = []
+    declaration_outputs = []
+    cleaned_declarations = []
     raw_outputs = []
     for name, output in zip(ctx.attr.group_names, ctx.outputs.outs):
         raw = ctx.actions.declare_file(ctx.label.name + "/raw/" + output.basename)
+        declaration = ctx.actions.declare_file(ctx.label.name + "/declarations/raw/" + output.basename)
+        cleaned = ctx.actions.declare_file(ctx.label.name + "/declarations_" + output.basename)
         raw_outputs.append(raw)
-        groups.append({"Sources": group_inputs[name], "Output": raw.path})
+        declaration_outputs.append(declaration)
+        cleaned_declarations.append(cleaned)
+        declaration_groups.append({"Sources": group_inputs[name], "Output": declaration.path})
+        groups.append({"Sources": group_inputs[name], "Output": raw.path, "Declarations": cleaned.path})
+        go_imports_action(ctx, declaration, cleaned)
     tags = list(go.mode.tags) + ctx.attr.gotags
     if go.mode.race:
         tags.append("race")
     if go.mode.msan:
         tags.append("msan")
-    config = ctx.actions.declare_file(ctx.label.name + ".json")
-    ctx.actions.write(config, json.encode({
+    config_data = {
         "Package": ctx.attr.package,
         "ImportPath": ctx.attr.importpath,
         "StatePackage": "gvisor.dev/gvisor/pkg/state",
@@ -80,9 +88,23 @@ def _go_stateify_impl(ctx):
         "Tags": tags,
         "GoVersion": "go" + go.sdk.version,
         "CgoEnabled": go.env["CGO_ENABLED"] == "1",
-    }))
+    }
+    config = ctx.actions.declare_file(ctx.label.name + ".json")
+    ctx.actions.write(config, json.encode(config_data))
+    declaration_config = ctx.actions.declare_file(ctx.label.name + "_declarations.json")
+    config_data["Groups"] = declaration_groups
+    ctx.actions.write(declaration_config, json.encode(config_data))
     ctx.actions.run(
-        inputs = depset([config] + list(checker.srcs) + archive_files, transitive = [go.stdlib.libs]),
+        inputs = depset([declaration_config] + list(checker.srcs)),
+        outputs = declaration_outputs,
+        mnemonic = "GoStateifyDeclarations",
+        progress_message = "Generating state declarations %s" % ctx.label,
+        arguments = ["-config=" + declaration_config.path, "-declarations-only"],
+        executable = ctx.executable._tool,
+        env = go.env,
+    )
+    ctx.actions.run(
+        inputs = depset([config] + list(checker.srcs) + archive_files + cleaned_declarations, transitive = [go.stdlib.libs]),
         outputs = raw_outputs,
         mnemonic = "GoStateify",
         progress_message = "Generating state methods %s" % ctx.label,
