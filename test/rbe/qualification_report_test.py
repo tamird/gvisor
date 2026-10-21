@@ -1602,6 +1602,108 @@ class QualificationReportTest(unittest.TestCase):
             reports[attempt, "test.outputs/" + name] = path
         return reports
 
+    def dynamic_image_fixture(self, *, zipped: bool = False, archive_sha256: str | None = None) -> Path:
+        invocation = self.native_image_fixture()
+        contract = report.read_json(invocation / "expectations.json")
+        configured, = contract["configured_owners"]
+        image, = configured["images"]
+        canonical = report.read_json(invocation / "verdict.json")
+        canonical["command_kind"] = "test"
+        report.write_json(invocation / "verdict.json", canonical)
+        contract.pop("benchmarks")
+        contract["owners"] = {configured["label"]: []}
+        command, files = self.image_command_files()
+        files = {name.replace("benchmarks_profile-helper", "benchmarks_iperf"):
+                 data.replace(b"benchmarks_profile-helper", b"benchmarks_iperf").replace(
+                     b"benchmarks/profile-helper", b"benchmarks/iperf") for name, data in files.items()}
+        records, spawns = report.compact_records(invocation / "execution.json")
+        archive_id, = [identifier for identifier, row in records.items()
+                      if row.get("file", {}).get("path") == image["archive"]]
+        context_id, context_inputs_id = range(max(records) + 1, max(records) + 3)
+        context = "bazel-out/k8-fastbuild/bin/images/cpu_source_contexts.tar"
+        records.update({
+            context_id: {"id": context_id, "file": {"path": context, "digest": {"hash": "d" * 64, "sizeBytes": "100"}}},
+            context_inputs_id: {"id": context_inputs_id, "inputSet": {"inputIds": [archive_id]}},
+        })
+        test, = [spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"]
+        for row in records.values():
+            inputs = row.get("inputSet", {}).get("inputIds", [])
+            if archive_id in inputs and row["id"] != context_inputs_id:
+                inputs[inputs.index(archive_id)] = context_id
+        spawns.append({"targetLabel": "//images:cpu_source_contexts", "mnemonic": "PackageTar",
+                       "inputSetId": context_inputs_id, "outputs": [{"outputId": context_id}], "exitCode": 0})
+        command.update(contexts=context, context_images=[image])
+        configured.update(images=[], source_commands=[command])
+        report.write_json(invocation / "expectations.json", contract)
+        request_path = "source-images/benchmarks_iperf/request.json"
+        request = json.loads(files[request_path])
+        request["archive_sha256"] = records[archive_id]["file"]["digest"]["hash"] if archive_sha256 is None else archive_sha256
+        files[request_path] = json.dumps(request).encode()
+        directory, = [records[output["outputId"]]["directory"] for output in test["outputs"]
+                      if "outputId" in output and "directory" in records[output["outputId"]]]
+        directory["files"] = []
+        manifest = report.read_json(invocation / "manifest.json")
+        identity = manifest["reports"][0]["identity"]
+        if zipped:
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, "w") as archive:
+                for name, data in files.items():
+                    archive.writestr(name, data)
+            files = {"outputs.zip": buffer.getvalue()}
+        for name, data in files.items():
+            path = invocation / "reports" / directory["path"].removeprefix("bazel-out/") / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            digest = report.file_record(path)
+            manifest["reports"].append({"identity": identity, "name": "test.outputs__outputs.zip" if zipped else "test.outputs/" + name,
+                                        "path": str(path.relative_to(invocation)), **digest})
+            directory["files"].append({"path": name, "digest": {"hash": digest["sha256"], "sizeBytes": str(digest["bytes"])}})
+        report.write_json(invocation / "manifest.json", manifest)
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+        return invocation
+
+    def test_dynamic_images_require_context_and_output_provenance(self) -> None:
+        for damage, expected in (("", ""), ("zip", ""),
+                                 ("context", "Missing configured image context"),
+                                 ("producer", "Archive is not a context input"),
+                                 ("ambiguous", "Ambiguous input producer"),
+                                 ("failed", "Unsuccessful input producer"),
+                                 ("archive", "Loaded archive differs from configured context"),
+                                 ("output", "Image-build result differs from TestRunner output")):
+            with self.subTest(damage=damage):
+                invocation = self.dynamic_image_fixture(zipped=damage == "zip", archive_sha256="e" * 64 if damage == "archive" else None)
+                try:
+                    contract = report.read_json(invocation / "expectations.json")
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    producer, = [spawn for spawn in spawns if spawn.get("mnemonic") == "PackageTar"]
+                    if damage == "context":
+                        contract["configured_owners"][0]["source_commands"][0]["contexts"] += ".unrelated"
+                    elif damage == "producer":
+                        spawns.remove(producer)
+                    elif damage == "ambiguous":
+                        spawns.append(producer.copy())
+                    elif damage == "failed":
+                        producer["exitCode"] = 1
+                    elif damage == "output":
+                        directory, = [row["directory"] for row in records.values()
+                                      if row.get("directory", {}).get("path", "").endswith("/test.outputs")]
+                        directory["files"][0]["digest"]["hash"] = "0" * 64
+                    report.write_json(invocation / "expectations.json", contract)
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    value = self.source_image_audit(invocation)
+                    if expected:
+                        self.assertEqual(value["audit_status"], "INCOMPLETE", value)
+                        self.assertIn(expected, "\n".join(value["errors"]))
+                    else:
+                        self.assertEqual((value["audit_status"], value["errors"]), ("PASS", []), value)
+                        consumer, = value["consumers"]
+                        self.assertEqual([row["operation"] for row in consumer["image_build"]["results"]],
+                                         ["docker-build", "archive-load"])
+                finally:
+                    shutil.rmtree(invocation)
+
     def test_image_results_require_exact_selection_and_successful_outputs(self) -> None:
         attempt = report.Attempt(report.Owner("//test:images", "configuration"), 1, 1, 1)
         for architecture, zipped in itertools.product(("x86_64", "aarch64"), (False, True)):

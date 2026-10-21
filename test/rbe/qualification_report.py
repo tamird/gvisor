@@ -886,8 +886,9 @@ def compact_records(path: Path) -> tuple[dict[int, dict[str, object]], list[dict
     return records, spawns
 
 
-def input_chain(records: dict[int, dict[str, object]], start: int, target: int) -> list[int] | None:
-    """Follow declared inputs, including runfiles trees, without pooling digests."""
+def input_chain(records: dict[int, dict[str, object]], start: int, target: int,
+                producers: dict[int, list[dict[str, object]]] | None = None) -> list[int] | None:
+    """Follow declared inputs, optionally through the actions producing them."""
     parents: dict[int, int | None] = {start: None}
     pending = deque([start])
     while pending:
@@ -906,12 +907,45 @@ def input_chain(records: dict[int, dict[str, object]], start: int, target: int) 
         edges = sequence(inputs.get("inputIds", [])) + sequence(inputs.get("transitiveSetIds", []))
         if "runfilesTree" in record:
             edges.append(mapping(record["runfilesTree"])["inputSetId"])
+        if producers is not None and current in producers:
+            match producers[current]:
+                case [producer]:
+                    if number(producer.get("exitCode", 0)) or producer.get("status"):
+                        raise ValueError(f"Unsuccessful input producer: {producer.get('targetLabel')}")
+                    edges.append(producer["inputSetId"])
+                case _:
+                    raise ValueError(f"Ambiguous input producer: {current}")
         for raw in edges:
             child = number(raw)
             if child not in parents:
                 parents[child] = current
                 pending.append(child)
     return None
+
+
+def spawn_output_files(records: dict[int, dict[str, object]], spawn: dict[str, object]) -> dict[str, dict[str, object]]:
+    """Index original output-file digests, including tree-artifact members."""
+    files = {}
+    for raw in sequence(spawn.get("outputs")):
+        output = mapping(raw)
+        if "outputId" not in output:
+            continue
+        record = records[number(output["outputId"])]
+        if "file" in record:
+            entries = [mapping(record["file"])]
+        elif "directory" in record:
+            directory = mapping(record["directory"])
+            entries = [mapping(file) | {"path": string(directory["path"]) + "/" + string(mapping(file)["path"])}
+                       for file in sequence(directory.get("files", []))]
+        else:
+            continue
+        for entry in entries:
+            path = string(entry["path"])
+            if path in files:
+                raise ValueError(f"Duplicate output file: {path}")
+            digest = mapping(entry.get("digest"))
+            files[path] = {"sha256": string(digest["hash"]), "bytes": number(digest.get("sizeBytes", 0))}
+    return files
 
 
 def image_command_result(attempt: Attempt, reports: dict[tuple[Attempt, str], Path],
@@ -985,7 +1019,9 @@ def image_command_result(attempt: Attempt, reports: dict[tuple[Attempt, str], Pa
             raise ValueError(f"Built image identity or platform differs: {image}")
         results.append({"image": image_name, "architecture": architecture, "operation": request["operation"],
                         "archive_sha256": archive, "reference": reference, "image_id": observed["Id"]})
-    return {**selection, "results": results}
+    return {**selection, "results": results,
+            "files": {name: {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+                      for name, data in files.items()}}
 
 
 def image_command_partitions(rows: list[dict[str, object]]) -> None:
@@ -1063,6 +1099,8 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
         if len(expected) != len(set(expected)) or set(wanted) != {owner.label for owner in expected}:
             raise ValueError("Source-image owners differ from canonical configured owners")
         configured_images: dict[Owner, list[dict[str, object]]] = {}
+        configured_commands: dict[Owner, dict[str, object]] = {}
+        producer_images: dict[Owner, list[dict[str, object]]] = {}
         configured_pins: dict[str, str] = {}
         configured_indexes: dict[str, dict[str, object]] = {}
         if "configured_owners" in contract:
@@ -1071,11 +1109,18 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 owner = Owner(string(row.get("label")), string(row.get("configuration")))
                 if owner in configured_images:
                     raise ValueError(f"Duplicate configured image owner: {owner}")
-                if sequence(row.get("source_commands")):
-                    raise ValueError(f"Dynamic source-image commands require their own load audit: {owner}")
                 configured_images[owner] = declared_source_images(row.get("images"))
+                inventory = list(configured_images[owner])
+                commands = sequence(row.get("source_commands"))
+                if commands:
+                    if len(commands) != 1 or not mapping(commands[0]).get("contexts"):
+                        raise ValueError(f"Dynamic source-image commands require their own load audit with configured contexts: {owner}")
+                    command = mapping(commands[0])
+                    configured_commands[owner] = command
+                    inventory.extend(declared_source_images(command["context_images"]))
+                producer_images[owner] = inventory
                 pins = mapping(row.get("pins", {}))
-                if pins.keys() != {image["pin"] for image in configured_images[owner] if image.get("origin") == "registry"}:
+                if pins.keys() != {image["pin"] for image in inventory if image.get("origin") == "registry"}:
                     raise ValueError(f"Registry pin evidence differs from declared images: {owner}")
                 for path, raw_pin in pins.items():
                     pin = mapping(raw_pin)
@@ -1086,7 +1131,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                         raise ValueError(f"Conflicting configured registry pin: {path}")
                     configured_pins[path] = digest
                 indexes = mapping(row.get("indexes", {}))
-                if indexes.keys() != {image["index"] for image in configured_images[owner] if image.get("origin") == "registry"}:
+                if indexes.keys() != {image["index"] for image in inventory if image.get("origin") == "registry"}:
                     raise ValueError(f"Registry index evidence differs from declared images: {owner}")
                 for path, raw_index in indexes.items():
                     index = mapping(raw_index)
@@ -1107,6 +1152,8 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             raise ValueError("Empty image obligations require configured source declarations")
         if verdict["command_kind"] == "build" and not configured_images:
             raise ValueError("Build image audits require configured archive declarations")
+        if verdict["command_kind"] == "build" and configured_commands:
+            raise ValueError("Image-build tests must execute to qualify their selected images")
         required_benchmarks = benchmark_expectations(contract["benchmarks"]) if "benchmarks" in contract else {}
         if not set(required_benchmarks) <= set(wanted):
             raise ValueError("Benchmark obligations name an unexpected source-image owner")
@@ -1114,7 +1161,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             raise ValueError("Build image audits cannot satisfy benchmark obligations")
         test_owners = set() if verdict["command_kind"] == "build" else {
             owner for owner in expected
-            if configured_images.get(owner, wanted[owner.label]) or owner.label in required_benchmarks
+            if configured_images.get(owner, wanted[owner.label]) or owner in configured_commands or owner.label in required_benchmarks
         }
         test_labels = {owner.label for owner in test_owners}
         _, reports, report_errors = retained_reports(manifest)
@@ -1124,6 +1171,11 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
         def outputs(spawn: dict[str, object]) -> list[int]:
             return [number(mapping(output)["outputId"]) for output in sequence(spawn.get("outputs"))
                     if "outputId" in mapping(output)]
+
+        producers: dict[int, list[dict[str, object]]] = {}
+        for spawn in spawns:
+            for identifier in outputs(spawn):
+                producers.setdefault(identifier, []).append(spawn)
 
         def chains(spawn: dict[str, object], identifiers: list[int]) -> list[list[int]] | None:
             paths = []
@@ -1200,7 +1252,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
 
         native_layouts: dict[tuple[str, str, str], str] = {}
         registry_layouts: dict[tuple[str, str, str, str], set[str]] = {}
-        for declarations in configured_images.values():
+        for declarations in producer_images.values():
             for declared in declarations:
                 origin = declared.get("origin", "source")
                 if origin == "registry":
@@ -1331,11 +1383,13 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 raise ValueError(f"Missing cached registry copy identity: {layout}")
             producer = identity(source, executed=not cached) | {"pin": pin, "indexes": retained_indexes, "inputs": copied, "output": layout_record}
             archive_outputs(image, architecture, [layout_id], producer, "registry", layout)
-        if {row["image"] for row in images} != {image for rows in wanted.values() for image in rows}:
+        required_images = ({image["name"] for rows in producer_images.values() for image in rows}
+                           if configured_images else {image for rows in wanted.values() for image in rows})
+        if {row["image"] for row in images} != required_images:
             raise ValueError("Source producers differ from declared image obligations")
         if configured_images:
             declared_archives = {(image["name"], image["architecture"], image["archive"])
-                                 for rows in configured_images.values() for image in rows}
+                                 for rows in producer_images.values() for image in rows}
             actual_archives = {(row["image"], row["architecture"], mapping(row["archive"])["path"]) for row in images}
             if actual_archives != declared_archives:
                 raise ValueError("Source archive identities differ from configured declarations")
@@ -1358,6 +1412,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
         logs = {str(path.relative_to(manifest.parent.resolve())): attempt
                 for (attempt, name), path in reports.items() if name == "test.log"}
         observed: set[Attempt] = set()
+        image_builds: dict[tuple[Owner, int, int], list[dict[str, object]]] = {}
         for test in (spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"):
             if test.get("targetLabel") not in test_labels:
                 continue
@@ -1406,6 +1461,56 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             digest = mapping(xml_file.get("digest"))
             if file_record(reports[attempt, "test.xml"]) != {"sha256": digest.get("hash"), "bytes": number(digest.get("sizeBytes", 0))}:
                 raise ValueError(f"TestRunner XML differs from captured bytes: {attempt}")
+            image_build = None
+            if attempt.owner in configured_commands:
+                command = configured_commands[attempt.owner]
+                image_build = image_command_result(attempt, reports, command)
+                output_files = spawn_output_files(records, test)
+                output_root = str(Path(string(xml_file["path"])).parent / "test.outputs") + "/"
+                if zipped := reports.get((attempt, "test.outputs__outputs.zip")):
+                    captured_files = {"outputs.zip": file_record(zipped)}
+                else:
+                    captured_files = mapping(image_build["files"])
+                for name, digest in captured_files.items():
+                    if output_files.get(output_root + name) != digest:
+                        raise ValueError(f"Image-build result differs from TestRunner output: {attempt}: {name}")
+                context_path = string(command["contexts"])
+                match records_by_path.get(("file", context_path), []):
+                    case [(context_id, context_record)]:
+                        pass
+                    case _:
+                        raise ValueError(f"Missing configured image context: {context_path}")
+                context_digest = mapping(mapping(context_record["file"]).get("digest"))
+                if (re.fullmatch(r"[0-9a-f]{64}", string(context_digest.get("hash"))) is None
+                        or number(context_digest.get("sizeBytes", 0)) <= 0
+                        or (context_chain := input_chain(records, number(test["inputSetId"]), context_id)) is None):
+                    raise ValueError(f"Configured image context is not a TestRunner input: {context_path}")
+                image_build["context"] = {"input": context_record, "input_chain": context_chain}
+                for result in sequence(image_build["results"]):
+                    result = mapping(result)
+                    declarations = [mapping(image) for image in sequence(command["context_images"])
+                                    if (mapping(image)["name"], mapping(image)["architecture"]) ==
+                                    (result["image"], result["architecture"])]
+                    if not declarations:
+                        if result["operation"] != "docker-build":
+                            raise ValueError(f"Loaded archive is absent from configured context: {result['image']}")
+                        continue
+                    if len(declarations) != 1 or result["operation"] != "archive-load":
+                        raise ValueError(f"Image operation differs from configured context: {result['image']}")
+                    declaration = declarations[0]
+                    match [image for image in images if (image["image"], image["architecture"], mapping(image["archive"])["path"]) ==
+                           (declaration["name"], declaration["architecture"], declaration["archive"])]:
+                        case [image]:
+                            pass
+                        case _:
+                            raise ValueError(f"Missing unique context archive producer: {result['image']}")
+                    if mapping(mapping(image["archive"])["digest"])["hash"] != result["archive_sha256"]:
+                        raise ValueError(f"Loaded archive differs from configured context: {result['image']}")
+                    if (chain := input_chain(records, context_id, number(image["archive_id"]), producers)) is None:
+                        raise ValueError(f"Archive is not a context input: {result['image']}")
+                    result["archive"] = image["archive"]
+                    result["input_chain"] = chain
+                image_builds.setdefault((attempt.owner, attempt.run, attempt.attempt), []).append(image_build)
             text = log.read_text()
             declared = configured_images.get(attempt.owner, [])
             cri = [image for image in declared if image.get("usage", "docker-load") != "docker-load"]
@@ -1507,10 +1612,13 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                             or leaf.iterations is not None and row["iterations"] != leaf.iterations):
                         raise ValueError(f"Benchmark measurement/XML differs from obligations for {attempt}: {name}")
             consumers.append({**asdict(attempt), "execution": execution_identity, "images": loaded, "cri": cri_evidence,
+                              "image_build": image_build,
                               "test_log": {"path": log_path, **file_record(log)}})
         if observed != attempts:
             raise ValueError(f"Missing configured TestRunners: {sorted(attempts - observed)}")
-    except (OSError, ValueError, KeyError, ET.ParseError) as error:
+        for rows in image_builds.values():
+            image_command_partitions(rows)
+    except (OSError, ValueError, KeyError, ET.ParseError, zipfile.BadZipFile) as error:
         errors.append(str(error))
     canonical_status = verdict.get("status", "INCOMPLETE")
     status = canonical_status if canonical_status in ("FAIL", "INCOMPLETE") else "INCOMPLETE" if errors else "PASS"
