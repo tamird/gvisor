@@ -88,8 +88,12 @@ image_apt.install(
         "ca-certificates (= 20260601~22.04.1)",
         # GNU commands used by the profiling and hackbench callers.
         "coreutils (= 8.32-4.1ubuntu1.4)",
+        # License notice referenced by the libgcc runtime package.
+        "gcc-12-base (= 12.3.0-1ubuntu1~22.04.3)",
         # C runtime and dynamic loader for the selected coreutils commands.
         "libc6 (= 2.35-0ubuntu3.15)",
+        # Shared exception unwinder used by LuaJIT in the wrk2 image.
+        "libgcc-s1 (= 12.3.0-1ubuntu1~22.04.3)",
         # Shared-library dependency of libselinux.
         "libpcre2-8-0 (= 10.39-3ubuntu0.1)",
         # Shared-library dependency of the packaged mkdir binary.
