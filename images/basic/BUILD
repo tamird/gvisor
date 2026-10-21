@@ -207,53 +207,62 @@ arch_genrule(
 arch_genrule(
     name = "host_connect_qualification",
     src = ":host_connect",
+    tags = ["qualification-output-group=default"],
     template = "host_connect_%s",
 )
 
 arch_genrule(
     name = "host_fd_qualification",
     src = ":host_fd",
+    tags = ["qualification-output-group=default"],
     template = "host_fd_%s",
 )
 
 arch_genrule(
     name = "link_test_qualification",
     src = ":link_test",
+    tags = ["qualification-output-group=default"],
     template = "link_test_%s",
 )
 
 arch_genrule(
     name = "tcp_loopback_qualification",
     src = ":tcp_loopback",
+    tags = ["qualification-output-group=default"],
     template = "tcp_loopback_%s",
 )
 
 arch_genrule(
     name = "tcp_server_qualification",
     src = ":tcp_server",
+    tags = ["qualification-output-group=default"],
     template = "tcp_server_%s",
 )
 
 arch_genrule(
     name = "tcp_stress_server_qualification",
     src = ":tcp_stress_server",
+    tags = ["qualification-output-group=default"],
     template = "tcp_stress_server_%s",
 )
 
 arch_genrule(
     name = "test_copy_up_qualification",
     src = ":test_copy_up",
+    tags = ["qualification-output-group=default"],
     template = "test_copy_up_%s",
 )
 
 arch_genrule(
     name = "test_rewinddir_qualification",
     src = ":test_rewinddir",
+    tags = ["qualification-output-group=default"],
     template = "test_rewinddir_%s",
 )
 
 arch_genrule(
     name = "test_sticky_qualification",
     src = ":test_sticky",
+    tags = ["qualification-output-group=default"],
     template = "test_sticky_%s",
 )
