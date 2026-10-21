@@ -11,11 +11,12 @@
 +
  license(
      name = "license",
-@@ -13,6 +15,7 @@
+@@ -13,6 +15,8 @@
  cc_binary(
      name = "iperf3",
      srcs = ["src/main.c"],
 +    features = ["fully_static_link"],
++    linkopts = ["-static"],
      visibility = ["//visibility:public"],
      deps = [":libiperf"],
  )
