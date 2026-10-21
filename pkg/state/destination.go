@@ -227,7 +227,17 @@ func (backingArrayBody[E, EO]) restore(d Decoder, target reflect.Value) {
 	// One view of the authoritative complete array, including unused slice
 	// capacity. The array's allocation and interior addresses never change.
 	elements := target.Slice(0, target.Len()).Interface().([]E)
-	restoreArrayElements(d, typedSlice[[]E, E]{&elements}, typedCell[E, EO]{}, requireWire[wire.Array](value))
+	restoreArrayElements(d, typedArray[E]{elements}, typedCell[E, EO]{}, requireWire[wire.Array](value))
+}
+
+// typedArray holds a fixed view of a graph allocation. Unlike a manual slice
+// destination, its header cannot be replaced by a load hook.
+type typedArray[E any] struct{ elements []E }
+
+func (a typedArray[E]) length() int   { return len(a.elements) }
+func (a typedArray[E]) cell(i int) *E { return &a.elements[i] }
+func (a typedArray[E]) primitives(encoded wire.Array) {
+	restorePrimitiveArray(reflect.ValueOf(a.elements), encoded)
 }
 
 type typedSlice[S ~[]E, E any] struct{ target *S }
