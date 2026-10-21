@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-21T03:52:36.828077+00:00",
-  "registryDate": "2026-10-21T03:55:05.364810+00:00",
+  "registryDate": "2026-10-21T04:15:41.609979+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none"
@@ -728,7 +728,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQEX8rA",
             "url": "https://github.com/google/gvisor/pull/14237#issuecomment-5373295788",
-            "body": "The scope has grown beyond the original nested-capture fix. r? @EtiennePerot for the cumulative lock/atomic analysis and configured-Go-target changes.\n\nThe cumulative diff is 48 files (+1743/−240), centered on `tools/checklocks/; tools/nogo/; tools/bazeldefs/`.\n\ncc @konstantin-s-bogom.\n\nAssisted-by: Codex",
+            "body": "The scope has grown beyond the original nested-capture fix. r? @EtiennePerot for the cumulative lock/atomic analysis and configured-Go-target changes.\n\nThe cumulative diff is 48 files (+1743/\u2212240), centered on `tools/checklocks/; tools/nogo/; tools/bazeldefs/`.\n\ncc @konstantin-s-bogom.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-21T17:45:20Z",
             "updatedAt": "2026-08-24T04:20:48Z",
             "author": {
@@ -3409,7 +3409,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQU8ZwA",
             "url": "https://github.com/google/gvisor/pull/14351#issuecomment-5390670272",
-            "body": "r? @milantracy for the MM mapping/metadata contracts and their timer, accounting and loader callers.\n\nThe cumulative diff is 26 files (+805/−192), centered on `pkg/sentry/{mm,ktime,usage}/; runsc/boot/`.\n\nAssisted-by: Codex",
+            "body": "r? @milantracy for the MM mapping/metadata contracts and their timer, accounting and loader callers.\n\nThe cumulative diff is 26 files (+805/\u2212192), centered on `pkg/sentry/{mm,ktime,usage}/; runsc/boot/`.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-24T04:18:54Z",
             "updatedAt": "2026-08-24T04:18:54Z",
             "author": {
@@ -3924,7 +3924,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQU8x4w",
             "url": "https://github.com/google/gvisor/pull/14360#issuecomment-5390676451",
-            "body": "r? @fvoznika for checkpoint callback ordering and async restore ownership, including allocator save/restore boundaries.\n\nThe cumulative diff is 14 files (+838/−157), centered on `pkg/sentry/{kernel,pgalloc}/; runsc/boot/`.\n\nAssisted-by: Codex",
+            "body": "r? @fvoznika for checkpoint callback ordering and async restore ownership, including allocator save/restore boundaries.\n\nThe cumulative diff is 14 files (+838/\u2212157), centered on `pkg/sentry/{kernel,pgalloc}/; runsc/boot/`.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-24T04:19:47Z",
             "updatedAt": "2026-08-24T04:19:47Z",
             "author": {
@@ -4484,7 +4484,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQU8z7Q",
             "url": "https://github.com/google/gvisor/pull/14361#issuecomment-5390676973",
-            "body": "r? @milantracy for LisaFS socket/control-FD ownership and stale-node removal after replacement.\n\nThe cumulative diff is 10 files (+197/−46), centered on `pkg/lisafs/; runsc/fsgofer/`.\n\nAssisted-by: Codex",
+            "body": "r? @milantracy for LisaFS socket/control-FD ownership and stale-node removal after replacement.\n\nThe cumulative diff is 10 files (+197/\u221246), centered on `pkg/lisafs/; runsc/fsgofer/`.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-24T04:19:52Z",
             "updatedAt": "2026-08-24T04:19:52Z",
             "author": {
@@ -8540,7 +8540,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABYQbQNA",
             "url": "https://github.com/google/gvisor/pull/14985#issuecomment-5922803764",
-            "body": "Closing in favor of the [hermetic LLVM toolchain migration](https://github.com/tamird/gvisor/commit/63e2554be). It removes Coral’s toolchain registration, extension, and templates, so these compatibility patches are no longer needed on that path. The replacement is published but has not landed upstream.\n\nAssisted-by: Codex\n",
+            "body": "Closing in favor of the [hermetic LLVM toolchain migration](https://github.com/tamird/gvisor/commit/63e2554be). It removes Coral\u2019s toolchain registration, extension, and templates, so these compatibility patches are no longer needed on that path. The replacement is published but has not landed upstream.\n\nAssisted-by: Codex\n",
             "createdAt": "2026-10-01T01:21:52Z",
             "updatedAt": "2026-10-01T01:21:52Z",
             "author": {
@@ -11227,7 +11227,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs72kOQr",
             "url": "https://github.com/google/gvisor/pull/15033#discussion_r4136690731",
-            "body": "AI nit:\n\n#### 1. Trailing Whitespace on //go:nosplit Directive\n\n  In checkescape.go:\n\n    if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {\n        for _, comment := range decl.Doc.List {\n            if comment.Text == \"//go:nosplit\" {\n                return nil\n            }\n        }\n    }\n\n  • Observation: comment.Text includes the full comment text including any trailing whitespace or carriage returns (e.g. //go:nosplit  or \\r\\n). In cmd/compile, the compiler trims\n  trailing whitespace when checking compiler directives.\n  • Suggestion: Consider strings.TrimSpace(comment.Text) == \"//go:nosplit\" to guard against accidental trailing whitespace.\n",
+            "body": "AI nit:\n\n#### 1. Trailing Whitespace on //go:nosplit Directive\n\n  In checkescape.go:\n\n    if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {\n        for _, comment := range decl.Doc.List {\n            if comment.Text == \"//go:nosplit\" {\n                return nil\n            }\n        }\n    }\n\n  \u2022 Observation: comment.Text includes the full comment text including any trailing whitespace or carriage returns (e.g. //go:nosplit  or \\r\\n). In cmd/compile, the compiler trims\n  trailing whitespace when checking compiler directives.\n  \u2022 Suggestion: Consider strings.TrimSpace(comment.Text) == \"//go:nosplit\" to guard against accidental trailing whitespace.\n",
             "createdAt": "2026-09-29T18:01:30Z",
             "updatedAt": "2026-09-29T18:02:39Z",
             "author": {
@@ -11261,7 +11261,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs72mjM6",
             "url": "https://github.com/google/gvisor/pull/15033#discussion_r4137300794",
-            "body": "Went full strict and matched the compiler behavior exactly 🙃 ",
+            "body": "Went full strict and matched the compiler behavior exactly \ud83d\ude43 ",
             "createdAt": "2026-09-29T19:09:14Z",
             "updatedAt": "2026-09-29T19:09:14Z",
             "author": {
@@ -15129,7 +15129,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABZeZ33A",
             "url": "https://github.com/google/gvisor/pull/15061#issuecomment-6004570076",
-            "body": "> Is this really necessary? How tightly constrained are such workers?\n\nIn response to [your review](https://github.com/google/gvisor/pull/15061#pullrequestreview-5399663055):\n\nThe original run was OOM-killed while enumerating tests, before any syscall case ran. It used a 300 MB scheduling estimate; I don't have evidence of the worker's hard memory limit. There are five parameterized tests, and [GoogleTest retains a parameter copy for each](https://github.com/google/googletest/blob/52eb8108c/googletest/include/gtest/internal/gtest-param-util.h#L402-L410). With two 32 MiB strings per parameter, that is at least 320 MiB of payload for registration alone, plus temporary copies.\n\nAfter this change, all 50 cases passed in native and each of the two systrap variants with the same worker estimate. The actual 32 MiB syscall buffers are unchanged. The noncopying comparison also avoids duplicating and concatenating those large buffers while a case runs.\n\n[Original run](https://app.buildbuddy.io/invocation/980d63fa-55b9-49d3-81d5-46ff7ca7cedb) · [After-fix run](https://app.buildbuddy.io/invocation/a20482e5-86cd-4bce-aa3c-1906c0a66d4a)\n\nPosted by Codex on behalf of @tamird.\n",
+            "body": "> Is this really necessary? How tightly constrained are such workers?\n\nIn response to [your review](https://github.com/google/gvisor/pull/15061#pullrequestreview-5399663055):\n\nThe original run was OOM-killed while enumerating tests, before any syscall case ran. It used a 300 MB scheduling estimate; I don't have evidence of the worker's hard memory limit. There are five parameterized tests, and [GoogleTest retains a parameter copy for each](https://github.com/google/googletest/blob/52eb8108c/googletest/include/gtest/internal/gtest-param-util.h#L402-L410). With two 32 MiB strings per parameter, that is at least 320 MiB of payload for registration alone, plus temporary copies.\n\nAfter this change, all 50 cases passed in native and each of the two systrap variants with the same worker estimate. The actual 32 MiB syscall buffers are unchanged. The noncopying comparison also avoids duplicating and concatenating those large buffers while a case runs.\n\n[Original run](https://app.buildbuddy.io/invocation/980d63fa-55b9-49d3-81d5-46ff7ca7cedb) \u00b7 [After-fix run](https://app.buildbuddy.io/invocation/a20482e5-86cd-4bce-aa3c-1906c0a66d4a)\n\nPosted by Codex on behalf of @tamird.\n",
             "createdAt": "2026-10-05T22:35:37Z",
             "updatedAt": "2026-10-05T22:35:37Z",
             "author": {
@@ -17685,7 +17685,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABd6mrWQ",
             "url": "https://github.com/google/gvisor/pull/15106#issuecomment-6302575449",
-            "body": "[🤖] Invalidating approval due to rebase as a means to notify @zkoopmans to re-review. Current diff looks different from pre-rebase diff.",
+            "body": "[\ud83e\udd16] Invalidating approval due to rebase as a means to notify @zkoopmans to re-review. Current diff looks different from pre-rebase diff.",
             "createdAt": "2026-10-20T21:56:16Z",
             "updatedAt": "2026-10-20T21:56:16Z",
             "author": {
@@ -17697,7 +17697,7 @@
             "kind": "review",
             "id": "PRR_kwDOB9IlXs8AAAABQOwXXw",
             "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5384181599",
-            "body": "LGTM! Very clean improvement—decoupling the Go export layout assembly from git branch manipulation is a great win for testability.\n\nA couple of minor non-blocking thoughts:\n- In the binary entrypoint filegroups (`runsc`, `shim`, etc.), consider `glob([\"*.go\"], exclude = [\"*_test.go\"])` just to future-proof against any unit tests added to those top-level packages getting accidentally bundled into the export archive.\n- In `BUILD`, `$(execpath go.mod)` is passed both to `--go-mod` and in the positional args list. Harmless since it just populates `files[\"go.mod\"]`, but `assemble` could also just implicitly write `files[\"go.mod\"] = data` from the already-read `--go-mod` file.",
+            "body": "LGTM! Very clean improvement\u2014decoupling the Go export layout assembly from git branch manipulation is a great win for testability.\n\nA couple of minor non-blocking thoughts:\n- In the binary entrypoint filegroups (`runsc`, `shim`, etc.), consider `glob([\"*.go\"], exclude = [\"*_test.go\"])` just to future-proof against any unit tests added to those top-level packages getting accidentally bundled into the export archive.\n- In `BUILD`, `$(execpath go.mod)` is passed both to `--go-mod` and in the positional args list. Harmless since it just populates `files[\"go.mod\"]`, but `assemble` could also just implicitly write `files[\"go.mod\"] = data` from the already-read `--go-mod` file.",
             "state": "APPROVED",
             "submittedAt": "2026-10-01T19:05:07Z",
             "updatedAt": "2026-10-01T19:05:07Z",
@@ -37107,7 +37107,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs76PGJy",
             "url": "https://github.com/google/gvisor/pull/15180#discussion_r4198261362",
-            "body": "Added maxMTU for Linux’s MAX_MTU value and used it in the link-header subtraction. The bound is unchanged.\n\nAssisted-by: Codex",
+            "body": "Added maxMTU for Linux\u2019s MAX_MTU value and used it in the link-header subtraction. The bound is unchanged.\n\nAssisted-by: Codex",
             "createdAt": "2026-10-06T17:09:35Z",
             "updatedAt": "2026-10-06T17:09:35Z",
             "author": {
@@ -48130,7 +48130,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABdrtYjw",
             "url": "https://github.com/google/gvisor/pull/15321#issuecomment-6286956687",
-            "body": "[🤖] Invalidating approval due to rebase as a means to notify @nybidari to re-review. Current diff looks identical to pre-rebase diff.",
+            "body": "[\ud83e\udd16] Invalidating approval due to rebase as a means to notify @nybidari to re-review. Current diff looks identical to pre-rebase diff.",
             "createdAt": "2026-10-20T08:37:51Z",
             "updatedAt": "2026-10-20T08:37:51Z",
             "author": {
@@ -52196,7 +52196,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABc1LgDA",
             "url": "https://github.com/google/gvisor/pull/15337#issuecomment-6229778444",
-            "body": "Rebased onto current master (`383c1da19`). The BPF compilation changes\nare unchanged; the conflict resolution retains upstream’s QEMU helper\nimports and definitions alongside the LLVM imports.\n\n@EtiennePerot, could you review the updated head, `be5bda6e54`?\n\nAssisted-by: Codex\n",
+            "body": "Rebased onto current master (`383c1da19`). The BPF compilation changes\nare unchanged; the conflict resolution retains upstream\u2019s QEMU helper\nimports and definitions alongside the LLVM imports.\n\n@EtiennePerot, could you review the updated head, `be5bda6e54`?\n\nAssisted-by: Codex\n",
             "createdAt": "2026-10-17T04:44:43Z",
             "updatedAt": "2026-10-17T04:44:43Z",
             "author": {
@@ -52220,7 +52220,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABdvx73w",
             "url": "https://github.com/google/gvisor/pull/15337#issuecomment-6291225567",
-            "body": "@EtiennePerot, the amendment uses libbpf’s header-only target so BPF\ncompilation does not analyze the userspace library or fetch its ELF\ndependencies. This addresses the public elfutils download failure.\nAll fourteen configured BPF builds and buildifier pass.\n\nCould you review [4847ada9b][1]? The separate import Gazelle failure\nstill needs the shared ZIP dependency correction.\n\n[1]: https://github.com/tamird/gvisor/commit/4847ada9b\n\nPosted by Codex on behalf of @tamird.\n",
+            "body": "@EtiennePerot, the amendment uses libbpf\u2019s header-only target so BPF\ncompilation does not analyze the userspace library or fetch its ELF\ndependencies. This addresses the public elfutils download failure.\nAll fourteen configured BPF builds and buildifier pass.\n\nCould you review [4847ada9b][1]? The separate import Gazelle failure\nstill needs the shared ZIP dependency correction.\n\n[1]: https://github.com/tamird/gvisor/commit/4847ada9b\n\nPosted by Codex on behalf of @tamird.\n",
             "createdAt": "2026-10-20T12:49:32Z",
             "updatedAt": "2026-10-20T12:49:32Z",
             "author": {
@@ -52428,7 +52428,7 @@
               "number": 16042,
               "url": "https://github.com/google/gvisor/pull/16042",
               "title": "Build BPF with declared LLVM tools and headers",
-              "body": "Build BPF with declared LLVM tools and headers\n\nBPF genrules used PATH clang and /usr/include, so remote compilation\nrequired worker packages and cross builds used the worker's headers.\n\nCompile BPF programs with LLVM's declared execution-platform tools,\ntarget Linux UAPI headers and libbpf's helper headers. Keep the BPF v1\ninstruction set explicitly because the selected LLVM defaults to v3 [1].\nAlign the module versions required by LLVM. The supplier requires Bazel\n8.5 or newer for its extension metadata API [2]. Leave Coral registered\nfor C and C++.\n\nRemove the builder's libbpf-dev requirement. Record libbpf using its\nBSD-2-Clause alternative [3]; its upstream notice requires a maintained\naudit entry because the canonical classifier does not recognize it.\n\n[1]: https://github.com/llvm/llvm-project/blob/85ac56026/llvm/lib/Target/BPF/BPFSubtarget.cpp#L75\n[2]: https://github.com/bazelbuild/bazel/commit/0b3c45f46\n[3]: https://github.com/libbpf/libbpf/blob/f5dcbae73/LICENSE\n\nAssisted-by: Codex\n\n<!-- codex-thread: 01a0680f-bbf5-7511-95f7-4414f4e10d2e -->\nAuto-fixed-by: [🤖] @EtiennePerot\nFUTURE_COPYBARA_INTEGRATE_REVIEW=https://github.com/google/gvisor/pull/15337 from tamird:hermetic-bpf-current a6168c6433e14cb816e2dcc08d2899889dbc5d6b\n",
+              "body": "Build BPF with declared LLVM tools and headers\n\nBPF genrules used PATH clang and /usr/include, so remote compilation\nrequired worker packages and cross builds used the worker's headers.\n\nCompile BPF programs with LLVM's declared execution-platform tools,\ntarget Linux UAPI headers and libbpf's helper headers. Keep the BPF v1\ninstruction set explicitly because the selected LLVM defaults to v3 [1].\nAlign the module versions required by LLVM. The supplier requires Bazel\n8.5 or newer for its extension metadata API [2]. Leave Coral registered\nfor C and C++.\n\nRemove the builder's libbpf-dev requirement. Record libbpf using its\nBSD-2-Clause alternative [3]; its upstream notice requires a maintained\naudit entry because the canonical classifier does not recognize it.\n\n[1]: https://github.com/llvm/llvm-project/blob/85ac56026/llvm/lib/Target/BPF/BPFSubtarget.cpp#L75\n[2]: https://github.com/bazelbuild/bazel/commit/0b3c45f46\n[3]: https://github.com/libbpf/libbpf/blob/f5dcbae73/LICENSE\n\nAssisted-by: Codex\n\n<!-- codex-thread: 01a0680f-bbf5-7511-95f7-4414f4e10d2e -->\nAuto-fixed-by: [\ud83e\udd16] @EtiennePerot\nFUTURE_COPYBARA_INTEGRATE_REVIEW=https://github.com/google/gvisor/pull/15337 from tamird:hermetic-bpf-current a6168c6433e14cb816e2dcc08d2899889dbc5d6b\n",
               "updatedAt": "2026-10-21T03:10:41Z",
               "headRefOid": "8620f19403b836f0da3a700e1f88645b22c73bb0",
               "author": {
@@ -64254,7 +64254,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABbhbAeg",
             "url": "https://github.com/google/gvisor/pull/15444#issuecomment-6141952122",
-            "body": "This change was imported in [60faa657ca99](https://github.com/google/gvisor/commit/60faa657ca99f3398e04c8dbc580a848df20f2f2). The current revision has no remaining functional difference, so I’m closing this superseded PR.\n\nAssisted-by: Codex\n",
+            "body": "This change was imported in [60faa657ca99](https://github.com/google/gvisor/commit/60faa657ca99f3398e04c8dbc580a848df20f2f2). The current revision has no remaining functional difference, so I\u2019m closing this superseded PR.\n\nAssisted-by: Codex\n",
             "createdAt": "2026-10-13T08:54:29Z",
             "updatedAt": "2026-10-13T08:54:29Z",
             "author": {
@@ -67266,7 +67266,7 @@
             "kind": "review",
             "id": "PRR_kwDOB9IlXs8AAAABTMEUZQ",
             "url": "https://github.com/google/gvisor/pull/15473#pullrequestreview-5582689381",
-            "body": "[🤖] Re-approving based on same-diff as prior @EtiennePerot approval.",
+            "body": "[\ud83e\udd16] Re-approving based on same-diff as prior @EtiennePerot approval.",
             "state": "APPROVED",
             "submittedAt": "2026-10-20T08:37:45Z",
             "updatedAt": "2026-10-20T22:13:01Z",
@@ -68984,7 +68984,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABaJIo4Q",
             "url": "https://github.com/google/gvisor/pull/15476#issuecomment-6049376481",
-            "body": "I compared the existing pointer, map, and slice state benchmarks on both\nsides of this change. None of the six encoding/decoding cases showed a\nstatistically significant timing difference in this run; their median\nallocation counts and bytes per operation were unchanged.\n\nI also benchmarked `tcpip.ReceivableControlMessages` with a nonzero\n`Timestamp`, so this measures the old UnixNano hook against the new binary\ncodec through a real caller:\n\n| Operation | Before | After | Change | Allocs before → after |\n|---|---:|---:|---:|---:|\n| Save | 9.710 µs | 12.207 µs | +25.72% | 80 → 94 |\n| Load | 12.674 µs | 13.997 µs | +10.44% | 138 → 151 |\n\nAllocated bytes increased from 5,624 to 6,528 per save and from 6,024 to\n6,320 per load. The encoded message grew from 494 to 521 bytes. The time\ncomparison was significant for save (p<0.001) and load (p=0.015), with ten\nsamples per version.\n\nBoth binaries were compiled first, then measured in ten alternating\nbefore/after pairs on one Linux AMD EPYC worker, pinned to the same CPU\nwith GOMAXPROCS=1 and Go 1.27.1. Each benchmark used a 500 ms duration;\ntwo warmups were excluded. These are state-serialization microbenchmarks,\nnot whole-sandbox checkpoint timings, and the timestamp comparison does\nnot isolate reflection from the changed representation.\n\nThe [run](https://app.buildbuddy.io/invocation/003fd04d-7d4e-4f55-9a77-584d353c93ab)\nretains all raw samples and benchstat output. All 22 benchmark actions and\nbenchstat passed. The parent failed afterward because cleanup named two\nsource files deleted by the candidate; the source tree was already clean.\nThe measurements were preserved and not rerun.\n\nAssisted-by: OpenAI Codex\n",
+            "body": "I compared the existing pointer, map, and slice state benchmarks on both\nsides of this change. None of the six encoding/decoding cases showed a\nstatistically significant timing difference in this run; their median\nallocation counts and bytes per operation were unchanged.\n\nI also benchmarked `tcpip.ReceivableControlMessages` with a nonzero\n`Timestamp`, so this measures the old UnixNano hook against the new binary\ncodec through a real caller:\n\n| Operation | Before | After | Change | Allocs before \u2192 after |\n|---|---:|---:|---:|---:|\n| Save | 9.710 \u00b5s | 12.207 \u00b5s | +25.72% | 80 \u2192 94 |\n| Load | 12.674 \u00b5s | 13.997 \u00b5s | +10.44% | 138 \u2192 151 |\n\nAllocated bytes increased from 5,624 to 6,528 per save and from 6,024 to\n6,320 per load. The encoded message grew from 494 to 521 bytes. The time\ncomparison was significant for save (p<0.001) and load (p=0.015), with ten\nsamples per version.\n\nBoth binaries were compiled first, then measured in ten alternating\nbefore/after pairs on one Linux AMD EPYC worker, pinned to the same CPU\nwith GOMAXPROCS=1 and Go 1.27.1. Each benchmark used a 500 ms duration;\ntwo warmups were excluded. These are state-serialization microbenchmarks,\nnot whole-sandbox checkpoint timings, and the timestamp comparison does\nnot isolate reflection from the changed representation.\n\nThe [run](https://app.buildbuddy.io/invocation/003fd04d-7d4e-4f55-9a77-584d353c93ab)\nretains all raw samples and benchstat output. All 22 benchmark actions and\nbenchstat passed. The parent failed afterward because cleanup named two\nsource files deleted by the candidate; the source tree was already clean.\nThe measurements were preserved and not rerun.\n\nAssisted-by: OpenAI Codex\n",
             "createdAt": "2026-10-08T00:07:47Z",
             "updatedAt": "2026-10-08T00:07:47Z",
             "author": {
@@ -68996,7 +68996,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABaJVS5g",
             "url": "https://github.com/google/gvisor/pull/15476#issuecomment-6049583846",
-            "body": "> I compared the existing pointer, map, and slice state benchmarks on both sides of this change. None of the six encoding/decoding cases showed a statistically significant timing difference in this run; their median allocation counts and bytes per operation were unchanged.\r\n> \r\n> I also benchmarked `tcpip.ReceivableControlMessages` with a nonzero `Timestamp`, so this measures the old UnixNano hook against the new binary codec through a real caller:\r\n> \r\n> Operation\tBefore\tAfter\tChange\tAllocs before → after\r\n> Save\t9.710 µs\t12.207 µs\t+25.72%\t80 → 94\r\n> Load\t12.674 µs\t13.997 µs\t+10.44%\t138 → 151\r\n> Allocated bytes increased from 5,624 to 6,528 per save and from 6,024 to 6,320 per load. The encoded message grew from 494 to 521 bytes. The time comparison was significant for save (p<0.001) and load (p=0.015), with ten samples per version.\r\n> \r\n> Both binaries were compiled first, then measured in ten alternating before/after pairs on one Linux AMD EPYC worker, pinned to the same CPU with GOMAXPROCS=1 and Go 1.27.1. Each benchmark used a 500 ms duration; two warmups were excluded. These are state-serialization microbenchmarks, not whole-sandbox checkpoint timings, and the timestamp comparison does not isolate reflection from the changed representation.\r\n> \r\n> The [run](https://app.buildbuddy.io/invocation/003fd04d-7d4e-4f55-9a77-584d353c93ab) retains all raw samples and benchstat output. All 22 benchmark actions and benchstat passed. The parent failed afterward because cleanup named two source files deleted by the candidate; the source tree was already clean. The measurements were preserved and not rerun.\r\n> \r\n> Assisted-by: OpenAI Codex\r\n\r\nOK. So a real cost, but what's not answered yet is how much this is amortized on a real-world application checkpoint.\r\n\r\nHowever, given that we already have something that works, that this would be a regression, and that building on this mechanism (which IIUC you are planning to do), perhaps it's worth looking at whether this can be solved without this overhead? Perhaps via code generation like the rest of the stateify package, perhaps with a generic function with a type switch (which IIRC will inline correctly on each type-specific invocation to effectively remove the `switch` so long as the types are distinguishable, we use this trick in https://github.com/google/gvisor/blob/5dd59c99442c6692227bdff0e1f8f973d96ade07/pkg/bpf/input_bytes.go#L51 for example).",
+            "body": "> I compared the existing pointer, map, and slice state benchmarks on both sides of this change. None of the six encoding/decoding cases showed a statistically significant timing difference in this run; their median allocation counts and bytes per operation were unchanged.\r\n> \r\n> I also benchmarked `tcpip.ReceivableControlMessages` with a nonzero `Timestamp`, so this measures the old UnixNano hook against the new binary codec through a real caller:\r\n> \r\n> Operation\tBefore\tAfter\tChange\tAllocs before \u2192 after\r\n> Save\t9.710 \u00b5s\t12.207 \u00b5s\t+25.72%\t80 \u2192 94\r\n> Load\t12.674 \u00b5s\t13.997 \u00b5s\t+10.44%\t138 \u2192 151\r\n> Allocated bytes increased from 5,624 to 6,528 per save and from 6,024 to 6,320 per load. The encoded message grew from 494 to 521 bytes. The time comparison was significant for save (p<0.001) and load (p=0.015), with ten samples per version.\r\n> \r\n> Both binaries were compiled first, then measured in ten alternating before/after pairs on one Linux AMD EPYC worker, pinned to the same CPU with GOMAXPROCS=1 and Go 1.27.1. Each benchmark used a 500 ms duration; two warmups were excluded. These are state-serialization microbenchmarks, not whole-sandbox checkpoint timings, and the timestamp comparison does not isolate reflection from the changed representation.\r\n> \r\n> The [run](https://app.buildbuddy.io/invocation/003fd04d-7d4e-4f55-9a77-584d353c93ab) retains all raw samples and benchstat output. All 22 benchmark actions and benchstat passed. The parent failed afterward because cleanup named two source files deleted by the candidate; the source tree was already clean. The measurements were preserved and not rerun.\r\n> \r\n> Assisted-by: OpenAI Codex\r\n\r\nOK. So a real cost, but what's not answered yet is how much this is amortized on a real-world application checkpoint.\r\n\r\nHowever, given that we already have something that works, that this would be a regression, and that building on this mechanism (which IIUC you are planning to do), perhaps it's worth looking at whether this can be solved without this overhead? Perhaps via code generation like the rest of the stateify package, perhaps with a generic function with a type switch (which IIRC will inline correctly on each type-specific invocation to effectively remove the `switch` so long as the types are distinguishable, we use this trick in https://github.com/google/gvisor/blob/5dd59c99442c6692227bdff0e1f8f973d96ade07/pkg/bpf/input_bytes.go#L51 for example).",
             "createdAt": "2026-10-08T00:25:17Z",
             "updatedAt": "2026-10-08T00:25:17Z",
             "author": {
@@ -70469,7 +70469,7 @@
             "kind": "review",
             "id": "PRR_kwDOB9IlXs8AAAABTMnTAg",
             "url": "https://github.com/google/gvisor/pull/15498#pullrequestreview-5583262466",
-            "body": "[🤖] Re-approving based on same-diff as prior @EtiennePerot approval.",
+            "body": "[\ud83e\udd16] Re-approving based on same-diff as prior @EtiennePerot approval.",
             "state": "APPROVED",
             "submittedAt": "2026-10-20T09:31:26Z",
             "updatedAt": "2026-10-20T22:12:20Z",
@@ -79730,7 +79730,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABdrtLNA",
             "url": "https://github.com/google/gvisor/pull/15562#issuecomment-6286953268",
-            "body": "[🤖] Invalidating approval due to rebase as a means to notify @milantracy to re-review. Current diff looks different from pre-rebase diff.",
+            "body": "[\ud83e\udd16] Invalidating approval due to rebase as a means to notify @milantracy to re-review. Current diff looks different from pre-rebase diff.",
             "createdAt": "2026-10-20T08:37:39Z",
             "updatedAt": "2026-10-20T08:37:39Z",
             "author": {
@@ -83851,7 +83851,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs78VW5O",
             "url": "https://github.com/google/gvisor/pull/15583#discussion_r4233457230",
-            "body": "Nit: please remove this comment — we don't need to explain previous logic bugs in the new code.",
+            "body": "Nit: please remove this comment \u2014 we don't need to explain previous logic bugs in the new code.",
             "createdAt": "2026-10-09T18:44:46Z",
             "updatedAt": "2026-10-09T18:44:46Z",
             "author": {
@@ -85794,7 +85794,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs78cbW3",
             "url": "https://github.com/google/gvisor/pull/15604#discussion_r4235310519",
-            "body": "I got curious so I did, gemini-code-assist is correct.\r\n\r\n```\r\n                   │   pow.txt    │               mul.txt               │\r\n                   │    sec/op    │   sec/op     vs base                │\r\n     X-20            13.670n ± 5%   1.912n ± 2%  -86.01% (p=0.000 n=20)\r\n     CubicCwndX-20   12.625n ± 2%   1.934n ± 2%  -84.68% (p=0.000 n=20)\r\n\r\n```",
+            "body": "I got curious so I did, gemini-code-assist is correct.\r\n\r\n```\r\n    \u00a0              \u2502   pow.txt    \u2502               mul.txt               \u2502\r\n                   \u2502    sec/op    \u2502   sec/op     vs base                \u2502\r\n     X-20            13.670n \u00b1 5%   1.912n \u00b1 2%  -86.01% (p=0.000 n=20)\r\n     CubicCwndX-20   12.625n \u00b1 2%   1.934n \u00b1 2%  -84.68% (p=0.000 n=20)\r\n\r\n```",
             "createdAt": "2026-10-09T23:13:23Z",
             "updatedAt": "2026-10-09T23:13:23Z",
             "author": {
@@ -103224,7 +103224,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABdbcpug",
             "url": "https://github.com/google/gvisor/pull/15868#issuecomment-6269905338",
-            "body": "The ZIP proxy is in #15919. Once it merges, I’ll publish the prepared\nformatting update here so the formatter can keep its normal import\ngrouping without an archive/zip exception.\n\nPosted by Codex on behalf of @tamird.\n",
+            "body": "The ZIP proxy is in #15919. Once it merges, I\u2019ll publish the prepared\nformatting update here so the formatter can keep its normal import\ngrouping without an archive/zip exception.\n\nPosted by Codex on behalf of @tamird.\n",
             "createdAt": "2026-10-19T14:40:52Z",
             "updatedAt": "2026-10-19T14:40:52Z",
             "author": {
@@ -105164,7 +105164,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABdoaaNQ",
             "url": "https://github.com/google/gvisor/pull/15919#issuecomment-6283500085",
-            "body": "[🤖] PR merged as 760b80785dc53311d4c87bd2de167525a99709c1",
+            "body": "[\ud83e\udd16] PR merged as 760b80785dc53311d4c87bd2de167525a99709c1",
             "createdAt": "2026-10-20T04:37:53Z",
             "updatedAt": "2026-10-20T04:37:53Z",
             "author": {
@@ -113520,7 +113520,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABdiP-5A",
             "url": "https://github.com/google/gvisor/pull/15956#issuecomment-6277037796",
-            "body": "Switched the standard-library import to `goContext` and left the gVisor\ncontext package unaliased, as suggested.\n\nThe [Go team’s review guidance][imports] recommends renaming the most\nlocal or project-specific import when names collide. This amendment uses\nthe surrounding kernel code’s convention instead.\n\n[imports]: https://go.dev/wiki/CodeReviewComments#imports\n\nPosted by Codex on behalf of @tamird.\n",
+            "body": "Switched the standard-library import to `goContext` and left the gVisor\ncontext package unaliased, as suggested.\n\nThe [Go team\u2019s review guidance][imports] recommends renaming the most\nlocal or project-specific import when names collide. This amendment uses\nthe surrounding kernel code\u2019s convention instead.\n\n[imports]: https://go.dev/wiki/CodeReviewComments#imports\n\nPosted by Codex on behalf of @tamird.\n",
             "createdAt": "2026-10-19T20:50:56Z",
             "updatedAt": "2026-10-19T20:50:56Z",
             "author": {
@@ -117611,7 +117611,7 @@
             "kind": "review",
             "id": "PRR_kwDOB9IlXs8AAAABTGAFcA",
             "url": "https://github.com/google/gvisor/pull/15981#pullrequestreview-5576328560",
-            "body": "In `FindUIDGIDInPasswd` (`pkg/sentry/fsimpl/user/user.go:307-340`), if a matched `/etc/passwd` record has `len(parts) > gidIdx && len(parts) != numFields` (e.g. 4–6 fields like `\"user0::1000:1111\"`) or an empty home directory (`\"user0::1000:1111:::/bin/sh\"`), the first `if matched` block succeeds and then lines 322–336 return `fallbackUID, fallbackGID, nil`, silently resolving `\"user0\"` to UID 0 / GID 0 instead of returning an error.\n\nIf we check `matched` inside the `len(parts) != numFields` and `parts[i] == \"\"` checks, we can both return `strconv.ErrSyntax` for any malformed selected record and collapse the two `if matched` blocks into one:\n\n```go\n\t\tparts := strings.Split(line, \":\")\n\t\tmatched := len(parts) > idxToMatch && parts[idxToMatch] == uStringOrID\n\t\tif len(parts) != numFields {\n\t\t\tif matched {\n\t\t\t\treturn 0, 0, fmt.Errorf(\"invalid passwd record for user %q: %w\", uStringOrID, strconv.ErrSyntax)\n\t\t\t}\n\t\t\t// If format is invalid, return default values.\n\t\t\treturn fallbackUID, fallbackGID, nil\n\t\t}\n\t\tfor i := 0; i < numFields; i++ {\n\t\t\t// The password, GECOS and user command interpreter fields are\n\t\t\t// optional, no need to check if they are empty.\n\t\t\tif i == passwdIdx || i == shellIdx || i == gecosIdx {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t\tif parts[i] == \"\" {\n\t\t\t\tif matched {\n\t\t\t\t\treturn 0, 0, fmt.Errorf(\"empty field %d for user %q: %w\", i, uStringOrID, strconv.ErrSyntax)\n\t\t\t\t}\n\t\t\t\t// If format is invalid, return default values.\n\t\t\t\treturn fallbackUID, fallbackGID, nil\n\t\t\t}\n\t\t}\n\n\t\tif matched {\n\t\t\tuid, err := parseID(parts[uidIdx])\n\t\t\tif err != nil {\n\t\t\t\treturn 0, 0, fmt.Errorf(\"invalid UID for user %q: %w\", uStringOrID, err)\n\t\t\t}\n\t\t\tgid, err := parseID(parts[gidIdx])\n\t\t\tif err != nil {\n\t\t\t\treturn 0, 0, fmt.Errorf(\"invalid GID for user %q: %w\", uStringOrID, err)\n\t\t\t}\n\t\t\treturn auth.KUID(uid), auth.KGID(gid), nil\n\t\t}\n```\n\n*(Assisted by Gemini)*",
+            "body": "In `FindUIDGIDInPasswd` (`pkg/sentry/fsimpl/user/user.go:307-340`), if a matched `/etc/passwd` record has `len(parts) > gidIdx && len(parts) != numFields` (e.g. 4\u20136 fields like `\"user0::1000:1111\"`) or an empty home directory (`\"user0::1000:1111:::/bin/sh\"`), the first `if matched` block succeeds and then lines 322\u2013336 return `fallbackUID, fallbackGID, nil`, silently resolving `\"user0\"` to UID 0 / GID 0 instead of returning an error.\n\nIf we check `matched` inside the `len(parts) != numFields` and `parts[i] == \"\"` checks, we can both return `strconv.ErrSyntax` for any malformed selected record and collapse the two `if matched` blocks into one:\n\n```go\n\t\tparts := strings.Split(line, \":\")\n\t\tmatched := len(parts) > idxToMatch && parts[idxToMatch] == uStringOrID\n\t\tif len(parts) != numFields {\n\t\t\tif matched {\n\t\t\t\treturn 0, 0, fmt.Errorf(\"invalid passwd record for user %q: %w\", uStringOrID, strconv.ErrSyntax)\n\t\t\t}\n\t\t\t// If format is invalid, return default values.\n\t\t\treturn fallbackUID, fallbackGID, nil\n\t\t}\n\t\tfor i := 0; i < numFields; i++ {\n\t\t\t// The password, GECOS and user command interpreter fields are\n\t\t\t// optional, no need to check if they are empty.\n\t\t\tif i == passwdIdx || i == shellIdx || i == gecosIdx {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t\tif parts[i] == \"\" {\n\t\t\t\tif matched {\n\t\t\t\t\treturn 0, 0, fmt.Errorf(\"empty field %d for user %q: %w\", i, uStringOrID, strconv.ErrSyntax)\n\t\t\t\t}\n\t\t\t\t// If format is invalid, return default values.\n\t\t\t\treturn fallbackUID, fallbackGID, nil\n\t\t\t}\n\t\t}\n\n\t\tif matched {\n\t\t\tuid, err := parseID(parts[uidIdx])\n\t\t\tif err != nil {\n\t\t\t\treturn 0, 0, fmt.Errorf(\"invalid UID for user %q: %w\", uStringOrID, err)\n\t\t\t}\n\t\t\tgid, err := parseID(parts[gidIdx])\n\t\t\tif err != nil {\n\t\t\t\treturn 0, 0, fmt.Errorf(\"invalid GID for user %q: %w\", uStringOrID, err)\n\t\t\t}\n\t\t\treturn auth.KUID(uid), auth.KGID(gid), nil\n\t\t}\n```\n\n*(Assisted by Gemini)*",
             "state": "COMMENTED",
             "submittedAt": "2026-10-19T19:02:47Z",
             "updatedAt": "2026-10-19T19:02:47Z",
@@ -122267,7 +122267,7 @@
             "kind": "review",
             "id": "PRR_kwDODlcBtc8AAAABRsw_sw",
             "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13781#pullrequestreview-5482758067",
-            "body": "Reworks the filecache concurrent-scan test so it builds one fixture in the current layout and reuses it across trials. The test now covers the in-place scan's \"already in the LRU, so don't evict\" check instead of the legacy migration branch. No blocking bugs were found.\n\n### Additional findings (lines outside the diff)\n- `enterprise/server/remote_execution/filecache/filecache.go:521` — Pre-existing, not introduced by this PR: if a file disappears while the scan is running, the scan stops for the rest of that group.\n- Sequence: `AddFile(k)` runs before the scan reaches `k`, then `DeleteFile(k)` or a size eviction unlinks the file. When the scan reaches `k`, `os.Stat` returns `NotFound`.\n- Only `InvalidArgument` is tolerated (line 514), so `WalkDir` aborts.\n- Every remaining file in that group stays on disk but never enters the LRU, so it is never evicted. #7924 removed the earlier `NotFound` tolerance.\n\nThe reworked test does one `AddFile` per trial, so it can't hit this.\n- `enterprise/server/remote_execution/filecache/filecache.go:270` — Pre-existing, not introduced by this PR: `Close` doesn't wait for the scan, because the scan starts with a bare `go c.scanDir()` instead of `c.wg.Go`. That is why the test's deferred cleanup at `filecache_test.go:689` has to call `WaitForDirectoryScanToComplete()` itself. In production, a scan or migration that is still running can write after `Close` has synced and removed `boot_id`.\n\n**[Re-run review](https://app.buildbuddy.io/workflows/run?action_name=Code+review&branch=sluongng%2Ffilecache-scan-fixture&env_preset=AGENT_REVIEW&repo_url=https%3A%2F%2Fgithub.com%2Fbuildbuddy-io%2Fbuildbuddy)**\n\n<sub>Reviewed with [`bb agent review`](https://www.buildbuddy.io/docs/cli-commands#bb-agent-review) on BuildBuddy Workflows</sub>",
+            "body": "Reworks the filecache concurrent-scan test so it builds one fixture in the current layout and reuses it across trials. The test now covers the in-place scan's \"already in the LRU, so don't evict\" check instead of the legacy migration branch. No blocking bugs were found.\n\n### Additional findings (lines outside the diff)\n- `enterprise/server/remote_execution/filecache/filecache.go:521` \u2014 Pre-existing, not introduced by this PR: if a file disappears while the scan is running, the scan stops for the rest of that group.\n- Sequence: `AddFile(k)` runs before the scan reaches `k`, then `DeleteFile(k)` or a size eviction unlinks the file. When the scan reaches `k`, `os.Stat` returns `NotFound`.\n- Only `InvalidArgument` is tolerated (line 514), so `WalkDir` aborts.\n- Every remaining file in that group stays on disk but never enters the LRU, so it is never evicted. #7924 removed the earlier `NotFound` tolerance.\n\nThe reworked test does one `AddFile` per trial, so it can't hit this.\n- `enterprise/server/remote_execution/filecache/filecache.go:270` \u2014 Pre-existing, not introduced by this PR: `Close` doesn't wait for the scan, because the scan starts with a bare `go c.scanDir()` instead of `c.wg.Go`. That is why the test's deferred cleanup at `filecache_test.go:689` has to call `WaitForDirectoryScanToComplete()` itself. In production, a scan or migration that is still running can write after `Close` has synced and removed `boot_id`.\n\n**[Re-run review](https://app.buildbuddy.io/workflows/run?action_name=Code+review&branch=sluongng%2Ffilecache-scan-fixture&env_preset=AGENT_REVIEW&repo_url=https%3A%2F%2Fgithub.com%2Fbuildbuddy-io%2Fbuildbuddy)**\n\n<sub>Reviewed with [`bb agent review`](https://www.buildbuddy.io/docs/cli-commands#bb-agent-review) on BuildBuddy Workflows</sub>",
             "state": "COMMENTED",
             "submittedAt": "2026-10-11T09:29:19Z",
             "updatedAt": "2026-10-11T09:29:20Z",
@@ -122384,7 +122384,7 @@
             "line": null,
             "id": "PRRC_kwDODlcBtc78yW2s",
             "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13781#discussion_r4241059244",
-            "body": "No test now runs the legacy migration at the same time as `AddFile`. The old fixture was the only one that did, through the migration branch at `filecache.go:778-797` (`Remove(k)`, link the legacy path, unlink it). `TestFileCacheEvictionAfterSubdirPrefixing` and `TestFileCacheEvictionAfterStartupScan` both call `WaitForDirectoryScanToComplete()` before `AddFile`. So \"leaving legacy migration coverage in its existing tests\" covers migration alone, not migration during a concurrent add. Upgraded executors still on the flat layout run exactly that path at startup. Consider keeping a legacy fixture with a small trial count (for example, 5–10), or adding a separate small test for it.",
+            "body": "No test now runs the legacy migration at the same time as `AddFile`. The old fixture was the only one that did, through the migration branch at `filecache.go:778-797` (`Remove(k)`, link the legacy path, unlink it). `TestFileCacheEvictionAfterSubdirPrefixing` and `TestFileCacheEvictionAfterStartupScan` both call `WaitForDirectoryScanToComplete()` before `AddFile`. So \"leaving legacy migration coverage in its existing tests\" covers migration alone, not migration during a concurrent add. Upgraded executors still on the flat layout run exactly that path at startup. Consider keeping a legacy fixture with a small trial count (for example, 5\u201310), or adding a separate small test for it.",
             "createdAt": "2026-10-11T09:29:20Z",
             "updatedAt": "2026-10-11T09:29:20Z",
             "author": {
@@ -123760,7 +123760,7 @@
             "kind": "review",
             "id": "PRR_kwDODlcBtc8AAAABStSgFA",
             "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13826#pullrequestreview-5550415892",
-            "body": "Turns on `CONFIG_VHOST_NET` (along with `CONFIG_VHOST` and `CONFIG_VHOST_IOTLB`) in the x86_64 5.15 and 6.18 guest kernel configs, and updates `deps.bzl` to point at the rebuilt kernel binaries.\n\n### Additional findings (lines outside the diff)\n- `enterprise/server/cmd/goinit/main.go:241` — `/dev/vhost-net` stays root-only (0600). goinit relaxes `/dev/net/tun` and `/dev/fuse` to 0666 because the guest has no udev. On a normal distro, udev also makes `/dev/vhost-net` 0666, but it isn't added to this list. As a result, rootless Podman/QEMU, or any action running as a non-root user, gets EACCES when opening it, and only root in the guest benefits from this change. Consider adding `/dev/vhost-net` here.\n- `enterprise/vmsupport/kernel/BUILD:10` — The default 5.15 kernel is built from the bare `v5.15` tag (5.15.0). This target has no `git_tag`, so the build uses tag `v5.15`. This PR now compiles the vhost/vhost_net driver into every x86_64 guest without the later 5.15.y fixes, such as the iotlb hung-thread fix and the vhost_net ubuf refcount fix. `rebuild.sh:48` already recommends pinning a point release, as the 6.18 target does with `v6.18.57`.\n- `enterprise/server/remote_execution/containers/firecracker/firecracker_test.go:418` — No test checks that `/dev/vhost-net` exists. `TestFirecrackerRunSimple` already runs `stat` on `/dev/fuse` and `/dev/net/tun`. Adding `/dev/vhost-net` to the amd64 branch would catch a kernel uploaded from the wrong config, or a later config edit that drops VHOST_NET. The new sha256 values in `deps.bzl` only show the file matches what was uploaded, not which config it was built from.\n- `enterprise/vmsupport/kernel/microvm-kernel-aarch64-v5.10.config:2135` — arm64 is still `# CONFIG_VHOST_NET is not set`, with no TODO, so the fix for #13604 only covers x86_64. TUN is already tracked with a TODO in the test; this should be tracked the same way.\n- `enterprise/vmsupport/kernel/rebuild.sh:83` — The build can't be reproduced to check the new hashes. `KBUILD_BUILD_TIMESTAMP`, `KBUILD_BUILD_USER` and `KBUILD_BUILD_HOST` are never pinned, so a reviewer can't rebuild and confirm that `10b243f5…` and `4c27704a…` came from these configs. This problem predates the PR, but it matters most when a PR's whole change is a new hash.\n\n**[Re-run review](https://app.buildbuddy.io/workflows/run?action_name=Code+review&branch=guest-kernel-vhost-net&env_preset=AGENT_REVIEW&repo_url=https%3A%2F%2Fgithub.com%2Fbuildbuddy-io%2Fbuildbuddy)**\n\n<sub>Reviewed with [`bb agent review`](https://www.buildbuddy.io/docs/cli-commands#bb-agent-review) on BuildBuddy Workflows</sub>",
+            "body": "Turns on `CONFIG_VHOST_NET` (along with `CONFIG_VHOST` and `CONFIG_VHOST_IOTLB`) in the x86_64 5.15 and 6.18 guest kernel configs, and updates `deps.bzl` to point at the rebuilt kernel binaries.\n\n### Additional findings (lines outside the diff)\n- `enterprise/server/cmd/goinit/main.go:241` \u2014 `/dev/vhost-net` stays root-only (0600). goinit relaxes `/dev/net/tun` and `/dev/fuse` to 0666 because the guest has no udev. On a normal distro, udev also makes `/dev/vhost-net` 0666, but it isn't added to this list. As a result, rootless Podman/QEMU, or any action running as a non-root user, gets EACCES when opening it, and only root in the guest benefits from this change. Consider adding `/dev/vhost-net` here.\n- `enterprise/vmsupport/kernel/BUILD:10` \u2014 The default 5.15 kernel is built from the bare `v5.15` tag (5.15.0). This target has no `git_tag`, so the build uses tag `v5.15`. This PR now compiles the vhost/vhost_net driver into every x86_64 guest without the later 5.15.y fixes, such as the iotlb hung-thread fix and the vhost_net ubuf refcount fix. `rebuild.sh:48` already recommends pinning a point release, as the 6.18 target does with `v6.18.57`.\n- `enterprise/server/remote_execution/containers/firecracker/firecracker_test.go:418` \u2014 No test checks that `/dev/vhost-net` exists. `TestFirecrackerRunSimple` already runs `stat` on `/dev/fuse` and `/dev/net/tun`. Adding `/dev/vhost-net` to the amd64 branch would catch a kernel uploaded from the wrong config, or a later config edit that drops VHOST_NET. The new sha256 values in `deps.bzl` only show the file matches what was uploaded, not which config it was built from.\n- `enterprise/vmsupport/kernel/microvm-kernel-aarch64-v5.10.config:2135` \u2014 arm64 is still `# CONFIG_VHOST_NET is not set`, with no TODO, so the fix for #13604 only covers x86_64. TUN is already tracked with a TODO in the test; this should be tracked the same way.\n- `enterprise/vmsupport/kernel/rebuild.sh:83` \u2014 The build can't be reproduced to check the new hashes. `KBUILD_BUILD_TIMESTAMP`, `KBUILD_BUILD_USER` and `KBUILD_BUILD_HOST` are never pinned, so a reviewer can't rebuild and confirm that `10b243f5\u2026` and `4c27704a\u2026` came from these configs. This problem predates the PR, but it matters most when a PR's whole change is a new hash.\n\n**[Re-run review](https://app.buildbuddy.io/workflows/run?action_name=Code+review&branch=guest-kernel-vhost-net&env_preset=AGENT_REVIEW&repo_url=https%3A%2F%2Fgithub.com%2Fbuildbuddy-io%2Fbuildbuddy)**\n\n<sub>Reviewed with [`bb agent review`](https://www.buildbuddy.io/docs/cli-commands#bb-agent-review) on BuildBuddy Workflows</sub>",
             "state": "COMMENTED",
             "submittedAt": "2026-10-16T16:06:26Z",
             "updatedAt": "2026-10-16T16:06:27Z",
@@ -124560,7 +124560,7 @@
             "kind": "comment",
             "id": "IC_kwDODlcBtc8AAAABdzDlZQ",
             "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13849#issuecomment-6294660453",
-            "body": "Rebased onto #13781 so Windows CI includes the filecache fixture fix; the patch is unchanged. @sluongng, could you re-approve the rebased head? The Darwin checks report “Check requires approving review”.\n\nPosted by Codex on behalf of @tamird.\n",
+            "body": "Rebased onto #13781 so Windows CI includes the filecache fixture fix; the patch is unchanged. @sluongng, could you re-approve the rebased head? The Darwin checks report \u201cCheck requires approving review\u201d.\n\nPosted by Codex on behalf of @tamird.\n",
             "createdAt": "2026-10-20T15:34:20Z",
             "updatedAt": "2026-10-20T15:34:20Z",
             "author": {
@@ -125118,7 +125118,7 @@
             "kind": "comment",
             "id": "IC_kwDODlcBtc8AAAABdzDpaA",
             "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13850#issuecomment-6294661480",
-            "body": "Rebased onto #13781 so Windows CI includes the filecache fixture fix; the patch is unchanged. @maggie-lou, could you re-approve the rebased head? The Darwin checks report “Check requires approving review”.\n\nPosted by Codex on behalf of @tamird.\n",
+            "body": "Rebased onto #13781 so Windows CI includes the filecache fixture fix; the patch is unchanged. @maggie-lou, could you re-approve the rebased head? The Darwin checks report \u201cCheck requires approving review\u201d.\n\nPosted by Codex on behalf of @tamird.\n",
             "createdAt": "2026-10-20T15:34:23Z",
             "updatedAt": "2026-10-20T15:34:23Z",
             "author": {

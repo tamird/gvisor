@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T03:55:05.364810+00:00",
+    "updatedAt": "2026-10-21T04:15:41.609979+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -13387,24 +13387,25 @@
       "url": "https://github.com/google/gvisor/pull/15963",
       "group": "runtime",
       "status": "open",
-      "summary": "The recovery head ddea238bbfa3 passes all current source checks, including Gazelle and Go export, in the October 21 03:24 UTC snapshot. Existing maintainer review and policy requirements remain separate. Import #16007 has refreshed to 5e7af466c5d4 and its exact footer now matches this source; its new checks are pending. The prior nonmatching import observation is superseded.\n\nRoot published the independently reviewed patch-equivalent recovery at ddea238bbfa3 on c45 containing merged a9e9. Original patch, author and message are preserved; no comment or review waiver. Fresh-head checks remain separately observed. The retained import #16007 targets the previous source and no longer qualifies as a current failure.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nCurrent matching import #16007 at 2cb745a42c completed Go export and its local branch push, then failed disposable-clone cleanup with Directory not empty. Existing #15598 addresses this workflow boundary. The surviving writer remains unproved; no topic source failure or blind rerun is inferred.\n\nImport #16007 at 2cb745a42c fails Go generation during temporary-clone cleanup after the export was committed and pushed locally. The same workflow then posts the failed go tests status; no separate test execution failure is established. This matches the cleanup symptom addressed by existing #15598. The writer identity and precise race remain unknown; no topic amendment or retry is proposed.",
-      "updatedAt": "2026-10-21T03:25:25.998043+00:00",
+      "summary": "At 04:14 UTC on October 21, current matching import #16007 at 9efb3d57388f has passed GitHub checks and internal Buildkite #33361. Public Buildkite #51666 is genuinely running: its sixth automatic smoke-race attempt passed at 04:10:03, releasing downstream tests. The returned inventory has 197 running jobs, 16 passed jobs and five preserved failed retry attempts. No terminal un-retried job failure is present. The completed fifth attempt lost agent contact during the prerequisite release build; no smoke-test or compiler failure was recorded, and the underlying host cause remains unknown. WorkMap follows this existing execution; no manual retry or source repair is indicated.\n\nEarlier source and import observations are preserved below with their original head scope.\n\nRoot published the independently reviewed patch-equivalent recovery at ddea238bbfa3 on c45 containing merged a9e9. Original patch, author and message are preserved; no comment or review waiver. Fresh-head checks remain separately observed. The retained import #16007 targets the previous source and no longer qualifies as a current failure.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nCurrent matching import #16007 at 2cb745a42c completed Go export and its local branch push, then failed disposable-clone cleanup with Directory not empty. Existing #15598 addresses this workflow boundary. The surviving writer remains unproved; no topic source failure or blind rerun is inferred.\n\nImport #16007 at 2cb745a42c fails Go generation during temporary-clone cleanup after the export was committed and pushed locally. The same workflow then posts the failed go tests status; no separate test execution failure is established. This matches the cleanup symptom addressed by existing #15598. The writer identity and precise race remain unknown; no topic amendment or retry is proposed.",
+      "updatedAt": "2026-10-21T04:15:41.609979+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "ddea238bbfa3b0e8eae4053cd40845a1bbee216e",
-        "observedAt": "2026-10-21T03:24:36.294542+00:00",
-        "disposition": "Recovery source checks pass; existing review requirements remain",
-        "nextAction": "Follow existing maintainer review and any matching import. The current recovery head passes all source checks, including Gazelle and Go export; no repeated rebase or cleanup repair is indicated.",
+        "observedAt": "2026-10-21T04:14:25.672293+00:00",
+        "disposition": "Matching import is executing public downstream CI after automatic smoke-race recovery",
+        "nextAction": "Follow the existing Buildkite pipeline #51666 on the normal cadence. Its sixth smoke-race attempt passed; downstream jobs are running. Preserve the five agent-loss attempts and existing review requirements; do not rebase or manually retry for this observation.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39314629737/job/118272786450",
-          "https://github.com/google/gvisor/pull/15598",
-          "https://github.com/google/gvisor/pull/15598#issuecomment-6306857960",
-          "https://github.com/google/gvisor/commit/a9e9db418362cc12913dd3e75fa26285653d1d16"
+          "https://buildkite.com/gvisor/pipeline/builds/51666",
+          "https://buildkite.com/gvisor/pipeline/builds/51666#01a15ca1-5aca-4b5b-acdb-73b8d70e5c3a",
+          "https://buildkite.com/gvisor/pipeline/builds/51666#01a15c9b-2c91-4ba8-b6e6-208f5bfd4863",
+          "https://buildkite.com/gvisor/internal/builds/33361",
+          "https://github.com/google/gvisor/pull/16007"
         ]
       },
       "evidence": [
         {
-          "label": "Current Go-export cleanup failure",
+          "label": "Historical Go-export cleanup failure",
           "url": "https://github.com/google/gvisor/actions/runs/39314629737/job/118272786450"
         }
       ]
