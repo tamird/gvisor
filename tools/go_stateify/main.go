@@ -46,6 +46,10 @@ func resolveTypeName(typ ast.Expr) (field string, qualified string) {
 		case *ast.StarExpr:
 			qualified += "*"
 			typ = rs.X
+		case *ast.IndexExpr:
+			typ = rs.X
+		case *ast.IndexListExpr:
+			typ = rs.X
 		case *ast.ArrayType:
 			if rs.Len == nil {
 				// Slice type declaration.
@@ -463,7 +467,7 @@ func main() {
 					// Add to our registration.
 					emitRegister(ts.Name.Name)
 
-				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
+				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType, *ast.MapType:
 					maybeEmitImports()
 
 					// Generate the info methods.
