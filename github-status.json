@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-21T10:53:38.867401+00:00",
-  "registryDate": "2026-10-21T13:33:41.044857+00:00",
+  "registryDate": "2026-10-21T13:56:04.974074+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none"
@@ -129389,39 +129389,30 @@
       }
     },
     "branch:nogo-export-data": {
-      "contributor-review": {
-        "scope": "802a775bf922f09dbe03927233c81f92aeb7a1a0",
-        "since": "2026-10-21T13:33:41.044857+00:00",
+      "changes-requested": {
+        "scope": "711b1c711195a92db38b4b23029042af3e3dcfd9",
+        "since": "2026-10-21T13:56:04.974074+00:00",
         "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T13:33:41.044857+00:00"
-      }
-    },
-    "branch:fix/ipv6-quoted-extension-headers": {
-      "contributor-review": {
-        "scope": "4913272f2637242d49f2b1cc31e48d802109863d",
-        "since": "2026-10-21T13:33:41.044857+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T13:33:41.044857+00:00"
-      }
-    },
-    "branch:fix/ipv6-forwarded-checksums": {
-      "contributor-review": {
-        "scope": "c7693ef8d522a27857fef24fe6f5e0aa178343f4",
-        "since": "2026-10-21T13:33:41.044857+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T13:33:41.044857+00:00"
+        "qualifier": "Contributor",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00"
       }
     },
     "branch:rules-img-basic-images": {
-      "contributor-review": {
-        "scope": "8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
-        "since": "2026-10-21T13:33:41.044857+00:00",
+      "changes-requested": {
+        "scope": "cf55245b69a60372882c5b01008b505c00e7e17d",
+        "since": "2026-10-21T13:56:04.974074+00:00",
         "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T13:33:41.044857+00:00"
+        "qualifier": "Contributor",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00"
+      }
+    },
+    "branch:rules-img-syscallbench": {
+      "changes-requested": {
+        "scope": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
+        "since": "2026-10-21T13:56:04.974074+00:00",
+        "basis": "observed",
+        "qualifier": "Contributor",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00"
       }
     }
   },

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T13:33:41.044857+00:00",
+    "updatedAt": "2026-10-21T13:56:04.974074+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16118,20 +16118,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "nogo-export-data",
-      "head": "802a775bf922f09dbe03927233c81f92aeb7a1a0",
+      "head": "711b1c711195a92db38b4b23029042af3e3dcfd9",
       "title": "Use supported export data for Nogo imports",
-      "url": "https://github.com/tamird/gvisor/commit/802a775bf922f09dbe03927233c81f92aeb7a1a0",
+      "url": "https://github.com/tamird/gvisor/commit/711b1c711195a92db38b4b23029042af3e3dcfd9",
       "group": "analysis",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-21T13:33:41.044857+00:00",
-      "summary": "Nogo now writes supported export data from its existing source type checks and reads it directly; compiler archives remain available only to binary analyzers. Independent review accepted the exact eight-owner normal-mode composition and the five-owner canonical race run. The latter produced 28 positive records, with both architectures reported by each analyzer owner. The final message-only amendment has the same tree as qualified 5a9e562ced7. All four original failed attempts remain preserved. The existing cgo exclusion remains; this is not a whole-repository or native ARM runtime claim.",
+      "status": "Conditional approval; performance context in progress",
+      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
+      "summary": "The contributor conditionally approved the proposal, requesting combined Write/Close error handling and performance context. The requested errors.Join change is implemented and independently reviewed. The published candidate also explains that generated packages now enter the existing analyzer/facts path. The six-pass AMD64 measurement packet is independently accepted: one warmup per revision and two measured samples per revision in ABBA order, capturing actual Nogo action work separately from Bazel compilation and downloads. Results remain pending; no performance claim is made. The accepted normal/race results and four historical failures retain their original source identities.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Contributor decision pending",
-        "sourceHead": "802a775bf922f09dbe03927233c81f92aeb7a1a0",
-        "observedAt": "2026-10-21T13:33:41.044857+00:00",
-        "nextAction": "Await the already-requested contributor decision on the exact linked commit and description before upstream publication.",
+        "disposition": "Owner completing conditional approval",
+        "sourceHead": "711b1c711195a92db38b4b23029042af3e3dcfd9",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00",
+        "nextAction": "Complete the existing bounded performance run, report individual values/ranges and matched versus newly covered owners, then add the measured context to the final description under the recorded conditional approval.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/711b1c711195a92db38b4b23029042af3e3dcfd9",
           "https://github.com/tamird/gvisor/commit/802a775bf922f09dbe03927233c81f92aeb7a1a0",
           "https://app.buildbuddy.io/invocation/316ef638-9097-432b-bb44-3b9d3afc45b5",
           "https://app.buildbuddy.io/invocation/0317e7cc-e806-4979-8459-df82dc2cafd8"
@@ -16139,8 +16140,8 @@
       },
       "evidence": [
         {
-          "label": "Exact proposal and commit description",
-          "url": "https://github.com/tamird/gvisor/commit/802a775bf922f09dbe03927233c81f92aeb7a1a0"
+          "label": "Published refinement and description",
+          "url": "https://github.com/tamird/gvisor/commit/711b1c711195a92db38b4b23029042af3e3dcfd9"
         },
         {
           "label": "Accepted normal-mode recovery",
@@ -16151,38 +16152,46 @@
           "url": "https://app.buildbuddy.io/invocation/0317e7cc-e806-4979-8459-df82dc2cafd8"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "802a775bf922f09dbe03927233c81f92aeb7a1a0",
-        "url": "https://github.com/tamird/gvisor/commit/802a775bf922f09dbe03927233c81f92aeb7a1a0"
+      "contributorChangesRequested": {
+        "head": "711b1c711195a92db38b4b23029042af3e3dcfd9",
+        "url": "https://github.com/tamird/gvisor/commit/711b1c711195a92db38b4b23029042af3e3dcfd9"
+      },
+      "refinement": {
+        "before": {
+          "head": "802a775bf922f09dbe03927233c81f92aeb7a1a0"
+        },
+        "after": {
+          "head": "711b1c711195a92db38b4b23029042af3e3dcfd9"
+        }
       }
     },
     {
-      "id": "branch:fix/ipv6-quoted-extension-headers",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16096",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/ipv6-quoted-extension-headers",
       "head": "4913272f2637242d49f2b1cc31e48d802109863d",
-      "title": "Handle IPv6 extension headers in quoted errors",
-      "url": "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d",
+      "title": "netstack: parse quoted IPv6 extension headers",
+      "url": "https://github.com/google/gvisor/pull/16096",
       "group": "runtime",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-21T13:33:41.044857+00:00",
-      "summary": "Quoted-error delivery, conntrack lookup and NAT rewriting reuse the existing IPv6 extension-header iterator and agree on the final protocol and offset. Valid truncated quotes and first/atomic fragments remain supported; incomplete extensions and non-first fragments are rejected. Independent review accepted the failing-before evidence and the corrected 13-owner gate: 17,858 positive XML records including parents, with seven analyzer owners reporting both architectures. The final subject-only amendment has the same tree as qualified 89f154da36. This proposal is independent of the forwarding-checksum correction and the deprecation-policy PR.",
+      "status": "open",
+      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
+      "summary": "Contributor approval is delivered as PR #16096 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Quoted-error delivery, conntrack lookup and NAT rewriting reuse the existing IPv6 extension-header iterator and agree on the final protocol and offset. Valid truncated quotes and first/atomic fragments remain supported; incomplete extensions and non-first fragments are rejected. Independent review accepted the failing-before evidence and the corrected 13-owner gate: 17,858 positive XML records including parents, with seven analyzer owners reporting both architectures. The final subject-only amendment has the same tree as qualified 89f154da36. This proposal is independent of the forwarding-checksum correction and the deprecation-policy PR.",
       "followup": {
-        "owner": "node_tls_sni",
-        "disposition": "Contributor decision pending",
+        "owner": "work_map_current",
+        "disposition": "Delivered; current-head CI and maintainer review remain",
         "sourceHead": "4913272f2637242d49f2b1cc31e48d802109863d",
-        "observedAt": "2026-10-21T13:33:41.044857+00:00",
-        "nextAction": "Await the already-requested contributor decision on the exact linked commit and description before upstream publication.",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00",
+        "nextAction": "Follow the exact PR through the existing authorized cadence when it resumes. The contributor decision is complete; no repeated review request or additional source change is pending.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16096",
           "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d",
           "https://app.buildbuddy.io/invocation/a8acb9fb-e1b7-4817-a035-9179e0e26fee"
         ]
       },
       "evidence": [
         {
-          "label": "Exact proposal and commit description",
+          "label": "Exact delivered and qualified source",
           "url": "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d"
         },
         {
@@ -16190,38 +16199,35 @@
           "url": "https://app.buildbuddy.io/invocation/a8acb9fb-e1b7-4817-a035-9179e0e26fee"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "4913272f2637242d49f2b1cc31e48d802109863d",
-        "url": "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d"
-      }
+      "number": 16096
     },
     {
-      "id": "branch:fix/ipv6-forwarded-checksums",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16095",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/ipv6-forwarded-checksums",
       "head": "c7693ef8d522a27857fef24fe6f5e0aa178343f4",
-      "title": "Correct forwarded IPv6 TCP and UDP checksums",
-      "url": "https://github.com/tamird/gvisor/commit/c7693ef8d522a27857fef24fe6f5e0aa178343f4",
+      "title": "netstack: fix forwarded IPv6 checksums",
+      "url": "https://github.com/google/gvisor/pull/16095",
       "group": "runtime",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-21T13:33:41.044857+00:00",
-      "summary": "Software forwarding now uses the matched TCP or UDP protocol in the checksum pseudoheader instead of the IPv6 base NextHeader value. The direct and forwarding/SNAT regressions reproduce eight new failing leaves before the fix while four original controls pass. Independent review accepted seven corrected owners, 1,504 positive XML records including parents, all 14 selected regression records, four analyzer owners reporting both architectures, and formatting checks. The verified receipt arrived 6.145 seconds after execution with no manual collection. The fallback, ICMP and GSO paths are unchanged; this is independent of the quoted-error proposal.",
+      "status": "open",
+      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
+      "summary": "Contributor approval is delivered as PR #16095 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Software forwarding now uses the matched TCP or UDP protocol in the checksum pseudoheader instead of the IPv6 base NextHeader value. The direct and forwarding/SNAT regressions reproduce eight new failing leaves before the fix while four original controls pass. Independent review accepted seven corrected owners, 1,504 positive XML records including parents, all 14 selected regression records, four analyzer owners reporting both architectures, and formatting checks. The verified receipt arrived 6.145 seconds after execution with no manual collection. The fallback, ICMP and GSO paths are unchanged; this is independent of the quoted-error proposal.",
       "followup": {
-        "owner": "node_tls_sni",
-        "disposition": "Contributor decision pending",
+        "owner": "work_map_current",
+        "disposition": "Delivered; current-head CI and maintainer review remain",
         "sourceHead": "c7693ef8d522a27857fef24fe6f5e0aa178343f4",
-        "observedAt": "2026-10-21T13:33:41.044857+00:00",
-        "nextAction": "Await the already-requested contributor decision on the exact linked commit and description before upstream publication.",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00",
+        "nextAction": "Follow the exact PR through the existing authorized cadence when it resumes. The contributor decision is complete; no repeated review request or additional source change is pending.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16095",
           "https://github.com/tamird/gvisor/commit/c7693ef8d522a27857fef24fe6f5e0aa178343f4",
           "https://app.buildbuddy.io/invocation/e3c3639b-3101-41dc-8248-80b1be041da0"
         ]
       },
       "evidence": [
         {
-          "label": "Exact proposal and commit description",
+          "label": "Exact delivered and qualified source",
           "url": "https://github.com/tamird/gvisor/commit/c7693ef8d522a27857fef24fe6f5e0aa178343f4"
         },
         {
@@ -16229,40 +16235,38 @@
           "url": "https://app.buildbuddy.io/invocation/e3c3639b-3101-41dc-8248-80b1be041da0"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "c7693ef8d522a27857fef24fe6f5e0aa178343f4",
-        "url": "https://github.com/tamird/gvisor/commit/c7693ef8d522a27857fef24fe6f5e0aa178343f4"
-      }
+      "number": 16095
     },
     {
       "id": "branch:rules-img-basic-images",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-basic-images",
-      "head": "8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
+      "head": "cf55245b69a60372882c5b01008b505c00e7e17d",
       "title": "Build the basic images with rules_img",
-      "url": "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
+      "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
       "group": "bazel",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-21T13:33:41.044857+00:00",
-      "summary": "The standalone change replaces the Alpine, BusyBox and tmpfile Dockerfiles with rules_img declarations using the same pinned base versions, plus a standard archive and Make adapter. Independent review accepted six archive/context outputs per architecture, formatting, canonical license Fetch and Verify, and actual Make rebuild, cached retagging and container checks for all three images. The final catalog amendment imports the exact generated output, including three newly discovered allowed notices; production remains identical to qualified b7884b1cb9. There is no held image or license proposal prerequisite. ARM archives were built; runtime checks were AMD64. Earlier failures and fork-only verifier evidence retain their original identities.",
+      "status": "Conditional approval; layout validation in progress",
+      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
+      "summary": "The contributor approved the migration subject to consolidating the former Dockerfile directories. The reviewed refinement places all three declarations in images/basic/BUILD with the exact tmpfile fixture alongside it. Explicit image names preserve tags and nested Make context paths while helper targets receive distinct names. One combined remote gate at child 5ac1aa8e95 validates the final basic and syscallbench layouts. Earlier AMD64/ARM64 archive, Make/container and license results remain accepted at their original sources; they are not presented as execution of this refinement. There is no held image or license proposal prerequisite.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor decision pending",
-        "sourceHead": "8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
-        "observedAt": "2026-10-21T13:33:41.044857+00:00",
-        "nextAction": "Await the already-requested contributor decision on the exact linked commit and description before upstream publication.",
+        "disposition": "Owner completing conditional approval",
+        "sourceHead": "cf55245b69a60372882c5b01008b505c00e7e17d",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00",
+        "nextAction": "Node owns the single combined layout gate. Reconcile its complete result and final range-diff, then deliver the conditionally approved basic-image proposal.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
           "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
           "https://app.buildbuddy.io/invocation/2d49ad1a-86ca-4de9-ac5f-e9bf49d1e47b",
-          "https://app.buildbuddy.io/invocation/4da02be7-2fbd-4976-b013-3213fdba22ae"
+          "https://app.buildbuddy.io/invocation/4da02be7-2fbd-4976-b013-3213fdba22ae",
+          "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         ]
       },
       "evidence": [
         {
-          "label": "Exact proposal and commit description",
-          "url": "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e"
+          "label": "Published refinement and description",
+          "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d"
         },
         {
           "label": "Accepted raw Make and container checks",
@@ -16271,12 +16275,23 @@
         {
           "label": "Accepted canonical license Fetch and Verify",
           "url": "https://app.buildbuddy.io/invocation/4da02be7-2fbd-4976-b013-3213fdba22ae"
+        },
+        {
+          "label": "Current combined layout validation",
+          "url": "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
-        "url": "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e"
+      "contributorChangesRequested": {
+        "head": "cf55245b69a60372882c5b01008b505c00e7e17d",
+        "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d"
+      },
+      "refinement": {
+        "before": {
+          "head": "8f8c2b71ad946e5fcf2256b88c510d6bad90885e"
+        },
+        "after": {
+          "head": "cf55245b69a60372882c5b01008b505c00e7e17d"
+        }
       }
     },
     {
@@ -16284,34 +16299,52 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-syscallbench",
-      "head": "16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
+      "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
       "title": "Build the syscall benchmark image from source",
-      "url": "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
+      "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
       "group": "bazel",
-      "status": "Focused validation in progress",
-      "updatedAt": "2026-10-21T13:33:41.044857+00:00",
-      "summary": "This next migration compiles the existing syscallbench C source statically and places it on the pinned BusyBox base using the basic-image adapter. The three-file change preserves the existing sleep and executable-path consumer interface and remains AMD64-only. Source and request review are complete. One focused run is in progress: it checks static linkage, archive/context outputs, actual Make rebuild and cached loading, then the four existing syscall/seccomp benchmark cases with 100 iterations each. No performance comparison, runtime pass or ARM support is claimed before the result is accepted.",
+      "status": "Conditional approval; layout validation in progress",
+      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
+      "summary": "The contributor approved this child subject to the same directory consolidation. The reviewed source now lives in images/benchmarks/BUILD and syscallbench.c; the C bytes, static linkage settings, BusyBox base, executable path and AMD64-only contract are unchanged. The original 16ac296202 gate passed static ELF checks, actual Make rebuild/deleted-tag restoration and all four existing runc benchmark modes at 100 iterations each, with a verified receipt 4.500 seconds after execution and no intervention. A single combined gate now validates the refined layout at 5ac1aa8e95. This proposal depends only on the basic-image adapter; no comparative performance or ARM support is claimed.",
       "followup": {
         "owner": "root",
-        "disposition": "Owner validation in progress",
-        "sourceHead": "16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
-        "observedAt": "2026-10-21T13:33:41.044857+00:00",
-        "nextAction": "Root owns the existing focused validation. Reconcile its terminal result, then prepare the contributor proposal; do not duplicate the run.",
+        "disposition": "Owner completing conditional approval",
+        "sourceHead": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
+        "observedAt": "2026-10-21T13:56:04.974074+00:00",
+        "nextAction": "Node owns the single combined layout gate. After accepted final validation and the basic-image prerequisite lands, deliver the conditionally approved child without duplicating the adapter.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
           "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
-          "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6"
+          "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6",
+          "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         ]
       },
       "evidence": [
         {
-          "label": "Published implementation",
-          "url": "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3"
+          "label": "Published refinement and description",
+          "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
         },
         {
           "label": "Current focused validation",
           "url": "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6"
+        },
+        {
+          "label": "Current combined layout validation",
+          "url": "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         }
-      ]
+      ],
+      "contributorChangesRequested": {
+        "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
+        "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+      },
+      "refinement": {
+        "before": {
+          "head": "16ac29620279b0c0ecdfc4df2739ea854c8f38d3"
+        },
+        "after": {
+          "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
+        }
+      }
     }
   ],
   "edges": [
@@ -18279,10 +18312,10 @@
       "from": "branch:rules-img-basic-images",
       "to": "branch:rules-img-syscallbench",
       "type": "depends_on",
-      "reason": "The syscallbench image uses the standard archive and Make adapter introduced by the basic-image proposal; its branch is based on exact 8f8c2b71ad. This is the only proposal prerequisite.",
+      "reason": "The syscallbench image uses the standard archive and Make adapter introduced by the basic-image proposal; the refined child is based on exact cf55245b69. This is the only proposal prerequisite.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
-        "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3"
+        "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
+        "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
       ]
     }
   ],
