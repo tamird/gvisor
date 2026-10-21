@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T02:48:15.310128+00:00",
+    "updatedAt": "2026-10-21T02:58:33.061996+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5956,7 +5956,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-21T02:47:30.565570+00:00",
+        "observedAt": "2026-10-21T02:57:08.791483+00:00",
         "disposition": "FUSE startup readiness fix is active; Node singleton and local continuous results remain",
         "nextAction": "Root fixes the owning FUSE readiness contract; Hostinet seals continuous results, and Node owns the single missing TAP case. Preserve original failures and final-source applicability limits.",
         "evidence": [
@@ -12796,18 +12796,25 @@
       "group": "buildbuddy",
       "status": "open",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803",
-      "summary": "The proposed 5.15 and 6.1 configurations passed feature discovery and owner/reset/reacquire checks. Maintainer follow-up awaits the kernel upgrade. Virtqueue traffic and hosted deployment remain unverified; source review or merge does not establish deployed worker capability.",
-      "updatedAt": "2026-10-19T10:33:24.407103+00:00",
+      "summary": "Maintainer replacement #13826 explicitly supersedes this proposal and has 24 successful checks at the recorded observation. Replacement is still open; retain #13803 and its evidence pending that landing. Its current conflict is superseded work, not an actionable rebase. Hosted deployment remains unverified.\n\nThe proposed 5.15 and 6.1 configurations passed feature discovery and owner/reset/reacquire checks. Maintainer follow-up awaits the kernel upgrade. Virtqueue traffic and hosted deployment remain unverified; source review or merge does not establish deployed worker capability.",
+      "updatedAt": "2026-10-21T02:58:33.061996+00:00",
       "followup": {
-        "owner": "bduffany",
-        "disposition": "Maintainer-owned incorporation after the 6.18 kernel upgrade",
+        "owner": "work_map_current",
+        "disposition": "Superseded pending maintainer replacement #13826 landing",
         "sourceHead": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-        "observedAt": "2026-10-19T13:11:37.658117+00:00",
-        "nextAction": "Follow the maintainer-owned incorporation and kernel upload; preserve the published proposal until that follow-up is available.",
+        "observedAt": "2026-10-21T02:54:53.310824+00:00",
+        "nextAction": "Monitor #13826 actual merge, then report to root for retirement under existing obsolete-work authority. Do not rebase this superseded proposal.",
         "evidence": [
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276"
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Explicit maintainer replacement #13826",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
+        }
+      ]
     },
     {
       "id": "pr:buildbuddy-io/buildbuddy:13802",
@@ -15220,6 +15227,35 @@
           "url": "https://app.buildbuddy.io/invocation/d8b31329-0d3a-418e-8b3e-f90764fdbb50"
         }
       ]
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:13826",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13826,
+      "title": "Enable vhost-net in x86 guest kernels",
+      "group": "buildbuddy",
+      "status": "open",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13826",
+      "head": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+      "summary": "Maintainer bduffany explicitly supersedes #13803 with this replacement for the 5.15 and 6.18 kernels and their uploaded dependency digests. All 24 checks passed at the recorded observation; the PR remains open. No hosted deployment or runtime capability is established.\n\n",
+      "updatedAt": "2026-10-21T02:58:33.061996+00:00",
+      "followup": {
+        "owner": "work_map_current",
+        "disposition": "Monitor the maintainer replacement until actual merge",
+        "sourceHead": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+        "observedAt": "2026-10-21T02:54:53.310824+00:00",
+        "nextAction": "Follow current checks and actual merge in the ordinary snapshot; report landing to root for the retained #13803 disposition.",
+        "evidence": [
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Maintainer replacement with explicit supersession",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
+        }
+      ]
     }
   ],
   "edges": [
@@ -17175,6 +17211,13 @@
         "https://github.com/google/gvisor/pull/16048",
         "https://github.com/google/gvisor/actions/runs/39473699791/job/118804061927"
       ]
+    },
+    {
+      "from": "pr:buildbuddy-io/buildbuddy:13826",
+      "to": "pr:buildbuddy-io/buildbuddy:13803",
+      "type": "blocked_by",
+      "reason": "Retirement of the superseded proposal awaits actual landing of the maintainer replacement; source checks do not establish hosted deployment.",
+      "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
     }
   ],
   "investigations": [
