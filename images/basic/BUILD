@@ -202,3 +202,58 @@ arch_genrule(
     src = ":integration_test_archive",
     template = "integration_test_%s.tar",
 )
+
+# Qualification-only: compile each existing helper for both supported CPUs.
+arch_genrule(
+    name = "host_connect_qualification",
+    src = ":host_connect",
+    template = "host_connect_%s",
+)
+
+arch_genrule(
+    name = "host_fd_qualification",
+    src = ":host_fd",
+    template = "host_fd_%s",
+)
+
+arch_genrule(
+    name = "link_test_qualification",
+    src = ":link_test",
+    template = "link_test_%s",
+)
+
+arch_genrule(
+    name = "tcp_loopback_qualification",
+    src = ":tcp_loopback",
+    template = "tcp_loopback_%s",
+)
+
+arch_genrule(
+    name = "tcp_server_qualification",
+    src = ":tcp_server",
+    template = "tcp_server_%s",
+)
+
+arch_genrule(
+    name = "tcp_stress_server_qualification",
+    src = ":tcp_stress_server",
+    template = "tcp_stress_server_%s",
+)
+
+arch_genrule(
+    name = "test_copy_up_qualification",
+    src = ":test_copy_up",
+    template = "test_copy_up_%s",
+)
+
+arch_genrule(
+    name = "test_rewinddir_qualification",
+    src = ":test_rewinddir",
+    template = "test_rewinddir_%s",
+)
+
+arch_genrule(
+    name = "test_sticky_qualification",
+    src = ":test_sticky",
+    template = "test_sticky_%s",
+)
