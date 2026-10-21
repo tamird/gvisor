@@ -27,6 +27,8 @@
 // by hand. Fetch preserves an existing entry for the same source and declared
 // archive hash, reporting the fetch error. Retention does not establish that
 // current notices were available or classified successfully.
+// LicenseRef entries are always maintained by hand and require a new audit
+// when their artifact pin changes.
 package licensecheck
 
 import (
@@ -73,11 +75,11 @@ type Entry struct {
 	License    Licenses `yaml:"license"`
 }
 
-// License is a license identifier from the configured text scanner, or an
-// explicit metadata token such as NOASSERTION. Scanner identifiers include
-// SPDX identifiers, but the scanner reuses unsuffixed GNU names for texts that
-// do not distinguish -only from -or-later. Those names have the scanner's
-// meaning here, not the meaning of the deprecated SPDX aliases:
+// License identifies terms recognized by the configured scanner, an explicit
+// metadata token such as NOASSERTION, or a manually audited LicenseRef. Scanner
+// identifiers include SPDX identifiers, but the scanner reuses unsuffixed GNU
+// names for texts that do not distinguish -only from -or-later. Those names have
+// the scanner's meaning here, not the meaning of the deprecated SPDX aliases:
 // https://github.com/google/licensecheck/blob/16aaea366/licenses/README.md#L138-L165
 type License string
 
@@ -172,6 +174,7 @@ const (
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
+# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -189,7 +192,14 @@ func Fetch(p Paths) error {
 	}
 	oldByName := make(map[string]Entry)
 	for _, e := range old {
+		if _, ok := oldByName[e.Dependency]; ok {
+			return fmt.Errorf("duplicate entry for %s in %s", e.Dependency, p.YAML)
+		}
 		oldByName[e.Dependency] = e
+	}
+	manual, err := pinnedManualEntries(deps, oldByName)
+	if err != nil {
+		return err
 	}
 
 	aptResults := fetchAptLicenses(deps)
@@ -197,6 +207,9 @@ func Fetch(p Paths) error {
 	sem := make(chan struct{}, fetchWorkers)
 	var wg sync.WaitGroup
 	for i, d := range deps {
+		if _, ok := manual[d.name]; ok {
+			continue
+		}
 		if d.kind == kindApt {
 			results[i] = aptResults[d.name]
 			continue
@@ -216,6 +229,11 @@ func Fetch(p Paths) error {
 	var entries []Entry
 	var failed []string
 	for i, d := range deps {
+		if e, ok := manual[d.name]; ok {
+			fmt.Fprintf(os.Stderr, "%-60s %s (kept manually audited artifact)\n", d.name, e.License)
+			entries = append(entries, e)
+			continue
+		}
 		r := results[i]
 		if r.err != nil {
 			if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
@@ -259,6 +277,26 @@ func Fetch(p Paths) error {
 func (d dep) canRetain(e Entry) bool {
 	return len(e.License) > 0 && e.Version == d.source() &&
 		(d.sha256 == "" || e.SHA256 == d.sha256)
+}
+
+// pinnedManualEntries prevents a repository's license from replacing manually
+// audited release-asset terms. For example, github/codeql-action is MIT, but its
+// CodeQL CLI bundles have separate terms. A changed pin must not fall back to
+// repository classification, even when that classification would succeed.
+// https://github.com/github/codeql-cli-binaries/blob/778dd2254/LICENSE.md
+func pinnedManualEntries(deps []dep, byName map[string]Entry) (map[string]Entry, error) {
+	manual := make(map[string]Entry)
+	for _, d := range deps {
+		e := byName[d.name]
+		if !slices.ContainsFunc(e.License, func(l License) bool { return strings.HasPrefix(string(l), "LicenseRef-") }) {
+			continue
+		}
+		if problems := verifyProblems([]dep{d}, []Entry{e}); len(problems) != 0 {
+			return nil, fmt.Errorf("re-audit the license of %s: %s", d.name, strings.Join(problems, "; "))
+		}
+		manual[d.name] = e
+	}
+	return manual, nil
 }
 
 // Verify checks that the YAML file has a well-formed, up-to-date entry for
@@ -322,8 +360,12 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 				problems = append(problems, fmt.Sprintf("%s was audited with sha256 %q, but is now pinned to %q", d.name, e.SHA256, d.sha256))
 			}
 			for i, license := range e.License {
-				if _, ok := registry.ids[license]; !ok {
+				custom := licenseRefRE.MatchString(string(license))
+				if _, ok := registry.ids[license]; !ok && !custom {
 					problems = append(problems, fmt.Sprintf("%s has unknown license %q", d.name, license))
+				}
+				if custom && d.sha256 == "" {
+					problems = append(problems, fmt.Sprintf("%s has manually audited terms without an artifact checksum pin", d.name))
 				}
 				if i > 0 && e.License[i-1] >= license {
 					problems = append(problems, fmt.Sprintf("licenses of %s are not sorted and unique", d.name))
