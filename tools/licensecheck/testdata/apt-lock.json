@@ -1,0 +1,443 @@
+{
+  "dependency_sets": {
+    "container_test_tools": {
+      "sets": {
+        "amd64": {
+          "/jammy-security/busybox-static:amd64": "1:1.30.1-7ubuntu3.1",
+          "/jammy/erofs-utils:amd64": "1.4-1"
+        },
+        "arm64": {
+          "/jammy-security/busybox-static:arm64": "1:1.30.1-7ubuntu3.1",
+          "/jammy/erofs-utils:arm64": "1.4-1"
+        }
+      }
+    },
+    "release_tools": {
+      "sets": {
+        "amd64": {
+          "/jammy-security/bash:amd64": "5.1-6ubuntu1.1",
+          "/jammy-security/bzip2:amd64": "1.0.8-5ubuntu0.1",
+          "/jammy-security/coreutils:amd64": "8.32-4.1ubuntu1.4",
+          "/jammy-security/diffutils:amd64": "1:3.8-0ubuntu2.1",
+          "/jammy-security/dpkg:amd64": "1.21.1ubuntu2.6",
+          "/jammy-security/file:amd64": "1:5.41-3ubuntu0.1",
+          "/jammy-security/gnupg:amd64": "2.2.27-3ubuntu2.5",
+          "/jammy-security/gzip:amd64": "1.10-4ubuntu4.2",
+          "/jammy-security/tar:amd64": "1.34+dfsg-1ubuntu0.1.22.04.6",
+          "/jammy-security/xz-utils:amd64": "5.2.5-2ubuntu1.1",
+          "/jammy-updates/apt-utils:amd64": "2.4.14",
+          "/jammy/dpkg-sig:amd64": "0.13.1+nmu4",
+          "/jammy/grep:amd64": "3.7-1build1",
+          "/jammy/mawk:amd64": "1.3.4.20200120-3",
+          "/jammy/zstd:amd64": "1.4.8+dfsg-3build1"
+        }
+      }
+    },
+    "syzkaller_sysroot": {
+      "sets": {
+        "amd64": {
+          "/jammy-security/libstdc++-11-dev:amd64": "11.4.0-1ubuntu1~22.04.3"
+        }
+      }
+    }
+  },
+  "facts": {
+    "jammy-security/main/amd64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-L4quix3+zZzBCZ7PbZK2uPhpUjItqiqkKSvWtdVhRk8=",
+    "jammy-security/main/arm64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-H7QVPJxlFaDpbIP6N8XzmBTXCkoxpFzXMGZU8yUuD70=",
+    "jammy-security/universe/amd64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-5GjN3PIvYvv53lK6mSuW0ANFyDHF1N+vuaandYEyi2Y=",
+    "jammy-security/universe/arm64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-ygbk6n5gbTWIWvjXGaMoleTRgYsuVsT/IdqLyl0A1/I=",
+    "jammy-updates/main/amd64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-DbMLNSXmlNS+HAoDKx97BM2/+JCegZJr1Z86uA/F7P0=",
+    "jammy-updates/main/arm64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-80/DoAug2gxaaN9cmtkauDEFNPo5SNeBgagVfD+pxh4=",
+    "jammy-updates/universe/amd64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-e/1cXCrbe3fhToIZarGMcZItJOcB5l434Ni3XCahoII=",
+    "jammy-updates/universe/arm64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-96ps831eZVWRwqvT8FuuLOqVPURQ+Lq713gC5Xvi8x0=",
+    "jammy/main/amd64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-N8tX8VVMv6ccWinun/7hipqMF4K7BWjgh0t/9M6PnBE=",
+    "jammy/main/arm64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-uA0fCXGY9KLYD4TbAlImPZAgUaaVBArLwIXwMwSLybs=",
+    "jammy/universe/amd64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-0pyyTJP+xfQyVXBrzn60bUd5lSA52MaKwbsUpvNlXOI=",
+    "jammy/universe/arm64/Packages/https://snapshot.ubuntu.com/ubuntu/20260928T000000Z": "sha256-I8GSi37A9qPjlvSPQ7aZW90Bpx3YQ6bMiaraC9q6SF0="
+  },
+  "packages": {
+    "/jammy-security/busybox-static:amd64=1:1.30.1-7ubuntu3.1": {
+      "architecture": "amd64",
+      "depends_on": [],
+      "filename": "pool/main/b/busybox/busybox-static_1.30.1-7ubuntu3.1_amd64.deb",
+      "name": "busybox-static",
+      "section": "shells",
+      "sha256": "833b81ad44c4e201059e1bbb1dab285d5d0488736db169adfaa677fd953baae6",
+      "size": 1019206,
+      "suite": "jammy-security",
+      "version": "1:1.30.1-7ubuntu3.1"
+    },
+    "/jammy-security/busybox-static:arm64=1:1.30.1-7ubuntu3.1": {
+      "architecture": "arm64",
+      "depends_on": [],
+      "filename": "pool/main/b/busybox/busybox-static_1.30.1-7ubuntu3.1_arm64.deb",
+      "name": "busybox-static",
+      "section": "shells",
+      "sha256": "c467c2014f91795a69237339693a64089347f73a96d10613e7285b7433b3965a",
+      "size": 920298,
+      "suite": "jammy-security",
+      "version": "1:1.30.1-7ubuntu3.1"
+    },
+    "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3": {
+      "architecture": "amd64",
+      "depends_on": [],
+      "filename": "pool/main/g/gcc-12/gcc-12-base_12.3.0-1ubuntu1~22.04.3_amd64.deb",
+      "name": "gcc-12-base",
+      "section": "libs",
+      "sha256": "7f9253b7e0976f0526fc21346c73ee006e185a7b2f2f865048ea78a2af55bc8d",
+      "size": 215782,
+      "suite": "jammy-security",
+      "version": "12.3.0-1ubuntu1~22.04.3"
+    },
+    "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3": {
+      "architecture": "arm64",
+      "depends_on": [],
+      "filename": "pool/main/g/gcc-12/gcc-12-base_12.3.0-1ubuntu1~22.04.3_arm64.deb",
+      "name": "gcc-12-base",
+      "section": "libs",
+      "sha256": "b2bc566681989941dd059d6391b01c41854857f26d83c53358287d620dfb0fd4",
+      "size": 215822,
+      "suite": "jammy-security",
+      "version": "12.3.0-1ubuntu1~22.04.3"
+    },
+    "/jammy-security/libc6:amd64=2.35-0ubuntu3.15": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/g/glibc/libc6_2.35-0ubuntu3.15_amd64.deb",
+      "name": "libc6",
+      "section": "libs",
+      "sha256": "79e35256227e16a607c154cdeb8d76ff12d20e31de286ea7fd9ad3b96fe0452d",
+      "size": 3234380,
+      "suite": "jammy-security",
+      "version": "2.35-0ubuntu3.15"
+    },
+    "/jammy-security/libc6:arm64=2.35-0ubuntu3.15": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/g/glibc/libc6_2.35-0ubuntu3.15_arm64.deb",
+      "name": "libc6",
+      "section": "libs",
+      "sha256": "dd88cc85dcfbac19c0c9b606676b7b1b87f851d75afa5c830fc5ba1293a30833",
+      "size": 2709356,
+      "suite": "jammy-security",
+      "version": "2.35-0ubuntu3.15"
+    },
+    "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/g/gcc-12/libgcc-s1_12.3.0-1ubuntu1~22.04.3_amd64.deb",
+      "name": "libgcc-s1",
+      "section": "libs",
+      "sha256": "d383e642d83263147f7b4b69fb92cf1036e5246c6be3accf10b77f986684589a",
+      "size": 53896,
+      "suite": "jammy-security",
+      "version": "12.3.0-1ubuntu1~22.04.3"
+    },
+    "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/g/gcc-12/libgcc-s1_12.3.0-1ubuntu1~22.04.3_arm64.deb",
+      "name": "libgcc-s1",
+      "section": "libs",
+      "sha256": "46626e1af6b159061e055f843654ee1f0f1e65fa280331ed47ee76ba1b1f6045",
+      "size": 39702,
+      "suite": "jammy-security",
+      "version": "12.3.0-1ubuntu1~22.04.3"
+    },
+    "/jammy-security/libpcre2-8-0:amd64=10.39-3ubuntu0.1": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_amd64.deb",
+      "name": "libpcre2-8-0",
+      "section": "libs",
+      "sha256": "01a5a74f3d305cad32fffffdc200c2a92fd8e5a01bff97de76ac598fb444d53e",
+      "size": 220512,
+      "suite": "jammy-security",
+      "version": "10.39-3ubuntu0.1"
+    },
+    "/jammy-security/libpcre2-8-0:arm64=10.39-3ubuntu0.1": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_arm64.deb",
+      "name": "libpcre2-8-0",
+      "section": "libs",
+      "sha256": "b85beefd54108f1c34a89cb26688eb1b2eeaa099e4995091295a1d39f9c67a91",
+      "size": 201806,
+      "suite": "jammy-security",
+      "version": "10.39-3ubuntu0.1"
+    },
+    "/jammy-security/libuuid1:amd64=2.37.2-4ubuntu3.6": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_amd64.deb",
+      "name": "libuuid1",
+      "section": "libs",
+      "sha256": "97eaa1090c2e7ddaad55d58f9d0d7907d64b70f89228405d68a7ce7d56a89d67",
+      "size": 23978,
+      "suite": "jammy-security",
+      "version": "2.37.2-4ubuntu3.6"
+    },
+    "/jammy-security/libuuid1:arm64=2.37.2-4ubuntu3.6": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/u/util-linux/libuuid1_2.37.2-4ubuntu3.6_arm64.deb",
+      "name": "libuuid1",
+      "section": "libs",
+      "sha256": "2478ccd8df956d8e5cf087bff1471bcd9991838be9c7999e5737d092034c492d",
+      "size": 24064,
+      "suite": "jammy-security",
+      "version": "2.37.2-4ubuntu3.6"
+    },
+    "/jammy-updates/base-files:amd64=12ubuntu4.7": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy/mawk:amd64=1.3.4.20200120-3"
+      ],
+      "filename": "pool/main/b/base-files/base-files_12ubuntu4.7_amd64.deb",
+      "name": "base-files",
+      "section": "admin",
+      "sha256": "543f50e12da693710e1d606af61029fa599cde7eb0eaee2c0e34fa47848f4533",
+      "size": 61894,
+      "suite": "jammy-updates",
+      "version": "12ubuntu4.7"
+    },
+    "/jammy/erofs-utils:amd64=1.4-1": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libuuid1:amd64=2.37.2-4ubuntu3.6",
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy/libselinux1:amd64=3.3-1build2",
+        "/jammy-security/libpcre2-8-0:amd64=10.39-3ubuntu0.1",
+        "/jammy/liblz4-1:amd64=1.9.3-2build2"
+      ],
+      "filename": "pool/universe/e/erofs-utils/erofs-utils_1.4-1_amd64.deb",
+      "name": "erofs-utils",
+      "section": "universe/admin",
+      "sha256": "1c5f55d2ab4aae4bf2295b67eb42afeb405af4dfad8435b93a3ef77e9afc8d78",
+      "size": 53798,
+      "suite": "jammy",
+      "version": "1.4-1"
+    },
+    "/jammy/erofs-utils:arm64=1.4-1": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libuuid1:arm64=2.37.2-4ubuntu3.6",
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy/libselinux1:arm64=3.3-1build2",
+        "/jammy-security/libpcre2-8-0:arm64=10.39-3ubuntu0.1",
+        "/jammy/liblz4-1:arm64=1.9.3-2build2"
+      ],
+      "filename": "pool/universe/e/erofs-utils/erofs-utils_1.4-1_arm64.deb",
+      "name": "erofs-utils",
+      "section": "universe/admin",
+      "sha256": "fc2053e6c1e5b894d546e41659657d2d5880e9c742e65eaf6f00a903351ee52d",
+      "size": 53408,
+      "suite": "jammy",
+      "version": "1.4-1"
+    },
+    "/jammy/libcrypt1:amd64=1:4.4.27-1": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/libx/libxcrypt/libcrypt1_4.4.27-1_amd64.deb",
+      "name": "libcrypt1",
+      "section": "libs",
+      "sha256": "3fa566e9f861a08736cbc5a97562d9d6e4f0c00450fbeafcb6d7583423b04a98",
+      "size": 82004,
+      "suite": "jammy",
+      "version": "1:4.4.27-1"
+    },
+    "/jammy/libcrypt1:arm64=1:4.4.27-1": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/libx/libxcrypt/libcrypt1_4.4.27-1_arm64.deb",
+      "name": "libcrypt1",
+      "section": "libs",
+      "sha256": "fb5f8d59de95bbb118a635e83e2a92077e13c6d297980dae3119df057bf88111",
+      "size": 86850,
+      "suite": "jammy",
+      "version": "1:4.4.27-1"
+    },
+    "/jammy/liblz4-1:amd64=1.9.3-2build2": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/l/lz4/liblz4-1_1.9.3-2build2_amd64.deb",
+      "name": "liblz4-1",
+      "section": "libs",
+      "sha256": "ac9b54d0feb840345060c74fb687675c5e1eb2b195effafae38c5f9991041e98",
+      "size": 56930,
+      "suite": "jammy",
+      "version": "1.9.3-2build2"
+    },
+    "/jammy/liblz4-1:arm64=1.9.3-2build2": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/l/lz4/liblz4-1_1.9.3-2build2_arm64.deb",
+      "name": "liblz4-1",
+      "section": "libs",
+      "sha256": "3e2274893e0963c758f0d18ba80d033736909373247a7deb211e9ff590a09133",
+      "size": 57640,
+      "suite": "jammy",
+      "version": "1.9.3-2build2"
+    },
+    "/jammy/libselinux1:amd64=3.3-1build2": {
+      "architecture": "amd64",
+      "depends_on": [
+        "/jammy-security/libpcre2-8-0:amd64=10.39-3ubuntu0.1",
+        "/jammy-security/libc6:amd64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:amd64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:amd64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:amd64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/libs/libselinux/libselinux1_3.3-1build2_amd64.deb",
+      "name": "libselinux1",
+      "section": "libs",
+      "sha256": "b96c6b40ee2388bd51341cb11c0f1d5bcca29b9180b6e3a77a06b881f2913f7e",
+      "size": 74578,
+      "suite": "jammy",
+      "version": "3.3-1build2"
+    },
+    "/jammy/libselinux1:arm64=3.3-1build2": {
+      "architecture": "arm64",
+      "depends_on": [
+        "/jammy-security/libpcre2-8-0:arm64=10.39-3ubuntu0.1",
+        "/jammy-security/libc6:arm64=2.35-0ubuntu3.15",
+        "/jammy/libcrypt1:arm64=1:4.4.27-1",
+        "/jammy-security/libgcc-s1:arm64=12.3.0-1ubuntu1~22.04.3",
+        "/jammy-security/gcc-12-base:arm64=12.3.0-1ubuntu1~22.04.3"
+      ],
+      "filename": "pool/main/libs/libselinux/libselinux1_3.3-1build2_arm64.deb",
+      "name": "libselinux1",
+      "section": "libs",
+      "sha256": "3a0726b2174a40fa28e74712867aa6e40d3d725543e8f668af9e9e59a28c817c",
+      "size": 74408,
+      "suite": "jammy",
+      "version": "3.3-1build2"
+    },
+    "/jammy/libsemanage-common:amd64=3.3-1build2": {
+      "architecture": "all",
+      "depends_on": [],
+      "filename": "pool/main/libs/libsemanage/libsemanage-common_3.3-1build2_all.deb",
+      "name": "libsemanage-common",
+      "section": "libs",
+      "sha256": "bb60d1049ed3d7838b395785cab09f2210c04878fcae9391ea3499f62d04ec2d",
+      "size": 9874,
+      "suite": "jammy",
+      "version": "3.3-1build2"
+    }
+  },
+  "sources": {
+    "jammy": {
+      "architectures": [
+        "amd64",
+        "arm64"
+      ],
+      "components": [
+        "main",
+        "universe"
+      ],
+      "types": [
+        "deb"
+      ],
+      "uris": [
+        "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"
+      ]
+    },
+    "jammy-security": {
+      "architectures": [
+        "amd64",
+        "arm64"
+      ],
+      "components": [
+        "main",
+        "universe"
+      ],
+      "types": [
+        "deb"
+      ],
+      "uris": [
+        "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"
+      ]
+    },
+    "jammy-updates": {
+      "architectures": [
+        "amd64",
+        "arm64"
+      ],
+      "components": [
+        "main",
+        "universe"
+      ],
+      "types": [
+        "deb"
+      ],
+      "uris": [
+        "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"
+      ]
+    }
+  },
+  "version": 2
+}
