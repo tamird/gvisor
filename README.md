@@ -169,6 +169,24 @@ GitHub's approval. No comment text or follow-up prose creates this assignment. R
 the record when addressed; a new head requires an explicit carry-forward of
 the record's own head, independently of ordinary follow-up metadata updates.
 
+A completed triage can record `followup.attentionDispositions` for a specific
+feedback, public-import failure or conflict reason. Each record supplies a title,
+next action, public evidence URLs and the exact structured binding produced by
+`attentionDispositionEvidence`; a replacement wait also names its explicit
+same-repository PR. These records route only the bound reason to **Triaged
+external follow-up**, consistently in groups, filters, counts and copied handoffs.
+PR details explain the remaining action. Raw checks, conflicts, review decisions
+and unresolved threads are unchanged.
+
+The binding includes complete source review/thread/feedback content and identity,
+including actual approval times. Import failures additionally bind current import
+heads and exact check identities/results; a replacement wait binds its open state
+and head. New replies/findings, changed approvals, runs, imports, source heads or
+replacement state invalidate the disposition, as does incomplete or missing
+evidence. Observation timestamps alone do not invalidate it. New unrelated reasons
+remain actionable, and an explicitly assigned comment always needs author work.
+Free-text follow-up notes never create or extend a disposition.
+
 Copybara import links require a same-repository PR by `copybara-service` whose
 body contains the exact `FUTURE_COPYBARA_INTEGRATE_REVIEW` footer for the original
 PR URL and source owner/branch. The footer SHA is retained. An older source SHA

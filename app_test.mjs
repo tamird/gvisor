@@ -341,6 +341,117 @@ test('stale or superseding evidence cannot release a rebase and never hides fail
   }
 });
 
+function triagedContext() {
+  const context = client();
+  const fixture = JSON.parse(readFileSync(new URL('./attention_dispositions_fixture.json', import.meta.url)));
+  context.nodesInput = fixture.nodes;
+  context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: fixture.observedAt,
+    repositories: { 'google/gvisor': 'copybara', 'buildbuddy-io/buildbuddy': 'none' } },
+    nodes: context.nodesInput, groups: [], edges: [] };
+  vm.runInContext('registry = registryInput; model = { nodes: nodesInput }; validateRegistry(registryInput)', context);
+  return context;
+}
+test('retained triaged reasons consistently move to external follow-up without rewriting raw signals', () => {
+  const context = triagedContext(), original = JSON.stringify(context.nodesInput.map(node => node.github));
+  const sourceNodes = context.nodesInput.filter(node => node.followup?.attentionDispositions);
+  context.sourcesInput = sourceNodes;
+  for (const node of sourceNodes) {
+    context.nodeInput = node;
+    const record = node.followup.attentionDispositions[0];
+    assert.equal(vm.runInContext('attentionDisposition(nodeInput, nodeInput.followup.attentionDispositions[0].reason)?.title', context), record.title);
+    let reasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+    assert.ok(!reasons.some(reason => reason.owner === 'agent'), node.id);
+    assert.ok(reasons.some(reason => reason.id === 'maintainer-triaged' && reason.detail.includes(record.nextAction)), node.id);
+    delete node.followup.attentionDispositions;
+    reasons = JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+    assert.ok(reasons.some(reason => reason.id === record.reason && reason.owner === 'agent'), node.id);
+    node.followup.attentionDispositions = [record];
+  }
+  context.nodeInput = sourceNodes.find(node => node.number === 13803);
+  assert.ok(!vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "maintainer-review")', context));
+  const replacement = context.nodesInput.find(node => node.number === 13826);
+  replacement.github.status = 'merged';
+  assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "maintainer-review")', context));
+  assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "author-conflicts")', context));
+  replacement.github.status = 'open';
+  assert.equal(JSON.stringify(context.nodesInput.map(node => node.github)), original);
+  const groups = JSON.parse(vm.runInContext('JSON.stringify(attentionGroups(sourcesInput, "tamird"))', context));
+  assert.ok(groups.every(group => group.owner === 'maintainer'));
+  assert.equal(groups.reduce((count, group) => count + group.entries.length, 0), 3);
+  const triaged = JSON.parse(vm.runInContext('JSON.stringify(attentionGroups(sourcesInput, "tamird", true, new Set(["maintainer-triaged"])))', context));
+  assert.equal(triaged.length, 1); assert.equal(triaged[0].id, 'maintainer-triaged');
+  assert.equal(triaged[0].entries.length, 3);
+  const text = vm.runInContext('attentionText(attentionGroups(sourcesInput, "tamird"), registryInput.meta.updatedAt)', context);
+  assert.match(text, /Needs maintainer attention: Triaged external follow-up/);
+  assert.ok(!text.includes('Agent work'));
+  assert.equal(text.split('https://').length - 1, 3);
+  const elements = Object.fromEntries(['show-resolved', 'state-filters', 'all-reasons', 'legacy-state-filter',
+    'attention-agent-summary', 'attention-user-summary', 'attention-maintainer-summary'].map(id => [id, {
+      checked: false, querySelectorAll: () => [], setAttribute() {},
+    }]));
+  context.document = { getElementById: id => elements[id] };
+  vm.runInContext('initializing = false; matchesBase = node => sourcesInput.includes(node); drawStateFilters()', context);
+  assert.equal(elements['attention-agent-summary'].textContent, 'Agent work · 0');
+  assert.equal(elements['attention-maintainer-summary'].textContent, 'Needs maintainer attention · 3');
+  context.nodeInput = sourceNodes[0];
+  assert.equal(vm.runInContext('reasonFilters = new Set(["maintainer-triaged"]); matches(nodeInput)', context), true);
+  assert.equal(vm.runInContext('reasonFilters = new Set(["maintainer-import-checks"]); matches(nodeInput)', context), false);
+});
+
+test('new feedback, changed approval and explicit assignments invalidate the reviewed observation', () => {
+  for (const mutate of [
+    node => { node.github.head = 'f'.repeat(40); },
+    node => { node.github.revisionChanged = true; },
+    node => { node.github.feedback.complete = false; },
+    node => { node.github.threads.complete = false; },
+    node => { node.github.reviewsComplete = false; },
+    node => { node.github.approvedAt = '2026-10-21T08:00:00Z'; },
+    node => { node.github.feedback.items.find(item => item.kind === 'inline').body = 'Please change this implementation.'; },
+    node => { node.github.feedback.items.push({ kind: 'inline', id: 'new-reply', threadId: 'new-thread',
+      author: { login: 'reviewer' }, body: 'Another issue', createdAt: '2026-10-21T08:00:00Z', isResolved: false }); },
+    node => { const comment = node.github.feedback.items.find(item => item.kind === 'comment');
+      node.followup.owner = 'assigned-owner'; node.followup.actionableComment = { head: node.github.head, commentId: comment.id, url: comment.url }; },
+    node => { delete node.followup.attentionDispositions[0].binding; },
+  ]) {
+    const context = triagedContext(), node = context.nodesInput.find(node => node.number === 15670);
+    context.nodeInput = node; mutate(node);
+    assert.equal(vm.runInContext('attentionDisposition(nodeInput, "author-feedback")', context), null, mutate.toString());
+    assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.owner === "agent")', context), mutate.toString());
+  }
+});
+
+test('rerun and import identities or replacement changes reopen triaged work', () => {
+  for (const [number, reason, mutations] of [
+    [15499, 'maintainer-import-checks', [
+      node => { node.github.imports[0].head = 'f'.repeat(40); },
+      node => { node.github.imports[0].checks.contexts.find(check => check.state === 'FAILURE').id = 'new-same-status-run'; },
+      node => { node.github.imports[0].checks.contexts.find(check => check.state === 'FAILURE').url += '?attempt=2'; },
+      node => { node.github.imports[0].checks.complete = false; },
+      node => { node.github.importsComplete = false; },
+      node => { node.github.imports[0].status = 'closed'; },
+    ]],
+    [13803, 'author-conflicts', [
+      (node, context) => { context.nodesInput.find(item => item.number === 13826).github.status = 'merged'; },
+      (node, context) => { context.nodesInput.find(item => item.number === 13826).github.status = 'closed'; },
+      (node, context) => { context.nodesInput.find(item => item.number === 13826).github.head = 'f'.repeat(40); },
+      (node, context) => { context.nodesInput.find(item => item.number === 13826).github.repo = 'other/repo'; },
+      (node, context) => { context.nodesInput.splice(context.nodesInput.findIndex(item => item.number === 13826), 1); },
+    ]],
+  ]) for (const mutate of mutations) {
+    const context = triagedContext(), node = context.nodesInput.find(node => node.number === number);
+    context.nodeInput = node; mutate(node, context);
+    assert.equal(vm.runInContext(`attentionDisposition(nodeInput, "${reason}")`, context), null, mutate.toString());
+  }
+  const context = triagedContext(), node = context.nodesInput.find(node => node.number === 15670);
+  context.nodeInput = node;
+  node.github.checkedAt = '2026-10-22T08:00:00Z'; node.github.mergeabilityCheckedAt = node.github.checkedAt;
+  assert.ok(vm.runInContext('attentionDisposition(nodeInput, "author-feedback")', context));
+  node.github.checks.contexts.push({ id: 'new-source-failure', name: 'new test', state: 'FAILURE', purpose: 'validation', kind: 'check-run' });
+  node.github.checks.total++; node.github.checks.state = 'FAILURE';
+  assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "author-public-checks")', context));
+  assert.ok(vm.runInContext('attentionReasons(nodeInput, "tamird").some(reason => reason.id === "maintainer-triaged")', context));
+});
+
 function assignedCommentNode() {
   const node = attentionNode(15926); node.repo = 'google/gvisor';
   const comment = { kind: 'comment', id: 'comment-1', url: `${node.url}#issuecomment-6295602307`,

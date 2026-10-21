@@ -174,6 +174,7 @@ const ATTENTION_REASONS = [
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
+  { id: "maintainer-triaged", owner: "maintainer", title: "Triaged external follow-up" },
   { id: "maintainer-response", owner: "maintainer", title: "Review follow-up" },
   { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
   { id: "maintainer-import-label", owner: "maintainer", title: "Needs import label" },
@@ -283,9 +284,55 @@ function sourceFixRecovery(node, nodes = model?.nodes || []) {
   return { state: "ready", remedy: recovery.remedy, mergedAt: remedy.mergedAt, sourceHead: pr.head,
     detail: `CI remedy #${remedy.number} merged as ${recovery.fixCommit.slice(0, 9)}. Verified ancestry shows ${pr.head.slice(0, 9)} lacks it; rebase this source branch and verify its new checks. Existing failures and review holds remain visible.` };
 }
+const TRIAGED_REASONS = new Set(["author-feedback", "maintainer-import-checks", "author-conflicts"]);
+function evidenceJSON(value) {
+  // Object key order is not evidence; array order is retained from the snapshot.
+  if (Array.isArray(value)) return `[${value.map(evidenceJSON).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${evidenceJSON(value[key])}`).join(",")}}`;
+  return JSON.stringify(value);
+}
+function attentionDispositionEvidence(node, reason, replacementId, nodes = model?.nodes || []) {
+  const pr = node.github;
+  if (!TRIAGED_REASONS.has(reason) || !pr || pr.status !== "open" || pr.revisionChanged
+      || !pr.head || node.head && node.head !== pr.head || pr.reviewsComplete !== true
+      || pr.threads?.complete !== true || pr.feedback?.complete !== true || !Array.isArray(pr.feedback.items)
+      || actionableComment(node)) return null;
+  const evidence = { sourceHead: pr.head, reviewDecision: pr.reviewDecision,
+    approvedHead: pr.approvedHead ?? null, approvedAt: pr.approvedAt ?? null,
+    headCommittedAt: pr.headCommittedAt ?? null, headIntroducedAt: pr.headIntroducedAt ?? null,
+    headHistoryComplete: pr.headHistoryComplete ?? false, threads: pr.threads, feedback: pr.feedback };
+  if (reason === "maintainer-import-checks" || reason === "author-conflicts") {
+    if (pr.importsComplete !== true || !Array.isArray(pr.imports)) return null;
+    const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
+    if (reason === "maintainer-import-checks" && (!completeChecks(pr) || current.some(item => !completeChecks(item)))) return null;
+    evidence.imports = current.map(item => ({ number: item.number, head: item.head, sourceHead: item.sourceHead,
+      status: item.status, mergeable: item.mergeable, ...(reason === "maintainer-import-checks" ? { checks: item.checks } : {}) }));
+    if (reason === "maintainer-import-checks") evidence.checks = pr.checks;
+    else evidence.mergeable = pr.mergeable;
+  }
+  if (replacementId !== undefined) {
+    const replacement = nodes.find(item => item.id === replacementId)?.github;
+    if (reason !== "author-conflicts" || !replacement || replacement.revisionChanged
+        || prRepo(replacement) !== prRepo(pr) || replacement.status !== "open" || !replacement.head) return null;
+    evidence.replacement = { id: replacementId, head: replacement.head, status: replacement.status };
+  }
+  return evidence;
+}
+function attentionDisposition(node, reason) {
+  const record = node.followup?.attentionDispositions?.find(item => item.reason === reason);
+  if (!record?.binding || !record.title || !record.nextAction || !record.evidence?.length) return null;
+  const current = attentionDispositionEvidence(node, reason, record.replacement);
+  return current && evidenceJSON(current) === evidenceJSON(record.binding) ? record : null;
+}
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
-    if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
+    const disposition = attentionDisposition(node, id);
+    if (disposition) {
+      const existing = reasons.find(item => item.id === "maintainer-triaged");
+      const triage = `${disposition.title}. ${disposition.nextAction}`;
+      if (existing) { if (!existing.detail.includes(triage)) existing.detail += ` ${triage}`; }
+      else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === "maintainer-triaged"), detail: triage });
+    } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
   if (states(node)["contributor-review"])
     add("author-proposal", "A decision is pending on a separate proposed revision; this does not change the published head's review status.");
@@ -308,7 +355,7 @@ function attentionReasons(node, owner) {
   const authorFailures = publicFailures.filter(check => !sourceRecovery?.ids.has(check.id));
   if (authorFailures.length) add("author-public-checks", authorFailures.map(check => `${check.name}: ${check.state}`).join("; "));
   const approvalGates = contexts.filter(check => isApprovalGate(pr, check));
-  if (approvalGates.length) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
+  if (approvalGates.length && !attentionDisposition(node, "author-conflicts")?.replacement) add("maintainer-review", `${approvalGates.map(check => check.name).join("; ")}: Check requires approving review. These checks have not run.`);
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   const acceptedPatch = approvedPatch(node), approved = decision === "APPROVED" || acceptedPatch;
   const comment = actionableComment(node), feedback = [];
@@ -349,13 +396,13 @@ function attentionReasons(node, owner) {
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
     add("agent-refresh", "GitHub reports a source check failure without its failing context. Investigate the public check records.");
-  const agentBlocked = reasons.some(item => item.owner === "agent");
-  if (review.unknown && !review.incomplete && !agentBlocked)
+  const followupBlocked = reasons.some(item => item.owner === "agent" || item.id === "maintainer-triaged");
+  if (review.unknown && !review.incomplete && !followupBlocked)
     add("maintainer-response", "A current review decision remains unresolved without an identified author change. Ask the reviewer to clarify or complete that decision.");
   if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
-  if (!approved && !agentBlocked && !review.response && !review.unknown)
+  if (!approved && !followupBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
-  if (approved && !agentBlocked) {
+  if (approved && !followupBlocked) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
       if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"
@@ -1111,6 +1158,13 @@ function drawDetails() {
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
+  for (const record of node.followup?.attentionDispositions || []) {
+    if (!attentionDisposition(node, record.reason)) continue;
+    const section = element("section", "detail-section");
+    section.append(element("h3", "", record.title), element("p", "", record.nextAction));
+    for (const url of record.evidence) section.append(link("Evidence ↗", url, "relation-source"));
+    details.append(section);
+  }
   const refinement = refinementComparison(node);
   if (refinement) appendRangeDiffCommand(details, refinement);
   const reach = impact(node.id);
@@ -1315,6 +1369,17 @@ function validateRegistry(candidate) {
         Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
+    const dispositions = node.followup?.attentionDispositions;
+    if (dispositions !== undefined && (!Array.isArray(dispositions)
+        || new Set(dispositions.map(item => item?.reason)).size !== dispositions.length
+        || dispositions.some(item => !item || node.type !== "pr" || !TRIAGED_REASONS.has(item.reason)
+          || typeof item.title !== "string" || !item.title.trim()
+          || typeof item.nextAction !== "string" || !item.nextAction.trim()
+          || !Array.isArray(item.evidence) || !item.evidence.length || !item.evidence.every(safeURL)
+          || !item.binding || !/^[a-f0-9]{40}$/.test(item.binding.sourceHead)
+          || item.replacement !== undefined && (item.reason !== "author-conflicts"
+            || !candidate.nodes.some(other => other.id === item.replacement && other.type === "pr" && other.repo === node.repo && other.id !== node.id)))))
+      throw new Error("Invalid attention disposition");
     const comment = node.followup?.actionableComment, commentPrefix = `${node.url}#issuecomment-`;
     if (comment !== undefined && (!comment || node.type !== "pr"
         || typeof node.followup.owner !== "string" || !node.followup.owner.trim()

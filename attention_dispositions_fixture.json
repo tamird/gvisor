@@ -1,0 +1,1915 @@
+{
+  "observedAt": "2026-10-21T07:52:39.157953+00:00",
+  "nodes": [
+    {
+      "id": "pr:15499",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15499,
+      "title": "Handle OOM score updates for exited processes",
+      "url": "https://github.com/google/gvisor/pull/15499",
+      "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+      "workStates": {
+        "failing": {
+          "scope": "15910:445d4451f9b75b7bab89af73b0abae8a34d9ee71",
+          "since": "2026-10-19T20:57:27.442701+00:00",
+          "basis": "observed",
+          "qualifier": "Import #15910 failing",
+          "observedAt": "2026-10-21T07:52:33.538061+00:00"
+        },
+        "changes-requested": {
+          "scope": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+          "since": "2026-10-17T06:11:33.880092+00:00",
+          "basis": "observed",
+          "qualifier": null,
+          "observedAt": "2026-10-21T07:52:33.538061+00:00"
+        },
+        "importing": {
+          "scope": "15910:445d4451f9b75b7bab89af73b0abae8a34d9ee71",
+          "since": "2026-10-19T20:47:11.363356+00:00",
+          "basis": "observed",
+          "qualifier": "#15910: open, checks failing, no reported conflict",
+          "observedAt": "2026-10-21T07:52:33.538061+00:00"
+        }
+      },
+      "followup": {
+        "attentionDispositions": [
+          {
+            "reason": "maintainer-import-checks",
+            "title": "Awaiting historical producer evidence",
+            "nextAction": "The public import failure remains unresolved. Its logs were audited and our evidence/reconsideration reply is posted; the later bounded diagnostic did not reproduce it. Await the missing gofer diagnostic or substantive maintainer response. Do not repeat identical runs or infer a source fix.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15499#issuecomment-6269980510",
+              "https://github.com/google/gvisor/pull/15910",
+              "https://buildkite.com/gvisor/pipeline/builds/51366"
+            ],
+            "binding": {
+              "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+              "reviewDecision": "CHANGES_REQUESTED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-10-17T02:26:39Z",
+              "headIntroducedAt": "2026-10-17T02:27:06Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABahnM3A",
+                    "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6075043036",
+                    "body": "@manninglucas can you please mark this ready to import?",
+                    "createdAt": "2026-10-09T05:40:00Z",
+                    "updatedAt": "2026-10-09T05:40:00Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABcz9kXg",
+                    "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6228501598",
+                    "body": "Rebased onto current master (`a4d9fdee9`). The production changes and\nregression tests are unchanged; the conflict resolution retains imports\nrequired by newer sandbox tests.\n\n@manninglucas, could you review the updated head, `728f546af`?\n\nAssisted-by: Codex\n",
+                    "createdAt": "2026-10-17T02:28:04Z",
+                    "updatedAt": "2026-10-17T02:28:04Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABc11H_g",
+                    "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6230460414",
+                    "body": "> TestUIDMap in container_test appears to be failing.\r\n\r\nLink?",
+                    "createdAt": "2026-10-17T06:01:47Z",
+                    "updatedAt": "2026-10-17T06:01:47Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABc4cRYQ",
+                    "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6233198945",
+                    "body": "> TestUIDMap in container_test appears to be failing.\r\n\r\nFixed in https://github.com/google/gvisor/pull/15920 and unrelated to this change, right? Can you please advance this one through the machine if you agree?",
+                    "createdAt": "2026-10-17T11:10:26Z",
+                    "updatedAt": "2026-10-17T11:10:26Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABdbhPXg",
+                    "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6269980510",
+                    "body": "@EtiennePerot, I checked the failed import's complete diff against the\n[public test log][1]. Both `TestUIDMap` failures occur in `New`, while boot\nreads an [empty mount message from the gofer][2], before `Start`.\n\nThe test leaves `OOMScoreAdj` unset, and failed construction leaves\n`c.Sandbox` nil, so cleanup also skips the OOM adjustment. The pidfd helper\nextraction preserves the previous implementation. I found no changed\nbehavior on the failing startup path.\n\nThis is also different from #15920: the failed CI cases use a temporary\ndirectory under `/home`, without that test's duplicate `/tmp` mount. The\nunderlying gofer failure remains unexplained because its log was not\nuploaded; #15927 adds that capture.\n\nCould you reconsider the changes-requested review on this PR?\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/51218/jobs/01a148c3-2747-4186-b50d-f9bc3fc7c1fc/artifacts/01a148c6-edef-45cd-a2a8-d81e6d7208e4\n[2]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/51218/jobs/01a148c3-2747-4186-b50d-f9bc3fc7c1fc/artifacts/01a148c6-f8d1-428b-a26c-a6d15bc0e964\n\nPosted by Codex on behalf of @tamird.\n",
+                    "createdAt": "2026-10-19T14:44:26Z",
+                    "updatedAt": "2026-10-19T14:44:26Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABRXnlig",
+                    "url": "https://github.com/google/gvisor/pull/15499#pullrequestreview-5460583818",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-08T17:35:39Z",
+                    "updatedAt": "2026-10-08T17:35:39Z",
+                    "author": {
+                      "login": "manninglucas",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "73b3b76556e7cb8b6ac03d418fc2c0e00704845f"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABSyNBEA",
+                    "url": "https://github.com/google/gvisor/pull/15499#pullrequestreview-5555568912",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-17T02:28:35Z",
+                    "updatedAt": "2026-10-17T02:28:35Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "728f546aff7d3005c2a8d373f68c5d7e963d629f"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABSzFEhg",
+                    "url": "https://github.com/google/gvisor/pull/15499#pullrequestreview-5556487302",
+                    "body": "TestUIDMap in container_test appears to be failing.",
+                    "state": "CHANGES_REQUESTED",
+                    "submittedAt": "2026-10-17T05:43:28Z",
+                    "updatedAt": "2026-10-17T05:43:28Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "728f546aff7d3005c2a8d373f68c5d7e963d629f"
+                    }
+                  }
+                ]
+              },
+              "imports": [
+                {
+                  "number": 15910,
+                  "head": "445d4451f9b75b7bab89af73b0abae8a34d9ee71",
+                  "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+                  "status": "open",
+                  "mergeable": "MERGEABLE",
+                  "checks": {
+                    "state": "FAILURE",
+                    "total": 15,
+                    "complete": true,
+                    "contexts": [
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir3H9g",
+                        "name": "gazelle",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320156227/job/118291810294",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "Gazelle",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir2OZA",
+                        "name": "check-changes",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118291795556",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "GitHub Actions Scan",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir3Hjg",
+                        "name": "generate",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320156184/job/118291810190",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "Go",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir3Gyg",
+                        "name": "scan-pr",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320156230/job/118291809994",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir3GgQ",
+                        "name": "label",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320156137/job/118291809921",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "Labeler",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir3H3w",
+                        "name": "fileheader",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320156106/job/118291810271",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "License header",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir3ILA",
+                        "name": "lint",
+                        "state": "SUCCESS",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320156248/job/118291810348",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "Lint",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbis2i4w",
+                        "name": "zizmor-config",
+                        "state": "SKIPPED",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292849379",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "GitHub Actions Scan",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbis2oiA",
+                        "name": "zizmor-scan",
+                        "state": "SKIPPED",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292850824",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "GitHub Actions Scan",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbis2yDw",
+                        "name": "zizmor-upload",
+                        "state": "SKIPPED",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292853263",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "GitHub Actions Scan",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbis2zHw",
+                        "name": "zizmor-output",
+                        "state": "SKIPPED",
+                        "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292853535",
+                        "kind": "check-run",
+                        "app": "GitHub Actions",
+                        "appSlug": "github-actions",
+                        "workflow": "GitHub Actions Scan",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "SC_kwDOB9IlXs8AAAANNZYKjg",
+                        "name": "buildkite/internal",
+                        "state": "FAILURE",
+                        "url": "https://buildkite.com/gvisor/internal/builds/33076",
+                        "description": "Build #33076 failed (29 minutes, 17 seconds)",
+                        "app": null,
+                        "kind": "status",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "SC_kwDOB9IlXs8AAAANNaJmkg",
+                        "name": "buildkite/pipeline",
+                        "state": "FAILURE",
+                        "url": "https://buildkite.com/gvisor/pipeline/builds/51366",
+                        "description": "Build #51366 failed (50 minutes, 56 seconds)",
+                        "app": null,
+                        "kind": "status",
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "CR_kwDOB9IlXs8AAAAbir1XCA",
+                        "name": "cla/google",
+                        "state": "SUCCESS",
+                        "url": "https://cla.developers.google.com/about",
+                        "kind": "check-run",
+                        "app": "Google CLA",
+                        "appSlug": "google-cla",
+                        "workflow": null,
+                        "purpose": "validation"
+                      },
+                      {
+                        "id": "SC_kwDOB9IlXs8AAAANNXUgIw",
+                        "name": "go tests",
+                        "state": "SUCCESS",
+                        "url": null,
+                        "description": null,
+                        "app": null,
+                        "kind": "status",
+                        "purpose": "validation"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "checks": {
+                "state": "FAILURE",
+                "total": 14,
+                "complete": true,
+                "contexts": [
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFw5A",
+                    "name": "gazelle",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994971627/job/117285417188",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "Gazelle",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFTZQ",
+                    "name": "check-changes",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285409637",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "GitHub Actions Scan",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFwQg",
+                    "name": "generate",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994971584/job/117285417026",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "Go",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFv8A",
+                    "name": "scan-pr",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994971588/job/117285416944",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFwMw",
+                    "name": "label",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994971605/job/117285417011",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "Labeler",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFxig",
+                    "name": "fileheader",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994971736/job/117285417354",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "License header",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFxZg",
+                    "name": "lint",
+                    "state": "SUCCESS",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994971683/job/117285417318",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "Lint",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsR8vA",
+                    "name": "zizmor-config",
+                    "state": "SKIPPED",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616828",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "GitHub Actions Scan",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsR5ig",
+                    "name": "zizmor-scan",
+                    "state": "SKIPPED",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616010",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "GitHub Actions Scan",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsR7Dw",
+                    "name": "zizmor-upload",
+                    "state": "SKIPPED",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616399",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "GitHub Actions Scan",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsR9XA",
+                    "name": "zizmor-output",
+                    "state": "SKIPPED",
+                    "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616988",
+                    "kind": "check-run",
+                    "app": "GitHub Actions",
+                    "appSlug": "github-actions",
+                    "workflow": "GitHub Actions Scan",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "SC_kwDOB9IlXs8AAAANNYCJOQ",
+                    "name": "feedback/copybara",
+                    "state": "FAILURE",
+                    "url": null,
+                    "description": "Google internal checks FAILED for runs with create time 2026-10-19T20:24:59.387502334Z.",
+                    "app": null,
+                    "kind": "status",
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "CR_kwDOB9IlXs8AAAAbTsFE0g",
+                    "name": "cla/google",
+                    "state": "SUCCESS",
+                    "url": "https://cla.developers.google.com/about",
+                    "kind": "check-run",
+                    "app": "Google CLA",
+                    "appSlug": "google-cla",
+                    "workflow": null,
+                    "purpose": "validation"
+                  },
+                  {
+                    "id": "SC_kwDOB9IlXs8AAAANLEu8Lg",
+                    "name": "import/copybara",
+                    "state": "SUCCESS",
+                    "url": null,
+                    "description": "Change imported to the internal review system",
+                    "app": null,
+                    "kind": "status",
+                    "purpose": "validation"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "github": {
+        "number": 15499,
+        "repo": "google/gvisor",
+        "title": "Ignore OOM score permission errors after exit",
+        "url": "https://github.com/google/gvisor/pull/15499",
+        "status": "open",
+        "ref": "oom-score-exited-process",
+        "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+        "base": "a4d9fdee9d4bb6fbc7790319a91862d716bbbdfc",
+        "headCommittedAt": "2026-10-17T02:26:39Z",
+        "headHistoryComplete": true,
+        "headIntroducedAt": "2026-10-17T02:27:06Z",
+        "headOwner": "tamird",
+        "headRepo": "tamird/gvisor",
+        "updatedAt": "2026-10-19T14:44:26Z",
+        "createdAt": "2026-10-08T07:06:04Z",
+        "mergedAt": null,
+        "closedAt": null,
+        "mergeCommit": null,
+        "githubReviewDecision": "CHANGES_REQUESTED",
+        "reviewsComplete": true,
+        "reviewRequests": [
+          {
+            "__typename": "User",
+            "login": "EtiennePerot"
+          }
+        ],
+        "reviewRequestsComplete": true,
+        "mergeable": "MERGEABLE",
+        "mergeabilityCheckedAt": "2026-10-21T07:51:54.619182+00:00",
+        "mergeState": "BLOCKED",
+        "labels": [
+          "ready to pull"
+        ],
+        "labelsComplete": true,
+        "threads": {
+          "unresolved": 0,
+          "total": 0,
+          "complete": true
+        },
+        "feedback": {
+          "complete": true,
+          "items": [
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABahnM3A",
+              "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6075043036",
+              "body": "@manninglucas can you please mark this ready to import?",
+              "createdAt": "2026-10-09T05:40:00Z",
+              "updatedAt": "2026-10-09T05:40:00Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABcz9kXg",
+              "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6228501598",
+              "body": "Rebased onto current master (`a4d9fdee9`). The production changes and\nregression tests are unchanged; the conflict resolution retains imports\nrequired by newer sandbox tests.\n\n@manninglucas, could you review the updated head, `728f546af`?\n\nAssisted-by: Codex\n",
+              "createdAt": "2026-10-17T02:28:04Z",
+              "updatedAt": "2026-10-17T02:28:04Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABc11H_g",
+              "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6230460414",
+              "body": "> TestUIDMap in container_test appears to be failing.\r\n\r\nLink?",
+              "createdAt": "2026-10-17T06:01:47Z",
+              "updatedAt": "2026-10-17T06:01:47Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABc4cRYQ",
+              "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6233198945",
+              "body": "> TestUIDMap in container_test appears to be failing.\r\n\r\nFixed in https://github.com/google/gvisor/pull/15920 and unrelated to this change, right? Can you please advance this one through the machine if you agree?",
+              "createdAt": "2026-10-17T11:10:26Z",
+              "updatedAt": "2026-10-17T11:10:26Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABdbhPXg",
+              "url": "https://github.com/google/gvisor/pull/15499#issuecomment-6269980510",
+              "body": "@EtiennePerot, I checked the failed import's complete diff against the\n[public test log][1]. Both `TestUIDMap` failures occur in `New`, while boot\nreads an [empty mount message from the gofer][2], before `Start`.\n\nThe test leaves `OOMScoreAdj` unset, and failed construction leaves\n`c.Sandbox` nil, so cleanup also skips the OOM adjustment. The pidfd helper\nextraction preserves the previous implementation. I found no changed\nbehavior on the failing startup path.\n\nThis is also different from #15920: the failed CI cases use a temporary\ndirectory under `/home`, without that test's duplicate `/tmp` mount. The\nunderlying gofer failure remains unexplained because its log was not\nuploaded; #15927 adds that capture.\n\nCould you reconsider the changes-requested review on this PR?\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/51218/jobs/01a148c3-2747-4186-b50d-f9bc3fc7c1fc/artifacts/01a148c6-edef-45cd-a2a8-d81e6d7208e4\n[2]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/51218/jobs/01a148c3-2747-4186-b50d-f9bc3fc7c1fc/artifacts/01a148c6-f8d1-428b-a26c-a6d15bc0e964\n\nPosted by Codex on behalf of @tamird.\n",
+              "createdAt": "2026-10-19T14:44:26Z",
+              "updatedAt": "2026-10-19T14:44:26Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABRXnlig",
+              "url": "https://github.com/google/gvisor/pull/15499#pullrequestreview-5460583818",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-10-08T17:35:39Z",
+              "updatedAt": "2026-10-08T17:35:39Z",
+              "author": {
+                "login": "manninglucas",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "73b3b76556e7cb8b6ac03d418fc2c0e00704845f"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABSyNBEA",
+              "url": "https://github.com/google/gvisor/pull/15499#pullrequestreview-5555568912",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-10-17T02:28:35Z",
+              "updatedAt": "2026-10-17T02:28:35Z",
+              "author": {
+                "login": "EtiennePerot",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "728f546aff7d3005c2a8d373f68c5d7e963d629f"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABSzFEhg",
+              "url": "https://github.com/google/gvisor/pull/15499#pullrequestreview-5556487302",
+              "body": "TestUIDMap in container_test appears to be failing.",
+              "state": "CHANGES_REQUESTED",
+              "submittedAt": "2026-10-17T05:43:28Z",
+              "updatedAt": "2026-10-17T05:43:28Z",
+              "author": {
+                "login": "EtiennePerot",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "728f546aff7d3005c2a8d373f68c5d7e963d629f"
+              }
+            }
+          ]
+        },
+        "checks": {
+          "state": "FAILURE",
+          "total": 14,
+          "complete": true,
+          "contexts": [
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFw5A",
+              "name": "gazelle",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994971627/job/117285417188",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Gazelle",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFTZQ",
+              "name": "check-changes",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285409637",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFwQg",
+              "name": "generate",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994971584/job/117285417026",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Go",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFv8A",
+              "name": "scan-pr",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994971588/job/117285416944",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFwMw",
+              "name": "label",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994971605/job/117285417011",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Labeler",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFxig",
+              "name": "fileheader",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994971736/job/117285417354",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "License header",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFxZg",
+              "name": "lint",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/38994971683/job/117285417318",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Lint",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsR8vA",
+              "name": "zizmor-config",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616828",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsR5ig",
+              "name": "zizmor-scan",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616010",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsR7Dw",
+              "name": "zizmor-upload",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616399",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsR9XA",
+              "name": "zizmor-output",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/38994969098/job/117285616988",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDOB9IlXs8AAAANNYCJOQ",
+              "name": "feedback/copybara",
+              "state": "FAILURE",
+              "url": null,
+              "description": "Google internal checks FAILED for runs with create time 2026-10-19T20:24:59.387502334Z.",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbTsFE0g",
+              "name": "cla/google",
+              "state": "SUCCESS",
+              "url": "https://cla.developers.google.com/about",
+              "kind": "check-run",
+              "app": "Google CLA",
+              "appSlug": "google-cla",
+              "workflow": null,
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDOB9IlXs8AAAANLEu8Lg",
+              "name": "import/copybara",
+              "state": "SUCCESS",
+              "url": null,
+              "description": "Change imported to the internal review system",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            }
+          ]
+        },
+        "reviewDecision": "CHANGES_REQUESTED",
+        "approvedHead": null,
+        "approvedAt": null,
+        "checkedAt": "2026-10-21T07:52:33.538061+00:00",
+        "mergeabilityObservation": {
+          "state": "MERGEABLE",
+          "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+          "base": "a4d9fdee9d4bb6fbc7790319a91862d716bbbdfc",
+          "checkedAt": "2026-10-21T07:51:54.619182+00:00"
+        },
+        "importsComplete": true,
+        "importPolicy": "copybara",
+        "imports": [
+          {
+            "number": 15910,
+            "repo": "google/gvisor",
+            "title": "Ignore OOM score permission errors after exit",
+            "url": "https://github.com/google/gvisor/pull/15910",
+            "status": "open",
+            "ref": "test/cl1001252129",
+            "head": "445d4451f9b75b7bab89af73b0abae8a34d9ee71",
+            "base": "53b1f070c39aa19a8a167a8f06adb8ad066a9c98",
+            "headCommittedAt": "2026-10-19T20:32:12Z",
+            "headHistoryComplete": true,
+            "headIntroducedAt": "2026-10-19T20:32:21Z",
+            "headOwner": "google",
+            "headRepo": "google/gvisor",
+            "updatedAt": "2026-10-19T20:32:25Z",
+            "createdAt": "2026-10-17T02:44:39Z",
+            "mergedAt": null,
+            "closedAt": null,
+            "mergeCommit": null,
+            "githubReviewDecision": null,
+            "reviewsComplete": true,
+            "reviewRequests": [],
+            "reviewRequestsComplete": true,
+            "mergeable": "MERGEABLE",
+            "mergeabilityCheckedAt": "2026-10-21T07:52:27.345107+00:00",
+            "mergeState": "BLOCKED",
+            "labels": [
+              "exported"
+            ],
+            "labelsComplete": true,
+            "threads": {
+              "unresolved": 0,
+              "total": 0,
+              "complete": true
+            },
+            "feedback": {
+              "complete": true,
+              "items": []
+            },
+            "checks": {
+              "state": "FAILURE",
+              "total": 15,
+              "complete": true,
+              "contexts": [
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir3H9g",
+                  "name": "gazelle",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320156227/job/118291810294",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "Gazelle",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir2OZA",
+                  "name": "check-changes",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118291795556",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "GitHub Actions Scan",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir3Hjg",
+                  "name": "generate",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320156184/job/118291810190",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "Go",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir3Gyg",
+                  "name": "scan-pr",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320156230/job/118291809994",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir3GgQ",
+                  "name": "label",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320156137/job/118291809921",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "Labeler",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir3H3w",
+                  "name": "fileheader",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320156106/job/118291810271",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "License header",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir3ILA",
+                  "name": "lint",
+                  "state": "SUCCESS",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320156248/job/118291810348",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "Lint",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbis2i4w",
+                  "name": "zizmor-config",
+                  "state": "SKIPPED",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292849379",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "GitHub Actions Scan",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbis2oiA",
+                  "name": "zizmor-scan",
+                  "state": "SKIPPED",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292850824",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "GitHub Actions Scan",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbis2yDw",
+                  "name": "zizmor-upload",
+                  "state": "SKIPPED",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292853263",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "GitHub Actions Scan",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbis2zHw",
+                  "name": "zizmor-output",
+                  "state": "SKIPPED",
+                  "url": "https://github.com/google/gvisor/actions/runs/39320151154/job/118292853535",
+                  "kind": "check-run",
+                  "app": "GitHub Actions",
+                  "appSlug": "github-actions",
+                  "workflow": "GitHub Actions Scan",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "SC_kwDOB9IlXs8AAAANNZYKjg",
+                  "name": "buildkite/internal",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/internal/builds/33076",
+                  "description": "Build #33076 failed (29 minutes, 17 seconds)",
+                  "app": null,
+                  "kind": "status",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "SC_kwDOB9IlXs8AAAANNaJmkg",
+                  "name": "buildkite/pipeline",
+                  "state": "FAILURE",
+                  "url": "https://buildkite.com/gvisor/pipeline/builds/51366",
+                  "description": "Build #51366 failed (50 minutes, 56 seconds)",
+                  "app": null,
+                  "kind": "status",
+                  "purpose": "validation"
+                },
+                {
+                  "id": "CR_kwDOB9IlXs8AAAAbir1XCA",
+                  "name": "cla/google",
+                  "state": "SUCCESS",
+                  "url": "https://cla.developers.google.com/about",
+                  "kind": "check-run",
+                  "app": "Google CLA",
+                  "appSlug": "google-cla",
+                  "workflow": null,
+                  "purpose": "validation"
+                },
+                {
+                  "id": "SC_kwDOB9IlXs8AAAANNXUgIw",
+                  "name": "go tests",
+                  "state": "SUCCESS",
+                  "url": null,
+                  "description": null,
+                  "app": null,
+                  "kind": "status",
+                  "purpose": "validation"
+                }
+              ]
+            },
+            "reviewDecision": null,
+            "approvedHead": null,
+            "approvedAt": null,
+            "checkedAt": "2026-10-21T07:52:33.538061+00:00",
+            "mergeabilityObservation": {
+              "state": "MERGEABLE",
+              "head": "445d4451f9b75b7bab89af73b0abae8a34d9ee71",
+              "base": "53b1f070c39aa19a8a167a8f06adb8ad066a9c98",
+              "checkedAt": "2026-10-21T07:52:27.345107+00:00"
+            },
+            "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
+            "matchesSourceHead": true,
+            "relationshipEvidence": "https://github.com/google/gvisor/pull/15910"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pr:15670",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15670,
+      "title": "Declare image contexts and CUDA helper builds",
+      "url": "https://github.com/google/gvisor/pull/15670",
+      "head": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+      "workStates": {
+        "awaiting-import": {
+          "scope": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+          "since": "2026-10-19T18:48:35.525085+00:00",
+          "basis": "observed",
+          "qualifier": "Import status failing; validation checks passed",
+          "observedAt": "2026-10-21T07:52:33.538061+00:00"
+        }
+      },
+      "followup": {
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Approved observation; internal CI follow-up",
+            "nextAction": "The sole unresolved inline is an observation followed by the reviewer\u2019s exact-head approval, without an amendment request. The supported-GPU question was already answered. Await substantive feedback or accessible internal CI evidence; no further author reply is pending.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15670#discussion_r4317491751",
+              "https://github.com/google/gvisor/pull/15670#pullrequestreview-5576093955",
+              "https://github.com/google/gvisor/pull/15670#issuecomment-6131706342"
+            ],
+            "binding": {
+              "sourceHead": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+              "reviewDecision": "APPROVED",
+              "approvedHead": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+              "approvedAt": "2026-10-19T18:42:28Z",
+              "headCommittedAt": "2026-10-19T18:35:34Z",
+              "headIntroducedAt": "2026-10-19T18:36:11Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 1,
+                "total": 1,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABbXpp5g",
+                    "url": "https://github.com/google/gvisor/pull/15670#issuecomment-6131706342",
+                    "body": "No supported GPU was available for this validation. The checks covered\nAMD64/ARM64 helper builds, CPU subprocess behavior, image contexts and\nMake integration, and the Go analyzers. GPU sample execution remains\nuntested.\n\nAssisted-by: OpenAI Codex\n",
+                    "createdAt": "2026-10-12T20:04:15Z",
+                    "updatedAt": "2026-10-12T20:04:15Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABbgIWlg",
+                    "url": "https://github.com/google/gvisor/pull/15670#issuecomment-6140597910",
+                    "body": "@zkoopmans I think you need to mark this for import?",
+                    "createdAt": "2026-10-13T07:30:39Z",
+                    "updatedAt": "2026-10-13T07:30:39Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABdgAiBw",
+                    "url": "https://github.com/google/gvisor/pull/15670#issuecomment-6274687495",
+                    "body": "Rebased onto master at [3f35bca89]. This rebase leaves the topic\nchanges unchanged.\n\n@zkoopmans, please take another look at the [rebased head].\n\n[3f35bca89]: https://github.com/google/gvisor/commit/3f35bca89c44d2b03f6b2fcc4510b05bd1397828\n[rebased head]: https://github.com/google/gvisor/commit/923b3b3e29403f6cdda08e995ba7edb5698426cf\n\nPosted by Codex on behalf of @tamird.",
+                    "createdAt": "2026-10-19T18:47:08Z",
+                    "updatedAt": "2026-10-19T18:47:08Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABR4o1IQ",
+                    "url": "https://github.com/google/gvisor/pull/15670#pullrequestreview-5495207201",
+                    "body": "Just checking...did you have the means to test this on a supported GPU? ",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-12T19:33:52Z",
+                    "updatedAt": "2026-10-12T19:33:52Z",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "eba5e3c8304feedb92fff4a370a5530fd67ec9df"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABR5tVXg",
+                    "url": "https://github.com/google/gvisor/pull/15670#pullrequestreview-5496329566",
+                    "body": "LGTM, but pay attention to presubmits. If you need a gVisor reviewer to sheppard this through so it can be tested, let me know.",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-12T21:51:07Z",
+                    "updatedAt": "2026-10-19T18:36:11Z",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "923b3b3e29403f6cdda08e995ba7edb5698426cf"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABTFxxAw",
+                    "url": "https://github.com/google/gvisor/pull/15670#pullrequestreview-5576093955",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-19T18:42:28Z",
+                    "updatedAt": "2026-10-19T18:42:28Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "923b3b3e29403f6cdda08e995ba7edb5698426cf"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6uDefw",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "tools/images.mk",
+                    "line": 257,
+                    "id": "PRRC_kwDOB9IlXs8AAAABAVeyJw",
+                    "url": "https://github.com/google/gvisor/pull/15670#discussion_r4317491751",
+                    "body": "Well this is... a thing",
+                    "createdAt": "2026-10-19T18:42:15Z",
+                    "updatedAt": "2026-10-19T18:42:28Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "github": {
+        "number": 15670,
+        "repo": "google/gvisor",
+        "title": "Declare image contexts and CUDA helper builds",
+        "url": "https://github.com/google/gvisor/pull/15670",
+        "status": "open",
+        "ref": "cuda-image-contexts",
+        "head": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+        "base": "2db1fdf33bb6449236a600307ec5a06a2c3c8427",
+        "headCommittedAt": "2026-10-19T18:35:34Z",
+        "headHistoryComplete": true,
+        "headIntroducedAt": "2026-10-19T18:36:11Z",
+        "headOwner": "tamird",
+        "headRepo": "tamird/gvisor",
+        "updatedAt": "2026-10-19T18:47:08Z",
+        "createdAt": "2026-10-12T14:42:37Z",
+        "mergedAt": null,
+        "closedAt": null,
+        "mergeCommit": null,
+        "githubReviewDecision": "APPROVED",
+        "reviewsComplete": true,
+        "reviewRequests": [
+          {
+            "__typename": "User",
+            "login": "aaltinaydev"
+          },
+          {
+            "__typename": "User",
+            "login": "parth-opensrc"
+          }
+        ],
+        "reviewRequestsComplete": true,
+        "mergeable": "MERGEABLE",
+        "mergeabilityCheckedAt": "2026-10-21T07:52:03.012310+00:00",
+        "mergeState": "BLOCKED",
+        "labels": [
+          "ready to pull"
+        ],
+        "labelsComplete": true,
+        "threads": {
+          "unresolved": 1,
+          "total": 1,
+          "complete": true
+        },
+        "feedback": {
+          "complete": true,
+          "items": [
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABbXpp5g",
+              "url": "https://github.com/google/gvisor/pull/15670#issuecomment-6131706342",
+              "body": "No supported GPU was available for this validation. The checks covered\nAMD64/ARM64 helper builds, CPU subprocess behavior, image contexts and\nMake integration, and the Go analyzers. GPU sample execution remains\nuntested.\n\nAssisted-by: OpenAI Codex\n",
+              "createdAt": "2026-10-12T20:04:15Z",
+              "updatedAt": "2026-10-12T20:04:15Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABbgIWlg",
+              "url": "https://github.com/google/gvisor/pull/15670#issuecomment-6140597910",
+              "body": "@zkoopmans I think you need to mark this for import?",
+              "createdAt": "2026-10-13T07:30:39Z",
+              "updatedAt": "2026-10-13T07:30:39Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABdgAiBw",
+              "url": "https://github.com/google/gvisor/pull/15670#issuecomment-6274687495",
+              "body": "Rebased onto master at [3f35bca89]. This rebase leaves the topic\nchanges unchanged.\n\n@zkoopmans, please take another look at the [rebased head].\n\n[3f35bca89]: https://github.com/google/gvisor/commit/3f35bca89c44d2b03f6b2fcc4510b05bd1397828\n[rebased head]: https://github.com/google/gvisor/commit/923b3b3e29403f6cdda08e995ba7edb5698426cf\n\nPosted by Codex on behalf of @tamird.",
+              "createdAt": "2026-10-19T18:47:08Z",
+              "updatedAt": "2026-10-19T18:47:08Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABR4o1IQ",
+              "url": "https://github.com/google/gvisor/pull/15670#pullrequestreview-5495207201",
+              "body": "Just checking...did you have the means to test this on a supported GPU? ",
+              "state": "COMMENTED",
+              "submittedAt": "2026-10-12T19:33:52Z",
+              "updatedAt": "2026-10-12T19:33:52Z",
+              "author": {
+                "login": "zkoopmans",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "eba5e3c8304feedb92fff4a370a5530fd67ec9df"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABR5tVXg",
+              "url": "https://github.com/google/gvisor/pull/15670#pullrequestreview-5496329566",
+              "body": "LGTM, but pay attention to presubmits. If you need a gVisor reviewer to sheppard this through so it can be tested, let me know.",
+              "state": "APPROVED",
+              "submittedAt": "2026-10-12T21:51:07Z",
+              "updatedAt": "2026-10-19T18:36:11Z",
+              "author": {
+                "login": "zkoopmans",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "923b3b3e29403f6cdda08e995ba7edb5698426cf"
+              }
+            },
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABTFxxAw",
+              "url": "https://github.com/google/gvisor/pull/15670#pullrequestreview-5576093955",
+              "body": "",
+              "state": "APPROVED",
+              "submittedAt": "2026-10-19T18:42:28Z",
+              "updatedAt": "2026-10-19T18:42:28Z",
+              "author": {
+                "login": "EtiennePerot",
+                "__typename": "User"
+              },
+              "commit": {
+                "oid": "923b3b3e29403f6cdda08e995ba7edb5698426cf"
+              }
+            },
+            {
+              "kind": "inline",
+              "threadId": "PRRT_kwDOB9IlXs6uDefw",
+              "isResolved": false,
+              "isOutdated": false,
+              "path": "tools/images.mk",
+              "line": 257,
+              "id": "PRRC_kwDOB9IlXs8AAAABAVeyJw",
+              "url": "https://github.com/google/gvisor/pull/15670#discussion_r4317491751",
+              "body": "Well this is... a thing",
+              "createdAt": "2026-10-19T18:42:15Z",
+              "updatedAt": "2026-10-19T18:42:28Z",
+              "author": {
+                "login": "EtiennePerot",
+                "__typename": "User"
+              }
+            }
+          ]
+        },
+        "checks": {
+          "state": "FAILURE",
+          "total": 14,
+          "complete": true,
+          "contexts": [
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2dCbQ",
+              "name": "gazelle",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303886184/job/118235808365",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Gazelle",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2b7bQ",
+              "name": "check-changes",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303880220/job/118235790189",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2c5Lg",
+              "name": "generate",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303886127/job/118235805998",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Go",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2dF4A",
+              "name": "scan-pr",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303886551/job/118235809248",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2c9OA",
+              "name": "label",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303886445/job/118235807032",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Labeler",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2dD6w",
+              "name": "fileheader",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303886284/job/118235808747",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "License header",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2dD-g",
+              "name": "lint",
+              "state": "SUCCESS",
+              "url": "https://github.com/google/gvisor/actions/runs/39303886255/job/118235808762",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "Lint",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh3uhEA",
+              "name": "zizmor-config",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/39303880220/job/118237143312",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh3uhpQ",
+              "name": "zizmor-scan",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/39303880220/job/118237143461",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh3ulHg",
+              "name": "zizmor-upload",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/39303880220/job/118237144350",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh3ulrg",
+              "name": "zizmor-output",
+              "state": "SKIPPED",
+              "url": "https://github.com/google/gvisor/actions/runs/39303880220/job/118237144494",
+              "kind": "check-run",
+              "app": "GitHub Actions",
+              "appSlug": "github-actions",
+              "workflow": "GitHub Actions Scan",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDOB9IlXs8AAAANPEm4gw",
+              "name": "feedback/copybara",
+              "state": "FAILURE",
+              "url": null,
+              "description": "Google internal checks FAILED for runs with create time 2026-10-21T00:36:32.468104069Z.",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "CR_kwDOB9IlXs8AAAAbh2bJ3g",
+              "name": "cla/google",
+              "state": "SUCCESS",
+              "url": "https://cla.developers.google.com/about",
+              "kind": "check-run",
+              "app": "Google CLA",
+              "appSlug": "google-cla",
+              "workflow": null,
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDOB9IlXs8AAAANNNLWlA",
+              "name": "import/copybara",
+              "state": "SUCCESS",
+              "url": null,
+              "description": "Change imported to the internal review system",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            }
+          ]
+        },
+        "reviewDecision": "APPROVED",
+        "approvedHead": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+        "approvedAt": "2026-10-19T18:42:28Z",
+        "checkedAt": "2026-10-21T07:52:33.538061+00:00",
+        "mergeabilityObservation": {
+          "state": "MERGEABLE",
+          "head": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
+          "base": "2db1fdf33bb6449236a600307ec5a06a2c3c8427",
+          "checkedAt": "2026-10-21T07:52:03.012310+00:00"
+        },
+        "importsComplete": true,
+        "importPolicy": "copybara",
+        "imports": []
+      }
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:13803",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13803,
+      "title": "Enable vhost-net in x86 guest kernels",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803",
+      "workStates": {
+        "checks-pending": {
+          "scope": "13803:48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+          "since": "2026-10-19T13:08:15.637199+00:00",
+          "basis": "observed",
+          "qualifier": null,
+          "observedAt": "2026-10-21T07:52:38.515847+00:00"
+        },
+        "conflicts": {
+          "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+          "since": "2026-10-19T13:08:15.637199+00:00",
+          "basis": "observed",
+          "qualifier": null,
+          "observedAt": "2026-10-21T07:52:38.515847+00:00"
+        },
+        "maintainer-review": {
+          "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+          "since": "2026-10-19T13:08:15.637199+00:00",
+          "basis": "observed",
+          "qualifier": "BuildBuddy requires approving review before these checks run",
+          "observedAt": "2026-10-21T07:52:38.515847+00:00"
+        }
+      },
+      "followup": {
+        "attentionDispositions": [
+          {
+            "reason": "author-conflicts",
+            "title": "Waiting for the maintainer replacement",
+            "nextAction": "The maintainer\u2019s open replacement explicitly supersedes this proposal. Monitor its actual landing, then reconcile retirement under the existing authorization; do not rebase the superseded proposal.",
+            "evidence": [
+              "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
+              "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
+            ],
+            "replacement": "pr:buildbuddy-io/buildbuddy:13826",
+            "binding": {
+              "sourceHead": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+              "reviewDecision": "REVIEW_REQUIRED",
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-10-15T13:14:19Z",
+              "headIntroducedAt": "2026-10-15T13:14:41Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDODlcBtc8AAAABcbGapg",
+                    "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6202432166",
+                    "body": "r? @bduffany ",
+                    "createdAt": "2026-10-15T21:15:10Z",
+                    "updatedAt": "2026-10-15T21:15:10Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDODlcBtc8AAAABcb-4XA",
+                    "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
+                    "body": "@tamird I'm working on a PR to upgrade us to 6.18, which conflicts with this one. Once my change is in I'll send a followup with these changes plus the deps.bzl update with the new kernel upload",
+                    "createdAt": "2026-10-15T22:12:59Z",
+                    "updatedAt": "2026-10-15T22:12:59Z",
+                    "author": {
+                      "login": "bduffany",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDODlcBtc8AAAABccDw9w",
+                    "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203437303",
+                    "body": "Sounds great, thanks!",
+                    "createdAt": "2026-10-15T22:18:23Z",
+                    "updatedAt": "2026-10-15T22:18:23Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "imports": [],
+              "mergeable": "CONFLICTING",
+              "replacement": {
+                "id": "pr:buildbuddy-io/buildbuddy:13826",
+                "head": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+                "status": "open"
+              }
+            }
+          }
+        ]
+      },
+      "github": {
+        "number": 13803,
+        "repo": "buildbuddy-io/buildbuddy",
+        "title": "Enable vhost-net in x86 guest kernels",
+        "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803",
+        "status": "open",
+        "ref": "fixes/guest-kernel-vhost-net",
+        "head": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+        "base": "a457463cf8e0b4de78963ec627c43615e272df5b",
+        "headCommittedAt": "2026-10-15T13:14:19Z",
+        "headHistoryComplete": true,
+        "headIntroducedAt": "2026-10-15T13:14:41Z",
+        "headOwner": "tamird",
+        "headRepo": "tamird/buildbuddy",
+        "updatedAt": "2026-10-15T22:18:23Z",
+        "createdAt": "2026-10-15T12:52:00Z",
+        "mergedAt": null,
+        "closedAt": null,
+        "mergeCommit": null,
+        "githubReviewDecision": "REVIEW_REQUIRED",
+        "reviewsComplete": true,
+        "reviewRequests": [],
+        "reviewRequestsComplete": true,
+        "mergeable": "CONFLICTING",
+        "mergeabilityCheckedAt": "2026-10-21T07:52:38.515596+00:00",
+        "mergeState": "DIRTY",
+        "labels": [],
+        "labelsComplete": true,
+        "threads": {
+          "unresolved": 0,
+          "total": 0,
+          "complete": true
+        },
+        "feedback": {
+          "complete": true,
+          "items": [
+            {
+              "kind": "comment",
+              "id": "IC_kwDODlcBtc8AAAABcbGapg",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6202432166",
+              "body": "r? @bduffany ",
+              "createdAt": "2026-10-15T21:15:10Z",
+              "updatedAt": "2026-10-15T21:15:10Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDODlcBtc8AAAABcb-4XA",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
+              "body": "@tamird I'm working on a PR to upgrade us to 6.18, which conflicts with this one. Once my change is in I'll send a followup with these changes plus the deps.bzl update with the new kernel upload",
+              "createdAt": "2026-10-15T22:12:59Z",
+              "updatedAt": "2026-10-15T22:12:59Z",
+              "author": {
+                "login": "bduffany",
+                "__typename": "User"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDODlcBtc8AAAABccDw9w",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203437303",
+              "body": "Sounds great, thanks!",
+              "createdAt": "2026-10-15T22:18:23Z",
+              "updatedAt": "2026-10-15T22:18:23Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              }
+            }
+          ]
+        },
+        "checks": {
+          "state": "FAILURE",
+          "total": 15,
+          "complete": true,
+          "contexts": [
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vkwA",
+              "name": "Test (darwin_amd64)",
+              "state": "ERROR",
+              "url": "https://app.buildbuddy.io",
+              "description": "Check requires approving review",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vlKA",
+              "name": "Test (darwin_arm64)",
+              "state": "ERROR",
+              "url": "https://app.buildbuddy.io",
+              "description": "Check requires approving review",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vlxA",
+              "name": "Test (darwin_arm64) (dev)",
+              "state": "ERROR",
+              "url": "https://app.buildbuddy.dev",
+              "description": "Check requires approving review",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vlxg",
+              "name": "Baremetal tests",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.io/invocation/42f70cca-c2a3-4a8e-a5e8-eedb64099d77?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vm9w",
+              "name": "Baremetal tests (dev)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.dev/invocation/1785dee2-ede2-4b97-bd86-181927f951ba?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vm4A",
+              "name": "Build public release artifacts (linux_amd64)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.io/invocation/1dc33f1c-ea0b-4dd5-8eeb-b9b511ecf7d8?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vnAA",
+              "name": "Build public release artifacts (linux_amd64) (dev)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.dev/invocation/86db44c5-0ee1-4923-97f7-8c5f41bc70cc?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vmQA",
+              "name": "Build public release artifacts (linux_arm64)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.io/invocation/9966b706-5281-4e65-a66d-ce8f15daee4a?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vmvQ",
+              "name": "Build public release artifacts (linux_arm64) (dev)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.dev/invocation/1a2a9063-bab3-475b-b628-171c1b85b345?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vlwg",
+              "name": "Check style",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.io/invocation/e2c39cca-fb07-4b51-bea4-430335748c65?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vmeQ",
+              "name": "Check style (dev)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.dev/invocation/ca7e1a3a-91f6-481c-89ec-cd1966ec43d6?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vm5Q",
+              "name": "Test",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.io/invocation/90688015-6ff1-4248-900c-afac24a99fb2?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vm_w",
+              "name": "Test (dev)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.dev/invocation/61b2c551-2e15-4f9d-9798-2cb84c29d5ee?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vmoQ",
+              "name": "Test (linux_arm64)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.io/invocation/603dbce0-4ac3-4397-a89d-c24d8cf9d078?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            },
+            {
+              "id": "SC_kwDODlcBtc8AAAANI1vnDg",
+              "name": "Test (linux_arm64) (dev)",
+              "state": "PENDING",
+              "url": "https://buildbuddy.buildbuddy.dev/invocation/8ec1b677-9745-4b02-b5de-7fce4b454cee?queued=true",
+              "description": "Queued...",
+              "app": null,
+              "kind": "status",
+              "purpose": "validation"
+            }
+          ]
+        },
+        "reviewDecision": "REVIEW_REQUIRED",
+        "approvedHead": null,
+        "approvedAt": null,
+        "checkedAt": "2026-10-21T07:52:38.515847+00:00",
+        "mergeabilityObservation": {
+          "state": "CONFLICTING",
+          "head": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
+          "base": "a457463cf8e0b4de78963ec627c43615e272df5b",
+          "checkedAt": "2026-10-21T07:52:38.515596+00:00"
+        },
+        "importsComplete": true,
+        "importPolicy": "none",
+        "imports": []
+      }
+    },
+    {
+      "id": "pr:buildbuddy-io/buildbuddy:13826",
+      "type": "pr",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13826,
+      "title": "Enable vhost-net in x86 guest kernels",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13826",
+      "head": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+      "workStates": {
+        "maintainer-review": {
+          "scope": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+          "since": "2026-10-21T02:58:01.478754+00:00",
+          "basis": "observed",
+          "qualifier": null,
+          "observedAt": "2026-10-21T07:52:38.515847+00:00"
+        }
+      },
+      "github": {
+        "repo": "buildbuddy-io/buildbuddy",
+        "number": 13826,
+        "head": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+        "status": "open"
+      }
+    }
+  ]
+}
