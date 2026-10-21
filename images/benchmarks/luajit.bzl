@@ -18,8 +18,12 @@ _LIBRARIES = [
     "src/lib_buffer.c",
 ]
 
-def luajit_targets():
-    """Defines the pinned library and its execution-platform bytecode compiler."""
+def luajit_targets(name):
+    """Defines the pinned library and its execution-platform bytecode compiler.
+
+    Args:
+        name: Name of the public LuaJIT library.
+    """
     native.exports_files(["COPYRIGHT"])
     headers = native.glob(["src/*.h"])
     cc_binary(
@@ -86,7 +90,7 @@ def luajit_targets():
         tools = buildvm,
     )
     cc_library(
-        name = "luajit",
+        name = name,
         # These patterns are exactly LJCORE_O + LJLIB_O in the pinned source;
         # the CLI, host tools and optional amalgamation are separate inputs.
         srcs = native.glob(["src/lj_*.c", "src/lib_*.c"]) + [":lj_vm"],
@@ -109,7 +113,7 @@ def luajit_targets():
         name = "luajit_cli",
         srcs = ["src/luajit.c"],
         linkopts = ["-Wl,-E"],
-        deps = [":luajit"],
+        deps = [":" + name],
         visibility = ["//visibility:public"],
     )
     native.exports_files(["src/jit/bcsave.lua"])
