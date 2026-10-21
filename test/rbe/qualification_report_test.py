@@ -2170,6 +2170,39 @@ signal.pause()
         self.assertIsNone(value["actions_artifact"])
         self.assertIn("Workflow is still live", value["collection_error"])
 
+    def test_actions_collection_shares_watch_budget_across_reattachments(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        pending = {**retained, "status": "in_progress", "conclusion": None}
+        for options, clock, timeouts in (
+            ([], [0, 0, 6000, 10000], [10000, 4000]),
+            (["--watch-seconds", "18000"], [0, 11000, 17999, 18000], [7000, 1]),
+        ):
+            with self.subTest(options=options):
+                argv = ["collect_actions", "--run", str(retained["id"]), "--source", retained["head_sha"],
+                        "--architecture", "amd64", "--prefix", str(self.root / "budget"), *options]
+                with (mock.patch.object(sys, "argv", argv),
+                      mock.patch.object(collect_actions.time, "monotonic", side_effect=clock),
+                      mock.patch.object(collect_actions.subprocess, "check_output", return_value=json.dumps(pending).encode()),
+                      mock.patch.object(collect_actions.subprocess, "run", return_value=subprocess.CompletedProcess([], 1)) as watch):
+                    self.assertEqual(collect_actions.main(), 1)
+                self.assertEqual([call.kwargs["timeout"] for call in watch.call_args_list], timeouts)
+                value = report.read_json(self.root / "budget-receipt.json")
+                self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "INCOMPLETE"))
+                self.assertEqual(value["watch_exits"], [1, 1])
+                self.assertEqual(value["workflow"]["id"], retained["id"])
+                self.assertIsNone(value["actions_artifact"])
+                self.assertIn("Workflow is still live", value["collection_error"])
+
+    def test_actions_collection_rejects_invalid_watch_budget(self) -> None:
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        for budget in (0, -1, True):
+            with self.subTest(budget=budget), mock.patch.object(collect_actions.subprocess, "check_output") as api:
+                value = collect_actions.collect_actions(retained["id"], retained["head_sha"], "amd64",
+                                                        self.root / "invalid-budget", watch_seconds=budget)
+                self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "INCOMPLETE"))
+                self.assertIn("positive watch budget", value["collection_error"])
+                api.assert_not_called()
+
     def test_actions_collection_rejects_prior_attempt_artifacts(self) -> None:
         retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
         artifact, producer = self.artifact(self.fixture())
