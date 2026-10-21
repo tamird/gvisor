@@ -173,8 +173,8 @@ A completed triage can record `followup.attentionDispositions` for a specific
 feedback, public-import failure or conflict reason. Each record supplies a title,
 next action, public evidence URLs and the exact structured binding produced by
 `attentionDispositionEvidence`; a replacement wait also names its explicit
-same-repository PR. These records route only the bound reason to **Triaged
-external follow-up**, consistently in groups, filters, counts and copied handoffs.
+same-repository PR. These records route only the bound reason to **Awaiting
+maintainer follow-up**, consistently in groups, filters, counts and copied handoffs.
 PR details explain the remaining action. Raw checks, conflicts, review decisions
 and unresolved threads are unchanged.
 
