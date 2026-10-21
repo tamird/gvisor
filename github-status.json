@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-10-21T00:59:55.584252+00:00",
-  "registryDate": "2026-10-20T22:29:00.985871+00:00",
+  "checkedAt": "2026-10-21T01:39:28.544966+00:00",
+  "registryDate": "2026-10-21T01:41:17.826530+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none"
@@ -420,7 +420,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365783+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.928861+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -673,7 +673,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9f15cc6f33d681c1cd051c2797a3172f0dc89efa",
@@ -1198,7 +1198,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365802+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929302+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -1413,7 +1413,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
@@ -1448,7 +1448,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365805+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929304+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -1923,7 +1923,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "dc2687aa226ef6501206c06b6395969bfe9f68ea",
@@ -1967,7 +1967,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365807+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929305+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -2207,7 +2207,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "db1650842d9b3e403f4b4cd9f16a79fb39e7363a",
@@ -3557,7 +3557,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365808+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929305+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -3749,7 +3749,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "41efa809aca7ca1df316e0fefccf48140332d125",
@@ -15178,7 +15178,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365810+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929306+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -15335,7 +15335,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c058cddf269f5fe81bb4e261f6356ca764bb50ca",
@@ -16680,9 +16680,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365814+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929307+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -16941,7 +16941,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7d6a86c59d028fa5bdd3cff67c2402007d1fc1f3",
@@ -17694,7 +17694,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:50.365816+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:22.929308+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -18022,7 +18022,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
@@ -18286,7 +18286,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450572+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655878+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -18495,7 +18495,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "acdc4e37466b55da3d2e627da62150e424ccd4ae",
@@ -18541,7 +18541,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304894+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656660+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -18737,7 +18737,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7856cf4d0b68716fb257595d34c90c7d5b21e1ba",
@@ -25573,7 +25573,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304903+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656715+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -25757,7 +25757,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "4c675e4a3aac60e689e496f2d60c2f65a4199f7f",
@@ -25800,9 +25800,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304906+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656716+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -25997,7 +25997,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f7f7cd707c453855ccbe5de562a27f5ad18b74c3",
@@ -27531,7 +27531,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304908+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656718+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -27845,7 +27845,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6779464a0fa68c547ad8cc1f6c741c107e0f7eed",
@@ -34124,7 +34124,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304910+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656719+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -34374,7 +34374,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "bac3659cc12edc23634d905b76fe9f4476940b00",
       "approvedAt": "2026-10-19T18:47:26Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "bac3659cc12edc23634d905b76fe9f4476940b00",
@@ -34626,9 +34626,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450586+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655905+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -34814,7 +34814,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "6e7d20c28c16ce3c967bfdd9458e6de9c6f05435",
@@ -35936,7 +35936,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304911+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656719+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -36200,7 +36200,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a5143ead3031d808450e8351d028794e87a5a2d9",
@@ -36455,7 +36455,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304913+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656720+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -36651,7 +36651,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "854bf04d57cd4bb5ec7edfb124852a4cd8361eca",
@@ -39422,7 +39422,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:53.304915+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:25.656721+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -39590,7 +39590,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e4832d76df42d3f8a4fb64228c4151f9533978ac",
@@ -44925,7 +44925,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028276+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235382+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -45175,7 +45175,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "10e4c37aaf37f2b81b9223df485d9525559ea572",
@@ -45209,7 +45209,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981160+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469354+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -45418,7 +45418,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "11c3f12c84f0975fa5071696df5b28d84a26ab9a",
@@ -45973,7 +45973,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028288+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235393+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -46191,7 +46191,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
@@ -46225,7 +46225,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450592+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655909+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -46434,7 +46434,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "586fc1b9a51cd19c10bc8511aa366db2e72068fe",
@@ -46960,7 +46960,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028290+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235395+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -47156,7 +47156,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "91a7df8205d3aa835e7e440c0b04f4a32a47f7cd",
@@ -47407,7 +47407,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028292+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235397+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -47562,7 +47562,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b0c562f07ba202abb6dd087274d4a2012c4055ad",
@@ -50949,9 +50949,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028294+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235398+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -51228,7 +51228,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fed35fe5a8a2b4cac2f065e70a9f83b538f42929",
@@ -51262,7 +51262,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:30.318035+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:01.524221+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -51449,7 +51449,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "21831de25bc7ab8d3627b03a095decd3b7088974",
@@ -51495,7 +51495,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028295+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235399+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -51661,7 +51661,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fd0194dbcd3b64e2cc5ffb31c32c24698ca54390",
@@ -51705,7 +51705,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028297+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235403+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -51860,7 +51860,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "40c98de221422141de30217febbb64a743a5847c",
@@ -54530,7 +54530,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:56.028299+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:28.235405+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -54746,7 +54746,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "639c23a1717ed3bb20826b0dfa5cc5a6823290df",
@@ -58642,9 +58642,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081730+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029305+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -58849,7 +58849,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fe90ffd7a90f62ecbe9b8806dfa4d8de01361052",
@@ -58883,7 +58883,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981162+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469355+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -59070,7 +59070,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "e469c2eead2938c21578f64cc76b596cb3e58322",
@@ -62762,7 +62762,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081740+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029334+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -62928,7 +62928,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1c636c974ff648d8e67fffb6280e01599e117bf5",
@@ -64212,7 +64212,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081743+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029336+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -64367,7 +64367,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ad6ccc6be2369707e07deac0670a15f340041c4d",
@@ -65945,9 +65945,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081745+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029338+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -66180,7 +66180,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "41ca4bbf6816ee48a8d871954c0240738bef71a4",
@@ -66213,9 +66213,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:30.318038+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:01.524222+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -66401,7 +66401,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "11852d62d9ab4d869d2dc5c3af0be877fccb5354",
@@ -66435,9 +66435,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:30.318039+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:01.524223+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -66645,7 +66645,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "394403cdf6d5a4912136c3e04fd929c79b1b58cd",
@@ -68046,7 +68046,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981140+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469318+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -68255,7 +68255,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "6583a092132f53867eeaf885a943b7093bbd73c3",
@@ -69071,9 +69071,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081749+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029339+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -69327,11 +69327,11 @@
             "purpose": "validation"
           },
           {
-            "id": "SC_kwDOB9IlXs8AAAANPAdUGA",
+            "id": "SC_kwDOB9IlXs8AAAANPHWxYg",
             "name": "feedback/copybara",
             "state": "FAILURE",
             "url": null,
-            "description": "Google internal checks FAILED for runs with create time 2026-10-20T22:18:09.804116388Z.",
+            "description": "Google internal checks FAILED for runs with create time 2026-10-20T23:26:38.785682672Z.",
             "app": null,
             "kind": "status",
             "purpose": "validation"
@@ -69362,7 +69362,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ae1d700c60cdb28116e70f10ae6205b03fa98ebb",
@@ -69404,9 +69404,9 @@
             }
           ],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981155+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469352+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -69421,7 +69421,7 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 15,
             "complete": true,
             "contexts": [
@@ -69547,21 +69547,21 @@
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANPBH9pg",
-                "name": "buildkite/pipeline",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/51645",
-                "description": "Build #51645 started",
-                "app": null,
-                "kind": "status",
-                "purpose": "validation"
-              },
-              {
                 "id": "SC_kwDOB9IlXs8AAAANPCaidg",
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/33343",
                 "description": "Build #33343 passed (22 minutes, 19 seconds)",
+                "app": null,
+                "kind": "status",
+                "purpose": "validation"
+              },
+              {
+                "id": "SC_kwDOB9IlXs8AAAANPHHuhw",
+                "name": "buildkite/pipeline",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/51645",
+                "description": "Build #51645 passed (1 hour, 55 minutes, 48 seconds)",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
@@ -69592,7 +69592,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "a03c7f9658914e85fb1daaf43750772260ae565e",
@@ -69634,7 +69634,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081751+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029340+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -69920,7 +69920,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
@@ -69954,7 +69954,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981159+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469353+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -70141,7 +70141,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "445d4451f9b75b7bab89af73b0abae8a34d9ee71",
@@ -70770,7 +70770,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081753+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029341+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -70988,7 +70988,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c9a33a02be6800494e41a5d30092203b175bf867",
@@ -71261,7 +71261,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746586+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079356+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -71470,7 +71470,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "1df71a3d5bca816bf29c66b6dae9ea3f94e7f910",
@@ -72052,7 +72052,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:58:59.081754+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:31.029341+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -72274,7 +72274,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "9661cdec7780c11a5508ff868d09b2c219e886d8",
       "approvedAt": "2026-10-19T19:01:18Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9661cdec7780c11a5508ff868d09b2c219e886d8",
@@ -72308,7 +72308,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450594+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655909+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -72517,7 +72517,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "8e6eefeea80baa3179cdaef06ffdcc3282fe8236",
@@ -73604,9 +73604,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128378+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623120+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -73803,7 +73803,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "23ec3b582aa10aef02cd0f2e4cc7e83796ebe4d2",
@@ -78274,7 +78274,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128389+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623155+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -78470,7 +78470,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0729cdc9c742b6ab664b8f636ef550b3b165ab8a",
@@ -78504,7 +78504,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981152+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469350+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -78691,7 +78691,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "bc25b28dd702fa5fbb76b6d15549a1e198aeb74e",
@@ -82343,7 +82343,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128392+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623156+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -82601,7 +82601,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b465d8b75c5c11758bb356c6304bd9535431f1fb",
@@ -83164,7 +83164,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128398+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623158+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -83410,7 +83410,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5a35aced40951cba626d716d45575bb5ba9f16ed",
@@ -83443,9 +83443,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450590+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655907+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -83631,7 +83631,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "89a54bd65dd346b84378f25110ea5f3c38ec7214",
@@ -84194,7 +84194,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128400+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623159+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -84494,7 +84494,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "98d5af4a32ab97ff02115b815ceda526d108d5ce",
@@ -84538,7 +84538,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128401+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623159+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -84826,7 +84826,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "776b86bce2baa17457cb9375e8a15f8b437d5737",
       "approvedAt": "2026-10-19T19:02:13Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "776b86bce2baa17457cb9375e8a15f8b437d5737",
@@ -84860,7 +84860,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450584+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655903+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -85069,7 +85069,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "114ec8f466b1190f6c357e3b4929b5e6ebf4940e",
@@ -86181,7 +86181,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128402+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623160+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -86358,7 +86358,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "89ff1b319b60be84a6b6d2b4f8cdc12f14ad5555",
@@ -87487,9 +87487,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:02.128404+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:33.623161+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -87533,7 +87533,7 @@
         ]
       },
       "checks": {
-        "state": "FAILURE",
+        "state": "SUCCESS",
         "total": 14,
         "complete": true,
         "contexts": [
@@ -87659,16 +87659,6 @@
             "purpose": "validation"
           },
           {
-            "id": "SC_kwDOB9IlXs8AAAANPCR-2g",
-            "name": "feedback/copybara",
-            "state": "FAILURE",
-            "url": null,
-            "description": "Google internal checks FAILED for runs with create time 2026-10-20T23:20:40.861102885Z.",
-            "app": null,
-            "kind": "status",
-            "purpose": "validation"
-          },
-          {
             "id": "CR_kwDOB9IlXs8AAAAbr9R5TA",
             "name": "cla/google",
             "state": "SUCCESS",
@@ -87677,6 +87667,16 @@
             "app": "Google CLA",
             "appSlug": "google-cla",
             "workflow": null,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAANPG-kuA",
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "description": "Google internal checks PASS for runs with create time 2026-10-20T23:58:46.408062778Z.",
+            "app": null,
+            "kind": "status",
             "purpose": "validation"
           },
           {
@@ -87694,7 +87694,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f1a7f313000460286a5e59602568473fc6e5e29e",
@@ -87970,9 +87970,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450591+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655908+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -87987,7 +87987,7 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 15,
             "complete": true,
             "contexts": [
@@ -88113,21 +88113,21 @@
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANPDErfQ",
-                "name": "buildkite/pipeline",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/51654",
-                "description": "Build #51654 started",
-                "app": null,
-                "kind": "status",
-                "purpose": "validation"
-              },
-              {
                 "id": "SC_kwDOB9IlXs8AAAANPE7Hiw",
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/33352",
                 "description": "Build #33352 passed (35 minutes, 14 seconds)",
+                "app": null,
+                "kind": "status",
+                "purpose": "validation"
+              },
+              {
+                "id": "SC_kwDOB9IlXs8AAAANPGzttQ",
+                "name": "buildkite/pipeline",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/51654",
+                "description": "Build #51654 passed (1 hour, 14 minutes, 14 seconds)",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
@@ -88158,7 +88158,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "68c63741158ab0fa6de87f8b6b6c839bb07727a0",
@@ -89807,7 +89807,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260702+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042061+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -89984,7 +89984,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b1ffc53734f52a7907273b162e180de0bea6604f",
@@ -90028,7 +90028,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260714+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042092+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -90218,7 +90218,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "149488d2bc9690f7d835383e10cbd3051eeaee8d",
@@ -90258,7 +90258,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260716+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042094+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -90444,7 +90444,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1313c108f4200ee8a8dc8fd7878cfeaff54b3c18",
@@ -91282,7 +91282,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260719+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042096+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -91459,7 +91459,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
@@ -93656,7 +93656,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260721+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042097+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -93811,7 +93811,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f6f07b07059dd71f9058a47e51f4355cc394d573",
@@ -93859,7 +93859,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260722+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042097+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -94045,7 +94045,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c8b2b48967734b73fb4e62d7ad4a3439fb103a59",
@@ -94310,9 +94310,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260724+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042098+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -94590,7 +94590,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
       "approvedAt": "2026-10-19T18:42:28Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
@@ -94638,7 +94638,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:05.260728+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:36.042099+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -94942,7 +94942,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0e7c1aaff6def034fd74491aa9db41d12b760e49",
@@ -94986,7 +94986,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440518+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061067+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -95176,7 +95176,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d4ff1a6238fb597f869266ffdc654c3f102a4a5e",
@@ -96297,7 +96297,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440530+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061103+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -96474,7 +96474,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b6f522fdd45c47713425c27e9866627d2b6bb727",
@@ -99719,7 +99719,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440532+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061104+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -99953,7 +99953,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "4d0adbc37ea91a904c84392d669a49509db5ad7c",
       "approvedAt": "2026-10-19T19:00:28Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "4d0adbc37ea91a904c84392d669a49509db5ad7c",
@@ -99987,7 +99987,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:26.450588+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:57.655907+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -100196,7 +100196,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "6f808c9e09d20e51fd4f9256127e5a02a3da1a5a",
@@ -101025,7 +101025,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981157+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469353+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -101212,7 +101212,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "8f006730b81776b0b32727cbc09d8bad45a7a4bd",
@@ -101541,9 +101541,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440534+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061105+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -101738,7 +101738,7 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "63a56cc2943dec5c396983bd382eb901d0e41cf7",
@@ -101782,7 +101782,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440535+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061106+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -101959,7 +101959,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a3d034009968a39adc8e8caf95e740eb4d879dc2",
@@ -101998,9 +101998,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440537+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061106+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -102193,7 +102193,7 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "56f55fcbb4097fce01573658ddeafbd7a9b078a7",
@@ -102226,9 +102226,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746599+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079368+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -102414,7 +102414,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "e51e27f8ec27c3a8e8b9ab0e09d943cf0cb56816",
@@ -102456,7 +102456,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440539+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061107+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -102672,7 +102672,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "60399ad7b133ebe0c972fa54f430c889b36a88c2",
       "approvedAt": "2026-10-19T20:48:24Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "60399ad7b133ebe0c972fa54f430c889b36a88c2",
@@ -102706,7 +102706,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746604+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079370+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -102915,7 +102915,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "56d69b1047942f60b5246521a92332efdf75f228",
@@ -102961,7 +102961,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:08.440540+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:39.061108+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -103138,7 +103138,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3c38e66e5f66c5646f8be1afbdf140a6b9dc45ab",
@@ -103182,7 +103182,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162692+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019060+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -103359,7 +103359,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "df6de9b138356665f1f7a65f1d106d49c9247fb8",
@@ -103941,7 +103941,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:30.318022+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:01.524163+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -104150,7 +104150,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "b1092c90d94bd60e3f2e5a13c4acac1f51d59306",
@@ -104713,7 +104713,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162703+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019092+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -104907,7 +104907,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "02e19cf28c7c83b6c32aed7845771b58c7297cc7",
       "approvedAt": "2026-10-19T22:00:52Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "02e19cf28c7c83b6c32aed7845771b58c7297cc7",
@@ -104941,7 +104941,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746607+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079374+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -105150,7 +105150,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "3299cf03abd9fed3421be5388362960566c7ed21",
@@ -105191,9 +105191,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162705+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019094+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -105391,7 +105391,7 @@
         ]
       },
       "checks": {
-        "state": "FAILURE",
+        "state": "SUCCESS",
         "total": 14,
         "complete": true,
         "contexts": [
@@ -105517,16 +105517,6 @@
             "purpose": "validation"
           },
           {
-            "id": "SC_kwDOB9IlXs8AAAANPBCqlg",
-            "name": "feedback/copybara",
-            "state": "FAILURE",
-            "url": null,
-            "description": "Google internal checks FAILED for runs with create time 2026-10-20T22:52:17.957400380Z.",
-            "app": null,
-            "kind": "status",
-            "purpose": "validation"
-          },
-          {
             "id": "CR_kwDOB9IlXs8AAAAbrtuh6w",
             "name": "cla/google",
             "state": "SUCCESS",
@@ -105535,6 +105525,16 @@
             "app": "Google CLA",
             "appSlug": "google-cla",
             "workflow": null,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAANPGSxGw",
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "description": "Google internal checks PASS for runs with create time 2026-10-20T23:32:10.515423433Z.",
+            "app": null,
+            "kind": "status",
             "purpose": "validation"
           },
           {
@@ -105552,7 +105552,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "b143d86cb32a1eaa516324f52423b395a0123126",
       "approvedAt": "2026-10-20T22:09:40Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b143d86cb32a1eaa516324f52423b395a0123126",
@@ -105585,9 +105585,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746602+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079370+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -105615,7 +105615,7 @@
             ]
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 15,
             "complete": true,
             "contexts": [
@@ -105741,21 +105741,21 @@
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANPBml9A",
-                "name": "buildkite/pipeline",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/51649",
-                "description": "Build #51649 started",
-                "app": null,
-                "kind": "status",
-                "purpose": "validation"
-              },
-              {
                 "id": "SC_kwDOB9IlXs8AAAANPDDHsw",
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/33347",
                 "description": "Build #33347 passed (23 minutes, 53 seconds)",
+                "app": null,
+                "kind": "status",
+                "purpose": "validation"
+              },
+              {
+                "id": "SC_kwDOB9IlXs8AAAANPGLT1A",
+                "name": "buildkite/pipeline",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/51649",
+                "description": "Build #51649 passed (1 hour, 27 minutes, 26 seconds)",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
@@ -105786,7 +105786,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "289109834e94f964c4923cf31c9ce452475b0ce6",
@@ -105832,7 +105832,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162707+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019095+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -106009,7 +106009,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3be9e8ee88a6d70730a111ee376af749cc875c5a",
@@ -106053,7 +106053,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162709+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019096+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -106208,7 +106208,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fb113dfa51e7658314e852df6d5ae7553a5db364",
@@ -106252,7 +106252,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162710+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019096+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -106429,7 +106429,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a1461b691bc87b2d1314c3d9696d4e1e2c12ffae",
@@ -106473,7 +106473,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162712+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019097+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -106628,7 +106628,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
@@ -107686,7 +107686,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:11.162713+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:42.019098+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -107902,7 +107902,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "0068142bdeb9de91fe72bf9794204de6dec92cb4",
       "approvedAt": "2026-10-19T20:59:47Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0068142bdeb9de91fe72bf9794204de6dec92cb4",
@@ -107936,7 +107936,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746605+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079373+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -108145,7 +108145,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "765863a3da12a1e2910e142d2b368ddb5e47e1f7",
@@ -108712,7 +108712,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484251+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847189+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -108880,7 +108880,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d48995da34b3d52c5bd6fdceb08655b772a2761d",
@@ -108923,9 +108923,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484264+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847236+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -109079,7 +109079,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3f8833c521759f8982130e180115a67af426c52b",
@@ -109123,7 +109123,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484266+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847239+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -109278,7 +109278,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "297d9b6582e922e99566894b4c44adafa4d145bf",
@@ -109709,7 +109709,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:23.981163+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:38:54.469355+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -109896,7 +109896,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "0d6060d50b64c979bbb6d4ec2a17c831857cc73e",
@@ -110226,7 +110226,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484268+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847240+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -110403,7 +110403,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "351c9da4969e0f2e640edb25a4982821e79cf9ff",
@@ -110443,7 +110443,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484269+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847242+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -110649,7 +110649,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "4cb688aa057d10a82677bc699365edd318de262c",
       "approvedAt": "2026-10-20T06:00:15Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "4cb688aa057d10a82677bc699365edd318de262c",
@@ -110693,7 +110693,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484271+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847243+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -110870,7 +110870,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c80dd9d7f5fd2d3cafdd5108d3393fc3027a97f2",
@@ -111449,7 +111449,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484273+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847244+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -111604,7 +111604,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "db16a02a3dc2ef2dfb0e26b570197af082b5c66b",
@@ -111643,9 +111643,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:13.484274+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:44.847246+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -111828,7 +111828,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "84b7b1f7c438a2e18f3af16de6f5763983dea3b9",
@@ -112359,7 +112359,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941910+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896462+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -112536,7 +112536,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "77360cb73e3f5c8a882de1538cedc569a5abc450",
@@ -112580,7 +112580,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941921+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896499+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -112757,7 +112757,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "aebc2c60a7ead4e32d5523edad54a0010123526a",
@@ -112801,7 +112801,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941923+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896500+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -112978,7 +112978,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "adfbecdf3a6251cffecc63d338d0bbe30791a0ff",
@@ -113018,7 +113018,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941927+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896500+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -113234,7 +113234,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "f5eff9ef73eebcf604a291b14ecb75b93ffefda7",
       "approvedAt": "2026-10-19T19:36:37Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f5eff9ef73eebcf604a291b14ecb75b93ffefda7",
@@ -113268,7 +113268,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746597+00:00",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079366+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -113477,7 +113477,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "2cb745a42c6a038d774cbae0be75e139bd54373c",
@@ -114550,7 +114550,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941929+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896501+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -114727,7 +114727,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ff7e8b92523c6ab3d38eb187069c3d82fa7f3c7b",
@@ -114771,7 +114771,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941930+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896503+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -114948,7 +114948,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e49c983b9e9503fb3cd1c13d1c2df6ff192e5def",
@@ -114988,7 +114988,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941932+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896503+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -115204,7 +115204,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "7ff604b88c766e269f5f71541bafeab0fa9428e4",
       "approvedAt": "2026-10-19T20:02:09Z",
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7ff604b88c766e269f5f71541bafeab0fa9428e4",
@@ -115237,9 +115237,9 @@
           "reviewsComplete": true,
           "reviewRequests": [],
           "reviewRequestsComplete": true,
-          "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-21T00:59:28.746601+00:00",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-21T01:39:00.079369+00:00",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -115425,7 +115425,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+          "checkedAt": "2026-10-21T01:39:23.141141+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "11968a050d53ef504a7b71fe30fea358e3f8a032",
@@ -115471,7 +115471,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:15.941933+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:47.896504+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -115655,7 +115655,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3d5d9f0011c8f4b0193eaee607f0d7dab6aa3236",
@@ -115699,7 +115699,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183261+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970276+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -115883,7 +115883,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "29195900fa1080417883488a1536f4c60fb1ec76",
@@ -115927,7 +115927,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183274+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970285+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -116104,7 +116104,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "007c189b39250b0c60fa861778b7077ffca00d54",
@@ -116148,7 +116148,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183276+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970286+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -116325,7 +116325,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d1b9cc2f8c2b11e4eff728390366cff978cccf64",
@@ -117428,9 +117428,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183278+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970287+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -117584,7 +117584,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0e6946fc8d1821246fced5f960b37860d79e3d99",
@@ -117627,9 +117627,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183280+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970287+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -117783,7 +117783,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "897ab483372766b94cfc7fe8ced21185d3789d10",
@@ -117826,9 +117826,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183282+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970288+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -117982,7 +117982,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "59b68fe49953968abdce68d1992f541643beb2d0",
@@ -118261,9 +118261,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183284+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970292+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -118417,7 +118417,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a7ad53e89f4045cc8bbfbdb7ad490b13fc3cdf7d",
@@ -118460,9 +118460,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:19.183286+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:49.970292+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -118616,7 +118616,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "2a04de7b8f6da7fabff03cf9870214bd680f10a4",
@@ -118659,9 +118659,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751118+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.919993+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -118815,7 +118815,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "eca97a613b16d5c61fec9064e2cad005578c2407",
@@ -118858,9 +118858,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751129+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.920094+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -119014,7 +119014,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8f01b6cd01364101b96e2d4b467c53f1fa7419b4",
@@ -119057,9 +119057,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751131+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.920095+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -119213,7 +119213,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ef937e84f875e956938dc7d04f9aabadd1314854",
@@ -119256,9 +119256,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751133+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.920096+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -119412,7 +119412,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "4c88cdb9ad3cc84007e130fea5a08827cd095d03",
@@ -119455,9 +119455,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751134+00:00",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.920097+00:00",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -119611,7 +119611,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a5b68bb18bc4b49723bec07080b6da31373114e6",
@@ -119655,7 +119655,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751136+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.920097+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -119832,7 +119832,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "99593b0defafe89bb885cd3dd50cfb5fb16f45a3",
@@ -119876,7 +119876,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:21.751137+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:38:51.920098+00:00",
       "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
@@ -120053,7 +120053,7 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:51.605805+00:00",
+      "checkedAt": "2026-10-21T01:39:23.141141+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "17cd0b27b8f705027a134d44d9cc409efed49405",
@@ -120990,7 +120990,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:55.217691+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:39:27.927676+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -121200,12 +121200,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:55.217730+00:00",
+      "checkedAt": "2026-10-21T01:39:27.927711+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
         "base": "a457463cf8e0b4de78963ec627c43615e272df5b",
-        "checkedAt": "2026-10-21T00:59:55.217691+00:00"
+        "checkedAt": "2026-10-21T01:39:27.927676+00:00"
       },
       "importsComplete": true,
       "importPolicy": "none",
@@ -122987,7 +122987,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:55.217691+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:39:27.927676+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -123185,12 +123185,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:55.217730+00:00",
+      "checkedAt": "2026-10-21T01:39:27.927711+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b5e6c9df9dc32d7ca1ff235522daba4dfe7e488c",
         "base": "171043b63cb257653511c3ece31c7be62c7ab316",
-        "checkedAt": "2026-10-21T00:59:55.217691+00:00"
+        "checkedAt": "2026-10-21T01:39:27.927676+00:00"
       },
       "importsComplete": true,
       "importPolicy": "none",
@@ -123220,7 +123220,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:55.217691+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:39:27.927676+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -123456,12 +123456,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:55.217730+00:00",
+      "checkedAt": "2026-10-21T01:39:27.927711+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8c704d5324518b02f430a3f5f0f9388549c65eab",
         "base": "171043b63cb257653511c3ece31c7be62c7ab316",
-        "checkedAt": "2026-10-21T00:59:55.217691+00:00"
+        "checkedAt": "2026-10-21T01:39:27.927676+00:00"
       },
       "importsComplete": true,
       "importPolicy": "none",
@@ -123491,7 +123491,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-21T00:59:55.217691+00:00",
+      "mergeabilityCheckedAt": "2026-10-21T01:39:27.927676+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -123674,12 +123674,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-21T00:59:55.217730+00:00",
+      "checkedAt": "2026-10-21T01:39:27.927711+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
         "base": "e3e93a84417b7f6d5ce9e6c906aa2a681dd192db",
-        "checkedAt": "2026-10-21T00:59:55.217691+00:00"
+        "checkedAt": "2026-10-21T01:39:27.927676+00:00"
       },
       "importsComplete": true,
       "importPolicy": "none",
@@ -123736,7 +123736,7 @@
         "since": "2026-10-06T08:06:14.932695+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/43572e2f12b6e05835af23196b3906cd99650b61/github-status.json"
       }
     },
@@ -123755,7 +123755,7 @@
         "since": "2026-10-09T12:16:13.901195+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:14343": {
@@ -123764,7 +123764,7 @@
         "since": "2026-10-19T18:36:46.432891+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:14345": {
@@ -123773,7 +123773,7 @@
         "since": "2026-10-15T22:59:23.496825+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:14348": {
@@ -123809,7 +123809,7 @@
         "since": "2026-10-10T14:31:14.516622+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:14502": {
@@ -124007,7 +124007,7 @@
         "since": "2026-10-06T08:06:14.932695+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/43572e2f12b6e05835af23196b3906cd99650b61/github-status.json"
       }
     },
@@ -124044,7 +124044,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15107": {
@@ -124071,7 +124071,7 @@
         "since": "2026-10-19T19:00:46.772566+00:00",
         "basis": "observed",
         "qualifier": "#15991: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15114": {
@@ -124080,7 +124080,7 @@
         "since": "2026-10-19T18:36:46.432891+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15115": {
@@ -124224,14 +124224,14 @@
         "since": "2026-10-19T18:48:35.525085+00:00",
         "basis": "observed",
         "qualifier": "Source checks failing",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "changes-requested": {
         "scope": "4c675e4a3aac60e689e496f2d60c2f65a4199f7f",
         "since": "2026-10-19T18:36:46.432891+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15146": {
@@ -124240,7 +124240,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15147": {
@@ -124276,7 +124276,7 @@
         "since": "2026-10-19T18:48:35.525085+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15154": {
@@ -124392,8 +124392,8 @@
         "scope": "15994:6e7d20c28c16ce3c967bfdd9458e6de9c6f05435",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#15994: open, validation checks passed, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#15994: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15170": {
@@ -124420,7 +124420,7 @@
         "since": "2026-10-08T21:43:51.851665+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15181": {
@@ -124429,7 +124429,7 @@
         "since": "2026-10-19T18:15:31.997144+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15183": {
@@ -124483,7 +124483,7 @@
         "since": "2026-10-08T21:43:51.851665+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15202": {
@@ -124582,7 +124582,7 @@
         "since": "2026-10-18T12:45:09.882351+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15316": {
@@ -124600,7 +124600,7 @@
         "since": "2026-10-19T19:00:46.772566+00:00",
         "basis": "observed",
         "qualifier": "#16000: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15319": {
@@ -124618,14 +124618,14 @@
         "since": "2026-10-19T21:51:06.587950+00:00",
         "basis": "observed",
         "qualifier": "Source checks failing",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "maintainer-review": {
         "scope": "91a7df8205d3aa835e7e440c0b04f4a32a47f7cd",
         "since": "2026-10-20T08:35:35.946932+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15322": {
@@ -124634,7 +124634,7 @@
         "since": "2026-10-16T19:40:05.463942+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15330": {
@@ -124706,7 +124706,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15368": {
@@ -124715,7 +124715,7 @@
         "since": "2026-10-06T15:16:49.951787+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/dcfd61cb9fe2c9c0231b1fbe2f261a841f8ae028/github-status.json"
       }
     },
@@ -124725,7 +124725,7 @@
         "since": "2026-10-10T14:31:14.516622+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15371": {
@@ -124779,7 +124779,7 @@
         "since": "2026-10-17T11:32:58.377247+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15388": {
@@ -124851,7 +124851,7 @@
         "since": "2026-10-19T19:00:46.772566+00:00",
         "basis": "observed",
         "qualifier": "#15961: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15436": {
@@ -124914,7 +124914,7 @@
         "since": "2026-10-07T16:00:40.688888+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00",
         "evidence": "https://github.com/tamird/gvisor/blob/ea7d39eae04a092c894f6d33b39e8b0d3d6a554d/github-status.json"
       }
     },
@@ -124942,7 +124942,7 @@
         "since": "2026-10-19T18:48:35.525085+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15453": {
@@ -124978,21 +124978,21 @@
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "maintainer-review": {
         "scope": "41ca4bbf6816ee48a8d871954c0240738bef71a4",
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "importing": {
         "scope": "16050:11852d62d9ab4d869d2dc5c3af0be877fccb5354,16082:394403cdf6d5a4912136c3e04fd929c79b1b58cd",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#16050: open, checks pending, no reported conflict; #16082: open, checks pending, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#16050: open, checks pending, mergeability unknown; #16082: open, checks pending, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15474": {
@@ -125032,26 +125032,19 @@
       }
     },
     "pr:15498": {
-      "checks-pending": {
-        "scope": "15718:a03c7f9658914e85fb1daaf43750772260ae565e",
-        "since": "2026-10-21T00:59:51.605805+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
-      },
       "maintainer-review": {
         "scope": "ae1d700c60cdb28116e70f10ae6205b03fa98ebb",
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "importing": {
         "scope": "15718:a03c7f9658914e85fb1daaf43750772260ae565e",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#15718: open, checks pending, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#15718: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15499": {
@@ -125060,21 +125053,21 @@
         "since": "2026-10-19T20:57:27.442701+00:00",
         "basis": "observed",
         "qualifier": "Import #15910 failing",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "changes-requested": {
         "scope": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
         "since": "2026-10-17T06:11:33.880092+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "importing": {
         "scope": "15910:445d4451f9b75b7bab89af73b0abae8a34d9ee71",
         "since": "2026-10-19T20:47:11.363356+00:00",
         "basis": "observed",
         "qualifier": "#15910: open, checks failing, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15500": {
@@ -125092,7 +125085,7 @@
         "since": "2026-10-19T19:09:56.648024+00:00",
         "basis": "observed",
         "qualifier": "#16002: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15502": {
@@ -125110,7 +125103,7 @@
         "since": "2026-10-19T19:00:46.772566+00:00",
         "basis": "observed",
         "qualifier": "#16001: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15506": {
@@ -125137,7 +125130,7 @@
         "since": "2026-10-09T19:16:38.099061+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15509": {
@@ -125218,7 +125211,7 @@
         "since": "2026-10-20T08:35:35.946932+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15563": {
@@ -125290,7 +125283,7 @@
         "since": "2026-10-09T20:00:43.517313+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15591": {
@@ -125307,8 +125300,8 @@
         "scope": "15996:89a54bd65dd346b84378f25110ea5f3c38ec7214",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#15996: open, validation checks passed, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#15996: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15603": {
@@ -125326,7 +125319,7 @@
         "since": "2026-10-09T23:37:31.109094+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15618": {
@@ -125335,7 +125328,7 @@
         "since": "2026-10-19T19:00:46.772566+00:00",
         "basis": "observed",
         "qualifier": "#15993: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15621": {
@@ -125362,7 +125355,7 @@
         "since": "2026-10-10T15:06:19.907866+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15635": {
@@ -125384,26 +125377,19 @@
       }
     },
     "pr:15643": {
-      "checks-pending": {
-        "scope": "15998:68c63741158ab0fa6de87f8b6b6c839bb07727a0",
-        "since": "2026-10-21T00:59:51.605805+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
-      },
       "maintainer-review": {
         "scope": "f1a7f313000460286a5e59602568473fc6e5e29e",
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "importing": {
         "scope": "15998:68c63741158ab0fa6de87f8b6b6c839bb07727a0",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#15998: open, checks pending, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#15998: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15644": {
@@ -125439,7 +125425,7 @@
         "since": "2026-10-11T11:13:53.334733+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15648": {
@@ -125448,7 +125434,7 @@
         "since": "2026-10-11T15:16:41.487248+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15649": {
@@ -125457,7 +125443,7 @@
         "since": "2026-10-13T03:06:19.468827+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15650": {
@@ -125475,7 +125461,7 @@
         "since": "2026-10-11T20:34:36.728761+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15652": {
@@ -125520,7 +125506,7 @@
         "since": "2026-10-19T10:22:49.908059+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15669": {
@@ -125529,7 +125515,7 @@
         "since": "2026-10-14T11:04:33.584745+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15670": {
@@ -125538,7 +125524,7 @@
         "since": "2026-10-19T18:48:35.525085+00:00",
         "basis": "observed",
         "qualifier": "Import status failing; validation checks passed",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15730": {
@@ -125547,7 +125533,7 @@
         "since": "2026-10-19T18:48:35.525085+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15738": {
@@ -125556,7 +125542,7 @@
         "since": "2026-10-13T15:20:26.874315+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15740": {
@@ -125583,7 +125569,7 @@
         "since": "2026-10-14T10:45:42.262799+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15770": {
@@ -125646,7 +125632,7 @@
         "since": "2026-10-19T19:00:46.772566+00:00",
         "basis": "observed",
         "qualifier": "#15995: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15858": {
@@ -125673,7 +125659,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15891": {
@@ -125682,7 +125668,7 @@
         "since": "2026-10-16T21:22:28.813334+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15915": {
@@ -125691,14 +125677,14 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "importing": {
         "scope": "16010:e51e27f8ec27c3a8e8b9ab0e09d943cf0cb56816",
         "since": "2026-10-20T22:28:24.171325+00:00",
         "basis": "observed",
-        "qualifier": "#16010: open, validation checks passed, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#16010: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15916": {
@@ -125707,7 +125693,7 @@
         "since": "2026-10-19T21:11:55.198417+00:00",
         "basis": "observed",
         "qualifier": "#16020: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15917": {
@@ -125716,7 +125702,7 @@
         "since": "2026-10-17T06:11:33.879659+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15918": {
@@ -125725,7 +125711,7 @@
         "since": "2026-10-17T06:11:33.880084+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15919": {
@@ -125752,23 +125738,16 @@
         "since": "2026-10-19T22:26:11.560649+00:00",
         "basis": "observed",
         "qualifier": "#16027: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15926": {
-      "checks-pending": {
-        "scope": "16018:289109834e94f964c4923cf31c9ce452475b0ce6",
-        "since": "2026-10-21T00:59:51.605805+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
-      },
       "importing": {
         "scope": "16018:289109834e94f964c4923cf31c9ce452475b0ce6",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#16018: open, checks pending, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#16018: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15927": {
@@ -125777,7 +125756,7 @@
         "since": "2026-10-17T11:38:55.141074+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15929": {
@@ -125786,7 +125765,7 @@
         "since": "2026-10-20T21:14:58.301727+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15930": {
@@ -125795,7 +125774,7 @@
         "since": "2026-10-17T20:04:02.258030+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15931": {
@@ -125804,7 +125783,7 @@
         "since": "2026-10-19T23:58:14.229482+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15932": {
@@ -125831,7 +125810,7 @@
         "since": "2026-10-19T21:34:57.526725+00:00",
         "basis": "observed",
         "qualifier": "#16022: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15935": {
@@ -125849,7 +125828,7 @@
         "since": "2026-10-18T01:18:51.495018+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15937": {
@@ -125858,7 +125837,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15940": {
@@ -125867,7 +125846,7 @@
         "since": "2026-10-18T01:24:17.362675+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15941": {
@@ -125885,7 +125864,7 @@
         "since": "2026-10-18T12:45:09.882351+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15951": {
@@ -125894,7 +125873,7 @@
         "since": "2026-10-20T06:10:08.749171+00:00",
         "basis": "observed",
         "qualifier": "Import status failing; validation checks passed",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15952": {
@@ -125903,7 +125882,7 @@
         "since": "2026-10-18T16:16:15.362915+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15953": {
@@ -125921,7 +125900,7 @@
         "since": "2026-10-19T10:22:49.908059+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15956": {
@@ -125930,7 +125909,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15957": {
@@ -125948,7 +125927,7 @@
         "since": "2026-10-18T18:54:20.119562+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15959": {
@@ -125957,7 +125936,7 @@
         "since": "2026-10-18T18:54:20.119562+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15960": {
@@ -125966,7 +125945,7 @@
         "since": "2026-10-18T18:54:20.119562+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15963": {
@@ -125975,14 +125954,14 @@
         "since": "2026-10-19T20:12:12.850060+00:00",
         "basis": "observed",
         "qualifier": "Import #16007 failing",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "importing": {
         "scope": "16007:2cb745a42c6a038d774cbae0be75e139bd54373c",
         "since": "2026-10-19T20:01:53.869191+00:00",
         "basis": "observed",
         "qualifier": "#16007: open, checks failing, mergeability unknown",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15964": {
@@ -126009,7 +125988,7 @@
         "since": "2026-10-19T00:13:50.492885+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15977": {
@@ -126018,7 +125997,7 @@
         "since": "2026-10-19T15:47:40.936440+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15978": {
@@ -126026,8 +126005,8 @@
         "scope": "16011:11968a050d53ef504a7b71fe30fea358e3f8a032",
         "since": "2026-10-21T00:59:51.605805+00:00",
         "basis": "observed",
-        "qualifier": "#16011: open, validation checks passed, no reported conflict",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "qualifier": "#16011: open, validation checks passed, mergeability unknown",
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15980": {
@@ -126036,14 +126015,14 @@
         "since": "2026-10-19T20:25:26.840769+00:00",
         "basis": "observed",
         "qualifier": "Source checks failing",
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       },
       "maintainer-review": {
         "scope": "3d5d9f0011c8f4b0193eaee607f0d7dab6aa3236",
         "since": "2026-10-19T20:12:12.850060+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15981": {
@@ -126052,7 +126031,7 @@
         "since": "2026-10-19T19:41:04.610572+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:15983": {
@@ -126061,7 +126040,7 @@
         "since": "2026-10-19T17:11:21.055911+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16006": {
@@ -126070,7 +126049,7 @@
         "since": "2026-10-19T19:41:04.610572+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16025": {
@@ -126106,7 +126085,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16052": {
@@ -126115,7 +126094,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16053": {
@@ -126124,7 +126103,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16054": {
@@ -126142,7 +126121,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16056": {
@@ -126151,7 +126130,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16057": {
@@ -126160,7 +126139,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16058": {
@@ -126169,7 +126148,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16059": {
@@ -126178,7 +126157,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16065": {
@@ -126187,7 +126166,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16068": {
@@ -126196,7 +126175,7 @@
         "since": "2026-10-20T22:17:34.577883+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16076": {
@@ -126205,7 +126184,7 @@
         "since": "2026-10-20T21:03:33.137346+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:16077": {
@@ -126214,7 +126193,7 @@
         "since": "2026-10-20T21:03:33.137346+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:51.605805+00:00"
+        "observedAt": "2026-10-21T01:39:23.141141+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:13781": {
@@ -126241,21 +126220,21 @@
         "since": "2026-10-19T13:08:15.637199+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       },
       "conflicts": {
         "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
         "since": "2026-10-19T13:08:15.637199+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       },
       "maintainer-review": {
         "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
         "since": "2026-10-19T13:08:15.637199+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:13814": {
@@ -126300,14 +126279,14 @@
         "since": "2026-10-19T15:04:27.813712+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       },
       "maintainer-review": {
         "scope": "b5e6c9df9dc32d7ca1ff235522daba4dfe7e488c",
         "since": "2026-10-19T15:04:27.813712+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:13858": {
@@ -126316,14 +126295,14 @@
         "since": "2026-10-19T14:19:01.720865+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       },
       "maintainer-review": {
         "scope": "8c704d5324518b02f430a3f5f0f9388549c65eab",
         "since": "2026-10-19T14:19:01.720865+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       }
     },
     "pr:buildbuddy-io/buildbuddy:13882": {
@@ -126332,14 +126311,14 @@
         "since": "2026-10-20T19:41:02.475939+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       },
       "maintainer-review": {
         "scope": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
         "since": "2026-10-20T19:41:02.475939+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
-        "observedAt": "2026-10-21T00:59:55.217730+00:00"
+        "observedAt": "2026-10-21T01:39:27.927711+00:00"
       }
     },
     "branch:state-primitive-array-storage": {
@@ -126348,7 +126327,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-20T22:29:00.985871+00:00"
+        "observedAt": "2026-10-21T01:41:17.826530+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -126357,7 +126336,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-20T22:29:00.985871+00:00"
+        "observedAt": "2026-10-21T01:41:17.826530+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -126366,7 +126345,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-20T22:29:00.985871+00:00"
+        "observedAt": "2026-10-21T01:41:17.826530+00:00"
       }
     },
     "branch:diagnostics/state-integrated-array-proposal": {
@@ -126375,19 +126354,19 @@
         "since": "2026-10-17T02:45:40.196371+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-20T22:29:00.985871+00:00"
+        "observedAt": "2026-10-21T01:41:17.826530+00:00"
       }
     }
   },
   "limits": {
     "requests": 29,
     "graphqlCost": 152,
-    "graphqlRemaining": 4839,
+    "graphqlRemaining": 4634,
     "nestedPageSize": 100,
     "maxOpenPRs": 200,
     "repositories": {
       "google/gvisor": {
-        "openInventoryTotal": 496,
+        "openInventoryTotal": 494,
         "retainedSources": 171,
         "retainedImports": 183,
         "mergeabilityRecheck": {
@@ -126399,9 +126378,11 @@
             14345,
             14361,
             15064,
+            15106,
             15111,
             15114,
             15145,
+            15146,
             15153,
             15169,
             15180,
@@ -126411,14 +126392,19 @@
             15318,
             15321,
             15322,
+            15337,
             15368,
             15370,
             15376,
+            15435,
             15443,
             15449,
+            15473,
+            15498,
             15499,
             15501,
             15503,
+            15508,
             15548,
             15562,
             15583,
@@ -126426,36 +126412,44 @@
             15604,
             15618,
             15634,
+            15643,
             15647,
             15648,
             15649,
             15651,
             15668,
             15669,
+            15670,
             15687,
+            15718,
             15730,
             15738,
             15769,
             15819,
             15861,
+            15868,
             15891,
             15910,
+            15915,
             15916,
             15917,
             15918,
             15921,
+            15926,
             15927,
             15929,
             15930,
             15931,
             15934,
             15936,
+            15937,
             15940,
             15942,
             15950,
             15951,
             15952,
             15955,
+            15956,
             15958,
             15959,
             15960,
@@ -126470,24 +126464,42 @@
             15983,
             15991,
             15993,
+            15994,
             15995,
+            15996,
+            15998,
             16000,
             16001,
             16002,
             16006,
             16007,
+            16010,
+            16011,
+            16018,
             16020,
             16022,
             16027,
             16031,
             16042,
+            16050,
+            16051,
+            16052,
+            16053,
+            16055,
+            16056,
+            16057,
+            16058,
+            16059,
+            16065,
+            16068,
             16076,
-            16077
+            16077,
+            16082
           ]
         }
       },
       "buildbuddy-io/buildbuddy": {
-        "openInventoryTotal": 225,
+        "openInventoryTotal": 224,
         "retainedSources": 6,
         "retainedImports": 0,
         "mergeabilityRecheck": {
@@ -126501,7 +126513,7 @@
         }
       }
     },
-    "openInventoryTotal": 721,
+    "openInventoryTotal": 718,
     "retainedSources": 177,
     "retainedImports": 183
   }
