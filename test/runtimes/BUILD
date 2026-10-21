@@ -21,6 +21,8 @@ _RUNTIMES = {
         exclude_file = "exclude/java21.csv",
         ipv6 = True,
         lang = "java",
+        # jtreg requires up to 16GiB to discover the large-memory tests.
+        memory = "24GB",
         native_reference = True,
         partitions = 40,
         proctor_privileged = False,
