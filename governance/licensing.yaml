@@ -35,7 +35,7 @@ exceptions:
       - GPL-3.0-or-later
     exception_rationale: &helper_image_notices >-
       Supplies the common license texts and package notice retained with
-      the selected GNU runtime in the profiling helper image. These
+      the selected GNU runtime in the profiling and hackbench images. These
       files are image data, not inputs linked into gVisor release
       binaries.
   - dependency: apt/helper_image_packages/amd64/ca-certificates
@@ -44,7 +44,7 @@ exceptions:
       - GPL-2.0-or-later
       - MPL-2.0
     exception_rationale: &helper_image_ca >-
-      Supplies the CA trust bundle shared by both Go helper images. The
+      Supplies the CA trust bundle shared by the native helper images. The
       package copyright notice is retained alongside the bundle; its
       maintenance scripts are excluded from the assembled filesystem.
   - dependency: apt/helper_image_packages/amd64/coreutils
@@ -55,11 +55,10 @@ exceptions:
       - GPL-3.0-or-later
       - ISC
     exception_rationale: &helper_image_commands >-
-      Supplies only GNU rm, mkdir, and chmod in the profiling helper
-      image used by Kubernetes benchmarks. The package notice and
-      matching license texts are retained in the image; these tools are
-      separate executables from the Go helper and gVisor release
-      binaries.
+      Supplies GNU rm, mkdir, and chmod in the profiling helper image
+      and sleep in the hackbench image. The package notice and matching
+      license texts are retained; these tools are separate executables
+      from the benchmarks and gVisor release binaries.
   - dependency: apt/helper_image_packages/amd64/dpkg
     license:
       - BSD-2-Clause
@@ -67,9 +66,9 @@ exceptions:
       - GPL-2.0-or-later
     exception_rationale: &helper_image_resolver >-
       Resolver dependency of the pinned helper-image packages. Its
-      payload is not copied into either helper image: their declared
-      layers select the CA bundle, three GNU commands, and the
-      explicitly required runtime files.
+      payload is not copied into the helper images: their declared layers
+      select the CA bundle, required GNU commands, and their runtime
+      files.
   - dependency: apt/helper_image_packages/amd64/gcc-12-base
     license:
       - Artistic-1.0-Perl
@@ -122,18 +121,19 @@ exceptions:
       - LGPL-2.1-or-later
       - Spencer-94
     exception_rationale: &helper_image_runtime >-
-      Supplies a required dynamic library or loader for the three GNU
-      commands in the profiling helper image. Its package notice and
-      matching license texts are retained. The Go helpers remain static
-      binaries.
+      Supplies a required dynamic library or loader for the selected GNU
+      commands. The profiling and hackbench images share libc and the
+      loader; only the profiling image needs SELinux and PCRE. Package
+      notices and matching license texts are retained. The native helpers
+      remain static binaries.
   - dependency: apt/helper_image_packages/amd64/libcrypt1
     license: LicenseRef-libxcrypt-4.4.27
     exception_rationale: &helper_image_libcrypt >-
       The exact pinned artifact retains its previously audited per-file
       LicenseRef-libxcrypt-4.4.27 inventory. Resolver dependency of the
       pinned helper-image packages. Its payload is not copied into
-      either helper image: their declared layers select the CA bundle,
-      three GNU commands, and the explicitly required runtime files.
+      the helper images: their declared layers select the CA bundle,
+      required GNU commands, and their runtime files.
   - dependency: apt/helper_image_packages/amd64/libgcc-s1
     license:
       - Artistic-1.0-Perl
@@ -448,3 +448,10 @@ exceptions:
       QEMU user-mode emulators for arm64 build machines, run as a build tool
       to execute binaries built for the target architecture when
       cross-compiling. QEMU is neither linked into nor distributed with gVisor.
+  - dependency: rt_tests
+    license: GPL-2.0-only
+    exception_rationale: >-
+      Hackbench is a standalone test image executable built under the
+      GPLv2 option of its GPL-2.0-or-later license. Its source archive is
+      pinned and its COPYING file is retained in the image. It is not
+      linked into gVisor release binaries.

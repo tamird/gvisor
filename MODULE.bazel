@@ -72,7 +72,7 @@ image_apt.install(
         "base-files (= 12ubuntu4.7)",
         # CA trust for HTTPS requests from the Ollama client.
         "ca-certificates (= 20260601~22.04.1)",
-        # mkdir, chmod and rm --one-file-system used by the profiling caller.
+        # GNU commands used by the profiling and hackbench callers.
         "coreutils (= 8.32-4.1ubuntu1.4)",
         # C runtime and dynamic loader for the selected coreutils commands.
         "libc6 (= 2.35-0ubuntu3.15)",
@@ -107,6 +107,16 @@ http_archive(
     urls = [
         "https://github.com/kythe/kythe/releases/download/v0.0.74/kythe-v0.0.74.tar.gz",
     ],
+)
+
+### rt-tests
+# rt-tests 2.2 supplies the hackbench source used by the benchmark.
+http_archive(
+    name = "rt_tests",
+    build_file_content = 'exports_files(["COPYING", "src/hackbench/hackbench.c"])',
+    sha256 = "48346ab2b5bf2ffbdb1ed0d4540e9e8e22f6665e6bb3d59c22614f9722b13a91",
+    strip_prefix = "rt-tests-2.2",
+    urls = ["https://www.kernel.org/pub/linux/utils/rt-tests/older/rt-tests-2.2.tar.xz"],
 )
 
 ### Python

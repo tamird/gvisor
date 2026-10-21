@@ -1,7 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
-load("//tools:arch.bzl", "select_arch")
+load("//images:package_layer.bzl", "package_layer")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
 
 package(
@@ -56,68 +56,32 @@ image_layer(
 
 # Kubernetes invokes these commands directly. GNU rm's --one-file-system
 # protects nested mounts under the host directory being removed.
-_COREUTILS_MEMBERS = [
-    "./bin/chmod",
-    "./bin/mkdir",
-    "./bin/rm",
-    "./lib/{triplet}/libc.so.6",
-    "./lib/{triplet}/{loader}",
-    "./{interpreter}",
-    "./lib/{triplet}/libselinux.so.1",
-    "./usr/lib/{triplet}/libpcre2-8.so.0",
-    "./usr/lib/{triplet}/libpcre2-8.so.0.10.4",
-    "./usr/share/doc/coreutils/copyright",
-    "./usr/share/doc/libc6/copyright",
-    "./usr/share/doc/libselinux1/copyright",
-    "./usr/share/doc/libpcre2-8-0/copyright",
-    "./usr/share/doc/base-files/copyright",
-    "./usr/share/common-licenses/GPL-2",
-    "./usr/share/common-licenses/GPL-3",
-    "./usr/share/common-licenses/LGPL-2.1",
-    "./usr/share/common-licenses/GFDL-1.3",
-]
-
-_COREUTILS_PACKAGES = [
-    # Common license texts referenced by the runtime packages' notices.
-    "@helper_image_packages//base-files:data",
-    # mkdir, chmod and rm --one-file-system invoked by the Kubernetes caller.
-    "@helper_image_packages//coreutils:data",
-    # C runtime and dynamic loader for those three commands.
-    "@helper_image_packages//libc6:data",
-    # Shared-library dependency of libselinux.
-    "@helper_image_packages//libpcre2-8-0:data",
-    # Shared-library dependency of the packaged mkdir binary.
-    "@helper_image_packages//libselinux1:data",
-]
-
-# bsdtar copies matching entries from the declared package archives, preserving
-# their modes and loader links. Listing every required member then rejects an
-# incomplete runtime layer if the package contents change.
-_COREUTILS_COMMAND = "$(execpath @bsd_tar_toolchains//:resolved_target_toolchain) -cf $@ --format=ustar " + " ".join([
-    "--include=" + member
-    for member in _COREUTILS_MEMBERS
-]) + " " + " ".join([
-    "@$(location " + package + ")"
-    for package in _COREUTILS_PACKAGES
-]) + " && $(execpath @bsd_tar_toolchains//:resolved_target_toolchain) -tf $@ " + " ".join(_COREUTILS_MEMBERS) + " > /dev/null"
-
-genrule(
+package_layer(
     name = "profile_helper_coreutils_layer",
-    srcs = _COREUTILS_PACKAGES,
-    outs = ["profile-helper-coreutils.tar"],
-    cmd = select_arch(
-        amd64 = _COREUTILS_COMMAND.format(
-            interpreter = "lib64/ld-linux-x86-64.so.2",
-            loader = "ld-linux-x86-64.so.2",
-            triplet = "x86_64-linux-gnu",
-        ),
-        arm64 = _COREUTILS_COMMAND.format(
-            interpreter = "lib/ld-linux-aarch64.so.1",
-            loader = "ld-linux-aarch64.so.1",
-            triplet = "aarch64-linux-gnu",
-        ),
-    ),
-    tools = ["@bsd_tar_toolchains//:resolved_target_toolchain"],
+    members = [
+        "./bin/chmod",
+        "./bin/mkdir",
+        "./bin/rm",
+    ],
+    packages = ["@helper_image_packages//coreutils:data"],
+)
+
+# mkdir also needs SELinux and its PCRE dependency.
+package_layer(
+    name = "profile_helper_selinux_layer",
+    members = [
+        "./lib/{triplet}/libselinux.so.1",
+        "./usr/lib/{triplet}/libpcre2-8.so.0",
+        "./usr/lib/{triplet}/libpcre2-8.so.0.10.4",
+        "./usr/share/doc/libselinux1/copyright",
+        "./usr/share/doc/libpcre2-8-0/copyright",
+    ],
+    packages = [
+        # Shared-library dependency of libselinux.
+        "@helper_image_packages//libpcre2-8-0:data",
+        # Shared-library dependency of the packaged mkdir binary.
+        "@helper_image_packages//libselinux1:data",
+    ],
 )
 
 image_manifest(
@@ -125,7 +89,9 @@ image_manifest(
     base = "//images:helper_base",
     cmd = ["/usr/bin/profilehelper"],
     layers = [
+        "//images:helper_coreutils_runtime",
         ":profile_helper_coreutils_layer",
+        ":profile_helper_selinux_layer",
         ":profile_helper_layer",
     ],
     tags = ["manual"],
@@ -138,4 +104,57 @@ image_outputs(
     name = "profile_helper",
     image = ":profile_helper_image",
     image_name = "benchmarks/profile-helper",
+)
+
+# Keep the rt-tests version and command-line behavior used by the benchmark.
+cc_binary(
+    name = "hackbench",
+    srcs = ["@rt_tests//:src/hackbench/hackbench.c"],
+    copts = ["-O2"],
+    defines = [
+        "VERSION=2.2",
+        "_GNU_SOURCE",
+    ],
+    linkopts = ["-lrt"],
+    static = True,
+    # The executable uses Linux IPC and scheduling interfaces.
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+image_layer(
+    name = "hackbench_layer",
+    srcs = {
+        "/usr/bin/hackbench": ":hackbench",
+        "/usr/share/doc/hackbench/COPYING": "@rt_tests//:COPYING",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/bin/hackbench": file_metadata(mode = "0755")},
+)
+
+# The benchmark starts sleep before executing hackbench repeatedly.
+package_layer(
+    name = "hackbench_coreutils_layer",
+    members = ["./bin/sleep"],
+    packages = ["@helper_image_packages//coreutils:data"],
+)
+
+image_manifest(
+    name = "hackbench_image",
+    base = "//images:helper_base",
+    cmd = ["/usr/bin/hackbench"],
+    layers = [
+        "//images:helper_coreutils_runtime",
+        ":hackbench_coreutils_layer",
+        ":hackbench_layer",
+    ],
+    tags = ["manual"],
+    # Match the Linux executable and selected image platform, not the build host.
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+image_outputs(
+    name = "hackbench",
+    image = ":hackbench_image",
+    image_name = "benchmarks/hackbench",
 )
