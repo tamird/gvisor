@@ -17,6 +17,7 @@ function client() {
 
 test('cross-references remain visible evidence without creating graph relationships', () => {
   const context = client(), pr = attentionNode().github;
+  context.snapshotInput.checkedAt = pr.checkedAt = '2026-10-21T02:54:53Z';
   const event = { id: 'reference-13826', createdAt: '2026-10-16T15:59:46Z', source: {
     __typename: 'PullRequest', number: 13826, repository: { nameWithOwner: 'buildbuddy-io/buildbuddy', isPrivate: false },
     url: 'https://github.com/buildbuddy-io/buildbuddy/pull/13826', title: 'Enable vhost-net',
