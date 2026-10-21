@@ -43,6 +43,7 @@ def _image_archive_for_arch(architecture):
 # https://github.com/fmeum/with_cfg.bzl/blob/a33b1b2d2/with_cfg/private/with_cfg.bzl#L86-L89
 # buildifier: disable=unused-variable
 _amd64_image_archive, _amd64_image_archive_transition = _image_archive_for_arch("amd64")
+
 # buildifier: disable=unused-variable
 _arm64_image_archive, _arm64_image_archive_transition = _image_archive_for_arch("arm64")
 

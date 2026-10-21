@@ -73,7 +73,7 @@ def _declared_image_archive_impl(ctx):
     image_config = manifest.config if manifest != None else (inherited.image_config if inherited != None else None)
     layers = tuple([struct(metadata = layer.metadata, blob = layer.blob) for layer in manifest.layers]) if manifest != None else (inherited.layers if inherited != None else ())
     if inherited != None and (origin != inherited.origin or layout != inherited.layout or pin != inherited.pin or
-                             manifest_file != inherited.manifest or image_config != inherited.image_config or layers != inherited.layers):
+                              manifest_file != inherited.manifest or image_config != inherited.image_config or layers != inherited.layers):
         fail("archive aliases must preserve the declared producer")
     if (origin in ("source", "native-img")) != (layout == None):
         fail("native OCI and registry archives require their configured layout")

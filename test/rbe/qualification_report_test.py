@@ -159,9 +159,7 @@ class QualificationReportTest(unittest.TestCase):
                 try:
                     records, spawns = report.compact_records(invocation / "execution.json")
                     source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage"]
-                    archive, = [spawn for spawn in spawns if spawn.get("mnemonic") == "DockerSave"]
-                    for action in (source, archive):
-                        action.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
+                    source.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
                     (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
                         [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
                     if kind == "build":
@@ -273,7 +271,9 @@ class QualificationReportTest(unittest.TestCase):
                 try:
                     records, spawns = report.compact_records(invocation / "execution.json")
                     source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "ImageManifest"]
-                    source.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
+                    archive, = [spawn for spawn in spawns if spawn.get("mnemonic") == "DockerSave"]
+                    for action in (source, archive):
+                        action.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
                     (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
                         [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
                     if kind == "build":

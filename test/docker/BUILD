@@ -91,8 +91,15 @@ source_image_archive(
         architecture = architecture,
         tags = ["manual"],
     )
-    for image in ["alpine", "busybox", "tmpfile"]
-    for architecture in ["amd64", "arm64"]
+    for image in [
+        "alpine",
+        "busybox",
+        "tmpfile",
+    ]
+    for architecture in [
+        "amd64",
+        "arm64",
+    ]
 ]
 
 docker_image_archives(
@@ -101,9 +108,16 @@ docker_image_archives(
     source_archives = {
         "basic/" + image: {
             architecture: ":basic_" + image + "_source_" + architecture
-            for architecture in ["amd64", "arm64"]
+            for architecture in [
+                "amd64",
+                "arm64",
+            ]
         }
-        for image in ["alpine", "busybox", "tmpfile"]
+        for image in [
+            "alpine",
+            "busybox",
+            "tmpfile",
+        ]
     } | {
         "basic/nginx": {"amd64": ":nginx_source_amd64"},
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},

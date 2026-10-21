@@ -495,7 +495,10 @@ img_pull(
     name = "test_alpine",
     digest = "sha256:b276d875eeed9c7d3f1cfa7edb06b22ed22b14219a7d67c52c56612330348239",
     layer_handling = "eager",
-    platforms = ["linux/amd64", "linux/arm64"],
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
     registry = "index.docker.io",
     repository = "library/alpine",
     tag = "3.11.5",
@@ -505,7 +508,10 @@ img_pull(
     name = "test_busybox",
     digest = "sha256:95cf004f559831017cdf4628aaf1bb30133677be8702a8c5f2994629f637a209",
     layer_handling = "eager",
-    platforms = ["linux/amd64", "linux/arm64"],
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
     registry = "index.docker.io",
     repository = "library/busybox",
     tag = "1.31.1",
