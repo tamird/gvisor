@@ -231,7 +231,7 @@ class QualificationReportTest(unittest.TestCase):
                 ("other-archive", "Missing actual archive load"),
                 ("runfiles", "Loaded source images differ"),
                 ("xml", "TestRunner XML differs"),
-                ("configuration", "Executed attempts differ"),
+                ("configuration", "Missing or duplicate canonical test attempts"),
                 ("duplicate-attempt", "Missing or duplicate canonical test attempts"),
                 ("duplicate-spawn", "Duplicate or mismatched configured TestRunner"),
                 ("missing-spawn", "Missing configured TestRunners"),
@@ -241,53 +241,55 @@ class QualificationReportTest(unittest.TestCase):
                 ("remote-no-digest", "Missing execution identity")):
             with self.subTest(damage=damage):
                 invocation = self.source_image_fixture()
-                records, spawns = report.compact_records(invocation / "execution.json")
-                source, = [spawn for spawn in spawns if spawn["mnemonic"] == "SourceImageOCI"]
-                test, = [spawn for spawn in spawns if spawn["mnemonic"] == "TestRunner"]
-                manifest = report.read_json(invocation / "manifest.json")
-                canonical = report.read_json(invocation / "verdict.json")
-                contract = report.read_json(invocation / "expectations.json")
-                owner, = contract["owners"]
-                if damage in ("load", "other-archive", "xml"):
-                    name = "test.xml" if damage == "xml" else "test.log"
-                    row, = [row for row in manifest["reports"] if row["name"] == name]
-                    path = invocation / row["path"]
-                    text = path.read_text()
-                    if damage == "load":
-                        text = text.replace("Loaded declared image archive", "Unobserved archive")
-                    elif damage == "other-archive":
-                        text = text.replace("Loaded image:", "Loaded declared image archive other/tarball.tar:\nLoaded image:", 1)
-                    else:
-                        text += "\n"
-                    path.write_text(text)
-                    row.update(report.file_record(path))
-                elif damage == "runfiles":
-                    records[45644]["inputSet"]["inputIds"] = []
-                elif damage == "configuration":
-                    canonical["executed"][0]["owner"]["configuration"] = "other-configuration"
-                elif damage == "duplicate-attempt":
-                    canonical["executed"].append(canonical["executed"][0])
-                elif damage == "duplicate-spawn":
-                    spawns.append(test)
-                elif damage == "missing-spawn":
-                    spawns.remove(test)
-                elif damage == "missing-image":
-                    contract["owners"][owner].append("benchmarks/missing")
-                elif damage == "required-case":
-                    contract["benchmarks"][owner].append({"name": "BenchmarkMissing", "count": 1, "units": ["ns/op"]})
-                elif damage == "cached-source":
-                    source["cacheHit"] = True
-                elif damage == "remote-no-digest":
-                    test["runner"] = "remote"
-                report.write_json(invocation / "manifest.json", manifest)
-                report.write_json(invocation / "verdict.json", canonical)
-                report.write_json(invocation / "expectations.json", contract)
-                (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
-                    [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
-                value = self.source_image_audit(invocation)
-                self.assertEqual((value["status"], value["canonical_status"]), ("INCOMPLETE", "PASS"), value)
-                self.assertIn(expected_error, "\n".join(value["errors"]))
-                shutil.rmtree(invocation)
+                try:
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    source, = [spawn for spawn in spawns if spawn["mnemonic"] == "SourceImageOCI"]
+                    test, = [spawn for spawn in spawns if spawn["mnemonic"] == "TestRunner"]
+                    manifest = report.read_json(invocation / "manifest.json")
+                    canonical = report.read_json(invocation / "verdict.json")
+                    contract = report.read_json(invocation / "expectations.json")
+                    owner, = contract["owners"]
+                    if damage in ("load", "other-archive", "xml"):
+                        name = "test.xml" if damage == "xml" else "test.log"
+                        row, = [row for row in manifest["reports"] if row["name"] == name]
+                        path = invocation / row["path"]
+                        text = path.read_text()
+                        if damage == "load":
+                            text = text.replace("Loaded declared image archive", "Unobserved archive")
+                        elif damage == "other-archive":
+                            text = text.replace("Loaded image:", "Loaded declared image archive other/tarball.tar:\nLoaded image:", 1)
+                        else:
+                            text += "\n"
+                        path.write_text(text)
+                        row.update(report.file_record(path))
+                    elif damage == "runfiles":
+                        records[45644]["inputSet"]["inputIds"] = []
+                    elif damage == "configuration":
+                        canonical["executed"][0]["owner"]["configuration"] = "other-configuration"
+                    elif damage == "duplicate-attempt":
+                        canonical["executed"].append(canonical["executed"][0])
+                    elif damage == "duplicate-spawn":
+                        spawns.append(test)
+                    elif damage == "missing-spawn":
+                        spawns.remove(test)
+                    elif damage == "missing-image":
+                        contract["owners"][owner].append("benchmarks/missing")
+                    elif damage == "required-case":
+                        contract["benchmarks"][owner].append({"name": "BenchmarkMissing", "count": 1, "units": ["ns/op"]})
+                    elif damage == "cached-source":
+                        source["cacheHit"] = True
+                    elif damage == "remote-no-digest":
+                        test["runner"] = "remote"
+                    report.write_json(invocation / "manifest.json", manifest)
+                    report.write_json(invocation / "verdict.json", canonical)
+                    report.write_json(invocation / "expectations.json", contract)
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual((value["status"], value["canonical_status"]), ("INCOMPLETE", "PASS"), value)
+                    self.assertIn(expected_error, "\n".join(value["errors"]))
+                finally:
+                    shutil.rmtree(invocation)
 
     def test_source_images_preserve_failure_and_reject_partial_measurements(self) -> None:
         invocation = self.source_image_fixture()

@@ -1868,6 +1868,9 @@ def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_
     if len(sources) != 1:
         errors.append("Invocation sources are absent or inconsistent")
     verdicts = [mapping(row["verdict"]) for row in rows]
+    cases: Counter[str] = Counter()
+    for row in verdicts:
+        cases.update({key: number(value) for key, value in mapping(row.get("case_counts", {})).items()})
     native_exits = []
     for row in rows:
         try:
@@ -1895,7 +1898,7 @@ def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_
               "commands": [{"invocation": row["path"], **{key: mapping(row["verdict"])[key] for key in (
                   "source", "status", "bazel_command", "arguments", "native_exit", "command_outputs", "execution_finished_at",
               )}} for row in rows if mapping(row["verdict"]).get("command_kind") == "command"],
-              "case_counts": dict(sum((Counter({key: number(value) for key, value in mapping(row.get("case_counts", {})).items()}) for row in verdicts), Counter())),
+              "case_counts": dict(cases),
               "zero_case_owners": [item for row in verdicts for item in sequence(row.get("zero_case_owners", []))],
               "non_runtime_owners": [item for row in verdicts for item in sequence(row.get("non_runtime_owners", []))],
               "all_skipped_owners": [item for row in verdicts for item in sequence(row.get("all_skipped_owners", []))],
