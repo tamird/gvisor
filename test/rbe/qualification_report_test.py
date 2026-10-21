@@ -117,6 +117,101 @@ class QualificationReportTest(unittest.TestCase):
         return report.source_image_audit(invocation / "execution.json", invocation / "verdict.json",
                                          invocation / "manifest.json", invocation / "expectations.json")
 
+    def native_image_fixture(self) -> Path:
+        invocation = self.source_image_fixture()
+        image, = self.source_image_audit(invocation)["images"]
+        records, spawns = report.compact_records(invocation / "execution.json")
+        source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "SourceImageOCI"]
+        layout_id, = [output["outputId"] for output in source["outputs"]
+                      if "directory" in records[output["outputId"]]]
+        layout = records[layout_id]["directory"]["path"]
+        base_id, layer_id, descriptor_id, inputs_id = range(max(records) + 1, max(records) + 5)
+        base = "bazel-out/k8-fastbuild/bin/external/base/layout"
+        layer = "bazel-out/k8-fastbuild/bin/images/helper/layer.tar"
+        descriptor = "bazel-out/k8-fastbuild/bin/images/helper/image.0.descriptor.json"
+        records.update({
+            base_id: {"id": base_id, "directory": {"path": base}},
+            layer_id: {"id": layer_id, "file": {"path": layer, "digest": {"hash": "b" * 64, "sizeBytes": "100"}}},
+            descriptor_id: {"id": descriptor_id, "file": {"path": descriptor, "digest": {"hash": "c" * 64, "sizeBytes": "80"}}},
+            inputs_id: {"id": inputs_id, "inputSet": {"inputIds": [base_id, layer_id, descriptor_id]}},
+        })
+        # This is the retained rules_oci OCIImage argv/output shape. Its build
+        # inputs may be cached; the test attempt and observed load remain real.
+        source.update(mnemonic="OCIImage", inputSetId=inputs_id,
+                      args=["bazel-out/k8-fastbuild/bin/images/helper/image_image.sh",
+                            "--from=" + base, "--layer=" + layer + "=" + descriptor],
+                      outputs=[{"outputId": layout_id}])
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+        canonical = report.read_json(invocation / "verdict.json")
+        owner, = canonical["expected"]
+        contract = report.read_json(invocation / "expectations.json")
+        contract["configured_owners"] = [{**owner, "images": [{"name": image["image"], "architecture": "amd64",
+            "archive": image["archive"]["path"], "origin": "native-oci", "layout": layout}], "source_commands": []}]
+        report.write_json(invocation / "expectations.json", contract)
+        return invocation
+
+    def test_native_images_bind_layout_inputs_archive_and_actual_load(self) -> None:
+        for cached, kind in ((False, "benchmark"), (True, "benchmark"), (True, "build")):
+            with self.subTest(cached=cached, kind=kind):
+                invocation = self.native_image_fixture()
+                try:
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage"]
+                    source.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    if kind == "build":
+                        canonical = report.read_json(invocation / "verdict.json")
+                        canonical.update(command_kind="build", executed=[])
+                        report.write_json(invocation / "verdict.json", canonical)
+                        contract = report.read_json(invocation / "expectations.json")
+                        contract.pop("benchmarks")
+                        report.write_json(invocation / "expectations.json", contract)
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual((value["audit_status"], value["errors"]), ("PASS", []), value)
+                    image, = value["images"]
+                    self.assertEqual((image["origin"], image["producer"]["cache_hit"]), ("native-oci", cached))
+                    self.assertEqual([row["kind"] for row in image["producer"]["inputs"]], ["base", "layer", "descriptor"])
+                    self.assertEqual(len(value["consumers"]), int(kind != "build"))
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_native_images_reject_missing_or_conflicting_ancestry(self) -> None:
+        for damage, error in (("layout", "Missing or ambiguous native OCI layout"),
+                              ("assembly", "Missing unique native OCI assembly"),
+                              ("failed", "Unsuccessful source/archive action"),
+                              ("layer", "is not an assembly input"),
+                              ("archive", "Source archive identities differ"),
+                              ("registry", "Registry dependency requires")):
+            with self.subTest(damage=damage):
+                invocation = self.native_image_fixture()
+                try:
+                    contract = report.read_json(invocation / "expectations.json")
+                    image, = contract["configured_owners"][0]["images"]
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage"]
+                    if damage == "layout":
+                        image["layout"] += "/different-configuration"
+                    elif damage == "assembly":
+                        spawns.append(source.copy())
+                    elif damage == "failed":
+                        source["exitCode"] = 1
+                    elif damage == "layer":
+                        records[source["inputSetId"]]["inputSet"]["inputIds"].pop(1)
+                    elif damage == "archive":
+                        image["archive"] += ".unrelated"
+                    else:
+                        image["origin"] = "registry"
+                    report.write_json(invocation / "expectations.json", contract)
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual(value["audit_status"], "INCOMPLETE", value)
+                    self.assertIn(error, "\n".join(value["errors"]))
+                finally:
+                    shutil.rmtree(invocation)
+
     def test_source_images_bind_local_runfiles_archive_and_measurements(self) -> None:
         invocation = self.source_image_fixture()
         value = self.source_image_audit(invocation)

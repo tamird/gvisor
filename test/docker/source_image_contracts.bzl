@@ -32,6 +32,16 @@ _ImageInputsInfo = provider(fields = {
 def _declared_image_archive_impl(ctx):
     archive = ctx.file.archive
     dependency = ctx.attr.archive[DefaultInfo]
+    inherited = ctx.attr.archive[_ImageArchiveInfo].image if _ImageArchiveInfo in ctx.attr.archive else None
+    architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(ctx.attr.architecture, ctx.attr.architecture)
+    if inherited != None and (inherited.name != ctx.attr.image or inherited.architecture != architecture):
+        fail("archive aliases must preserve the declared image and architecture")
+    origin = ctx.attr.origin or (inherited.origin if inherited != None else "source")
+    layout = ctx.file.layout or (inherited.layout if inherited != None else None)
+    if inherited != None and (origin != inherited.origin or layout != inherited.layout):
+        fail("archive aliases must preserve the declared producer")
+    if (origin == "source") != (layout == None):
+        fail("native OCI and registry archives require their configured layout; source archives use their source action")
     runfiles = ctx.runfiles(files = [archive]).merge_all([
         files
         for files in [dependency.default_runfiles, dependency.data_runfiles]
@@ -44,8 +54,10 @@ def _declared_image_archive_impl(ctx):
         ),
         _ImageArchiveInfo(image = struct(
             name = ctx.attr.image,
-            architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(ctx.attr.architecture, ctx.attr.architecture),
+            architecture = architecture,
             archive = archive,
+            origin = origin,
+            layout = layout,
         )),
     ]
 
@@ -56,6 +68,8 @@ declared_image_archive = rule(
         "archive": attr.label(mandatory = True, allow_single_file = True),
         "architecture": attr.string(mandatory = True, values = ["amd64", "arm64", "x86_64", "aarch64"]),
         "image": attr.string(mandatory = True),
+        "origin": attr.string(values = ["", "source", "native-oci", "registry"], doc = "Producer kind; empty inherits the archive declaration."),
+        "layout": attr.label(allow_single_file = True, doc = "Configured OCI layout for a native assembly or registry dependency."),
     },
 )
 
@@ -108,6 +122,8 @@ def _source_image_contracts_impl(target, ctx):
                 "name": image.name,
                 "architecture": image.architecture,
                 "archive": image.archive.path,
+                "origin": image.origin,
+                "layout": image.layout.path if image.layout != None else "",
             } for image in images.to_list()],
             # These commands build and load their own images, so the absence
             # of archive inputs does not mean there is nothing to qualify.

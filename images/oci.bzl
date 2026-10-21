@@ -34,6 +34,14 @@ def image_outputs(name, image, content_tag = False, exec_properties = {}):
         tags = ["manual"],
     )
 
+    # Qualification joins this exact configured layout to its stock archive.
+    native.filegroup(
+        name = name + "_layout",
+        srcs = [image],
+        tags = ["manual"],
+        visibility = ["//test/docker:__pkg__"],
+    )
+
     native.filegroup(
         name = name,
         srcs = [":load_image"],

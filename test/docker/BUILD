@@ -208,6 +208,7 @@ amd64_image_archive(
     testonly = True,
     srcs = ["//images/gpu/ollama/client:image_archive"],
     image = "gpu/ollama/client",
+    layout = "//images/gpu/ollama/client:image_archive_layout",
     tags = ["manual"],
 )
 
@@ -216,6 +217,7 @@ amd64_image_archive(
     testonly = True,
     srcs = ["//images/benchmarks/profile-helper:image_archive"],
     image = "benchmarks/profile-helper",
+    layout = "//images/benchmarks/profile-helper:image_archive_layout",
     tags = ["manual"],
 )
 
@@ -224,6 +226,7 @@ amd64_image_archive(
     testonly = True,
     srcs = ["//images/gpu/ollama/bench:image_archive"],
     image = "gpu/ollama/bench",
+    layout = "//images/gpu/ollama/bench:image_archive_layout",
     tags = ["manual"],
 )
 
@@ -232,6 +235,7 @@ amd64_image_archive(
     testonly = True,
     srcs = ["//images/gpu/triton:image_archive"],
     image = "gpu/triton",
+    layout = "//images/gpu/triton:image_archive_layout",
     tags = ["manual"],
 )
 
@@ -240,6 +244,7 @@ amd64_image_archive(
     testonly = True,
     srcs = ["//images/gpu/ollama/bench/small:image_archive"],
     image = "gpu/ollama/bench/small",
+    layout = "//images/gpu/ollama/bench/small:image_archive_layout",
     tags = ["manual"],
 )
 

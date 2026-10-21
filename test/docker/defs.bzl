@@ -37,21 +37,26 @@ _amd64_image_archive, _amd64_image_archive_transition = with_cfg(native.filegrou
     [Label("//tools/bazeldefs:linux_amd64")],
 ).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
 
-def amd64_image_archive(name, image, **kwargs):
+def amd64_image_archive(name, image, layout, **kwargs):
     """Preserves the image identity across its AMD64 archive transition.
 
     Args:
       name: Public archive target.
       image: Image name relative to gvisor.dev/images.
+      layout: Native OCI layout assembled into the archive.
       **kwargs: Archive filegroup inputs and common target attributes.
     """
+    common = {key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
     _amd64_image_archive(name = name + "_configured", **kwargs)
+    _amd64_image_archive(name = name + "_layout_configured", srcs = [layout], **common)
     declared_image_archive(
         name = name,
         archive = ":" + name + "_configured",
         architecture = "amd64",
         image = image,
-        **{key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
+        origin = "native-oci",
+        layout = ":" + name + "_layout_configured",
+        **common
     )
 
 def _image_name(image):
@@ -95,6 +100,8 @@ def docker_image_archive(name, image, architecture, source = None):
         archive = ":" + name + "_archive",
         architecture = architecture,
         image = image,
+        origin = "registry",
+        layout = "@" + repository,
         tags = ["manual"],
     )
 

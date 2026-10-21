@@ -903,6 +903,24 @@ def input_chain(records: dict[int, dict[str, object]], start: int, target: int) 
     return None
 
 
+def declared_source_images(value: object) -> list[dict[str, object]]:
+    """Validate image origins without changing the original schema-1 source form."""
+    images = [mapping(image) for image in sequence(value)]
+    for image in images:
+        fields = {"name", "architecture", "archive"}
+        if image.keys() not in (fields, fields | {"origin", "layout"}):
+            raise ValueError(f"Invalid configured image fields: {image}")
+        if (not string(image["name"]) or not string(image["archive"])
+                or image["architecture"] not in ("amd64", "arm64")):
+            raise ValueError(f"Invalid configured image obligation: {image}")
+        origin, layout = image.get("origin", "source"), string(image.get("layout", ""))
+        if origin not in ("source", "native-oci", "registry") or (origin == "source") != (not layout):
+            raise ValueError(f"Invalid configured image origin/layout: {image}")
+    if len(images) != len({(image["name"], image["architecture"], image["archive"]) for image in images}):
+        raise ValueError("Duplicate configured image obligations")
+    return images
+
+
 def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                        expectations: Path) -> dict[str, object]:
     """Audit one invocation without replacing its workload verdict.
@@ -948,13 +966,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                     raise ValueError(f"Duplicate configured image owner: {owner}")
                 if sequence(row.get("source_commands")):
                     raise ValueError(f"Dynamic source-image commands require their own load audit: {owner}")
-                declared = [mapping(image) for image in sequence(row.get("images"))]
-                for image in declared:
-                    if (image.keys() != {"name", "architecture", "archive"}
-                            or not string(image["name"]) or not string(image["archive"])
-                            or image["architecture"] not in ("amd64", "arm64")):
-                        raise ValueError(f"Invalid configured image obligation: {image}")
-                configured_images[owner] = declared
+                configured_images[owner] = declared_source_images(row.get("images"))
             if configured_images.keys() != set(expected):
                 raise ValueError("Image declarations differ from configured owners")
             for label, names in wanted.items():
@@ -1004,19 +1016,8 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 "exit_code": number(spawn.get("exitCode", 0)), "cache_hit": spawn.get("cacheHit", False),
                 "remote_cache_hit": spawn.get("remoteCacheHit", False)}
 
-        sources = [spawn for spawn in spawns if spawn.get("mnemonic") == "SourceImageOCI"]
-        for source in sources:
-            successful(source)
-            if source.get("cacheHit", False) or source.get("remoteCacheHit", False):
-                raise ValueError(f"Source image was cached: {source.get('targetLabel')}")
-            match sequence(source.get("args")):
-                case [_, "test/docker/source_images.sh", "layout", str(architecture), _, _, _, _, str(image), *_]:
-                    pass
-                case _:
-                    raise ValueError("Unsupported source-image command")
-            source_outputs = outputs(source)
-            if not source_outputs:
-                raise ValueError(f"Missing source outputs: {image}")
+        def archive_outputs(image: str, architecture: str, source_outputs: list[int],
+                            producer: dict[str, object], origin: str, layout: str = "") -> None:
             manifests = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCITarballManifest"
                          and chains(spawn, source_outputs) is not None]
             if not manifests:
@@ -1048,10 +1049,86 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 if architecture not in ("amd64", "arm64"):
                     raise ValueError(f"Unsupported source-image architecture: {architecture}")
                 images.append({"image": image, "architecture": architecture,
-                               "producer": identity(source, executed=True), "archive_action": identity(archive),
-                               "archive_id": archive_id, "archive": archive_file,
+                               "origin": origin, "producer": producer, "archive_action": identity(archive),
+                               "layout": layout, "archive_id": archive_id, "archive": archive_file,
                                "manifest_inputs": chains(conversion, source_outputs),
                                "archive_inputs": chains(archive, source_outputs + conversion_outputs)})
+
+        for source in (spawn for spawn in spawns if spawn.get("mnemonic") == "SourceImageOCI"):
+            successful(source)
+            if source.get("cacheHit", False) or source.get("remoteCacheHit", False):
+                raise ValueError(f"Source image was cached: {source.get('targetLabel')}")
+            match sequence(source.get("args")):
+                case [_, "test/docker/source_images.sh", "layout", str(architecture), _, _, _, _, str(image), *_]:
+                    pass
+                case _:
+                    raise ValueError("Unsupported source-image command")
+            source_outputs = outputs(source)
+            if not source_outputs:
+                raise ValueError(f"Missing source outputs: {image}")
+            archive_outputs(image, architecture, source_outputs, identity(source, executed=True), "source")
+
+        native_layouts: dict[tuple[str, str, str], str] = {}
+        for declarations in configured_images.values():
+            for declared in declarations:
+                origin = declared.get("origin", "source")
+                if origin == "registry":
+                    raise ValueError(f"Registry dependency requires its own pinned identity audit: {declared['name']}")
+                if origin != "native-oci":
+                    continue
+                key = (string(declared["name"]), string(declared["architecture"]), string(declared["archive"]))
+                layout = string(declared["layout"])
+                if key in native_layouts and native_layouts[key] != layout:
+                    raise ValueError(f"Conflicting native OCI layouts for {key}")
+                native_layouts[key] = layout
+        native_records: dict[tuple[str, str], list[tuple[int, dict[str, object]]]] = {}
+        if native_layouts:
+            for identifier, record in records.items():
+                for kind in ("directory", "file"):
+                    if kind in record:
+                        native_records.setdefault((kind, string(mapping(record[kind])["path"])), []).append((identifier, record))
+        # The same configured layout can feed several stock conversions or owners.
+        for image, architecture, layout in sorted({(name, architecture, layout)
+                for (name, architecture, _), layout in native_layouts.items()}):
+            match native_records.get(("directory", layout), []):
+                case [(layout_id, layout_record)]:
+                    pass
+                case _:
+                    raise ValueError(f"Missing or ambiguous native OCI layout: {layout}")
+            match [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage" and layout_id in outputs(spawn)]:
+                case [source]:
+                    successful(source)
+                case _:
+                    raise ValueError(f"Missing unique native OCI assembly: {layout}")
+            native_inputs = []
+            for argument in sequence(source.get("args")):
+                argument = string(argument)
+                if argument.startswith("--from="):
+                    paths = [("base", argument.removeprefix("--from="))]
+                elif argument.startswith("--layer="):
+                    match argument.removeprefix("--layer=").split("=", 1):
+                        case [layer, descriptor] if layer and descriptor:
+                            paths = [("layer", layer), ("descriptor", descriptor)]
+                        case _:
+                            raise ValueError(f"Invalid native OCI layer argument: {argument}")
+                else:
+                    continue
+                for kind, path in paths:
+                    match native_records.get(("directory" if kind == "base" else "file", path), []):
+                        case [(identifier, record)]:
+                            pass
+                        case _:
+                            raise ValueError(f"Missing unique native OCI {kind} input: {path}")
+                    if (chain := input_chain(records, number(source["inputSetId"]), identifier)) is None:
+                        raise ValueError(f"Native OCI {kind} is not an assembly input: {path}")
+                    native_inputs.append({"kind": kind, "input": record, "input_chain": chain})
+            if not native_inputs:
+                raise ValueError(f"Missing native OCI assembly inputs: {layout}")
+            cached = bool(source.get("cacheHit", False) or source.get("remoteCacheHit", False))
+            if cached and not source.get("digest"):
+                raise ValueError(f"Missing cached native OCI action identity: {layout}")
+            producer = identity(source, executed=not cached) | {"inputs": native_inputs, "output": layout_record}
+            archive_outputs(image, architecture, [layout_id], producer, "native-oci", layout)
         if {row["image"] for row in images} != {image for rows in wanted.values() for image in rows}:
             raise ValueError("Source producers differ from declared image obligations")
         if configured_images:
@@ -2040,13 +2117,7 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
         contract = read_json(path)
         if contract.get("schema_version") != 1 or contract.get("owner") != owner.label or owner in configured:
             raise ValueError(f"Wrong or duplicate configured source-image contract: {owner}")
-        images = [mapping(image) for image in sequence(contract.get("images"))]
-        for image in images:
-            if (image.keys() != {"name", "architecture", "archive"} or not string(image["name"])
-                    or image["architecture"] not in ("amd64", "arm64") or not string(image["archive"])):
-                raise ValueError(f"Invalid declared source image: {image}")
-        if len(images) != len({(image["name"], image["architecture"], image["archive"]) for image in images}):
-            raise ValueError(f"Duplicate declared source images for {owner}")
+        images = declared_source_images(contract.get("images"))
         commands = [mapping(command) for command in sequence(contract.get("source_commands"))]
         for command in commands:
             if (command.keys() != {"owner", "architecture", "image_class", "images"}

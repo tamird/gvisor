@@ -74,6 +74,8 @@ def containerd_test(name, **kwargs):
                 archive = ":" + target + "_archive",
                 architecture = arch,
                 image = "registry.k8s.io/pause:" + version,
+                origin = "registry",
+                layout = "@containerd_pause_" + version.replace(".", "_") + "_" + arch,
                 tags = ["manual"],
             )
 
