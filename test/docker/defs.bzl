@@ -11,6 +11,7 @@ load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
+load(":source_image_contracts.bzl", "ImageSourceCommandInfo", "declared_image_archive")
 
 # Conversion only reads OCI content and writes a compressed Docker archive.
 # Keep it on the ordinary executor used by the completed large-image exports.
@@ -28,13 +29,30 @@ SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
 
 # Match the source-context transition: an AMD64 image remains AMD64 even when
 # its consumer is built for another CPU or with the Go race detector enabled.
-amd64_image_archive, _amd64_image_archive_transition = with_cfg(native.filegroup).set(
+_amd64_image_archive, _amd64_image_archive_transition = with_cfg(native.filegroup).set(
     "cpu",
     "k8",
 ).set(
     "platforms",
     [Label("//tools/bazeldefs:linux_amd64")],
 ).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
+
+def amd64_image_archive(name, image, **kwargs):
+    """Preserves the image identity across its AMD64 archive transition.
+
+    Args:
+      name: Public archive target.
+      image: Image name relative to gvisor.dev/images.
+      **kwargs: Archive filegroup inputs and common target attributes.
+    """
+    _amd64_image_archive(name = name + "_configured", **kwargs)
+    declared_image_archive(
+        name = name,
+        archive = ":" + name + "_configured",
+        architecture = "amd64",
+        image = image,
+        **{key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
+    )
 
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")
@@ -49,10 +67,12 @@ def docker_image_archive(name, image, architecture, source = None):
       source: Optional declared Docker-save archive replacing the registry input.
     """
     if source != None:
-        native.filegroup(
+        declared_image_archive(
             name = name + "_tar",
             testonly = True,
-            srcs = [source],
+            archive = source,
+            architecture = architecture,
+            image = image,
             tags = ["manual"],
         )
         return
@@ -64,10 +84,17 @@ def docker_image_archive(name, image, architecture, source = None):
         tags = ["manual"],
     )
     output_files(
-        name = name + "_tar",
+        name = name + "_archive",
         output_group = "tarball",
         paths = [paths.join(native.package_name(), name, "tarball.tar")],
         target = ":" + name,
+        tags = ["manual"],
+    )
+    declared_image_archive(
+        name = name + "_tar",
+        archive = ":" + name + "_archive",
+        architecture = architecture,
+        image = image,
         tags = ["manual"],
     )
 
@@ -409,7 +436,14 @@ def _image_source_command_impl(ctx):
     make_runfiles = make.target[DefaultInfo].default_runfiles
     if make_runfiles:
         runfiles = runfiles.merge(make_runfiles)
-    return DefaultInfo(executable = command, runfiles = runfiles)
+    return [
+        DefaultInfo(executable = command, runfiles = runfiles),
+        ImageSourceCommandInfo(
+            architecture = ctx.attr.architecture,
+            image_class = ctx.attr.image_class,
+            images = ctx.attr.images,
+        ),
+    ]
 
 image_source_command = rule(
     implementation = _image_source_command_impl,
@@ -539,9 +573,16 @@ def source_image_archive(name, architecture, image, archive_exec_properties = {}
         **common
     )
     output_files(
-        name = name,
+        name = name + "_archive",
         target = ":" + name + "_load",
         output_group = "tarball",
         paths = [paths.join(native.package_name(), name + "_load", "tarball.tar")],
+        **common
+    )
+    declared_image_archive(
+        name = name,
+        archive = ":" + name + "_archive",
+        architecture = architecture,
+        image = image,
         **common
     )

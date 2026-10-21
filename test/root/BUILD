@@ -14,6 +14,7 @@ bzl_library(
     deps = [
         "//test/docker:config_bzl",
         "//test/docker:defs_bzl",
+        "//test/docker:source_image_contracts_bzl",
         "//tools:arch_bzl",
         "@rules_oci//oci:defs",
     ],

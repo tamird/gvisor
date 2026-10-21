@@ -3,6 +3,7 @@
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//test/docker:config.bzl", "CONTAINERD_IMAGES")
 load("//test/docker:defs.bzl", "docker_test")
+load("//test/docker:source_image_contracts.bzl", "declared_image_archive")
 load("//tools:arch.bzl", "select_arch")
 
 # Match containerd-tests in Make and each release's default sandbox image.
@@ -63,9 +64,16 @@ def containerd_test(name, **kwargs):
                 tags = ["manual"],
             )
             native.filegroup(
-                name = target + "_tar",
+                name = target + "_archive",
                 srcs = [":" + target],
                 output_group = "tarball",
+                tags = ["manual"],
+            )
+            declared_image_archive(
+                name = target + "_tar",
+                archive = ":" + target + "_archive",
+                architecture = arch,
+                image = "registry.k8s.io/pause:" + version,
                 tags = ["manual"],
             )
 

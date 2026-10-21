@@ -207,6 +207,7 @@ amd64_image_archive(
     name = "gpu_ollama_client_source_amd64",
     testonly = True,
     srcs = ["//images/gpu/ollama/client:image_archive"],
+    image = "gpu/ollama/client",
     tags = ["manual"],
 )
 
@@ -214,6 +215,7 @@ amd64_image_archive(
     name = "profile_helper_source_amd64",
     testonly = True,
     srcs = ["//images/benchmarks/profile-helper:image_archive"],
+    image = "benchmarks/profile-helper",
     tags = ["manual"],
 )
 
@@ -221,6 +223,7 @@ amd64_image_archive(
     name = "gpu_ollama_bench_source_amd64",
     testonly = True,
     srcs = ["//images/gpu/ollama/bench:image_archive"],
+    image = "gpu/ollama/bench",
     tags = ["manual"],
 )
 
@@ -228,6 +231,7 @@ amd64_image_archive(
     name = "gpu_triton_source_amd64",
     testonly = True,
     srcs = ["//images/gpu/triton:image_archive"],
+    image = "gpu/triton",
     tags = ["manual"],
 )
 
@@ -235,6 +239,7 @@ amd64_image_archive(
     name = "gpu_ollama_small_source_amd64",
     testonly = True,
     srcs = ["//images/gpu/ollama/bench/small:image_archive"],
+    image = "gpu/ollama/bench/small",
     tags = ["manual"],
 )
 
@@ -279,10 +284,16 @@ bzl_library(
 )
 
 bzl_library(
+    name = "source_image_contracts_bzl",
+    srcs = ["source_image_contracts.bzl"],
+)
+
+bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     deps = [
         ":config_bzl",
+        ":source_image_contracts_bzl",
         "//tools:arch_bzl",
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
