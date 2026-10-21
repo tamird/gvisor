@@ -1,35 +1,60 @@
-name: CI
+name: State lifecycle comparison
 
 "on":
   push:
-    branches:
-      - "*"
+    branches: [qualification/state-lifecycle-startup]
+  workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  lifecycle:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Prepare the pinned coordinator
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin \
+            1014ae8b6b1425902cc72519a7f7795f97e2dc3f \
+            b25ab8afd58f71a930232ae0f5c74c96762edd40 \
+            5203b735d8991e2e4f00568c8b6c850761dd8ef6 \
+            aa42f89132b16eda9c39e0acea0dcbb0e463deee
+          mkdir "$RUNNER_TEMP/state-lifecycle"
+          cp .github/state_lifecycle.py "$RUNNER_TEMP/state-lifecycle/driver.py"
+          for file in qualification_report.py unit_matrix.py; do
+            git show "aa42f89132b16eda9c39e0acea0dcbb0e463deee:test/rbe/$file" \
+              > "$RUNNER_TEMP/state-lifecycle/$file"
+          done
+          cd "$RUNNER_TEMP/state-lifecycle"
+          sha256sum --check --strict <<'HASHES'
+          66057fa29bab9ec896041526b4d90ec80196edc11e289f410f57e246540bdc9d  qualification_report.py
+          209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          HASHES
+          command -v bazelisk
+          sudo -n true
+      - name: Build both sources remotely and measure native lifecycle
+        timeout-minutes: 65
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          : "${BUILDBUDDY_API_KEY:?Missing repository Remote Bazel credential}"
+          export LIFECYCLE_BAZELISK="$(command -v bazelisk)"
+          sudo -n -H --preserve-env=BUILDBUDDY_API_KEY,GITHUB_SHA,GITHUB_WORKSPACE,RUNNER_TEMP,LIFECYCLE_BAZELISK \
+            python3 "$RUNNER_TEMP/state-lifecycle/driver.py"
+      - name: Retain source-bound results and original evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-lifecycle-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/state-lifecycle/results/
+          if-no-files-found: error
