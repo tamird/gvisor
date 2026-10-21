@@ -212,6 +212,209 @@ class QualificationReportTest(unittest.TestCase):
                 finally:
                     shutil.rmtree(invocation)
 
+    def registry_image_fixture(self) -> Path:
+        invocation = self.native_image_fixture()
+        contract = report.read_json(invocation / "expectations.json")
+        owner, = contract["configured_owners"]
+        image, = owner["images"]
+        records, spawns = report.compact_records(invocation / "execution.json")
+        source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage"]
+        layout_id, = [item["outputId"] for item in source["outputs"]]
+        repository = "rules_oci++oci+fixture_linux_amd64"
+        image.update(origin="registry", layout="bazel-out/k8-fastbuild/bin/external/" + repository + "/layout",
+                     pin="bazel-out/k8-fastbuild/bin/owner.source-image-pin-0", usage="docker-load", config="",
+                     index="bazel-out/k8-fastbuild/bin/owner.source-image-index-0.json")
+        pin = "e" * 64
+        owner["pins"] = {image["pin"]: {"digest": "sha256:" + pin}}
+        body = json.dumps({"schemaVersion": 2, "manifests": [{"digest": "sha256:" + pin, "size": 100,
+                           "mediaType": "application/vnd.oci.image.manifest.v1+json"}]})
+        owner["indexes"] = {image["index"]: {"body": body, "evidence": {
+            "sha256": hashlib.sha256(body.encode()).hexdigest(), "bytes": len(body.encode())}}}
+        files = [{"path": path, "digest": {"hash": digest, "sizeBytes": "100"}} for path, digest in (
+            ("blobs/sha256/" + pin, pin), ("index.json", "f" * 64), ("oci-layout", "a" * 64))]
+        files[1]["digest"] = {"hash": hashlib.sha256(body.encode()).hexdigest(), "sizeBytes": str(len(body.encode()))}
+        records[layout_id]["directory"] = {"path": image["layout"], "files": files}
+        first = max(records) + 1
+        for identifier, file in enumerate(files, first):
+            records[identifier] = {"id": identifier, "file": {**file, "path": "external/" + repository + "/" + file["path"]}}
+        inputs_id = first + len(files)
+        records[inputs_id] = {"id": inputs_id, "inputSet": {"inputIds": list(range(first, inputs_id))}}
+        source.update(mnemonic="CopyToDirectory", inputSetId=inputs_id,
+                      args=["copy_to_directory", "configured-copy.json", repository], cacheHit=True, runner="remote cache hit")
+        report.write_json(invocation / "expectations.json", contract)
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+        return invocation
+
+    def test_registry_archive_binds_existing_pin_and_copy_inputs(self) -> None:
+        for damage, error in ((None, None), ("shared", None), ("pin", "Registry index does not select the configured manifest pin"),
+                              ("unselected", "Registry index does not select the configured manifest pin"),
+                              ("index-bytes", "Registry index differs from the configured layout"),
+                              ("member", "Registry layout member differs"), ("ancestry", "not a layout copy input"),
+                              ("copy", "Missing unique registry layout copy"), ("archive", "Source archive identities differ")):
+            with self.subTest(damage=damage):
+                invocation = self.registry_image_fixture()
+                try:
+                    contract = report.read_json(invocation / "expectations.json")
+                    owner, = contract["configured_owners"]
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "CopyToDirectory"]
+                    if damage == "shared":
+                        canonical = report.read_json(invocation / "verdict.json")
+                        second_owner = {**canonical["expected"][0], "label": canonical["expected"][0]["label"] + "_second"}
+                        canonical["expected"].append(second_owner)
+                        second_attempt = json.loads(json.dumps(canonical["executed"][0]))
+                        second_attempt["owner"] = second_owner
+                        canonical["executed"].append(second_attempt)
+                        report.write_json(invocation / "verdict.json", canonical)
+                        contract["owners"][second_owner["label"]] = contract["owners"][owner["label"]]
+                        contract["benchmarks"][second_owner["label"]] = contract["benchmarks"][owner["label"]]
+                        second = json.loads(json.dumps(owner))
+                        second["label"] = second_owner["label"]
+                        image = second["images"][0]
+                        old_index = image["index"]
+                        image["index"] = old_index.replace("owner.", "second-owner.")
+                        second["indexes"] = {image["index"]: second["indexes"][old_index]}
+                        contract["configured_owners"].append(second)
+                        test, = [spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"]
+                        clone = json.loads(json.dumps(test))
+                        clone["targetLabel"] = second_owner["label"]
+                        for output in clone["outputs"]:
+                            identifier = output["outputId"]
+                            record = json.loads(json.dumps(records[identifier]))
+                            new_id = max(records) + 1
+                            record["id"] = new_id
+                            record["file"]["path"] = record["file"]["path"].replace("_owned/", "_owned_second/")
+                            records[new_id] = record
+                            output["outputId"] = new_id
+                        spawns.append(clone)
+                        manifest = report.read_json(invocation / "manifest.json")
+                        for original in list(manifest["reports"]):
+                            row = json.loads(json.dumps(original))
+                            row["identity"]["label"] = second_owner["label"]
+                            row["path"] = row["path"].replace("_owned/", "_owned_second/")
+                            destination = invocation / row["path"]
+                            destination.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copyfile(invocation / original["path"], destination)
+                            manifest["reports"].append(row)
+                        report.write_json(invocation / "manifest.json", manifest)
+                    elif damage == "pin":
+                        next(iter(owner["pins"].values()))["digest"] = "sha256:" + "0" * 64
+                    elif damage in ("unselected", "index-bytes"):
+                        index = next(iter(owner["indexes"].values()))
+                        value = json.loads(index["body"])
+                        if damage == "unselected":
+                            value["manifests"][0]["digest"] = "sha256:" + "0" * 64
+                        else:
+                            value["annotations"] = {"changed": "index content"}
+                        index["body"] = json.dumps(value)
+                        index["evidence"] = {"sha256": hashlib.sha256(index["body"].encode()).hexdigest(),
+                                             "bytes": len(index["body"].encode())}
+                    elif damage == "member":
+                        first = records[source["inputSetId"]]["inputSet"]["inputIds"][0]
+                        records[first]["file"]["digest"] = {"hash": "1" * 64, "sizeBytes": "100"}
+                    elif damage == "ancestry":
+                        records[source["inputSetId"]]["inputSet"]["inputIds"].pop()
+                    elif damage == "copy":
+                        spawns.append(source.copy())
+                    elif damage == "archive":
+                        owner["images"][0]["archive"] += ".unrelated"
+                    report.write_json(invocation / "expectations.json", contract)
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual(value["audit_status"], "INCOMPLETE" if error else "PASS", value)
+                    if error:
+                        self.assertIn(error, "\n".join(value["errors"]))
+                    else:
+                        image, = value["images"]
+                        self.assertEqual((image["origin"], image["producer"]["cache_hit"]), ("registry", True))
+                        self.assertEqual(image["producer"]["pin"], "sha256:" + "e" * 64)
+                        self.assertEqual(len(image["producer"]["inputs"]), 3)
+                        self.assertEqual(len(value["consumers"]), 2 if damage == "shared" else 1)
+                        self.assertEqual(len(image["producer"]["indexes"]), 2 if damage == "shared" else 1)
+                finally:
+                    shutil.rmtree(invocation)
+
+    def cri_image_fixture(self) -> Path:
+        invocation = self.source_image_fixture()
+        image, = self.source_image_audit(invocation)["images"]
+        canonical = report.read_json(invocation / "verdict.json")
+        owner, = canonical["expected"]
+        config = "bazel-out/k8-fastbuild/bin/test/root/image_config.json"
+        short = config.split("/bin/", 1)[1]
+        contract = report.read_json(invocation / "expectations.json")
+        contract["configured_owners"] = [{**owner, "source_commands": [], "images": [{
+            "name": image["image"], "architecture": image["architecture"], "archive": image["archive"]["path"],
+            "origin": "source", "layout": "", "pin": "", "index": "", "usage": "cri-import", "config": config}]}]
+        report.write_json(invocation / "expectations.json", contract)
+        body = json.dumps({"containerd_version": "1.7.31", "sandbox_image": image["image"],
+                           "images": {image["image"]: image["archive"]["path"].split("/bin/", 1)[1]}})
+        records, spawns = report.compact_records(invocation / "execution.json")
+        test, = [spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"]
+        config_id, inputs_id = range(max(records) + 1, max(records) + 3)
+        records[config_id] = {"id": config_id, "file": {"path": config, "digest": {
+            "hash": hashlib.sha256(body.encode()).hexdigest(), "sizeBytes": str(len(body.encode()))}}}
+        records[inputs_id] = {"id": inputs_id, "inputSet": {"inputIds": [config_id], "transitiveSetIds": [test["inputSetId"]]}}
+        test["inputSetId"] = inputs_id
+        test["args"] += ["--harness_image_config=" + short, "--containerd_version=1.7.31"]
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+        manifest = report.read_json(invocation / "manifest.json")
+        log, = [row for row in manifest["reports"] if row["name"] == "test.log"]
+        path = invocation / log["path"]
+        path.write_text(path.read_text() + "\nStaged declared CRI images: " + json.dumps({"path": short, "config": body}) +
+                        "\nImported declared CRI image " + image["image"] + " from /cri-images/" +
+                        image["image"].replace("/", "_") + ".tar\n")
+        log.update(report.file_record(path))
+        report.write_json(invocation / "manifest.json", manifest)
+        return invocation
+
+    def test_cri_imports_require_declared_roles_config_and_success_observations(self) -> None:
+        for damage, error in ((None, None), ("staged", None), ("missing", "Checked CRI imports differ"),
+                              ("staged-only", "Checked CRI imports differ"), ("extra", "Unexpected checked CRI import"),
+                              ("config", "Staged CRI config bytes differ"), ("argument", "does not select"),
+                              ("archive", "Loaded source archives differ")):
+            with self.subTest(damage=damage):
+                invocation = self.cri_image_fixture()
+                try:
+                    contract = report.read_json(invocation / "expectations.json")
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    test, = [spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"]
+                    manifest = report.read_json(invocation / "manifest.json")
+                    log, = [row for row in manifest["reports"] if row["name"] == "test.log"]
+                    path = invocation / log["path"]
+                    if damage in ("missing", "staged"):
+                        path.write_text(path.read_text().replace("Imported declared CRI image", "Failed CRI import"))
+                        if damage == "staged":
+                            contract["configured_owners"][0]["images"][0]["usage"] = "staged-only"
+                    elif damage == "staged-only":
+                        contract["configured_owners"][0]["images"][0]["usage"] = "staged-only"
+                    elif damage == "extra":
+                        path.write_text(path.read_text() + "Imported declared CRI image unknown from /cri-images/unknown.tar\n")
+                    elif damage == "config":
+                        config_id, = records[test["inputSetId"]]["inputSet"]["inputIds"]
+                        records[config_id]["file"]["digest"]["hash"] = "0" * 64
+                    elif damage == "argument":
+                        test["args"] = [argument for argument in test["args"] if not argument.startswith("--harness_image_config=")]
+                    elif damage == "archive":
+                        records[45644]["inputSet"]["inputIds"] = []
+                    log.update(report.file_record(path))
+                    report.write_json(invocation / "manifest.json", manifest)
+                    report.write_json(invocation / "expectations.json", contract)
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual(value["audit_status"], "INCOMPLETE" if error else "PASS", value)
+                    if error:
+                        self.assertIn(error, "\n".join(value["errors"]))
+                    else:
+                        consumer, = value["consumers"]
+                        self.assertEqual(consumer["cri"]["imports"], {} if damage == "staged" else {"benchmarks/iperf": 1})
+                        self.assertEqual(consumer["images"][0]["usage"], "staged-only" if damage == "staged" else "cri-import")
+                finally:
+                    shutil.rmtree(invocation)
+
     def test_source_images_bind_local_runfiles_archive_and_measurements(self) -> None:
         invocation = self.source_image_fixture()
         value = self.source_image_audit(invocation)
@@ -2572,7 +2775,9 @@ signal.pause()
         owner, = original["expected"]
         second_path = invocation / "second-contract.json"
         image = {"name": "basic/alpine", "architecture": "arm64", "archive": "bazel-out/arm64/bin/image.tar"}
-        command = {"owner": "//images:cpu", "architecture": "aarch64", "image_class": "cpu", "images": []}
+        command = {"owner": "//images:cpu", "architecture": "aarch64", "image_class": "cpu", "images": [],
+                   "contexts": "bazel-out/arm64/bin/contexts.tar", "context_images": [
+                       {"name": "context-only", "architecture": "arm64", "archive": "bazel-out/arm64/bin/context-image.tar"}]}
         report.write_json(second_path, {"schema_version": 1, "owner": owner["label"],
                                         "images": [image], "source_commands": [command]})
         second = {**first, "identity": {"label": owner["label"], "configuration": {"id": "other-config"}},
@@ -2586,18 +2791,68 @@ signal.pause()
         self.assertEqual(by_config[owner["configuration"]]["images"], [])
         self.assertEqual(by_config["other-config"]["images"], [image])
         self.assertEqual(by_config["other-config"]["source_commands"], [command])
+        self.assertEqual(actual["owners"][owner["label"]], ["basic/alpine"])
         for outputs in ([first], [first, first], [first, {**second, "identity": first["identity"]}]):
             report.write_json(invocation / "verdict.json", {**value, "build_outputs": outputs})
             with self.subTest(outputs=outputs), self.assertRaises(ValueError):
                 report.source_image_expectations(invocation / "verdict.json", manifest)
 
-    def matrix_fixture(self, name: str = "pass", row_count: int = 1) -> tuple[Path, Path, dict[str, object]]:
+    def test_registry_pins_require_exact_configured_retained_output(self) -> None:
+        invocation, analysis, _ = self.source_contract_fixture()
+        report.capture(invocation / "events.jsonl", invocation / "captured.jsonl", invocation,
+                       invocation / "reports", expected_analysis=(analysis,))
+        original = self.verdict(invocation, analysis=analysis)
+        output, = [row for row in original["build_outputs"] if row["group"] == "source_image_contracts"]
+        owner, = original["expected"]
+        contract_path = invocation / output["path"]
+        pin_path = invocation / "retained-pin"
+        pin_name = "bazel-out/k8-fastbuild/bin/owner.source-image-pin-0"
+        index_name = "bazel-out/k8-fastbuild/bin/owner.source-image-index-0.json"
+        index_path = invocation / "retained-index.json"
+        report.write_json(index_path, {"schemaVersion": 2, "manifests": []})
+        report.write_json(contract_path, {"schema_version": 1, "owner": owner["label"], "source_commands": [],
+            "images": [{"name": "pinned", "architecture": "amd64", "archive": "bazel-out/k8/bin/pin.tar",
+                        "origin": "registry", "layout": "bazel-out/k8/bin/layout", "usage": "docker-load",
+                        "config": "", "pin": pin_name, "index": index_name}]})
+        output.update(report.file_record(contract_path))
+        pin_path.write_text("sha256:" + "a" * 64 + "\n")
+        pin = {**output, "name": pin_name, "path": pin_path.name, **report.file_record(pin_path)}
+        index = {**output, "name": index_name, "path": index_path.name, **report.file_record(index_path)}
+        for damage, error in ((None, None), ("owner", "Missing configured registry pin output"),
+                              ("missing", "Missing configured registry pin output"),
+                              ("bytes", "differs from retained build output"), ("format", "Invalid registry pin bytes")):
+            with self.subTest(damage=damage):
+                current = dict(pin)
+                pin_path.write_text("sha256:" + "a" * 64 + "\n")
+                if damage == "owner":
+                    current["identity"] = {"label": owner["label"], "configuration": {"id": "another-config"}}
+                elif damage in ("bytes", "format"):
+                    pin_path.write_text("not-a-digest")
+                    if damage == "format":
+                        current.update(report.file_record(pin_path))
+                report.write_json(invocation / "verdict.json", {**original, "build_outputs": [output, index] + ([] if damage == "missing" else [current])})
+                if error:
+                    with self.assertRaisesRegex(ValueError, error):
+                        report.source_image_expectations(invocation / "verdict.json", report.manifest_path(invocation / "captured.jsonl"))
+                else:
+                    value = report.source_image_expectations(invocation / "verdict.json", report.manifest_path(invocation / "captured.jsonl"))
+                    configured, = value["configured_owners"]
+                    self.assertEqual(configured["pins"][pin_name]["digest"], "sha256:" + "a" * 64)
+
+    def matrix_fixture(self, name: str = "pass", row_count: int = 1, *, source_contract: bool = False) -> tuple[Path, Path, dict[str, object]]:
         invocation = self.fixture("pass" if name == "all-skipped" else name)
         if name == "all-skipped":
             (invocation / "test.xml").write_text(
                 '<testsuite><testcase name="unavailable"><skipped>environment</skipped></testcase></testsuite>')
         self.capture(invocation)
         original = self.verdict(invocation)
+        if source_contract:
+            owner, = original["expected"]
+            contract = invocation / "owner.source-images.json"
+            report.write_json(contract, {"schema_version": 1, "owner": owner["label"], "images": [], "source_commands": []})
+            original["build_outputs"] = [{"group": "source_image_contracts", "name": contract.name, "path": contract.name,
+                "identity": {"label": owner["label"], "configuration": {"id": owner["configuration"]}}, **report.file_record(contract)}]
+            report.write_json(invocation / "verdict.json", original)
         plan = {"schema_version": 1, "profile": "full", "source": original["source"], "run_id": "123",
                 "run_attempt": 1, "side_inputs": {"clock_source": "kvm-clock"},
                 "rows": [{"id": f"row-{index}", "lanes": ["test"], "required_kinds": ["test"], "required_audits": []}
@@ -2621,7 +2876,7 @@ signal.pause()
         return plan_path, results_path, original
 
     def test_matrix_cli_composes_rows_and_retains_authenticated_children(self) -> None:
-        plan, results, original = self.matrix_fixture(row_count=2)
+        plan, results, original = self.matrix_fixture(row_count=2, source_contract=True)
         output = self.root / "matrix.tar.gz"
         directory = self.root / "composed"
         command = subprocess.run([sys.executable, report.__file__, "compose", "--plan", str(plan),
@@ -2658,7 +2913,7 @@ signal.pause()
                     shutil.rmtree(self.root / "composed")
 
     def test_matrix_rejects_wrong_identity_coverage_or_transfer(self) -> None:
-        for fault in ("duplicate", "extra", "missing", "plan", "source", "attempt", "digest", "size", "transfer", "row", "side-inputs", "query-only", "partial-lanes", "duplicate-lanes"):
+        for fault in ("duplicate", "extra", "missing", "plan", "source", "attempt", "digest", "size", "transfer", "row", "side-inputs", "query-only", "partial-lanes", "duplicate-lanes", "declaration-missing", "declaration-changed"):
             with self.subTest(fault=fault):
                 plan, results, _ = self.matrix_fixture()
                 try:
@@ -2690,6 +2945,20 @@ signal.pause()
                         elif fault in ("partial-lanes", "duplicate-lanes"):
                             record = json.dumps({"lanes": ["test"], "native_exit": 0}) + "\n"
                             (self.evidence / "lane-results.jsonl").write_text("" if fault == "partial-lanes" else record * 2)
+                        elif fault.startswith("declaration-"):
+                            invocation = self.evidence / "invocation-pass"
+                            declaration = invocation / "owner.source-image-pin-0"
+                            declaration.write_text("sha256:" + "a" * 64 + "\n")
+                            canonical = report.read_json(invocation / "verdict.json")
+                            owner, = canonical["expected"]
+                            canonical["build_outputs"] = [{"group": "source_image_contracts", "name": declaration.name,
+                                "path": declaration.name, "identity": {"label": owner["label"],
+                                    "configuration": {"id": owner["configuration"]}}, **report.file_record(declaration)}]
+                            report.write_json(invocation / "verdict.json", canonical)
+                            if fault == "declaration-missing":
+                                declaration.unlink()
+                            else:
+                                declaration.write_text("changed after audit")
                         else:
                             invocation = self.evidence / "invocation-pass"
                             context = report.read_json(invocation / "context.json")
@@ -2739,7 +3008,7 @@ signal.pause()
         producer = {"invocations": [phase], "matrix_audits": [audit]}
         artifact = self.root / "audit.tar.gz"
         report.archive_evidence(self.evidence, artifact)
-        members = report.bundle_members(artifact, {entry["evidence"]["path"]})
+        members = report.bundle_members(artifact, {entry["evidence"]["path"], entry["inputs"]["expectations"]["path"]})
         self.assertEqual(report.matrix_audits(members, producer, identity, row), [audit])
         for damage in ("missing", "duplicate", "partial", "input", "roles", "status"):
             changed = json.loads(json.dumps(producer))
@@ -2758,6 +3027,17 @@ signal.pause()
                 changed["matrix_audits"][0]["status"] = "INCOMPLETE"
             with self.subTest(damage=damage), self.assertRaises(ValueError):
                 report.matrix_audits(members, changed, identity, row)
+
+        # A received artifact must also retain every canonical contract output,
+        # including pin/index files that generated expectations refer to.
+        contract_path = invocation / "owner.source-image-pin-0"
+        contract_path.write_text("sha256:" + "a" * 64 + "\n")
+        phase["verdict"]["build_outputs"] = [{"group": "source_image_contracts",
+            "identity": {"label": phase["verdict"]["expected"][0]["label"],
+                         "configuration": {"id": phase["verdict"]["expected"][0]["configuration"]}},
+            "path": contract_path.name, "name": contract_path.name, **report.file_record(contract_path)}]
+        with self.assertRaisesRegex(ValueError, "does not cover its configured outputs"):
+            report.matrix_audits(members, producer, identity, row)
 
     def test_matrix_job_failure_preserves_incomplete_coverage(self) -> None:
         plan, results, _ = self.matrix_fixture()

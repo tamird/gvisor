@@ -3,7 +3,7 @@
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//test/docker:config.bzl", "CONTAINERD_IMAGES")
 load("//test/docker:defs.bzl", "docker_test")
-load("//test/docker:source_image_contracts.bzl", "declared_image_archive")
+load("//test/docker:source_image_contracts.bzl", "ImageUsageInfo", "declared_image_archive")
 load("//tools:arch.bzl", "select_arch")
 
 # Match containerd-tests in Make and each release's default sandbox image.
@@ -30,12 +30,20 @@ def _image_config_impl(ctx):
         images[image] = files[0].short_path
         archives.append(files[0])
     output = ctx.actions.declare_file(ctx.label.name + ".json")
+    if sorted(ctx.attr.image_usage.keys()) != sorted(images.keys()) or any([
+        usage not in ["cri-import", "staged-only"]
+        for usage in ctx.attr.image_usage.values()
+    ]):
+        fail("each configured CRI image requires an import or staging-only role")
     ctx.actions.write(output, json.encode({
         "containerd_version": ctx.attr.containerd_version,
         "sandbox_image": ctx.attr.sandbox_image,
         "images": images,
     }))
-    return [DefaultInfo(files = depset([output]), runfiles = ctx.runfiles(files = archives))]
+    return [
+        DefaultInfo(files = depset([output]), runfiles = ctx.runfiles(files = archives)),
+        ImageUsageInfo(images = ctx.attr.image_usage, config = output),
+    ]
 
 _image_config = rule(
     implementation = _image_config_impl,
@@ -43,6 +51,7 @@ _image_config = rule(
         "containerd_version": attr.string(mandatory = True),
         "sandbox_image": attr.string(mandatory = True),
         "images": attr.label_keyed_string_dict(allow_files = True, mandatory = True),
+        "image_usage": attr.string_dict(mandatory = True),
     },
 )
 
@@ -76,6 +85,7 @@ def containerd_test(name, **kwargs):
                 image = "registry.k8s.io/pause:" + version,
                 origin = "registry",
                 layout = "@containerd_pause_" + version.replace(".", "_") + "_" + arch,
+                pin = "@containerd_pause_" + version.replace(".", "_") + "_" + arch + "//:digest",
                 tags = ["manual"],
             )
 
@@ -91,12 +101,15 @@ def containerd_test(name, **kwargs):
             }
             images[":" + name + "_pause_" + pause.replace(".", "_") + "_" + arch + "_tar"] = "registry.k8s.io/pause:" + pause
             image_inputs[arch] = images
+        image_usage = dict(CONTAINERD_IMAGES)
+        image_usage["registry.k8s.io/pause:" + pause] = "cri-import"
         _image_config(
             name = config,
             testonly = True,
             containerd_version = version,
             sandbox_image = "registry.k8s.io/pause:" + pause,
             images = select_arch(**image_inputs),
+            image_usage = image_usage,
             tags = ["manual"],
         )
         variants.append(struct(

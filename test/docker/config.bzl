@@ -239,15 +239,16 @@ COHORT_IMAGES = {
     ],
 }
 
-# These archives are imported directly by CRI inside the containerd harness.
-CONTAINERD_IMAGES = [
-    "basic/alpine",
-    "basic/python",
-    "basic/busybox",
-    "basic/symlink-resolv",
-    "basic/httpd",
-    "basic/ubuntu",
-]
+# The existing harness stages all of these archives. Only the images used by
+# crictl_test are required imports; the others remain explicit staging inputs.
+CONTAINERD_IMAGES = {
+    "basic/alpine": "staged-only",
+    "basic/python": "staged-only",
+    "basic/busybox": "cri-import",
+    "basic/symlink-resolv": "cri-import",
+    "basic/httpd": "cri-import",
+    "basic/ubuntu": "staged-only",
+}
 
 # This existing systemd case only runs on AMD64.
 AMD64_RUNTIME_IMAGES = ["arch-systemd"]

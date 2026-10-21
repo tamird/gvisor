@@ -1006,7 +1006,8 @@ def declared_source_images(value: object) -> list[dict[str, object]]:
     images = [mapping(image) for image in sequence(value)]
     for image in images:
         fields = {"name", "architecture", "archive"}
-        if image.keys() not in (fields, fields | {"origin", "layout"}):
+        if image.keys() not in (fields, fields | {"origin", "layout"},
+                               fields | {"origin", "layout", "usage", "config", "pin", "index"}):
             raise ValueError(f"Invalid configured image fields: {image}")
         if (not string(image["name"]) or not string(image["archive"])
                 or image["architecture"] not in ("amd64", "arm64")):
@@ -1014,6 +1015,12 @@ def declared_source_images(value: object) -> list[dict[str, object]]:
         origin, layout = image.get("origin", "source"), string(image.get("layout", ""))
         if origin not in ("source", "native-oci", "registry") or (origin == "source") != (not layout):
             raise ValueError(f"Invalid configured image origin/layout: {image}")
+        usage, config = image.get("usage", "docker-load"), string(image.get("config", ""))
+        if usage not in ("docker-load", "cri-import", "staged-only") or (usage == "docker-load") != (not config):
+            raise ValueError(f"Invalid configured image usage/config: {image}")
+        if ((origin == "registry") != bool(string(image.get("pin", "")))
+                or (origin == "registry") != bool(string(image.get("index", "")))):
+            raise ValueError(f"Registry dependency requires its configured pin: {image['name']}")
     if len(images) != len({(image["name"], image["architecture"], image["archive"]) for image in images}):
         raise ValueError("Duplicate configured image obligations")
     return images
@@ -1056,6 +1063,8 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
         if len(expected) != len(set(expected)) or set(wanted) != {owner.label for owner in expected}:
             raise ValueError("Source-image owners differ from canonical configured owners")
         configured_images: dict[Owner, list[dict[str, object]]] = {}
+        configured_pins: dict[str, str] = {}
+        configured_indexes: dict[str, dict[str, object]] = {}
         if "configured_owners" in contract:
             for raw in sequence(contract["configured_owners"]):
                 row = mapping(raw)
@@ -1065,6 +1074,29 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 if sequence(row.get("source_commands")):
                     raise ValueError(f"Dynamic source-image commands require their own load audit: {owner}")
                 configured_images[owner] = declared_source_images(row.get("images"))
+                pins = mapping(row.get("pins", {}))
+                if pins.keys() != {image["pin"] for image in configured_images[owner] if image.get("origin") == "registry"}:
+                    raise ValueError(f"Registry pin evidence differs from declared images: {owner}")
+                for path, raw_pin in pins.items():
+                    pin = mapping(raw_pin)
+                    digest = string(pin.get("digest"))
+                    if re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is None:
+                        raise ValueError(f"Invalid configured registry pin: {path}")
+                    if path in configured_pins and configured_pins[path] != digest:
+                        raise ValueError(f"Conflicting configured registry pin: {path}")
+                    configured_pins[path] = digest
+                indexes = mapping(row.get("indexes", {}))
+                if indexes.keys() != {image["index"] for image in configured_images[owner] if image.get("origin") == "registry"}:
+                    raise ValueError(f"Registry index evidence differs from declared images: {owner}")
+                for path, raw_index in indexes.items():
+                    index = mapping(raw_index)
+                    body = string(index.get("body")).encode()
+                    evidence = mapping(index.get("evidence"))
+                    if (hashlib.sha256(body).hexdigest(), len(body)) != (evidence.get("sha256"), evidence.get("bytes")):
+                        raise ValueError(f"Registry index bytes differ from retained evidence: {path}")
+                    if path in configured_indexes and configured_indexes[path] != index:
+                        raise ValueError(f"Conflicting configured registry index: {path}")
+                    configured_indexes[path] = index
             if configured_images.keys() != set(expected):
                 raise ValueError("Image declarations differ from configured owners")
             for label, names in wanted.items():
@@ -1167,11 +1199,15 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             archive_outputs(image, architecture, source_outputs, identity(source, executed=True), "source")
 
         native_layouts: dict[tuple[str, str, str], str] = {}
+        registry_layouts: dict[tuple[str, str, str, str], set[str]] = {}
         for declarations in configured_images.values():
             for declared in declarations:
                 origin = declared.get("origin", "source")
                 if origin == "registry":
-                    raise ValueError(f"Registry dependency requires its own pinned identity audit: {declared['name']}")
+                    key = (string(declared["name"]), string(declared["architecture"]),
+                           string(declared["layout"]), configured_pins[string(declared["pin"])])
+                    registry_layouts.setdefault(key, set()).add(string(declared["index"]))
+                    continue
                 if origin != "native-oci":
                     continue
                 key = (string(declared["name"]), string(declared["architecture"]), string(declared["archive"]))
@@ -1179,16 +1215,15 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 if key in native_layouts and native_layouts[key] != layout:
                     raise ValueError(f"Conflicting native OCI layouts for {key}")
                 native_layouts[key] = layout
-        native_records: dict[tuple[str, str], list[tuple[int, dict[str, object]]]] = {}
-        if native_layouts:
-            for identifier, record in records.items():
-                for kind in ("directory", "file"):
-                    if kind in record:
-                        native_records.setdefault((kind, string(mapping(record[kind])["path"])), []).append((identifier, record))
+        records_by_path: dict[tuple[str, str], list[tuple[int, dict[str, object]]]] = {}
+        for identifier, record in records.items():
+            for kind in ("directory", "file"):
+                if kind in record:
+                    records_by_path.setdefault((kind, string(mapping(record[kind])["path"])), []).append((identifier, record))
         # The same configured layout can feed several stock conversions or owners.
         for image, architecture, layout in sorted({(name, architecture, layout)
                 for (name, architecture, _), layout in native_layouts.items()}):
-            match native_records.get(("directory", layout), []):
+            match records_by_path.get(("directory", layout), []):
                 case [(layout_id, layout_record)]:
                     pass
                 case _:
@@ -1212,7 +1247,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 else:
                     continue
                 for kind, path in paths:
-                    match native_records.get(("directory" if kind == "base" else "file", path), []):
+                    match records_by_path.get(("directory" if kind == "base" else "file", path), []):
                         case [(identifier, record)]:
                             pass
                         case _:
@@ -1227,6 +1262,75 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 raise ValueError(f"Missing cached native OCI action identity: {layout}")
             producer = identity(source, executed=not cached) | {"inputs": native_inputs, "output": layout_record}
             archive_outputs(image, architecture, [layout_id], producer, "native-oci", layout)
+        for (image, architecture, layout, pin), index_paths in sorted(registry_layouts.items()):
+            match records_by_path.get(("directory", layout), []):
+                case [(layout_id, layout_record)]:
+                    pass
+                case _:
+                    raise ValueError(f"Missing or ambiguous registry layout: {layout}")
+            match [spawn for spawn in spawns if spawn.get("mnemonic") == "CopyToDirectory" and layout_id in outputs(spawn)]:
+                case [source]:
+                    successful(source)
+                case _:
+                    raise ValueError(f"Missing unique registry layout copy: {layout}")
+            match sequence(source.get("args")):
+                case [_, _, str(repository)] if repository and "/" not in repository:
+                    pass
+                case _:
+                    raise ValueError(f"Unsupported registry layout copy: {layout}")
+            if not layout.endswith("/bin/external/" + repository + "/layout"):
+                raise ValueError(f"Registry layout differs from its declared repository: {layout}")
+            retained_indexes = [configured_indexes[path] for path in sorted(index_paths)]
+            if len({string(index["body"]) for index in retained_indexes}) != 1:
+                raise ValueError(f"Configured copies of the registry index differ: {layout}")
+            retained_index = retained_indexes[0]
+            index = mapping(json.loads(string(retained_index["body"])))
+            match sequence(index.get("manifests")):
+                case [{"digest": str(selected), "mediaType": str(media_type), "size": int(size)}] if (
+                        index.get("schemaVersion") == 2 and selected == pin and size > 0
+                        and media_type in ("application/vnd.oci.image.manifest.v1+json",
+                                           "application/vnd.docker.distribution.manifest.v2+json")):
+                    pass
+                case _:
+                    raise ValueError(f"Registry index does not select the configured manifest pin: {pin}")
+            copied = []
+            files = [mapping(file) for file in sequence(mapping(layout_record["directory"]).get("files"))]
+            match [mapping(file.get("digest")) for file in files if file.get("path") == "index.json"]:
+                case [{"hash": str(digest), "sizeBytes": raw_size}] if (
+                        digest == mapping(retained_index["evidence"])["sha256"]
+                        and number(raw_size) == mapping(retained_index["evidence"])["bytes"]):
+                    pass
+                case _:
+                    raise ValueError(f"Registry index differs from the configured layout: {layout}")
+            paths = [string(file.get("path")) for file in files]
+            if len(paths) != len(set(paths)) or not {"index.json", "oci-layout"} <= set(paths):
+                raise ValueError(f"Incomplete registry layout: {layout}")
+            pinned = "blobs/sha256/" + pin.removeprefix("sha256:")
+            if not any(file["path"] == pinned and number(mapping(file["digest"])["sizeBytes"]) == size for file in files):
+                # An index pin is not the selected platform's manifest pin.
+                # Do not infer an index-to-child relationship from a pull name.
+                raise ValueError(f"Registry pin is not a retained layout manifest: {pin}")
+            for file in files:
+                path = string(file["path"])
+                digest = mapping(file.get("digest"))
+                if (path.startswith("/") or any(part in ("", ".", "..") for part in path.split("/"))
+                        or re.fullmatch(r"[0-9a-f]{64}", string(digest.get("hash"))) is None
+                        or number(digest.get("sizeBytes", 0)) <= 0
+                        or path.startswith("blobs/sha256/") and path != "blobs/sha256/" + digest["hash"]):
+                    raise ValueError(f"Invalid registry layout member: {path}")
+                match records_by_path.get(("file", "external/" + repository + "/" + path), []):
+                    case [(identifier, record)] if mapping(record["file"]).get("digest") == digest:
+                        pass
+                    case _:
+                        raise ValueError(f"Registry layout member differs from its pull input: {path}")
+                if (chain := input_chain(records, number(source["inputSetId"]), identifier)) is None:
+                    raise ValueError(f"Registry member is not a layout copy input: {path}")
+                copied.append({"input": record, "input_chain": chain})
+            cached = bool(source.get("cacheHit", False) or source.get("remoteCacheHit", False))
+            if cached and not source.get("digest"):
+                raise ValueError(f"Missing cached registry copy identity: {layout}")
+            producer = identity(source, executed=not cached) | {"pin": pin, "indexes": retained_indexes, "inputs": copied, "output": layout_record}
+            archive_outputs(image, architecture, [layout_id], producer, "registry", layout)
         if {row["image"] for row in images} != {image for rows in wanted.values() for image in rows}:
             raise ValueError("Source producers differ from declared image obligations")
         if configured_images:
@@ -1303,6 +1407,55 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             if file_record(reports[attempt, "test.xml"]) != {"sha256": digest.get("hash"), "bytes": number(digest.get("sizeBytes", 0))}:
                 raise ValueError(f"TestRunner XML differs from captured bytes: {attempt}")
             text = log.read_text()
+            declared = configured_images.get(attempt.owner, [])
+            cri = [image for image in declared if image.get("usage", "docker-load") != "docker-load"]
+            cri_evidence = None
+            imported: Counter[str] = Counter()
+            if cri:
+                match sorted({string(image["config"]) for image in cri}):
+                    case [config_path]:
+                        pass
+                    case _:
+                        raise ValueError(f"Expected one declared CRI configuration: {attempt}")
+                match config_path.split("/bin/", 1):
+                    case [_, config_short]:
+                        pass
+                    case _:
+                        raise ValueError(f"Unsupported CRI config path: {config_path}")
+                if sequence(test.get("args")).count("--harness_image_config=" + config_short) != 1:
+                    raise ValueError(f"TestRunner does not select its declared CRI configuration: {attempt}")
+                observations_cri = [mapping(json.loads(body)) for body in re.findall(
+                    r"Staged declared CRI images: ([^\r\n]+)", text)]
+                match observations_cri:
+                    case [{"path": str(path), "config": str(body)}] if path == config_short:
+                        config_bytes = body.encode()
+                    case _:
+                        raise ValueError(f"Missing unique staged CRI configuration: {attempt}")
+                config = mapping(json.loads(config_bytes))
+                configured_paths = {string(image["name"]): string(image["archive"]).split("/bin/", 1)[-1] for image in cri}
+                if (config.keys() != {"containerd_version", "sandbox_image", "images"}
+                        or mapping(config["images"]) != configured_paths
+                        or config.get("sandbox_image") not in configured_paths
+                        or sequence(test.get("args")).count("--containerd_version=" + string(config["containerd_version"])) != 1):
+                    raise ValueError(f"Staged CRI configuration differs from declared archives/version: {attempt}")
+                match records_by_path.get(("file", config_path), []):
+                    case [(config_id, record)]:
+                        pass
+                    case _:
+                        raise ValueError(f"Missing unique CRI configuration input: {config_path}")
+                digest = mapping(mapping(record["file"]).get("digest"))
+                if (digest.get("hash") != hashlib.sha256(config_bytes).hexdigest()
+                        or number(digest.get("sizeBytes", 0)) != len(config_bytes)
+                        or (config_chain := input_chain(records, number(test["inputSetId"]), config_id)) is None):
+                    raise ValueError(f"Staged CRI config bytes differ from TestRunner input: {attempt}")
+                for name, path in re.findall(r"Imported declared CRI image (\S+) from (\S+)", text):
+                    if name not in configured_paths or path != "/cri-images/" + name.replace("/", "_") + ".tar":
+                        raise ValueError(f"Unexpected checked CRI import: {name}: {path}")
+                    imported[name] += 1
+                required_imports = {string(image["name"]) for image in cri if image["usage"] == "cri-import"}
+                if imported.keys() != required_imports:
+                    raise ValueError(f"Checked CRI imports differ from required imports: {attempt}")
+                cri_evidence = {"config": record, "input_chain": config_chain, "imports": dict(imported)}
             loaded = []
             for image in images:
                 if (chain := input_chain(records, number(test["inputSetId"]), number(image["archive_id"]))) is None:
@@ -1312,15 +1465,23 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                         pass
                     case _:
                         raise ValueError(f"Unsupported archive output path: {image['archive']}")
-                blocks = [body for path, body in re.findall(
-                    r"Loaded declared image archive ([^\r\n]+):\r?\n((?:Loaded image: [^\r\n]+\r?\n)+)", text)
-                          if path == archive_path]
-                tags = sorted({tag for body in blocks for tag in re.findall(r"Loaded image: (\S+)", body)
-                               if tag.startswith(f"gvisor.dev/images/{image['image']}:")})
-                if len(blocks) != 1 or not tags:
-                    raise ValueError(f"Missing actual archive load for {attempt}: {image['image']}")
-                loaded.append({"image": image["image"], "architecture": image["architecture"],
-                               "archive": image["archive"], "input_chain": chain, "tags": tags})
+                declaration = next((item for item in declared if (item["name"], item["architecture"], item["archive"]) ==
+                                    (image["image"], image["architecture"], mapping(image["archive"])["path"])), None)
+                usage = declaration.get("usage", "docker-load") if declaration else "docker-load"
+                row = {"image": image["image"], "architecture": image["architecture"], "archive": image["archive"],
+                       "input_chain": chain, "usage": usage}
+                if usage == "docker-load":
+                    blocks = [body for path, body in re.findall(
+                        r"Loaded declared image archive ([^\r\n]+):\r?\n((?:Loaded image: [^\r\n]+\r?\n)+)", text)
+                              if path == archive_path]
+                    tags = sorted({tag for body in blocks for tag in re.findall(r"Loaded image: (\S+)", body)
+                                   if tag.startswith(f"gvisor.dev/images/{image['image']}:")})
+                    if len(blocks) != 1 or not tags:
+                        raise ValueError(f"Missing actual archive load for {attempt}: {image['image']}")
+                    row["tags"] = tags
+                elif usage == "cri-import":
+                    row["imports"] = imported[string(image["image"])]
+                loaded.append(row)
             if configured_images:
                 actual = Counter((row["image"], row["architecture"], mapping(row["archive"])["path"]) for row in loaded)
                 required = Counter((row["name"], row["architecture"], row["archive"]) for row in configured_images[attempt.owner])
@@ -1345,7 +1506,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                     if (name not in positive or set(mapping(row["metrics"])) != set(leaf.units)
                             or leaf.iterations is not None and row["iterations"] != leaf.iterations):
                         raise ValueError(f"Benchmark measurement/XML differs from obligations for {attempt}: {name}")
-            consumers.append({**asdict(attempt), "execution": execution_identity, "images": loaded,
+            consumers.append({**asdict(attempt), "execution": execution_identity, "images": loaded, "cri": cri_evidence,
                               "test_log": {"path": log_path, **file_record(log)}})
         if observed != attempts:
             raise ValueError(f"Missing configured TestRunners: {sorted(attempts - observed)}")
@@ -2209,32 +2370,73 @@ def source_image_expectations(canonical: Path, manifest: Path) -> dict[str, obje
         raise ValueError("Duplicate configured owners in canonical verdict")
     configured = {}
     owners = {}
+    retained = {}
     for raw in sequence(verdict.get("build_outputs")):
         item = mapping(raw)
         if item.get("group") != "source_image_contracts":
             continue
         owner = Owner.parse(item.get("identity"))
+        name = string(item.get("name"))
+        key = owner, name
+        if key in retained:
+            raise ValueError(f"Duplicate source-image output: {key}")
         path = (manifest.parent / string(item.get("path"))).resolve()
         path.relative_to(manifest.parent.resolve())
         if file_record(path) != {"sha256": item.get("sha256"), "bytes": item.get("bytes")}:
             raise ValueError("Source-image contract differs from retained build output")
+        retained[key] = path
+    used = set()
+    for (owner, name), path in retained.items():
+        if not name.endswith(".source-images.json"):
+            continue
         contract = read_json(path)
         if contract.get("schema_version") != 1 or contract.get("owner") != owner.label or owner in configured:
             raise ValueError(f"Wrong or duplicate configured source-image contract: {owner}")
+        used.add((owner, name))
         images = declared_source_images(contract.get("images"))
         commands = [mapping(command) for command in sequence(contract.get("source_commands"))]
+        inventory = list(images)
         for command in commands:
-            if (command.keys() != {"owner", "architecture", "image_class", "images"}
+            fields = {"owner", "architecture", "image_class", "images"}
+            if (command.keys() not in (fields, fields | {"contexts", "context_images"})
                     or not string(command["owner"]) or command["architecture"] not in ("x86_64", "aarch64")
                     or command["image_class"] not in ("cpu", "gpu")
                     or any(not string(image) for image in sequence(command["images"]))):
                 raise ValueError(f"Invalid declared image-source command: {command}")
+            if "contexts" in command:
+                if not string(command["contexts"]):
+                    raise ValueError("Image-source command requires its configured contexts archive")
+                inventory.extend(declared_source_images(command["context_images"]))
+        pins = {}
+        indexes = {}
+        for image in inventory:
+            if image.get("origin") != "registry":
+                continue
+            pin_name = string(image["pin"])
+            key = owner, pin_name
+            if key not in retained or not re.search(r"\.source-image-pin-[0-9]+$", pin_name):
+                raise ValueError(f"Missing configured registry pin output: {key}")
+            pin_path = retained[key]
+            digest = pin_path.read_text().strip()
+            if re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is None:
+                raise ValueError(f"Invalid registry pin bytes: {pin_name}")
+            used.add(key)
+            pins[pin_name] = {"digest": digest, "evidence": {"path": str(pin_path), **file_record(pin_path)}}
+            index_name = string(image["index"])
+            key = owner, index_name
+            if key not in retained or not re.search(r"\.source-image-index-[0-9]+\.json$", index_name):
+                raise ValueError(f"Missing configured registry index output: {key}")
+            index_path = retained[key]
+            body = index_path.read_text()
+            mapping(json.loads(body))
+            used.add(key)
+            indexes[index_name] = {"body": body, "evidence": {"path": str(index_path), **file_record(index_path)}}
         names = sorted({string(image["name"]) for image in images})
         owners[owner.label] = sorted(set(owners.get(owner.label, [])) | set(names))
-        configured[owner] = {**asdict(owner), "images": images, "source_commands": commands,
+        configured[owner] = {**asdict(owner), "images": images, "source_commands": commands, "pins": pins, "indexes": indexes,
                              "contract": {"path": str(path), **file_record(path)}}
-    if not expected or configured.keys() != expected:
-        raise ValueError("Source-image contracts differ from complete configured owners")
+    if not expected or configured.keys() != expected or used != retained.keys():
+        raise ValueError("Source-image contracts differ from complete configured owners or pin outputs")
     return {"owners": owners, "configured_owners": [configured[owner] for owner in sorted(configured)]}
 
 
@@ -2362,6 +2564,27 @@ def matrix_audits(members: dict[str, bytes], producer: dict[str, object], identi
                 if (not relative or actual[-len(relative):] != relative
                         or any(retained.get(key) != descriptor.get(key) for key in ("sha256", "bytes"))):
                     raise ValueError(f"Audit does not bind its declared {name} input role/path")
+            expectations = audit_member(members, inputs["expectations"])
+            outputs = [mapping(raw) for raw in sequence(mapping(phase["verdict"]).get("build_outputs", []))
+                       if mapping(raw).get("group") == "source_image_contracts"]
+            referenced = set()
+            for raw_owner in sequence(expectations.get("configured_owners", [])):
+                owner = mapping(raw_owner)
+                descriptors = [mapping(owner.get("contract"))]
+                descriptors.extend(mapping(mapping(raw).get("evidence")) for kind in ("pins", "indexes")
+                                   for raw in mapping(owner.get(kind, {})).values())
+                for descriptor in descriptors:
+                    match [output for output in outputs if (
+                            Owner.parse(output.get("identity")) == Owner(string(owner["label"]), string(owner["configuration"]))
+                            and Path(string(descriptor.get("path"))).parts[-len(Path(string(output["path"])).parts):]
+                            == Path(string(output["path"])).parts
+                            and all(descriptor.get(key) == output.get(key) for key in ("sha256", "bytes")))]:
+                        case [output]:
+                            referenced.add((Owner.parse(output["identity"]), string(output["path"])))
+                        case _:
+                            raise ValueError("Configured contract/pin/index evidence differs from retained outputs")
+            if referenced != {(Owner.parse(output["identity"]), string(output["path"])) for output in outputs}:
+                raise ValueError("Source expectation evidence does not cover its configured outputs")
             if value.get("audit_status") != "PASS":
                 raise ValueError(f"Required source-image audit is {value.get('audit_status', 'missing')}: {entry['path']}")
         if audit.get("status") != "PASS":
@@ -2436,10 +2659,20 @@ def compose(plan_path: Path, results_path: Path, directory: Path, output: Path) 
                                         "path": f"rows/{name}/" + string(phase["path"])})
                 member_names = {"verdict.json"} | {string(phase.get("path")) for phase in phases}
                 inputs = {}
+                for phase in phases:
+                    for raw_output in sequence(mapping(phase["verdict"]).get("build_outputs", [])):
+                        source_output = mapping(raw_output)
+                        if source_output.get("group") == "source_image_contracts":
+                            path = str(Path(string(phase["path"])).parent / string(source_output.get("path")))
+                            descriptor = {"path": path, "sha256": source_output.get("sha256"), "bytes": source_output.get("bytes")}
+                            if path in inputs and inputs[path] != descriptor:
+                                raise ValueError(f"Conflicting source-contract output descriptors: {path}")
+                            inputs[path] = descriptor
                 for audit in sequence(producer.get("matrix_audits", [])):
                     for raw_entry in sequence(mapping(audit).get("invocations", [])):
                         entry = mapping(raw_entry)
                         member_names.add(string(mapping(entry.get("evidence")).get("path")))
+                        member_names.add(string(mapping(mapping(entry.get("inputs")).get("expectations")).get("path")))
                         for raw_input in mapping(entry.get("inputs")).values():
                             descriptor = mapping(raw_input)
                             path = string(descriptor.get("path"))

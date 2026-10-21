@@ -105,6 +105,7 @@ def docker_image_archive(name, image, architecture, source = None):
         image = image,
         origin = "registry",
         layout = "@" + repository,
+        pin = "@" + repository + "//:digest",
         tags = ["manual"],
     )
 
@@ -449,6 +450,7 @@ def _image_source_command_impl(ctx):
     return [
         DefaultInfo(executable = command, runfiles = runfiles),
         ImageSourceCommandInfo(
+            contexts = ctx.file.contexts,
             architecture = ctx.attr.architecture,
             image_class = ctx.attr.image_class,
             images = ctx.attr.images,

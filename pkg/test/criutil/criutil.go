@@ -270,6 +270,7 @@ func (cc *Crictl) Import(image string) error {
 		if err != nil {
 			return fmt.Errorf("importing %q from %q: %v (%s)", image, tarball, err, out)
 		}
+		cc.logger.Logf("Imported declared CRI image %s from %s", image, tarball)
 		return nil
 	}
 	return cc.importFromDocker(image)

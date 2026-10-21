@@ -25,8 +25,17 @@ ImageSourceCommandInfo = provider(
     doc = "The source-owned selection of an image-building command.",
     fields = {
         "architecture": "Architecture of images built inside the command.",
+        "contexts": "Configured archive containing this command's build contexts.",
         "image_class": "Canonical Make CPU or GPU image cohort.",
         "images": "Selected image names; empty selects the complete cohort.",
+    },
+)
+
+ImageUsageInfo = provider(
+    doc = "Source-owned import and staging roles for a configured CRI consumer.",
+    fields = {
+        "images": "Image names mapped to required import or staging-only usage.",
+        "config": "Configured file that maps those names to archive runfiles.",
     },
 )
 
@@ -47,10 +56,13 @@ def _declared_image_archive_impl(ctx):
         fail("archive aliases must preserve the declared image and architecture")
     origin = ctx.attr.origin or (inherited.origin if inherited != None else "source")
     layout = ctx.file.layout or (inherited.layout if inherited != None else None)
-    if inherited != None and (origin != inherited.origin or layout != inherited.layout):
+    pin = ctx.file.pin or (inherited.pin if inherited != None else None)
+    if inherited != None and (origin != inherited.origin or layout != inherited.layout or pin != inherited.pin):
         fail("archive aliases must preserve the declared producer")
     if (origin == "source") != (layout == None):
         fail("native OCI and registry archives require their configured layout; source archives use their source action")
+    if (origin == "registry") != (pin != None):
+        fail("registry archives require the existing pull repository's digest file")
     runfiles = ctx.runfiles(files = [archive]).merge_all([
         files
         for files in [dependency.default_runfiles, dependency.data_runfiles]
@@ -67,6 +79,9 @@ def _declared_image_archive_impl(ctx):
             archive = archive,
             origin = origin,
             layout = layout,
+            usage = "docker-load",
+            config = None,
+            pin = pin,
         )),
     ]
 
@@ -79,6 +94,7 @@ declared_image_archive = rule(
         "image": attr.string(mandatory = True),
         "origin": attr.string(values = ["", "source", "native-oci", "registry"], doc = "Producer kind; empty inherits the archive declaration."),
         "layout": attr.label(allow_single_file = True, doc = "Configured OCI layout for a native assembly or registry dependency."),
+        "pin": attr.label(allow_single_file = True, doc = "The registry pull repository's existing digest target."),
     },
 )
 
@@ -89,6 +105,19 @@ def _owner_label(label):
     # This recognizes Bazel's output; it does not name a repository dependency.
     # buildifier: disable=canonical-repository
     return label[2:] if label.startswith("@@//") else label
+
+def _image_record(image, pins, indexes):
+    return {
+        "name": image.name,
+        "architecture": image.architecture,
+        "archive": image.archive.path,
+        "origin": image.origin,
+        "layout": image.layout.path if image.layout != None else "",
+        "usage": image.usage,
+        "config": image.config.path if image.config != None else "",
+        "pin": pins[image.pin].path if image.pin != None else "",
+        "index": indexes[image.layout].path if image.origin == "registry" else "",
+    }
 
 def _source_image_contracts_impl(target, ctx):
     if _ImageArchiveInfo in target:
@@ -106,6 +135,8 @@ def _source_image_contracts_impl(target, ctx):
             architecture = command.architecture,
             image_class = command.image_class,
             images = tuple(command.images),
+            contexts = command.contexts,
+            context_images = tuple(ctx.rule.attr.contexts[_ImageInputsInfo].images.to_list()),
         )])
     else:
         transitive = []
@@ -124,19 +155,45 @@ def _source_image_contracts_impl(target, ctx):
                         transitive_commands.append(dependency[_ImageInputsInfo].source_commands)
         images = depset(transitive = transitive)
         commands = depset(transitive = transitive_commands)
+    if ImageUsageInfo in target:
+        usage = target[ImageUsageInfo]
+        if sorted(usage.images.keys()) != sorted([image.name for image in images.to_list()]):
+            fail("image usage must cover exactly the configured archive inputs")
+        images = depset([struct(
+            name = image.name,
+            architecture = image.architecture,
+            archive = image.archive,
+            origin = image.origin,
+            layout = image.layout,
+            usage = usage.images[image.name],
+            config = usage.config,
+            pin = image.pin,
+        ) for image in images.to_list()])
     providers = [_ImageInputsInfo(images = images, source_commands = commands)]
     if ctx.rule:
+        pins = {}
+        indexes = {}
+        inventory = images.to_list() + [image for command in commands.to_list() for image in command.context_images]
+        for image in inventory:
+            if image.pin != None and image.pin not in pins:
+                pin = ctx.actions.declare_file(ctx.label.name + ".source-image-pin-" + str(len(pins)))
+                ctx.actions.expand_template(template = image.pin, output = pin, substitutions = {})
+                pins[image.pin] = pin
+            if image.origin == "registry" and image.layout not in indexes:
+                index = ctx.actions.declare_file(ctx.label.name + ".source-image-index-" + str(len(indexes)) + ".json")
+                ctx.actions.run_shell(
+                    inputs = [image.layout],
+                    outputs = [index],
+                    arguments = [image.layout.path, index.path],
+                    command = 'cp "$1/index.json" "$2"',
+                    mnemonic = "RegistryImageIndex",
+                )
+                indexes[image.layout] = index
         output = ctx.actions.declare_file(ctx.label.name + ".source-images.json")
         ctx.actions.write(output, json.encode({
             "schema_version": 1,
             "owner": _owner_label(ctx.label),
-            "images": [{
-                "name": image.name,
-                "architecture": image.architecture,
-                "archive": image.archive.path,
-                "origin": image.origin,
-                "layout": image.layout.path if image.layout != None else "",
-            } for image in images.to_list()],
+            "images": [_image_record(image, pins, indexes) for image in images.to_list()],
             # These commands build and load their own images, so the absence
             # of archive inputs does not mean there is nothing to qualify.
             "source_commands": [{
@@ -144,9 +201,11 @@ def _source_image_contracts_impl(target, ctx):
                 "architecture": command.architecture,
                 "image_class": command.image_class,
                 "images": command.images,
+                "contexts": command.contexts.path,
+                "context_images": [_image_record(image, pins, indexes) for image in command.context_images],
             } for command in commands.to_list()],
         }))
-        providers.append(OutputGroupInfo(source_image_contracts = depset([output])))
+        providers.append(OutputGroupInfo(source_image_contracts = depset([output] + pins.values() + indexes.values())))
     return providers
 
 source_image_contracts = aspect(

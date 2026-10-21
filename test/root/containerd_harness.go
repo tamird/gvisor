@@ -337,6 +337,14 @@ func stageImages(dir string, logger testutil.Logger) ([]mount.Mount, string, err
 				ReadOnly: true,
 			})
 		}
+		observation, err := json.Marshal(struct {
+			Path   string `json:"path"`
+			Config string `json:"config"`
+		}{*harnessImageConfig, string(data)})
+		if err != nil {
+			return nil, "", err
+		}
+		logger.Logf("Staged declared CRI images: %s", observation)
 		return mounts, inputs.SandboxImage, nil
 	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
