@@ -27,6 +27,7 @@ selection=$7
 case "${mode}" in
   test)
     test "$#" -ge 7
+    results=$(realpath -m "${TEST_UNDECLARED_OUTPUTS_DIR:?}/source-images")
     if [[ -n ${TEST_SHARD_STATUS_FILE:-} ]]; then
       touch "${TEST_SHARD_STATUS_FILE}"
     fi
@@ -54,14 +55,25 @@ printf -v crane_command '%q' "${crane}"
 export MAKE="${make}"
 cd "${work}"
 if [[ ${mode} == test ]]; then
+  # Capture the complete cohort before sharding: an image absent from every
+  # shard must not disappear from qualification's expected results.
+  available_images=$("${make}" --no-print-directory -s -f "${makefile}" \
+    ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 PARTITION=1 TOTAL_PARTITIONS=1 \
+    "list-${selection}-images")
+  mapfile -t cohort <<< "${available_images}"
+  for image in "${cohort[@]}"; do
+    # These names become result paths and JSON strings below.
+    if [[ ! ${image} =~ ^[[:alnum:]][[:alnum:]_.-]*$ ]]; then
+      printf 'Invalid canonical image name: %s\n' "${image}" >&2
+      exit 1
+    fi
+  done
+  selected=("${cohort[@]}")
   selection_options=()
   if (( $# > 7 )); then
     shift 7
     # Validate against Make's complete class before applying its partitioning.
     # A missing or wrong-class image must not become an empty successful check.
-    available_images=$("${make}" --no-print-directory -s -f "${makefile}" \
-      ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 PARTITION=1 TOTAL_PARTITIONS=1 \
-      "list-${selection}-images")
     for image in "$@"; do
       if [[ -z ${image} || ${image} == *[[:space:]]* ]] || \
           ! grep -Fxq -- "${image}" <<< "${available_images}"; then
@@ -69,17 +81,46 @@ if [[ ${mode} == test ]]; then
         exit 1
       fi
     done
+    selected=("$@")
     selection_options=("${selection^^}_TEST_IMAGES=$*")
   fi
   # Bazel shards are zero-based; canonical Make partitions are one-based.
   partition=$((${TEST_SHARD_INDEX:-0} + 1))
   partitions=${TEST_TOTAL_SHARDS:-1}
-  # A registry manifest does not establish that these sources still build.
-  # List the selection first so a failure also records unattempted images.
-  "${make}" --keep-going -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
+  image_options=(ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
     PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
-    CRANE="${crane_command}" "${selection_options[@]}" \
-    "list-${selection}-images" "rebuild-${selection}-images"
+    CRANE="${crane_command}" "${selection_options[@]}")
+  shard_images=$("${make}" --no-print-directory -s -f "${makefile}" \
+    "${image_options[@]}" "list-${selection}-images")
+  shard=()
+  if [[ -n ${shard_images} ]]; then
+    mapfile -t shard <<< "${shard_images}"
+  fi
+  image_array() {
+    local separator= image
+    printf '['
+    for image in "$@"; do
+      printf '%s"%s"' "${separator}" "${image}"
+      separator=,
+    done
+    printf ']'
+  }
+  mkdir "${results}"
+  {
+    printf '{"schema_version":1,"architecture":"%s","image_class":"%s",' "${arch}" "${selection}"
+    printf '"partition":%d,"partitions":%d,"cohort":' "${partition}" "${partitions}"
+    image_array "${cohort[@]}"
+    printf ',"selected":'
+    image_array "${selected[@]}"
+    printf ',"images":'
+    image_array "${shard[@]}"
+    printf '}\n'
+  } > "${results}/selection.json"
+  # A registry manifest does not establish that these sources still build.
+  # Keep Make's parallel scheduling and keep-going behavior; each recipe
+  # records its own output so failed or interrupted builds remain visible.
+  "${make}" --keep-going -f "${makefile}" "${image_options[@]}" \
+    _IMAGE_RESULTS="${results}" "rebuild-${selection}-images"
 else
   target=${selection//\//_}
   case "${arch}" in

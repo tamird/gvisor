@@ -207,8 +207,32 @@ rebuild = \
   (if [ -z "$(_IMAGE_OCI_OUTPUT)" ]; then \
     $(call local_tag,$(1)) && $(call latest_tag,$(1)); \
   fi)
+# Qualification retains the build status separately from output inspection,
+# so a reporting error cannot replace the original build failure.
+rebuild_with_result = \
+  set -e; \
+  result="$(_IMAGE_RESULTS)/$(1)"; mkdir "$$result"; \
+  trap 'status=$$?; trap - EXIT; \
+    if ! printf "%s\n" "$$status" > "$$result/exit-code"; then \
+      if [ "$$status" -eq 0 ]; then status=1; fi; \
+    fi; exit "$$status"' EXIT; \
+  operation=docker-build; archive=null; \
+  if [ -f "$(call path,$(1))/image.tar" ]; then \
+    operation=archive-load; \
+    archive=$$(sha256sum "$(call path,$(1))/image.tar"); \
+    archive=\"$${archive%% *}\"; \
+  fi; \
+  reference="$(call local_image,$(1)):$(call tag,$(1))"; \
+  printf '{"schema_version":1,"image":"%s","architecture":"%s","operation":"%s","reference":"%s","archive_sha256":%s}\n' \
+    '$(1)' '$(ARCH)' "$$operation" "$$reference" "$$archive" > "$$result/request.json"; \
+  status=0; ($(call rebuild,$(1))) || status=$$?; \
+  if ! printf '%s\n' "$$status" > "$$result/build-exit-code"; then \
+    if [ "$$status" -eq 0 ]; then status=1; fi; \
+  fi; \
+  if [ "$$status" -ne 0 ]; then exit "$$status"; fi; \
+  docker image inspect "$$reference" > "$$result/inspect.json"
 rebuild-%: register-cross ## Force rebuild an image locally.
-	@$(call rebuild,$*)
+	@$(if $(_IMAGE_RESULTS),$(call rebuild_with_result,$*),$(call rebuild,$*))
 
 # load reuses a cached remote image or pulls/builds one, applying local hash and
 # latest tags. On a cache miss, SKIP_IMAGE_LOAD only checks the local hash tag.
