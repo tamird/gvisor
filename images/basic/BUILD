@@ -157,7 +157,11 @@ image_layer(
     file_metadata = {
         "/etc/group": file_metadata(mode = "0644"),
         "/etc/passwd": file_metadata(mode = "0644"),
-        "/home/nonroot": file_metadata(uid = 1338, gid = 1337, mode = "0755"),
+        "/home/nonroot": file_metadata(
+            gid = 1337,
+            mode = "0755",
+            uid = 1338,
+        ),
         "/root": file_metadata(mode = "0700"),
         "/root/copy_up_testfile.txt": file_metadata(mode = "0644"),
     },
