@@ -84,6 +84,31 @@ image_apt.install(
 )
 use_repo(image_apt, "helper_image_packages")
 
+# Runtime commands used by the integration image's existing end-to-end tests.
+# Keep their complete dependency closure; no package installation scripts run.
+image_apt.install(
+    dependency_set = "integration_test_packages",
+    packages = [
+        # Common package license notices and standard filesystem data.
+        "base-files (= 12ubuntu4.7)",
+        # Interpreter for the existing ping scripts.
+        "bash (= 5.1-6ubuntu1.1)",
+        # /bin/sh for runsc do and container shell commands.
+        "dash (= 0.5.11+git20210903+057cd650a4ed-3build1)",
+        # GNU sleep infinity, stat and ls, plus the other standard file tools.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # Interface configuration in the loopback tests and runsc do.
+        "iproute2 (= 5.15.0-1ubuntu2.2)",
+        # Legacy firewall commands used by runsc do's network setup.
+        "iptables (= 1.8.7-1ubuntu5.2)",
+        # IPv4 and IPv6 connectivity checks in the existing ping scripts.
+        "iputils-ping (= 3:20211215-1ubuntu0.1)",
+        # unshare is exercised without CAP_SETFCAP by the integration tests.
+        "util-linux (= 2.37.2-4ubuntu3.6)",
+    ],
+)
+use_repo(image_apt, "integration_test_packages")
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
