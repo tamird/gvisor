@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T19:52:26.688539+00:00",
+    "updatedAt": "2026-10-21T20:28:40.439837+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4427,13 +4427,13 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-21T19:46:27.451186+00:00",
-      "summary": "The October21 maintainer notice asks the named reviewer to re-review this unchanged current head. Comparison with the actual previously approved head confirms the already-disclosed amendments: Direct linux/if_link.h include plus canonical assertion line wrapping; runtime patch unchanged. Existing October18 author comments explain both amendments and request review. The earlier approval does not approve this head; no new source correction or duplicate reply is pending.\n\nPreserved history:\n\nThe contributor-approved direct-header amendment is published at 10e4c37aa, and the prepared explanation is posted. It adds linux/if_link.h for IFLA_NET_NS_FD; exact-source ClangTidy passes, and runtime code is unchanged. Fresh maintainer approval and current public checks remain outstanding.\n\nEarlier observations:\n\nRebased onto current upstream after Nayana’s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. All applicable public checks have finished: eight pass and four workflow-change scans are skipped. Fresh maintainer approval is still required.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
+      "updatedAt": "2026-10-21T20:28:40.439837+00:00",
+      "summary": "nybidari approved the exact current head 10e4c37aaf on 2026-10-21T19:49:28Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe October21 maintainer notice asks the named reviewer to re-review this unchanged current head. Comparison with the actual previously approved head confirms the already-disclosed amendments: Direct linux/if_link.h include plus canonical assertion line wrapping; runtime patch unchanged. Existing October18 author comments explain both amendments and request review. The earlier approval does not approve this head; no new source correction or duplicate reply is pending.\n\nPreserved history:\n\nThe contributor-approved direct-header amendment is published at 10e4c37aa, and the prepared explanation is posted. It adds linux/if_link.h for IFLA_NET_NS_FD; exact-source ClangTidy passes, and runtime code is unchanged. Fresh maintainer approval and current public checks remain outstanding.\n\nEarlier observations:\n\nRebased onto current upstream after Nayana’s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. All applicable public checks have finished: eight pass and four workflow-change scans are skipped. Fresh maintainer approval is still required.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
       "number": 15315,
       "followup": {
-        "disposition": "Awaiting requested maintainer re-review",
+        "disposition": "Current head approved; awaiting import progress",
         "owner": "work_map_current",
-        "nextAction": "Observe the named maintainer’s review of the exact current head. Preserve the existing author explanations and original approval provenance; no automatic rebase or duplicate reply.",
+        "nextAction": "Observe the approved source through existing import and merge monitoring. Preserve historical failures and review provenance; no repeated review request or rebase.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
@@ -4447,13 +4447,14 @@
           "https://github.com/tamird/gvisor/actions/runs/39113992309",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6249988776",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6324815128",
-          "https://github.com/tamird/gvisor/compare/fbbeb1a403d52642fe5add8ad0cf0b626c04d185...10e4c37aaf37f2b81b9223df485d9525559ea572"
+          "https://github.com/tamird/gvisor/compare/fbbeb1a403d52642fe5add8ad0cf0b626c04d185...10e4c37aaf37f2b81b9223df485d9525559ea572",
+          "https://github.com/google/gvisor/pull/15315#pullrequestreview-5605349233"
         ],
-        "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
+        "reviewedAt": "2026-10-21T19:49:28Z",
         "sourceHead": "10e4c37aaf37f2b81b9223df485d9525559ea572",
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-21T19:46:27.451186+00:00"
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN",
+        "observedAt": "2026-10-21T20:21:43.009617+00:00"
       },
       "head": "10e4c37aaf37f2b81b9223df485d9525559ea572",
       "refinement": {
@@ -8162,14 +8163,14 @@
       "url": "https://github.com/google/gvisor/pull/15583",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-21T19:46:27.451186+00:00",
-      "summary": "The October21 maintainer notice asks the named reviewer to re-review this unchanged current head. Comparison with the actual previously approved head confirms the already-disclosed amendments: Reviewer-requested obsolete-bug comment removal and second Pause/Resume drain in regression. Existing October9 review reply explains both and asks another look. The earlier approval does not approve this head; no new source correction or duplicate reply is pending.\n\nPreserved history:\n\nThe user-approved amendment is delivered at b465d8b75. Both review nits were answered and resolved, and Lucas was asked to look again after the rebase. The prior approval is not fresh for this head; no contributor decision remains.",
+      "updatedAt": "2026-10-21T20:28:40.439837+00:00",
+      "summary": "manninglucas approved the exact current head b465d8b75c on 2026-10-21T19:59:00Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe October21 maintainer notice asks the named reviewer to re-review this unchanged current head. Comparison with the actual previously approved head confirms the already-disclosed amendments: Reviewer-requested obsolete-bug comment removal and second Pause/Resume drain in regression. Existing October9 review reply explains both and asks another look. The earlier approval does not approve this head; no new source correction or duplicate reply is pending.\n\nPreserved history:\n\nThe user-approved amendment is delivered at b465d8b75. Both review nits were answered and resolved, and Lucas was asked to look again after the rebase. The prior approval is not fresh for this head; no contributor decision remains.",
       "followup": {
-        "disposition": "Awaiting requested maintainer re-review",
+        "disposition": "Current head approved; awaiting import progress",
         "owner": "work_map_current",
         "sourceHead": "b465d8b75c5c11758bb356c6304bd9535431f1fb",
-        "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
-        "nextAction": "Observe the named maintainer’s review of the exact current head. Preserve the existing author explanations and original approval provenance; no automatic rebase or duplicate reply.",
+        "reviewedAt": "2026-10-21T19:59:00Z",
+        "nextAction": "Observe the approved source through existing import and merge monitoring. Preserve historical failures and review provenance; no repeated review request or rebase.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15583#pullrequestreview-5474690842",
           "https://github.com/google/gvisor/pull/15583",
@@ -8181,11 +8182,12 @@
           "https://github.com/google/gvisor/pull/15583#discussion_r4233457230",
           "https://github.com/google/gvisor/pull/15583#discussion_r4233457236",
           "https://github.com/google/gvisor/pull/15583#issuecomment-6324810579",
-          "https://github.com/tamird/gvisor/compare/34246fb949c7f929c22886fb5cf7569e1051e0d6...b465d8b75c5c11758bb356c6304bd9535431f1fb"
+          "https://github.com/tamird/gvisor/compare/34246fb949c7f929c22886fb5cf7569e1051e0d6...b465d8b75c5c11758bb356c6304bd9535431f1fb",
+          "https://github.com/google/gvisor/pull/15583#pullrequestreview-5605469336"
         ],
-        "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-21T19:46:27.451186+00:00"
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN",
+        "observedAt": "2026-10-21T20:21:43.009617+00:00"
       },
       "number": 15583,
       "refinement": {
@@ -15416,20 +15418,24 @@
       "url": "https://github.com/google/gvisor/pull/16056",
       "group": "tests",
       "status": "open",
-      "summary": "The authorized Gazelle rebase is complete at 2a04de7b8f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 2a04de7b8f6da7fabff03cf9870214bd680f10a4 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633706278 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16056 at 4f0cfc48c5544a029975e2a08e668b2d6817ccd9. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nCurrent selector-only proposal5c51476a1303bd6c5affeed6e0cd61d54a36ba41 is published and independently source-reviewed on public760b. Its complete Makefile patch is identical to f1 and removes only the trace exclusion. Public producer/workload bytes match retained d265, while assertions, metadata capture and fork BUILD differ explicitly; no exact-current-source execution is claimed. The fchdir fix is merged; stronger open #15936 and metadata #15916 are separate changes, not demonstrated blockers of ordinary public unit fixtures. Root requested contributor review once, including the exact f1-to-5c range-diff and evidence limits. No upstream PR or comment has been made.\n\nThe fchdir producer correction #15935 merged on October 19 at 21:03:44 UTC. Node now owns preparation of the selector-only follow-up on current public source, including applicability of the retained full trace and Nogo results. The later fixture-scoped offset correction is published separately as #15936 at d48995da34b3d52c5bd6fdceb08655b772a2761d; it remains open with successful checks, no import and pending maintainer review. Its corrected integration d265 passed the full AMD64 and ARM64 trace owners plus both-architecture Nogo. The owner must distinguish that stronger unmerged assertion patch from prerequisites of the current upstream suite before preparing a contributor packet. No PR submission or contributor decision is pending for this selector follow-up yet.",
+      "summary": "zkoopmans approved the exact current head 2a04de7b8f on 2026-10-21T19:56:02Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe authorized Gazelle rebase is complete at 2a04de7b8f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 2a04de7b8f6da7fabff03cf9870214bd680f10a4 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633706278 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16056 at 4f0cfc48c5544a029975e2a08e668b2d6817ccd9. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nCurrent selector-only proposal5c51476a1303bd6c5affeed6e0cd61d54a36ba41 is published and independently source-reviewed on public760b. Its complete Makefile patch is identical to f1 and removes only the trace exclusion. Public producer/workload bytes match retained d265, while assertions, metadata capture and fork BUILD differ explicitly; no exact-current-source execution is claimed. The fchdir fix is merged; stronger open #15936 and metadata #15916 are separate changes, not demonstrated blockers of ordinary public unit fixtures. Root requested contributor review once, including the exact f1-to-5c range-diff and evidence limits. No upstream PR or comment has been made.\n\nThe fchdir producer correction #15935 merged on October 19 at 21:03:44 UTC. Node now owns preparation of the selector-only follow-up on current public source, including applicability of the retained full trace and Nogo results. The later fixture-scoped offset correction is published separately as #15936 at d48995da34b3d52c5bd6fdceb08655b772a2761d; it remains open with successful checks, no import and pending maintainer review. Its corrected integration d265 passed the full AMD64 and ARM64 trace owners plus both-architecture Nogo. The owner must distinguish that stronger unmerged assertion patch from prerequisites of the current upstream suite before preparing a contributor packet. No PR submission or contributor decision is pending for this selector follow-up yet.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "2a04de7b8f6da7fabff03cf9870214bd680f10a4",
-        "observedAt": "2026-10-20T22:28:29.820396+00:00",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase.",
+        "observedAt": "2026-10-21T20:21:43.009617+00:00",
+        "disposition": "Current head approved; awaiting import progress",
+        "nextAction": "Observe the approved source through existing import and merge monitoring. Preserve historical failures and review provenance; no repeated review request or rebase.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424560132/job/118633706278",
           "https://github.com/google/gvisor/pull/16031",
-          "https://github.com/google/gvisor/pull/16048"
-        ]
+          "https://github.com/google/gvisor/pull/16048",
+          "https://github.com/google/gvisor/pull/16056#pullrequestreview-5605429787"
+        ],
+        "reviewedAt": "2026-10-21T19:56:02Z",
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN"
       },
-      "updatedAt": "2026-10-21T01:41:17.826530+00:00",
+      "updatedAt": "2026-10-21T20:28:40.439837+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -16229,17 +16235,22 @@
       "url": "https://github.com/google/gvisor/pull/16092",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-21T13:08:10.972055+00:00",
-      "summary": "The contributor-approved replacement is delivered at 83e32857808. Direct collection of filename-sorted declarations replaces deprecated ast.Package/MergePackageFiles without discarding legal init functions or generic receiver methods. Exact source review and focused remote validation passed: 15 uncached owners, 53 positive records, maintained generated template consumers and both analyzer architectures. Public head and description readback match the approved source. No merge or broader execution claim is made.",
+      "updatedAt": "2026-10-21T20:28:40.439837+00:00",
+      "summary": "zkoopmans approved the exact current head 83e3285780 on 2026-10-21T19:58:56Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe contributor-approved replacement is delivered at 83e32857808. Direct collection of filename-sorted declarations replaces deprecated ast.Package/MergePackageFiles without discarding legal init functions or generic receiver methods. Exact source review and focused remote validation passed: 15 uncached owners, 53 positive records, maintained generated template consumers and both analyzer architectures. Public head and description readback match the approved source. No merge or broader execution claim is made.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "83e32857808ea0d76b422272475efd3074bc3266",
-        "disposition": "Delivered; current-head CI and maintainer review remain",
-        "nextAction": "Observe this PR through the existing authorized cadence when it resumes; no remaining contributor decision or repeated review request.",
+        "disposition": "Current head approved; awaiting import progress",
+        "nextAction": "Observe the approved source through existing import and merge monitoring. Preserve historical failures and review provenance; no repeated review request or rebase.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16092",
-          "https://app.buildbuddy.io/invocation/f2570450-6bdb-4f78-acd0-b6b500b07f1d"
-        ]
+          "https://app.buildbuddy.io/invocation/f2570450-6bdb-4f78-acd0-b6b500b07f1d",
+          "https://github.com/google/gvisor/pull/16092#pullrequestreview-5605468535"
+        ],
+        "reviewedAt": "2026-10-21T19:58:56Z",
+        "observedAt": "2026-10-21T20:21:43.009617+00:00",
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN"
       },
       "evidence": [
         {
@@ -16533,18 +16544,21 @@
       "url": "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
       "group": "bazel",
       "status": "Agent validation: sysctl added; cgroup failure under diagnosis",
-      "updatedAt": "2026-10-21T19:38:05.543683+00:00",
-      "summary": "The reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
+      "updatedAt": "2026-10-21T20:28:40.439837+00:00",
+      "summary": "The reviewed procps image is undergoing the existing nested-runtime checks with the original 55f runtime and test source held fixed. The complete 372-entry dependency catalog passed canonical Verify without changing the prior Fetch output. The old Bionic-image control passed the previously failing cgroup-enabled leaf with byte-identical runsc and sidecars; because it used a separate worker and freshly rebuilt image, this supports an image association without proving the failing syscall or file. The scoped compiler bootstrap now uses the pinned worker’s existing Ubuntu sources and verifies that Git and global APT configuration stay unchanged; the ambient Git PPA no longer blocks these checks. If the gofer failure persists, the next diagnostic will compare both images on one worker and trace the actual clone/exec path. No cgroup bypass or speculative runtime change is planned.\n\nPreserved earlier observations:\n\nThe reviewed sysctl correction is published as 6bee555dad: the integration image now declares the pinned procps package. The separate cgroup-enabled gofer failure remains unresolved. An old-image control keeps runtime/test source55f fixed, builds the original cc4 Dockerfile image, then restores55f before the selected nested test. Its first attempt stopped before Bazel at a Git PPA metadata HTTP503; this provides no image or gofer evidence. Canonical Fetch completed the final procps graph with 372 entries; Verify rejected only eight newly required scoped license sets. Those exact sets are reviewed and published on qualification policy child 373b21bddb. Verify-only recovery reuses the unchanged generated catalog; it and the unchanged old-image control remain held on the advertised Git PPA package-index HTTP503. No Fetch repetition, package-pin change or cgroup bypass is planned.\n\nPreserved 55f validation (before adding procps):\n\nAll nine unchanged C helpers have accepted AMD64 and ARM64 compiler/archive outputs with 18 static ELF identities, account IDs, modes, fixture bytes and legacy firewall links. The original hardlink-inspector failure is preserved; the corrected inspector accepted the same archive bytes.\n\nThe real runtime recovery built and installed exact-source runsc and sidecars, enabled experimental Docker, and passed Make rebuild/deleted-tag/cached restore. Both integration_test and integration_runtime_test passed their selected consumers, including checkpoint/restore, C helpers, host sockets and nonroot permissions. The nested runtime owner failed: two rootful cases require the missing sysctl executable; the separate cgroup-enabled gofer launch returned ENOENT and remains under diagnosis. The overall result remains FAIL, with 22 positive and four failed XML records including parents. No full runtime or ARM execution claim is made.\n\nCanonical full Fetch and Verify passed for the 360-entry catalog on the explicit reviewed policy child. All dependency versions, artifact hashes and license sets match the retained seed; only four existing Go commit/date metadata fields changed. Any package addition will require final-graph regeneration. The original dependency, setup and runtime failures remain retained. Exact-package downloader routing preserves pinned bytes and the generated lock. The separate rewinddir fix is delivered as #16101.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Diagnose cgroup-specific launch and validate procps graph",
+        "disposition": "Corrected image validation running; cgroup diagnosis continues",
         "sourceHead": "6bee555dad8d7b78a44057ca92827d0f0e18b7de",
-        "observedAt": "2026-10-21T19:38:05.543683+00:00",
-        "nextAction": "When the exact advertised PPA index is available, resume the unchanged old-image control and Verify-only check of the preserved 372-entry catalog. Establish the separate cgroup-enabled gofer failure cause and validate corrected nested runtime behavior; no cgroup bypass.",
+        "observedAt": "2026-10-21T20:28:40.439837+00:00",
+        "nextAction": "Finish invocation 8ff0aeb9 on the procps image with exact original runtime/test source. Preserve the accepted old-image control and full catalog results; diagnose any remaining cgroup failure before preparing a contributor proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de",
           "https://app.buildbuddy.io/invocation/718c961b-d2b2-46e4-9d48-e6be2378020b",
-          "https://app.buildbuddy.io/invocation/be135d5c-5dfe-41eb-adbf-abce9a581d63"
+          "https://app.buildbuddy.io/invocation/be135d5c-5dfe-41eb-adbf-abce9a581d63",
+          "https://app.buildbuddy.io/invocation/570e8bee-2a9a-4472-b5b3-6a873a212b5e",
+          "https://app.buildbuddy.io/invocation/ce6eeb97-db88-4bd5-b8c7-a85a3e52edfd",
+          "https://app.buildbuddy.io/invocation/8ff0aeb9-ff70-417a-ae50-17fe86fb86c3"
         ]
       },
       "evidence": [
@@ -16607,6 +16621,18 @@
         {
           "label": "Reviewed procps license-policy recovery",
           "url": "https://github.com/tamird/gvisor/commit/373b21bddbdf3882e3294d9281f7177416412ad8"
+        },
+        {
+          "label": "Original-image nested-runtime control passed",
+          "url": "https://app.buildbuddy.io/invocation/570e8bee-2a9a-4472-b5b3-6a873a212b5e"
+        },
+        {
+          "label": "Full 372-entry catalog Verify passed",
+          "url": "https://app.buildbuddy.io/invocation/ce6eeb97-db88-4bd5-b8c7-a85a3e52edfd"
+        },
+        {
+          "label": "Procps image nested-runtime validation",
+          "url": "https://app.buildbuddy.io/invocation/8ff0aeb9-ff70-417a-ae50-17fe86fb86c3"
         }
       ]
     },
@@ -16761,22 +16787,25 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-iperf3-image",
-      "head": "6c4fcc182f5bbe9a3fe6bb58fb9387748adb2315",
+      "head": "1b8618835f8e146c92380834c5c1eee4bba66544",
       "title": "Build the iperf image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/6c4fcc182f5bbe9a3fe6bb58fb9387748adb2315",
+      "url": "https://github.com/tamird/gvisor/commit/1b8618835f8e146c92380834c5c1eee4bba66544",
       "group": "bazel",
       "status": "Agent validation: BCR iperf3 revision",
-      "updatedAt": "2026-10-21T18:45:18.470163+00:00",
-      "summary": "The contributor-requested BCR revision is published as 6c4fcc182f5b. It uses the BCR iperf3 executable and updates the actual benchmark command and aggregate JSON parsing. The reviewed remote packet checks both CPU archives, exact static executable and license bytes, Make reload, existing unit/analyzer owners and eight native benchmark cases in opt mode. Validation is pending; the previous iperf2 results are not credit for this revision.\n\nPreserved previous proposal:\n\nThe final proposal builds pinned iperf source using the existing grouped image and Make interface. Both CPU binary/archive/context outputs have exact configured BEP identities; remote inspection verifies static binaries and archive equality. Make rebuild and cached reload preserve the image ID. All eight existing native benchmark cases completed one positive iteration, establishing functional coverage rather than a performance comparison. Canonical Fetch/Verify passed for the complete 246-entry catalog. The exact-package mirror recovered the original snapshot HTTP502 without changing source versions or hashes. Original failed runs remain retained.",
+      "updatedAt": "2026-10-21T20:28:40.439837+00:00",
+      "summary": "The BCR iperf3 revision has passed the existing parser/analyzer checks and canonical Verify of its complete 247-entry catalog. Both CPU image builds completed. The first static-ELF check found dynamic linkage; an explicit static link option is now published and both configured link actions plus the AMD64 static ELF check passed. Validation then exposed a wrapper path error reading an external LICENSE relative to the checkout. The owner is correcting that resolver against the existing Bazel execution root before completing both-CPU archive inspection, Make reload and eight native benchmark cases. Original failures are retained; there is no complete image/runtime or contributor-readiness claim yet.\n\nPreserved earlier observations:\n\nThe contributor-requested BCR revision is published as 6c4fcc182f5b. It uses the BCR iperf3 executable and updates the actual benchmark command and aggregate JSON parsing. The reviewed remote packet checks both CPU archives, exact static executable and license bytes, Make reload, existing unit/analyzer owners and eight native benchmark cases in opt mode. Validation is pending; the previous iperf2 results are not credit for this revision.\n\nPreserved previous proposal:\n\nThe final proposal builds pinned iperf source using the existing grouped image and Make interface. Both CPU binary/archive/context outputs have exact configured BEP identities; remote inspection verifies static binaries and archive equality. Make rebuild and cached reload preserve the image ID. All eight existing native benchmark cases completed one positive iteration, establishing functional coverage rather than a performance comparison. Canonical Fetch/Verify passed for the complete 246-entry catalog. The exact-package mirror recovered the original snapshot HTTP502 without changing source versions or hashes. Original failed runs remain retained.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Validate contributor-requested BCR revision",
-        "sourceHead": "6c4fcc182f5bbe9a3fe6bb58fb9387748adb2315",
-        "observedAt": "2026-10-21T18:45:18.470163+00:00",
-        "nextAction": "Complete the reviewed iperf3 runtime and canonical catalog qualification before another contributor proposal. No approval for the previous bespoke build carries over.",
+        "disposition": "Complete BCR image validation after wrapper path correction",
+        "sourceHead": "1b8618835f8e146c92380834c5c1eee4bba66544",
+        "observedAt": "2026-10-21T20:28:40.439837+00:00",
+        "nextAction": "Finish the existing static/archive/Make/eight-case runtime gate after resolving cquery outputs against its canonical execution root. Reuse accepted unit and catalog results for unchanged inputs; then prepare the requested BCR revision for contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295",
-          "https://registry.bazel.build/modules/iperf"
+          "https://registry.bazel.build/modules/iperf",
+          "https://app.buildbuddy.io/invocation/e909bd36-8976-4a72-89f9-911de26dfc33",
+          "https://app.buildbuddy.io/invocation/85a083fe-21bc-462f-ac0c-702fb065344e",
+          "https://github.com/tamird/gvisor/commit/1b8618835f8e146c92380834c5c1eee4bba66544"
         ]
       },
       "evidence": [
