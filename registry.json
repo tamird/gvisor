@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T17:46:07.311350+00:00",
+    "updatedAt": "2026-10-21T18:20:41.027270+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -8551,27 +8551,25 @@
       "title": "Capture primitive arrays without per-element boxing",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
-      "status": "Contributor changes requested",
-      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
-      "summary": "The unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
+      "status": "Preserved investigation history",
+      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
+      "summary": "This abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
       "followup": {
-        "disposition": "Contributor revision requested",
-        "owner": "restore_integration_review",
+        "disposition": "Superseded by the current destination-driven redesign",
+        "owner": "root",
         "sourceHead": "3b13f133c033512ce901163cfe33eebd80a49965",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Reassess retirement after the unified replacement resolves its measured Load regressions. No contributor decision is pending on this old design.",
+        "nextAction": "Retain the source and findings as history; follow the single destination-driven redesign for active work.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
           "https://app.buildbuddy.io/invocation/463669e5-4701-4d87-b24e-ec1d8813428a",
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5",
           "https://github.com/tamird/gvisor/commit/48643e138c5244eb957a84a6a5c60b46124c1955",
-          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1"
-        ]
-      },
-      "contributorChangesRequested": {
-        "head": "3b13f133c033512ce901163cfe33eebd80a49965",
-        "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965"
+          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
+          "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
+        ],
+        "observedAt": "2026-10-21T18:16:40.279706+00:00"
       }
     },
     {
@@ -8869,15 +8867,15 @@
       "title": "Generate typed state snapshot records",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
-      "status": "Contributor changes requested",
-      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
-      "summary": "The unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
+      "status": "Preserved investigation history",
+      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
+      "summary": "This abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
       "followup": {
-        "disposition": "Contributor revision requested",
-        "owner": "restore_integration_review",
+        "disposition": "Superseded by the current destination-driven redesign",
+        "owner": "root",
         "sourceHead": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Reassess retirement after the unified replacement resolves its measured Load regressions. No contributor decision is pending on this old design.",
+        "nextAction": "Retain the source and findings as history; follow the single destination-driven redesign for active work.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
           "https://app.buildbuddy.io/invocation/f66a74d9-0e0e-489b-a515-c0e8d690bfd0",
@@ -8887,12 +8885,10 @@
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5",
           "https://github.com/tamird/gvisor/commit/48643e138c5244eb957a84a6a5c60b46124c1955",
-          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1"
-        ]
-      },
-      "contributorChangesRequested": {
-        "head": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
-        "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0"
+          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
+          "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
+        ],
+        "observedAt": "2026-10-21T18:16:40.279706+00:00"
       },
       "refinement": {
         "before": {
@@ -8912,15 +8908,15 @@
       "title": "Capture pointer arrays as stable state references",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-      "status": "Contributor changes requested",
-      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
-      "summary": "The unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "status": "Preserved investigation history",
+      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
+      "summary": "This abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
-        "disposition": "Contributor revision requested",
-        "owner": "restore_integration_review",
+        "disposition": "Superseded by the current destination-driven redesign",
+        "owner": "root",
         "sourceHead": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Reassess retirement after the unified replacement resolves its measured Load regressions. No contributor decision is pending on this old design.",
+        "nextAction": "Retain the source and findings as history; follow the single destination-driven redesign for active work.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
           "https://app.buildbuddy.io/invocation/5b1e64cd-0b69-414c-9f46-85f618ed6d95",
@@ -8928,12 +8924,10 @@
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5",
           "https://github.com/tamird/gvisor/commit/48643e138c5244eb957a84a6a5c60b46124c1955",
-          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1"
-        ]
-      },
-      "contributorChangesRequested": {
-        "head": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-        "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52"
+          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
+          "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
+        ],
+        "observedAt": "2026-10-21T18:16:40.279706+00:00"
       }
     },
     {
@@ -10915,28 +10909,28 @@
       "id": "branch:diagnostics/state-integrated-array-proposal",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/state-codec-consolidation",
-      "head": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
+      "ref": "state-destination-codecs",
+      "head": "4d282eb89a5a943ff96c5608dd2f1517a9958952",
       "title": "Integrate typed arrays into the state rewrite",
-      "url": "https://github.com/tamird/gvisor/commit/c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
+      "url": "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952",
       "group": "runtime",
-      "status": "Agent work: destination-driven restore design review",
-      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
-      "summary": "The contributor requested another architecture review: restore currently selects handling from encoded kinds even when the destination Go type is known. The owner is examining whether the existing common path can make that contract simpler. This is agent work; no contributor approval or new decision is pending.\n\nThe published c774ad4 revision removes 272 net obsolete test/BUILD lines and restores the original registration tests without changing production behavior. Its four normal owners and two race owners pass; the two original lazy-registration race skips remain explicit. The direct comparison against the original shared prerequisite baseline is accepted: 12 balanced blocks show save/load medians 4.53%/7.92% lower for the adopted array fixture and 10.68%/13.88% lower for the UDP queue fixture. Each native benchstat time comparison has p<0.001; these are scoped serialization measurements, not whole-application startup claims. Wire bytes are unchanged.\n\nPreserved proposal history:\n\nThe signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. The contributor requested revision of this exact proposal: quantify final-versus-original-baseline performance and explain the added code, design motivation and review structure. Root owns the revision and Node is reusing the existing matched harness for the direct baseline comparison. Upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
+      "status": "Agent work: destination-driven runtime and generator",
+      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
+      "summary": "Root is implementing a destination-driven runtime on state-destination-codecs, while Node integrates the existing generator and Hostinet independently reviews the source and validation. The measured c774 common-path proposal remains preserved. This is agent work; no new performance result or contributor decision is claimed.\n\nThe contributor requested another architecture review: restore currently selects handling from encoded kinds even when the destination Go type is known. The owner is examining whether the existing common path can make that contract simpler. This is agent work; no contributor approval or new decision is pending.\n\nThe published c774ad4 revision removes 272 net obsolete test/BUILD lines and restores the original registration tests without changing production behavior. Its four normal owners and two race owners pass; the two original lazy-registration race skips remain explicit. The direct comparison against the original shared prerequisite baseline is accepted: 12 balanced blocks show save/load medians 4.53%/7.92% lower for the adopted array fixture and 10.68%/13.88% lower for the UDP queue fixture. Each native benchstat time comparison has p<0.001; these are scoped serialization measurements, not whole-application startup claims. Wire bytes are unchanged.\n\nPreserved proposal history:\n\nThe signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. The contributor requested revision of this exact proposal: quantify final-versus-original-baseline performance and explain the added code, design motivation and review structure. Root owns the revision and Node is reusing the existing matched harness for the direct baseline comparison. Upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
       "refinement": {
         "before": {
           "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b"
         },
         "after": {
-          "head": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda"
+          "head": "4d282eb89a5a943ff96c5608dd2f1517a9958952"
         }
       },
       "followup": {
         "owner": "root",
-        "disposition": "Contributor challenged destination-type restore architecture",
-        "sourceHead": "c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
-        "observedAt": "2026-10-21T17:44:40.987622+00:00",
-        "nextAction": "Address the destination-type versus encoded-kind design question and revise the explanation. Preserve accepted correctness and scoped baseline measurements; request contributor review only when the revised proposal is concrete.",
+        "disposition": "Destination-driven runtime and generator implementation",
+        "sourceHead": "4d282eb89a5a943ff96c5608dd2f1517a9958952",
+        "observedAt": "2026-10-21T18:16:40.279706+00:00",
+        "nextAction": "Complete and validate the destination-driven runtime and existing generator integration before another contributor proposal. Preserve c774 measurements as source-specific evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c774ad4d3e8ce0cd0d23c0f112643c5c8f216dda",
           "https://app.buildbuddy.io/invocation/7dbad531-e117-472b-b348-7c1a1d999e82",
@@ -11004,6 +10998,10 @@
         {
           "label": "Direct original-baseline comparison",
           "url": "https://app.buildbuddy.io/invocation/7dbad531-e117-472b-b348-7c1a1d999e82"
+        },
+        {
+          "label": "Published destination-driven runtime prototype; validation pending",
+          "url": "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
         }
       ],
       "contributorChangesRequested": {
@@ -16487,15 +16485,15 @@
       "title": "Build the integration test C image with rules_img",
       "url": "https://github.com/tamird/gvisor/commit/55f4bfaeaa583faaa3e6902c4e95765842562695",
       "group": "bazel",
-      "status": "Agent validation: exact-package mirror recovery",
-      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
-      "summary": "All nine unchanged C helpers now have retained build outputs for AMD64 and ARM64. The compile-only qualification has 18 exact default-output/hash joins and verifies each ELF architecture and static linkage. This does not establish image, Make, runtime or license correctness.\n\nThe latest image build at exact 55f4bfae still failed on the pinned libelf1 snapshot URL (HTTP 503; subsequent HEAD 500). Ubuntu’s canonical archive now serves that exact package with the same locked SHA256. A peer-reviewed, qualification-only Bazel downloader configuration redirects only the two observed failing AMD64 .deb URLs to their canonical archive, retaining the original URL as fallback. Source indices, package versions, lock identities and all owning checks remain unchanged. The existing image recovery e4fccb3f was submitted once at 17:44 UTC through the maintained collector. Actual consumers and canonical catalog validation remain pending.\n\nEarlier failures remain preserved; the independently delivered rewinddir allocation fix is PR #16101.",
+      "status": "Agent validation: archive passed; runtime setup recovery and catalog pending",
+      "updatedAt": "2026-10-21T18:20:41.027270+00:00",
+      "summary": "All nine unchanged C helpers have accepted AMD64 and ARM64 compiler outputs with 18 exact identities and static ELF checks. Same-source archive recovery now passes both architectures, account IDs, directory modes, fixture bytes and legacy firewall links. The prior duplicate-file failure was an inspector defect: retained tar metadata proves root/host_connect is a hardlink to home/nonroot/host_connect. Correcting the reader preserves the original archive hashes.\n\nThe shared qualification-only downloader routes two exact failing AMD64 package URLs to byte-identical canonical Ubuntu artifacts, retaining snapshot fallback. The full generated lock is unchanged. Original dependency and inspector failures remain visible. The first runtime attempt built and installed exact-source runsc, then failed before tests because the qualification adapter read a field omitted by Docker 24. The correction reads Docker info experimental state; the same three owners and fourteen consumer parents remain required, including checkpoint/restore, nonroot UDS and nested runsc. Canonical catalog qualification is active with the accepted checker and explicit held policy prerequisite; no new package records are hand-authored.\n\nNo actual runtime, Make or license acceptance is claimed yet. The separate rewinddir fix remains delivered as #16101.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Compiler evidence complete; same-source image recovery underway",
+        "disposition": "Archives accepted; runtime setup correction and canonical catalog pending",
         "sourceHead": "55f4bfaeaa583faaa3e6902c4e95765842562695",
-        "observedAt": "2026-10-21T17:44:40.987622+00:00",
-        "nextAction": "Collect the existing mirror recovery, then validate actual consumers and the canonical package catalog. Preserve the snapshot failure and compile-only scope.",
+        "observedAt": "2026-10-21T18:20:41.027270+00:00",
+        "nextAction": "Run the reviewed Docker-info adapter recovery and collect canonical Fetch/Verify; preserve the original zero-test failure and prerequisite holds.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/55f4bfaeaa583faaa3e6902c4e95765842562695",
           "https://app.buildbuddy.io/invocation/5afe0295-239f-4469-9d2a-eedf93f04318",
@@ -16527,6 +16525,18 @@
         {
           "label": "Same-source recovery with exact package mirrors",
           "url": "https://app.buildbuddy.io/invocation/e4fccb3f-727f-43b6-b681-db34528aec85"
+        },
+        {
+          "label": "Both-architecture archive inspection passed",
+          "url": "https://app.buildbuddy.io/invocation/31b3e9e3-ba37-4d49-a479-8eea34de3ae4"
+        },
+        {
+          "label": "Preserved runtime setup adapter failure before tests",
+          "url": "https://app.buildbuddy.io/invocation/fe7ee5bf-bf29-4cb9-a12f-3b3b0cb6921b"
+        },
+        {
+          "label": "Canonical C image package catalog qualification",
+          "url": "https://app.buildbuddy.io/invocation/52d38fa1-6bd8-40e7-970f-20658da540bb"
         }
       ]
     },
@@ -16638,22 +16648,24 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-hey",
-      "head": "6e0276becd22261ab9fd2f0422229079084afb8c",
+      "head": "f53b01d2d2e44874003448cea423f8f1e422f173",
       "title": "Build the hey image from pinned Go source",
-      "url": "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c",
+      "url": "https://github.com/tamird/gvisor/commit/f53b01d2d2e44874003448cea423f8f1e422f173",
       "group": "bazel",
-      "status": "Runtime validation underway; catalog passed",
-      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
-      "summary": "The migration embeds the pinned upstream hey command through a scoped Gazelle library and repository Go toolchain, then assembles it with the existing lean helper base. The stable image name and Make context interface are preserved. Initial visibility and buildifier failures remain retained. The current source adds only the scoped lint annotation to the corrected canonical main-repository visibility. Canonical catalog Fetch/Verify passed on the same graph; the unchanged runtime fixture is now running on the final source. Actual HTTP/TLS requests, parser behavior, archive identity and Make reloads remain pending; no TLS trust-store verification is claimed.",
+      "status": "Contributor approved; awaiting prerequisites",
+      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
+      "summary": "The final proposal builds pinned hey v0.1.5 with the repository Go toolchain and shared lean image base. Both CPU archive binaries match their declared outputs and static ELF architecture. The actual AMD64 Make reload preserved image identity; existing parser checks and twelve HTTP plus twelve HTTPS responses passed with both Nogo architectures. HTTPS exercises request behavior, not certificate trust: upstream hey disables verification. Full canonical Fetch/Verify adds only the hey record to the unchanged 244-entry foundation catalog. Earlier visibility and lint failures remain preserved. The final single commit retains the exact qualified production files and generated catalog.\n\nThe user reviewed and approved exact f53b01d2. Open after the recorded image/license prerequisites land; no repeated contributor request is needed.",
       "followup": {
         "owner": "node_tls_sni",
-        "disposition": "Runtime validation underway; catalog passed",
-        "sourceHead": "6e0276becd22261ab9fd2f0422229079084afb8c",
-        "observedAt": "2026-10-21T17:44:40.987622+00:00",
-        "nextAction": "Collect the current runtime invocation and reconcile its exact source with the canonical catalog result before contributor review.",
+        "disposition": "Contributor approved; awaiting prerequisites",
+        "sourceHead": "f53b01d2d2e44874003448cea423f8f1e422f173",
+        "observedAt": "2026-10-21T18:16:40.279706+00:00",
+        "nextAction": "Deliver the approved exact proposal after the recorded prerequisites land; preserve approval across verified mechanical refreshes.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6e0276becd22261ab9fd2f0422229079084afb8c"
-        ]
+          "https://github.com/tamird/gvisor/commit/f53b01d2d2e44874003448cea423f8f1e422f173",
+          "https://app.buildbuddy.io/invocation/3434ef66-59df-4d0d-88d2-d7c8b1cebfb6"
+        ],
+        "reviewedHead": "f53b01d2d2e44874003448cea423f8f1e422f173"
       },
       "evidence": [
         {
@@ -16667,6 +16679,10 @@
         {
           "label": "Canonical catalog qualification",
           "url": "https://app.buildbuddy.io/invocation/543a9b91-1c0d-4fc5-aeb3-7cb25218b583"
+        },
+        {
+          "label": "Final contributor-review commit",
+          "url": "https://github.com/tamird/gvisor/commit/f53b01d2d2e44874003448cea423f8f1e422f173"
         }
       ]
     },
@@ -16674,22 +16690,23 @@
       "id": "branch:rules-img-iperf-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-iperf-image",
-      "head": "13830a48512a4bb6e104ad798f1dfa2744d4ad33",
+      "ref": "rules-img-iperf-image-audited",
+      "head": "7fc0ec3ee46139b3aa307cd08364377c1d688295",
       "title": "Build the iperf image from pinned source",
-      "url": "https://github.com/tamird/gvisor/commit/13830a48512a4bb6e104ad798f1dfa2744d4ad33",
+      "url": "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295",
       "group": "bazel",
-      "status": "Agent validation: exact-package mirror recovery",
-      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
-      "summary": "The migration builds pinned iperf source for the existing grouped image and Make interface. The first runtime qualification passed preparation and buildifier but failed AMD image analysis on the pinned base-files package snapshot URL (HTTP 502). Partial compilation was logged, but no binary/archive identity or runtime coverage was retained. The canonical Ubuntu archive serves the exact locked bytes; the existing downloader configuration permits one bounded same-source recovery. Catalog verification remains a separate owning result. The final source 13830a48 only reorders an existing policy block for canonical Verify; image source remains byte-identical to 97d0.",
+      "status": "Agent revision: use the BCR iperf module",
+      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
+      "summary": "The user requested replacing the bespoke iperf build with the existing Bazel Central Registry module. Hostinet owns this revision. No contributor approval or pending decision exists for the current7fc proposal. Its accepted runtime and catalog results remain source-specific evidence.\n\nThe final proposal builds pinned iperf source using the existing grouped image and Make interface. Both CPU binary/archive/context outputs have exact configured BEP identities; remote inspection verifies static binaries and archive equality. Make rebuild and cached reload preserve the image ID. All eight existing native benchmark cases completed one positive iteration, establishing functional coverage rather than a performance comparison. Canonical Fetch/Verify passed for the complete 246-entry catalog. The exact-package mirror recovered the original snapshot HTTP502 without changing source versions or hashes. Original failed runs remain retained.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Agent validation: exact-package mirror recovery",
-        "sourceHead": "13830a48512a4bb6e104ad798f1dfa2744d4ad33",
-        "observedAt": "2026-10-21T17:44:40.987622+00:00",
-        "nextAction": "Complete the reviewed same-source mirror recovery and canonical catalog verification; preserve the failed runtime and all original target obligations.",
+        "disposition": "Contributor requested BCR module integration",
+        "sourceHead": "7fc0ec3ee46139b3aa307cd08364377c1d688295",
+        "observedAt": "2026-10-21T18:16:40.279706+00:00",
+        "nextAction": "Replace the bespoke source build with the BCR iperf module, then validate the concrete revised image and catalog before another contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/97d0c0b052d62605d105c56b264e2ba94f11cf35"
+          "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295",
+          "https://registry.bazel.build/modules/iperf"
         ]
       },
       "evidence": [
@@ -16704,8 +16721,20 @@
         {
           "label": "Policy-order correction on unchanged image source",
           "url": "https://github.com/tamird/gvisor/commit/13830a48512a4bb6e104ad798f1dfa2744d4ad33"
+        },
+        {
+          "label": "Final contributor-review commit",
+          "url": "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295"
+        },
+        {
+          "label": "Accepted actual runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/3490c0b6-2e08-4e30-a19c-2cf323eb1d97"
         }
-      ]
+      ],
+      "contributorChangesRequested": {
+        "head": "7fc0ec3ee46139b3aa307cd08364377c1d688295",
+        "url": "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295"
+      }
     }
   ],
   "edges": [
