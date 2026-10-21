@@ -232,6 +232,7 @@ GITHUB_WORKFLOWS = glob(
 filegroup(
     name = "github_workflows",
     srcs = GITHUB_WORKFLOWS,
+    visibility = ["//test/rbe:__pkg__"],
 )
 
 yaml_test(
