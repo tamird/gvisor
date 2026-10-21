@@ -281,11 +281,18 @@ class QualificationReportTest(unittest.TestCase):
                         clone = json.loads(json.dumps(test))
                         clone["targetLabel"] = second_owner["label"]
                         for output in clone["outputs"]:
+                            if "invalidOutputPath" in output:
+                                output["invalidOutputPath"] = output["invalidOutputPath"].replace("_owned/", "_owned_second/")
+                                continue
                             identifier = output["outputId"]
                             record = json.loads(json.dumps(records[identifier]))
                             new_id = max(records) + 1
                             record["id"] = new_id
-                            record["file"]["path"] = record["file"]["path"].replace("_owned/", "_owned_second/")
+                            match record:
+                                case {"file": entry} | {"directory": entry}:
+                                    entry["path"] = entry["path"].replace("_owned/", "_owned_second/")
+                                case _:
+                                    self.fail(f"Unexpected retained output record: {record}")
                             records[new_id] = record
                             output["outputId"] = new_id
                         spawns.append(clone)
