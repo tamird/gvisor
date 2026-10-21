@@ -1,0 +1,27 @@
+{"id": {"started": {}}, "children": [{"progress": {}}, {"unstructuredCommandLine": {}}, {"structuredCommandLine": {"commandLineLabel": "original"}}, {"structuredCommandLine": {"commandLineLabel": "canonical"}}, {"structuredCommandLine": {"commandLineLabel": "tool"}}, {"buildMetadata": {}}, {"optionsParsed": {}}, {"workspaceStatus": {}}, {"pattern": {"pattern": ["@org_golang_x_perf//cmd/benchstat:benchstat"]}}, {"buildFinished": {}}], "started": {"uuid": "f978c3a6-25a7-4a34-a00e-7ebae243a801", "startTime": "2026-10-21T18:54:31.124Z", "startTimeMillis": "1792608871124", "command": "build"}}
+{"id": {"buildMetadata": {}}}
+{"id": {"unstructuredCommandLine": {}}}
+{"id": {"optionsParsed": {}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "original"}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "canonical"}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "tool"}}}
+{"id": {"progress": {}}, "children": [{"progress": {"opaqueCount": 1}}, {"fetch": {"url": "https://dl.google.com/go/go1.27.2.linux-amd64.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://dl.google.com/go/go1.27.2.linux-amd64.tar.gz", "downloader": "HTTP"}}}
+{"id": {"pattern": {"pattern": ["@org_golang_x_perf//cmd/benchstat:benchstat"]}}, "children": [{"targetConfigured": {"label": "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat"}}]}
+{"id": {"progress": {"opaqueCount": 1}}, "children": [{"progress": {"opaqueCount": 2}}, {"workspace": {}}]}
+{"id": {"workspace": {}}}
+{"id": {"progress": {"opaqueCount": 2}}, "children": [{"progress": {"opaqueCount": 3}}, {"configuration": {"id": "a830a29f5f055f85cc352785cc809b1c20a7bee4f160271f65d61c245b58544b"}}]}
+{"id": {"configuration": {"id": "a830a29f5f055f85cc352785cc809b1c20a7bee4f160271f65d61c245b58544b"}}}
+{"id": {"workspaceStatus": {}}}
+{"id": {"progress": {"opaqueCount": 3}}, "children": [{"progress": {"opaqueCount": 4}}, {"configuration": {"id": "11f869e6b5095ce96021842049e8897f7457bd9e22ddfd24b80e3a96c1f46f75"}}]}
+{"id": {"configuration": {"id": "11f869e6b5095ce96021842049e8897f7457bd9e22ddfd24b80e3a96c1f46f75"}}}
+{"id": {"targetConfigured": {"label": "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat"}}, "children": [{"targetCompleted": {"label": "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat", "configuration": {"id": "11f869e6b5095ce96021842049e8897f7457bd9e22ddfd24b80e3a96c1f46f75"}}}], "configured": {"targetKind": "go_binary rule"}}
+{"id": {"progress": {"opaqueCount": 4}}, "children": [{"progress": {"opaqueCount": 5}}, {"namedSet": {"id": "0"}}]}
+{"id": {"namedSet": {"id": "0"}}, "namedSetOfFiles": {"files": [{"name": "external/gazelle++go_deps+org_golang_x_perf/cmd/benchstat/benchstat_/benchstat", "uri": "file:///home/buildbuddy/workspace/output-base/execroot/_main/bazel-out/k8-fastbuild/bin/external/gazelle++go_deps+org_golang_x_perf/cmd/benchstat/benchstat_/benchstat", "pathPrefix": ["bazel-out", "k8-fastbuild", "bin"], "digest": "26d929dac24fcba6a0b22c60db59f27fca01e070be2977ab380413e2f7a59401", "length": "2338976"}]}}
+{"id": {"targetCompleted": {"label": "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat", "configuration": {"id": "11f869e6b5095ce96021842049e8897f7457bd9e22ddfd24b80e3a96c1f46f75"}}}, "completed": {"success": true, "outputGroup": [{"name": "default", "fileSets": [{"id": "0"}]}]}}
+{"id": {"progress": {"opaqueCount": 5}}, "children": [{"progress": {"opaqueCount": 6}}, {"convenienceSymlinksIdentified": {}}]}
+{"id": {"convenienceSymlinksIdentified": {}}}
+{"id": {"buildFinished": {}}, "children": [{"buildToolLogs": {}}, {"buildMetrics": {}}], "finished": {"overallSuccess": true, "finishTimeMillis": "1792608902179", "exitCode": {"name": "SUCCESS"}, "finishTime": "2026-10-21T18:55:02.179Z"}}
+{"id": {"progress": {"opaqueCount": 6}}}
+{"id": {"buildToolLogs": {}}}
+{"id": {"buildMetrics": {}}}

@@ -1,0 +1,23 @@
+tree aa285f823807bdc2d5d7a72807c56cdf2f4038e8
+parent 7fc0ec3ee46139b3aa307cd08364377c1d688295
+author Tamir Duberstein <tamird@gmail.com> 1792607966 -0400
+committer Tamir Duberstein <tamird@gmail.com> 1792607966 -0400
+gpgsig -----BEGIN SSH SIGNATURE-----
+ U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgtYz36g7iDMSkY5K7Ab51ksGX7h
+ JgsMRt+XVZTrIzMVIAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
+ AAAAQFAvPNgHCRi2sMu4s+7pJMLSP7tvUgERUe9goZ3htGlJgkWR/o+WXs6hk3DJsKIpLi
+ Ew1c0PZPh83CGBRqKl1wE=
+ -----END SSH SIGNATURE-----
+
+Use the BCR iperf module for network benchmarks
+
+Build the benchmark image from the standard iperf3 module so Bazel
+owns its source selection, configuration and dependencies. Package
+the static executable and upstream notices on the shared helper base,
+preserving the image name and client/server placement.
+
+Use iperf3's JSON sender summary for aggregate throughput across all
+streams and keep the requested transfer budget in KiB. This replaces
+the first-stream text metric; results are not directly comparable with
+iperf2. Keep the explicit port and buffer size, and remove iperf2's
+best-effort realtime scheduling request.

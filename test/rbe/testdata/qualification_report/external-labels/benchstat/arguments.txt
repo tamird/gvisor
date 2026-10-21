@@ -1,0 +1,15 @@
+--bazelrc=/tmp/syscall-applicability-auth-5z4aduds/credentials.bazelrc
+build
+--config=x86_64
+--lockfile_mode=error
+--runs_per_test=1
+--flaky_test_attempts=1
+--nocache_test_results
+--test_env=GO_TEST_WRAP_TESTV=1
+--remote_download_outputs=all
+--build_event_json_file_path_conversion=false
+--nozip_undeclared_test_outputs
+--noannounce_rc
+--test_sharding_strategy=disabled
+@org_golang_x_perf//cmd/benchstat:benchstat
+--build_event_json_file=/tmp/syscall-applicability-upstream-64icmv98/fixture-tool-build.events.jsonl

@@ -1,0 +1,16 @@
+tree bb2d7b4b8ea03c1a0371a65509600edeb0ce4a64
+parent 0ebdf9f9e8b6f8578a8bbd0e481ee60cf954828e
+author Tamir Duberstein <tamird@gmail.com> 1792608399 -0400
+committer Tamir Duberstein <tamird@gmail.com> 1792608399 -0400
+gpgsig -----BEGIN SSH SIGNATURE-----
+ U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgtYz36g7iDMSkY5K7Ab51ksGX7h
+ JgsMRt+XVZTrIzMVIAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
+ AAAAQPohC2KpeU2jrjnwM0fkPrP9oVw4+jEzwgmr2UBdz6UxPD8aKKgDkGqMHqT378BuJ8
+ rbW2DCrP6CYY+S7PTnfQE=
+ -----END SSH SIGNATURE-----
+
+Declare benchstat for the paired state fixture
+
+Use the existing measured benchstat version and its numerical dependency.
+Resolve the shared module graph remotely before comparing the two source
+arms, keeping the generated lock unchanged for every build and test.

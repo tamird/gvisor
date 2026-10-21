@@ -1,0 +1,9 @@
+These are byte-exact retained invocation inputs from iperf d7675ba3 and
+benchstat 86ba5b42. Both external builds returned native exit 0; the old
+reporter rejected apparent repository labels before writing a verdict.
+
+Tests replay the retained pattern/configuration/completion graph through
+capture and verdict. They omit the original lock fields in the test context:
+the large dependency lock is unrelated to label selection. Original context
+bytes, source commit and arguments remain here; no output files or image/
+benchmark execution credit is inferred from these graph fixtures.

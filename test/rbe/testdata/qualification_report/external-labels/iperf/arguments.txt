@@ -1,0 +1,13 @@
+--bazelrc=/tmp/syscall-applicability-auth-9o26e9jg/credentials.bazelrc
+build
+--downloader_config=/tmp/syscall-applicability-upstream-i16z212n/qualification-evidence/ubuntu-pinned-package-downloader.cfg
+--compilation_mode=opt
+--lockfile_mode=error
+--remote_download_outputs=all
+--build_event_json_file_path_conversion=false
+--noannounce_rc
+--config=x86_64
+@iperf//:iperf3
+//images/benchmarks:iperf_archive
+//images/benchmarks:iperf_context
+--build_event_json_file=/tmp/syscall-applicability-upstream-i16z212n/images-x86_64.events.jsonl

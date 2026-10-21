@@ -1,0 +1,71 @@
+{"id": {"started": {}}, "children": [{"progress": {}}, {"unstructuredCommandLine": {}}, {"structuredCommandLine": {"commandLineLabel": "original"}}, {"structuredCommandLine": {"commandLineLabel": "canonical"}}, {"structuredCommandLine": {"commandLineLabel": "tool"}}, {"buildMetadata": {}}, {"optionsParsed": {}}, {"workspaceStatus": {}}, {"pattern": {"pattern": ["@iperf//:iperf3", "//images/benchmarks:iperf_archive", "//images/benchmarks:iperf_context"]}}, {"buildFinished": {}}], "started": {"uuid": "bea68a7b-e8d5-43b3-b26a-5c1bcc72ad7f", "startTime": "2026-10-21T18:51:29.250Z", "startTimeMillis": "1792608689250", "command": "build"}}
+{"id": {"buildMetadata": {}}}
+{"id": {"unstructuredCommandLine": {}}}
+{"id": {"optionsParsed": {}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "original"}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "canonical"}}}
+{"id": {"structuredCommandLine": {"commandLineLabel": "tool"}}}
+{"id": {"progress": {}}, "children": [{"progress": {"opaqueCount": 1}}, {"fetch": {"url": "https://github.com/hermeticbuild/sha256.star/releases/download/v0.0.1/sha256.bzl-v0.0.1.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/hermeticbuild/sha256.star/releases/download/v0.0.1/sha256.bzl-v0.0.1.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 1}}, "children": [{"progress": {"opaqueCount": 2}}, {"fetch": {"url": "https://github.com/bazel-contrib/rules_runfiles_group/releases/download/v0.1.0/rules_runfiles_group-v0.1.0.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/bazel-contrib/rules_runfiles_group/releases/download/v0.1.0/rules_runfiles_group-v0.1.0.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 2}}, "children": [{"progress": {"opaqueCount": 3}}, {"fetch": {"url": "https://github.com/esnet/iperf/releases/download/3.18/iperf-3.18.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/esnet/iperf/releases/download/3.18/iperf-3.18.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 3}}, "children": [{"progress": {"opaqueCount": 4}}, {"fetch": {"url": "https://bcr.bazel.build/modules/sha256.bzl/0.0.1/patches/module_dot_bazel_version.patch", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/sha256.bzl/0.0.1/patches/module_dot_bazel_version.patch", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 4}}, "children": [{"progress": {"opaqueCount": 5}}, {"fetch": {"url": "https://bcr.bazel.build/modules/rules_runfiles_group/0.1.0/patches/module_dot_bazel_version.patch", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/rules_runfiles_group/0.1.0/patches/module_dot_bazel_version.patch", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 5}}, "children": [{"progress": {"opaqueCount": 6}}, {"fetch": {"url": "https://bcr.bazel.build/modules/iperf/3.18.0/overlay/BUILD.bazel", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/iperf/3.18.0/overlay/BUILD.bazel", "downloader": "HTTP"}}}
+{"id": {"pattern": {"pattern": ["@iperf//:iperf3", "//images/benchmarks:iperf_archive", "//images/benchmarks:iperf_context"]}}, "children": [{"targetConfigured": {"label": "@@iperf+//:iperf3"}}, {"targetConfigured": {"label": "//images/benchmarks:iperf_archive"}}, {"targetConfigured": {"label": "//images/benchmarks:iperf_context"}}]}
+{"id": {"progress": {"opaqueCount": 6}}, "children": [{"progress": {"opaqueCount": 7}}, {"workspace": {}}]}
+{"id": {"workspace": {}}}
+{"id": {"progress": {"opaqueCount": 7}}, "children": [{"progress": {"opaqueCount": 8}}, {"configuration": {"id": "3038d339771a16248ccb6c4d1de75fa184830e4c4342d04029c99a0661627137"}}]}
+{"id": {"configuration": {"id": "3038d339771a16248ccb6c4d1de75fa184830e4c4342d04029c99a0661627137"}}}
+{"id": {"workspaceStatus": {}}}
+{"id": {"progress": {"opaqueCount": 8}}, "children": [{"progress": {"opaqueCount": 9}}, {"fetch": {"url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260811/runfiles-stub-x86_64-linux", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260811/runfiles-stub-x86_64-linux", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 9}}, "children": [{"progress": {"opaqueCount": 10}}, {"fetch": {"url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260811/finalize-stub-x86_64-linux", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/hermeticbuild/hermetic-launcher/releases/download/binaries-20260811/finalize-stub-x86_64-linux", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 10}}, "children": [{"progress": {"opaqueCount": 11}}, {"fetch": {"url": "https://github.com/hermeticbuild/bsdtar-prebuilt/releases/download/v3.8.1-3/tar_linux_amd64", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/hermeticbuild/bsdtar-prebuilt/releases/download/v3.8.1-3/tar_linux_amd64", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 11}}, "children": [{"progress": {"opaqueCount": 12}}, {"fetch": {"url": "https://github.com/uutils/coreutils/releases/download/0.5.0/coreutils-0.5.0-x86_64-unknown-linux-musl.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/uutils/coreutils/releases/download/0.5.0/coreutils-0.5.0-x86_64-unknown-linux-musl.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 12}}, "children": [{"progress": {"opaqueCount": 13}}, {"fetch": {"url": "https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 13}}, "children": [{"progress": {"opaqueCount": 14}}, {"fetch": {"url": "https://github.com/bazel-contrib/rules_img/releases/download/v0.3.23/img_linux_amd64", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/bazel-contrib/rules_img/releases/download/v0.3.23/img_linux_amd64", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 14}}, "children": [{"progress": {"opaqueCount": 15}}, {"fetch": {"url": "https://bcr.bazel.build/modules/openssl/3.3.1.bcr.1/overlay/test_bazel_build/BUILD.bazel", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/openssl/3.3.1.bcr.1/overlay/test_bazel_build/BUILD.bazel", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 15}}, "children": [{"progress": {"opaqueCount": 16}}, {"fetch": {"url": "https://bcr.bazel.build/modules/openssl/3.3.1.bcr.1/overlay/BUILD.bazel", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/openssl/3.3.1.bcr.1/overlay/BUILD.bazel", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 16}}, "children": [{"progress": {"opaqueCount": 17}}, {"fetch": {"url": "https://bcr.bazel.build/modules/openssl/3.3.1.bcr.1/overlay/utils.bzl", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://bcr.bazel.build/modules/openssl/3.3.1.bcr.1/overlay/utils.bzl", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 17}}, "children": [{"progress": {"opaqueCount": 18}}, {"fetch": {"url": "https://github.com/raccoons-build/bazel-openssl-cc/releases/download/3.3.1.bcr.1/bazel-openssl-cc-3.3.1.bcr.1.tar.gz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/raccoons-build/bazel-openssl-cc/releases/download/3.3.1.bcr.1/bazel-openssl-cc-3.3.1.bcr.1.tar.gz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 18}}, "children": [{"progress": {"opaqueCount": 19}}, {"fetch": {"url": "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/ca-certificates/ca-certificates_20260601~22.04.1_all.deb", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/ca-certificates/ca-certificates_20260601~22.04.1_all.deb", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 19}}, "children": [{"progress": {"opaqueCount": 20}}, {"fetch": {"url": "https://github.com/skaji/relocatable-perl/releases/download/5.36.0.1/perl-linux-amd64.tar.xz", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/skaji/relocatable-perl/releases/download/5.36.0.1/perl-linux-amd64.tar.xz", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 20}}, "children": [{"progress": {"opaqueCount": 21}}, {"fetch": {"url": "https://github.com/aspect-build/zstd-prebuilt/releases/download/v1.5.6-bcr1/zstd_linux_amd64", "downloader": "HTTP"}}]}
+{"id": {"fetch": {"url": "https://github.com/aspect-build/zstd-prebuilt/releases/download/v1.5.6-bcr1/zstd_linux_amd64", "downloader": "HTTP"}}}
+{"id": {"progress": {"opaqueCount": 21}}, "children": [{"progress": {"opaqueCount": 22}}, {"configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}]}
+{"id": {"configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}
+{"id": {"targetConfigured": {"label": "@@iperf+//:iperf3"}}, "children": [{"targetCompleted": {"label": "@@iperf+//:iperf3", "configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}], "configured": {"targetKind": "cc_binary rule"}}
+{"id": {"targetConfigured": {"label": "//images/benchmarks:iperf_archive"}}, "children": [{"targetCompleted": {"label": "//images/benchmarks:iperf_archive", "configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}], "configured": {"targetKind": "filegroup rule", "tag": ["manual"]}}
+{"id": {"targetConfigured": {"label": "//images/benchmarks:iperf_context"}}, "children": [{"targetCompleted": {"label": "//images/benchmarks:iperf_context", "configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}], "configured": {"targetKind": "pkg_tar_impl rule"}}
+{"id": {"progress": {"opaqueCount": 22}}, "children": [{"progress": {"opaqueCount": 23}}, {"namedSet": {"id": "0"}}]}
+{"id": {"namedSet": {"id": "0"}}, "namedSetOfFiles": {"files": [{"name": "external/iperf+/iperf3", "uri": "file:///root/workspace/output-base/execroot/_main/bazel-out/k8-opt/bin/external/iperf+/iperf3", "pathPrefix": ["bazel-out", "k8-opt", "bin"], "digest": "78128705c18587630cb53ffc36d1ff00ba0be26264973f0ff620090d0716595e", "length": "4616384"}]}}
+{"id": {"targetCompleted": {"label": "@@iperf+//:iperf3", "configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}, "completed": {"success": true, "outputGroup": [{"name": "default", "fileSets": [{"id": "0"}]}]}}
+{"id": {"progress": {"opaqueCount": 23}}, "children": [{"progress": {"opaqueCount": 24}}, {"namedSet": {"id": "1"}}]}
+{"id": {"namedSet": {"id": "1"}}, "namedSetOfFiles": {"files": [{"name": "images/benchmarks/iperf_load_docker.tar", "uri": "file:///root/workspace/output-base/execroot/_main/bazel-out/k8-opt/bin/images/benchmarks/iperf_load_docker.tar", "pathPrefix": ["bazel-out", "k8-opt", "bin"], "digest": "36e1f86a0b357a70d7ca0a6d4a563a67a14e612eda283df37fbb85d755ba7d86", "length": "3484160"}]}}
+{"id": {"targetCompleted": {"label": "//images/benchmarks:iperf_archive", "configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}, "completed": {"success": true, "outputGroup": [{"name": "default", "fileSets": [{"id": "1"}]}], "tag": ["manual"]}}
+{"id": {"progress": {"opaqueCount": 24}}, "children": [{"progress": {"opaqueCount": 25}}, {"namedSet": {"id": "2"}}]}
+{"id": {"namedSet": {"id": "2"}}, "namedSetOfFiles": {"files": [{"name": "images/benchmarks/iperf_context.tar", "uri": "file:///root/workspace/output-base/execroot/_main/bazel-out/k8-opt/bin/images/benchmarks/iperf_context.tar", "pathPrefix": ["bazel-out", "k8-opt", "bin"], "digest": "cc1d621d222f1ebee1c07e9033901f4b029f83b288a87030d724eeca66ddae86", "length": "3491840"}]}}
+{"id": {"targetCompleted": {"label": "//images/benchmarks:iperf_context", "configuration": {"id": "ab795958336554f94a2b150ecfe2b362dbc8d7c50f3cf1f3f2a586cd996ee04a"}}}, "completed": {"success": true, "outputGroup": [{"name": "default", "fileSets": [{"id": "2"}]}]}}
+{"id": {"progress": {"opaqueCount": 25}}, "children": [{"progress": {"opaqueCount": 26}}, {"convenienceSymlinksIdentified": {}}]}
+{"id": {"convenienceSymlinksIdentified": {}}}
+{"id": {"buildFinished": {}}, "children": [{"buildToolLogs": {}}, {"buildMetrics": {}}], "finished": {"overallSuccess": true, "finishTimeMillis": "1792608736136", "exitCode": {"name": "SUCCESS"}, "finishTime": "2026-10-21T18:52:16.136Z"}}
+{"id": {"progress": {"opaqueCount": 26}}}
+{"id": {"buildToolLogs": {}}}
+{"id": {"buildMetrics": {}}}

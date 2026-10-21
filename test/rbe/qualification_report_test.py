@@ -109,6 +109,149 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
+    def external_fixture(self, name: str) -> Path:
+        invocation = self.evidence / name
+        shutil.copytree(FIXTURES / "external-labels" / name, invocation)
+        context = report.read_json(invocation / "context.json")
+        context.pop("lock_before")
+        context.pop("lock_after")
+        report.write_json(invocation / "context.json", context)
+        return invocation
+
+    def external_verdict(self, invocation: Path, analysis: Path | None = None) -> dict[str, object]:
+        self.capture(invocation)
+        events = invocation / "captured.jsonl"
+        value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
+                               invocation / "expected-targets.txt", (analysis,) if analysis else ())
+        report.write_json(invocation / "verdict.json", value)
+        return value
+
+    def test_retained_external_builds_resolve_canonical_repositories(self) -> None:
+        for name, repository, count in (("iperf", "@@iperf+//:iperf3", 3),
+                                         ("benchstat", "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat", 1)):
+            with self.subTest(name=name):
+                invocation = self.external_fixture(name)
+                try:
+                    value = self.external_verdict(invocation)
+                    self.assertEqual((value["status"], value["native_exit"], value["errors"]), ("PASS", 0, []), value)
+                    self.assertEqual(len(value["expected"]), count)
+                    self.assertIn(repository, value["expected_labels"])
+                    self.assertEqual(value["case_counts"], {})
+                    archive = self.root / (name + ".tar.gz")
+                    combined = report.bundle(self.evidence, 0, 0, archive)
+                    self.assertEqual(combined["status"], "PASS", combined)
+                    receipt = report.receipt(archive, report.file_record(archive)["sha256"], value["source"])
+                    self.assertEqual(receipt["status"], "PASS", receipt)
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_external_selection_requires_complete_unambiguous_expansion(self) -> None:
+        for damage, status, diagnostic in (
+            ("missing", "INCOMPLETE", "Pattern expansion differs"),
+            ("duplicate", "INCOMPLETE", "Pattern expansion differs"),
+            ("extra-child", "INCOMPLETE", "ambiguous external pattern"),
+            ("changed-pattern", "INCOMPLETE", "Pattern expansion differs"),
+            ("changed-cli", "INCOMPLETE", "Executed literal targets differ"),
+            ("missing-owner", "INCOMPLETE", "Expected labels absent"),
+            ("extra-owner", "INCOMPLETE", "Configured owners differ"),
+            ("extra-config", "INCOMPLETE", "exactly one configured owner"),
+            ("missing-completion", "INCOMPLETE", None),
+            ("wrong-config", "INCOMPLETE", None),
+            ("analysis-changed", "INCOMPLETE", "changed between analysis and execution"),
+            ("analysis-missing", "INCOMPLETE", "Pattern expansion differs"),
+            ("invalid-expected", "INCOMPLETE", "distinct explicit owner labels"),
+            ("native-failure", "FAIL", "Pattern expansion differs"),
+        ):
+            with self.subTest(damage=damage):
+                invocation = self.external_fixture("benchstat")
+                try:
+                    events = self.events(invocation)
+                    expansion, = [event for event in events if "pattern" in event["id"]]
+                    configured, = [event for event in events if "configured" in event]
+                    completion, = [event for event in events if "completed" in event]
+                    analysis = None
+                    if damage in ("missing", "native-failure"):
+                        events.remove(expansion)
+                        if damage == "native-failure":
+                            (invocation / "native-exit").write_text("1\n")
+                    elif damage == "duplicate":
+                        events.append(expansion)
+                    elif damage == "extra-child":
+                        expansion["children"].append(expansion["children"][0])
+                    elif damage == "changed-pattern":
+                        expansion["id"]["pattern"]["pattern"] = ["@other//:tool"]
+                    elif damage == "changed-cli":
+                        (invocation / "arguments.txt").write_text("build\n@other//:tool\n")
+                    elif damage == "missing-owner":
+                        events.remove(configured)
+                    elif damage == "extra-owner":
+                        extra = json.loads(json.dumps(configured).replace("@@gazelle++go_deps+org_golang_x_perf", "@@other"))
+                        events.append(extra)
+                    elif damage == "extra-config":
+                        extra = json.loads(json.dumps(configured))
+                        extra["children"][0]["targetCompleted"]["configuration"]["id"] = "changed"
+                        events.append(extra)
+                    elif damage == "missing-completion":
+                        events.remove(completion)
+                    elif damage == "wrong-config":
+                        completion["id"]["targetCompleted"]["configuration"]["id"] = "changed"
+                    elif damage.startswith("analysis-"):
+                        analysis = invocation / "analysis.jsonl"
+                        independent = json.loads(json.dumps(events))
+                        if damage == "analysis-missing":
+                            independent = [event for event in independent if "pattern" not in event["id"]]
+                        else:
+                            independent = json.loads(json.dumps(independent).replace("@@gazelle++go_deps+org_golang_x_perf", "@@changed"))
+                        analysis.write_text("".join(json.dumps(event) + "\n" for event in independent))
+                    elif damage == "invalid-expected":
+                        (invocation / "expected-targets.txt").write_text("@org_golang_x_perf//...\n")
+                        (invocation / "arguments.txt").write_text("build\n@org_golang_x_perf//...\n")
+                    self.write_events(invocation, events)
+                    value = self.external_verdict(invocation, analysis)
+                    self.assertEqual(value["status"], status, value)
+                    if diagnostic is not None:
+                        self.assertTrue(any(diagnostic in error for error in value["errors"]), value)
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_external_analysis_keeps_exact_configurations(self) -> None:
+        invocation = self.external_fixture("benchstat")
+        analysis = invocation / "analysis.jsonl"
+        shutil.copyfile(invocation / "events.jsonl", analysis)
+        value = self.external_verdict(invocation, analysis)
+        self.assertEqual((value["status"], value["errors"]), ("PASS", []), value)
+        events = self.events(invocation)
+        for event in events:
+            event_text = json.dumps(event)
+            configured = value["expected"][0]["configuration"]
+            event.update(json.loads(event_text.replace(configured, "changed")))
+        self.write_events(invocation, events)
+        value = self.external_verdict(invocation, analysis)
+        self.assertEqual(value["status"], "INCOMPLETE", value)
+        self.assertEqual(value["expected"][0]["configuration"], configured)
+
+    def test_external_tests_preserve_failures_incomplete_and_zero_cases(self) -> None:
+        for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"), ("zero", "INCOMPLETE")):
+            with self.subTest(name=name):
+                invocation = self.fixture(name)
+                originals = (invocation / "expected.txt").read_text().splitlines()
+                literals = [f"@fixture//:test{index}" for index in range(len(originals))]
+                canonical = [literal.replace("@fixture", "@@fixture+") for literal in literals]
+                text = json.dumps(self.events(invocation))
+                for original, label in zip(originals, canonical, strict=True):
+                    text = text.replace(json.dumps(original), json.dumps(label))
+                events = json.loads(text)
+                events.insert(0, {"id": {"pattern": {"pattern": literals}},
+                                  "children": [{"targetConfigured": {"label": label}} for label in canonical]})
+                self.write_events(invocation, events)
+                (invocation / "expected.txt").write_text("\n".join(literals) + "\n")
+                (invocation / "executed-arguments.txt").write_text("test\n" + "\n".join(literals) + "\n")
+                self.capture(invocation)
+                value = self.verdict(invocation)
+                self.assertEqual(value["status"], status, value)
+                if name == "zero":
+                    self.assertEqual(len(value["zero_case_owners"]), 1)
+
     def source_image_fixture(self) -> Path:
         invocation = self.evidence / "source-images"
         shutil.copytree(FIXTURES / "source-images", invocation)

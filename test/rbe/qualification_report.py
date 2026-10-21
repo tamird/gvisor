@@ -1833,6 +1833,31 @@ def marshal_test_contract(log: Path) -> dict[str, object]:
     return value
 
 
+def expanded_owner_labels(expansions: list[dict[str, object]], literals: list[str]) -> set[str]:
+    """Resolve explicit external selections through Bazel's pattern graph."""
+    def explicit(label: str) -> bool:
+        return (re.fullmatch(r"(?:@{1,2}[^/\s]+)?//[^:\s]*:[^:\s]+", label) is not None
+                and "..." not in label and label.rsplit(":", 1)[1] not in ("*", "all", "all-targets"))
+
+    if not literals or len(literals) != len(set(literals)) or not all(map(explicit, literals)):
+        raise ValueError("External selection requires distinct explicit owner labels")
+    requested: list[str] = []
+    resolved: list[str] = []
+    for event in expansions:
+        patterns = [string(value) for value in sequence(mapping(mapping(event.get("id")).get("pattern")).get("pattern"))]
+        children = [string(mapping(mapping(child).get("targetConfigured")).get("label"))
+                    for child in sequence(event.get("children", []))]
+        if ("aborted" in event or not patterns or len(patterns) != len(children)
+                or not all(map(explicit, children))):
+            raise ValueError("Missing or ambiguous external pattern expansion")
+        requested.extend(patterns)
+        resolved.extend(children)
+    if (sorted(requested) != sorted(literals) or len(resolved) != len(set(resolved))
+            or not set(label for label in literals if not label.startswith("@") or label.startswith("@@")) <= set(resolved)):
+        raise ValueError("Pattern expansion differs from the explicit expected selection")
+    return set(resolved)
+
+
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
             expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None,
             declared_benchmarks: Path | None = None) -> dict[str, object]:
@@ -1894,12 +1919,15 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     jtreg_tests: set[Owner] = set()
     nodejs_tests: set[Owner] = set()
     exact_nodejs_tests: set[Owner] = set()
+    expansions: list[dict[str, object]] = []
     with events.open() as stream:
         for line_number, line in enumerate(stream, 1):
             try:
                 event = mapping(json.loads(line))
                 identity = mapping(event.get("id"))
                 children = [mapping(child) for child in sequence(event.get("children", []))]
+                if "pattern" in identity:
+                    expansions.append(event)
                 if "configured" in event:
                     details = mapping(event["configured"])
                     if details.get("targetKind") != "test_suite rule" and (not testing or "testSize" in details):
@@ -1948,7 +1976,25 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             except (ValueError, TypeError) as error:
                 errors.append(f"BEP line {line_number}: {error}")
     configured -= skipped_owners
-    labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
+    labels: set[str] = set()
+    external_literals: list[str] = []
+    if expected_targets is not None:
+        try:
+            literals = expected_targets.read_text().splitlines()
+            if any(label.startswith("@") for label in literals):
+                external_literals = literals
+                # Explicit external selections use --option=value arguments;
+                # do not guess whether a positional word is an option value.
+                arguments = info["arguments"]
+                command = arguments.index(info["bazel_command"])
+                actual = [argument for argument in arguments[command + 1:] if not argument.startswith("--")]
+                if sorted(actual) != sorted(literals):
+                    raise ValueError("Executed literal targets differ from the expected external selection")
+                labels = expanded_owner_labels(expansions, literals)
+            else:
+                labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True))
+        except (OSError, ValueError) as error:
+            errors.append(f"Expected targets: {error}")
     expected: set[Owner] = set()
     expected_aspects: set[Aspect] = set()
     negative_tests: set[Owner] = set()
@@ -1979,6 +2025,11 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                                 if "go-benchmark-contract" in target.tags)
             expected_aspects.update(Aspect(Owner(label, target.configuration), name)
                                     for label, target in targets.items() for name in target.aspects)
+            if external_literals:
+                with analysis.open() as stream:
+                    analysis_expansions = [event for line in stream if "pattern" in mapping((event := mapping(json.loads(line))).get("id"))]
+                if expanded_owner_labels(analysis_expansions, external_literals) != labels:
+                    raise ValueError("External pattern expansion changed between analysis and execution")
         except (OSError, ValueError) as error:
             errors.append(f"Expected analysis: {error}")
     build_outputs = []
@@ -2010,6 +2061,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append("Expected labels absent from configured invocation")
     if not expected:
         errors.append("No expected configured owners")
+    if external_literals and len(configured) != len(labels):
+        errors.append("External selection requires exactly one configured owner per expanded label")
     # A test command may also build test rules excluded by its execution
     # filters. Independent test-only analysis owns selection; results and
     # summaries below must still belong to that exact set of configurations.
