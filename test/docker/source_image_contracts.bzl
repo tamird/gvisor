@@ -85,6 +85,7 @@ declared_image_archive = rule(
 def _owner_label(label):
     # BEP omits the canonical main-repository prefix from owner labels.
     label = str(label)
+
     # This recognizes Bazel's output; it does not name a repository dependency.
     # buildifier: disable=canonical-repository
     return label[2:] if label.startswith("@@//") else label
