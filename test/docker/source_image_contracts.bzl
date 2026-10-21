@@ -59,6 +59,11 @@ declared_image_archive = rule(
     },
 )
 
+def _owner_label(label):
+    # BEP omits the canonical main-repository prefix from owner labels.
+    label = str(label)
+    return label[2:] if label.startswith("@@//") else label
+
 def _source_image_contracts_impl(target, ctx):
     if _ImageArchiveInfo in target:
         # The archive's build can itself consume images. Those are producer
@@ -71,7 +76,7 @@ def _source_image_contracts_impl(target, ctx):
         command = target[ImageSourceCommandInfo]
         images = depset()
         commands = depset([struct(
-            owner = str(ctx.label),
+            owner = _owner_label(ctx.label),
             architecture = command.architecture,
             image_class = command.image_class,
             images = tuple(command.images),
@@ -98,7 +103,7 @@ def _source_image_contracts_impl(target, ctx):
         output = ctx.actions.declare_file(ctx.label.name + ".source-images.json")
         ctx.actions.write(output, json.encode({
             "schema_version": 1,
-            "owner": str(ctx.label),
+            "owner": _owner_label(ctx.label),
             "images": [{
                 "name": image.name,
                 "architecture": image.architecture,
