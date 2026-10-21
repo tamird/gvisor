@@ -99,8 +99,11 @@ def coordinator_policy(lanes: list[str], architecture: str, execution: str,
 def dispatch_kinds(lanes: list[str], architecture: str, execution: str) -> list[str]:
     """Require real work, not just a successful query or analysis preflight."""
     builds = {"build", "build-all", "presubmit-build", "plugin-build", "codeql",
-              "lint-cc", "python-distributions", "website", "release-artifacts"}
-    commands = {"gazelle", "license-check", "license-fetch"}
+              "lint-cc", "python-distributions", "website", "release-artifacts",
+              "license-check", "license-fetch"}
+    # Make runs the license tool directly after its captured Bazel builds;
+    # the lane ledger records the tool's exit status.
+    commands = {"gazelle"}
     if architecture == "all" and execution == "remote":
         # qualify.sh combines compatible lanes into one build or test command.
         separate = set(lanes) & {"presubmit-build", "lint-cc", "gazelle", "syscalls-rc"}
