@@ -914,6 +914,93 @@ def input_chain(records: dict[int, dict[str, object]], start: int, target: int) 
     return None
 
 
+def image_command_result(attempt: Attempt, reports: dict[tuple[Attempt, str], Path],
+                         command: dict[str, object]) -> dict[str, object]:
+    """Read one image-build shard; the caller must prove its source ancestry."""
+    prefix = "source-images/"
+    files: dict[str, bytes] = {}
+    if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
+        with zipfile.ZipFile(archive_path) as archive:
+            total = 0
+            for item in archive.infolist():
+                if not item.filename.startswith(prefix) or item.is_dir():
+                    continue
+                total += item.file_size
+                if item.filename in files or item.file_size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
+                    raise ValueError("Duplicate or oversized image-build result")
+                files[item.filename] = archive.read(item)
+    else:
+        files = {name.removeprefix("test.outputs/"): path.read_bytes()
+                 for (owner, name), path in reports.items()
+                 if owner == attempt and name.startswith("test.outputs/" + prefix)}
+    selection = mapping(json.loads(files[prefix + "selection.json"]))
+    if (set(selection) != {"schema_version", "architecture", "image_class", "partition", "partitions", "cohort", "selected", "images"}
+            or type(selection["schema_version"]) is not int or selection["schema_version"] != 1
+            or selection["architecture"] != command["architecture"] or selection["image_class"] != command["image_class"]
+            or type(selection["partition"]) is not int or type(selection["partitions"]) is not int
+            or selection["partition"] != attempt.shard or not 1 <= selection["partition"] <= selection["partitions"]):
+        raise ValueError("Image-build selection differs from its configured command or shard")
+    names = {}
+    for key in ("cohort", "selected", "images"):
+        values = [string(name) for name in sequence(selection[key])]
+        if (len(values) != len(set(values)) or key != "images" and not values
+                or any(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name) is None for name in values)):
+            raise ValueError(f"Invalid or duplicate image names: {key}")
+        names[key] = set(values)
+    selected = set(sequence(command["images"])) or names["cohort"]
+    if names["selected"] != selected or not names["images"] <= selected <= names["cohort"]:
+        raise ValueError("Image-build selection differs from its declared cohort")
+    expected_files = {prefix + "selection.json"} | {
+        prefix + image + "/" + name for image in names["images"]
+        for name in ("request.json", "build-exit-code", "inspect.json", "exit-code")
+    }
+    if files.keys() != expected_files:
+        raise ValueError("Image-build results are missing or unexpected")
+    architecture = {"x86_64": "amd64", "aarch64": "arm64"}[string(command["architecture"])]
+    results = []
+    for image in sequence(selection["images"]):
+        path = prefix + string(image) + "/"
+        request = mapping(json.loads(files[path + "request.json"]))
+        if (set(request) != {"schema_version", "image", "architecture", "operation", "reference", "archive_sha256"}
+                or type(request["schema_version"]) is not int or request["schema_version"] != 1
+                or request["image"] != image or request["architecture"] != command["architecture"]
+                or request["operation"] not in ("docker-build", "archive-load")):
+            raise ValueError(f"Image-build request differs from its selection: {image}")
+        archive = request["archive_sha256"]
+        if (request["operation"] == "docker-build" and archive is not None
+                or request["operation"] == "archive-load" and re.fullmatch(r"[0-9a-f]{64}", string(archive)) is None):
+            raise ValueError(f"Invalid image-build archive identity: {image}")
+        if any(files[path + name].strip() != b"0" for name in ("build-exit-code", "exit-code")):
+            raise ValueError(f"Image build or result collection failed: {image}")
+        observations = sequence(json.loads(files[path + "inspect.json"]))
+        if len(observations) != 1:
+            raise ValueError(f"Expected one built image: {image}")
+        observed = mapping(observations[0])
+        reference = string(request["reference"])
+        image_name = string(image).replace("_", "/")
+        if (re.fullmatch(r"gvisor\.dev/images/" + re.escape(image_name) + r":[0-9a-f]{16}", reference) is None
+                or reference not in sequence(observed.get("RepoTags"))
+                or observed.get("Os") != "linux" or observed.get("Architecture") != architecture
+                or re.fullmatch(r"sha256:[0-9a-f]{64}", string(observed.get("Id"))) is None):
+            raise ValueError(f"Built image identity or platform differs: {image}")
+        results.append({"image": image_name, "architecture": architecture, "operation": request["operation"],
+                        "archive_sha256": archive, "reference": reference, "image_id": observed["Id"]})
+    return {**selection, "results": results}
+
+
+def image_command_partitions(rows: list[dict[str, object]]) -> None:
+    """Require every selected image exactly once across one run's shards."""
+    if not rows:
+        raise ValueError("Missing image-build shards")
+    first = rows[0]
+    shared = ("architecture", "image_class", "partitions", "cohort", "selected")
+    if (number(first["partitions"]) != len(rows)
+            or any(any(row[key] != first[key] for key in shared) for row in rows)
+            or Counter(number(row["partition"]) for row in rows) != Counter(range(1, len(rows) + 1))
+            or Counter(string(image) for row in rows for image in sequence(row["images"])) != Counter(sequence(first["selected"]))):
+        raise ValueError("Image-build shards differ from the complete selected cohort")
+
+
 def declared_source_images(value: object) -> list[dict[str, object]]:
     """Validate image origins without changing the original schema-1 source form."""
     images = [mapping(image) for image in sequence(value)]

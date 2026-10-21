@@ -1365,6 +1365,91 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 1))
         self.assertEqual([row["label"] for row in value["failures"]], [extra])
 
+    def image_command_files(self, architecture="x86_64"):
+        images = ["basic_alpine", "benchmarks_profile-helper"]
+        command = {"owner": "//test/docker:images", "architecture": architecture, "image_class": "cpu", "images": []}
+        selection = {"schema_version": 1, "architecture": architecture, "image_class": "cpu",
+                     "partition": 1, "partitions": 1, "cohort": images, "selected": images, "images": images}
+        files = {"source-images/selection.json": json.dumps(selection).encode()}
+        for image, operation in zip(images, ("docker-build", "archive-load"), strict=True):
+            reference = "gvisor.dev/images/" + image.replace("_", "/") + ":" + "a" * 16
+            path = "source-images/" + image + "/"
+            files[path + "request.json"] = json.dumps({
+                "schema_version": 1, "image": image, "architecture": architecture, "operation": operation,
+                "reference": reference, "archive_sha256": "b" * 64 if operation == "archive-load" else None}).encode()
+            files[path + "build-exit-code"] = files[path + "exit-code"] = b"0\n"
+            files[path + "inspect.json"] = json.dumps([{
+                "Id": "sha256:" + "c" * 64, "RepoTags": [reference], "Os": "linux",
+                "Architecture": {"x86_64": "amd64", "aarch64": "arm64"}[architecture]}]).encode()
+        return command, files
+
+    def image_command_reports(self, attempt, files, zipped=False):
+        directory = Path(tempfile.mkdtemp(dir=self.root))
+        if zipped:
+            path = directory / "outputs.zip"
+            with zipfile.ZipFile(path, "w") as archive:
+                for name, data in files.items():
+                    archive.writestr(name, data)
+            return {(attempt, "test.outputs__outputs.zip"): path}
+        reports = {}
+        for name, data in files.items():
+            path = directory / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            reports[attempt, "test.outputs/" + name] = path
+        return reports
+
+    def test_image_results_require_exact_selection_and_successful_outputs(self) -> None:
+        attempt = report.Attempt(report.Owner("//test:images", "configuration"), 1, 1, 1)
+        for architecture, zipped in itertools.product(("x86_64", "aarch64"), (False, True)):
+            with self.subTest(architecture=architecture, zipped=zipped):
+                command, files = self.image_command_files(architecture)
+                result = report.image_command_result(attempt, self.image_command_reports(attempt, files, zipped), command)
+                self.assertEqual([row["operation"] for row in result["results"]], ["docker-build", "archive-load"])
+                report.image_command_partitions([result])
+        for damage, expected in (
+                ("selection", "selection differs from its declared cohort"),
+                ("missing", "results are missing or unexpected"),
+                ("build", "build or result collection failed"),
+                ("collection", "build or result collection failed"),
+                ("platform", "identity or platform differs"),
+                ("tag", "identity or platform differs"),
+                ("archive", "Invalid image-build archive identity")):
+            with self.subTest(damage=damage):
+                command, files = self.image_command_files()
+                if damage == "selection":
+                    command["images"] = ["basic_alpine"]
+                elif damage == "missing":
+                    files.pop("source-images/basic_alpine/exit-code")
+                elif damage in ("build", "collection"):
+                    name = "build-exit-code" if damage == "build" else "exit-code"
+                    files["source-images/basic_alpine/" + name] = b"17\n"
+                elif damage in ("platform", "tag"):
+                    path = "source-images/basic_alpine/inspect.json"
+                    value = json.loads(files[path])
+                    value[0]["Architecture" if damage == "platform" else "RepoTags"] = "arm64" if damage == "platform" else []
+                    files[path] = json.dumps(value).encode()
+                else:
+                    path = "source-images/benchmarks_profile-helper/request.json"
+                    value = json.loads(files[path])
+                    value["archive_sha256"] = "unknown"
+                    files[path] = json.dumps(value).encode()
+                with self.assertRaisesRegex(ValueError, expected):
+                    report.image_command_result(attempt, self.image_command_reports(attempt, files), command)
+
+    def test_image_shards_must_cover_the_complete_cohort_once(self) -> None:
+        _, files = self.image_command_files()
+        selection = json.loads(files["source-images/selection.json"])
+        first, second = selection["images"]
+        rows = [selection | {"partitions": 2, "partition": index, "images": [image]}
+                for index, image in enumerate((first, second), 1)]
+        report.image_command_partitions(rows)
+        for broken in ([], rows[:1], rows + rows[:1],
+                       [rows[0], rows[1] | {"images": [first]}],
+                       [rows[0], rows[1] | {"selected": [second]}]):
+            with self.subTest(rows=broken), self.assertRaisesRegex(ValueError, "Missing image-build shards|shards differ"):
+                report.image_command_partitions(broken)
+
     def test_retained_test_no_build_preflight(self) -> None:
         events = FIXTURES / "analysis-no-build/events.jsonl"
         value = report.preflight(events, 1, "test")
