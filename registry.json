@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T03:25:25.998043+00:00",
+    "updatedAt": "2026-10-21T03:36:34.193987+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -5960,7 +5960,7 @@
       "followup": {
         "owner": "root",
         "sourceHead": "d7ece726b59962e27b3358c4c851333d1cd28db1",
-        "observedAt": "2026-10-21T03:18:07.166983+00:00",
+        "observedAt": "2026-10-21T03:28:38.471325+00:00",
         "disposition": "Benchmark/source-consumer union complete; final reconciliation and external limits remain",
         "nextAction": "Use the accepted 24-owner union in final qualification reconciliation. Follow GPU project/capacity selection and the hosted VFS provider issue separately; no benchmark replay or active collector remains.",
         "evidence": [
