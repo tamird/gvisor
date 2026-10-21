@@ -1,15 +1,16 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T13:56:04.974074+00:00",
+    "updatedAt": "2026-10-21T14:08:34.830807+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
-    "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
+    "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
     "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
     "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Retained unpublished source remains visible; obsolete validation branches are omitted. Landed prerequisites are not active blockers.",
     "repositories": {
       "google/gvisor": "copybara",
-      "buildbuddy-io/buildbuddy": "none"
+      "buildbuddy-io/buildbuddy": "none",
+      "golang/tools": "none"
     }
   },
   "groups": [
@@ -16246,15 +16247,15 @@
       "title": "Build the basic images with rules_img",
       "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
       "group": "bazel",
-      "status": "Conditional approval; layout validation in progress",
-      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
-      "summary": "The contributor approved the migration subject to consolidating the former Dockerfile directories. The reviewed refinement places all three declarations in images/basic/BUILD with the exact tmpfile fixture alongside it. Explicit image names preserve tags and nested Make context paths while helper targets receive distinct names. One combined remote gate at child 5ac1aa8e95 validates the final basic and syscallbench layouts. Earlier AMD64/ARM64 archive, Make/container and license results remain accepted at their original sources; they are not presented as execution of this refinement. There is no held image or license proposal prerequisite.",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-21T14:08:34.830807+00:00",
+      "summary": "The requested directory consolidation is complete and independently validated. The three declarations now share images/basic/BUILD with the exact tmpfile fixture alongside it; stable image names, tags and nested Make context paths are preserved. The final combined gate at child 5ac1aa8e95 passes all 15 configured outputs (nine AMD64 and six ARM64), formatting, all three actual basic-image Make rebuild/deleted-tag restoration/container checks, and the child benchmark checks. The parent layout is source-bound to exact cf55245b69. Root has requested the concrete final contributor decision on this parent. Runtime coverage is AMD64; ARM64 coverage is archive/context construction. Earlier failures and canonical license evidence retain their original source identities. There is no held image or license proposal prerequisite.",
       "followup": {
         "owner": "root",
-        "disposition": "Owner completing conditional approval",
+        "disposition": "Final contributor decision pending",
         "sourceHead": "cf55245b69a60372882c5b01008b505c00e7e17d",
-        "observedAt": "2026-10-21T13:56:04.974074+00:00",
-        "nextAction": "Node owns the single combined layout gate. Reconcile its complete result and final range-diff, then deliver the conditionally approved basic-image proposal.",
+        "observedAt": "2026-10-21T14:08:34.830807+00:00",
+        "nextAction": "Await the already-requested decision on final parent cf55245b69, then deliver it. Source review and combined layout validation are complete; do not repeat the approval question or workload.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
           "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
@@ -16277,14 +16278,10 @@
           "url": "https://app.buildbuddy.io/invocation/4da02be7-2fbd-4976-b013-3213fdba22ae"
         },
         {
-          "label": "Current combined layout validation",
+          "label": "Accepted final combined layout validation",
           "url": "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "cf55245b69a60372882c5b01008b505c00e7e17d",
-        "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d"
-      },
       "refinement": {
         "before": {
           "head": "8f8c2b71ad946e5fcf2256b88c510d6bad90885e"
@@ -16292,6 +16289,11 @@
         "after": {
           "head": "cf55245b69a60372882c5b01008b505c00e7e17d"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "cf55245b69a60372882c5b01008b505c00e7e17d",
+        "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d"
       }
     },
     {
@@ -16303,15 +16305,15 @@
       "title": "Build the syscall benchmark image from source",
       "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
       "group": "bazel",
-      "status": "Conditional approval; layout validation in progress",
-      "updatedAt": "2026-10-21T13:56:04.974074+00:00",
-      "summary": "The contributor approved this child subject to the same directory consolidation. The reviewed source now lives in images/benchmarks/BUILD and syscallbench.c; the C bytes, static linkage settings, BusyBox base, executable path and AMD64-only contract are unchanged. The original 16ac296202 gate passed static ELF checks, actual Make rebuild/deleted-tag restoration and all four existing runc benchmark modes at 100 iterations each, with a verified receipt 4.500 seconds after execution and no intervention. A single combined gate now validates the refined layout at 5ac1aa8e95. This proposal depends only on the basic-image adapter; no comparative performance or ARM support is claimed.",
+      "status": "Contributor approved; awaiting prerequisite",
+      "updatedAt": "2026-10-21T14:08:34.830807+00:00",
+      "summary": "The contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
       "followup": {
         "owner": "root",
-        "disposition": "Owner completing conditional approval",
+        "disposition": "Contributor approved; parent prerequisite remains",
         "sourceHead": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
-        "observedAt": "2026-10-21T13:56:04.974074+00:00",
-        "nextAction": "Node owns the single combined layout gate. After accepted final validation and the basic-image prerequisite lands, deliver the conditionally approved child without duplicating the adapter.",
+        "observedAt": "2026-10-21T14:08:34.830807+00:00",
+        "nextAction": "Deliver the approved child after the basic-image parent lands, preserving the reviewed layout and exact range-diff. Validation is complete; no new child approval question or repeated runtime gate is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
           "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
@@ -16329,14 +16331,10 @@
           "url": "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6"
         },
         {
-          "label": "Current combined layout validation",
+          "label": "Accepted final combined layout validation",
           "url": "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
-        "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
-      },
       "refinement": {
         "before": {
           "head": "16ac29620279b0c0ecdfc4df2739ea854c8f38d3"
@@ -16345,6 +16343,37 @@
           "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
         }
       }
+    },
+    {
+      "id": "pr:golang/tools:702",
+      "type": "pr",
+      "repo": "golang/tools",
+      "number": 702,
+      "ref": "gcexportdata-format-docs",
+      "head": "670ec820600f50f41d2f5c05ade377b954c6e705",
+      "title": "go/gcexportdata: clarify which export files require NewReader",
+      "url": "https://github.com/golang/tools/pull/702",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-10-21T14:08:34.830807+00:00",
+      "summary": "The reviewed documentation clarification is delivered upstream at exact 670ec8206. Package and API comments distinguish compiler archives, which require NewReader, from standalone Write/cmd/export files, which Read accepts directly. The change explains the Go 1.28 output transition and the already-announced Go 1.29 compiler-export deprecation. It changes no implementation; tests were not run for this documentation-only patch. This is related documentation work, not a prerequisite for the independent Nogo migration.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "670ec820600f50f41d2f5c05ade377b954c6e705",
+        "observedAt": "2026-10-21T14:08:34.830807+00:00",
+        "disposition": "Delivered; upstream review remains",
+        "nextAction": "Follow the published documentation proposal through the existing ordinary review cadence when it resumes. No Nogo delivery dependency or new contributor decision is implied.",
+        "evidence": [
+          "https://github.com/golang/tools/pull/702",
+          "https://github.com/golang/go/issues/79427"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact delivered documentation and description",
+          "url": "https://github.com/golang/tools/pull/702/commits/670ec820600f50f41d2f5c05ade377b954c6e705"
+        }
+      ]
     }
   ],
   "edges": [

@@ -3,10 +3,11 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-21T10:53:38.867401+00:00",
-  "registryDate": "2026-10-21T13:56:04.974074+00:00",
+  "registryDate": "2026-10-21T14:08:34.830807+00:00",
   "repositories": {
     "google/gvisor": "copybara",
-    "buildbuddy-io/buildbuddy": "none"
+    "buildbuddy-io/buildbuddy": "none",
+    "golang/tools": "none"
   },
   "prs": [
     {
@@ -129398,21 +129399,12 @@
       }
     },
     "branch:rules-img-basic-images": {
-      "changes-requested": {
+      "contributor-review": {
         "scope": "cf55245b69a60372882c5b01008b505c00e7e17d",
-        "since": "2026-10-21T13:56:04.974074+00:00",
+        "since": "2026-10-21T14:08:34.830807+00:00",
         "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-10-21T13:56:04.974074+00:00"
-      }
-    },
-    "branch:rules-img-syscallbench": {
-      "changes-requested": {
-        "scope": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
-        "since": "2026-10-21T13:56:04.974074+00:00",
-        "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-10-21T13:56:04.974074+00:00"
+        "qualifier": null,
+        "observedAt": "2026-10-21T14:08:34.830807+00:00"
       }
     }
   },
