@@ -77,6 +77,133 @@ explicit targets, such as the workflow checks, join the same verified graph.
 Configured expected owners and actual execution records establish which
 architectures ran.
 
+## Running the supported public matrix
+
+Use the sequence below for source qualification across the public CPU profiles.
+The `amd64` shorthand above is only the remote subset. A complete result combines
+that work with the native routes, both PGO modes and the recorded exclusions;
+there is no single lane that substitutes for this matrix. Ordinary compilation
+uses RBE. Compatible remote lanes share one Bazel graph; native routes use the
+Actions host for tests and image builds that need its capabilities.
+
+Choose one published `qualification/` branch containing this workflow, keep it
+fixed until all dispatches have started, and record its exact commit:
+
+```sh
+QUALIFICATION_REF=qualification/final-public-ci
+SOURCE_COMMIT=$(gh api "repos/tamird/gvisor/git/ref/heads/$QUALIFICATION_REF" \
+  --jq .object.sha)
+```
+
+The fork needs its existing `BUILDBUDDY_API_KEY` secret. Set `BASE_COMMIT` to the
+full comparison SHA for license headers, and obtain the complete COS catalog as
+[described below](#selecting-qualification-lanes). Preserve the catalog bytes,
+capture time and SHA256. These are side inputs, not replacements for source.
+The workflow checks out its immutable triggering SHA; reject a result whose
+head differs from `SOURCE_COMMIT` rather than combining different revisions.
+
+For each row below, set `LANES`, `ARCH` and `EXECUTION` to its literal values and
+dispatch the existing workflow. A cell containing **separate:** requires one
+dispatch per listed lane, not a combined local invocation. Empty `targets`,
+`test_filter` and `syscall_bucket` inputs preserve each complete selection.
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref "$QUALIFICATION_REF" \
+  -f "lanes=$LANES" -f "architecture=$ARCH" -f "execution=$EXECUTION"
+```
+
+| `LANES` | `ARCH` | `EXECUTION` |
+| --- | --- | --- |
+| `presubmit-build` | `all` | `remote` |
+| `build-all` | `amd64` | `remote` |
+| `nogo workflows gazelle lint lint-cc governance` | `all` | `remote` |
+| `release-artifacts release-repository python-distributions website plugin-build go-export codeql` | `all` | `remote` |
+| `unit` | `all` | `local` |
+| `unit-v1 docker-v1` | `all` | `remote` |
+| `smoke smoke-race do bwrap` | `all` | `remote` |
+| `overlay swgso hostnet containerd fsstress packetimpact iptables nftables packetdrill kubernetes podman syzkaller` | `all` | `remote` |
+| `docker` | `amd64` | `remote` |
+| **separate:** `smoke`, `bwrap`, `docker`, `cpu-images`, `gpu-images` | `arm64` | `local` |
+| **separate:** `container`, `container-v1-pilot`, `container-v1` | `amd64` | `local` |
+| **separate:** `kvm`, `startup`, `posture`, `portforward`, `root`, `plugin-network`, `moby`, `benchmarks` | `amd64` | `local` |
+| **separate:** `syscalls`, `syscalls-save`, `syscalls-kvm` | `amd64` | `local` |
+| **separate:** `syscalls`, `syscalls-resume` | `arm64` | `local` |
+| **separate:** `syscalls-64k`, `kvm` | `arm64` | `remote` |
+| `syscalls-rc` | `all` | `local` |
+| **separate:** `language-directfs`, `language-goferfs` | `all` | `remote` |
+| `language-goferfs` | `amd64` | `local` |
+| `license-check` | `amd64` | `remote` |
+
+The local language row selects both PHP filesystem modes only; it does not
+replace the complete remote language selections. The native ARM rows cover
+owners omitted for unavailable ARM64 Firecracker capacity. Keep those omissions
+visible in the remote result and require their native results separately. For
+`container`, pass `-f local_test_requirements=kvm`; complete the cgroup-v1 pilot
+before its full lane. The all/local RC row executes both public kernel profiles
+through their declared AMD64 KVM and ARM64 TCG guests.
+
+Dispatch the two side-input lanes explicitly:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref "$QUALIFICATION_REF" \
+  -f lanes=license-headers -f architecture=all -f execution=remote \
+  -f "header_base=$BASE_COMMIT"
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref "$QUALIFICATION_REF" \
+  -f lanes=cos-metadata -f architecture=all -f execution=remote \
+  -f "cos_catalog_gzip_base64=$(gzip -n -c "$COS_IMAGES_JSON" | base64 | tr -d '\n')" \
+  -f "cos_catalog_sha256=$(sha256sum "$COS_IMAGES_JSON" | cut -d ' ' -f 1)"
+```
+
+For AMD64 image production, use the long remote `test` route with
+`targets=//test/docker:cpu_image_sources_amd64_test`, then with
+`targets=//test/docker:gpu_image_sources_amd64_test`; set `architecture=all`
+and `execution=remote` for each. These explicit owners retain their declared
+AMD64 platforms and complete canonical Make cohorts. Also retain Make's
+`NON_TEST_IMAGES` exclusions: image production is distinct from device execution,
+and separately declared archive/load checks do not become part of those cohorts.
+Run both six-owner selections in [PGO profile generation](#pgo-profile-generation)
+using the same source. License fetching and publishing/deploying releases or the
+website are separate operations, not qualification prerequisites.
+
+Record each workflow run ID and attempt. For Actions coordinators, attach the
+maintained collector with a distinct prefix. Set `ARCH` to that dispatch's input,
+including `all`; the artifact name records the selection, not the host CPU.
+
+```sh
+python3 test/rbe/collect_actions.py --run "$run_id" --run-attempt "$run_attempt" \
+  --source "$SOURCE_COMMIT" --architecture "$ARCH" --watch-seconds 18000 \
+  --prefix "$receipt_prefix"
+```
+
+The AMD64 remote `docker` and `license-check` rows and ARM64 remote `kvm` row
+use hosted Remote Bazel instead. Attach the documented
+[`native-receipt` command](#qualification-reports) to their BuildBuddy invocation
+IDs; they do not publish an Actions qualification ZIP.
+
+The finite Actions watch covers the longest local benchmark job. Work and
+per-test limits remain unchanged. A deadline, missing owner, failed test or failed
+collection remains a failed or incomplete result. If a full lane exceeds its
+budget, use its documented owner/bucket selection and reconcile the exact union;
+a passing subset does not close the lane. Retain all original attempts.
+Authenticate every bundle and use the maintained
+[`source-images` audit](#qualification-reports) for each applicable consumer
+invocation, with source-declared owner/image obligations and required measured
+cases. Preserve auxiliary command phases, configured attempts, source/archive
+identities, native statuses, named outcomes and explicit skips when composing
+the matrix. A green workflow alone does not establish complete qualification.
+
+Physical GPU/TPU execution requires the dedicated hosts described below; CPU
+image construction supplies no device-runtime credit. Missing NVIDIA source tags
+leave their ABI comparisons unqualified until those upstream sources exist.
+These are separate from the public filters and supported-scope exclusions:
+SlimVM, Java's `-tl:200` policy, checked-in runtime exclusions, kernel-dependent
+skips and Make's image exclusions. Preserve each exclusion in the result
+instead of labeling the CPU matrix a global pass. Externally supplied staged
+binaries are outside scope.
+
 ## Qualification reports
 
 `actions.sh` captures reports for both hosted Bazel and Actions coordinators.
@@ -620,11 +747,11 @@ gh workflow run build.yml --repo tamird/gvisor \
 
 The dispatcher checks suite membership and records the complete suite and the
 selected targets. Explicit selections have separate workflow concurrency keys.
-Each keeps its original benchmark arguments and one-hour test timeout; the
-Actions step allows 70 minutes for compilation and execution, with another
-five minutes for setup and artifact upload. A passing invocation covers only
-the selected owners. Direct callers repeat `--benchmark-target=LABEL` with local AMD64
-benchmarks and provide `RUNNER_TEMP` for the selection report.
+Each keeps its original benchmark arguments and one-hour test timeout. The
+coordinator allows 250 minutes of work within a 275-minute step and 285-minute
+job, including time to capture and upload results. A passing invocation covers
+only the selected owners. Direct callers repeat `--benchmark-target=LABEL`
+with local AMD64 benchmarks and provide `RUNNER_TEMP` for the selection report.
 
 The lifecycle Go benchmarks retain their declared 30 iterations and platform
 arguments within mixed continuous suites. Their configured contract tag binds
@@ -1553,10 +1680,14 @@ suite's declared image archives, and stops the daemon after all parallel tests
 finish. The source-built release retains strict sidecar lookup. The former
 single-case lifecycle target is covered by the maintained integration suite.
 
-The archives pin the existing `tools/images.mk` source-hash tags by digest in
-`MODULE.bazel`, for AMD64 and ARM64. Updating an image requires rebuilding its
-existing Dockerfile and refreshing its corresponding digest. Image names and
-cohorts are owned by `test/docker/config.bzl`; no alternate workloads are used.
+The owned suites use declared source-image producers for AMD64 and ARM64.
+These build the canonical Dockerfiles and supply Make's source-hash tags through
+stock archive conversion. Explicit source aliases share the nginx, containerd
+harness and Moby producers. Image names and cohorts remain owned by
+`test/docker/config.bzl`. The archive rule retains its explicit registry-image
+compatibility option; the generic owned suites select source production by
+default. Kubernetes' third-party kind/node image remains an explicit registry
+dependency because this repository has no corresponding Dockerfile.
 Docker-in-Docker cases still pull and build images over the network. They are
 not hermetic tests, and their external failures remain visible.
 
@@ -1814,7 +1945,7 @@ standalone ARM64 execution requires Firecracker capacity. The other network
 conformance suites have separate lanes described below.
 
 The language runtime lanes retain the five public AMD64 suites: PHP 8.5.11,
-Java 21, Go 1.22, Node 22.2.0 and Python 3.12.3. DirectFS matches presubmit;
+Java 21, Go 1.22, Node 26.12.0 and Python 3.12.3. DirectFS matches presubmit;
 goferfs matches the continuous matrix:
 
 ```sh
