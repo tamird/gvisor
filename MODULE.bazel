@@ -11,6 +11,8 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_distroless", version = "0.9.4")
+bazel_dep(name = "tar.bzl", version = "0.10.4")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0")
@@ -50,6 +52,45 @@ single_version_override(
     patch_strip = 1,
     patches = ["//tools:libbpf_headers.patch"],
 )
+
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar_toolchains, "bsd_tar_toolchains")
+
+# The images consume selected files from these packages, without running their
+# installation scripts. The snapshot fixes the packages for both architectures.
+image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+image_apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
+)
+image_apt.install(
+    dependency_set = "helper_image_packages",
+    packages = [
+        # Common license texts referenced by the runtime packages' notices.
+        "base-files (= 12ubuntu4.7)",
+        # CA trust for HTTPS requests from the Ollama client.
+        "ca-certificates (= 20260601~22.04.1)",
+        # mkdir, chmod and rm --one-file-system used by the profiling caller.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # C runtime and dynamic loader for the selected coreutils commands.
+        "libc6 (= 2.35-0ubuntu3.15)",
+        # Shared-library dependency of libselinux.
+        "libpcre2-8-0 (= 10.39-3ubuntu0.1)",
+        # Shared-library dependency of the packaged mkdir binary.
+        "libselinux1 (= 3.3-1build2)",
+    ],
+)
+use_repo(image_apt, "helper_image_packages")
 
 ### LLVM
 # TODO: try using "llvm-raw" from BCR

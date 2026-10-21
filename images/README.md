@@ -31,6 +31,24 @@ The continuous integration system can either take fine-grained dependencies on
 single images via individual `load` targets, or pull all images via a single
 `load-all-test-images` invocation.
 
+## Go helper images
+
+The Ollama client and benchmark profiling helper are static Go programs built
+with the repository toolchain. Their images share `//images:helper_base`,
+which supplies CA trust and a writable `/tmp`. The selected architecture
+controls the programs and package inputs.
+
+The profiling helper's Kubernetes caller also invokes `mkdir`, `chmod`, and
+`rm --one-file-system` directly. Its image adds these GNU commands, their
+loader and shared libraries, and their license notices from snapshot-pinned
+Ubuntu packages. The filesystem boundary prevents recursive removal from
+crossing into nested mounts on the host.
+
+The grouped packages expose `//images/benchmarks:profile_helper_archive` and
+`//images/gpu/ollama:client_archive`, with corresponding `_context` targets
+for Make. The stable image names remain `benchmarks/profile-helper` and
+`gpu/ollama/client`.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.
