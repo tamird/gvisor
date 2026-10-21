@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T17:06:49.278563+00:00",
+    "updatedAt": "2026-10-21T17:09:26.035859+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10920,9 +10920,9 @@
       "title": "Integrate typed arrays into the state rewrite",
       "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58",
       "group": "runtime",
-      "status": "Needs contributor review",
-      "updatedAt": "2026-10-21T17:02:05.482646+00:00",
-      "summary": "The signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. Contributor review has been requested for this exact revision; upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
+      "status": "Agent work: contributor requested revision",
+      "updatedAt": "2026-10-21T17:09:26.035859+00:00",
+      "summary": "The signed final proposal f65f0db5 removes the generated Capture path and whole-package compiler/importer model, using the common Sink path and homogeneous primitive storage. The generator subtree matches its prerequisite. The contributor requested revision of this exact proposal: quantify final-versus-original-baseline performance and explain the added code, design motivation and review structure. Root owns the revision and Node is reusing the existing matched harness for the direct baseline comparison. Upstream publication also waits for #15648 and #15814. The retired predecessor investigations remain historical records, not separate active tasks.\n\nNormal and race correctness passed. The unchanged matched harness compared the preserved aggregate with the simplified common path in 104 fresh children: 96 measured observations and eight warmups across twelve balanced blocks. None of the four native benchstat time comparisons establishes a difference. Allocation counts and wire sizes remain unchanged; the two measured binaries are smaller by 20,480 and 24,576 bytes. The final build-only applicability check reproduces both measured executable hashes; it adds no test execution credit. The final signed consolidation has the same tree as the accepted source.\n\nHistorical comparison against the prerequisite base remains separate: the original 3a386 proposal had faster UDP Save/Load and adoption Load, with adoption Save inconclusive; original source-bound results and startup measurements remain linked below. They do not establish a new speedup for the simplified revision. Earlier setup failures and all original source identities are retained.",
       "refinement": {
         "before": {
           "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b"
@@ -10933,10 +10933,10 @@
       },
       "followup": {
         "owner": "root",
-        "disposition": "Exact revised proposal awaiting contributor decision",
+        "disposition": "Contributor requested quantified comparison and explanation",
         "sourceHead": "f65f0db5ebab296bfc82add78817451328d53d58",
-        "observedAt": "2026-10-21T17:02:05.482646+00:00",
-        "nextAction": "Await the requested review of f65f0db5, then publish only after #15648 and #15814 land. The final source and validation are complete.",
+        "observedAt": "2026-10-21T17:09:26.035859+00:00",
+        "nextAction": "Complete the existing matched original-baseline versus final comparison and revise the design explanation and review guidance. Preserve the exact f65 source and prior accepted evidence; no contributor decision is pending while this work is underway.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58",
           "https://github.com/google/gvisor/pull/15648",
@@ -10997,8 +10997,7 @@
           "url": "https://app.buildbuddy.io/invocation/bbfbe3d2-9ef5-418b-b9d1-82c419bdc9ef"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "f65f0db5ebab296bfc82add78817451328d53d58",
         "url": "https://github.com/tamird/gvisor/commit/f65f0db5ebab296bfc82add78817451328d53d58"
       }
