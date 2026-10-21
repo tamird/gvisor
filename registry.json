@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T15:11:59.532108+00:00",
+    "updatedAt": "2026-10-21T15:46:23.775842+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -9574,19 +9574,19 @@
       "id": "branch:native-go-images",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-native-go-images",
-      "head": "cc4f7cacbcfe668c03cc887aff385fa91d8265e3",
+      "ref": "rules-img-native-go-images-audited",
+      "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3",
-      "status": "Agent validation",
-      "updatedAt": "2026-10-21T14:51:17.244607+00:00",
-      "summary": "The existing approved lean-image proposal is modernized at cc4f7cacbc to rules_img and grouped benchmark/Ollama packages, preserving both Go sources, the package choices and GNU coreutils behavior. Independent source review is complete. The owner reports successful AMD64 runtime, both-architecture archive construction and actual Make loading at the qualification-only child; independent result review and canonical catalog work remain. The first qualification formatting failure is preserved. Only the shared image lineage and APT catalog interface are current prerequisites: the required Ollama Go source already exists in this base.\n\nRetained original proposal and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
+      "url": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd",
+      "status": "Contributor approved; awaiting prerequisites",
+      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
+      "summary": "The contributor explicitly approved the complete reviewed range 5ac1aa8e95..4094323ff5 for upstream delivery after its image and license prerequisites. The modernized rules_img/grouped-layout proposal preserves the approved lean package choices and both Go sources. Both-architecture archive checks, actual AMD64 Make/runtime tests and the complete 244-entry canonical catalog are independently accepted. The catalog has 46 APT entries; the two libcrypt manual records and existing classifier policy remain explicit prerequisites. Final 409 adds only the exact generated catalog to the qualified image/policy source. No fresh ARM runtime or same-head replay is claimed. No contributor decision is pending.\n\nRetained original proposal and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
       "followup": {
         "owner": "node_tls_sni",
-        "disposition": "Owner completing refreshed qualification",
-        "sourceHead": "cc4f7cacbcfe668c03cc887aff385fa91d8265e3",
-        "nextAction": "Complete independent runtime-result review and canonical catalog reconciliation, then prepare the exact modernization proposal. Preserve the original approved 62b source and historical qualifications.",
+        "disposition": "Contributor approved; awaiting image and license prerequisites",
+        "sourceHead": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
+        "nextAction": "Deliver the approved range 5ac1aa8e95..4094323ff5 after the grouped image parent, APT enumeration, classifier/policy #15146 and manual-artifact validation #16051 prerequisites land. Do not repeat contributor review unless the source changes substantively.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
           "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
@@ -9599,16 +9599,31 @@
           "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae",
           "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
         ],
-        "observedAt": "2026-10-21T14:51:17.244607+00:00"
+        "observedAt": "2026-10-21T15:42:01.457765+00:00"
       },
       "refinement": {
         "before": {
           "head": "62b68fd8b397112f4d4de7964a488801d20b73ae"
         },
         "after": {
-          "head": "cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
+          "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
+          "base": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
         }
-      }
+      },
+      "evidence": [
+        {
+          "label": "Approved final source and description",
+          "url": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd"
+        },
+        {
+          "label": "Exact contributor-approved range",
+          "url": "https://github.com/tamird/gvisor/compare/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be...4094323ff5a37d180f904fb030b4ccce2d1435dd"
+        },
+        {
+          "label": "Canonical complete catalog Verify",
+          "url": "https://app.buildbuddy.io/invocation/1c33c921-5331-4117-828d-2fe54976a3c8"
+        }
+      ]
     },
     {
       "id": "pr:15738",
@@ -10900,28 +10915,28 @@
       "id": "branch:diagnostics/state-integrated-array-proposal",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "diagnostics/state-integrated-array-proposal",
-      "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b",
+      "ref": "review/state-codec-consolidation",
+      "head": "e780baf3a62e77ea4be52eaa1e3998e855d81d25",
       "title": "Integrate typed arrays into the state rewrite",
-      "url": "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b",
+      "url": "https://github.com/tamird/gvisor/commit/e780baf3a62e77ea4be52eaa1e3998e855d81d25",
       "group": "runtime",
-      "status": "Agent architecture reassessment",
-      "updatedAt": "2026-10-21T15:11:59.532108+00:00",
-      "summary": "The contributor requested architectural revision: the current proposal is too large and additive. Root owns one reassessment of the existing capture/restore paths and the three preserved predecessor investigations. No contributor decision or upstream publication is pending for this revision. Existing qualification and performance results remain bound to their original sources.\n\nHistorical proposal and review evidence:\n\nThe contributor decision on this proposal remains pending. Its startup prerequisite #15814 is authored by Etienne Perot and is separately awaiting his response to our October 15 review: make the registration test repeatable, consolidate registration ownership, and explain the lazy-metadata behavior and startup measurement. Both #15648 and #15814 remain open. These are publication holds. The qualified fork already includes both prerequisite compositions, and its current-consumer, aggregate and startup evidence is complete. Further architecture work remains authorized; the bounded follow-up assessment identified no new concrete hypothesis or missing experiment.\n\nThe complete integrated state proposal 3a38641f0 now has a matched comparison against its current prerequisite base. Exact arms fdc73917e and 6b522949e share the same fixtures and qualification infrastructure; twelve balanced adjacent pairs across four Save/Load fixtures produced 104 fresh children, including 96 measured observations. UDP Save is 10.73% faster, UDP Load is 14.44% faster, and adoption Load is 7.89% faster (all p<.001). Adoption Save timing is inconclusive (p=.060). UDP Save allocated bytes fall by 21.34% and UDP Load bytes by 14.96%, with allocation counts unchanged. Adoption Save uses 2.53% fewer bytes and 12.94% fewer allocations; adoption Load uses 7.07% fewer bytes and 17.93% fewer allocations. Wire sizes are unchanged. These results compare the full proposal with its prerequisite base; earlier scalar-stage samples remain separate. The matched startup run also passed: CLI medians are 2.380 versus 2.397 ms (p=.410), and StartupEmpty medians are 283.7 versus 265.8 ms (p=.198); neither establishes a timing difference. State initialization remains 3,032 bytes and 13 allocations in both runsc and Sentry. Production file growth is 98,304 bytes for AMD64 runsc, 253,952 for AMD64 Sentry, 131,072 for ARM64 runsc and 262,144 for ARM64 Sentry. The complete proposal packet is published, and the contributor review request is pending. Upstream submission also requires #15648 and #15814 to land. The published 44-path proposal and its four current-consumer links plus nine checkpoint/cycle smoke entries remain qualified. The preserved predecessor is 67c4ddcf6; the exact refinement command remains available.",
+      "status": "Agent validation: matched benchmark pending",
+      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
+      "summary": "The published simplification removes the generated Capture path and whole-package compiler/importer model, reusing the existing common Sink path and homogeneous primitive storage. Normal and race correctness gates are accepted. The owner is measuring the revised common path against the preserved aggregate with the existing matched benchmark harness; those results remain pending. The contributor requested this architectural reassessment, and no contributor decision is pending on the new revision. Historical measurements below remain bound to their original sources.\n\nHistorical proposal and review evidence:\n\nThe contributor decision on this proposal remains pending. Its startup prerequisite #15814 is authored by Etienne Perot and is separately awaiting his response to our October 15 review: make the registration test repeatable, consolidate registration ownership, and explain the lazy-metadata behavior and startup measurement. Both #15648 and #15814 remain open. These are publication holds. The qualified fork already includes both prerequisite compositions, and its current-consumer, aggregate and startup evidence is complete. Further architecture work remains authorized; the bounded follow-up assessment identified no new concrete hypothesis or missing experiment.\n\nThe complete integrated state proposal 3a38641f0 now has a matched comparison against its current prerequisite base. Exact arms fdc73917e and 6b522949e share the same fixtures and qualification infrastructure; twelve balanced adjacent pairs across four Save/Load fixtures produced 104 fresh children, including 96 measured observations. UDP Save is 10.73% faster, UDP Load is 14.44% faster, and adoption Load is 7.89% faster (all p<.001). Adoption Save timing is inconclusive (p=.060). UDP Save allocated bytes fall by 21.34% and UDP Load bytes by 14.96%, with allocation counts unchanged. Adoption Save uses 2.53% fewer bytes and 12.94% fewer allocations; adoption Load uses 7.07% fewer bytes and 17.93% fewer allocations. Wire sizes are unchanged. These results compare the full proposal with its prerequisite base; earlier scalar-stage samples remain separate. The matched startup run also passed: CLI medians are 2.380 versus 2.397 ms (p=.410), and StartupEmpty medians are 283.7 versus 265.8 ms (p=.198); neither establishes a timing difference. State initialization remains 3,032 bytes and 13 allocations in both runsc and Sentry. Production file growth is 98,304 bytes for AMD64 runsc, 253,952 for AMD64 Sentry, 131,072 for ARM64 runsc and 262,144 for ARM64 Sentry. The complete proposal packet is published, and the contributor review request is pending. Upstream submission also requires #15648 and #15814 to land. The published 44-path proposal and its four current-consumer links plus nine checkpoint/cycle smoke entries remain qualified. The preserved predecessor is 67c4ddcf6; the exact refinement command remains available.",
       "refinement": {
         "before": {
-          "head": "67c4ddcf6ff517a8a8c44d30a325201b976caaf4"
+          "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b"
         },
         "after": {
-          "head": "3a38641f03edeb40fd50059cbb1559720f5ad04b"
+          "head": "e780baf3a62e77ea4be52eaa1e3998e855d81d25"
         }
       },
       "followup": {
         "owner": "root",
-        "disposition": "Addressing contributor architecture feedback",
-        "sourceHead": "3a38641f03edeb40fd50059cbb1559720f5ad04b",
-        "observedAt": "2026-10-21T15:11:59.532108+00:00",
-        "nextAction": "Reassess consolidation around existing state paths and remove duplicated generated mechanisms; present the resulting concrete revision for review. Preserve historical source/measurement evidence and prerequisite holds.",
+        "disposition": "Correctness accepted; matched comparison underway",
+        "sourceHead": "e780baf3a62e77ea4be52eaa1e3998e855d81d25",
+        "observedAt": "2026-10-21T15:42:01.457765+00:00",
+        "nextAction": "Finish the existing matched old/new benchmark comparison, assess the simplified common path and prepare a concrete revised proposal. Preserve the original measurement identities and prerequisite holds.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3a38641f03edeb40fd50059cbb1559720f5ad04b",
           "https://app.buildbuddy.io/invocation/8c112347-ac8d-4247-ac23-f9072e4da856",
@@ -10960,6 +10975,18 @@
         {
           "label": "Matched current-source CLI and StartupEmpty assessment",
           "url": "https://app.buildbuddy.io/invocation/057306de-648f-41e3-b4b4-d7d92a31c3d5"
+        },
+        {
+          "label": "Published architecture simplification",
+          "url": "https://github.com/tamird/gvisor/commit/e780baf3a62e77ea4be52eaa1e3998e855d81d25"
+        },
+        {
+          "label": "Normal correctness gate",
+          "url": "https://app.buildbuddy.io/invocation/d0ae2992-cd6f-4f86-98e3-e35112ba698f"
+        },
+        {
+          "label": "Current matched common-path comparison",
+          "url": "https://app.buildbuddy.io/invocation/3b5d466e-197a-4ec9-b7e9-234cbe14939d"
         }
       ],
       "contributorChangesRequested": {
@@ -16391,20 +16418,103 @@
       "title": "Build the integration test C image with rules_img",
       "url": "https://github.com/tamird/gvisor/commit/55f4bfaeaa583faaa3e6902c4e95765842562695",
       "group": "bazel",
-      "status": "Agent validation",
-      "updatedAt": "2026-10-21T14:51:17.244607+00:00",
-      "summary": "The reviewed migration builds all nine existing C helpers from their unchanged sources and packages the declared GNU runtime, shell/network utilities, legacy firewall entry points and nonroot account. Both architecture archives and their metadata are under validation. The first run stopped only at canonical formatting before compilation; its exact formatting correction is published and the bounded retry is running. Runtime and catalog acceptance remain. The independently identified rewinddir allocation defect is kept separate from this migration.",
+      "status": "Dependency availability blocks validation",
+      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
+      "summary": "The reviewed migration builds all nine existing C helpers from their unchanged sources and declares the GNU runtime, shell/network utilities, legacy firewall entry points and nonroot account. Canonical formatting passed, but subsequent runs stopped on exact Ubuntu snapshot package/index HTTP 502/503 errors before image compilation. No archive, runtime or catalog acceptance is claimed. The owner is preparing the actual consumer route and has separately fixed preparation reporting so a pre-phase dependency failure retains authenticated source identity and zero executed owners. That reporting fix does not repair or replace the original failed results. The independent rewinddir allocation fix is qualified separately.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Owner validating image construction",
+        "disposition": "Waiting for dependency endpoint recovery; runtime route prepared separately",
         "sourceHead": "55f4bfaeaa583faaa3e6902c4e95765842562695",
-        "observedAt": "2026-10-21T14:51:17.244607+00:00",
-        "nextAction": "Finish the existing archive/compiler gate, then validate the actual image consumers and canonical package catalog. No contributor review or upstream PR is requested yet.",
+        "observedAt": "2026-10-21T15:42:01.457765+00:00",
+        "nextAction": "Use one bounded availability check before any same-source retry; retain the exact package/index failures and do not repeat unavailable submissions. After the owning compiler/archive gate succeeds, validate actual image consumers and the canonical catalog.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/4d304d56-6472-4a3c-9a1b-a12d5d523bc8",
           "https://app.buildbuddy.io/invocation/5fc3c58f-36ea-46a0-9c75-86de482db4c2"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Preserved dependency-preparation failure",
+          "url": "https://app.buildbuddy.io/invocation/bb03a0b8-2714-4b23-a11f-9c446b737da3"
+        },
+        {
+          "label": "Qualified preparation-reporting correction",
+          "url": "https://github.com/tamird/gvisor/commit/9fab2a3456aa646d2b9ea2a4b6e9700640ba7bb9"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-hackbench-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-hackbench-image",
+      "head": "3c5d84337f4bfecaa366cd71b28cd985385d4118",
+      "title": "Build the hackbench image from pinned source",
+      "url": "https://github.com/tamird/gvisor/commit/3c5d84337f4bfecaa366cd71b28cd985385d4118",
+      "group": "bazel",
+      "status": "Agent validation: canonical catalog pending",
+      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
+      "summary": "The source-built hackbench proposal uses pinned rt-tests 2.2, a static C binary and the existing shared GNU runtime. Independent qualification accepts both-architecture image construction, actual AMD64 Make reloads, both existing native-runc benchmark cases and the GNU profile-helper fixture. The shared extraction refactor preserves the complete 32-entry profile-helper filesystem and runtime configuration against cc4 on both architectures; archive byte hashes differ. The initial formatter failure is preserved. Canonical catalog validation remains separate; these smoke measurements make no comparative performance or ARM execution claim.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "disposition": "Runtime accepted; canonical catalog validation",
+        "sourceHead": "3c5d84337f4bfecaa366cd71b28cd985385d4118",
+        "observedAt": "2026-10-21T15:42:01.457765+00:00",
+        "nextAction": "Complete the existing canonical catalog Fetch/Verify, then prepare the exact proposal for contributor review. Preserve the shared native-image prerequisite and original formatter failure.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/ce077af2-fedf-4968-90ba-046013679088"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published source and description",
+          "url": "https://github.com/tamird/gvisor/commit/3c5d84337f4bfecaa366cd71b28cd985385d4118"
+        },
+        {
+          "label": "Accepted image/runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/ce077af2-fedf-4968-90ba-046013679088"
+        }
+      ]
+    },
+    {
+      "id": "pr:16101",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "fix/rewinddir-path-terminator",
+      "head": "4f256cdafca75a81ac1f63b81d1fb0f63f6d4a48",
+      "title": "Include the terminator in the rewinddir path",
+      "url": "https://github.com/google/gvisor/pull/16101",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-10-21T15:46:23.775842+00:00",
+      "summary": "The contributor approved the exact one-line correction, now delivered ready as PR #16101 at signed 4f256cdafc. The provider readback verifies the reviewed title/body, one commit and one-file patch; it is mergeable and initial public CI is running. Identical qualification-only ASan harnesses reproduce the original strcpy heap-buffer-overflow and pass with the corrected helper. Both actual hosted Linux AMD64 executions are completely collected. No image, gVisor or ARM execution is inferred; the original baseline remains FAIL. No contributor decision remains.",
+      "followup": {
+        "owner": "work_map_current",
+        "disposition": "Delivered; awaiting current-head CI and maintainer review",
+        "sourceHead": "4f256cdafca75a81ac1f63b81d1fb0f63f6d4a48",
+        "observedAt": "2026-10-21T15:46:23.775842+00:00",
+        "nextAction": "Follow the published current head through the existing ordinary updater. No duplicate approval request, qualification replay or manual CI retry is needed.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/4f256cdafca75a81ac1f63b81d1fb0f63f6d4a48",
+          "https://app.buildbuddy.io/invocation/e02750ac-7af6-4e7f-92f9-8100352cab10",
+          "https://app.buildbuddy.io/invocation/5444eb25-18ee-4424-922c-2f5c1f3c02e8"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact proposal and message",
+          "url": "https://github.com/tamird/gvisor/commit/4f256cdafca75a81ac1f63b81d1fb0f63f6d4a48"
+        },
+        {
+          "label": "Original ASan overflow reproduced",
+          "url": "https://app.buildbuddy.io/invocation/e02750ac-7af6-4e7f-92f9-8100352cab10"
+        },
+        {
+          "label": "Corrected helper passes identical ASan harness",
+          "url": "https://app.buildbuddy.io/invocation/5444eb25-18ee-4424-922c-2f5c1f3c02e8"
+        }
+      ],
+      "number": 16101
     }
   ],
   "edges": [
@@ -18384,6 +18494,20 @@
       "to": "branch:rules-img-integration-test-image",
       "type": "depends_on",
       "reason": "The C image reuses the declared APT package machinery and shared runtime base introduced by the reviewed native Go image foundation. Its additional package records require canonical generation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
+    },
+    {
+      "from": "pr:16051",
+      "to": "branch:native-go-images",
+      "type": "depends_on",
+      "reason": "The complete catalog retains the two approved libcrypt manual artifacts. Upstream delivery requires the existing manual-artifact verification interface; the qualification-only checker composition already verifies them.",
+      "evidence": "https://github.com/google/gvisor/pull/16051"
+    },
+    {
+      "from": "branch:native-go-images",
+      "to": "branch:rules-img-hackbench-image",
+      "type": "depends_on",
+      "reason": "Hackbench reuses the declared APT machinery and shared lean GNU runtime introduced by the native Go image proposal. Its extraction refactor preserves the qualified helper filesystem.",
       "evidence": "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
     }
   ],
@@ -25726,9 +25850,9 @@
       "title": "Migrate Docker image construction to rules_img",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-21T14:51:17.244607+00:00",
-      "summary": "Basic images are delivered as PR #16097; the contributor-approved syscallbench child awaits that parent. The existing native Go image proposal is modernized and being qualified, and the integration-test C image is under compiler/archive validation. Hostinet also owns the newly assigned hackbench migration, whose source is still being prepared. Concrete proposal records carry exact source and next actions. The broader migration remains active; no complete Dockerfile migration or comparative performance benefit is claimed.",
-      "nextStep": "Complete the assigned native Go, integration-test C and hackbench source/consumer qualifications without duplicating existing image proposals.",
+      "updatedAt": "2026-10-21T15:42:01.457765+00:00",
+      "summary": "Basic images are delivered as PR #16097; the approved syscallbench child awaits that parent. The modernized native Go image proposal is fully qualified and contributor-approved after its image/license prerequisites. Hackbench runtime is independently accepted while its canonical catalog is under validation. The integration-test C image is held on exact dependency endpoint failures before compilation; its runtime route is being prepared without blind retries. Concrete proposal records carry exact source and next actions. The broader migration remains active; no complete Dockerfile migration or comparative performance benefit is claimed.",
+      "nextStep": "Complete hackbench catalog and C-image validation when dependencies are available; deliver approved proposals when their explicit prerequisites land.",
       "evidence": [
         {
           "label": "Published first image group",
