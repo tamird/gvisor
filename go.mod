@@ -28,6 +28,7 @@ require (
 	github.com/gofrs/flock v0.8.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/btree v1.1.2
+	github.com/google/licensecheck v0.3.1
 	github.com/google/go-github/v84 v84.0.0
 	github.com/google/subcommands v1.0.2-0.20190508160503-636abe8753b8
 	github.com/googleapis/gax-go/v2 v2.21.0
