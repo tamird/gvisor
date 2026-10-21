@@ -900,8 +900,10 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
     The caller authenticates the containing bundle with receipt(), selects each
     invocation explicitly, and decodes its compact log. Expectations contain an
     owners mapping from target labels to complete image lists, plus optional
-    benchmarks in the existing declared-benchmark format. They are declared
-    obligations, never inferred from successful observed loads.
+    benchmarks in the existing declared-benchmark format. Configured source
+    declarations bind each image to its architecture and archive; build-only
+    audits require those declarations and cannot establish runtime loads.
+    Obligations are never inferred from successful observed loads.
     """
     verdict: dict[str, object] = {}
     errors: list[str] = []
@@ -914,22 +916,55 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             inputs.append({"path": str(path), **file_record(path)})
         if verdict.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
             raise ValueError("Missing canonical qualification status")
-        if verdict.get("command_kind") not in ("test", "benchmark"):
-            raise ValueError("Source-image audit requires a test invocation")
+        if verdict.get("command_kind") not in ("test", "benchmark", "build"):
+            raise ValueError("Source-image audit requires a build or test invocation")
         contract = read_json(expectations)
-        if set(contract) - {"owners", "benchmarks"}:
-            raise ValueError("Source-image expectations require owners and optional benchmarks")
+        if set(contract) - {"owners", "benchmarks", "configured_owners"}:
+            raise ValueError("Unexpected source-image expectation fields")
         wanted = {label: [string(image) for image in sequence(raw)]
                   for label, raw in mapping(contract.get("owners")).items()}
-        if not wanted or any(not rows or len(rows) != len(set(rows)) for rows in wanted.values()):
-            raise ValueError("Expected nonempty, unique source images for every owner")
+        if not wanted or any(len(rows) != len(set(rows)) for rows in wanted.values()):
+            raise ValueError("Expected unique source images for every owner")
         expected = [Owner(string(mapping(row).get("label")), string(mapping(row).get("configuration")))
                     for row in sequence(verdict.get("expected"))]
         if len(expected) != len(set(expected)) or set(wanted) != {owner.label for owner in expected}:
             raise ValueError("Source-image owners differ from canonical configured owners")
+        configured_images: dict[Owner, list[dict[str, object]]] = {}
+        if "configured_owners" in contract:
+            for raw in sequence(contract["configured_owners"]):
+                row = mapping(raw)
+                owner = Owner(string(row.get("label")), string(row.get("configuration")))
+                if owner in configured_images:
+                    raise ValueError(f"Duplicate configured image owner: {owner}")
+                if sequence(row.get("source_commands")):
+                    raise ValueError(f"Dynamic source-image commands require their own load audit: {owner}")
+                declared = [mapping(image) for image in sequence(row.get("images"))]
+                for image in declared:
+                    if (image.keys() != {"name", "architecture", "archive"}
+                            or not string(image["name"]) or not string(image["archive"])
+                            or image["architecture"] not in ("amd64", "arm64")):
+                        raise ValueError(f"Invalid configured image obligation: {image}")
+                configured_images[owner] = declared
+            if configured_images.keys() != set(expected):
+                raise ValueError("Image declarations differ from configured owners")
+            for label, names in wanted.items():
+                if set(names) != {image["name"] for owner, rows in configured_images.items()
+                                  if owner.label == label for image in rows}:
+                    raise ValueError(f"Image name summary differs from configured declarations: {label}")
+        elif any(not rows for rows in wanted.values()):
+            raise ValueError("Empty image obligations require configured source declarations")
+        if verdict["command_kind"] == "build" and not configured_images:
+            raise ValueError("Build image audits require configured archive declarations")
         required_benchmarks = benchmark_expectations(contract["benchmarks"]) if "benchmarks" in contract else {}
         if not set(required_benchmarks) <= set(wanted):
             raise ValueError("Benchmark obligations name an unexpected source-image owner")
+        if verdict["command_kind"] == "build" and required_benchmarks:
+            raise ValueError("Build image audits cannot satisfy benchmark obligations")
+        test_owners = set() if verdict["command_kind"] == "build" else {
+            owner for owner in expected
+            if configured_images.get(owner, wanted[owner.label]) or owner.label in required_benchmarks
+        }
+        test_labels = {owner.label for owner in test_owners}
         _, reports, report_errors = retained_reports(manifest)
         errors.extend(report_errors)
         records, spawns = compact_records(execution)
@@ -965,7 +1000,7 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             if source.get("cacheHit", False) or source.get("remoteCacheHit", False):
                 raise ValueError(f"Source image was cached: {source.get('targetLabel')}")
             match sequence(source.get("args")):
-                case [_, "test/docker/source_images.sh", "layout", _, _, _, _, _, str(image), *_]:
+                case [_, "test/docker/source_images.sh", "layout", str(architecture), _, _, _, _, str(image), *_]:
                     pass
                 case _:
                     raise ValueError("Unsupported source-image command")
@@ -999,18 +1034,33 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 if (re.fullmatch(r"[0-9a-f]{64}", string(digest.get("hash"))) is None
                         or number(digest.get("sizeBytes", 0)) <= 0):
                     raise ValueError(f"Missing archive identity: {image}")
-                images.append({"image": image, "producer": identity(source, executed=True), "archive_action": identity(archive),
+                architecture = {"x86_64": "amd64", "aarch64": "arm64"}.get(architecture, architecture)
+                if architecture not in ("amd64", "arm64"):
+                    raise ValueError(f"Unsupported source-image architecture: {architecture}")
+                images.append({"image": image, "architecture": architecture,
+                               "producer": identity(source, executed=True), "archive_action": identity(archive),
                                "archive_id": archive_id, "archive": archive_file,
                                "manifest_inputs": chains(conversion, source_outputs),
                                "archive_inputs": chains(archive, source_outputs + conversion_outputs)})
         if {row["image"] for row in images} != {image for rows in wanted.values() for image in rows}:
             raise ValueError("Source producers differ from declared image obligations")
-        expected_attempts = [mapping(row) for row in sequence(verdict.get("executed"))]
+        if configured_images:
+            declared_archives = {(image["name"], image["architecture"], image["archive"])
+                                 for rows in configured_images.values() for image in rows}
+            actual_archives = {(row["image"], row["architecture"], mapping(row["archive"])["path"]) for row in images}
+            if actual_archives != declared_archives:
+                raise ValueError("Source archive identities differ from configured declarations")
+        expected_attempts = []
+        for raw in sequence(verdict.get("executed")):
+            row = mapping(raw)
+            owner = mapping(row["owner"])
+            if Owner(string(owner["label"]), string(owner["configuration"])) in test_owners:
+                expected_attempts.append(row)
         attempts = {Attempt(Owner(string(mapping(row["owner"])["label"]), string(mapping(row["owner"])["configuration"])),
                             *(number(row[key]) for key in ("run", "shard", "attempt"))) for row in expected_attempts}
-        if not attempts or len(attempts) != len(expected_attempts):
+        if (test_owners and not attempts) or len(attempts) != len(expected_attempts):
             raise ValueError("Missing or duplicate canonical test attempts")
-        if {attempt.owner for attempt in attempts} != set(expected) or any(
+        if {attempt.owner for attempt in attempts} != test_owners or any(
                 min(attempt.run, attempt.shard, attempt.attempt) < 1 for attempt in attempts):
             raise ValueError("Executed attempts differ from configured owners")
         observations = {Attempt(Owner(string(mapping(row["owner"])["label"]), string(mapping(row["owner"])["configuration"])),
@@ -1020,6 +1070,8 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                 for (attempt, name), path in reports.items() if name == "test.log"}
         observed: set[Attempt] = set()
         for test in (spawn for spawn in spawns if spawn.get("mnemonic") == "TestRunner"):
+            if test.get("targetLabel") not in test_labels:
+                continue
             if sequence(test.get("args"))[:1] == ["external/bazel_tools/tools/test/generate-xml.sh"]:
                 continue
             files = [mapping(records[identifier].get("file", {})) for identifier in outputs(test)]
@@ -1052,6 +1104,8 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             if log_path not in logs:
                 raise ValueError(f"TestRunner log is not a captured attempt: {log_path}")
             attempt = logs[log_path]
+            if attempt.owner not in test_owners:
+                continue
             if attempt not in attempts or attempt in observed or test.get("targetLabel") != attempt.owner.label:
                 raise ValueError(f"Duplicate or mismatched configured TestRunner: {attempt}")
             observed.add(attempt)
@@ -1080,8 +1134,14 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
                                if tag.startswith(f"gvisor.dev/images/{image['image']}:")})
                 if len(blocks) != 1 or not tags:
                     raise ValueError(f"Missing actual archive load for {attempt}: {image['image']}")
-                loaded.append({"image": image["image"], "archive": image["archive"], "input_chain": chain, "tags": tags})
-            if Counter(row["image"] for row in loaded) != Counter(wanted[attempt.owner.label]):
+                loaded.append({"image": image["image"], "architecture": image["architecture"],
+                               "archive": image["archive"], "input_chain": chain, "tags": tags})
+            if configured_images:
+                actual = Counter((row["image"], row["architecture"], mapping(row["archive"])["path"]) for row in loaded)
+                required = Counter((row["name"], row["architecture"], row["archive"]) for row in configured_images[attempt.owner])
+                if actual != required:
+                    raise ValueError(f"Loaded source archives differ from configured obligations for {attempt}")
+            elif Counter(row["image"] for row in loaded) != Counter(wanted[attempt.owner.label]):
                 raise ValueError(f"Loaded source images differ from obligations for {attempt}")
             if attempt.owner.label in required_benchmarks:
                 # Reuse the canonical parser, including its rejection of
