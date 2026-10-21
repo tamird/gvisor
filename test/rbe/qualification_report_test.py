@@ -159,7 +159,9 @@ class QualificationReportTest(unittest.TestCase):
                 try:
                     records, spawns = report.compact_records(invocation / "execution.json")
                     source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage"]
-                    source.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
+                    archive, = [spawn for spawn in spawns if spawn.get("mnemonic") == "DockerSave"]
+                    for action in (source, archive):
+                        action.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
                     (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
                         [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
                     if kind == "build":
@@ -209,6 +211,161 @@ class QualificationReportTest(unittest.TestCase):
                         [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
                     value = self.source_image_audit(invocation)
                     self.assertEqual(value["audit_status"], "INCOMPLETE", value)
+                    self.assertIn(error, "\n".join(value["errors"]))
+                finally:
+                    shutil.rmtree(invocation)
+
+    def img_image_fixture(self) -> Path:
+        invocation = self.native_image_fixture()
+        contract = report.read_json(invocation / "expectations.json")
+        image, = contract["configured_owners"][0]["images"]
+        records, spawns = report.compact_records(invocation / "execution.json")
+        source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCIImage"]
+        archive, = [spawn for spawn in spawns if spawn.get("mnemonic") == "OCITarball"]
+        spawns = [spawn for spawn in spawns if spawn.get("mnemonic") != "OCITarballManifest"]
+        paths = {name: "bazel-out/k8-fastbuild/bin/images/img-helper/" + name for name in (
+            "manifest.json", "config.json", "base-manifest.json", "base-config.json", "base-descriptor.json",
+            "base-layer.metadata.json", "base-layer.tar", "layer.metadata.json", "layer.tar", "load.configuration.json")}
+        identifiers = {}
+        for name, path in paths.items():
+            identifier = max(records) + 1
+            identifiers[name] = identifier
+            records[identifier] = {"id": identifier, "file": {"path": path,
+                "digest": {"hash": hashlib.sha256(name.encode()).hexdigest(), "sizeBytes": "100"}}}
+        assembly_inputs = max(records) + 1
+        archive_inputs = assembly_inputs + 1
+        records[assembly_inputs] = {"id": assembly_inputs, "inputSet": {"inputIds": [identifiers[name] for name in
+            ("base-manifest.json", "base-config.json", "base-descriptor.json", "base-layer.metadata.json", "layer.metadata.json")]}}
+        records[archive_inputs] = {"id": archive_inputs, "inputSet": {"inputIds": [identifiers[name] for name in
+            ("manifest.json", "config.json", "base-layer.metadata.json", "base-layer.tar", "layer.metadata.json", "layer.tar", "load.configuration.json")]}}
+        # Pinned rules_img 0.3.23 uses ImageManifest -> DockerSave, with no
+        # intervening OCI layout. Both actions list inherited and added layers;
+        # the base manifest does not replace inherited metadata arguments.
+        # Retain the original consumer/load evidence.
+        source.update(mnemonic="ImageManifest", inputSetId=assembly_inputs,
+                      args=["img", "manifest", "--os", "linux", "--architecture", "amd64",
+                            "--manifest", paths["manifest.json"], "--config", paths["config.json"],
+                            "--base-manifest", paths["base-manifest.json"],
+                            "--base-config", paths["base-config.json"], "--base-descriptor", paths["base-descriptor.json"],
+                            "--layer-from-metadata=" + paths["base-layer.metadata.json"],
+                            "--layer-from-metadata=" + paths["layer.metadata.json"]],
+                      outputs=[{"outputId": identifiers[name]} for name in ("manifest.json", "config.json")])
+        archive.update(mnemonic="DockerSave", inputSetId=archive_inputs,
+                       args=["img", "docker-save", "--output", image["archive"], "--format", "tar",
+                             "--configuration-file", paths["load.configuration.json"],
+                             "--manifest", paths["manifest.json"], "--config", paths["config.json"],
+                             "--layer", paths["base-layer.metadata.json"] + "=" + paths["base-layer.tar"],
+                             "--layer", paths["layer.metadata.json"] + "=" + paths["layer.tar"]])
+        image.update(origin="native-img", layout="", usage="docker-load", config="", pin="", index="",
+                     manifest=paths["manifest.json"], image_config=paths["config.json"],
+                     layers=[{"metadata": paths["base-layer.metadata.json"], "blob": paths["base-layer.tar"]},
+                             {"metadata": paths["layer.metadata.json"], "blob": paths["layer.tar"]}])
+        report.write_json(invocation / "expectations.json", contract)
+        (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+            [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+        return invocation
+
+    def test_rules_img_binds_manifest_layers_archive_and_load(self) -> None:
+        for cached, kind, status in ((False, "benchmark", "PASS"), (True, "benchmark", "PASS"),
+                                     (True, "build", "PASS"), (False, "benchmark", "FAIL")):
+            with self.subTest(cached=cached, kind=kind, status=status):
+                invocation = self.img_image_fixture()
+                try:
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "ImageManifest"]
+                    source.update(cacheHit=cached, runner="remote cache hit" if cached else "remote")
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    if kind == "build":
+                        canonical = report.read_json(invocation / "verdict.json")
+                        canonical.update(command_kind="build", executed=[])
+                        report.write_json(invocation / "verdict.json", canonical)
+                        contract = report.read_json(invocation / "expectations.json")
+                        contract.pop("benchmarks")
+                        report.write_json(invocation / "expectations.json", contract)
+                    if status == "FAIL":
+                        canonical = report.read_json(invocation / "verdict.json")
+                        canonical.update(status="FAIL", native_exit=1)
+                        report.write_json(invocation / "verdict.json", canonical)
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual((value["status"], value["audit_status"], value["errors"]), (status, "PASS", []), value)
+                    image, = value["images"]
+                    self.assertEqual((image["origin"], image["producer"]["cache_hit"]), ("native-img", cached))
+                    self.assertEqual(image["archive_action"]["cache_hit"], cached)
+                    self.assertEqual(len(image["producer"]["inputs"]), 5)
+                    self.assertEqual(len(image["archive_inputs"]), 7)
+                    self.assertEqual(len(value["consumers"]), int(kind != "build"))
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_rules_img_rejects_missing_failed_and_mismatched_inputs(self) -> None:
+        for damage, error in (
+                ("manifest", "Missing unique image input/output"),
+                ("assembly", "Missing unique rules_img assembly"),
+                ("failed-assembly", "Unsuccessful source/archive action"),
+                ("architecture", "assembly differs from declared image/platform"),
+                ("metadata", "metadata is not an assembly input"),
+                ("blob", "file is not an archive input"),
+                ("archive-config", "archive differs from configured manifest/layers"),
+                ("failed-archive", "Unsuccessful source/archive action"),
+                ("archive-identity", "Missing execution identity"),
+                ("cached-archive-identity", "Missing cached rules_img action identity"),
+                ("duplicate-archive", "Missing unique rules_img archive"),
+                ("shallow", "archive differs from configured manifest/layers"),
+                ("missing-layer", "assembly layers differ from declarations"),
+                ("digest", "Missing image input/output digest"),
+                ("load", "Missing actual archive load")):
+            with self.subTest(damage=damage):
+                invocation = self.img_image_fixture()
+                try:
+                    contract = report.read_json(invocation / "expectations.json")
+                    image, = contract["configured_owners"][0]["images"]
+                    records, spawns = report.compact_records(invocation / "execution.json")
+                    source, = [spawn for spawn in spawns if spawn.get("mnemonic") == "ImageManifest"]
+                    archive, = [spawn for spawn in spawns if spawn.get("mnemonic") == "DockerSave"]
+                    if damage == "manifest":
+                        image["manifest"] += ".unrelated"
+                    elif damage == "assembly":
+                        spawns.append(source.copy())
+                    elif damage == "failed-assembly":
+                        source["exitCode"] = 1
+                    elif damage == "architecture":
+                        source["args"][source["args"].index("amd64")] = "arm64"
+                    elif damage == "metadata":
+                        records[source["inputSetId"]]["inputSet"]["inputIds"].pop()
+                    elif damage == "blob":
+                        records[archive["inputSetId"]]["inputSet"]["inputIds"].pop(3)
+                    elif damage == "archive-config":
+                        archive["args"][archive["args"].index("--config") + 1] += ".other"
+                    elif damage == "failed-archive":
+                        archive["exitCode"] = 1
+                    elif damage == "archive-identity":
+                        archive["runner"] = "unknown"
+                    elif damage == "cached-archive-identity":
+                        archive.update(cacheHit=True, runner="remote cache hit")
+                        archive.pop("digest", None)
+                    elif damage == "duplicate-archive":
+                        spawns.append(archive.copy())
+                    elif damage == "shallow":
+                        archive["args"].append("--allow-missing-blobs")
+                    elif damage == "missing-layer":
+                        image["layers"] = []
+                    elif damage == "digest":
+                        identifier, = [identifier for identifier, record in records.items()
+                                       if record.get("file", {}).get("path") == image["layers"][0]["blob"]]
+                        records[identifier]["file"]["digest"]["hash"] = "invalid"
+                    else:
+                        manifest = report.read_json(invocation / "manifest.json")
+                        row, = [row for row in manifest["reports"] if row["name"] == "test.log"]
+                        path = invocation / row["path"]
+                        path.write_text(path.read_text().replace("Loaded declared image archive", "Unobserved archive"))
+                        row.update(report.file_record(path))
+                        report.write_json(invocation / "manifest.json", manifest)
+                    report.write_json(invocation / "expectations.json", contract)
+                    (invocation / "execution.json").write_text("\n".join(json.dumps(row) for row in
+                        [*records.values(), *({"spawn": spawn} for spawn in spawns)]))
+                    value = self.source_image_audit(invocation)
+                    self.assertEqual((value["audit_status"], value["canonical_status"]), ("INCOMPLETE", "PASS"), value)
                     self.assertIn(error, "\n".join(value["errors"]))
                 finally:
                     shutil.rmtree(invocation)

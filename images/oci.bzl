@@ -1,10 +1,9 @@
 """Shared archive interfaces for images assembled by Bazel."""
 
 load("@rules_oci//oci:defs.bzl", "oci_load")
-load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//test/docker:source_image_contracts.bzl", "declared_image_archive")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "pkg_tar")
+load(":archive.bzl", "image_context")
 
 def image_outputs(name, image, content_tag = False, exec_properties = {}, architecture = None):
     """Exposes one image per images/<path> package to tests and Make.
@@ -56,17 +55,4 @@ def image_outputs(name, image, content_tag = False, exec_properties = {}, archit
         visibility = ["//test/docker:__pkg__"],
     )
 
-    pkg_files(
-        name = "make_image",
-        srcs = [":" + name],
-        renames = {":" + name: "image.tar"},
-    )
-
-    # Hash the assembled image, including its base, instead of a Dockerfile.
-    pkg_tar(
-        name = "make_context",
-        srcs = [":make_image"],
-        exec_properties = exec_properties,
-        package_dir = package,
-        visibility = ["//images:__pkg__"],
-    )
+    image_context(archive = ":" + name, exec_properties = exec_properties)

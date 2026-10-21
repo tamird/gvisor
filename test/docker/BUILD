@@ -3,7 +3,7 @@ load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
-load(":defs.bzl", "SOURCE_ARCHIVE_EXEC_PROPERTIES", "amd64_image_archive", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
+load(":defs.bzl", "SOURCE_ARCHIVE_EXEC_PROPERTIES", "configured_image_archive", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -83,10 +83,28 @@ source_image_archive(
     tags = ["manual"],
 )
 
+[
+    configured_image_archive(
+        name = "basic_" + image + "_source_" + architecture,
+        testonly = True,
+        actual = "//images/basic/" + image + ":image_archive",
+        architecture = architecture,
+        tags = ["manual"],
+    )
+    for image in ["alpine", "busybox", "tmpfile"]
+    for architecture in ["amd64", "arm64"]
+]
+
 docker_image_archives(
     name = "images",
     extra_images = CONTAINERD_IMAGES,
     source_archives = {
+        "basic/" + image: {
+            architecture: ":basic_" + image + "_source_" + architecture
+            for architecture in ["amd64", "arm64"]
+        }
+        for image in ["alpine", "busybox", "tmpfile"]
+    } | {
         "basic/nginx": {"amd64": ":nginx_source_amd64"},
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
         "moby": {"amd64": ":moby_source_amd64"},
@@ -203,35 +221,35 @@ source_image_archive(
 
 # The Bazel-built client is one OCI layer. Preserve the AMD64 image label
 # used by the public GPU cohorts independently of the caller's architecture.
-amd64_image_archive(
+configured_image_archive(
     name = "gpu_ollama_client_source_amd64",
     testonly = True,
     actual = "//images/gpu/ollama/client:image_archive",
     tags = ["manual"],
 )
 
-amd64_image_archive(
+configured_image_archive(
     name = "profile_helper_source_amd64",
     testonly = True,
     actual = "//images/benchmarks/profile-helper:image_archive",
     tags = ["manual"],
 )
 
-amd64_image_archive(
+configured_image_archive(
     name = "gpu_ollama_bench_source_amd64",
     testonly = True,
     actual = "//images/gpu/ollama/bench:image_archive",
     tags = ["manual"],
 )
 
-amd64_image_archive(
+configured_image_archive(
     name = "gpu_triton_source_amd64",
     testonly = True,
     actual = "//images/gpu/triton:image_archive",
     tags = ["manual"],
 )
 
-amd64_image_archive(
+configured_image_archive(
     name = "gpu_ollama_small_source_amd64",
     testonly = True,
     actual = "//images/gpu/ollama/bench/small:image_archive",
@@ -281,6 +299,7 @@ bzl_library(
 bzl_library(
     name = "source_image_contracts_bzl",
     srcs = ["source_image_contracts.bzl"],
+    deps = ["@rules_img//img:providers"],
 )
 
 bzl_library(

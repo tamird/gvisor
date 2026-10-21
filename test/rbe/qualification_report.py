@@ -1042,14 +1042,15 @@ def declared_source_images(value: object) -> list[dict[str, object]]:
     images = [mapping(image) for image in sequence(value)]
     for image in images:
         fields = {"name", "architecture", "archive"}
-        if image.keys() not in (fields, fields | {"origin", "layout"},
-                               fields | {"origin", "layout", "usage", "config", "pin", "index"}):
+        extended = fields | {"origin", "layout", "usage", "config", "pin", "index"}
+        if image.keys() not in (fields, fields | {"origin", "layout"}, extended,
+                               extended | {"manifest", "image_config", "layers"}):
             raise ValueError(f"Invalid configured image fields: {image}")
         if (not string(image["name"]) or not string(image["archive"])
                 or image["architecture"] not in ("amd64", "arm64")):
             raise ValueError(f"Invalid configured image obligation: {image}")
         origin, layout = image.get("origin", "source"), string(image.get("layout", ""))
-        if origin not in ("source", "native-oci", "registry") or (origin == "source") != (not layout):
+        if origin not in ("source", "native-oci", "native-img", "registry") or (origin in ("source", "native-img")) != (not layout):
             raise ValueError(f"Invalid configured image origin/layout: {image}")
         usage, config = image.get("usage", "docker-load"), string(image.get("config", ""))
         if usage not in ("docker-load", "cri-import", "staged-only") or (usage == "docker-load") != (not config):
@@ -1057,6 +1058,16 @@ def declared_source_images(value: object) -> list[dict[str, object]]:
         if ((origin == "registry") != bool(string(image.get("pin", "")))
                 or (origin == "registry") != bool(string(image.get("index", "")))):
             raise ValueError(f"Registry dependency requires its configured pin: {image['name']}")
+        if origin == "native-img":
+            if (not string(image.get("manifest")) or not string(image.get("image_config"))
+                    or image["manifest"] == image["image_config"]):
+                raise ValueError(f"rules_img requires its configured manifest/config: {image['name']}")
+            for raw_layer in sequence(image.get("layers")):
+                layer = mapping(raw_layer)
+                if layer.keys() != {"metadata", "blob"} or not all(string(path) for path in layer.values()):
+                    raise ValueError(f"rules_img requires complete configured layers: {image['name']}")
+        elif set(image) & {"manifest", "image_config", "layers"}:
+            raise ValueError(f"Manifest/config fields require rules_img origin: {image['name']}")
     if len(images) != len({(image["name"], image["architecture"], image["archive"]) for image in images}):
         raise ValueError("Duplicate configured image obligations")
     return images
@@ -1272,6 +1283,103 @@ def source_image_audit(execution: Path, canonical: Path, manifest: Path,
             for kind in ("directory", "file"):
                 if kind in record:
                     records_by_path.setdefault((kind, string(mapping(record[kind])["path"])), []).append((identifier, record))
+        def image_file(path: str) -> tuple[int, dict[str, object]]:
+            match records_by_path.get(("file", path), []):
+                case [(identifier, record)]:
+                    digest = mapping(mapping(record["file"]).get("digest"))
+                    if (re.fullmatch(r"[0-9a-f]{64}", string(digest.get("hash"))) is None
+                            or number(digest.get("sizeBytes", 0)) <= 0):
+                        raise ValueError(f"Missing image input/output digest: {path}")
+                    return identifier, record
+                case _:
+                    raise ValueError(f"Missing unique image input/output: {path}")
+
+        def option_values(arguments: list[object], name: str) -> list[str]:
+            values = []
+            for index, raw in enumerate(arguments):
+                argument = string(raw)
+                if argument == name:
+                    if index + 1 == len(arguments):
+                        raise ValueError(f"Missing image argument value: {name}")
+                    values.append(string(arguments[index + 1]))
+                elif argument.startswith(name + "="):
+                    values.append(argument.removeprefix(name + "="))
+            return values
+
+        img_declarations: dict[tuple[str, str, str], dict[str, object]] = {}
+        for rows in producer_images.values():
+            for declared in rows:
+                if declared.get("origin") != "native-img":
+                    continue
+                key = (string(declared["name"]), string(declared["architecture"]), string(declared["archive"]))
+                producer_fields = {field: declared[field] for field in ("manifest", "image_config", "layers")}
+                if key in img_declarations and img_declarations[key] != producer_fields:
+                    raise ValueError(f"Conflicting rules_img producer declarations: {key}")
+                img_declarations[key] = producer_fields
+        for (image, architecture, archive_path), declared in img_declarations.items():
+            manifest_path, config_path = string(declared["manifest"]), string(declared["image_config"])
+            manifest_id, manifest_record = image_file(manifest_path)
+            config_id, config_record = image_file(config_path)
+            match [spawn for spawn in spawns if spawn.get("mnemonic") == "ImageManifest"
+                   and {manifest_id, config_id} <= set(outputs(spawn))]:
+                case [source]:
+                    successful(source)
+                case _:
+                    raise ValueError(f"Missing unique rules_img assembly: {image}")
+            arguments = sequence(source.get("args"))
+            if (arguments[1:2] != ["manifest"] or option_values(arguments, "--manifest") != [manifest_path]
+                    or option_values(arguments, "--config") != [config_path]
+                    or option_values(arguments, "--os") != ["linux"]
+                    or option_values(arguments, "--architecture") != [architecture]):
+                raise ValueError(f"rules_img assembly differs from declared image/platform: {image}")
+            layers = [mapping(layer) for layer in sequence(declared["layers"])]
+            metadata = [string(layer["metadata"]) for layer in layers]
+            if option_values(arguments, "--layer-from-metadata") != metadata:
+                raise ValueError(f"rules_img assembly layers differ from declarations: {image}")
+            base = [option_values(arguments, "--base-" + field) for field in ("manifest", "config", "descriptor")]
+            if any(base) and any(len(values) != 1 for values in base):
+                raise ValueError(f"Incomplete rules_img base arguments: {image}")
+            assembly_inputs = []
+            for path in metadata + [path for values in base for path in values]:
+                identifier, record = image_file(path)
+                if (chain := input_chain(records, number(source["inputSetId"]), identifier)) is None:
+                    raise ValueError(f"rules_img metadata is not an assembly input: {path}")
+                assembly_inputs.append({"input": record, "input_chain": chain})
+            archive_id, archive_record = image_file(archive_path)
+            match [spawn for spawn in spawns if spawn.get("mnemonic") == "DockerSave" and archive_id in outputs(spawn)]:
+                case [archive]:
+                    successful(archive)
+                case _:
+                    raise ValueError(f"Missing unique rules_img archive: {image}")
+            arguments = sequence(archive.get("args"))
+            configuration = option_values(arguments, "--configuration-file")
+            if (arguments[1:2] != ["docker-save"] or outputs(archive) != [archive_id]
+                    or any(string(arg).split("=", 1)[0] == "--allow-missing-blobs" for arg in arguments)
+                    or option_values(arguments, "--manifest") != [manifest_path]
+                    or option_values(arguments, "--config") != [config_path]
+                    or option_values(arguments, "--output") != [archive_path]
+                    or option_values(arguments, "--format") != ["tar"] or len(configuration) != 1
+                    or option_values(arguments, "--layer") != [str(layer["metadata"]) + "=" + str(layer["blob"]) for layer in layers]):
+                raise ValueError(f"rules_img archive differs from configured manifest/layers: {image}")
+            archive_inputs = []
+            for path in [manifest_path, config_path, *configuration] + [string(layer[field]) for layer in layers for field in ("metadata", "blob")]:
+                identifier, record = image_file(path)
+                if (chain := input_chain(records, number(archive["inputSetId"]), identifier)) is None:
+                    raise ValueError(f"rules_img file is not an archive input: {path}")
+                archive_inputs.append({"input": record, "input_chain": chain})
+            action_identities = []
+            for action in (source, archive):
+                cached = bool(action.get("cacheHit", False) or action.get("remoteCacheHit", False))
+                if cached and not action.get("digest"):
+                    raise ValueError(f"Missing cached rules_img action identity: {image}")
+                action_identities.append(identity(action, executed=not cached))
+            producer_identity, archive_identity = action_identities
+            images.append({"image": image, "architecture": architecture, "origin": "native-img",
+                           "producer": producer_identity | {"inputs": assembly_inputs,
+                               "manifest": manifest_record, "config": config_record},
+                           "archive_action": archive_identity, "archive_id": archive_id,
+                           "archive": archive_record["file"], "archive_inputs": archive_inputs})
+
         # The same configured layout can feed several stock conversions or owners.
         for image, architecture, layout in sorted({(name, architecture, layout)
                 for (name, architecture, _), layout in native_layouts.items()}):

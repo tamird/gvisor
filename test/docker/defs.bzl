@@ -27,32 +27,40 @@ SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
     "//conditions:default": {},
 })
 
-# Match the source-context transition: an AMD64 image remains AMD64 even when
-# its consumer is built for another CPU or with the Go race detector enabled.
-# with_cfg requires its internal rule to be bound globally for Bazel:
+def _image_archive_for_arch(architecture):
+    return with_cfg(
+        native.alias,
+        extra_providers = [ImageArchiveInfo],
+    ).set(
+        "cpu",
+        {"amd64": "k8", "arm64": "aarch64"}[architecture],
+    ).set(
+        "platforms",
+        [Label("//tools/bazeldefs:linux_" + architecture)],
+    ).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
+
+# with_cfg requires its internal rules to be bound globally for Bazel:
 # https://github.com/fmeum/with_cfg.bzl/blob/a33b1b2d2/with_cfg/private/with_cfg.bzl#L86-L89
 # buildifier: disable=unused-variable
-_amd64_image_archive, _amd64_image_archive_transition = with_cfg(
-    native.alias,
-    extra_providers = [ImageArchiveInfo],
-).set(
-    "cpu",
-    "k8",
-).set(
-    "platforms",
-    [Label("//tools/bazeldefs:linux_amd64")],
-).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
+_amd64_image_archive, _amd64_image_archive_transition = _image_archive_for_arch("amd64")
+# buildifier: disable=unused-variable
+_arm64_image_archive, _arm64_image_archive_transition = _image_archive_for_arch("arm64")
 
-def amd64_image_archive(name, actual, **kwargs):
+def configured_image_archive(name, actual, architecture = "amd64", **kwargs):
     """Preserves the public archive owner and its configured producer identity.
 
     Args:
       name: Public archive target.
-      actual: Declared archive to build for AMD64.
+      actual: Declared archive to build for the selected architecture.
+      architecture: Architecture of the image, independent of the consumer.
       **kwargs: Common target attributes.
     """
     common = {key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
-    _amd64_image_archive(name = name + "_configured", actual = actual, **kwargs)
+    {"amd64": _amd64_image_archive, "arm64": _arm64_image_archive}[architecture](
+        name = name + "_configured",
+        actual = actual,
+        **kwargs
+    )
 
     # Native aliases are transparent to aspects. Keep the public owner on a
     # rule while inheriting the producer's configured archive and identity.

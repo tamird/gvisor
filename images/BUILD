@@ -17,15 +17,36 @@ bzl_library(
 )
 
 bzl_library(
+    name = "archive_bzl",
+    srcs = ["archive.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        "//tools:defs_bzl",
+        "@rules_pkg//pkg:bzl_srcs",
+    ],
+)
+
+bzl_library(
+    name = "img_bzl",
+    srcs = ["img.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        ":archive_bzl",
+        "//test/docker:source_image_contracts_bzl",
+        "//tools:arch_bzl",
+        "@rules_img//img:load",
+    ],
+)
+
+bzl_library(
     name = "oci_bzl",
     srcs = ["oci.bzl"],
     visibility = ["//images:__subpackages__"],
     deps = [
+        ":archive_bzl",
         "//test/docker:source_image_contracts_bzl",
         "//tools:arch_bzl",
-        "//tools:defs_bzl",
         "@rules_oci//oci:defs",
-        "@rules_pkg//pkg:bzl_srcs",
     ],
 )
 
@@ -120,6 +141,9 @@ pkg_tar(
     visibility = ["//test/docker:__pkg__"],
     deps = [
         ":source_contexts",
+        "//images/basic/alpine:make_context",
+        "//images/basic/busybox:make_context",
+        "//images/basic/tmpfile:make_context",
         "//images/benchmarks/profile-helper:make_context",
     ],
 )

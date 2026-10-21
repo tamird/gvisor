@@ -51,7 +51,7 @@ REMOTE_IMAGE_PREFIX ?= us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presub
 LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
 # These images expose //images/<path>:make_context instead of a Dockerfile.
 # Their contexts contain the complete Bazel-built image as image.tar.
-BAZEL_IMAGES        := benchmarks_profile-helper gpu_ollama_client
+BAZEL_IMAGES        := basic_alpine basic_busybox basic_tmpfile benchmarks_profile-helper gpu_ollama_client
 # These server images have AMD64-only bases and must not receive ARM64 tags.
 ifeq ($(ARCH),x86_64)
 BAZEL_IMAGES        += gpu_ollama_bench gpu_triton

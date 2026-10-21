@@ -14,6 +14,8 @@
 
 """Image obligations exported from the configured build graph for qualification."""
 
+load("@rules_img//img:providers.bzl", "ImageManifestInfo")
+
 ImageArchiveInfo = provider(
     doc = "An image archive and its configured producer identity.",
     fields = {
@@ -61,10 +63,22 @@ def _declared_image_archive_impl(ctx):
     origin = ctx.attr.origin or (inherited.origin if inherited != None else "source")
     layout = ctx.file.layout or (inherited.layout if inherited != None else None)
     pin = ctx.file.pin or (inherited.pin if inherited != None else None)
-    if inherited != None and (origin != inherited.origin or layout != inherited.layout or pin != inherited.pin):
+    manifest = ctx.attr.manifest[ImageManifestInfo] if ctx.attr.manifest != None else None
+    if manifest != None:
+        if manifest.os != "linux" or manifest.architecture != architecture:
+            fail("image manifest must match the declared Linux architecture")
+        if any([layer.blob == None for layer in manifest.layers]):
+            fail("declared image archives require every layer blob")
+    manifest_file = manifest.manifest if manifest != None else (inherited.manifest if inherited != None else None)
+    image_config = manifest.config if manifest != None else (inherited.image_config if inherited != None else None)
+    layers = tuple([struct(metadata = layer.metadata, blob = layer.blob) for layer in manifest.layers]) if manifest != None else (inherited.layers if inherited != None else ())
+    if inherited != None and (origin != inherited.origin or layout != inherited.layout or pin != inherited.pin or
+                             manifest_file != inherited.manifest or image_config != inherited.image_config or layers != inherited.layers):
         fail("archive aliases must preserve the declared producer")
-    if (origin == "source") != (layout == None):
-        fail("native OCI and registry archives require their configured layout; source archives use their source action")
+    if (origin in ("source", "native-img")) != (layout == None):
+        fail("native OCI and registry archives require their configured layout")
+    if (origin == "native-img") != (manifest_file != None and image_config != None):
+        fail("rules_img archives require their configured manifest and config")
     if (origin == "registry") != (pin != None):
         fail("registry archives require the existing pull repository's digest file")
     runfiles = ctx.runfiles(files = [archive]).merge_all([
@@ -86,6 +100,9 @@ def _declared_image_archive_impl(ctx):
             usage = "docker-load",
             config = None,
             pin = pin,
+            manifest = manifest_file,
+            image_config = image_config,
+            layers = layers,
         )),
     ]
 
@@ -96,9 +113,10 @@ declared_image_archive = rule(
         "archive": attr.label(mandatory = True, allow_single_file = True),
         "architecture": attr.string(values = ["", "amd64", "arm64", "x86_64", "aarch64"], doc = "Image architecture; empty inherits the archive declaration."),
         "image": attr.string(doc = "Canonical image name; empty inherits the archive declaration."),
-        "origin": attr.string(values = ["", "source", "native-oci", "registry"], doc = "Producer kind; empty inherits the archive declaration."),
+        "origin": attr.string(values = ["", "source", "native-oci", "native-img", "registry"], doc = "Producer kind; empty inherits the archive declaration."),
         "layout": attr.label(allow_single_file = True, doc = "Configured OCI layout for a native assembly or registry dependency."),
         "pin": attr.label(allow_single_file = True, doc = "The registry pull repository's existing digest target."),
+        "manifest": attr.label(providers = [ImageManifestInfo], doc = "Configured rules_img manifest for a self-contained archive."),
     },
 )
 
@@ -111,7 +129,7 @@ def _owner_label(label):
     return label[2:] if label.startswith("@@//") else label
 
 def _image_record(image, pins, indexes):
-    return {
+    result = {
         "name": image.name,
         "architecture": image.architecture,
         "archive": image.archive.path,
@@ -122,6 +140,13 @@ def _image_record(image, pins, indexes):
         "pin": pins[image.pin].path if image.pin != None else "",
         "index": indexes[image.layout].path if image.origin == "registry" else "",
     }
+    if image.origin == "native-img":
+        result.update(
+            manifest = image.manifest.path,
+            image_config = image.image_config.path,
+            layers = [{"metadata": layer.metadata.path, "blob": layer.blob.path} for layer in image.layers],
+        )
+    return result
 
 def _source_image_contracts_impl(target, ctx):
     if ImageArchiveInfo in target:
@@ -175,6 +200,9 @@ def _source_image_contracts_impl(target, ctx):
             usage = usage.images[image.name],
             config = usage.config,
             pin = image.pin,
+            manifest = image.manifest,
+            image_config = image.image_config,
+            layers = image.layers,
         ) for image in images.to_list()])
     providers = [_ImageInputsInfo(images = images, source_commands = commands)]
     if ctx.rule:
