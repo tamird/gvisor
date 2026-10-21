@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-21T14:08:34.830807+00:00",
+    "updatedAt": "2026-10-21T14:15:29.126079+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -9578,14 +9578,14 @@
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae",
-      "status": "Approved; awaiting landing prerequisites",
-      "updatedAt": "2026-10-14T11:41:43.692401+00:00",
-      "summary": "The complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
+      "status": "Modernizing approved proposal",
+      "updatedAt": "2026-10-21T14:15:29.126079+00:00",
+      "summary": "Node is modernizing this existing approved proposal to rules_img and grouped image packages under the current user instruction. The approved lean package choices, GNU coreutils runtime, license records and original source at 62b68fd8 remain the starting point; this is not a parallel Ubuntu-based migration. The new source/stack shape is still being prepared, so no refreshed qualification or prerequisite release is claimed.\n\nRetained approved scope and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
       "followup": {
-        "owner": "syscall_validation",
-        "disposition": "Approved; awaiting landing prerequisites",
+        "owner": "node_tls_sni",
+        "disposition": "Owner modernizing existing approved proposal",
         "sourceHead": "62b68fd8b397112f4d4de7964a488801d20b73ae",
-        "nextAction": "Deliver after the existing Ollama client and APT enumeration prerequisites land. The contributor-approved comment and guard refinements are published; no new review question remains.",
+        "nextAction": "Prepare and independently review the rules_img/grouped-layout refinement in the assigned checkout, preserving the lean runtime contract and existing package/license obligations. Root will settle the necessary stack; current Ollama/APT prerequisites remain recorded until exact source proves otherwise.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
           "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
@@ -9597,7 +9597,7 @@
           "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351",
           "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae"
         ],
-        "observedAt": "2026-10-14T11:41:43.692401+00:00"
+        "observedAt": "2026-10-21T14:15:29.126079+00:00"
       },
       "refinement": {
         "before": {
@@ -16239,24 +16239,25 @@
       "number": 16095
     },
     {
-      "id": "branch:rules-img-basic-images",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16097",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "rules-img-basic-images",
       "head": "cf55245b69a60372882c5b01008b505c00e7e17d",
-      "title": "Build the basic images with rules_img",
-      "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
+      "title": "Build basic test images with rules_img",
+      "url": "https://github.com/google/gvisor/pull/16097",
       "group": "bazel",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-21T14:08:34.830807+00:00",
-      "summary": "The requested directory consolidation is complete and independently validated. The three declarations now share images/basic/BUILD with the exact tmpfile fixture alongside it; stable image names, tags and nested Make context paths are preserved. The final combined gate at child 5ac1aa8e95 passes all 15 configured outputs (nine AMD64 and six ARM64), formatting, all three actual basic-image Make rebuild/deleted-tag restoration/container checks, and the child benchmark checks. The parent layout is source-bound to exact cf55245b69. Root has requested the concrete final contributor decision on this parent. Runtime coverage is AMD64; ARM64 coverage is archive/context construction. Earlier failures and canonical license evidence retain their original source identities. There is no held image or license proposal prerequisite.",
+      "status": "open",
+      "updatedAt": "2026-10-21T14:15:29.126079+00:00",
+      "summary": "Contributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
       "followup": {
-        "owner": "root",
-        "disposition": "Final contributor decision pending",
+        "owner": "work_map_current",
+        "disposition": "Delivered; awaiting maintainer review",
         "sourceHead": "cf55245b69a60372882c5b01008b505c00e7e17d",
-        "observedAt": "2026-10-21T14:08:34.830807+00:00",
-        "nextAction": "Await the already-requested decision on final parent cf55245b69, then deliver it. Source review and combined layout validation are complete; do not repeat the approval question or workload.",
+        "observedAt": "2026-10-21T14:15:29.126079+00:00",
+        "nextAction": "Follow exact PR #16097 through the existing ordinary CI/review cadence when it resumes. The contributor decision and layout validation are complete; no repeated question or workload is needed.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
           "https://github.com/tamird/gvisor/commit/8f8c2b71ad946e5fcf2256b88c510d6bad90885e",
           "https://app.buildbuddy.io/invocation/2d49ad1a-86ca-4de9-ac5f-e9bf49d1e47b",
@@ -16266,7 +16267,7 @@
       },
       "evidence": [
         {
-          "label": "Published refinement and description",
+          "label": "Exact delivered source and description",
           "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d"
         },
         {
@@ -16290,11 +16291,7 @@
           "head": "cf55245b69a60372882c5b01008b505c00e7e17d"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "cf55245b69a60372882c5b01008b505c00e7e17d",
-        "url": "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d"
-      }
+      "number": 16097
     },
     {
       "id": "branch:rules-img-syscallbench",
@@ -16306,15 +16303,16 @@
       "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
       "group": "bazel",
       "status": "Contributor approved; awaiting prerequisite",
-      "updatedAt": "2026-10-21T14:08:34.830807+00:00",
+      "updatedAt": "2026-10-21T14:15:29.126079+00:00",
       "summary": "The contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor approved; parent prerequisite remains",
+        "disposition": "Contributor approved; awaiting PR #16097",
         "sourceHead": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
-        "observedAt": "2026-10-21T14:08:34.830807+00:00",
-        "nextAction": "Deliver the approved child after the basic-image parent lands, preserving the reviewed layout and exact range-diff. Validation is complete; no new child approval question or repeated runtime gate is needed.",
+        "observedAt": "2026-10-21T14:15:29.126079+00:00",
+        "nextAction": "Deliver the approved child after PR #16097 lands, preserving the reviewed layout and exact range-diff. Validation is complete; no new child approval question or repeated runtime gate is needed.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
           "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
           "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6",
@@ -18338,11 +18336,12 @@
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
     },
     {
-      "from": "branch:rules-img-basic-images",
+      "from": "pr:16097",
       "to": "branch:rules-img-syscallbench",
       "type": "depends_on",
-      "reason": "The syscallbench image uses the standard archive and Make adapter introduced by the basic-image proposal; the refined child is based on exact cf55245b69. This is the only proposal prerequisite.",
+      "reason": "The contributor-approved syscallbench child uses the archive and Make adapter delivered by PR #16097 at cf55245b69. Open it after that parent lands; no other proposal prerequisite is required.",
       "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/cf55245b69a60372882c5b01008b505c00e7e17d",
         "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
       ]
