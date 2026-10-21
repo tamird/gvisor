@@ -467,7 +467,7 @@ func main() {
 					// Add to our registration.
 					emitRegister(ts.Name.Name)
 
-				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
+				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType, *ast.MapType:
 					maybeEmitImports()
 
 					// Generate the info methods.
