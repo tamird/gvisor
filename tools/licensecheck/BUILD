@@ -7,13 +7,16 @@ package(
 
 go_library(
     name = "licensecheck",
-    srcs = ["licensecheck.go"],
-    importpath = "gvisor.dev/gvisor/tools/licensecheck",
+    srcs = [
+        "apt.go",
+        "classify.go",
+        "licensecheck.go",
+    ],
     marshal = False,
     stateify = False,
     visibility = ["//tools/licensecheck:__subpackages__"],
     deps = [
-        "//pkg/zip",
+        "@com_github_google_licensecheck//:go_default_library",
         "@in_gopkg_yaml_v3//:go_default_library",
         "@org_golang_x_mod//modfile:go_default_library",
         "@org_golang_x_mod//module:go_default_library",
@@ -24,16 +27,22 @@ go_library(
 go_test(
     name = "licensecheck_test",
     size = "small",
-    srcs = ["licensecheck_test.go"],
+    srcs = [
+        "apt_test.go",
+        "licensecheck_test.go",
+    ],
     data = [
         "dependencies.yaml",
         "//governance:licensing.yaml",
     ],
-    embed = [":licensecheck"],
     embedsrcs = [
-        "testdata/overflow-readme.txt",
-        "testdata/udiff-bsd.txt",
-        "testdata/udiff-mit.txt",
+        "testdata/apt-busybox-static-copyright.txt",
+        "testdata/apt-erofs-utils-copyright.txt",
+        "testdata/apt-libpcre2-8-0-copyright.txt",
+        "testdata/apt-lock.json",
+        "testdata/bsd.txt",
+        "testdata/llvm.txt",
+        "testdata/openssl.txt",
     ],
-    deps = ["//pkg/zip"],
+    library = ":licensecheck",
 )
