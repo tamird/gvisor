@@ -119,6 +119,7 @@ class DispatchPlanTest(unittest.TestCase):
 
     def test_qualifier_plans_without_entering_linux_workload_path(self):
         environment = os.environ | {
+            "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ["PATH"],
             "QUALIFICATION_PROFILE": "single", "QUALIFICATION_COMMIT": "a" * 40,
             "GITHUB_RUN_ID": "1234", "GITHUB_RUN_ATTEMPT": "2",
             "QUALIFICATION_LANES": "docker", "QUALIFICATION_ARCH": "amd64",
@@ -130,8 +131,9 @@ class DispatchPlanTest(unittest.TestCase):
         }
         result = subprocess.run(
             ["/bin/bash", str(Path(__file__).with_name("qualify.sh").resolve()), "--dispatch-plan"],
-            env=environment, cwd=self.directory.name, text=True, capture_output=True, check=True,
+            env=environment, cwd=self.directory.name, text=True, capture_output=True, check=False,
         )
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout), self.plan(
             profile="single", lanes=["docker"], test_filter="TestExample", clock_source="reference",
             header_base="", cos_sha256="", cos_gzip_base64="",
