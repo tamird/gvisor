@@ -18139,10 +18139,10 @@
     - GPL-2.0
     - MIT
 - dependency: package_metadata
-  version: https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.7/supply-chain-v0.0.7.tar.gz
-  retrieved: "2026-10-18"
-  commit: 0025d6abf888945fd2e14d62b92ada5c6d958fbf
-  sha256: 8f27dc7393e3f3bdc793bdc4ba36d67a63c22cc9d38cc65d3204654974ea4563
+  version: https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.10/supply-chain-v0.0.10.tar.gz
+  retrieved: "2026-10-21"
+  commit: 6edc3491a8a7596cef456ed1538d87343084d146
+  sha256: bfd9bc7a9932516f997d50a2770287b277bca107db285350d0485f14a1bc2203
   license: Apache-2.0
 - dependency: pigz
   version: https://zlib.net/pigz/pigz-2.8.tar.gz
@@ -18435,6 +18435,12 @@
   retrieved: "2026-09-29"
   commit: 9792f1c079a7602347e0fd966542b6d6b35a6c64
   sha256: c3e253237109ab2e2a8d3cb075688b98a6e6fce43d849849648e8e3a84f20d6f
+  license: Apache-2.0
+- dependency: rules_img
+  version: https://github.com/bazel-contrib/rules_img/releases/download/v0.3.23/rules_img-v0.3.23.tar.gz
+  retrieved: "2026-10-21"
+  commit: 5a6bfd045c78fec2ad600e22ec697e65a7c49c27
+  sha256: 22092bd8f72d915995ab75c803a12f8506b8cf56bc59bc540f7df7812cc49a1d
   license: Apache-2.0
 - dependency: rules_license
   version: https://github.com/bazelbuild/rules_license/releases/download/1.0.0/rules_license-1.0.0.tar.gz
