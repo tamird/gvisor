@@ -31,7 +31,8 @@ import qualification_report as report
 
 
 def collect_actions(run: int, source: str, architecture: str, prefix: Path,
-                    poll_interval: int = 10, run_attempt: int | None = None) -> dict[str, object]:
+                    poll_interval: int = 10, run_attempt: int | None = None,
+                    watch_seconds: int = 10000) -> dict[str, object]:
     """Reuse gh watch/download and the canonical authenticated bundle receipt."""
     def output(suffix: str) -> Path:
         return Path(str(prefix) + suffix)
@@ -48,6 +49,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
     report.write_json(output("-collector.json"), {
         "run": run, "source": source, "collector_attached_at": attached_at,
         "poll_interval_seconds": poll_interval, "requested_run_attempt": run_attempt,
+        "watch_seconds": watch_seconds,
     })
 
     def observe(metadata: dict[str, object]) -> None:
@@ -77,13 +79,15 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
             raise ValueError("Unknown qualification architecture")
         if type(poll_interval) is not int or poll_interval <= 0:
             raise ValueError("Expected a positive polling interval")
+        if type(watch_seconds) is not int or watch_seconds <= 0:
+            raise ValueError("Expected a positive watch budget in seconds")
         if run_attempt is not None and (type(run_attempt) is not int or run_attempt <= 0):
             raise ValueError("Expected a positive workflow run attempt")
         path = f"repos/tamird/gvisor/actions/runs/{run}"
         metadata = api(path)
         observe(metadata)
         if metadata.get("status") != "completed":
-            deadline = time.monotonic() + 10000
+            deadline = time.monotonic() + watch_seconds
             with output("-watch.log").open("w") as log:
                 # A disconnected watch does not stop the workflow. Reattach
                 # within the original deadline, preserving all watch output.
@@ -155,7 +159,7 @@ def collect_actions(run: int, source: str, architecture: str, prefix: Path,
                    "source_verified": type(workflow.get("id")) is int and workflow["id"] == run
                    and workflow.get("head_sha") == source,
                    "watch_exit": watch_exit, "watch_exits": watch_exits, "collector_attached_at": attached_at,
-                   "poll_interval_seconds": poll_interval,
+                   "poll_interval_seconds": poll_interval, "watch_seconds": watch_seconds,
                    "collection_finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat()})
     report.write_json(output("-receipt.json"), result)
     return result
@@ -171,9 +175,11 @@ def main() -> int:
                         help="Required workflow attempt; otherwise bind the first observed attempt")
     parser.add_argument("--poll-interval", type=int, default=10,
                         help="Seconds between status checks; increase for concurrent runs to conserve API quota")
+    parser.add_argument("--watch-seconds", type=int, default=10000,
+                        help="Positive total watch budget in seconds, shared across reattachments")
     args = parser.parse_args()
     result = collect_actions(args.run, args.source, args.architecture, args.prefix,
-                             args.poll_interval, args.run_attempt)
+                             args.poll_interval, args.run_attempt, args.watch_seconds)
     print(f"{result['status']}: {args.prefix}-receipt.json", flush=True)
     return int(result["status"] != "PASS")
 
