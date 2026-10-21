@@ -57,7 +57,7 @@ copy-up fixture. The image retains the `nonroot` account (UID 1338, GID 1337) an
 its copy of `host_connect` in `/home/nonroot`.
 
 The runtime uses the declared Ubuntu Jammy snapshot. Bash, Dash, GNU coreutils,
-util-linux, iputils, iproute2 and iptables retain their complete package
+util-linux, iputils, iproute2, iptables and procps retain their complete package
 dependency closure and notices. Package installation scripts do not run; the
 image explicitly selects the legacy iptables entry points required by the
 tests. `//images/basic:integration_test_archives` builds the AMD64 and ARM64
