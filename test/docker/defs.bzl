@@ -29,7 +29,7 @@ SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
 
 # Match the source-context transition: an AMD64 image remains AMD64 even when
 # its consumer is built for another CPU or with the Go race detector enabled.
-_amd64_image_archive, _amd64_image_archive_transition = with_cfg(native.filegroup).set(
+_amd64_image_archive, _ = with_cfg(native.filegroup).set(
     "cpu",
     "k8",
 ).set(

@@ -14,20 +14,29 @@
 
 """Image obligations exported from the configured build graph for qualification."""
 
-_ImageArchiveInfo = provider(fields = {
-    "image": "Canonical image name, architecture and declared archive file.",
-})
+_ImageArchiveInfo = provider(
+    doc = "An image archive and its configured producer identity.",
+    fields = {
+        "image": "Canonical image name, architecture and declared archive file.",
+    },
+)
 
-ImageSourceCommandInfo = provider(fields = {
-    "architecture": "Architecture of images built inside the command.",
-    "image_class": "Canonical Make CPU or GPU image cohort.",
-    "images": "Selected image names; empty selects the complete cohort.",
-})
+ImageSourceCommandInfo = provider(
+    doc = "The source-owned selection of an image-building command.",
+    fields = {
+        "architecture": "Architecture of images built inside the command.",
+        "image_class": "Canonical Make CPU or GPU image cohort.",
+        "images": "Selected image names; empty selects the complete cohort.",
+    },
+)
 
-_ImageInputsInfo = provider(fields = {
-    "images": "Transitive declared image archives, independent of execution results.",
-    "source_commands": "Commands that build images during test execution.",
-})
+_ImageInputsInfo = provider(
+    doc = "The image obligations of a configured target and its dependencies.",
+    fields = {
+        "images": "Transitive declared image archives, independent of execution results.",
+        "source_commands": "Commands that build images during test execution.",
+    },
+)
 
 def _declared_image_archive_impl(ctx):
     archive = ctx.file.archive
@@ -76,6 +85,8 @@ declared_image_archive = rule(
 def _owner_label(label):
     # BEP omits the canonical main-repository prefix from owner labels.
     label = str(label)
+    # This recognizes Bazel's output; it does not name a repository dependency.
+    # buildifier: disable=canonical-repository
     return label[2:] if label.startswith("@@//") else label
 
 def _source_image_contracts_impl(target, ctx):
