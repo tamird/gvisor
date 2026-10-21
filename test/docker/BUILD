@@ -433,7 +433,10 @@ docker_command_test(
         memory = "8GB",
     ),
     shard_count = 4,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "source-image-results",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -456,7 +459,10 @@ docker_command_test(
         memory = "8GB",
     ),
     shard_count = 1,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "source-image-results",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -480,7 +486,10 @@ docker_command_test(
         memory = "8GB",
     ),
     shard_count = 1,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "source-image-results",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -505,7 +514,10 @@ docker_command_test(
         memory = "8GB",
     ),
     shard_count = 2,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "source-image-results",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",
@@ -528,7 +540,10 @@ docker_command_test(
         memory = "8GB",
     ),
     shard_count = 4,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "source-image-results",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -551,7 +566,10 @@ docker_command_test(
         memory = "8GB",
     ),
     shard_count = 2,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "source-image-results",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",

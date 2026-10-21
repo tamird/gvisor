@@ -1373,7 +1373,11 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["output_options"], [])
         self.assertEqual(report.preflight(events, 1, "build")["status"], "INCOMPLETE")
         self.assertEqual(report.preflight(events, 4, "test")["status"], "INCOMPLETE")
-        for tag in ("jtreg-results", "nodejs-results", "nodejs-exact-results"):
+        for tag, retained, omitted in (
+                ("jtreg-results", "batch-0.log", "source-images/selection.json"),
+                ("nodejs-results", "batch-0.log", "source-images/selection.json"),
+                ("nodejs-exact-results", "batch-0.log", "source-images/selection.json"),
+                ("source-image-results", "source-images/selection.json", "batch-0.log")):
             with self.subTest(tag=tag):
                 records = [json.loads(line) for line in events.read_text().splitlines()]
                 configured = next(record for record in records if "configured" in record)
@@ -1387,7 +1391,8 @@ class QualificationReportTest(unittest.TestCase):
                              for option in value["output_options"] if option.startswith("--remote_download_regex=")]
                 label = configured["id"]["targetConfigured"]["label"]
                 output = "bazel-out/config/testlogs/" + label.removeprefix("//").replace(":", "/")
-                self.assertRegex(output + "/run_1_of_2/test.outputs/batch-0.log", pattern)
+                self.assertRegex(output + "/run_1_of_2/test.outputs/" + retained, pattern)
+                self.assertIsNone(re.search(pattern, output + "/test.outputs/" + omitted))
                 self.assertIsNone(re.search(pattern, output + "/test.outputs/boot.log"))
 
     def test_test_no_build_requires_all_owners_and_no_failure(self) -> None:
@@ -1843,10 +1848,14 @@ class QualificationReportTest(unittest.TestCase):
         combined = report.bundle(self.evidence, 37, 1, self.root / "evidence.tar.gz")
         self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 37))
 
-    def test_bundle_retains_undeclared_outputs_only_for_failed_attempts(self) -> None:
-        for status, name in itertools.product(("PASSED", "TIMEOUT"),
-                                              ("test.outputs__outputs.zip", "test.outputs/guest/console.log")):
-            with self.subTest(status=status, name=name):
+    def test_bundle_retains_failure_diagnostics_and_declared_results(self) -> None:
+        for status, tag, name in itertools.product(
+                ("PASSED", "TIMEOUT"), (None, "source-image-results"),
+                ("test.outputs__outputs.zip", "test.outputs/guest/console.log",
+                 "test.outputs/source-images/selection.json", "test.outputs/source-images/basic_alpine/request.json",
+                 "test.outputs/source-images/basic_alpine/build-exit-code", "test.outputs/source-images/basic_alpine/inspect.json",
+                 "test.outputs/source-images/basic_alpine/exit-code")):
+            with self.subTest(status=status, tag=tag, name=name):
                 invocation = self.fixture()
                 relative = "test.outputs/outputs.zip" if name.endswith(".zip") else name
                 outputs = invocation / relative
@@ -1858,6 +1867,11 @@ class QualificationReportTest(unittest.TestCase):
                     outputs.write_text("payload completed before wrapper timeout\n")
                 original = outputs.read_bytes()
                 events = self.events(invocation)
+                if tag:
+                    configured = next(event["configured"] for event in events if "configured" in event)
+                    configured.setdefault("tag", []).append(tag)
+                    # Results can precede their configured owner in BEP.
+                    events.reverse()
                 result = next(event["testResult"] for event in events if "testResult" in event)
                 result["status"] = status
                 result["testActionOutput"].append({"name": name, "uri": outputs.as_uri()})
@@ -1874,7 +1888,7 @@ class QualificationReportTest(unittest.TestCase):
                 report.bundle(self.evidence, native_exit, 0, bundle)
                 with tarfile.open(bundle) as archive:
                     path = f"invocation-pass/reports/{relative}"
-                    if status == "PASSED":
+                    if status == "PASSED" and (tag is None or name == "test.outputs/guest/console.log"):
                         self.assertNotIn(path, archive.getnames())
                     else:
                         with archive.extractfile(path) as stream:

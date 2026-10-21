@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, deque
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 import datetime
@@ -59,6 +59,11 @@ MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
 RUNTIME_RESULT_TAGS = {"jtreg-results"} | NODE_RESULT_TAGS
+RESULT_OUTPUT_PATTERNS = {
+    **dict.fromkeys(RUNTIME_RESULT_TAGS, RUNTIME_OUTPUT_NAME),
+    "source-image-results": (r"source-images/(?:selection\.json|[A-Za-z0-9][A-Za-z0-9_.-]*/"
+                             r"(?:request\.json|build-exit-code|inspect\.json|exit-code))"),
+}
 SOURCE_IMAGE_ASPECT = "//test/docker:source_image_contracts.bzl%source_image_contracts"
 EVENT_KEYS = {
     "id", "children", "started", "finished", "configured", "completed",
@@ -281,12 +286,17 @@ def advertised_build_outputs(events: Path, groups: set[tuple[Owner, str]]) -> li
     return outputs
 
 
+def result_output_pattern(tags: Iterable[str]) -> str:
+    """Select the small result files needed even when their tests pass."""
+    return "|".join(dict.fromkeys(RESULT_OUTPUT_PATTERNS[tag] for tag in tags if tag in RESULT_OUTPUT_PATTERNS))
+
+
 def capture(events: Path, output: Path, output_root: Path, report_dir: Path, retain_outputs: bool = False,
             expected_analysis: tuple[Path, ...] = (), expected_kind: str = "build") -> dict[str, object]:
     """Copy all advertised original reports before returning capture failures."""
     errors: list[str] = []
     reports: list[dict[str, object]] = []
-    runtime_labels: set[str] = set()
+    result_patterns: dict[str, str] = {}
     output_root = output_root.resolve()
     if events.resolve() == output.resolve():
         raise ValueError("Raw and sanitized event files must differ")
@@ -357,9 +367,10 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
             for line in source:
                 try:
                     event = mapping(json.loads(line))
-                    if RUNTIME_RESULT_TAGS.intersection(mapping(event.get("configured", {})).get("tag", [])):
+                    pattern = result_output_pattern(mapping(event.get("configured", {})).get("tag", []))
+                    if pattern:
                         identity = mapping(event.get("id"))
-                        runtime_labels.add(string(mapping(identity.get("targetConfigured")).get("label")))
+                        result_patterns[string(mapping(identity.get("targetConfigured")).get("label"))] = pattern
                 except (ValueError, TypeError):
                     # The capture pass below reports malformed events.
                     continue
@@ -382,9 +393,9 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
                         if retain_outputs or result.get("status") != "PASSED":
                             names.extend(name for name in advertised
                                          if name == "test.outputs__outputs.zip" or name.startswith("test.outputs/"))
-                        elif attempt.owner.label in runtime_labels:
+                        elif pattern := result_patterns.get(attempt.owner.label):
                             names.extend(name for name in advertised
-                                         if name == "test.outputs__outputs.zip" or re.fullmatch("test.outputs/" + RUNTIME_OUTPUT_NAME, name))
+                                         if name == "test.outputs__outputs.zip" or re.fullmatch("test.outputs/(?:" + pattern + ")", name))
                         for name in names:
                             try:
                                 matches = advertised.get(name, [])
@@ -1419,22 +1430,25 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
             output_options = ["--output_groups=+" + ",+".join(sorted({group for _, group in groups})),
                               "--remote_download_outputs=toplevel"]
         if kind == "test":
-            paths = []
+            paths: dict[str, list[str]] = {}
             for label, target in sorted(targets.items()):
-                if not RUNTIME_RESULT_TAGS.intersection(target.tags):
+                pattern = result_output_pattern(target.tags)
+                if not pattern:
                     continue
                 repository, separator, local = label.partition("//")
                 if not separator or ":" not in local:
-                    raise ValueError(f"Invalid runtime owner label: {label}")
+                    raise ValueError(f"Invalid result owner label: {label}")
                 path = local.replace(":", "/", 1).lstrip("/")
                 if repository:
                     path = "external/" + repository.lstrip("@") + "/" + path
-                paths.append(re.escape(path))
+                paths.setdefault(pattern, []).append(re.escape(path))
             if paths:
                 # Minimal remote downloads omit passing undeclared outputs.
-                # Materialize only these owners' batch logs, not runtime images
-                # or successful debug logs. Repeated regex options are additive.
-                pattern = r".*/testlogs/(?:" + "|".join(paths) + r")/(?:[^/]+/)*test\.outputs/" + RUNTIME_OUTPUT_NAME + "$"
+                # Retain each owner's result files without downloading images
+                # or successful debug logs.
+                alternatives = [r"(?:" + "|".join(owners) + r")/(?:[^/]+/)*test\.outputs/(?:" + pattern + ")"
+                                for pattern, owners in paths.items()]
+                pattern = r".*/testlogs/(?:" + "|".join(alternatives) + ")$"
                 output_options.extend(["--nozip_undeclared_test_outputs", "--remote_download_regex=" + pattern])
     except (OSError, ValueError) as error:
         errors.append(str(error))
