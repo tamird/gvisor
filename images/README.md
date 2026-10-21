@@ -49,6 +49,15 @@ The grouped packages expose `//images/benchmarks:profile_helper_archive` and
 for Make. The stable image names remain `benchmarks/profile-helper` and
 `gpu/ollama/client`.
 
+## Hackbench image
+
+Hackbench is built from the pinned rt-tests 2.2 source with the repository C
+toolchain, preserving the version and arguments used by the benchmark. Its
+image shares `//images:helper_base` and the profiling image's GNU runtime
+layer, adding only `sleep`, the static benchmark binary, and its license.
+The image is available as `//images/benchmarks:hackbench_archive`; Make uses
+`hackbench_context` under the existing `benchmarks/hackbench` name.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.

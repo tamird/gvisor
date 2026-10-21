@@ -460,3 +460,10 @@ exceptions:
       QEMU user-mode emulators for arm64 build machines, run as a build tool
       to execute binaries built for the target architecture when
       cross-compiling. QEMU is neither linked into nor distributed with gVisor.
+  - dependency: rt_tests
+    license: GPL-2.0-only
+    exception_rationale: >-
+      Hackbench is a standalone test image executable built under the
+      GPLv2 option of its GPL-2.0-or-later license. Its source archive is
+      pinned and its COPYING file is retained in the image. It is not
+      linked into gVisor release binaries.

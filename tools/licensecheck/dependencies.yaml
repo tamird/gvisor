@@ -5,6 +5,7 @@
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
+# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -1641,6 +1642,12 @@
   retrieved: "2026-10-05"
   commit: ""
   sha256: c73711af02b97cd5e2667e735d9c06890c57165517110ca4e646c95a7083158d
+  license: GPL-2.0-only
+- dependency: rt_tests
+  version: https://www.kernel.org/pub/linux/utils/rt-tests/older/rt-tests-2.2.tar.xz
+  retrieved: "2026-10-21"
+  commit: ""
+  sha256: 48346ab2b5bf2ffbdb1ed0d4540e9e8e22f6665e6bb3d59c22614f9722b13a91
   license: GPL-2.0-only
 - dependency: rules_cc
   version: https://github.com/bazelbuild/rules_cc/releases/download/0.2.22/rules_cc-0.2.22.tar.gz
