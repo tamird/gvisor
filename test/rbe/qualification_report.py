@@ -282,7 +282,7 @@ def advertised_build_outputs(events: Path, groups: set[tuple[Owner, str]]) -> li
 
 
 def capture(events: Path, output: Path, output_root: Path, report_dir: Path, retain_outputs: bool = False,
-            expected_analysis: tuple[Path, ...] = ()) -> dict[str, object]:
+            expected_analysis: tuple[Path, ...] = (), expected_kind: str = "build") -> dict[str, object]:
     """Copy all advertised original reports before returning capture failures."""
     errors: list[str] = []
     reports: list[dict[str, object]] = []
@@ -417,7 +417,9 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     try:
         groups = set()
         for analysis in expected_analysis:
-            groups.update(declared_output_groups(unit_matrix.configured_targets(str(analysis), tests=None)))
+            groups.update(declared_output_groups(unit_matrix.configured_targets(
+                str(analysis), tests=True if expected_kind == "test" else None,
+                allow_test_no_build=expected_kind == "test")))
         for item in advertised_build_outputs(output, groups):
             try:
                 record = retain(string(item["uri"]), {"sha256": item["sha256"], "bytes": item["bytes"]})
@@ -2487,6 +2489,7 @@ def main() -> int:
         copy.add_argument("--" + name, type=Path, required=True)
     copy.add_argument("--retain-outputs", action="store_true")
     copy.add_argument("--expected-analysis", type=Path, action="append", default=[])
+    copy.add_argument("--expected-kind", choices=("test", "build"), default="build")
     analyze = commands.add_parser("preflight")
     for name in ("events", "output"):
         analyze.add_argument("--" + name, type=Path, required=True)
@@ -2594,7 +2597,7 @@ def main() -> int:
         return 0
     if args.command == "capture":
         result = capture(args.events, args.output, args.output_root, args.report_dir, args.retain_outputs,
-                         tuple(args.expected_analysis))
+                         tuple(args.expected_analysis), args.expected_kind)
         return int(bool(result["errors"]))
     if args.command == "preflight":
         result = preflight(args.events, args.native_exit, args.kind)

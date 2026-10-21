@@ -2274,8 +2274,11 @@ signal.pause()
         self.assertEqual(value["audit_status"], "INCOMPLETE", value)
         self.assertIn("benchmark", "\n".join(value["errors"]).lower())
 
-    def source_contract_fixture(self) -> tuple[Path, Path, Path]:
-        invocation, _, _ = self.build_output_fixture()
+    def source_contract_fixture(self, *, test: bool = False) -> tuple[Path, Path, Path]:
+        if test:
+            invocation = self.fixture()
+        else:
+            invocation, _, _ = self.build_output_fixture()
         events = self.events(invocation)
         target = next(event["id"]["targetCompleted"] for event in events if "completed" in event)
         identity = {**target, "aspect": report.SOURCE_IMAGE_ASPECT}
@@ -2310,6 +2313,38 @@ signal.pause()
         self.assertEqual((configured["images"], configured["source_commands"]), ([], []))
         self.assertEqual(expectations["owners"], {configured["label"]: []})
         self.assertEqual({row["group"] for row in captured["build_outputs"]}, {"default", "source_image_contracts"})
+
+    def test_source_contract_capture_accepts_only_complete_test_no_build_analysis(self) -> None:
+        invocation, analysis, _ = self.source_contract_fixture(test=True)
+        events = [json.loads(line) for line in analysis.read_text().splitlines()]
+        finished = next(event["finished"] for event in events if "finished" in event)
+        finished.update(overallSuccess=False, exitCode={"name": "BUILD_FAILURE", "code": 1})
+        completed = next(event["id"]["targetCompleted"] for event in self.events(invocation)
+                         if "completed" in event)
+        no_build = {"id": {"targetCompleted": completed}, "aborted": {"reason": "NO_BUILD"}}
+        for kind, complete, want_exit in (("test", True, 0), ("build", True, 1), ("test", False, 1)):
+            with self.subTest(kind=kind, complete=complete):
+                analysis.write_text("".join(json.dumps(event) + "\n" for event in
+                                            events + ([no_build] if complete else [])))
+                args = ["qualification_report.py", "capture", "--events", str(invocation / "events.jsonl"),
+                        "--output", str(invocation / "captured.jsonl"), "--output-root", str(invocation),
+                        "--report-dir", str(invocation / "reports"), "--expected-analysis", str(analysis),
+                        "--expected-kind", kind]
+                with mock.patch.object(sys, "argv", args):
+                    self.assertEqual(report.main(), want_exit)
+                captured = report.read_json(report.manifest_path(invocation / "captured.jsonl"))
+                self.assertEqual({row["name"] for row in captured["reports"]}, {"test.log", "test.xml"})
+                if want_exit:
+                    self.assertEqual(captured["build_outputs"], [])
+                    self.assertIn("Expected successful, nonempty target analysis", "\n".join(captured["errors"]))
+                else:
+                    self.assertEqual(captured["errors"], [])
+                    self.assertEqual({row["group"] for row in captured["build_outputs"]}, {"source_image_contracts"})
+                    self.assertEqual(self.verdict(invocation, analysis=analysis)["status"], "PASS")
+                    contract = report.source_image_expectations(
+                        invocation / "verdict.json", report.manifest_path(invocation / "captured.jsonl"))
+                    owner, = contract["configured_owners"]
+                    self.assertEqual((owner["images"], owner["source_commands"]), ([], []))
 
     def test_source_contract_missing_or_wrong_aspect_cannot_pass(self) -> None:
         for damage in ("missing", "wrong-aspect", "changed-bytes"):
