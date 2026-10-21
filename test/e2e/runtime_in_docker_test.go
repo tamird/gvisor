@@ -43,13 +43,42 @@ type testVariant struct {
 
 // run runs the test variant.
 func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string, error) {
-	runscPath, err := testutil.FindRunsc()
-	if err != nil {
-		return "", fmt.Errorf("cannot locate runsc binary: %v", err)
+	var expected struct {
+		Directory string `json:"directory"`
+		Files     map[string]struct {
+			Bytes  int    `json:"bytes"`
+			SHA256 string `json:"sha256"`
+		} `json:"files"`
 	}
-	gvisorBinDir, err := testutil.FindFile("release/gvisor-bin")
-	if err != nil {
-		return "", fmt.Errorf("cannot locate gvisor-bin directory: %v", err)
+	identityFile, diagnostic := os.LookupEnv("GVISOR_DIAGNOSTIC_RUNTIME_IDENTITIES")
+	var runscPath, gvisorBinDir string
+	if diagnostic {
+		if !filepath.IsAbs(identityFile) {
+			return "", fmt.Errorf("diagnostic runtime identities require an absolute path")
+		}
+		data, err := os.ReadFile(identityFile)
+		if err != nil {
+			return "", err
+		}
+		if err := json.Unmarshal(data, &expected); err != nil {
+			return "", err
+		}
+		if !filepath.IsAbs(expected.Directory) {
+			return "", fmt.Errorf("diagnostic runtime directory requires an absolute path")
+		}
+		// Keep the runtime bytes fixed across qualification-only test edits.
+		runscPath = filepath.Join(expected.Directory, "runsc")
+		gvisorBinDir = filepath.Join(expected.Directory, "gvisor-bin")
+	} else {
+		var err error
+		runscPath, err = testutil.FindRunsc()
+		if err != nil {
+			return "", fmt.Errorf("cannot locate runsc binary: %v", err)
+		}
+		gvisorBinDir, err = testutil.FindFile("release/gvisor-bin")
+		if err != nil {
+			return "", fmt.Errorf("cannot locate gvisor-bin directory: %v", err)
+		}
 	}
 	runscRealPath, err := filepath.EvalSymlinks(runscPath)
 	if err != nil {
@@ -73,34 +102,20 @@ func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string
 			ReadOnly: true,
 		})
 	}
-	if identityFile, diagnostic := os.LookupEnv("GVISOR_DIAGNOSTIC_RUNTIME_IDENTITIES"); diagnostic {
-		if !filepath.IsAbs(identityFile) {
-			return "", fmt.Errorf("diagnostic runtime identities require an absolute path")
-		}
-		data, err := os.ReadFile(identityFile)
-		if err != nil {
-			return "", err
-		}
-		var expected map[string]struct {
-			Bytes  int    `json:"bytes"`
-			SHA256 string `json:"sha256"`
-		}
-		if err := json.Unmarshal(data, &expected); err != nil {
-			return "", err
-		}
+	if diagnostic {
 		files := map[string]string{"runsc": runscRealPath}
 		for _, m := range sidecarMounts {
 			files[filepath.Base(m.Target)] = m.Source
 		}
-		if len(expected) != len(files) {
-			return "", fmt.Errorf("runtime identity count: got %d files, want %d", len(files), len(expected))
+		if len(expected.Files) != len(files) {
+			return "", fmt.Errorf("runtime identity count: got %d files, want %d", len(files), len(expected.Files))
 		}
 		for name, path := range files {
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return "", err
 			}
-			want, ok := expected[name]
+			want, ok := expected.Files[name]
 			digest := fmt.Sprintf("%x", sha256.Sum256(data))
 			if !ok || len(data) != want.Bytes || digest != want.SHA256 {
 				return "", fmt.Errorf("runtime identity mismatch: %s (%d bytes, %s)", path, len(data), digest)
