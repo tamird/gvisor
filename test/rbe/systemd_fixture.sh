@@ -83,7 +83,7 @@ timeout 120 docker exec "${container}" bash -c '
 '
 # Setup must also leave the cgroup root before systemd enables controllers.
 docker exec -i --env "GVISOR_TEST_CLOCK_SOURCE=${GVISOR_TEST_CLOCK_SOURCE:-}" "${container}" systemd-run --scope --quiet --unit=root-setup \
-  --slice=system.slice --expand-environment=no bash -se <<'SETUP'
+  --slice=system.slice --expand-environment=no bash -se -- "$3" "$4" <<'SETUP'
 set -euo pipefail
 test "$(cat /proc/1/comm)" = systemd
 test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
@@ -105,8 +105,16 @@ systemctl start docker.service
 test "$(docker info --format '{{.CgroupDriver}}/{{.CgroupVersion}}')" = systemd/2
 test "$(docker info --format '{{.SwapLimit}}')" = true
 docker info
-docker load --input /alpine.tar
-docker load --input /ubuntu.tar
+# Match the declared-archive protocol after each checked nested load.
+for archive in /alpine.tar /ubuntu.tar; do
+  loaded=$(docker load --input "$archive" 2>&1) || {
+    status=$?
+    printf '%s\n' "$loaded" >&2
+    exit "$status"
+  }
+  printf 'Loaded declared image archive %s:\n%s\n' "$1" "$loaded"
+  shift
+done
 SETUP
 docker_ready=true
 
