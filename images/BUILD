@@ -18,7 +18,7 @@ pkg_tar(
     mode = "01777",
 )
 
-# Both static Go helpers use this base. Additional runtime commands belong to
+# Static Go helpers use this base. Additional runtime commands belong to
 # the image whose caller needs them.
 image_manifest(
     name = "helper_base",
