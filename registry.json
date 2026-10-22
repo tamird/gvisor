@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T07:32:00.566327+00:00",
+    "updatedAt": "2026-10-22T08:10:09.499219+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18032,9 +18032,9 @@
       "title": "Build the pidfd selftest image from Linux sources",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/1e5f6855a0266377284df6feaa9a1b9f78e93c1b",
-      "status": "Agent work: compilation and image qualification",
-      "updatedAt": "2026-10-22T07:32:00.566327+00:00",
-      "summary": "The published source declares seven Linux v6.8 C selftests, their headers and existing runner files, using the selected target toolchain. It preserves the documented time-namespace and recycled-PID exclusions, BusyBox commands and GNU timeout with the existing 45-second deadline. Source review is accepted. The first compilation run disconnected without a result; the same bounded retry adds phase markers and is active. Compilation/profile-helper equality, image closure, Make, the unchanged PIDFD consumer and canonical catalog remain required. The exact image delta is published above the shared GNU prerequisite. Its canonical audit packet is independently reviewed: it resolves the new candidate graph during Fetch and requires unchanged catalog and lock inputs during Verify. Whole Linux archive licensing is not established by the retained selftest subset; any classification failure remains visible. No compile, runtime or catalog success is claimed.",
+      "status": "Agent work: compiler bootstrap and source-bundle audit",
+      "updatedAt": "2026-10-22T08:10:09.499219+00:00",
+      "summary": "The published source declares seven Linux v6.8 C selftests, existing runner files and documented exclusions, with BusyBox and GNU timeout preserving the 45-second deadline. The image delta is also published above the shared GNU prerequisite. Compilation has not started: the shared compiler-package installation stalls before Bazel and is under bounded diagnosis. Canonical Fetch preserves the unsupported kernel.org source error. A separate source audit verified the exact full Linux archive and retained primary notices, all LICENSES texts, member/SPDX indexes and files without SPDX annotations; this does not establish an exhaustive embedded-grant inventory or catalog approval. Image closure, Make, the unchanged PIDFD consumer, profile-helper equality and canonical validation remain required.",
       "links": [
         {
           "label": "Reviewed source",
@@ -18047,6 +18047,14 @@
         {
           "label": "Image delta on shared GNU prerequisite",
           "url": "https://github.com/tamird/gvisor/commit/a5fad05641ac246761943242ccd42190b57c3187"
+        },
+        {
+          "label": "Preserved canonical source-classification failure",
+          "url": "https://app.buildbuddy.io/invocation/33691db2-88d4-440f-95a9-0b307ba0ef14"
+        },
+        {
+          "label": "Exact Linux source and primary notice inventory",
+          "url": "https://app.buildbuddy.io/invocation/9d783170-2960-4e65-a456-d85f78f093b8"
         }
       ]
     },
@@ -18083,6 +18091,29 @@
         {
           "label": "Both architecture output identity",
           "url": "https://app.buildbuddy.io/invocation/26412b0a-a283-4f79-bb09-fbe45edc5d37"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-sudo",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-sudo",
+      "head": "486737d9cf5b652738bde5325c1710c95fecf7f4",
+      "title": "Assemble the sudo test image from pinned packages",
+      "url": "https://github.com/tamird/gvisor/commit/486737d9cf5b652738bde5325c1710c95fecf7f4",
+      "group": "bazel",
+      "status": "Agent work: image and privilege-test qualification",
+      "updatedAt": "2026-10-22T08:10:09.499219+00:00",
+      "summary": "The published source declares pinned distribution packages, accounts, PAM configuration, sudo policy permissions and home directories. It retains the package sudoers defaults with a group-only drop-in and an explicit /bin/whoami alias required by the unchanged privilege tests. Independent source and package-script reviews pass. Both architecture archives, dynamic/PAM/plugin closure, setuid metadata, Make and the four existing consumers on native runc and systrap remain required. Qualification uses the shared image helpers and is held while their existing compiler-package bootstrap stall is diagnosed; no image build, runtime or catalog success is claimed.",
+      "links": [
+        {
+          "label": "Reviewed declared image",
+          "url": "https://github.com/tamird/gvisor/commit/53a31ed3afadfd7610ff6deb576a10300dbcd1ee"
+        },
+        {
+          "label": "Consumer-required path alias",
+          "url": "https://github.com/tamird/gvisor/commit/486737d9cf5b652738bde5325c1710c95fecf7f4"
         }
       ]
     }
@@ -20193,6 +20224,13 @@
       "to": "branch:rules-img-gnu-prerequisite",
       "type": "depends_on",
       "reason": "The shared GNU tool correction is factored on the approved native Go image and package foundation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+    },
+    {
+      "from": "branch:rules-img-gnu-prerequisite",
+      "to": "branch:rules-img-sudo",
+      "type": "depends_on",
+      "reason": "Uses the shared GNU image-assembly toolchain correction and native-image package foundation.",
       "evidence": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
     }
   ],
