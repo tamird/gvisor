@@ -83,6 +83,7 @@ with tempfile.TemporaryDirectory(prefix="syscall-applicability-auth-") as tempor
                  *apt_options, "install", "--yes", "--no-install-recommends", *packages],
             ]
             for setup_command in setup_commands:
+                print("Preparing compiler packages: " + ("update" if "update" in setup_command else "install"), flush=True)
                 status = subprocess.run(["timeout", "--signal=TERM", "--kill-after=5s",
                     str(max(0.001, deadline - time.monotonic())), *setup_command],
                     stdout=stdout, stderr=stderr).returncode
@@ -109,12 +110,14 @@ with tempfile.TemporaryDirectory(prefix="syscall-applicability-auth-") as tempor
             if credential in facts or re.search(rb"x-buildbuddy-api-key=", facts, re.IGNORECASE):
                 raise ValueError("Credential marker in compiler prerequisite metadata")
             (artifacts / "toolchain-preparation.json").write_bytes(facts)
+            print("Preparing the pinned Python interpreter", flush=True)
             status = subprocess.run(["timeout", "--signal=TERM", "--kill-after=5s", str(max(0.001, deadline - time.monotonic())), *command], stdout=stdout, stderr=stderr).returncode
             if status == 0:
                 if not launch_script.is_file():
                     raise RuntimeError("Bazel did not emit the pinned interpreter launch script")
                 # The pinned body enforces the same work deadline and owns the existing
                 # reporting reserve. The startup script supplies Bazel's workspace env.
+                print("Running image qualification", flush=True)
                 status = subprocess.run(["timeout", "--signal=TERM", "--kill-after=5s", str(max(0.001, deadline - time.monotonic()) + 600), str(launch_script)], stdout=stdout, stderr=stderr).returncode
     except (OSError, RuntimeError, subprocess.SubprocessError):
         status = status or 1
