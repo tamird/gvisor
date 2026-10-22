@@ -1,5 +1,4 @@
 """Bootstrap the pinned reporter with private, authenticated Bazel diagnostics."""
-import datetime
 import hashlib
 import json
 import os
@@ -41,91 +40,6 @@ with tempfile.TemporaryDirectory(prefix="syscall-applicability-auth-") as tempor
                str(Path.cwd() / "test/rbe/image_qualification.py")]
     try:
         with (private / "stdout.log").open("wb") as stdout, (private / "stderr.log").open("wb") as stderr:
-            # Install the existing upstream direct-Bazel compiler prerequisites
-            # before Bazel probes toolchains. This is a fresh disposable worker.
-            packages = ["build-essential", "crossbuild-essential-arm64",
-                        "crossbuild-essential-amd64", "clang", "libbpf-dev"]
-            dockerfile = Path("images/default/Dockerfile").read_bytes()
-            if hashlib.sha256(dockerfile).hexdigest() != "0b729fcad355312ab1e759553839abeda0f3ab3111222196e3d86a74783f1a93":
-                raise RuntimeError("Upstream compiler prerequisite source changed")
-            if not all(package.encode() in dockerfile.split() for package in packages):
-                raise RuntimeError("Compiler dependency is not declared by the upstream image")
-            privilege = [] if os.geteuid() == 0 else ["sudo", "-n"]
-            # Use the pinned worker's existing Ubuntu sources only for these
-            # compiler packages. Git and Docker sources remain configured.
-            source_list = Path("/etc/apt/sources.list")
-            os_release = Path("/etc/os-release").read_text()
-            architecture = subprocess.check_output(["dpkg", "--print-architecture"], text=True).strip()
-            if ('ID=ubuntu\n' not in os_release or 'VERSION_CODENAME=jammy\n' not in os_release
-                    or architecture != "amd64"):
-                raise RuntimeError("Unexpected compiler bootstrap OS or architecture")
-            if hashlib.sha256(source_list.read_bytes()).hexdigest() != "15a39563d491def84446c8a5304e873a6b6509d56e2b54edce8eea154e1290a0":
-                raise RuntimeError("Pinned worker distro source list changed")
-            def source_identity():
-                paths = [source_list, *sorted(Path("/etc/apt/sources.list.d").glob("*.list")),
-                         *sorted(Path("/etc/apt/sources.list.d").glob("*.sources"))]
-                return {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
-            source_files_before = source_identity()
-            git_path = Path(subprocess.check_output(["sh", "-c", "command -v git"], text=True).strip()).resolve()
-            git_before = {"path": str(git_path), "sha256": hashlib.sha256(git_path.read_bytes()).hexdigest(),
-                          "version": subprocess.check_output([str(git_path), "--version"], text=True).strip()}
-            empty_sourceparts = private / "empty-apt-sourceparts"
-            empty_sourceparts.mkdir()
-            apt_options = ["-o", "Dir::Etc::sourcelist=" + str(source_list),
-                           "-o", "Dir::Etc::sourceparts=" + str(empty_sourceparts)]
-            apt_selection = {"os_release": os_release, "architecture": architecture,
-                             "options": apt_options, "source_files_before": source_files_before,
-                             "git_before": git_before}
-            (artifacts / "compiler-apt-sources.json").write_text(json.dumps(apt_selection, indent=2) + "\n")
-            setup_commands = [
-                [*privilege, "apt-get", *apt_options, "update", "-o", "Acquire::Retries=2",
-                 "-o", "Acquire::http::Timeout=30", "-o", "Acquire::https::Timeout=30"],
-                [*privilege, "env", "DEBIAN_FRONTEND=noninteractive", "apt-get",
-                 *apt_options, "install", "--yes", "--no-install-recommends", *packages],
-            ]
-            for setup_command in setup_commands:
-                phase = "update" if "update" in setup_command else "install"
-                # Package setup must leave time for the actual qualification.
-                # Retain each phase's timing and native exit if setup stalls.
-                seconds = min(300, max(0.001, deadline - time.monotonic()))
-                step = {"phase": phase, "timeout_seconds": seconds,
-                        "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
-                apt_selection.setdefault("steps", []).append(step)
-                (artifacts / "compiler-apt-sources.json").write_text(json.dumps(apt_selection, indent=2) + "\n")
-                print("Preparing compiler packages: " + phase + " (300s limit)", flush=True)
-                status = subprocess.run(["timeout", "--verbose", "--signal=TERM", "--kill-after=5s",
-                    str(seconds), *setup_command],
-                    stdout=stdout, stderr=stderr).returncode
-                step.update(native_exit=status,
-                            finished_at=datetime.datetime.now(datetime.timezone.utc).isoformat())
-                (artifacts / "compiler-apt-sources.json").write_text(json.dumps(apt_selection, indent=2) + "\n")
-                if status:
-                    # Process names and wait channels contain no command-line
-                    # credentials and can identify surviving package helpers.
-                    subprocess.run(["ps", "-eo", "pid,ppid,stat,wchan:32,etime,comm"],
-                                   stdout=stdout, stderr=stderr, timeout=10)
-                    raise RuntimeError("Upstream compiler prerequisite installation failed")
-            apt_selection["source_files_after"] = source_identity()
-            apt_selection["git_after"] = {"path": str(git_path), "sha256": hashlib.sha256(git_path.read_bytes()).hexdigest(),
-                                          "version": subprocess.check_output([str(git_path), "--version"], text=True).strip()}
-            (artifacts / "compiler-apt-sources.json").write_text(json.dumps(apt_selection, indent=2) + "\n")
-            if (apt_selection["source_files_after"] != source_files_before
-                    or apt_selection["git_after"] != git_before):
-                raise RuntimeError("Compiler installation changed Git or global APT sources")
-            versions = {}
-            for executable in ("/usr/bin/gcc", "/usr/bin/aarch64-linux-gnu-gcc", "/usr/bin/clang"):
-                versions[executable] = subprocess.check_output([executable, "--version"],
-                    text=True, stderr=stderr, timeout=min(30, max(0.001, deadline - time.monotonic())))
-            package_versions = subprocess.check_output(["dpkg-query", "-W",
-                "-f=${Package}=${Version}\n", *packages], text=True, stderr=stderr,
-                timeout=min(30, max(0.001, deadline - time.monotonic())))
-            facts = json.dumps({"source": source, "apt_source_selection": apt_selection, "dockerfile_sha256": hashlib.sha256(dockerfile).hexdigest(),
-                "requested_packages": packages, "package_versions": package_versions,
-                "compiler_versions": versions,
-                "os_release": Path("/etc/os-release").read_text(), "native_exit": 0}, indent=2).encode() + b"\n"
-            if credential in facts or re.search(rb"x-buildbuddy-api-key=", facts, re.IGNORECASE):
-                raise ValueError("Credential marker in compiler prerequisite metadata")
-            (artifacts / "toolchain-preparation.json").write_bytes(facts)
             print("Preparing the pinned Python interpreter", flush=True)
             status = subprocess.run(["timeout", "--signal=TERM", "--kill-after=5s", str(max(0.001, deadline - time.monotonic())), *command], stdout=stdout, stderr=stderr).returncode
             if status == 0:

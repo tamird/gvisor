@@ -52,7 +52,6 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     downloader = evidence / "ubuntu-pinned-package-downloader.cfg"
     downloader.write_text('# Qualification-only mirrors for two exact, SHA256-pinned Ubuntu packages.\n# Canonical archive first; retain the original snapshot URL as a fallback.\nrewrite snapshot\\.ubuntu\\.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0\\.186-1ubuntu0\\.1_amd64\\.deb archive.ubuntu.com/ubuntu/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_amd64.deb\nrewrite snapshot\\.ubuntu\\.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0\\.186-1ubuntu0\\.1_amd64\\.deb snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_amd64.deb\nrewrite snapshot\\.ubuntu\\.com/ubuntu/20260928T000000Z/pool/main/b/base-files/base-files_12ubuntu4\\.7_amd64\\.deb archive.ubuntu.com/ubuntu/pool/main/b/base-files/base-files_12ubuntu4.7_amd64.deb\nrewrite snapshot\\.ubuntu\\.com/ubuntu/20260928T000000Z/pool/main/b/base-files/base-files_12ubuntu4\\.7_amd64\\.deb snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/base-files/base-files_12ubuntu4.7_amd64.deb\n')
     os.environ["APPLICABILITY_DOWNLOADER_CONFIG"] = str(downloader)
-    shutil.copyfile(artifacts / "toolchain-preparation.json", evidence / "toolchain-preparation.json")
     for name, expected_hash in REPORTER_HASHES.items():
         url = f"https://raw.githubusercontent.com/tamird/gvisor/{REPORTER_SOURCE}/test/rbe/{name}"
         with urllib.request.urlopen(url, timeout=30) as response:
