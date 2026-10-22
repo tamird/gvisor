@@ -136,31 +136,25 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         for cpu in ("x86_64", "aarch64"):
             exec_triple = cpu + "-apple-darwin"
             target_triple = cpu + "-unknown-linux-musl"
-            configured = json.loads(command(
+            compiler_repository = "rustc_macos_" + cpu + "_1_99_1"
+            query = 'filter("' + compiler_repository + '//:rustc$", deps(' + BINARY + '))'
+            lines = command(
                 "rust-darwin-exec-" + cpu,
-                ["aquery", *options, "--lockfile_mode=update",
+                ["cquery", *options, "--lockfile_mode=update",
                  "--platforms=@rules_rs//rs/platforms:" + target_triple,
                  "--extra_execution_platforms=@rules_rs//rs/platforms:" + exec_triple,
-                 "--output=jsonproto", 'mnemonic("Rustc", ' + BINARY + ')'],
-            ))
-            target_ids = {str(row["id"]) for row in configured.get("targets", [])
-                          if row.get("label") == BINARY}
-            actions = [row for row in configured.get("actions", [])
-                       if str(row.get("targetId")) in target_ids and row.get("mnemonic") == "Rustc"]
-            if len(actions) != 1:
-                raise ValueError("Expected one configured Rust owner for " + exec_triple)
-            action = actions[0]
-            compilers = [argument for argument in action.get("arguments", [])
-                         if re.fullmatch(r"external/(?:[^/]+[+])?rustc_darwin_" +
-                                         re.escape(cpu) + r"_1_99_1/bin/rustc", argument)]
-            if len(compilers) != 1:
-                raise ValueError("Darwin analysis did not select the declared Rust compiler: " + exec_triple)
-            platform = action.get("executionPlatform", "")
-            if not platform.endswith("//rs/platforms:" + exec_triple):
-                raise ValueError("Unexpected Darwin execution platform: " + platform)
+                 "--output=label", query],
+            ).splitlines()
+            if len(lines) != 1:
+                raise ValueError("Expected one configured Rust compiler for " + exec_triple)
+            label = lines[0].split(" ", 1)[0]
+            if not re.fullmatch(r"@@?(?:[^/]+[+])?" + re.escape(compiler_repository) +
+                                r"//:rustc", label):
+                raise ValueError("Unexpected configured Darwin compiler: " + label)
             records["darwin_execution_analysis"].append({
                 "execution_triple": exec_triple, "target_triple": target_triple,
-                "compiler": compilers[0], "execution_platform": platform,
+                "compiler_label": label, "configured_compiler": lines[0],
+                "requested_execution_platform": "@rules_rs//rs/platforms:" + exec_triple,
                 "execution_performed": False,
             })
         # The native index performs the architecture split. Diagnostic flags
