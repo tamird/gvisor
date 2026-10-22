@@ -28,6 +28,389 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: apt/helper_image_packages/amd64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: &helper_image_notices >-
+      Supplies the common license texts and package notice retained with
+      the selected GNU runtime in the profiling helper image. These
+      files are image data, not inputs linked into gVisor release
+      binaries.
+  - dependency: apt/helper_image_packages/amd64/ca-certificates
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MPL-2.0
+    exception_rationale: &helper_image_ca >-
+      Supplies the CA trust bundle shared by both Go helper images. The
+      package copyright notice is retained alongside the bundle; its
+      maintenance scripts are excluded from the assembled filesystem.
+  - dependency: apt/helper_image_packages/amd64/coreutils
+    license:
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: &helper_image_commands >-
+      Supplies only GNU rm, mkdir, and chmod in the profiling helper
+      image used by Kubernetes benchmarks. The package notice and
+      matching license texts are retained in the image; these tools are
+      separate executables from the Go helper and gVisor release
+      binaries.
+  - dependency: apt/helper_image_packages/amd64/dpkg
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: &helper_image_resolver >-
+      Resolver dependency of the pinned helper-image packages. Its
+      payload is not copied into either helper image: their declared
+      layers select the CA bundle, three GNU commands, and the
+      explicitly required runtime files.
+  - dependency: apt/helper_image_packages/amd64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libattr1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: &helper_image_runtime >-
+      Supplies a required dynamic library or loader for the three GNU
+      commands in the profiling helper image. Its package notice and
+      matching license texts are retained. The Go helpers remain static
+      binaries.
+  - dependency: apt/helper_image_packages/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: &helper_image_libcrypt >-
+      The exact pinned artifact retains its previously audited per-file
+      LicenseRef-libxcrypt-4.4.27 inventory. Resolver dependency of the
+      pinned helper-image packages. Its payload is not copied into
+      either helper image: their declared layers select the CA bundle,
+      three GNU commands, and the explicitly required runtime files.
+  - dependency: apt/helper_image_packages/amd64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/liblzma5
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *helper_image_runtime
+  - dependency: apt/helper_image_packages/amd64/libssl3
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/libzstd1
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/openssl
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/perl-base
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/tar
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *helper_image_notices
+  - dependency: apt/helper_image_packages/arm64/ca-certificates
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MPL-2.0
+    exception_rationale: *helper_image_ca
+  - dependency: apt/helper_image_packages/arm64/coreutils
+    license:
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *helper_image_commands
+  - dependency: apt/helper_image_packages/arm64/dpkg
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libattr1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libbz2-1.0
+    license:
+      - GPL-2.0
+      - bzip2-1.0.6
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *helper_image_runtime
+  - dependency: apt/helper_image_packages/arm64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: *helper_image_libcrypt
+  - dependency: apt/helper_image_packages/arm64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/liblzma5
+    license:
+      - FSFULLR
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.0
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *helper_image_runtime
+  - dependency: apt/helper_image_packages/arm64/libssl3
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/libzstd1
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - MIT
+      - Zlib
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/openssl
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/perl-base
+    license:
+      - Artistic-1.0-Perl
+      - Artistic-2.0
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - CC0-1.0
+      - FSFAP
+      - GPL-1.0
+      - GPL-1.0-or-later
+      - GPL-2.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.1
+      - MIT
+      - Spencer-86
+      - Unicode-DFS-2015
+      - Zlib
+      - bzip2-1.0.6
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/tar
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *helper_image_resolver
   - dependency: apt/sudo_image_packages/amd64/base-files
     license:
       - GPL-2.0-or-later
@@ -968,389 +1351,6 @@ exceptions:
       - LGPL-3.0-or-later
       - MIT
     exception_rationale: *sudo_image_util
-  - dependency: apt/helper_image_packages/amd64/base-files
-    license:
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: &helper_image_notices >-
-      Supplies the common license texts and package notice retained with
-      the selected GNU runtime in the profiling helper image. These
-      files are image data, not inputs linked into gVisor release
-      binaries.
-  - dependency: apt/helper_image_packages/amd64/ca-certificates
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - MPL-2.0
-    exception_rationale: &helper_image_ca >-
-      Supplies the CA trust bundle shared by both Go helper images. The
-      package copyright notice is retained alongside the bundle; its
-      maintenance scripts are excluded from the assembled filesystem.
-  - dependency: apt/helper_image_packages/amd64/coreutils
-    license:
-      - BSD-3-Clause
-      - GFDL-1.2-no-invariants-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - ISC
-    exception_rationale: &helper_image_commands >-
-      Supplies only GNU rm, mkdir, and chmod in the profiling helper
-      image used by Kubernetes benchmarks. The package notice and
-      matching license texts are retained in the image; these tools are
-      separate executables from the Go helper and gVisor release
-      binaries.
-  - dependency: apt/helper_image_packages/amd64/dpkg
-    license:
-      - BSD-2-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: &helper_image_resolver >-
-      Resolver dependency of the pinned helper-image packages. Its
-      payload is not copied into either helper image: their declared
-      layers select the CA bundle, three GNU commands, and the
-      explicitly required runtime files.
-  - dependency: apt/helper_image_packages/amd64/gcc-12-base
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libacl1
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libattr1
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libbz2-1.0
-    license:
-      - GPL-2.0
-      - bzip2-1.0.6
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libc6
-    license:
-      - BSD-3-Clause
-      - GFDL-1.3
-      - GPL-2.0
-      - GPL-2.0-only
-      - HPND
-      - ISC
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - Spencer-94
-    exception_rationale: &helper_image_runtime >-
-      Supplies a required dynamic library or loader for the three GNU
-      commands in the profiling helper image. Its package notice and
-      matching license texts are retained. The Go helpers remain static
-      binaries.
-  - dependency: apt/helper_image_packages/amd64/libcrypt1
-    license: LicenseRef-libxcrypt-4.4.27
-    exception_rationale: &helper_image_libcrypt >-
-      The exact pinned artifact retains its previously audited per-file
-      LicenseRef-libxcrypt-4.4.27 inventory. Resolver dependency of the
-      pinned helper-image packages. Its payload is not copied into
-      either helper image: their declared layers select the CA bundle,
-      three GNU commands, and the explicitly required runtime files.
-  - dependency: apt/helper_image_packages/amd64/libgcc-s1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libgmp10
-    license:
-      - GPL-2.0
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/liblzma5
-    license:
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.0
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libselinux1
-    license:
-      - GPL-2.0
-      - LGPL-2.1
-      - libselinux-1.0
-    exception_rationale: *helper_image_runtime
-  - dependency: apt/helper_image_packages/amd64/libssl3
-    license:
-      - Apache-2.0
-      - Artistic-1.0-Perl
-      - GPL-1.0
-      - GPL-1.0-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/libzstd1
-    license:
-      - BSD-3-Clause
-      - GPL-2.0
-      - MIT
-      - Zlib
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/mawk
-    license:
-      - GPL-2.0
-      - GPL-2.0-only
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/openssl
-    license:
-      - Apache-2.0
-      - Artistic-1.0-Perl
-      - GPL-1.0
-      - GPL-1.0-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/perl-base
-    license:
-      - Artistic-1.0-Perl
-      - Artistic-2.0
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - CC0-1.0
-      - FSFAP
-      - GPL-1.0
-      - GPL-1.0-or-later
-      - GPL-2.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.1
-      - MIT
-      - Spencer-86
-      - Unicode-DFS-2015
-      - Zlib
-      - bzip2-1.0.6
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/amd64/tar
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/base-files
-    license:
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *helper_image_notices
-  - dependency: apt/helper_image_packages/arm64/ca-certificates
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - MPL-2.0
-    exception_rationale: *helper_image_ca
-  - dependency: apt/helper_image_packages/arm64/coreutils
-    license:
-      - BSD-3-Clause
-      - GFDL-1.2-no-invariants-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - ISC
-    exception_rationale: *helper_image_commands
-  - dependency: apt/helper_image_packages/arm64/dpkg
-    license:
-      - BSD-2-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/gcc-12-base
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libacl1
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libattr1
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libbz2-1.0
-    license:
-      - GPL-2.0
-      - bzip2-1.0.6
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libc6
-    license:
-      - BSD-3-Clause
-      - GFDL-1.3
-      - GPL-2.0
-      - GPL-2.0-only
-      - HPND
-      - ISC
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - Spencer-94
-    exception_rationale: *helper_image_runtime
-  - dependency: apt/helper_image_packages/arm64/libcrypt1
-    license: LicenseRef-libxcrypt-4.4.27
-    exception_rationale: *helper_image_libcrypt
-  - dependency: apt/helper_image_packages/arm64/libgcc-s1
-    license:
-      - Artistic-1.0-Perl
-      - BSD-2-Clause
-      - BSD-3-Clause
-      - BSD-4-Clause-UC
-      - GFDL-1.2
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.0-or-later
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-      - NCSA
-      - Spencer-94
-      - Unicode-DFS-2015
-      - Zlib
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libgmp10
-    license:
-      - GPL-2.0
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-3.0
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/liblzma5
-    license:
-      - FSFULLR
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.0
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libselinux1
-    license:
-      - GPL-2.0
-      - LGPL-2.1
-      - libselinux-1.0
-    exception_rationale: *helper_image_runtime
-  - dependency: apt/helper_image_packages/arm64/libssl3
-    license:
-      - Apache-2.0
-      - Artistic-1.0-Perl
-      - GPL-1.0
-      - GPL-1.0-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/libzstd1
-    license:
-      - BSD-3-Clause
-      - GPL-2.0
-      - MIT
-      - Zlib
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/mawk
-    license:
-      - GPL-2.0
-      - GPL-2.0-only
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/openssl
-    license:
-      - Apache-2.0
-      - Artistic-1.0-Perl
-      - GPL-1.0
-      - GPL-1.0-or-later
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/perl-base
-    license:
-      - Artistic-1.0-Perl
-      - Artistic-2.0
-      - BSD-3-Clause
-      - BSD-4-Clause
-      - CC0-1.0
-      - FSFAP
-      - GPL-1.0
-      - GPL-1.0-or-later
-      - GPL-2.0
-      - GPL-3.0-or-later
-      - HPND
-      - LGPL-2.1
-      - MIT
-      - Spencer-86
-      - Unicode-DFS-2015
-      - Zlib
-      - bzip2-1.0.6
-    exception_rationale: *helper_image_resolver
-  - dependency: apt/helper_image_packages/arm64/tar
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *helper_image_resolver
   - dependency: gawk
     license: LicenseRef-Gawk-source-bundle
     exception_rationale: >-
