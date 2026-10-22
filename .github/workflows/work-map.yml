@@ -66,3 +66,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST repos/tamird/gvisor/pages/builds --jq '{status, url}'
+      - name: Remind approvers of amended source
+        env:
+          GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
+          COMMENT_TOKEN_CONFIGURED: ${{ secrets.WORK_MAP_COMMENT_TOKEN != '' }}
+        run: |
+          if [[ "$COMMENT_TOKEN_CONFIGURED" == 'true' ]]; then
+            python3 update-status.py --reapproval-reminders post
+          else
+            echo 'Automatic comments disabled: WORK_MAP_COMMENT_TOKEN is not configured.' >> "$GITHUB_STEP_SUMMARY"
+            python3 update-status.py --reapproval-reminders plan
+          fi
