@@ -29,7 +29,7 @@ SOURCE = CONFIG["source"]
 REPORTER_SOURCE = "462126434f0cdf5e56f37603c82b563b456f1ce8"
 REPORTER_HASHES = {'qualification_report.py': '3929b631d7d28c9dd97720281d8629af7a6bb611d670dafaf96793a4a8652e83', 'unit_matrix.py': '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37'}
 TARGETS = CONFIG["targets"]
-REMOTE_PROPERTIES = {'OSFamily': 'linux', 'Arch': 'amd64', 'workload-isolation-type': 'oci', 'container-image': 'docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3'}
+REMOTE_PROPERTIES = {'OSFamily': 'linux', 'Arch': 'amd64', 'workload-isolation-type': 'firecracker', 'container-image': 'docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a'}
 OPTIONS = ["--compilation_mode=opt", "--lockfile_mode=error", "--remote_download_outputs=all",
            "--build_event_json_file_path_conversion=false", "--noannounce_rc"]
 workspace = Path(os.environ["BUILD_WORKSPACE_DIRECTORY"])
@@ -264,7 +264,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                            'command', targets=[])
         if formatted['status'] != 'PASS':
             raise RuntimeError('Canonical buildifier failed')
-        report.write_json(evidence / 'remote-compiler-config.json', {'options': ['--remote_executor=grpcs://remote.buildbuddy.io', '--remote_cache=grpcs://remote.buildbuddy.io', '--bes_backend=grpcs://remote.buildbuddy.io', '--bes_results_url=https://app.buildbuddy.io/invocation/', '--remote_timeout=10m', '--spawn_strategy=remote', '--noremote_local_fallback', '--jobs=400', '--remote_cache_compression', '--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo', '--remote_default_exec_properties=OSFamily=linux', '--remote_default_exec_properties=Arch=amd64', '--remote_default_exec_properties=workload-isolation-type=oci', '--remote_default_exec_properties=container-image=docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3', '--strategy=TestRunner=local', '--local_test_jobs=1', '--noremote_upload_local_results'], 'properties': REMOTE_PROPERTIES, 'configuration_source': 'state-lifecycle-final-state_lifecycle.py', 'test_runner': 'local'})
+        report.write_json(evidence / 'remote-compiler-config.json', {'options': ['--remote_executor=grpcs://remote.buildbuddy.io', '--remote_cache=grpcs://remote.buildbuddy.io', '--bes_backend=grpcs://remote.buildbuddy.io', '--bes_results_url=https://app.buildbuddy.io/invocation/', '--remote_timeout=10m', '--spawn_strategy=remote', '--noremote_local_fallback', '--jobs=12', '--remote_cache_compression', '--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo', '--remote_default_exec_properties=OSFamily=linux', '--remote_default_exec_properties=Arch=amd64', '--remote_default_exec_properties=workload-isolation-type=firecracker', '--remote_default_exec_properties=container-image=docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a', '--strategy=TestRunner=local', '--local_test_jobs=1', '--noremote_upload_local_results'], 'properties': REMOTE_PROPERTIES, 'configuration_source': 'state-lifecycle-final-state_lifecycle.py', 'test_runner': 'local'})
         import image_workload
         image_workload.run(invoke, record_execution, evidence, private, output_root)
         workload_completed = True
