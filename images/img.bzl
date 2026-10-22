@@ -15,6 +15,7 @@ def package_layer(name, packages, members, out):
         {interpreter} placeholders for architecture-specific library paths.
       out: Output tar filename.
     """
+
     # Preserve package modes and symlinks, and reject missing runtime files.
     tar = "$(execpath @bsd_tar_toolchains//:resolved_target_toolchain)"
     command = tar + " -cf $@ --format=ustar " + " ".join([

@@ -30,6 +30,8 @@ installed_sources.update({
     "opt/kselftest/kselftest/prefix.pl": "tools/testing/selftests/kselftest/prefix.pl",
     "usr/share/licenses/pidfd-tests/COPYING": "COPYING",
     "usr/share/licenses/pidfd-tests/GPL-2.0": "LICENSES/preferred/GPL-2.0",
+    "usr/share/licenses/pidfd-tests/Linux-syscall-note": "LICENSES/exceptions/Linux-syscall-note",
+    "usr/share/licenses/pidfd-tests/license-rules.rst": "Documentation/process/license-rules.rst",
 })
 labels = ["//images/basic:" + name for name in [*programs, "pidfd_tests_archive", "pidfd_tests_context", "pidfd_test_list"]]
 labels += ["@linux_pidfd//:" + name for name in installed_sources.values()]
