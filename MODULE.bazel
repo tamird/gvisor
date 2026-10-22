@@ -67,6 +67,7 @@ foreign_cc_tools.autoconf(mode = "noop")
 foreign_cc_tools.automake(mode = "noop")
 foreign_cc_tools.m4(mode = "noop")
 use_repo(foreign_cc_tools, "rules_foreign_cc_toolchains")
+
 register_toolchains("@rules_foreign_cc_toolchains//:all")
 
 # The images consume selected files from these packages, without running their
