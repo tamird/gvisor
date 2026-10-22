@@ -69,6 +69,9 @@ try:
                                        "segments": segments, "dynamic": dynamic, "needed": needed})
                 if machine not in header:
                     raise ValueError("Wrong target architecture: " + label)
+                limit = config.get("maximum_output_bytes", {}).get(label)
+                if limit is not None and output["bytes"] > limit:
+                    raise ValueError(f"Configured output exceeds {limit} bytes: {label}")
                 if label == config["gnu_hook"]:
                     versions = command([readelf, "--version-info", str(path)])
                     row["outputs"][-1]["symbol_versions"] = versions

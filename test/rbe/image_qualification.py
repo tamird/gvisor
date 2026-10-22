@@ -14,6 +14,8 @@ import time
 import traceback
 import urllib.request
 
+from image_execution import execution_records
+
 if sys.version_info < (3, 11):
     raise RuntimeError("Qualification requires Python 3.11+")
 native_bazel = Path(os.environ.pop("QUALIFICATION_NATIVE_BAZEL"))
@@ -104,7 +106,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         if kind != "command":
             command.append("--build_event_json_file=" + str(raw_events))
         (directory / "arguments.txt").write_text(json.dumps(command) if kind == "command" else "\n".join(command) + "\n")
-        (directory / "expected-targets.txt").write_text("\n".join(targets) + "\n")
+        (directory / "expected-targets.txt").write_text("".join(target + "\n" for target in targets))
         git_record(directory / "commit.txt", "cat-file", "commit", SOURCE)
         git_record(directory / "before.txt", "status", "--porcelain", "--untracked-files=no")
         lock = workspace / "MODULE.bazel.lock"
@@ -179,30 +181,35 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                   "scope": "Selected image build actions; mnemonics distinguish compilation and assembly"}
         prefix = architecture + "-" + phase
         destination = evidence / (prefix + "-image-execution.json")
+        compressed = artifacts / (prefix + "-execution.json.gz")
+        # Keep publication on one filesystem even when private storage differs.
+        partial = compressed.with_suffix(compressed.suffix + ".partial")
         try:
-            raw = path.read_bytes().replace(credential, b"[REDACTED]")
-            reject_credentials(raw)
-            text = raw.decode()
-            compressed = artifacts / (prefix + "-execution.json.gz")
-            with gzip.open(compressed, "wb") as output:
-                output.write(raw)
+            digest = hashlib.sha256()
+            size = 0
+            # Bound memory by one action, preserving the exact redacted text
+            # and existing compact action proof. Publish only a complete audit.
+            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb") as output:
+                for text, action in execution_records(stream):
+                    redacted = text.replace(credential.decode(), "[REDACTED]")
+                    raw = redacted.encode()
+                    reject_credentials(raw)
+                    output.write(raw)
+                    digest.update(raw)
+                    size += len(raw)
+                    if action is None:
+                        continue
+                    if redacted != text:
+                        action = json.loads(redacted)
+                    runner = action["runner"]
+                    record["runner_counts"][runner] = record["runner_counts"].get(runner, 0) + 1
+                    label = action["targetLabel"]
+                    if label.startswith(tuple(CONFIG['action_prefixes'])):
+                        record["image_actions"].append(report.execution_summary(action))
+            partial.replace(compressed)
             record["execution_log"] = report.retain_audit(compressed, evidence)
-            record["uncompressed"] = {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+            record["uncompressed"] = {"bytes": size, "sha256": digest.hexdigest()}
             path.unlink()
-            # The pinned Bazel writer emits concatenated pretty protobuf JSON.
-            decoder = json.JSONDecoder()
-            offset = 0
-            while offset < len(text):
-                while offset < len(text) and text[offset].isspace():
-                    offset += 1
-                if offset == len(text):
-                    break
-                action, offset = decoder.raw_decode(text, offset)
-                runner = action["runner"]
-                record["runner_counts"][runner] = record["runner_counts"].get(runner, 0) + 1
-                label = action["targetLabel"]
-                if label.startswith(tuple(CONFIG['action_prefixes'])):
-                    record["image_actions"].append(report.execution_summary(action))
             executed = [action for action in record["image_actions"]
                         if action["runner"] == "remote" and not action["cacheHit"]]
             for action in executed:
@@ -220,6 +227,11 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         except (KeyError, TypeError, AttributeError) as error:
             raise ValueError('Malformed native SpawnExec metadata') from error
         finally:
+            try:
+                partial.unlink(missing_ok=True)
+            except OSError as error:
+                record["partial_cleanup_error"] = str(error)
+                record["status"] = "FAIL"
             if record["status"] != "PASS":
                 runner_exit = runner_exit or 1
                 capture_exit = 1
