@@ -157,36 +157,6 @@ image_layer(
 
 # kselftest uses GNU timeout's --foreground option to enforce each test's
 # deadline. BusyBox supplies the other shell commands used by this collection.
-_PIDFD_TIMEOUT_PACKAGES = [
-    # Common license texts referenced by the runtime packages' notices.
-    "@helper_image_packages//base-files:data",
-    # GNU timeout, including its signal and process-group handling.
-    "@helper_image_packages//coreutils:data",
-    # C runtime and dynamic loader for the packaged timeout executable.
-    "@helper_image_packages//libc6:data",
-]
-
-_PIDFD_TIMEOUT_MEMBERS = [
-    "./usr/bin/timeout",
-    "./lib/{triplet}/libc.so.6",
-    "./lib/{triplet}/{loader}",
-    "./{interpreter}",
-    "./usr/share/doc/coreutils/copyright",
-    "./usr/share/doc/libc6/copyright",
-    "./usr/share/doc/base-files/copyright",
-    "./usr/share/common-licenses/GPL-2",
-    "./usr/share/common-licenses/GPL-3",
-    "./usr/share/common-licenses/LGPL-2.1",
-    "./usr/share/common-licenses/GFDL-1.3",
-]
-
-package_layer(
-    name = "pidfd_timeout_layer",
-    out = "pidfd-timeout.tar",
-    members = _PIDFD_TIMEOUT_MEMBERS,
-    packages = _PIDFD_TIMEOUT_PACKAGES,
-)
-
 image_layer(
     name = "pidfd_applets_layer",
     symlinks = {
@@ -229,8 +199,9 @@ fi
     layers = [
         "//images:helper_filesystem",
         "//images:busybox_layer",
+        "//images:musl_notice_layer",
         ":pidfd_applets_layer",
-        ":pidfd_timeout_layer",
+        "//images:timeout_layer",
         ":pidfd_tests_layer",
     ],
     tags = ["manual"],
