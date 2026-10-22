@@ -11,6 +11,13 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
                "--build_event_json_file_path_conversion=false"]
+    root_name = "canonical-execution-root"
+    result = invoke(root_name, ["info", *options, "execution_root"], "command", targets=[])
+    if result["status"] != "PASS":
+        raise RuntimeError("Cannot identify canonical execution root")
+    execution_root = Path((evidence / ("invocation-" + root_name) / "stdout.log").read_text().strip())
+    if not execution_root.is_absolute() or not execution_root.is_dir():
+        raise ValueError(f"Invalid canonical execution root: {execution_root}")
     for architecture in ("x86_64", "aarch64"):
         execution_log = evidence / (architecture + "-execution.json")
         built = invoke("pidfd-" + architecture,
@@ -35,7 +42,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 lines = (evidence / ("invocation-" + name) / "stdout.log").read_text().splitlines()
                 match lines:
                     case [output]:
-                        payload = Path(output).read_bytes()
+                        path = Path(output)
+                        if path.is_absolute() or ".." in path.parts or path.parts[:1] != ("bazel-out",):
+                            raise ValueError(f"Unexpected image output path: {path}")
+                        payload = (execution_root / path).read_bytes()
                     case _:
                         raise ValueError(f"Expected one output for {row['owner']}: {lines!r}")
                 actual = {"sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload)}

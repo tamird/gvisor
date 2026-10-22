@@ -1,16 +1,6 @@
-import os
-from pathlib import Path
-import shutil
-import sys
-if sys.version_info < (3, 11):
-    raise RuntimeError("Qualification requires Python 3.11+")
-native_bazel = Path(os.environ.pop("QUALIFICATION_NATIVE_BAZEL"))
-os.environ["PATH"] = os.environ.pop("QUALIFICATION_NATIVE_PATH")
-resolved_bazel = shutil.which("bazel")
-if resolved_bazel is None or not native_bazel.samefile(resolved_bazel):
-    raise RuntimeError("Pinned interpreter changed the native Bazel wrapper")
 """Run image workloads through the shared Bazel qualification reporter."""
 import datetime
+import gzip
 import hashlib
 import json
 import os
@@ -24,10 +14,18 @@ import time
 import traceback
 import urllib.request
 
+if sys.version_info < (3, 11):
+    raise RuntimeError("Qualification requires Python 3.11+")
+native_bazel = Path(os.environ.pop("QUALIFICATION_NATIVE_BAZEL"))
+os.environ["PATH"] = os.environ.pop("QUALIFICATION_NATIVE_PATH")
+resolved_bazel = shutil.which("bazel")
+if resolved_bazel is None or not native_bazel.samefile(resolved_bazel):
+    raise RuntimeError("Pinned interpreter changed the native Bazel wrapper")
+
 CONFIG = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
 SOURCE = CONFIG["source"]
-REPORTER_SOURCE = "f9c4c85b78c61a8a0a603a27d6127085cb71c837"
-REPORTER_HASHES = {'qualification_report.py': 'dfd8d16c6c7f6a75472aca18a69021475bd3fd7c72b25c3c06036e010dcf1fc2', 'unit_matrix.py': '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37'}
+REPORTER_SOURCE = "462126434f0cdf5e56f37603c82b563b456f1ce8"
+REPORTER_HASHES = {'qualification_report.py': '3929b631d7d28c9dd97720281d8629af7a6bb611d670dafaf96793a4a8652e83', 'unit_matrix.py': '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37'}
 TARGETS = CONFIG["targets"]
 REMOTE_PROPERTIES = {'OSFamily': 'linux', 'Arch': 'amd64', 'workload-isolation-type': 'oci', 'container-image': 'docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'}
 OPTIONS = ["--compilation_mode=opt", "--lockfile_mode=error", "--remote_download_outputs=all",
@@ -97,12 +95,12 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
 
     def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (), targets: list[str] = TARGETS) -> dict:
         global runner_exit
-        preparing_lock = kind == "command" and arguments[:2] == ["mod", "deps"]
+        preparing_lock = kind == "command" and "--lockfile_mode=update" in arguments
         directory = evidence / ("invocation-" + name)
         directory.mkdir()
         raw_events = private / (name + ".events.jsonl")
         events = directory / "events.jsonl"
-        option_index = 2 if preparing_lock else 1
+        option_index = 2 if arguments[:2] == ["mod", "deps"] else 1
         command = [*startup, *arguments[:option_index], "--downloader_config=" + str(downloader), *arguments[option_index:]]
         if kind != "command":
             command.append("--build_event_json_file=" + str(raw_events))
@@ -174,11 +172,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             report.write_json(directory / "verdict.json", result)
         return result
 
-    """Retain native image-assembly execution metadata without a compile claim."""
-    import gzip
-
-
-    def record_execution(path: Path, architecture: str) -> dict:
+    def record_execution(path: Path, architecture: str) -> None:
+        """Retain selected native actions without treating cache hits as execution."""
         global runner_exit, capture_exit
         record = {"architecture": architecture, "status": "INCOMPLETE", "runner_counts": {},
                   "image_actions": [], "expected_properties": REMOTE_PROPERTIES,
@@ -233,11 +228,18 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     workload_completed = False
     try:
         report.write_json(evidence / "authentication.json", {"startup_arguments": startup, "headers": ["remote_header", "bes_header"], "secret_retained": False})
-        prepared = invoke("dependency-preparation",
-                          ["mod", "deps", "--lockfile_mode=update", "--noannounce_rc"],
-                          "command", targets=[])
-        if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
-            raise RuntimeError("Canonical dependency preparation failed or changed tracked source")
+        # Resolve the configured image graph, without evaluating unrelated
+        # module extensions as `mod deps` does. All subsequent phases freeze
+        # this canonical lock; the separate license audit covers the full graph.
+        for architecture in ("x86_64", "aarch64"):
+            prepared = invoke("dependency-preparation-" + architecture,
+                              ["cquery", "--config=" + architecture,
+                               "--compilation_mode=opt", "--lockfile_mode=update",
+                               "--noannounce_rc", "--output=label",
+                               "set(" + " ".join(TARGETS) + ")"],
+                              "command", targets=[])
+            if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
+                raise RuntimeError("Configured dependency preparation failed or changed tracked source")
         with (private / "info.stderr").open("wb") as stderr:
             info = subprocess.run(["bazel", *startup, "info", "--downloader_config=" + str(downloader), "--config=x86_64", "--lockfile_mode=error", "--noannounce_rc", "output_base"], stdout=subprocess.PIPE, stderr=stderr, timeout=remaining())
         replay_output(private / "info.stderr", sys.stderr.buffer)
