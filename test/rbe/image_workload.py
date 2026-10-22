@@ -248,7 +248,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     raise ValueError("Rust runtime notice differs: " + name)
             with tarfile.open(context_paths[0]) as context:
                 members = {member.name.removeprefix("./"): member for member in context if member.isfile()}
-                if set(members) != {"image.tar"} or hashlib.sha256(context.extractfile(members["image.tar"]).read()).hexdigest() != row["archive"]["sha256"]:
+                member = "images/basic/rust/image.tar"
+                if set(members) != {member} or hashlib.sha256(context.extractfile(members[member]).read()).hexdigest() != row["archive"]["sha256"]:
                     raise ValueError("Make context does not contain the exact Rust archive")
             row["context"] = identity(context_paths[0])
             row["runtime_inputs"] = {"status": "PASS", "source": config["source"], "archive": row["archive"], "config_sha256": row["config_sha256"]}
