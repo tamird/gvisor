@@ -61,6 +61,8 @@ rust_binary(
     srcs = ["rust/helloworld.rs"],
     crate_name = "hello_world",
     edition = "2021",
+    # The C++ runtime would override Rust's bundled unwind implementation.
+    features = ["-static_link_cpp_runtimes"],
     rustc_flags = ["-Clink-self-contained=yes"],
     target_compatible_with = ["@llvm//constraints/libc:musl"],
 )
