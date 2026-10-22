@@ -11,6 +11,7 @@ go_binary(
         "main.go",
     ],
     static = True,
+    visibility = ["//test/rbe/compiler_matrix:__pkg__"],
     deps = [
         "//pkg/buffer",
         "//pkg/log",

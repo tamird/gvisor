@@ -79,6 +79,7 @@ genrule(
           "-o $@",
     features = ["-pie"],
     tools = [cc_linker],
+    visibility = ["//test/rbe/compiler_matrix:__pkg__"],
 )
 
 genrule(

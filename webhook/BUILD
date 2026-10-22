@@ -32,5 +32,6 @@ go_binary(
     srcs = ["main.go"],
     pure = "on",
     static = True,
+    visibility = ["//test/rbe/compiler_matrix:__pkg__"],
     deps = ["//webhook/pkg/cli"],
 )

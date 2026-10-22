@@ -24,6 +24,7 @@ go_binary(
     static = True,
     visibility = [
         "//runsc/container:__pkg__",
+        "//test/rbe/compiler_matrix:__pkg__",
         "//test/syscalls/linux:__pkg__",
     ],
     deps = [

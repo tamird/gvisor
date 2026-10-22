@@ -43,6 +43,7 @@ cc_binary(
 gnu_filegroup(
     name = "ioctl_hook_gnu",
     srcs = [":ioctl_hook"],
+    visibility = ["//test/rbe/compiler_matrix:__pkg__"],
 )
 
 go_binary(
