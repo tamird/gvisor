@@ -1,6 +1,6 @@
 load("@rules_python//python:py_test.bzl", "py_test")
 
-# Diagnostic-only input files are staged from the two source-bound builds.
+# Diagnostic-only inputs come from two sources under two linker layouts.
 py_test(
     name = "paired_test",
     size = "large",
@@ -10,12 +10,10 @@ py_test(
     args = ["$(rootpath @org_golang_x_perf//cmd/benchstat)"],
     data = [
         "inputs.json",
-        "arms/before/_main/pkg/state/common_engine_benchmark_test",
-        "arms/before/_main/pkg/state/tests/benchmark/benchmark_test",
-        "arms/before/_main/pkg/tcpip/transport/udp/udp_test",
-        "arms/after/_main/pkg/state/common_engine_benchmark_test",
-        "arms/after/_main/pkg/state/tests/benchmark/benchmark_test",
-        "arms/after/_main/pkg/tcpip/transport/udp/udp_test",
+        "arms/before_default/_main/pkg/tcpip/transport/udp/udp_test",
+        "arms/after_default/_main/pkg/tcpip/transport/udp/udp_test",
+        "arms/before_align64/_main/pkg/tcpip/transport/udp/udp_test",
+        "arms/after_align64/_main/pkg/tcpip/transport/udp/udp_test",
         "@org_golang_x_perf//cmd/benchstat",
     ],
     tags = ["manual"],

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Run a fixed paired Go benchmark cohort in one Bazel test action.
+"""Run the fixed UDP layout diagnostic in one Bazel test action.
 
 The input executables are built from the two source revisions before this
 TestRunner starts. Each observation still starts a new executable process.
@@ -42,16 +42,19 @@ class Workload:
     benchmark: str
 
 
-STATE = 'pkg/state/tests/benchmark'
 UDP = 'pkg/tcpip/transport/udp'
 WORKLOADS = {
-    'save_udp': Workload(UDP, 'udp_test', '^BenchmarkUDPReceiveQueueSave$/^32$', 'BenchmarkUDPReceiveQueueSave/32'),
     'load_udp': Workload(UDP, 'udp_test', '^BenchmarkUDPReceiveQueueLoad$/^32$', 'BenchmarkUDPReceiveQueueLoad/32'),
-    'save_adoption': Workload(STATE, 'benchmark_test', '^BenchmarkEncoding$/^adopt_captured$/^state$', 'BenchmarkEncoding/adopt_captured/state'),
-    'load_adoption': Workload(STATE, 'benchmark_test', '^BenchmarkDecoding$/^adopt_captured$/^state$', 'BenchmarkDecoding/adopt_captured/state'),
-    'save_manual': Workload('pkg/state', 'common_engine_benchmark_test', '^BenchmarkCommonEngineSave$', 'BenchmarkCommonEngineSave'),
-    'load_manual': Workload('pkg/state', 'common_engine_benchmark_test', '^BenchmarkCommonEngineLoad$', 'BenchmarkCommonEngineLoad'),
 }
+SIDES = ('before_default', 'after_default', 'before_align64', 'after_align64')
+# Each four-block cycle balances positions and within-block predecessor pairs.
+ORDERS = ((0, 1, 3, 2), (1, 2, 0, 3), (2, 3, 1, 0), (3, 0, 2, 1))
+CONTRASTS = (
+    ('source_default', 'before_default', 'after_default'),
+    ('source_align64', 'before_align64', 'after_align64'),
+    ('alignment_before', 'before_default', 'before_align64'),
+    ('alignment_after', 'after_default', 'after_align64'),
+)
 
 
 @dataclass(frozen=True)
@@ -66,12 +69,13 @@ class Sample:
 def cohort() -> list[Sample]:
     rows = []
     timed = list(WORKLOADS)
-    for side in ('before', 'after'):
+    for side in SIDES:
         for name in timed:
             rows.append(Sample(f'warmup-{side}-{name}', side, name, '100ms', False))
     for block in range(16):
         for name in timed:
-            for side in (('before', 'after') if block % 2 == 0 else ('after', 'before')):
+            for index in ORDERS[block % len(ORDERS)]:
+                side = SIDES[index]
                 rows.append(Sample(f'sample-{block:02d}-{side}-{name}', side, name, '1s', True))
     return rows
 
@@ -162,7 +166,7 @@ def main(package: Path, reporter: Path) -> int:
 
     signal.signal(signal.SIGTERM, cancel)
     signal.signal(signal.SIGINT, cancel)
-    benchfiles: dict[str, list[str]] = {'before': [], 'after': []}
+    benchfiles: dict[str, list[str]] = {side: [] for side in SIDES}
     completed = []
     wire_sizes: dict[str, set[float]] = {}
     wire_digests: dict[str, set[str]] = {}
@@ -290,10 +294,12 @@ def main(package: Path, reporter: Path) -> int:
         for side, lines in benchfiles.items():
             (output / f'{side}.bench').write_text('goos: linux\ngoarch: amd64\n' + '\n'.join(lines) + '\n')
         print('PAIR_RESULTS ' + json.dumps(completed), flush=True)
-        print('PAIR_BENCHSTAT_BEGIN', flush=True)
-        subprocess.run([str(reporter), str(output / 'before.bench'),
-                        str(output / 'after.bench')], check=True, timeout=60)
-        print('PAIR_BENCHSTAT_END', flush=True)
+        # These four raw contrasts do not constitute an interaction test.
+        for name, left, right in CONTRASTS:
+            print(f'PAIR_BENCHSTAT_BEGIN {name}', flush=True)
+            subprocess.run([str(reporter), str(output / f'{left}.bench'),
+                            str(output / f'{right}.bench')], check=True, timeout=60)
+            print(f'PAIR_BENCHSTAT_END {name}', flush=True)
         if cancellation:
             return cancellation
         print('PASS', flush=True)
