@@ -47,51 +47,6 @@ diff --git a/mk/toolchain/clang/rte.vars.mk b/mk/toolchain/clang/rte.vars.mk
  
  WERROR_FLAGS := -W -Wall -Wstrict-prototypes -Wmissing-prototypes
  WERROR_FLAGS += -Wmissing-declarations -Wold-style-definition -Wpointer-arith
-diff --git a/mk/toolchain/gcc/rte.vars.mk b/mk/toolchain/gcc/rte.vars.mk
---- a/mk/toolchain/gcc/rte.vars.mk
-+++ b/mk/toolchain/gcc/rte.vars.mk
-@@ -10,30 +10,30 @@
- #   - define TOOLCHAIN_ASFLAGS variable (overridden by cmdline value)
- #
- 
--CC        = $(CROSS)gcc
-+CC        ?= $(CROSS)gcc
- KERNELCC  = $(CROSS)gcc
--CPP       = $(CROSS)cpp
-+CPP       = $(CC) -E
- # for now, we don't use as but nasm.
- # AS      = $(CROSS)as
- AS        = nasm
--AR        = $(CROSS)ar
--LD        = $(CROSS)ld
-+AR        ?= $(CROSS)ar
-+LD        ?= $(CROSS)ld
- OBJCOPY   = $(CROSS)objcopy
--OBJDUMP   = $(CROSS)objdump
-+OBJDUMP   ?= $(CROSS)objdump
- STRIP     = $(CROSS)strip
- READELF   = $(CROSS)readelf
- GCOV      = $(CROSS)gcov
- 
--ifeq ("$(origin CC)", "command line")
-+# The plugin's execution and target platforms are both Linux AMD64.
- HOSTCC    = $(CC)
--else
--HOSTCC    = gcc
--endif
-+HOST_CFLAGS += $(BAZEL_CFLAGS)
-+HOST_CPPFLAGS += $(CPPFLAGS)
-+HOST_LDFLAGS += $(BAZEL_LDFLAGS)
- HOSTAS    = as
- 
- TOOLCHAIN_ASFLAGS =
--TOOLCHAIN_CFLAGS =
--TOOLCHAIN_LDFLAGS =
-+TOOLCHAIN_CFLAGS = $(BAZEL_CFLAGS)
-+TOOLCHAIN_LDFLAGS = $(BAZEL_LDFLAGS)
- 
- ifeq ($(CONFIG_RTE_LIBRTE_GCOV),y)
- TOOLCHAIN_CFLAGS += --coverage
 diff --git a/mk/internal/rte.compile-pre.mk b/mk/internal/rte.compile-pre.mk
 --- a/mk/internal/rte.compile-pre.mk
 +++ b/mk/internal/rte.compile-pre.mk
@@ -101,7 +56,7 @@ diff --git a/mk/internal/rte.compile-pre.mk b/mk/internal/rte.compile-pre.mk
  PMDINFO_CC = $(CC) $(CPPFLAGS) $(CFLAGS) $(EXTRA_CFLAGS) -c -o $@.pmd.o $@.pmd.c
 -PMDINFO_LD = $(CROSS)ld $(LDFLAGS) -r -o $@.o $@.pmd.o $@
 +# This relocatable link combines objects without a C runtime or startup files.
-+PMDINFO_LD = $(BAZEL_LD) -r -o $@.o $@.pmd.o $@
++PMDINFO_LD = $(DPDK_LD) -r -o $@.o $@.pmd.o $@
  PMDINFO_TO_O = if grep -q 'RTE_PMD_REGISTER_.*(.*)' $<; then \
  	echo "$(if $V,$(PMDINFO_GEN),  PMDINFO $@.pmd.c)" && \
  	$(PMDINFO_GEN) && \
