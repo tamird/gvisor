@@ -24,7 +24,7 @@ DIAGNOSTICS = ["--@rules_rust//rust/settings:per_crate_rustc_flag=" + BINARY + "
 DIAGNOSTICS.append("--@rules_rust//rust/settings:error_format=json")
 
 
-def native_trace_lines(text: str) -> list[dict[str, str]]:
+def native_trace_lines(text: str, owner_directories: set[str]) -> list[dict[str, str]]:
     """Select native inputs only from successful linker output diagnostics."""
     selected = []
     for line in text.splitlines():
@@ -42,6 +42,21 @@ def native_trace_lines(text: str) -> list[dict[str, str]]:
                 continue
         for trace in payload.splitlines():
             if "/lib/rustlib/" not in trace:
+                path = trace.split("(", 1)[0]
+                if path.endswith((".a", ".o")) and (path.startswith(("/", "external/")) or "/external/" in path):
+                    # Remote actions and the coordinator have different roots.
+                    # Recognize only the configured owner's generated object;
+                    # it is not part of the pinned native runtime inventory.
+                    owning_object = (
+                        trace == path
+                        and all(part not in ("", ".", "..") for part in path.split("/")[1:])
+                        and any(
+                            re.fullmatch(r"/(?:[^/]+/)*" + re.escape(parent) + r"/rustc[A-Za-z0-9]+/symbols\.o", path)
+                            for parent in owner_directories
+                        )
+                    )
+                    if not owning_object:
+                        raise ValueError("Native runtime input is outside the pinned Rust sysroot: " + trace)
                 continue
             suffix = trace.split("/lib/rustlib/", 1)[1]
             if "/lib/self-contained/" not in suffix and "/lib/libcompiler_builtins-" not in suffix:
@@ -165,7 +180,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         trace_directory = evidence / "invocation-rust-index-trace"
         text = "\n".join((trace_directory / name).read_text() for name in ("stdout.log", "stderr.log"))
         # Prospective --print=link-args command text cannot establish selection.
-        traces = native_trace_lines(text)
+        owner_directories = {str(Path(row["path"]).parent.relative_to(execution_root))
+                             for row in records["variants"]["trace"].values()}
+        records["native_link_owner_directories"] = sorted(owner_directories)
+        traces = native_trace_lines(text, owner_directories)
         records["native_link_trace_lines"] = traces
         expected_inputs = json.loads(Path(__file__).with_name("rust_native_inputs.json").read_text())
         selected_inputs = {}
