@@ -261,13 +261,13 @@ func TestWrongDestinationShape(t *testing.T) {
 		destination any
 		wantErr     string
 	}{
-		{"array_in_string", &wire.ObjectArray{}, new(string), "expected *wire.String"},
-		{"array_in_map", &wire.ObjectArray{}, new(map[int]int), "expected *wire.Map"},
-		{"map_in_pointer", &wire.Map{}, new(*int), "expected *wire.Ref"},
-		{"struct_in_integer", &emptyStruct, new(int64), "expected wire.Int"},
-		{"map_in_slice", &wire.Map{}, new([]int64), "expected wire.Array"},
-		{"reference_in_integer", &wire.Ref{}, new(int64), "expected wire.Int"},
-		{"slice_in_integer", &wire.Slice{}, new(int64), "expected wire.Int"},
+		{"array_in_string", &wire.ObjectArray{}, new(string), "is *wire.ObjectArray, not *wire.String"},
+		{"array_in_map", &wire.ObjectArray{}, new(map[int]int), "is *wire.ObjectArray, not *wire.Map"},
+		{"map_in_pointer", &wire.Map{}, new(*int), "is *wire.Map, not *wire.Ref"},
+		{"struct_in_integer", &emptyStruct, new(int64), "is *wire.Struct, not wire.Int"},
+		{"map_in_slice", &wire.Map{}, new([]int64), "*wire.Map is not wire.Array"},
+		{"reference_in_integer", &wire.Ref{}, new(int64), "is *wire.Ref, not wire.Int"},
+		{"slice_in_integer", &wire.Slice{}, new(int64), "is *wire.Slice, not wire.Int"},
 		{"reference_in_channel", &wire.Ref{}, new(chan int), "cannot restore *wire.Ref into chan int"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -278,8 +278,9 @@ func TestWrongDestinationShape(t *testing.T) {
 			}
 			wire.Save(&writer, wire.Uint(1))
 			wire.Save(&writer, test.encoded)
-			if _, err := Load(t.Context(), &buf, test.destination); err == nil || !strings.Contains(err.Error(), test.wantErr) {
-				t.Fatalf("Load error = %v, want %q", err, test.wantErr)
+			_, err := Load(t.Context(), &buf, test.destination)
+			if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), test.wantErr) || !strings.Contains(err.Error(), "error decoding object ID 1") {
+				t.Fatalf("Load error = %v, want ErrState with object context and %q", err, test.wantErr)
 			}
 		})
 	}
