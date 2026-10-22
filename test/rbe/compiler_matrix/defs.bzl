@@ -13,28 +13,23 @@ _arm64 = _base.clone().set("cpu", "aarch64").set(
     [Label("//tools/bazeldefs:linux_arm64")],
 )
 
-# with_cfg requires global bindings for its internal rules, even when only
-# the returned macros are called.
-_amd64_normal, _amd64_normal_transition = _amd64.clone().set(
-    # buildifier: disable=unused-variable
+# with_cfg requires global rule bindings even when only its macros are used.
+_amd64_normal, amd64_normal_transition_rule = _amd64.clone().set(
     Label("@io_bazel_rules_go//go/config:race"),
     False,
 ).set(Label("@io_bazel_rules_go//go/config:pure"), True).build()
 
-_amd64_race, _amd64_race_transition = _amd64.clone().set(
-    # buildifier: disable=unused-variable
+_amd64_race, amd64_race_transition_rule = _amd64.clone().set(
     Label("@io_bazel_rules_go//go/config:race"),
     True,
 ).set(Label("@io_bazel_rules_go//go/config:pure"), False).build()
 
-_arm64_normal, _arm64_normal_transition = _arm64.clone().set(
-    # buildifier: disable=unused-variable
+_arm64_normal, arm64_normal_transition_rule = _arm64.clone().set(
     Label("@io_bazel_rules_go//go/config:race"),
     False,
 ).set(Label("@io_bazel_rules_go//go/config:pure"), True).build()
 
-_arm64_race, _arm64_race_transition = _arm64.clone().set(
-    # buildifier: disable=unused-variable
+_arm64_race, arm64_race_transition_rule = _arm64.clone().set(
     Label("@io_bazel_rules_go//go/config:race"),
     True,
 ).set(Label("@io_bazel_rules_go//go/config:pure"), False).build()

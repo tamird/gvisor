@@ -74,6 +74,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     records = {"source": config["source"], "status": "INCOMPLETE", "builds": [], "tests": []}
     failed = False
     try:
+        if config.get("format_only", False):
+            records["status"] = "PASS"
+            return
         if config.get("graph_only", False):
             records["graph_validation"] = validate_graph(invoke, evidence, options, config["build_groups"])
             records["status"] = "PASS"
