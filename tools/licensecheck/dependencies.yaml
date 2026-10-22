@@ -5,6 +5,7 @@
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
+# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -1604,6 +1605,12 @@
   license:
     - Apache-2.0
     - NCSA
+- dependency: linux_pidfd
+  version: https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3
+  license: LicenseRef-Linux-6.8-source-bundle
 - dependency: llvm-raw
   version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
   retrieved: "2026-10-21"

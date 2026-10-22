@@ -1,7 +1,6 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
-load("//images:img.bzl", "image_outputs")
-load("//tools:arch.bzl", "select_arch")
+load("//images:img.bzl", "image_outputs", "package_layer")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
 
 package(
@@ -90,34 +89,11 @@ _COREUTILS_PACKAGES = [
     "@helper_image_packages//libselinux1:data",
 ]
 
-# bsdtar copies matching entries from the declared package archives, preserving
-# their modes and loader links. Listing every required member then rejects an
-# incomplete runtime layer if the package contents change.
-_COREUTILS_COMMAND = "$(execpath @bsd_tar_toolchains//:resolved_target_toolchain) -cf $@ --format=ustar " + " ".join([
-    "--include=" + member
-    for member in _COREUTILS_MEMBERS
-]) + " " + " ".join([
-    "@$(location " + package + ")"
-    for package in _COREUTILS_PACKAGES
-]) + " && $(execpath @bsd_tar_toolchains//:resolved_target_toolchain) -tf $@ " + " ".join(_COREUTILS_MEMBERS) + " > /dev/null"
-
-genrule(
+package_layer(
     name = "profile_helper_coreutils_layer",
-    srcs = _COREUTILS_PACKAGES,
-    outs = ["profile-helper-coreutils.tar"],
-    cmd = select_arch(
-        amd64 = _COREUTILS_COMMAND.format(
-            interpreter = "lib64/ld-linux-x86-64.so.2",
-            loader = "ld-linux-x86-64.so.2",
-            triplet = "x86_64-linux-gnu",
-        ),
-        arm64 = _COREUTILS_COMMAND.format(
-            interpreter = "lib/ld-linux-aarch64.so.1",
-            loader = "ld-linux-aarch64.so.1",
-            triplet = "aarch64-linux-gnu",
-        ),
-    ),
-    tools = ["@bsd_tar_toolchains//:resolved_target_toolchain"],
+    out = "profile-helper-coreutils.tar",
+    members = _COREUTILS_MEMBERS,
+    packages = _COREUTILS_PACKAGES,
 )
 
 image_manifest(
