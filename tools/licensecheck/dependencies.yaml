@@ -681,6 +681,12 @@
   commit: 84e84367f2560cdb47b9bb78fd3e615feb80c3e4
   sha256: fc3e24880c8ff2ac1564e24aa6d691d2224feadc04f39bb8919a16f28f12eb14
   license: Apache-2.0
+- dependency: gawk
+  version: https://mirror.bazel.build/ftp.gnu.org/gnu/gawk/gawk-5.4.0.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 3dd430f0cd3b4428c6c3f6afc021b9cd3c1f8c93f7a688dc268ca428a90b4ac1
+  license: LicenseRef-Gawk-source-bundle
 - dependency: gazelle
   version: https://github.com/bazel-contrib/bazel-gazelle/releases/download/v0.51.3/bazel-gazelle-v0.51.3.tar.gz
   retrieved: "2026-09-25"
