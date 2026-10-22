@@ -20,6 +20,7 @@ import json
 import os
 import re
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -83,6 +84,7 @@ class Comparison:
         self.original = os.environ["GITHUB_SHA"]
         self.sources = ALL_SOURCES | {"preflight": self.original}
         self.private = Path(__file__).resolve().parent
+        self.runtime_stderr = self.private / "benchmark.stderr.log"
         self.results = self.private / "results"
         self.results.mkdir()
         self.deadline = time.monotonic() + 3600
@@ -141,6 +143,8 @@ class Comparison:
         self.check_source(side)
         directory = self.results / side / ("invocation-" + name)
         directory.mkdir(parents=True)
+        if kind == "benchmark":
+            self.runtime_stderr.unlink(missing_ok=True)
         events = directory / "events.jsonl"
         raw = self.private / (side + "-" + name + ".events.json")
         command = [*self.startup, *arguments]
@@ -172,6 +176,14 @@ class Comparison:
                 (directory / filename).write_bytes(self.git(*args))
             for filename in ["stdout.log", "stderr.log"]:
                 self.redact(directory / filename)
+            if kind == "benchmark":
+                if self.runtime_stderr.is_file():
+                    diagnostics = directory / "benchmark.stderr.log"
+                    shutil.move(self.runtime_stderr, diagnostics)
+                    self.redact(diagnostics)
+                    report.write_json(directory / "benchmark-stderr.json", report.file_record(diagnostics))
+                else:
+                    capture_exit = 1
             context = {
                 "expected_source": self.sources[side], "command_kind": kind,
                 "execution_finished_at": finished, "commit_file": "commit.txt",
@@ -188,7 +200,7 @@ class Comparison:
                     captured = report.capture(raw, events, self.output_root, directory / "reports",
                                               expected_analysis=analysis,
                                               expected_kind="test" if arguments[0] == "test" else "build")
-                    capture_exit = int(bool(captured["errors"]))
+                    capture_exit |= int(bool(captured["errors"]))
             except (OSError, ValueError):
                 traceback.print_exc()
                 capture_exit = 1
@@ -289,7 +301,12 @@ class Comparison:
         if len(cpus) < 2:
             raise RuntimeError("Expected at least two available host CPUs")
         self.cpu_list = ",".join(map(str, cpus[:2]))
-        self.options = [*OPTIONS, "--run_under=taskset --cpu-list " + self.cpu_list,
+        # Keep diagnostics separate from benchmark rows and retain both streams.
+        run_under = shlex.join([
+            "bash", "-c", "exec taskset --cpu-list " + self.cpu_list +
+            ' "$@" 2>' + shlex.quote(str(self.runtime_stderr)), "--",
+        ])
+        self.options = [*OPTIONS, "--run_under=" + run_under,
                         *("--test_arg=" + value for value in BENCHMARK_ARGUMENTS)]
         report.write_json(self.results / "host.json", {
             "started_at": utc_now(), "uname": list(os.uname()), "uid": os.getuid(),
