@@ -109,14 +109,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         runtimes = {}
         with ExitStack() as scopes:
             for side, revision in (("before", config["before_source"]), ("after", source)):
-                # The GNU baseline expects compiler executables in /usr/bin;
-                # its release build and Make refresh need the same builder.
-                execution_options = []
-                if side == "before":
-                    execution_options.append("--remote_default_exec_properties=container-image=" +
-                                             config["before_execution_image"])
                 runtime_record = {"side": side, "source": revision, "status": "INCOMPLETE",
-                                  "execution_options": execution_options}
+                                  "execution_image": config["execution_image"]}
                 records["runtime_builds"].append(runtime_record)
                 command(["git", "switch", "--detach", revision])
                 for name, expected_hash in config["matched_inputs"].items():
@@ -126,11 +120,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     lock.write_bytes(candidate_lock)
                 prepared = invoke(side + "-release-preparation", ["cquery", "--config=x86_64",
                     "--compilation_mode=opt", "--lockfile_mode=update", "--noannounce_rc",
-                    *execution_options, "--output=label", "//:release"], "command", targets=[], source=revision)
+                    "--output=label", "//:release"], "command", targets=[], source=revision)
                 runtime_record["preparation"] = {key: prepared[key] for key in ("status", "native_exit")}
                 if prepared["status"] != "PASS":
                     raise RuntimeError("Release dependency preparation failed")
-                built = invoke(side + "-release", ["build", *options, *execution_options, "//:release"], "build",
+                built = invoke(side + "-release", ["build", *options, "//:release"], "build",
                                targets=["//:release"], source=revision)
                 directory = evidence / ("invocation-" + side + "-release") if side == "after" else evidence / "source-builds" / (side + "-release")
                 runtime_record["build"] = {key: built[key] for key in ("status", "native_exit", "source", "expected")}
@@ -149,7 +143,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 runtime = scopes.enter_context(prepared_runtime(destination / "runtime.json", runtime_directory, {
                     "runtime_name": runtime_name, "runtime_flags": ["--platform=systrap"],
                     "image_name": "benchmarks/alpine", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
-                    "bazel_options": execution_options,
                 }))
                 expected = set(config["runtime_paths"])
                 if not expected <= by_name.keys():
