@@ -247,82 +247,42 @@ func TestObjectOwnership(t *testing.T) {
 		Keys:   []Object{Int(29), Int(17)},
 		Values: want.Contents[:2],
 	}
-	var buf bytes.Buffer
-	w := Writer{Writer: &buf}
-	Save(&w, &parent)
-	Save(&w, &ObjectArray{Contents: []Object{&text, &text, &text}})
-	Save(&w, reuse)
 	// Full-width reference metadata and more than 255 path elements must
 	// survive both field-name and index paths in successive records.
-	path := &Ref{
+	fieldPath := &Ref{
 		Root: ^Uint(0),
 		Dots: make([]Dot, 257),
 		Type: &TypeSpecArray{Count: ^Uint(0), Type: TypeID(1<<63 | 3)},
 	}
-	for i := range path.Dots {
-		path.Dots[i] = &field
+	indexPath := &Ref{Root: fieldPath.Root, Dots: make([]Dot, 257), Type: fieldPath.Type}
+	for i := range fieldPath.Dots {
+		fieldPath.Dots[i], indexPath.Dots[i] = &field, Index(i)
 	}
-	Save(&w, path)
-	for i := range path.Dots {
-		path.Dots[i] = Index(i)
+	records := []Object{&parent, &ObjectArray{Contents: []Object{&text, &text, &text}}, reuse, fieldPath, indexPath, Uint(29)}
+	var buf bytes.Buffer
+	w := Writer{Writer: &buf}
+	for _, record := range records {
+		Save(&w, record)
 	}
-	Save(&w, path)
-	Save(&w, Uint(29))
 	encoded := buf.Bytes()
 	r := Reader{Reader: &buf}
 	first := Load(&r).(*Struct)
-	retained := (*first.Field(1)).(Array)
-	retainedText := string(*(*first.Field(2)).(*String))
-	retainedMap := (*first.Field(3)).(*Map)
-	// Keep only a nested subtree and text while reading unrelated records.
-	// Their lifetime must not depend on the reader or its input storage.
-	Load(&r)
-	// A large scalar array follows reference metadata and a short record.
-	reused := Load(&r).(Array)
-	if got, want := reused.Len(), len(reuse.Contents); got != want {
-		t.Fatalf("reused length = %d, want %d", got, want)
-	}
-	for i := range reuse.Contents {
-		if got, want := uint64(reused.Element(i).(Uint)), uint64(i&1); got != want {
-			t.Fatalf("reused element %d = %d, want %d", i, got, want)
-		}
-	}
-	fields := Load(&r).(*Ref)
-	if got, want := len(fields.Dots), len(path.Dots); got != want {
-		t.Fatalf("path length = %d, want %d", got, want)
-	}
-	for i := range path.Dots {
-		if got, want := fields.Dots[i], &field; !reflect.DeepEqual(got, want) {
-			t.Fatalf("field step %d = %+v, want %+v", i, got, want)
-		}
-	}
-	if got, want := Load(&r).(*Ref), path; !reflect.DeepEqual(got, want) {
-		t.Fatalf("reused index path = %#v, want %#v", got, want)
-	}
-	if got, want := uint64(Load(&r).(Uint)), uint64(29); got != want {
-		t.Fatalf("following value = %d, want %d", got, want)
+	// Retain children independently of their parent while parsing later
+	// records, then discard the input bytes. Reserialization checks all nested
+	// payloads, paths and type metadata without depending on parser storage.
+	retained := []Object{*first.Field(1), *first.Field(2), *first.Field(3)}
+	expected := []Object{want, &text, *parent.Field(3)}
+	for _, record := range records[1:] {
+		retained = append(retained, Load(&r))
+		expected = append(expected, record)
 	}
 	clear(encoded)
-	if got, want := retained.Len(), len(want.Contents); got != want {
-		t.Fatalf("owned subtree length = %d, want %d", got, want)
-	}
-	for i, expected := range want.Contents {
-		if got, want := retained.Element(i).(*Ref), expected.(*Ref); !reflect.DeepEqual(got, want) {
-			t.Errorf("owned reference %d = %#v, want %#v", i, got, want)
-		}
-	}
-	if got, want := retainedText, string(text); got != want {
-		t.Errorf("retained text = %q, want %q", got, want)
-	}
-	if got, want := len(retainedMap.Keys), 2; got != want {
-		t.Fatalf("retained map length = %d, want %d", got, want)
-	}
-	for i, key := range []int64{29, 17} {
-		if got, want := int64(retainedMap.Keys[i].(Int)), key; got != want {
-			t.Errorf("retained map key %d = %d, want %d", i, got, want)
-		}
-		if got, want := retainedMap.Values[i].(*Ref), want.Contents[i].(*Ref); !reflect.DeepEqual(got, want) {
-			t.Errorf("retained map value %d = %#v, want %#v", i, got, want)
+	for i, value := range retained {
+		var got, want bytes.Buffer
+		Save(&Writer{Writer: &got}, value)
+		Save(&Writer{Writer: &want}, expected[i])
+		if !bytes.Equal(got.Bytes(), want.Bytes()) {
+			t.Errorf("retained object %d = %x, want %x", i, got.Bytes(), want.Bytes())
 		}
 	}
 }

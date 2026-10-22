@@ -92,29 +92,12 @@ func (a *arrayFloatEncoding) StateLoad(_ context.Context, s state.Source) {
 	s.Load(1, &a.complexes)
 }
 
-// +stateify type
+// +stateify savable
 type countedArrayContainer struct {
 	first    any
 	values   []countedMapWord
 	pointers []*countedMapWord
 	zeros    []registeredMapStruct
-}
-
-func (v *countedArrayContainer) StateSave(s state.Sink) {
-	s.Save(0, &v.first)
-	s.Save(1, &v.values)
-	s.Save(2, &v.pointers)
-	s.Save(3, &v.zeros)
-}
-
-func (v *countedArrayContainer) StateLoad(_ context.Context, s state.Source) {
-	s.Load(0, &v.first)
-	value := state.SliceTypes(v.values)
-	state.LoadField(s, 1, &v.values, state.SliceOps(&v.values, state.ValueOps(&value)))
-	pointer := state.SliceTypes(v.pointers)
-	state.LoadField(s, 2, &v.pointers, state.SliceOps(&v.pointers, state.PointerOps(&pointer, state.ValueOps(&value))))
-	zero := state.SliceTypes(v.zeros)
-	state.LoadField(s, 3, &v.zeros, state.SliceOps(&v.zeros, state.ValueOps(&zero)))
 }
 
 // +stateify type
