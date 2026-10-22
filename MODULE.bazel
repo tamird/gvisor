@@ -13,6 +13,9 @@ bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
+
+# Use gawk's regex fixes when compiling the image assembly tools.
+bazel_dep(name = "gawk", version = "5.4.0.bcr.3")
 bazel_dep(name = "rules_cc", version = "0.2.22")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
@@ -33,6 +36,12 @@ bazel_dep(name = "cel-spec", version = "0.25.1")
 
 governance = use_extension("//governance/tools/maintainers:repositories.bzl", "governance")
 use_repo(governance, "governance_areas")
+
+single_version_override(
+    module_name = "rules_cc_autoconf",
+    patch_strip = 1,
+    patches = ["//tools:rules_cc_autoconf_shell_env.patch"],
+)
 
 single_version_override(
     module_name = "rules_go",
@@ -82,7 +91,18 @@ image_apt.install(
         "libselinux1 (= 3.3-1build2)",
     ],
 )
-use_repo(image_apt, "helper_image_packages")
+image_apt.install(
+    dependency_set = "filecap_image_packages",
+    packages = [
+        # Common license texts referenced by the runtime packages' notices.
+        "base-files (= 12ubuntu4.7)",
+        # cat, cp and sleep used by the file-capability tests.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # setcap and getcap exercise capability attributes on writable files.
+        "libcap2-bin (= 1:2.44-1ubuntu0.22.04.3)",
+    ],
+)
+use_repo(image_apt, "filecap_image_packages", "helper_image_packages")
 
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
