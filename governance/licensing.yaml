@@ -28,6 +28,23 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: bison
+    license: LicenseRef-Bison-source-bundle
+    exception_rationale: >-
+      GNU Bison is a host build tool and is not shipped in the tcpdump
+      test image or released gVisor binaries. GPL version 3 is selected
+      from its main program's version-3-or-later grant. The manually
+      audited source archive also contains GPL and LGPL support,
+      X11 and FSF copying grants, public-domain modifications, GNU
+      build-script and output exceptions, and GFDL documentation with
+      no invariant sections but specified front and back cover texts.
+      Those tools, support files, and documentation are not image
+      payloads. The generated libpcap parser contains Bison skeleton
+      code under its Bison 2.2 exception; the packet-capture image is
+      not itself a parser generator and retains the exact generated
+      notice and GPL text at /usr/share/licenses/bison/NOTICE. This
+      complete source-bundle audit requires renewed review when its
+      URL or archive hash changes.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
@@ -105,20 +122,3 @@ exceptions:
       source-specific copyright, permission and disclaimer notices at
       /usr/share/licenses/tcpdump/NOTICE. The exact archive pin and
       complete license set require renewed review when changed.
-  - dependency: bison
-    license: LicenseRef-Bison-source-bundle
-    exception_rationale: >-
-      GNU Bison is a host build tool and is not shipped in the tcpdump
-      test image or released gVisor binaries. GPL version 3 is selected
-      from its main program's version-3-or-later grant. The manually
-      audited source archive also contains GPL and LGPL support,
-      X11 and FSF copying grants, public-domain modifications, GNU
-      build-script and output exceptions, and GFDL documentation with
-      no invariant sections but specified front and back cover texts.
-      Those tools, support files, and documentation are not image
-      payloads. The generated libpcap parser contains Bison skeleton
-      code under its Bison 2.2 exception; the packet-capture image is
-      not itself a parser generator and retains the exact generated
-      notice and GPL text at /usr/share/licenses/bison/NOTICE. This
-      complete source-bundle audit requires renewed review when its
-      URL or archive hash changes.
