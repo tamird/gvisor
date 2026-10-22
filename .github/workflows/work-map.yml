@@ -70,8 +70,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.WORK_MAP_COMMENT_TOKEN || github.token }}
           COMMENT_TOKEN_CONFIGURED: ${{ secrets.WORK_MAP_COMMENT_TOKEN != '' }}
+          COMMENT_POSTING_PAUSED: ${{ vars.WORK_MAP_POSTING_PAUSED }}
         run: |
-          if [[ "$COMMENT_TOKEN_CONFIGURED" == 'true' ]]; then
+          if [[ "$COMMENT_POSTING_PAUSED" == 'true' ]]; then
+            echo 'Automatic comments paused; snapshot collection remains enabled.' >> "$GITHUB_STEP_SUMMARY"
+            python3 update-status.py --reapproval-reminders plan
+          elif [[ "$COMMENT_TOKEN_CONFIGURED" == 'true' ]]; then
             python3 update-status.py --reapproval-reminders post
           else
             echo 'Automatic comments disabled: WORK_MAP_COMMENT_TOKEN is not configured.' >> "$GITHUB_STEP_SUMMARY"
