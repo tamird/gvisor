@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T21:23:41.410959+00:00",
+    "updatedAt": "2026-10-22T22:16:42.343413+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12467,19 +12467,18 @@
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-20T00:01:20.268118+00:00",
-      "summary": "The quiet rebase is published at 5c36118d69d861a79bd6f97df9b77e0a64d44ddf and GitHub reports MERGEABLE. Independent review verified that all145 added/removed source lines match the prior patch; only upstream import context changed. Public checks are newly running; no new comment or runtime result is claimed.\n\nRoot assigned the existing #15931 conflict/rebase action to Hostinet in the released pr14353 checkout. The current public head remains 194f76d696; exact source and any conflict resolution require review before publication.\n\nRead the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
+      "updatedAt": "2026-10-22T22:16:42.343413+00:00",
+      "summary": "Three new inline comments on the published 5c36118 revision require the test setup to tolerate EACCES, limit the host sysctl only for host/native variants, and remove unused headers. Hostinet owns the correction; its source review is complete and remote qualification remains pending. The earlier source rebase is already published. The internal Copybara failure remains separately recorded; passing public import checks do not explain it.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Current internal checks failed; matching public import passes",
+        "owner": "hostinet_delivery",
+        "disposition": "Review feedback correction in progress",
         "sourceHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
-        "observedAt": "2026-10-22T20:52:33.431429+00:00",
-        "nextAction": "Obtain a maintainer diagnostic for the current internal failure before choosing a source correction. Exact-source public import #16148 passes all public checks; do not infer the internal failure has the same cause or send an unrequested public comment.",
+        "observedAt": "2026-10-22T22:16:42.343413+00:00",
+        "nextAction": "Qualify the reviewed EACCES-only fallback and host/native runner scope, then prepare the requested correction for the existing delivery process. Preserve the permission-denied skip and distinguish the separate internal-check failure.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15931",
-          "https://github.com/tamird/gvisor/commit/5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
-          "https://github.com/google/gvisor/pull/16148",
-          "https://buildkite.com/gvisor/pipeline/builds/51886"
+          "https://github.com/google/gvisor/pull/15931#discussion_r4353882006",
+          "https://github.com/google/gvisor/pull/15931#discussion_r4353885353",
+          "https://github.com/google/gvisor/pull/15931#discussion_r4353893777"
         ]
       },
       "evidence": [
@@ -28308,9 +28307,9 @@
       "title": "Migrate Docker image construction to rules_img",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-22T21:23:41.410959+00:00",
-      "summary": "The fifteen-resource moves and controlled output comparisons are complete. Scratch PIDFD has passed both-architecture builds, AMD64 consumers and its complete catalog. Rust product ad1cc now passes all 20 qualification phases: both-architecture static binaries and archive/context identities, selected Rust runtime inputs/notices, combined image index, Make and cleanup. Actual TestRust passes under runc and systrap on AMD64 with no skips; ARM64 runtime remains untested. Compiler composition is a qualification prerequisite; cached actions are not fresh compilation credit. All earlier failures remain retained. Its separate canonical license audit failed before enumeration: a transitive crate extension has no required lockfile. Verify did not run; all 200 committed catalog entries remain unchanged. The owner is diagnosing the dependency declaration, with the failed result and restored source retained.",
-      "nextStep": "Correct the demonstrated transitive crate-extension declaration and complete canonical Fetch/Verify before preparing the qualified proposal. Preserve the checker-enumerated graph versus selected runtime-notice boundary.",
+      "updatedAt": "2026-10-22T22:16:42.343413+00:00",
+      "summary": "The fifteen-resource moves and controlled output comparisons are complete. Scratch PIDFD has passed both-architecture builds, AMD64 consumers and its complete catalog. Rust passes all 20 qualification phases: both-architecture static binaries and archive/context identities, selected Rust runtime inputs/notices, combined image index, Make and cleanup. Actual TestRust passes under runc and systrap on AMD64 with no skips; ARM64 runtime remains untested. Compiler composition is a qualification prerequisite; cached actions are not fresh compilation credit. The canonical audit now completes full Fetch and later own-lock Verify with 201 unchanged final records. The narrow upstream Protobuf lock backport explicitly binds the already-selected 35.1 release; three existing same-artifact license exceptions were reconciled. Original runtime, transport, module-patching and policy failures remain retained.",
+      "nextStep": "Finish independent exact-tree final source/prose review and present the qualified proposal. Keep the checker-enumerated graph separate from selected runtime-notice proof and preserve existing image/compiler/license delivery prerequisites.",
       "evidence": [
         {
           "label": "Published first image group",
@@ -28355,6 +28354,18 @@
         {
           "label": "Rust canonical catalog audit",
           "url": "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3"
+        },
+        {
+          "label": "Rust canonical full Fetch and retained policy failure",
+          "url": "https://app.buildbuddy.io/invocation/9032588c-0a38-42ae-9626-a17d83c7afd8"
+        },
+        {
+          "label": "Rust canonical own-lock Verify passed",
+          "url": "https://app.buildbuddy.io/invocation/53f25de6-bbde-4e8b-9533-38cfbab3266d"
+        },
+        {
+          "label": "Rust audited product",
+          "url": "https://github.com/tamird/gvisor/commit/e661fdf8e68db14f0b85c96207c48c271a3a7c7f"
         }
       ],
       "findings": [
