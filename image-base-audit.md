@@ -32,18 +32,42 @@ The proposed replacement starts from scratch and adds the required
 executable inputs and paths explicitly. Preserve command, timeout, process
 parent and filesystem behavior while changing their source of supply.
 
+## Shared fixture compatibility
+
+The indexed consumer audit uses basic-image source1d562c448. In addition to
+commands, the replacement must preserve these concrete runtime contracts:
+
+- `test/e2e/exec_test.go`: TTY job control for `sleep | cat`; account creation
+  using BusyBox-compatible `adduser`/`addgroup` options; `bin` has home `/bin`,
+  root has `/root`, and dynamically created users retain their chosen home.
+- `test/e2e/integration_test.go`: `nobody` account, shell redirection and
+  pipelines, fractional sleeps, pgrep, ip, dd, head, expr, mount utilities,
+  plus filesystem and stderr behavior consumed by existing assertions.
+- `test/root/crictl_test.go`: runtime-derived HOME, `setsid`, process grouping
+  and long-lived sleep. Do not set HOME in image metadata to mask that test.
+- `test/root/crictl_emptydir_test.go`: grep, df, dd and stat; the test checks
+  actual tmpfs size, ENOSPC output and final file size.
+
+This is a source inventory, not runtime qualification or an exhaustive
+proof of utility compatibility. Retain existing consumers as validation.
+
 ## First implementation
 
 Hostinet owns the PIDFD prototype on `rules-img-pidfd-scratch`, preserving
-approved4be5. BCR Toybox0.8.12.bcr.1 provides a source-built static target;
-its utility applets are a candidate, but its shell lacks the pipefail
-behavior required by the retained upstream runner. A mature source-built
-shell is still being selected. Keep upstream kselftest scripts and GNU
-timeout. Qualify both architecture link closures, shell/timeout behavior
-and the actual seven programs before claiming that the replacement works. The immutable detailed audit is
-`pidfd-scratch-base-audit.json`.
+approved4be5. BCR Toybox0.8.12.bcr.1 provides a source-built static utility
+binary, but its shell is unsuitable: it lacks the runner's `set -o pipefail`
+semantics. The source check prevents a known-invalid remote build. Dash's
+implemented pipefail and source-built BusyBox ash are being compared for
+compatibility and maintainable build integration. Toybox is not a required
+choice. No upstream runner behavior will be weakened to fit a replacement.
 
-Prefer a reusable executable layer with explicit per-image applet symlinks.
+GNU timeout is currently an explicitly selected prebuilt package executable;
+removing the parent OCI image alone does not make that binary source-built.
+Qualify both architecture link closures, shell/timeout behavior and the
+actual seven PIDFD programs before accepting a replacement. The immutable
+runtime inventory is `pidfd-scratch-base-audit.json`.
+
+Prefer reusable source executables with explicit per-image installed paths.
 Do not replace one implicit default utility image with another. No new native
 test runner or generic image framework is required for this experiment.
 
