@@ -13,6 +13,9 @@ bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
+
+# Use gawk's regex fixes when compiling the image assembly tools.
+bazel_dep(name = "gawk", version = "5.4.0.bcr.3")
 bazel_dep(name = "rules_cc", version = "0.2.22")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
