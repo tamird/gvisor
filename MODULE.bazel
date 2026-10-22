@@ -96,6 +96,30 @@ image_apt.install(
 )
 use_repo(image_apt, "helper_image_packages")
 
+# The privilege tests need the packaged sudo/PAM stack and real Linux utilities.
+image_apt.install(
+    dependency_set = "sudo_image_packages",
+    packages = [
+        # Common license texts referenced by the packages' copyright files.
+        "base-files (= 12ubuntu4.7)",
+        # sleep, cp, chmod, cat and whoami used by the privilege tests.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # The tests exercise sudo through /bin/sh as well as direct exec.
+        "dash (= 0.5.11+git20210903+057cd650a4ed-3build1)",
+        # setcap applies capabilities to the test's copied executable.
+        "libcap2-bin (= 1:2.44-1ubuntu0.22.04.3)",
+        # Shared PAM service configuration and its module dependency closure.
+        "libpam-runtime (= 1.4.0-11ubuntu2.8)",
+        # An unprivileged tracer must prevent sudo from gaining privilege.
+        "strace (= 5.16-0ubuntu3)",
+        # The setuid executable, policy plugin and sudo-specific PAM services.
+        "sudo (= 1.9.9-1ubuntu2.6)",
+        # setpriv and unshare exercise no-new-privileges and user namespaces.
+        "util-linux (= 2.37.2-4ubuntu3.6)",
+    ],
+)
+use_repo(image_apt, "sudo_image_packages")
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
