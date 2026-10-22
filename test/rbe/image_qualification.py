@@ -41,7 +41,7 @@ artifacts.mkdir(parents=True, exist_ok=True)
 credential = os.environ.get("BUILDBUDDY_API_KEY", "").encode()
 if not credential:
     raise RuntimeError("Expected hosted-runner credential for diagnostic redaction")
-deadline = float(os.environ["APPLICABILITY_WORK_DEADLINE"])
+deadline = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - CONFIG.get("cleanup_reserve_seconds", 0)
 startup = ["--bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"]]
 runner_exit = capture_exit = 0
 

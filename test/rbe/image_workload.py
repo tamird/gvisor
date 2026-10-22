@@ -1,4 +1,5 @@
 """Qualify sudo assembly and its four existing privilege-test consumers."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -42,8 +43,20 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     inputs = [row.get("runtime_inputs") for row in contents["architectures"] if row["architecture"] == "amd64"]
     if len(inputs) != 1 or inputs[0] is None or inputs[0]["status"] != "PASS":
         raise RuntimeError("Sudo image lacks verified AMD64 runtime inputs")
+    # Docker 24 denies unshare without SYS_ADMIN. This native test needs only
+    # CLONE_NEWUSER; retain every other rule in its pinned default profile.
+    profile_bytes = Path(__file__).with_name("docker-24.0.9-seccomp.json").read_bytes()
+    if hashlib.sha256(profile_bytes).hexdigest() != "5e7994296d55cc3623fa4bd8e5682c36220c94e69b70ff2e923d3948d3a9995e":
+        raise RuntimeError("Pinned Docker default seccomp profile changed")
+    profile = json.loads(profile_bytes)
+    profile["syscalls"].append({"names": ["unshare"], "action": "SCMP_ACT_ALLOW",
+                                "args": [{"index": 0, "value": 0x10000000, "op": "SCMP_CMP_EQ"}]})
+    profile_path = evidence / "sudo-userns-seccomp.json"
+    profile_path.write_text(json.dumps(profile, indent=2) + "\n")
     configuration = {"runtime_name": "qualification-sudo", "image_name": "basic/sudo",
-                     "runtime_flags": ["--platform=systrap"], "contents": str(contents_path)}
+                     "runtime_flags": ["--platform=systrap", "--allow-suid"], "contents": str(contents_path),
+                     "seccomp_profile": str(profile_path), "docker_version": "24.0.9",
+                     "cleanup_reserve_seconds": config["cleanup_reserve_seconds"]}
     results = []
     destination = evidence / "sudo-consumers.json"
     try:

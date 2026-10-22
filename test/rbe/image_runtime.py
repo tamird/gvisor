@@ -23,9 +23,20 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     if runtime_name in original_config.get("runtimes", {}):
         raise RuntimeError("Task runtime name is already occupied")
     records["config_before"] = original_config
+    outer_deadline = float(os.environ["APPLICABILITY_WORK_DEADLINE"])
+    deadline = outer_deadline - configuration.get("cleanup_reserve_seconds", 0)
+    daemon_pid = None
+    daemon_start_ticks = None
+    daemon_child = None
+    daemon_arguments = None
+    daemon_environment = None
+    daemon_executable = None
+    daemon_cwd = None
+    daemon_ready = False
+    seccomp_changed = False
 
     def remaining():
-        seconds = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
+        seconds = deadline - time.monotonic()
         if seconds <= 0:
             raise TimeoutError("Runtime preparation exhausted the existing work deadline")
         return seconds
@@ -55,8 +66,88 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             raise RuntimeError("Docker PID does not identify the worker's dockerd")
         os.kill(pid, signal.SIGHUP)
 
+    def start_ticks(process: Path) -> str:
+        return (process / "stat").read_text().rsplit(")", 1)[1].split()[19]
+
+    def stop_daemon() -> None:
+        nonlocal daemon_pid, daemon_child
+        if daemon_pid is None:
+            return
+        if daemon_child is not None and daemon_child.poll() is not None:
+            records.setdefault("daemon_exits", []).append({"pid": daemon_pid, "native_exit": daemon_child.returncode})
+            daemon_pid = None
+            daemon_child = None
+            return
+        process = Path("/proc") / str(daemon_pid)
+        if ((daemon_child is None and int(Path("/var/run/docker.pid").read_text()) != daemon_pid) or
+                start_ticks(process) != daemon_start_ticks or
+                (process / "exe").resolve() != daemon_executable):
+            raise RuntimeError("Refuse to stop a daemon with a changed process identity")
+        if (daemon_child is None or daemon_ready) and run(["docker", "ps", "--quiet"]).strip():
+            raise RuntimeError("Refuse to restart Docker while containers are active")
+        os.kill(daemon_pid, signal.SIGTERM)
+        stop_deadline = min(deadline, time.monotonic() + 30)
+        while process.exists() and time.monotonic() < stop_deadline:
+            try:
+                state = (process / "stat").read_text().rsplit(")", 1)[1].split()[0]
+            except FileNotFoundError:
+                break
+            if state == "Z":
+                break
+            time.sleep(0.1)
+        else:
+            if process.exists():
+                raise RuntimeError("Owned dockerd did not stop within 30 seconds")
+        if daemon_child is not None:
+            daemon_child.wait(timeout=min(5, remaining()))
+        records.setdefault("daemon_stops", []).append(daemon_pid)
+        daemon_pid = None
+        daemon_child = None
+
+    def start_daemon(expected_security: list[str], restoring: bool = False) -> dict:
+        nonlocal daemon_pid, daemon_start_ticks, daemon_child, daemon_ready
+        if daemon_pid is not None:
+            raise RuntimeError("Refuse to start a second Docker daemon")
+        pidfile = Path("/var/run/docker.pid")
+        if pidfile.exists():
+            process = Path("/proc") / pidfile.read_text().strip()
+            if process.exists() and (process / "stat").read_text().rsplit(")", 1)[1].split()[0] != "Z":
+                raise RuntimeError("Another daemon appeared before the owned restart")
+        # The restored service outlives this scope. Keep its live output out of
+        # the frozen evidence; the fixture daemon is stopped before sealing.
+        log = runtime_directory.parent / "dockerd-restored.log" if restoring else destination.parent / "dockerd-fixture.log"
+        daemon_ready = False
+        with log.open("ab") as output:
+            daemon_child = subprocess.Popen(daemon_arguments, executable=str(daemon_executable),
+                                            env=daemon_environment, cwd=daemon_cwd, stdin=subprocess.DEVNULL,
+                                            stdout=output, stderr=output)
+        daemon_pid = daemon_child.pid
+        daemon_start_ticks = start_ticks(Path("/proc") / str(daemon_pid))
+        records.setdefault("daemon_starts", []).append({"pid": daemon_pid, "start_ticks": daemon_start_ticks})
+        ready_deadline = min(deadline, time.monotonic() + 30)
+        while time.monotonic() < ready_deadline:
+            if daemon_child.poll() is not None:
+                raise RuntimeError("Replacement dockerd exited before readiness")
+            try:
+                result = subprocess.run(["docker", "info", "--format={{json .}}"],
+                                        capture_output=True, text=True, timeout=min(5, remaining()))
+            except subprocess.TimeoutExpired:
+                continue
+            if result.returncode == 0:
+                info = json.loads(result.stdout)
+                if (int(Path("/var/run/docker.pid").read_text()) == daemon_pid and
+                        info["SecurityOptions"] == expected_security):
+                    for key in ("ID", "DockerRootDir", "Driver", "ServerVersion"):
+                        if info[key] != records["server_info_before"][key]:
+                            raise RuntimeError("Restart changed Docker identity: " + key)
+                    daemon_ready = True
+                    return info
+            time.sleep(0.1)
+        raise RuntimeError("Docker did not expose the exact fixture seccomp profile")
+
     try:
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
+        records["server_info_before"] = json.loads(run(["docker", "info", "--format={{json .}}"]))
         make = ["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
                 "OPTIONS=--compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
                 "STARTUP_OPTIONS=--output_base=" + os.environ["APPLICABILITY_OUTPUT_BASE"] + " --bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
@@ -80,8 +171,42 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             if installed["runtimes"].get(name) != value:
                 raise RuntimeError("Runtime installation changed an existing runtime")
         records["config_after"] = installed
-        reload_daemon()
-        records["daemon_action"] = "Reload existing daemon runtimes"
+        if profile_name := configuration.get("seccomp_profile"):
+            if records["server_before"]["Version"] != configuration["docker_version"]:
+                raise RuntimeError("Fixture seccomp profile does not match the Docker version")
+            security = records["server_info_before"]["SecurityOptions"]
+            if "name=seccomp,profile=builtin" not in security or "seccomp-profile" in original_config:
+                raise RuntimeError("Fixture requires the pinned built-in Docker seccomp profile")
+            daemon_pid = int(Path("/var/run/docker.pid").read_text())
+            process = Path("/proc") / str(daemon_pid)
+            daemon_arguments = [part.decode() for part in (process / "cmdline").read_bytes().split(b"\0") if part]
+            daemon_executable = (process / "exe").resolve()
+            daemon_cwd = (process / "cwd").resolve(strict=True)
+            daemon_start_ticks = start_ticks(process)
+            if (daemon_executable != Path(shutil.which("dockerd")).resolve() or
+                    Path(daemon_arguments[0]).name != "dockerd" or
+                    any(arg.startswith("--seccomp-profile") for arg in daemon_arguments)):
+                raise RuntimeError("Worker daemon identity or seccomp options differ")
+            # Keep the existing private environment in memory; never retain it.
+            daemon_environment = dict(item.decode().split("=", 1) for item in
+                                      (process / "environ").read_bytes().split(b"\0") if item)
+            records["daemon_arguments"] = daemon_arguments
+            records["daemon_executable"] = str(daemon_executable)
+            records["daemon_cwd"] = str(daemon_cwd)
+            records["seccomp_profile"] = record_file(Path(profile_name))
+            installed["seccomp-profile"] = profile_name
+            config_path.write_text(json.dumps(installed, indent=2) + "\n")
+            seccomp_changed = True
+            # Docker 24 reads its default seccomp profile only at startup.
+            # Preserve its argv, environment, data directory and configuration.
+            stop_daemon()
+            expected_security = ["name=seccomp,profile=" + profile_name if value ==
+                                 "name=seccomp,profile=builtin" else value for value in security]
+            records["fixture_server_info"] = start_daemon(expected_security)
+            records["daemon_action"] = "Restart sole disposable daemon with the pinned fixture profile"
+        else:
+            reload_daemon()
+            records["daemon_action"] = "Reload existing daemon runtimes"
         ready_deadline = min(time.monotonic() + remaining(), time.monotonic() + 30)
         while time.monotonic() < ready_deadline:
             result = subprocess.run(["docker", "info", "--format={{json .}}"], capture_output=True, text=True, timeout=min(5, remaining()))
@@ -122,14 +247,24 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         records["status"] = "PASS"
         yield records
     finally:
+        deadline = outer_deadline
         try:
             # This disposable worker has one owner. Restore its original
             # runtime configuration even if installation or the consumer fails.
             config_path.write_bytes(original_bytes)
-            reload_daemon()
+            if seccomp_changed:
+                stop_daemon()
+                records["restored_server_info"] = start_daemon(records["server_info_before"]["SecurityOptions"], restoring=True)
+                if records["restored_server_info"]["Runtimes"] != records["server_info_before"]["Runtimes"]:
+                    raise RuntimeError("Cleanup did not restore the original Docker runtimes")
+            else:
+                reload_daemon()
+            if config_path.read_bytes() != original_bytes:
+                raise RuntimeError("Cleanup did not restore the original Docker config bytes")
             records["cleanup"] = "PASS"
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             records["cleanup"] = "FAIL"
+            records["cleanup_error"] = str(error)
             raise
         finally:
             destination.write_text(json.dumps(records, indent=2) + "\n")
