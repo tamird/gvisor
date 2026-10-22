@@ -16,6 +16,7 @@ package tests
 
 import (
 	"bytes"
+	"math"
 	"reflect"
 	"slices"
 	"strings"
@@ -81,6 +82,8 @@ func TestGeneratedLegacyFields(t *testing.T) {
 		{"signed_overflow", 6, wire.Int(128), restoreLegacyFields{}, restoreLegacyFields{}, "truncated"},
 		{"unsigned_limit", 7, wire.Uint(255), restoreLegacyFields{}, restoreLegacyFields{unsigned: 255}, ""},
 		{"unsigned_overflow", 7, wire.Uint(256), restoreLegacyFields{}, restoreLegacyFields{}, "truncated"},
+		{"float32_signaling_nan", 8, wire.Float32(math.Float32frombits(0x7f800001)), restoreLegacyFields{}, restoreLegacyFields{narrowFloat: math.Float32frombits(0x7fc00001)}, ""},
+		{"float32_negative_signaling_nan", 8, wire.Float32(math.Float32frombits(0xff800001)), restoreLegacyFields{}, restoreLegacyFields{narrowFloat: math.Float32frombits(0xffc00001)}, ""},
 		{"float_exact", 8, wire.Float64(1.25), restoreLegacyFields{}, restoreLegacyFields{narrowFloat: 1.25}, ""},
 		{"float_truncation", 8, wire.Float64(1 + 1e-10), restoreLegacyFields{}, restoreLegacyFields{}, "truncated"},
 		{"complex_exact", 9, new(wire.Complex128(1 + 2i)), restoreLegacyFields{}, restoreLegacyFields{narrowComplex: 1 + 2i}, ""},
@@ -112,7 +115,13 @@ func TestGeneratedLegacyFields(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got, want := test.initial, test.want; !reflect.DeepEqual(got, want) {
+			got, want := test.initial, test.want
+			if gotBits, wantBits := math.Float32bits(got.narrowFloat), math.Float32bits(want.narrowFloat); gotBits != wantBits {
+				t.Errorf("float bits = %#x, want %#x", gotBits, wantBits)
+			}
+			// Compare NaNs by representation above; DeepEqual treats them as unequal.
+			got.narrowFloat, want.narrowFloat = 0, 0
+			if !reflect.DeepEqual(got, want) {
 				t.Errorf("Load = %+v, want %+v", got, want)
 			}
 		})

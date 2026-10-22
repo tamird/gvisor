@@ -79,12 +79,10 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value
 	case reflect.String:
 		target.SetString(string(*requireWire[*wire.String](value)))
 	case reflect.Pointer:
-		ds.restoreReference(target, requireWire[*wire.Ref](value))
+		ds.restoreReference(target, requireWire[*wire.Ref](value), nil)
 	case reflect.Slice:
 		if slice, ok := value.(*wire.Slice); ok {
-			if objectID(slice.Ref.Root) != 0 {
-				ds.assignSlice(target, slice)
-			}
+			ds.assignSlice(target, slice, nil)
 		} else {
 			// Manual savers can encode an array into an existing slice.
 			ds.restoreArray(ods, target, requireWire[wire.Array](value))
@@ -93,7 +91,7 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value
 		ds.restoreArray(ods, target, requireWire[wire.Array](value))
 	case reflect.Map:
 		if ref, ok := value.(*wire.Ref); ok {
-			ds.restoreReference(target, ref)
+			ds.restoreReference(target, ref, nil)
 		} else {
 			ds.restoreMap(ods, target, requireWire[*wire.Map](value))
 		}
@@ -114,16 +112,16 @@ func requireWire[T wire.Object](value wire.Object) T {
 
 // restoreReference retains register/Dots/assignment order and the destination's
 // reflected assignment rules. Interior pointers alone need writable addresses.
-func (ds *decodeState) restoreReference(target reflect.Value, ref *wire.Ref) {
+func (ds *decodeState) restoreReference(target reflect.Value, ref *wire.Ref, body objectBody) {
 	if objectID(ref.Root) == 0 {
 		return
 	}
 	if target.Kind() == reflect.Map {
-		object := walkChild(ref, ds.register(ref, target.Type(), nil))
+		object := walkChild(ref, ds.register(ref, target.Type(), body))
 		assignMap(target, object)
 		return
 	}
-	object := ds.register(ref, target.Type().Elem(), nil)
+	object := ds.register(ref, target.Type().Elem(), body)
 	var pointer reflect.Value
 	if len(ref.Dots) != 0 {
 		pointer = reflectValueRWAddr(walkChild(ref, object))
