@@ -11,8 +11,10 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+
 # Capture loopback packets in the container image tests.
 bazel_dep(name = "tcpdump", version = "4.99.6")
+
 # Expose the capture library's license for inclusion in the image.
 bazel_dep(name = "libpcap", version = "1.10.5.bcr.3")
 bazel_dep(name = "rules_cc", version = "0.2.25")
