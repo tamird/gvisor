@@ -55,7 +55,6 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
 	}
 	if length == 0 {
-		// Preserve legacy empty Array operations on other Len-capable types.
 		return
 	}
 	switch values := encoded.(type) {
