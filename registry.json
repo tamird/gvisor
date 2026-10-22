@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T20:18:13.441878+00:00",
+    "updatedAt": "2026-10-22T20:22:02.746107+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -26439,8 +26439,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-22T20:18:13.441878+00:00",
-      "summary": "The active default-branch workflow still requests ten-minute refreshes, but the latest 20 scheduled events remain hours apart. The last observed scheduled event was 15:39:50 UTC on 22 October; missing event creation has no provider-established cause. The existing manual refresh 39845533696 passed 104 tests and published the 20:05:19 snapshot. Its optional batched mergeability recheck received HTTP 502 and retained UNKNOWN observations; the strict reminder conflict guard remained in force. Manual success does not establish a repaired scheduler.",
+      "updatedAt": "2026-10-22T20:22:02.746107+00:00",
+      "summary": "The active default-branch workflow requests ten-minute refreshes, but the latest twenty scheduled events remain hours apart. A scheduled event resumed at 20:12:49 UTC on 22 October after the prior 15:39:50 event, passed and published the 20:14:12 snapshot. This does not explain the gap or establish regular cadence. The separately requested refresh 39845533696 passed 104 tests; its optional batched mergeability recheck received HTTP 502 and retained UNKNOWN observations while the strict reminder conflict guard remained in force.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -26623,6 +26623,10 @@
         {
           "label": "Latest requested refresh and actual reminder decisions",
           "url": "https://github.com/tamird/gvisor/actions/runs/39845533696"
+        },
+        {
+          "label": "Resumed scheduled event; cadence remains unverified",
+          "url": "https://github.com/tamird/gvisor/actions/runs/39846866366"
         }
       ]
     },
