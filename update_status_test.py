@@ -250,6 +250,29 @@ class CollectorHistoryTest(unittest.TestCase):
 
 
 class CheckReportTest(unittest.TestCase):
+    def test_conflicts_unknown_and_resolution_remain_visible_without_failed_checks(self) -> None:
+        source = retained(raw_pr(3))
+        old_import = linked(imported(103, 3), 3)
+        source["imports"] = [old_import]
+        source["mergeable"] = "CONFLICTING"
+        old_import["mergeable"] = "UNKNOWN"
+        previous = {"prs": [copy.deepcopy(source)]}
+        report = updater.check_report([source], previous)
+        self.assertEqual([(item["number"], item["mergeable"]) for item in report["mergeabilityIssues"]],
+                         [(3, "CONFLICTING"), (103, "UNKNOWN")])
+        self.assertEqual(report["changedMergeability"], [])
+        source["head"] = "b" * 40
+        report = updater.check_report([source], previous)
+        self.assertEqual(report["changedMergeability"][0]["head"], source["head"])
+        self.assertEqual(report["mergeabilityIssues"][1]["scope"], "older-source-import")
+        source["mergeable"] = "MERGEABLE"
+        old_import["status"] = "closed"
+        report = updater.check_report([source], previous)
+        self.assertEqual(report["mergeabilityIssues"], [])
+        self.assertEqual([(item["number"], item["status"], item["mergeable"])
+                          for item in report["changedMergeability"]],
+                         [(3, "open", "MERGEABLE"), (103, "closed", "UNKNOWN")])
+
     def test_current_failure_old_import_and_resolution_remain_distinct(self) -> None:
         source = retained(raw_pr(3))
         old_import = linked(imported(103, 3), 3)
@@ -419,6 +442,12 @@ class ReapprovalReminderTest(unittest.TestCase):
         with mock.patch.dict(self.node, {"reapproval": {}}):
             self.assertEqual(self.plan(early)["status"], "needs-evidence")
 
+    def test_conflicts_and_unknown_mergeability_defer_reminders(self) -> None:
+        for value, reason in [("CONFLICTING", "source-conflicted"), ("UNKNOWN", "mergeability-unknown"),
+                              (None, "mergeability-unknown")]:
+            with self.subTest(mergeable=value), mock.patch.dict(self.raw, {"mergeable": value}):
+                self.assertEqual((self.plan()["status"], self.plan()["reason"]), ("deferred", reason))
+
     def test_one_exact_current_approval_clears_alarm_despite_review_requests(self) -> None:
         # This alarm concerns stale approved bytes, not aggregate merge readiness.
         self.raw["reviews"]["nodes"] = [{**self.review, "submittedAt": LATER, "commit": {"oid": f"{8:040x}"}}]
@@ -487,6 +516,24 @@ class ReapprovalReminderTest(unittest.TestCase):
                 self.assertEqual(len(comments), 1)
                 self.raw["headRefOid"] = f"{8:040x}"
                 self.raw["commits"]["nodes"][0]["commit"]["oid"] = f"{8:040x}"
+                self.raw["mergeable"] = "CONFLICTING"
+                updater.reapproval_reminders(post=True)
+                self.assertEqual(len(comments), 1)
+                self.raw["mergeable"] = "UNKNOWN"
+                unresolved = {key: self.raw[key] for key in
+                              ("number", "headRefOid", "baseRefOid", "state", "mergeable", "mergeStateStatus")}
+                with mock.patch.object(updater, "requests", 0), \
+                        mock.patch.object(updater, "graphql", return_value={"repository": {"p7": unresolved}}) as query:
+                    updater.reapproval_reminders(post=True)
+                    query.assert_called_once()
+                    self.assertEqual(len(comments), 1)
+                    unresolved["headRefOid"] = "a" * 40
+                    with self.assertRaisesRegex(RuntimeError, "changed during mergeability recheck"):
+                        updater.reapproval_reminders(post=True)
+                    self.assertEqual(len(comments), 1)
+                    unresolved.update(headRefOid=f"{8:040x}", mergeable="MERGEABLE")
+                    updater.reapproval_reminders(post=True)
+                    self.assertEqual(len(comments), 2)
                 transport.side_effect = [subprocess.CompletedProcess([], 0, "tamird\n", ""),
                                          subprocess.TimeoutExpired("gh", 60)]
                 calls = transport.call_count

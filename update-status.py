@@ -411,10 +411,12 @@ def check_report(prs: list[dict], previous: dict) -> dict:
              for source in previous.get("prs", []) for pr in (source, *source.get("imports", []))}
     owners = {(node["repo"], node["number"]): node.get("followup", {})
               for node in REGISTRY["nodes"] if node["type"] == "pr"}
-    failures, changes, imports = [], [], []
+    failures, changes, imports, mergeability, mergeability_changes = [], [], [], [], []
     for source in prs:
         repo = source.get("repo", REPO)
         followup = owners.get((repo, source["number"]), {})
+        assignment = {key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
+                      if key in followup}
         for pr in (source, *source.get("imports", [])):
             old = prior.get((repo, pr["number"]), {})
             is_source = pr is source
@@ -427,6 +429,8 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 "repo": repo, "source": source["number"], "sourceHead": source["head"],
                 "sourceStatus": source["status"], "number": pr["number"], "url": pr["url"],
                 "head": pr["head"], "status": pr["status"], "checkedAt": pr.get("checkedAt"),
+                "base": pr.get("base"), "mergeable": pr.get("mergeable"), "mergeState": pr.get("mergeState"),
+                "mergeabilityCheckedAt": pr.get("mergeabilityCheckedAt"),
                 "scope": ("source" if is_source else "current-source-import"
                           if pr["sourceHead"] == source["head"] else "older-source-import"),
                 "checksState": checks.get("state"), "checksComplete": checks.get("complete", False),
@@ -437,9 +441,14 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 if active:
                     imports.append(observation)
             if active and (failed or checks.get("state") in FAILURES):
-                failures.append({**observation, "followup": {
-                    key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
-                    if key in followup}})
+                failures.append({**observation, "followup": assignment})
+            unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
+            if active and unresolved:
+                mergeability.append({**observation, "followup": assignment})
+            if (unresolved or old.get("mergeable") in {"CONFLICTING", "UNKNOWN"}) and any(
+                pr.get(key) != old.get(key) for key in ("head", "base", "status", "mergeable", "mergeState")
+            ):
+                mergeability_changes.append({**observation, "followup": assignment})
             # Include resolution and closure, and re-report failures after a head
             # change even if the service reuses its status-context identifier.
             if (failed or old_failed or checks.get("state") in FAILURES or old_checks.get("state") in FAILURES) and (
@@ -447,7 +456,8 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 (old.get("head"), old.get("status"), old.get("sourceHead"), old_checks)
             ):
                 changes.append(observation)
-    return {"checkFailures": failures, "changedChecks": changes, "activeImports": imports}
+    return {"checkFailures": failures, "changedChecks": changes, "activeImports": imports,
+            "mergeabilityIssues": mergeability, "changedMergeability": mergeability_changes}
 
 
 def reapproval_reminders(post: bool = False) -> None:
@@ -470,6 +480,7 @@ def reapproval_reminders(post: bool = False) -> None:
             print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER)))
             continue
         raw = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"])[pr["number"]]
+        recheck_unknown_mergeability([raw], repo=pr["repo"])
         current = normalize(raw)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
         plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER)

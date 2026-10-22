@@ -163,6 +163,13 @@ changes requested require source work first. A dismissed review qualifies as a
 former approval only when GitHub's
 review-dismissal event records its previous state as approved.
 
+Posting also requires fresh `MERGEABLE` status. Conflicts defer to source work;
+unknown mergeability gets the collector's existing single bounded, head-checked
+reread and still defers if unresolved. Every normal sweep reports the full
+current conflict/unknown inventory and its changed or resolved observations,
+including source/import heads and assigned follow-up. No reminder asks a
+maintainer to approve a revision that the fresh provider read reports conflicted.
+
 Delivery owners record exact `reapproval` evidence in the same registry update as
 each authorized source publication:
 the approved and amended heads, `kind: content-amendment`,
