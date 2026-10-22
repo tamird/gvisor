@@ -96,6 +96,22 @@ image_apt.install(
 )
 use_repo(image_apt, "helper_image_packages")
 
+# The ACL test needs named-account lookup and the actual ACL command-line tools.
+image_apt.install(
+    dependency_set = "acl_image_packages",
+    packages = [
+        # setfacl and getfacl exercise default ACL inheritance on tmpfs.
+        "acl (= 2.3.1-1)",
+        # Common license texts referenced by the packages' copyright files.
+        "base-files (= 12ubuntu4.7)",
+        # GNU sleep infinity keeps the container running; mkdir creates its test directory.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # /bin/sh executes the test's directory creation and redirection commands.
+        "dash (= 0.5.11+git20210903+057cd650a4ed-3build1)",
+    ],
+)
+use_repo(image_apt, "acl_image_packages")
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
