@@ -73,8 +73,7 @@ exceptions:
       retained in the image; package maintainer scripts are not run
       during assembly.
   - dependency: apt/acl_image_packages/amd64/debianutils
-    license:
-      - GPL-2.0
+    license: GPL-2.0
     exception_rationale: &acl_image_support >-
       Included in the pinned ACL package dependency closure. The
       flat package layer retains its programs, support files and
@@ -143,8 +142,7 @@ exceptions:
       - Spencer-94
     exception_rationale: *acl_image_libraries
   - dependency: apt/acl_image_packages/amd64/libcrypt1
-    license:
-      - LicenseRef-libxcrypt-4.4.27
+    license: LicenseRef-libxcrypt-4.4.27
     exception_rationale: &acl_image_crypt >-
       The exact pinned libxcrypt 4.4.27 package and its complete
       6,010-byte copyright notice match the existing manual artifact
@@ -266,8 +264,7 @@ exceptions:
       - MIT
     exception_rationale: *acl_image_shell
   - dependency: apt/acl_image_packages/arm64/debianutils
-    license:
-      - GPL-2.0
+    license: GPL-2.0
     exception_rationale: *acl_image_support
   - dependency: apt/acl_image_packages/arm64/dpkg
     license:
@@ -328,8 +325,7 @@ exceptions:
       - Spencer-94
     exception_rationale: *acl_image_libraries
   - dependency: apt/acl_image_packages/arm64/libcrypt1
-    license:
-      - LicenseRef-libxcrypt-4.4.27
+    license: LicenseRef-libxcrypt-4.4.27
     exception_rationale: *acl_image_crypt
   - dependency: apt/acl_image_packages/arm64/libgcc-s1
     license:
