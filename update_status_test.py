@@ -248,6 +248,48 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(self.registry, original_registry)
 
 
+class CheckReportTest(unittest.TestCase):
+    def test_current_failure_old_import_and_resolution_remain_distinct(self) -> None:
+        source = retained(raw_pr(3))
+        old_import = linked(imported(103, 3), 3)
+        failure = {"id": "status-1", "kind": "status", "name": "buildkite/pipeline", "state": "FAILURE"}
+        old_import["checks"] = {"state": "FAILURE", "total": 1, "complete": True, "contexts": [failure]}
+        source["imports"] = [old_import]
+        previous = {"prs": [copy.deepcopy(source)]}
+        source["head"] = "b" * 40
+        old_import["matchesSourceHead"] = False
+        report = updater.check_report([source], previous)
+        self.assertEqual([(item["number"], item["scope"], item["sourceHead"], item["importedSourceHead"])
+                          for item in report["checkFailures"]], [(103, "older-source-import", "b" * 40, f"{3:040x}")])
+        self.assertEqual(report["activeImports"][0]["head"], old_import["head"])
+        # An unchanged failed import remains visible in every sweep.
+        self.assertEqual(report["changedChecks"], [])
+        old_import["checks"] = {"state": "SUCCESS", "total": 1, "complete": True,
+                                  "contexts": [{**failure, "state": "SUCCESS"}]}
+        report = updater.check_report([source], previous)
+        self.assertEqual(report["checkFailures"], [])
+        self.assertEqual(report["changedChecks"][0]["checksState"], "SUCCESS")
+
+    def test_internal_status_and_incomplete_rollup_are_reported(self) -> None:
+        source = retained(raw_pr(3))
+        failure = {"id": "copybara-1", "kind": "status", "name": "feedback/copybara", "state": "FAILURE"}
+        source["checks"] = {"state": "FAILURE", "total": 1, "complete": True, "contexts": [failure]}
+        report = updater.check_report([source], {})
+        self.assertEqual(report["checkFailures"][0]["failedChecks"], [failure])
+        previous = {"prs": [copy.deepcopy(source)]}
+        source["head"] = "b" * 40
+        self.assertEqual(len(updater.check_report([source], previous)["changedChecks"]), 1)
+        source["checks"] = {"state": "FAILURE", "total": 101, "complete": False, "contexts": []}
+        report = updater.check_report([source], previous)
+        self.assertEqual((report["checkFailures"][0]["checksState"], report["checkFailures"][0]["checksComplete"]),
+                         ("FAILURE", False))
+        previous = {"prs": [copy.deepcopy(source)]}
+        source["status"] = "closed"
+        report = updater.check_report([source], previous)
+        self.assertEqual(report["checkFailures"], [])
+        self.assertEqual(report["changedChecks"][0]["status"], "closed")
+
+
 class ScopedApprovalTest(unittest.TestCase):
     def test_scoped_detail_retains_approval_and_force_push_boundary(self) -> None:
         pr = raw_pr(7)

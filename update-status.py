@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from work_states import check_purpose, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
+from work_states import FAILURES, check_purpose, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
 
 
 ROOT = Path(__file__).resolve().parent
@@ -395,6 +395,51 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
     }
 
 
+def check_report(prs: list[dict], previous: dict) -> dict:
+    """Report service failures without conflating old imports with current source."""
+    prior = {(pr.get("repo", REPO), pr["number"]): pr
+             for source in previous.get("prs", []) for pr in (source, *source.get("imports", []))}
+    owners = {(node["repo"], node["number"]): node.get("followup", {})
+              for node in REGISTRY["nodes"] if node["type"] == "pr"}
+    failures, changes, imports = [], [], []
+    for source in prs:
+        repo = source.get("repo", REPO)
+        followup = owners.get((repo, source["number"]), {})
+        for pr in (source, *source.get("imports", [])):
+            old = prior.get((repo, pr["number"]), {})
+            is_source = pr is source
+            checks = pr.get("checks") or {}
+            failed = [check for check in checks.get("contexts", []) if check["state"] in FAILURES]
+            old_checks = old.get("checks") or {}
+            old_failed = [check for check in old_checks.get("contexts", []) if check["state"] in FAILURES]
+            active = pr["status"] in {"open", "draft"}
+            observation = {
+                "repo": repo, "source": source["number"], "sourceHead": source["head"],
+                "sourceStatus": source["status"], "number": pr["number"], "url": pr["url"],
+                "head": pr["head"], "status": pr["status"], "checkedAt": pr.get("checkedAt"),
+                "scope": ("source" if is_source else "current-source-import"
+                          if pr["sourceHead"] == source["head"] else "older-source-import"),
+                "checksState": checks.get("state"), "checksComplete": checks.get("complete", False),
+                "failedChecks": failed,
+            }
+            if not is_source:
+                observation["importedSourceHead"] = pr["sourceHead"]
+                if active:
+                    imports.append(observation)
+            if active and (failed or checks.get("state") in FAILURES):
+                failures.append({**observation, "followup": {
+                    key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
+                    if key in followup}})
+            # Include resolution and closure, and re-report failures after a head
+            # change even if the service reuses its status-context identifier.
+            if (failed or old_failed or checks.get("state") in FAILURES or old_checks.get("state") in FAILURES) and (
+                (pr["head"], pr["status"], pr.get("sourceHead"), checks) !=
+                (old.get("head"), old.get("status"), old.get("sourceHead"), old_checks)
+            ):
+                changes.append(observation)
+    return {"checkFailures": failures, "changedChecks": changes, "activeImports": imports}
+
+
 def main() -> None:
     policies = repository_policies(REGISTRY)
     output = ROOT / "github-status.json"
@@ -445,6 +490,7 @@ def main() -> None:
     temporary.replace(output)
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
+    print(json.dumps(check_report(prs, previous)))
     for source in prs:
         for pr in (source, *source["imports"]):
             if (pr.get("repo", REPO), pr["number"]) not in refreshed:
