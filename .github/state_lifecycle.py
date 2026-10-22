@@ -57,7 +57,7 @@ BENCHMARK_ARGUMENTS = [
     "-test.v=false", "-test.benchtime=30x", "-test.count=1", "-test.cpu=2",
 ]
 OPTIONS = [
-    "--config=x86_64", "-c", "opt", "--lockfile_mode=error",
+    "--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
     "--spawn_strategy=remote", "--noremote_local_fallback", "--jobs=400",
     "--remote_cache_compression", "--remote_download_outputs=toplevel",
     "--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo",
