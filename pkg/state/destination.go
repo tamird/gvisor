@@ -40,20 +40,20 @@ type Destination[T any] interface {
 }
 
 // LoadField loads one field using its statically selected operation.
-func LoadField[T any, O Destination[T]](s Source, slot int, target *T, op O) {
+func LoadField[T any](s Source, slot int, target *T, op Destination[T]) {
 	od := &s.internal
 	restoreDestination(Decoder{ds: od.ds, ods: od.ods, encoded: od.field(slot)}, target, op)
 }
 
 // LoadWaitField is LoadField with the same dependency semantics as Source.LoadWait.
-func LoadWaitField[T any, O Destination[T]](s Source, slot int, target *T, op O) {
+func LoadWaitField[T any](s Source, slot int, target *T, op Destination[T]) {
 	od := &s.internal
 	value := od.field(slot)
 	restoreDestination(Decoder{ds: od.ds, ods: od.ods, encoded: value}, target, op)
 	od.ds.waitObject(od.ods, value, nil)
 }
 
-func restoreDestination[T any, O Destination[T]](d Decoder, target *T, op O) {
+func restoreDestination[T any](d Decoder, target *T, op Destination[T]) {
 	d.encoded = dataValue(d.encoded)
 	if _, ok := d.encoded.(wire.Nil); ok {
 		return
