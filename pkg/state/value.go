@@ -20,21 +20,12 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// valueHandle keeps storage reachable independently of the operation that reads
-// or writes it. Ordinary addressable values retain their existing *T interface;
-// unaddressable values retain their reflect.Value and its permission flags.
+// valueHandle retains storage and reflection's permission flags without boxing
+// or reconstructing the value. Typed adapters use the same retained storage.
 type valueHandle struct {
-	storage any
-	ops     *valueOperations
-	mode    valueMode
+	object reflect.Value
+	ops    *valueOperations
 }
-
-type valueMode uint8
-
-const (
-	valuePointer valueMode = iota
-	valueReflected
-)
 
 // valueOperations contains no checkpoint IDs or mutable per-save/load state.
 // Child providers can refer back to a table without recursively constructing a
@@ -85,47 +76,44 @@ func operationsFor(typ reflect.Type) *valueOperations {
 }
 
 func reflectedHandle(object reflect.Value) valueHandle {
-	if !object.IsValid() {
-		return valueHandle{}
-	}
-	return handleWithOperations(object, operationsFor(object.Type()))
+	return handleWithOperations(object, nil)
 }
 
 func handleWithOperations(object reflect.Value, ops *valueOperations) valueHandle {
 	if !object.IsValid() {
 		return valueHandle{}
 	}
-	if ops == nil {
+	if !object.CanSet() {
+		// Typed stores cannot bypass unaddressable or read-only values.
+		ops = &reflectedOperations[object.Kind()]
+	} else if ops == nil {
 		ops = operationsFor(object.Type())
 	}
-	v := valueHandle{ops: ops}
-	switch {
-	case object.CanAddr() && object.Addr().CanInterface():
-		v.storage, v.mode = object.Addr().Interface(), valuePointer
-	default:
-		v.storage, v.mode = object, valueReflected
-		// A typed pointer adapter cannot represent an unaddressable value or
-		// reflection's read-only flags. Keep those storage semantics explicit.
-		v.ops = &reflectedOperations[object.Kind()]
+	return valueHandle{object: object, ops: ops}
+}
+
+// pointerHandle selects a provider from the caller's existing pointer. It does
+// not manufacture a reflected pointer type to ask the same question.
+func pointerHandle(pointer any) valueHandle {
+	object := reflect.ValueOf(pointer).Elem()
+	if !object.IsValid() {
+		return valueHandle{}
 	}
-	return v
+	ops := &reflectedOperations[object.Kind()]
+	if provider, ok := pointer.(valueOperationProvider); ok {
+		ops = provider.stateValueOperations()
+	}
+	return valueHandle{object: object, ops: ops}
 }
 
 func typedHandle[T any](pointer *T, ops *valueOperations) valueHandle {
-	return valueHandle{storage: pointer, ops: ops, mode: valuePointer}
+	return valueHandle{object: reflect.ValueOf(pointer).Elem(), ops: ops}
 }
 
 // reflected exposes layout and assignment metadata at graph, interface and
 // compatibility boundaries. Scalar access and map insertion need not use it.
 func (v valueHandle) reflected() reflect.Value {
-	switch v.mode {
-	case valuePointer:
-		return reflect.ValueOf(v.storage).Elem()
-	case valueReflected:
-		return v.storage.(reflect.Value)
-	default:
-		panic("invalid value storage mode")
-	}
+	return v.object
 }
 
 func (v valueHandle) Type() reflect.Type { return v.reflected().Type() }
