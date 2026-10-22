@@ -14,31 +14,10 @@
 
 package state
 
-// These flat tables supply Go storage access only. The measured engine owns
-// the same wire, graph, wait and retained-cell decisions for every adapter.
-var commonEngineBenchmarkIntOps valueOperations
-var commonEngineBenchmarkMapOps valueOperations
-var commonEngineBenchmarkSliceOps valueOperations
-var commonEngineBenchmarkBackingOps valueOperations
+// The adapter supplies map storage access only. Both benchmark arms use the
+// same graph, public Source/Sink methods and wire/alias assertions.
+var commonEngineBenchmarkMapStorage = typedMapStorage[commonEngineBenchmarkMap]()
 
-func (*commonEngineBenchmarkInt) stateValueOperations() *valueOperations {
-	return &commonEngineBenchmarkIntOps
-}
-func (*commonEngineBenchmarkMap) stateValueOperations() *valueOperations {
-	return &commonEngineBenchmarkMapOps
-}
-func (*commonEngineBenchmarkSlice) stateValueOperations() *valueOperations {
-	return &commonEngineBenchmarkSliceOps
-}
-
-func init() {
-	commonEngineBenchmarkIntOps = integerOperations[commonEngineBenchmarkInt]()
-	commonEngineBenchmarkMapOps = mapOperations[commonEngineBenchmarkMap](
-		func() *valueOperations { return &commonEngineBenchmarkIntOps },
-		func() *valueOperations { return &commonEngineBenchmarkSliceOps })
-	commonEngineBenchmarkSliceOps = sliceOperations[commonEngineBenchmarkSlice](
-		func() *valueOperations { return &commonEngineBenchmarkMapOps },
-		func() *valueOperations { return &commonEngineBenchmarkBackingOps })
-	commonEngineBenchmarkBackingOps = backingOperations[commonEngineBenchmarkMap](
-		func() *valueOperations { return &commonEngineBenchmarkMapOps })
+func (*commonEngineBenchmarkMap) stateMapStorage() *mapStorage {
+	return &commonEngineBenchmarkMapStorage
 }

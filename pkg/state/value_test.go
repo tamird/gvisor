@@ -25,24 +25,20 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// These mutually recursive types use flat tables. Their runtime graph is
-// acyclic for completion waits and contains shared map and slice storage.
+// These mutually recursive types use typed map storage in the shared engine.
+// Their runtime graph is acyclic for completion waits and contains shared map
+// and slice storage.
 type engineMap map[int64]engineSlice
 type engineSlice []engineMap
 
-var engineIntOps valueOperations
-var engineMapOps valueOperations
-var engineSliceOps valueOperations
-var engineBackingOps valueOperations
-var engineCallbacksOps valueOperations
-var engineCallbackArrayOps valueOperations
+var engineMapStorage = typedMapStorage[engineMap]()
+var engineCallbacksStorage = typedMapStorage[engineCallbacks]()
 
-func (*engineMap) StateTypeName() string                    { return "state.engineMap" }
-func (*engineMap) StateFields() []string                    { return nil }
-func (*engineMap) stateValueOperations() *valueOperations   { return &engineMapOps }
-func (*engineSlice) StateTypeName() string                  { return "state.engineSlice" }
-func (*engineSlice) StateFields() []string                  { return nil }
-func (*engineSlice) stateValueOperations() *valueOperations { return &engineSliceOps }
+func (*engineMap) StateTypeName() string        { return "state.engineMap" }
+func (*engineMap) StateFields() []string        { return nil }
+func (*engineMap) stateMapStorage() *mapStorage { return &engineMapStorage }
+func (*engineSlice) StateTypeName() string      { return "state.engineSlice" }
+func (*engineSlice) StateFields() []string      { return nil }
 
 type engineRoot struct {
 	graph        engineMap
@@ -58,21 +54,21 @@ func (r *engineRoot) StateSave(s Sink) {
 	if r.dynamicFirst {
 		s.Save(1, &r.dynamic)
 	}
-	s.internal.save(0, typedHandle(&r.graph, &engineMapOps))
+	s.Save(0, &r.graph)
 	if !r.dynamicFirst {
 		s.Save(1, &r.dynamic)
 	}
-	s.internal.save(2, typedHandle(&r.value, &engineIntOps))
+	s.Save(2, &r.value)
 }
 func (r *engineRoot) StateLoad(_ context.Context, s Source) {
 	if r.dynamicFirst {
 		s.LoadWait(1, &r.dynamic)
 	}
-	s.internal.load(0, typedHandle(&r.graph, &engineMapOps), true, nil)
+	s.LoadWait(0, &r.graph)
 	if !r.dynamicFirst {
 		s.LoadWait(1, &r.dynamic)
 	}
-	s.internal.load(2, typedHandle(&r.value, &engineIntOps), false, nil)
+	s.Load(2, &r.value)
 	s.AfterLoad(func() { r.loaded = true })
 }
 
@@ -85,11 +81,11 @@ func (*engineInteriorRoot) StateTypeName() string { return "state.engineInterior
 func (*engineInteriorRoot) StateFields() []string { return []string{"child", "values"} }
 func (r *engineInteriorRoot) StateSave(s Sink) {
 	s.Save(0, &r.child)
-	s.internal.save(1, typedHandle(&r.values, &engineSliceOps))
+	s.Save(1, &r.values)
 }
 func (r *engineInteriorRoot) StateLoad(_ context.Context, s Source) {
 	s.Load(0, &r.child)
-	s.internal.load(1, typedHandle(&r.values, &engineSliceOps), true, nil)
+	s.LoadWait(1, &r.values)
 }
 
 type engineCallback struct {
@@ -113,17 +109,11 @@ type engineCallbacks map[int64][1]engineCallback
 
 func (*engineCallbacks) StateTypeName() string { return "state.engineCallbacks" }
 func (*engineCallbacks) StateFields() []string { return nil }
-func (*engineCallbacks) stateValueOperations() *valueOperations {
-	return &engineCallbacksOps
+func (*engineCallbacks) stateMapStorage() *mapStorage {
+	return &engineCallbacksStorage
 }
 
 func init() {
-	engineIntOps = integerOperations[int64]()
-	engineMapOps = mapOperations[engineMap](func() *valueOperations { return &engineIntOps }, func() *valueOperations { return &engineSliceOps })
-	engineSliceOps = sliceOperations[engineSlice](func() *valueOperations { return &engineMapOps }, func() *valueOperations { return &engineBackingOps })
-	engineBackingOps = backingOperations[engineMap](func() *valueOperations { return &engineMapOps })
-	engineCallbackArrayOps = backingOperations[engineCallback](func() *valueOperations { return &reflectedOperations[reflect.Struct] })
-	engineCallbacksOps = mapOperations[engineCallbacks](func() *valueOperations { return &engineIntOps }, func() *valueOperations { return &engineCallbackArrayOps })
 	Register((*engineMap)(nil))
 	Register((*engineSlice)(nil))
 	Register((*engineRoot)(nil))
@@ -220,38 +210,42 @@ func TestCommonEngineRetainedMapValues(t *testing.T) {
 }
 
 func TestCommonEngineStoragePermissions(t *testing.T) {
-	private := struct{ value int64 }{value: 13}
-	var wrongType uint64 = 17
+	private := struct{ value engineMap }{value: engineMap{13: nil}}
+	wrongType := map[uint64]engineSlice{17: nil}
+	var key int64 = 29
+	var value engineSlice
 	for _, test := range []struct {
 		name    string
 		object  reflect.Value
 		wantErr string
 	}{
-		{"unaddressable", reflect.ValueOf(int64(11)), "unaddressable value"},
-		{"read_only", reflect.ValueOf(&private).Elem().Field(0), "unexported field"},
+		{"unaddressable", reflect.ValueOf(engineMap{}), "incompatible typed storage"},
+		{"read_only", reflect.ValueOf(&private).Elem().Field(0), "incompatible typed storage"},
 		{"wrong_type", reflect.ValueOf(&wrongType).Elem(), "incompatible typed storage"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			ds := decodeState{}
+			wantLen := test.object.Len()
 			err := safely(func() {
-				ds.loadValue(nil, handleWithOperations(test.object, &engineIntOps), wire.Int(29))
+				engineMapStorage.insert(test.object, reflect.ValueOf(&key).Elem(), reflect.ValueOf(&value).Elem())
 			})
 			if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), test.wantErr) {
-				t.Fatalf("Load error = %v, want ErrState containing %q", err, test.wantErr)
+				t.Fatalf("insert error = %v, want ErrState containing %q", err, test.wantErr)
+			}
+			if got := test.object.Len(); got != wantLen {
+				t.Fatalf("destination size = %d, want %d", got, wantLen)
 			}
 		})
 	}
-	if got, want := private.value, int64(13); got != want {
-		t.Fatalf("read-only destination = %d, want %d", got, want)
+	if got, want := private.value, (engineMap{13: nil}); !reflect.DeepEqual(got, want) {
+		t.Fatalf("read-only destination = %v, want %v", got, want)
 	}
-	if got, want := wrongType, uint64(17); got != want {
-		t.Fatalf("wrong-type destination = %d, want %d", got, want)
+	if got, want := wrongType, (map[uint64]engineSlice{17: nil}); !reflect.DeepEqual(got, want) {
+		t.Fatalf("wrong-type destination = %v, want %v", got, want)
 	}
 }
 
 func TestCommonEngineIntegerNarrowing(t *testing.T) {
 	type smallInt int8
-	ops := integerOperations[smallInt]()
 	for _, test := range []struct {
 		name    string
 		encoded wire.Int
@@ -265,9 +259,9 @@ func TestCommonEngineIntegerNarrowing(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var value smallInt
-			handle := typedHandle(&value, &ops)
+			object := reflect.ValueOf(&value).Elem()
 			ds := decodeState{}
-			err := safely(func() { ds.loadValue(nil, handle, test.encoded) })
+			err := safely(func() { ds.decodeObject(nil, object, test.encoded) })
 			if test.wantErr == "" {
 				if err != nil {
 					t.Fatal(err)
@@ -280,7 +274,7 @@ func TestCommonEngineIntegerNarrowing(t *testing.T) {
 			}
 			var encoded wire.Object
 			es := encodeState{}
-			es.saveValue(handle, encodeDefault, &encoded)
+			es.encodeObject(object, encodeDefault, &encoded)
 			if got, want := encoded, wire.Int(test.want); got != want {
 				t.Fatalf("saved value = %v, want %v", got, want)
 			}
