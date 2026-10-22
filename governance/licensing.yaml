@@ -423,6 +423,13 @@ exceptions:
       build inputs remain distinct from the shipped executable.
       This manual record applies only to the exact URL and archive hash
       and requires renewed review when either changes.
+  - dependency: bzip2
+    license: bzip2-1.0.6
+    exception_rationale: >-
+      Supplies the execution-platform compressor used by BusyBox's source
+      generators. This build tool is neither linked into gVisor release
+      binaries nor installed in the PIDFD test image. The pinned release
+      retains its bzip2 license and source notices.
   - dependency: coreutils_source
     license: LicenseRef-Coreutils-9.11-source-bundle
     exception_rationale: >-
