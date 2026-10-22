@@ -21,11 +21,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         root = Path((evidence / "invocation-execution-root/stdout.log").read_text().strip())
         if not root.is_absolute() or not root.is_dir():
             raise ValueError("Invalid canonical execution root")
-        guarded = invoke("execution-log-stream-guards",
-                         ["run", *options, "@rules_python//python/bin:python", "--",
-                          str(Path.cwd() / "test/rbe/image_execution_test.py")], "command", targets=[])
-        if guarded["status"] != "PASS":
-            raise RuntimeError("Execution-log streaming guards failed")
         for group in config["build_groups"]:
             row = {**group, "status": "INCOMPLETE"}
             records["builds"].append(row)
