@@ -190,6 +190,29 @@ def validate_graph(invoke, evidence: Path, options: list[str], groups: list[dict
             "scope": "Source-owner, effective transition-setting and relative-output equality. Configuration directories retained; no binary/action/cache equivalence or build credit."}
 
 
+def bind_built_outputs(outputs: list[dict], expected_outputs: dict[str, str], proof: dict) -> None:
+    """Join configured outputs to the graph and their actual native actions."""
+    if proof["status"] != "PASS":
+        raise ValueError("Native action evidence did not complete")
+    if (len(outputs) != len(expected_outputs) or
+            {output["identity"]["label"] for output in outputs} != set(expected_outputs)):
+        raise ValueError("Built roots differ from the verified graph")
+    for output in outputs:
+        if output["name"] != expected_outputs[output["identity"]["label"]]:
+            raise ValueError("Built output differs from the verified graph: " + output["name"])
+        actions = [action for action in proof["image_actions"] if any(
+            item["path"] == output["name"] and
+            item.get("digest", {}).get("hash") == output["sha256"] and
+            int(item.get("digest", {}).get("sizeBytes", -1)) == output["bytes"]
+            for item in action["actualOutputs"])]
+        match actions:
+            case [action] if action["digest"].get("hash") and action["exitCode"] == 0 and not action["status"]:
+                output["native_action"] = {key: action[key] for key in
+                                           ("digest", "targetLabel", "mnemonic", "runner", "cacheHit", "full_record_sha256")}
+            case _:
+                raise ValueError("Expected one native producing action for " + output["name"])
+
+
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path, retained_graph: dict | None = None) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
@@ -207,6 +230,19 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             records["graph_validation"] = validate_graph(invoke, evidence, options, config["build_groups"], retained_graph)
             records["status"] = "PASS"
             return
+        build_only = config.get("build_only", False)
+        if build_only:
+            expected_outputs = config["expected_outputs"]
+            roots = {root for group in config["build_groups"] for root in group["roots"]}
+            if (config["test_groups"] or len(config["build_batches"]) != 1 or
+                    len(roots) != 40 or set(expected_outputs) != roots or
+                    len(set(expected_outputs.values())) != 40):
+                raise ValueError("Build-only qualification requires the exact 40 graph-verified roots")
+            batch = config["build_batches"][0]
+            if (batch["groups"] != [group["name"] for group in config["build_groups"]] or
+                    batch["options"] or batch["architecture"] != "multi"):
+                raise ValueError("Build-only qualification requires one complete mixed batch")
+            records["verified_graph"] = config["verified_graph"]
         result = invoke("execution-root", ["info", *options, "execution_root"], "command", targets=[])
         if result["status"] != "PASS":
             raise RuntimeError("Cannot identify canonical execution root")
@@ -258,6 +294,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     if actual != {key: output[key] for key in ("sha256", "bytes")}:
                         raise ValueError("Materialized output differs from default BEP identity")
                     output["materialized_path"] = str(root / relative)
+                if build_only:
+                    proof = json.loads((evidence / (batch["architecture"] + "-" + phase + "-image-execution.json")).read_text())
+                    bind_built_outputs(outputs, expected_outputs, proof)
                 for row in rows:
                     row["outputs"] = [{**output, "original_target": row["roots"][output["identity"]["label"]]}
                                       for output in outputs if output["identity"]["label"] in row["roots"]]
@@ -268,6 +307,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 for row in rows:
                     row["output_error"] = str(error)
                 failed = True
+        if build_only:
+            if failed:
+                raise RuntimeError("Mixed compiler build or output identity gate failed")
+            records["status"] = "PASS"
+            return
         # Every successful build batch retains its outputs even if another batch
         # failed. The inspector consumes only complete owner sets.
         manifest = evidence / "compiler-builds.json"
