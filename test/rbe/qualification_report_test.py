@@ -48,6 +48,50 @@ LIFECYCLE_MANIFEST = Path(__file__).parent.parent / "benchmarks" / "lifecycle.js
 
 
 class QualificationReportTest(unittest.TestCase):
+    def test_hosted_run_preflight_compact_request_and_budget_boundary(self) -> None:
+        request = {"steps": [{"run": "x" * 33814}]}
+        actual = report.hosted_run_preflight(request)
+        self.assertEqual(actual["largest_step_argument_bytes"], 33815)
+        self.assertEqual(actual, report.hosted_run_preflight({**request, "name": "remote run", "working_directory": "."}))
+        overhead = report.hosted_run_preflight({"steps": [{"run": ""}]})["action_budget_bytes"]
+        boundary = report.HOSTED_ACTION_BUDGET_BYTES - overhead
+        for delta in (-1, 0, 1):
+            with self.subTest(delta=delta):
+                request = {"steps": [{"run": "x" * (boundary + delta)}]}
+                if delta <= 0:
+                    self.assertEqual(report.hosted_run_preflight(request)["action_budget_bytes"],
+                                     report.HOSTED_ACTION_BUDGET_BYTES + delta)
+                else:
+                    with self.assertRaisesRegex(ValueError, "action budget"):
+                        report.hosted_run_preflight(request)
+
+    def test_hosted_run_preflight_counts_all_steps_and_encoding(self) -> None:
+        for steps in ([{"run": "x" * 205079}],
+                      [{"run": "x" * 24000}] * 2,
+                      [{"run": "echo ok\n"}] * 2000,
+                      [{"run": "\n" * 8000}],
+                      [{"run": "é" * 8000}]):
+            with self.subTest(steps=len(steps), first_bytes=len(steps[0]["run"].encode())):
+                with self.assertRaisesRegex(ValueError, "argument limit|action budget"):
+                    report.hosted_run_preflight({"steps": steps})
+
+    def test_hosted_run_preflight_step_boundary_is_utf8_including_nul(self) -> None:
+        # Isolate the kernel boundary from our stricter aggregate policy.
+        with mock.patch.object(report, "HOSTED_ACTION_BUDGET_BYTES", 1024 * 1024):
+            run = "é" * (report.HOSTED_ARGUMENT_BYTES // 2 - 1) + "x"
+            self.assertEqual(report.hosted_run_preflight({"steps": [{"run": run}]})["largest_step_argument_bytes"],
+                             report.HOSTED_ARGUMENT_BYTES)
+            for invalid in (run + "x", "echo\0bad"):
+                with self.assertRaisesRegex(ValueError, "argument limit"):
+                    report.hosted_run_preflight({"steps": [{"run": invalid}]})
+
+    def test_hosted_run_preflight_rejects_unmodeled_inputs(self) -> None:
+        for request in ({"steps": []}, {"steps": [{"run": "true", "extra": "x"}]},
+                        {"steps": [{"run": 1}]}, {"bazel_command": "test //..."},
+                        {"steps": [{"run": "true"}], "working_directory": "../other"}):
+            with self.subTest(request=request), self.assertRaises(ValueError):
+                report.hosted_run_preflight(request)
+
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

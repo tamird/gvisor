@@ -39,6 +39,7 @@ import json
 import math
 import os
 from pathlib import Path
+import posixpath
 import re
 import shutil
 import subprocess
@@ -56,6 +57,12 @@ import unit_matrix
 
 MAX_REPORT_BYTES = 512 * 1024 * 1024
 MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
+# Hosted Run encodes the complete action in one base64 YAML argv, then executes
+# each step with bash -c. Keep requests compact without pretending that Python
+# JSON serialization measures Go's YAML output. The aggregate policy reserves
+# room for quoting, indentation, defaults and base64 expansion.
+HOSTED_ACTION_BUDGET_BYTES = 44 * 1024
+HOSTED_ARGUMENT_BYTES = 128 * 1024  # Linux MAX_ARG_STRLEN with 4 KiB pages.
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
 RUNTIME_RESULT_TAGS = {"jtreg-results"} | NODE_RESULT_TAGS
@@ -97,6 +104,39 @@ def number(value: object) -> int:
 
 def read_json(path: Path) -> dict[str, object]:
     return mapping(json.loads(path.read_text()))
+
+
+def hosted_run_preflight(request: dict[str, object]) -> dict[str, int]:
+    """Reject oversized supported Run requests before submission side effects."""
+    if request.get("bazel_command"):
+        raise ValueError("Hosted qualification requires explicit run steps")
+    directory = posixpath.normpath(string(request.get("working_directory", "")))
+    if posixpath.isabs(directory) or ".." in directory:
+        raise ValueError("Hosted working directory must stay within the repository")
+    directory = "" if directory == "." else directory
+    name = string(request.get("name", "")) or "remote run"
+    steps = sequence(request.get("steps"))
+    if not steps:
+        raise ValueError("Hosted qualification requires at least one run step")
+    runs: list[str] = []
+    for step in steps:
+        fields = mapping(step)
+        if set(fields) != {"run"}:
+            raise ValueError("Hosted qualification supports only the run step field")
+        run = string(fields["run"])
+        if "\0" in run or len(run.encode()) + 1 > HOSTED_ARGUMENT_BYTES:
+            raise ValueError("Hosted step exceeds the Linux argument limit or contains NUL; use an artifact input")
+        runs.append(run)
+    action = {"name": name, "bazel_workspace_dir": directory,
+              "steps": [{"run": run} for run in runs]}
+    # Include all steps and charge for block indentation on actual newlines.
+    # This is a conservative request policy, not an exact YAML-size prediction.
+    budget = len(json.dumps(action, ensure_ascii=True).encode())
+    budget += 4 * sum(value.count("\n") for value in (name, directory, *runs))
+    if budget > HOSTED_ACTION_BUDGET_BYTES:
+        raise ValueError(f"Hosted action budget {budget} exceeds {HOSTED_ACTION_BUDGET_BYTES} bytes; use artifact inputs")
+    return {"action_budget_bytes": budget, "action_budget_limit": HOSTED_ACTION_BUDGET_BYTES,
+            "largest_step_argument_bytes": max(len(run.encode()) + 1 for run in runs)}
 
 
 def write_json(path: Path, value: object) -> None:
