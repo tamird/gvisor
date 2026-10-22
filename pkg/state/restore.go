@@ -35,9 +35,10 @@ func dataValue(value wire.Object) wire.Object {
 	}
 }
 
-// restoreValue selects the operation from the destination's Go type and checks
-// that the encoded value has the corresponding wire representation. Generated
-// fields, manual loaders and dynamically allocated graph objects share this path.
+// restoreValue handles manual and dynamic destinations whose operation was not
+// selected by generated code. It validates the wire representation against the
+// destination's Go type. Graph registration, reference assignment and collection
+// traversal are shared with typed operations.
 func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value, encoded wire.Object) {
 	value := dataValue(encoded)
 	if _, ok := value.(wire.Nil); ok {
