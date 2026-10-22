@@ -19,14 +19,16 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         built = invoke("boot-" + architecture, ["build", *selected, *builds],
                        "build", targets=builds)
         failed |= built["status"] != "PASS"
-        checked = invoke("analyzers-" + architecture,
-                         ["test", *selected, "--nocache_test_results", *analyzers],
-                         "test", targets=analyzers)
-        failed |= checked["status"] != "PASS"
         if architecture == "x86_64":
+            # Each Nogo owner transitions its analyzed dependency to both
+            # architectures; the findings reader must run on this AMD64 host.
+            checked = invoke("analyzers-" + architecture,
+                             ["test", *selected, "--nocache_test_results", *analyzers],
+                             "test", targets=analyzers)
+            failed |= checked["status"] != "PASS"
             tests = ["//pkg/sentry/time:time_test", "//runsc/config:config_test"]
             tested = invoke("unit-" + architecture,
-                            ["test", *selected, "--nocache_test_results", *tests],
+                            ["test", *selected, "--nocache_test_results", "--test_arg=-test.v", *tests],
                             "test", targets=tests)
             failed |= tested["status"] != "PASS"
     if failed:
