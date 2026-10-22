@@ -4,6 +4,8 @@
 # Check completeness with ARGS=--mode=verify.
 # Entries whose license cannot be fetched automatically are maintained by hand and preserved
 # by --mode=fetch, so you can hand-edit the file for these.
+# Entries marked manually_audited or containing LicenseRef identifiers require
+# re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -88,6 +90,13 @@
   commit: 3de43ed45e1c7923d53c4db56ca3de3e46601580
   sha256: 37cdfbc6faefea94f7b37760a305c98c08981116c2bc9e821e3b423221fad8c8
   license: Apache-2.0
+- dependency: bison
+  version: https://mirror.bazel.build/ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 9bba0214ccf7f1079c5d59210045227bcf619519840ebfa80cd3849cff5a5bf2
+  license: LicenseRef-Bison-source-bundle
+  manually_audited: true
 - dependency: buildkite_pipeline_schema
   version: https://raw.githubusercontent.com/buildkite/pipeline-schema/f7a0894074d194bcf19eec5411fec0528f7f4180/schema.json
   retrieved: "2026-08-27"
@@ -1107,6 +1116,18 @@
   commit: f5dcbae736e5d7f83a35718e01be1a8e3010fa39
   sha256: 7ab5feffbf78557f626f2e3e3204788528394494715a30fc2070fcddc2051b7b
   license: BSD-2-Clause
+- dependency: libpcap
+  version: https://www.tcpdump.org/release/libpcap-1.10.5.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 84fa89ac6d303028c1c5b754abff77224f45eca0a94eb1a34ff0aa9ceece3925
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - ISC
+    - LicenseRef-CMU-Stanford-permission-acknowledgement
+  manually_audited: true
 - dependency: llvm
   version: https://github.com/hermeticbuild/hermetic-llvm/releases/download/v0.8.24/hermetic-llvm-v0.8.24.tar.gz
   retrieved: "2026-10-02"
@@ -1222,6 +1243,26 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: tcpdump
+  version: https://www.tcpdump.org/release/tcpdump-4.99.6.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 40a8cefd45f0d2a06827e6658efb830d484868c449ad80f7efb33516af44f3da
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - ISC
+    - LicenseRef-CMU-Stanford-permission-acknowledgement
+    - LicenseRef-DEC-Compaq-supporting-documentation
+    - LicenseRef-DEC-permission-nonendorsement
+    - LicenseRef-IKP-entire-notice-retention
+    - LicenseRef-SJG-notice-preservation
+    - LicenseRef-SunRPC-product-distribution
+    - LicenseRef-TUT-publication-acknowledgement
+    - LicenseRef-UCB-LBL-distribution-acknowledgement
+    - LicenseRef-UCB-due-credit
+  manually_audited: true
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"

@@ -368,70 +368,56 @@ func TestTcpdump(t *testing.T) {
 	if testutil.IsRunningWithHostNet() {
 		t.Skip("docker doesn't work with hostinet")
 	}
-	ctx := context.Background()
-	// The "-docker" runtime comes with the net_raw capabilities enabled which are
-	// required for tcpdump.
-	d := dockerutil.MakeContainerWithRuntime(ctx, t, "-docker")
-	defer d.CleanUp(ctx)
+	// Capture on "any" as well as loopback to guard against b/411198401.
+	for _, iface := range []string{"lo", "any"} {
+		t.Run(iface, func(t *testing.T) {
+			ctx := t.Context()
+			// The "-docker" runtime enables net_raw, which tcpdump requires.
+			d := dockerutil.MakeContainerWithRuntime(ctx, t, "-docker")
+			defer d.CleanUp(t.Context())
+			if err := d.Spawn(ctx, dockerutil.RunOpts{
+				Image: "basic/tcpdump",
+			}, "sleep", "infinity"); err != nil {
+				t.Fatalf("docker run failed: %v", err)
+			}
+			ctx, cancel := context.WithTimeout(ctx, defaultWait)
+			defer cancel()
 
-	if err := d.Spawn(ctx, dockerutil.RunOpts{
-		Image: "basic/tcpdump",
-	}, "sleep", "infinity"); err != nil {
-		t.Fatalf("docker run failed: %v", err)
-	}
-
-	// Stick to `lo` to avoid catching packets from the host. The "port 9999"
-	// does not actually do anything because we do not yet support installing
-	// a filter bpf program.
-	cmd := "tcpdump -c 2 -i lo port 9999"
-	tcpdumpProc, err := d.ExecProcess(ctx, dockerutil.ExecOpts{}, "/bin/sh", "-c", cmd)
-	if err != nil {
-		t.Fatalf("docker run failed: %v", err)
-	}
-	cmd = "python3 sender.py"
-	senderProc, err := d.ExecProcess(ctx, dockerutil.ExecOpts{}, "/bin/sh", "-c", cmd)
-	if err != nil {
-		t.Fatalf("docker exec failed: %v", err)
-	}
-
-	if status, err := senderProc.WaitExitStatus(ctx); err != nil || status != 0 {
-		t.Fatalf("docker exec failed: %v, status: %d", err, status)
-	}
-	if status, err := tcpdumpProc.WaitExitStatus(ctx); err != nil || status != 0 {
-		t.Fatalf("docker exec failed: %v, status: %d", err, status)
-	}
-	expectedOutputStr1 := "IP localhost.9999 > localhost.9999: UDP, length 4"
-	logs, err := tcpdumpProc.Logs()
-	if err != nil {
-		t.Fatalf("docker exec failed: %v", err)
-	}
-	if !strings.Contains(logs, expectedOutputStr1) {
-		t.Fatalf("docker didn't get output: %q, got: %q", expectedOutputStr1, logs)
-	}
-	expectedOutputStr2 := "IP localhost.9999 > localhost.9999: UDP, length 8"
-	if !strings.Contains(logs, expectedOutputStr2) {
-		t.Fatalf("docker didn't get output: %q, got: %q", expectedOutputStr2, logs)
-	}
-
-	// Check that `any` also works to guard against b/411198401.
-	cmd = "tcpdump -c 2 -i any port 9999"
-	tcpdumpProc, err = d.ExecProcess(ctx, dockerutil.ExecOpts{}, "/bin/sh", "-c", cmd)
-	if err != nil {
-		t.Fatalf("docker run failed: %v", err)
-	}
-	cmd = "python3 sender.py"
-	senderProc, err = d.ExecProcess(ctx, dockerutil.ExecOpts{}, "/bin/sh", "-c", cmd)
-	if err != nil {
-		t.Fatalf("docker exec failed: %v", err)
-	}
-
-	// We make no assertions about the output because we might catch host packets
-	// too: we only rely on tcpdump's exit status.
-	if status, err := tcpdumpProc.WaitExitStatus(ctx); err != nil || status != 0 {
-		t.Fatalf("docker exec failed: %v, status: %d", err, status)
-	}
-	if status, err := senderProc.WaitExitStatus(ctx); err != nil || status != 0 {
-		t.Fatalf("docker exec failed: %v, status: %d", err, status)
+			// Use container logs to wait for capture readiness before sending.
+			// Keep the container alive even if "any" captures unrelated traffic
+			// and finishes before the sender does.
+			cmd := fmt.Sprintf("exec tcpdump -c 2 -i %s port 9999 >/proc/1/fd/1 2>&1", iface)
+			captureDone := make(chan error, 1)
+			go func() {
+				_, err := d.Exec(ctx, dockerutil.ExecOpts{}, "/bin/sh", "-c", cmd)
+				captureDone <- err
+			}()
+			if _, err := d.WaitForOutput(ctx, "listening on "+iface, defaultWait); err != nil {
+				t.Fatalf("tcpdump readiness: %v", err)
+			}
+			if output, err := d.Exec(ctx, dockerutil.ExecOpts{}, "tcpdump_sender"); err != nil {
+				t.Fatalf("sender failed: %v, output: %s", err, output)
+			}
+			if err := <-captureDone; err != nil {
+				t.Fatalf("tcpdump failed: %v", err)
+			}
+			if iface == "any" {
+				// Host traffic may be captured too; only require successful exit.
+				return
+			}
+			logs, err := d.Logs(ctx)
+			if err != nil {
+				t.Fatalf("tcpdump logs: %v", err)
+			}
+			for _, want := range []string{
+				"IP localhost.9999 > localhost.9999: UDP, length 4",
+				"IP localhost.9999 > localhost.9999: UDP, length 8",
+			} {
+				if !strings.Contains(logs, want) {
+					t.Errorf("tcpdump output %q does not contain %q", logs, want)
+				}
+			}
+		})
 	}
 }
 

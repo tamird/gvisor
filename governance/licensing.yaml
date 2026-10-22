@@ -28,6 +28,23 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: bison
+    license: LicenseRef-Bison-source-bundle
+    exception_rationale: >-
+      GNU Bison is a host build tool and is not shipped in the tcpdump
+      test image or released gVisor binaries. GPL version 3 is selected
+      from its main program's version-3-or-later grant. The manually
+      audited source archive also contains GPL and LGPL support,
+      X11 and FSF copying grants, public-domain modifications, GNU
+      build-script and output exceptions, and GFDL documentation with
+      no invariant sections but specified front and back cover texts.
+      Those tools, support files, and documentation are not image
+      payloads. The generated libpcap parser contains Bison skeleton
+      code under its Bison 2.2 exception; the packet-capture image is
+      not itself a parser generator and retains the exact generated
+      notice and GPL text at /usr/share/licenses/bison/NOTICE. This
+      complete source-bundle audit requires renewed review when its
+      URL or archive hash changes.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
@@ -44,6 +61,22 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: libpcap
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - ISC
+      - LicenseRef-CMU-Stanford-permission-acknowledgement
+    exception_rationale: >-
+      The pinned packet-capture library is used by the tcpdump test
+      image and is not linked into released runsc or sentry binaries.
+      Its selected sources and headers include BSD advertising terms and
+      CMU/Stanford permission and documentation acknowledgements. The
+      image includes the complete source-specific copyright, permission
+      and disclaimer notices at /usr/share/licenses/libpcap/NOTICE. The
+      exact archive pin and complete license set require renewed review
+      when changed.
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception
@@ -65,3 +98,27 @@ exceptions:
       QEMU user-mode emulators for arm64 build machines, run as a build tool
       to execute binaries built for the target architecture when
       cross-compiling. QEMU is neither linked into nor distributed with gVisor.
+  - dependency: tcpdump
+    license:
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause
+      - ISC
+      - LicenseRef-CMU-Stanford-permission-acknowledgement
+      - LicenseRef-DEC-Compaq-supporting-documentation
+      - LicenseRef-DEC-permission-nonendorsement
+      - LicenseRef-IKP-entire-notice-retention
+      - LicenseRef-SJG-notice-preservation
+      - LicenseRef-SunRPC-product-distribution
+      - LicenseRef-TUT-publication-acknowledgement
+      - LicenseRef-UCB-LBL-distribution-acknowledgement
+      - LicenseRef-UCB-due-credit
+    exception_rationale: >-
+      The pinned capture utility is used only in the tcpdump test image.
+      Its selected sources and headers include advertising, publication
+      and supporting-documentation acknowledgements, notice-preservation
+      terms and the SunRPC restriction to distribution as part of a
+      product or program. The image includes the complete
+      source-specific copyright, permission and disclaimer notices at
+      /usr/share/licenses/tcpdump/NOTICE. The exact archive pin and
+      complete license set require renewed review when changed.

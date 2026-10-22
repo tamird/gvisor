@@ -1,6 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:defs.bzl", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -29,6 +30,44 @@ image_outputs(
     name = "busybox",
     image = ":busybox",
     image_name = "basic/busybox",
+)
+
+go_binary(
+    name = "tcpdump_sender",
+    srcs = ["tcpdump_sender.go"],
+    pure = True,
+    static = True,
+)
+
+# Source files carry additional notices beyond each project's root LICENSE.
+image_layer(
+    name = "tcpdump_layer",
+    srcs = {
+        "/usr/bin/tcpdump": "@tcpdump",
+        "/usr/bin/tcpdump_sender": ":tcpdump_sender",
+        "/usr/share/licenses/bison/NOTICE": "tcpdump/bison.NOTICE",
+        "/usr/share/licenses/libpcap/NOTICE": "tcpdump/libpcap.NOTICE",
+        "/usr/share/licenses/tcpdump/NOTICE": "tcpdump/tcpdump.NOTICE",
+    },
+    file_metadata = {
+        "/usr/share/licenses/bison/NOTICE": file_metadata(mode = "0644"),
+        "/usr/share/licenses/libpcap/NOTICE": file_metadata(mode = "0644"),
+        "/usr/share/licenses/tcpdump/NOTICE": file_metadata(mode = "0644"),
+    },
+    include_runfiles = False,
+)
+
+image_manifest(
+    name = "tcpdump",
+    base = "@test_busybox",
+    layers = [":tcpdump_layer"],
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "tcpdump",
+    image = ":tcpdump",
+    image_name = "basic/tcpdump",
 )
 
 # The integration test checks that mounting /tmp preserves image contents.
