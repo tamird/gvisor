@@ -10,6 +10,8 @@ bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_rust", version = "0.74.0")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0")
@@ -62,6 +64,13 @@ archive_override(
     urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.10.0.tar.gz"],
 )
 
+# Expose the standard-library notice already downloaded with rustc.
+single_version_override(
+    module_name = "rules_rust",
+    patch_strip = 1,
+    patches = ["//tools:rules_rust_notices.patch"],
+)
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -91,6 +100,95 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
+
+### Rust image toolchains
+# Linux-hosted Rust compilers with explicit musl target standard libraries.
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(versions = [])
+
+RUST_IMAGE_SHA256S = {
+    "cargo-1.99.1-aarch64-unknown-linux-gnu.tar.xz": "5156832e0c1254e9b49a79edabdc6d4c35f32f8fc1cf3ca700f268ff96087ab0",
+    "cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz": "53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a",
+    "clippy-1.99.1-aarch64-unknown-linux-gnu.tar.xz": "3bea76c26dcf30c176c0a8a8cc283eb59fabd754e24a68b4ca0701e5f3245f6b",
+    "clippy-1.99.1-x86_64-unknown-linux-gnu.tar.xz": "458339712a058e52cc4522ff9ef8b59cd1ea1340312216cd94194c464a3f6dc5",
+    "llvm-tools-1.99.1-aarch64-unknown-linux-gnu.tar.xz": "cd1818058908c1c4e99bd2843fe103df255157454e16186ec9cc3b5b5823b39c",
+    "llvm-tools-1.99.1-x86_64-unknown-linux-gnu.tar.xz": "8429c5117debfb45c22cf2f97712ef00e0e94976c96cf92f661974a458ca7e84",
+    "rust-std-1.99.1-aarch64-unknown-linux-gnu.tar.xz": "e25668477083d6a9ddb87b9beb9c00742225f38233ccb4bfba3afa7a07427f52",
+    "rust-std-1.99.1-aarch64-unknown-linux-musl.tar.xz": "2f3eb0d0610e2b7f6b2121d106e2490ac648decfa0c09b30873bdfc60de6c1ab",
+    "rust-std-1.99.1-x86_64-unknown-linux-gnu.tar.xz": "109b074225bf5b9ea3820890876bfdf4ed161adbfaf94b2b4b5984c85ee5d958",
+    "rust-std-1.99.1-x86_64-unknown-linux-musl.tar.xz": "1dd241eaeb19ff3b5180461c77bdee93d6cafc669eda9de834e7c06b0ec3ca95",
+    "rustc-1.99.1-aarch64-unknown-linux-gnu.tar.xz": "acdcdfe09ae1f103aa9a2b7f88903a9588bc2e99288af10e6fbf5514e2e49f25",
+    "rustc-1.99.1-x86_64-unknown-linux-gnu.tar.xz": "2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f",
+    "rustfmt-1.99.1-aarch64-unknown-linux-gnu.tar.xz": "26b3200b1461921415927abf7fe410202a6eda2db3e419abde59e0abfcd93fc2",
+    "rustfmt-1.99.1-x86_64-unknown-linux-gnu.tar.xz": "e3b36c4c7ec3486c059d8067ff48787676612007123aad7a4e8ec12c48ee9ba2",
+}
+
+rust.repository_set(
+    name = "rust_image_aarch64",
+    edition = "2021",
+    exec_triple = "aarch64-unknown-linux-gnu",
+    rustfmt_version = "1.99.1",
+    sha256s = RUST_IMAGE_SHA256S,
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+        "@llvm//constraints/libc:musl",
+    ],
+    target_triple = "aarch64-unknown-linux-musl",
+    versions = ["1.99.1"],
+)
+rust.repository_set(
+    name = "rust_image_aarch64",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "@llvm//constraints/libc:musl",
+    ],
+    target_triple = "x86_64-unknown-linux-musl",
+)
+rust.repository_set(
+    name = "rust_image_x86_64",
+    edition = "2021",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    rustfmt_version = "1.99.1",
+    sha256s = RUST_IMAGE_SHA256S,
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+        "@llvm//constraints/libc:musl",
+    ],
+    target_triple = "aarch64-unknown-linux-musl",
+    versions = ["1.99.1"],
+)
+rust.repository_set(
+    name = "rust_image_x86_64",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "@llvm//constraints/libc:musl",
+    ],
+    target_triple = "x86_64-unknown-linux-musl",
+)
+use_repo(
+    rust,
+    "rust_image_aarch64__aarch64-unknown-linux-gnu__stable",
+    "rust_image_aarch64__aarch64-unknown-linux-musl__stable",
+    "rust_image_aarch64__x86_64-unknown-linux-musl__stable",
+    "rust_image_x86_64__aarch64-unknown-linux-musl__stable",
+    "rust_image_x86_64__x86_64-unknown-linux-gnu__stable",
+    "rust_image_x86_64__x86_64-unknown-linux-musl__stable",
+    "rust_image_x86_64__x86_64-unknown-linux-musl__stable_tools",
+)
+
+# Prefer the constrained image toolchains; native tools retain GNU targets.
+register_toolchains(
+    "@rust_image_aarch64__aarch64-unknown-linux-musl__stable//:toolchain",
+    "@rust_image_aarch64__x86_64-unknown-linux-musl__stable//:toolchain",
+    "@rust_image_x86_64__aarch64-unknown-linux-musl__stable//:toolchain",
+    "@rust_image_x86_64__x86_64-unknown-linux-musl__stable//:toolchain",
+    "@rust_image_aarch64__aarch64-unknown-linux-gnu__stable//:toolchain",
+    "@rust_image_x86_64__x86_64-unknown-linux-gnu__stable//:toolchain",
+)
 
 ### Linux headers
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
@@ -284,6 +382,37 @@ http_file(
     urls = [
         "https://pki.goog/roots.pem",
     ],
+)
+
+### Docker integration test images
+# Pin both architectures of the existing test distributions. Image assembly
+# uses declared layers and does not require a Docker daemon.
+img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
+
+img_pull(
+    name = "test_alpine",
+    digest = "sha256:b276d875eeed9c7d3f1cfa7edb06b22ed22b14219a7d67c52c56612330348239",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registry = "index.docker.io",
+    repository = "library/alpine",
+    tag = "3.11.5",
+)
+
+img_pull(
+    name = "test_busybox",
+    digest = "sha256:95cf004f559831017cdf4628aaf1bb30133677be8702a8c5f2994629f637a209",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registry = "index.docker.io",
+    repository = "library/busybox",
+    tag = "1.31.1",
 )
 
 ### Toolchains

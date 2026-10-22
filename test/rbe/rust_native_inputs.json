@@ -1,0 +1,110 @@
+{
+  "x86_64-unknown-linux-musl": {
+    "x86_64-unknown-linux-musl/lib/self-contained/libc.a": {
+      "bytes": 6406314,
+      "sha256": "e699c64b0c6b427d89ad5bf767bf78beb30c19930c5dedff635951636e8f9f70"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/libunwind.a": {
+      "bytes": 201418,
+      "sha256": "18ad5e6b1b383da0f07b64e94f68f20021412490d38835e99268569a03c7f449"
+    },
+    "x86_64-unknown-linux-musl/lib/libcompiler_builtins-648b0fadff3f0e71.rlib": {
+      "bytes": 4770054,
+      "sha256": "7656e712abe38ff555b33cda0ce0cfbc624e94d1352883fe216c0b1425072709"
+    },
+    "x86_64-unknown-linux-musl/lib/libunwind-b676589508ad3bda.rlib": {
+      "bytes": 5346,
+      "sha256": "cce8b47ec6702a4c68f4edd61211474a0b94eff67c07e16d4a9669fed0ed07c6"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crt1.o": {
+      "bytes": 3880,
+      "sha256": "03c4111a1bc81580c7388e4227a889cebe978faa46c965bbdde4f2d8de1fc3a2"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/Scrt1.o": {
+      "bytes": 3880,
+      "sha256": "cfb5b001408261d562d809eea6af636cf7ac10a233895a611ef79bbe4f8c60de"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/rcrt1.o": {
+      "bytes": 5224,
+      "sha256": "7998a49f23b463b1bf59aecd8fde59df5d0f0bf819d1272d92c6f00ae81fc429"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crtendS.o": {
+      "bytes": 1048,
+      "sha256": "0d11009c048ae289cdf184d726b767debc2972321e143838d28d7b6802b69c7c"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crtbeginS.o": {
+      "bytes": 3536,
+      "sha256": "297960e338581a38bbfcbee45169a847bcdc5527ccaf68abe95b72b3b0856bed"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crtend.o": {
+      "bytes": 1048,
+      "sha256": "0d11009c048ae289cdf184d726b767debc2972321e143838d28d7b6802b69c7c"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crti.o": {
+      "bytes": 2656,
+      "sha256": "5343749d306ea3578a4ae5c796be362100273f3314cec283be621bbe4a8ec720"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crtbegin.o": {
+      "bytes": 3536,
+      "sha256": "297960e338581a38bbfcbee45169a847bcdc5527ccaf68abe95b72b3b0856bed"
+    },
+    "x86_64-unknown-linux-musl/lib/self-contained/crtn.o": {
+      "bytes": 2600,
+      "sha256": "794abd4b28db5de5f993b1445460d90fa3191cc9556a8b8881d5d34a5e8dfa87"
+    }
+  },
+  "aarch64-unknown-linux-musl": {
+    "aarch64-unknown-linux-musl/lib/self-contained/libc.a": {
+      "bytes": 6455370,
+      "sha256": "b03473b6f1efb72f700f561b4407a88885b37e0edb5cdb2a64de0df5499e813f"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/libunwind.a": {
+      "bytes": 196766,
+      "sha256": "3ff5dcd17b4fe703ac91edf8ed0434ffa66c9ccd33701e940cfb8daab1dfda23"
+    },
+    "aarch64-unknown-linux-musl/lib/libcompiler_builtins-29674cca14587d3c.rlib": {
+      "bytes": 5063072,
+      "sha256": "d696daeff228aef6460e3ebcf6355e5a8b2545e937a4e20c6db296acc4278e5e"
+    },
+    "aarch64-unknown-linux-musl/lib/libunwind-18a867fff0951e2f.rlib": {
+      "bytes": 5434,
+      "sha256": "5c245880bab8f54bd7152b5c7ecc0b8f1f3cd74112265ba9cc58757171ad3110"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crt1.o": {
+      "bytes": 4000,
+      "sha256": "2c8595cff75b182ad59c0278d5f81bed2cf1e51b5bf9324db52142c89dd6479f"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/Scrt1.o": {
+      "bytes": 4000,
+      "sha256": "8bb3021de91cbf0132042a13851deec579519b3b4644ad5f1c6ddbb4ff3be4ef"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/rcrt1.o": {
+      "bytes": 5792,
+      "sha256": "e65dadc816775ab1d8d915f7f6fc4baa5080c1bea633b4372ff73e3b7b2df81c"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crtendS.o": {
+      "bytes": 1088,
+      "sha256": "9fd9518f8a0ba537a77c5d5c638ec30efa388a9458c21ad84f5607c535547adb"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crtbeginS.o": {
+      "bytes": 4056,
+      "sha256": "522c4ac7628b80df407f1873be18b6b9b398db5be7f9f5586835cdfd189f6a9e"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crtend.o": {
+      "bytes": 1088,
+      "sha256": "9fd9518f8a0ba537a77c5d5c638ec30efa388a9458c21ad84f5607c535547adb"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crti.o": {
+      "bytes": 2712,
+      "sha256": "b49a67e2e36eed4836023fc26ff9da617e2020a2317aadfeb7971e4cbe612bf7"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crtbegin.o": {
+      "bytes": 4056,
+      "sha256": "522c4ac7628b80df407f1873be18b6b9b398db5be7f9f5586835cdfd189f6a9e"
+    },
+    "aarch64-unknown-linux-musl/lib/self-contained/crtn.o": {
+      "bytes": 2656,
+      "sha256": "b2f52a98df83f38814f34f7477aeb629d5e1fb1c1379ef2739cad91ab9ab8734"
+    }
+  }
+}

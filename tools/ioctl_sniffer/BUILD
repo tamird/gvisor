@@ -56,9 +56,9 @@ go_binary(
         # filename, libioctl_hook.so.
         ":ioctl_hook_gnu",  # keep
     ],
-    features = ["fully_static_link"],
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
+    static = True,
     visibility = [
         "//:sandbox",
     ],
