@@ -3752,6 +3752,99 @@ signal.pause()
         self.assertEqual(value["actions_artifact"], {"id": 3, "name": current["name"], "digest": digest})
         self.assertEqual(value["case_counts"], producer["case_counts"])
 
+    def lifecycle_artifact(self, name: str, *, coordinator_source: str | None = None) -> tuple[Path, dict[str, object]]:
+        artifact, producer = self.artifact(self.fixture(name), native=True)
+        source = producer["sources"][0]
+        receipt = report.receipt(artifact, report.file_record(artifact)["sha256"], source)
+        results = self.root / "lifecycle-results"
+        results.mkdir()
+        for side in ("before", "after", "statistics", "preflight"):
+            shutil.copytree(self.evidence, results / side)
+        status = "PASS" if receipt["status"] == "PASS" else "FAIL"
+        collect_actions.publish_lifecycle(results, dict.fromkeys(("before", "after", "statistics", "preflight"), source), {
+            "status": status, "sources": {"before": source, "after": source},
+            "statistics_source": source,
+        }, producer["runner_exit"], producer["capture_exit"],
+            coordinator_source=coordinator_source)
+        compact = results / "compact" / "qualification"
+        result = self.root / "lifecycle.zip"
+        with zipfile.ZipFile(result, "w") as archive:
+            for path in compact.iterdir():
+                archive.write(path, "qualification/" + path.name)
+        return result, receipt
+
+    def test_lifecycle_compact_preserves_retained_outcomes(self) -> None:
+        for name in ("pass", "fail", "incomplete", "zero"):
+            with self.subTest(name=name):
+                artifact, receipt = self.lifecycle_artifact(name, coordinator_source=os.environ.get("LIFECYCLE_REPLAY_SOURCE"))
+                value = collect_actions.lifecycle_receipt(artifact, report.file_record(artifact)["sha256"],
+                                                         os.environ.get("LIFECYCLE_REPLAY_SOURCE", receipt["sources"][0]))
+                self.assertEqual(value["status"], "PASS" if receipt["status"] == "PASS" else "FAIL")
+                self.assertEqual(value["downloaded_bytes"], artifact.stat().st_size)
+                for retained in value["bundle_receipts"].values():
+                    for key in ("status", "case_counts", "native_exits", "zero_case_owners", "errors"):
+                        self.assertEqual(retained[key], receipt[key])
+                if os.environ.get("LIFECYCLE_REPLAY_SOURCE"):
+                    # A qualification-only replay can upload these exact
+                    # outputs without executing the original workloads again.
+                    destination = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / ("lifecycle-" + name)
+                    shutil.copytree(self.root / "lifecycle-results", destination)
+                shutil.rmtree(self.root / "lifecycle-results")
+                shutil.rmtree(self.evidence)
+                self.evidence.mkdir()
+
+    def test_lifecycle_compact_rejects_tampered_receipts(self) -> None:
+        artifact, receipt = self.lifecycle_artifact("pass")
+        for damage, error in (("source", "manifest schema or source differs"),
+                              ("receipt", "Retained audit input differs"),
+                              ("status", "receipt and bundle statuses differ"),
+                              ("bundle", "receipt source or audit identity differs"),
+                              ("missing", "qualification.tar.gz")):
+            with self.subTest(damage=damage):
+                with zipfile.ZipFile(artifact) as original:
+                    members = {name: original.read(name) for name in original.namelist()}
+                manifest = json.loads(members["qualification/manifest.json"])
+                if damage == "source":
+                    manifest["source"] = "0" * 40
+                elif damage == "receipt":
+                    members["qualification/before-receipt.json"] = b"{}"
+                elif damage == "status":
+                    manifest["bundles"]["before"]["status"] = "FAIL"
+                elif damage == "bundle":
+                    manifest["bundles"]["before"]["sha256"] = "0" * 64
+                else:
+                    del members["qualification/before-receipt.json"]
+                members["qualification/manifest.json"] = json.dumps(manifest).encode()
+                changed = self.root / "changed.zip"
+                with zipfile.ZipFile(changed, "w") as output:
+                    for name, data in members.items():
+                        output.writestr(name, data)
+                with self.assertRaisesRegex((ValueError, KeyError), error):
+                    collect_actions.lifecycle_receipt(changed, report.file_record(changed)["sha256"], receipt["sources"][0])
+
+    def test_actions_lifecycle_downloads_only_compact_result(self) -> None:
+        artifact, receipt = self.lifecycle_artifact("pass")
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        digest = "sha256:" + report.file_record(artifact)["sha256"]
+        current = {"id": 3, "name": "state-lifecycle-result-attempt-2", "expired": False, "digest": digest}
+        audit = {"id": 4, "name": "state-lifecycle-audit-attempt-2", "expired": False, "digest": "sha256:" + "a" * 64}
+        for conclusion, audits, status in (("success", [audit], "PASS"), ("failure", [audit], "FAIL"),
+                                           ("success", [], "INCOMPLETE")):
+            with self.subTest(conclusion=conclusion, audits=audits):
+                metadata = {**retained, "head_sha": receipt["sources"][0], "run_attempt": 2, "conclusion": conclusion}
+                responses = [json.dumps(value).encode() for value in (metadata, {"artifacts": [current, *audits]})]
+                def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                    self.assertEqual(command[-1], "repos/tamird/gvisor/actions/artifacts/3/zip")
+                    stdout.write(artifact.read_bytes())
+                    return subprocess.CompletedProcess(command, 0)
+                with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                      mock.patch.object(collect_actions.subprocess, "run", side_effect=download) as downloads):
+                    value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64",
+                                                            self.root / "lifecycle", run_attempt=2, lifecycle=True)
+                self.assertEqual((value["status"], value["producer_status"]), (status, "PASS"))
+                self.assertEqual(downloads.call_count, 1)
+                self.assertEqual(value["audit_upload_status"], "RETAINED" if audits else "INCOMPLETE")
+
     def test_actions_collection_rejects_changed_or_invalid_attempt(self) -> None:
         retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
         for first, last, requested, error in (
