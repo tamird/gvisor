@@ -1,18 +1,12 @@
-"""Compile the pidfd collection and its two-architecture runtime images."""
-import hashlib
+"""Build both BusyBox image closures, then probe the native shell contract."""
 import json
 import os
 from pathlib import Path
+import shutil
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    targets = config["targets"]
-    image_targets = config["image_targets"]
-    profile_targets = list(dict.fromkeys(row["owner"] for row in config["profile_helper_outputs"]))
-    profile_mode = "--compilation_mode=" + config["profile_helper_compilation_mode"]
-    if set(image_targets).intersection(profile_targets) or set(targets) != set(image_targets + profile_targets):
-        raise ValueError("PIDFD and profile-helper target partitions must cover the selected build")
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
                "--build_event_json_file_path_conversion=false"]
@@ -22,49 +16,73 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         raise RuntimeError("Cannot identify canonical execution root")
     execution_root = Path((evidence / ("invocation-" + root_name) / "stdout.log").read_text().strip())
     if not execution_root.is_absolute() or not execution_root.is_dir():
-        raise ValueError(f"Invalid canonical execution root: {execution_root}")
-    for architecture in ("x86_64", "aarch64"):
-        platform = "--platforms=" + config["image_platforms"][architecture]
-        for phase, selected, platform_options in (("pidfd", image_targets, [platform]),
-                                                  ("profile-helper", profile_targets, [profile_mode])):
-            execution_log = evidence / (architecture + "-" + phase + "-execution.json")
-            built = invoke(phase + "-" + architecture,
-                           ["build", *options, "--config=" + architecture, *platform_options, "--keep_going",
+        raise ValueError("Invalid canonical execution root")
+    records = {"source": config["source"], "status": "INCOMPLETE", "architectures": []}
+    failed = False
+    try:
+        for architecture in ("x86_64", "aarch64"):
+            selected = [*options, "--config=" + architecture,
+                        "--platforms=" + config["image_platforms"][architecture]]
+            execution_log = evidence / (architecture + "-busybox-execution.json")
+            built = invoke("busybox-" + architecture,
+                           ["build", *selected, "--keep_going", "--output_groups=+make_logs",
                             "--execution_log_json_file=" + str(execution_log),
-                            "--noexecution_log_sort", *selected], "build", targets=selected)
-            if built["status"] != "PASS":
-                raise RuntimeError(phase + " image build failed for " + architecture)
-            record_execution(execution_log, architecture, phase)
-    for architecture in ("x86_64", "aarch64"):
-        expected = [row for row in config["profile_helper_outputs"]
-                    if row["architecture"] == architecture]
-        comparisons = []
-        destination = evidence / (architecture + "-profile-helper-equality.json")
-        try:
-            for index, row in enumerate(expected):
-                name = f"profile-output-{architecture}-{index}"
-                result = invoke(name, ["cquery", *options, "--config=" + architecture, profile_mode,
-                                      "--output=files", row["owner"]],
-                                "command", targets=[])
-                if result["status"] != "PASS":
-                    raise RuntimeError("Cannot locate profile-helper output")
-                lines = (evidence / ("invocation-" + name) / "stdout.log").read_text().splitlines()
-                match lines:
-                    case [output]:
-                        path = Path(output)
-                        if path.is_absolute() or ".." in path.parts or path.parts[:1] != ("bazel-out",):
-                            raise ValueError(f"Unexpected image output path: {path}")
-                        payload = (execution_root / path).read_bytes()
-                    case _:
-                        raise ValueError(f"Expected one output for {row['owner']}: {lines!r}")
-                actual = {"sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload)}
-                wanted = {key: row[key] for key in ("sha256", "bytes")}
-                comparisons.append({"owner": row["owner"], "actual": actual,
-                                    "expected": wanted, "equal": actual == wanted})
-                if actual != wanted:
-                    raise ValueError(f"Profile-helper output changed: {row['owner']}")
-        finally:
-            destination.write_text(json.dumps(comparisons, indent=2) + "\n")
-    if config.get("runtime", False):
-        import image_pidfd_runtime
-        image_pidfd_runtime.run(invoke, evidence, private)
+                            "--noexecution_log_sort", *config["targets"]],
+                           "build", targets=config["targets"])
+            # Retain build failures and continue the independent architecture.
+            if execution_log.is_file():
+                record_execution(execution_log, architecture, "busybox")
+            row = {"architecture": architecture, "build_status": built["status"], "outputs": {}}
+            records["architectures"].append(row)
+            queries = {
+                "binary": ("//images:busybox_binary", []),
+                "config": ("//images:busybox_config", []),
+                "logs": ("//images:busybox_build", ["--output_groups=make_logs"]),
+                "tools": ('filter("^//images:busybox_(hostcc|nm)$", deps(//images:busybox_build))', []),
+            }
+            for name, (query, extra) in queries.items():
+                phase = architecture + "-busybox-" + name
+                queried = invoke(phase, ["cquery", *selected, *extra, "--output=files", query],
+                                 "command", targets=[])
+                if queried["status"] != "PASS":
+                    failed = True
+                    continue
+                paths = (evidence / ("invocation-" + phase) / "stdout.log").read_text().splitlines()
+                retained = []
+                for index, output in enumerate(paths):
+                    path = Path(output)
+                    if path.is_absolute() or ".." in path.parts or path.parts[:1] != ("bazel-out",):
+                        raise ValueError(f"Unexpected configured output: {path}")
+                    actual = execution_root / path
+                    if not actual.is_file():
+                        # Failed foreign builds may omit outputs; preserve available diagnostics.
+                        retained.append({"output": output, "missing": True})
+                        continue
+                    destination = evidence / (phase + "-" + str(index) + "-" + path.name)
+                    if name != "binary":
+                        if actual.stat().st_size > 8 * 1024 * 1024:
+                            raise ValueError("BusyBox diagnostic output exceeds 8 MiB")
+                        shutil.copyfile(actual, destination)
+                    retained.append({"output": str(actual), "retained": str(destination) if name != "binary" else None})
+                row["outputs"][name] = retained
+            failed |= built["status"] != "PASS"
+        if failed:
+            raise RuntimeError("A BusyBox image build or configured output query failed")
+        scripts = Path(__file__).parent
+        python = ["run", "--lockfile_mode=error", "--noannounce_rc",
+                  "@rules_python//python/bin:python", "--"]
+        contents = evidence / "pidfd-contents.json"
+        inspected = invoke("pidfd-image-closure", [*python, str(scripts / "pidfd_image_inspect.py"), str(contents)],
+                           "command", targets=[])
+        if inspected["status"] != "PASS":
+            raise RuntimeError("Existing image/source/timeout closure inspection failed")
+        manifest = evidence / "busybox-build-inputs.json"
+        manifest.write_text(json.dumps(records, indent=2) + "\n")
+        probed = invoke("busybox-shell-probes", [*python, str(scripts / "busybox_probe.py"),
+                        str(manifest), str(contents), str(evidence / "busybox-probes.json")],
+                        "command", targets=[])
+        if probed["status"] != "PASS":
+            raise RuntimeError("BusyBox static/configuration/shell probes failed")
+        records["status"] = "PASS"
+    finally:
+        (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
