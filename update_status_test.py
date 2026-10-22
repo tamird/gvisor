@@ -11,6 +11,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+from work_states import checks_passed
+
 
 updater = importlib.import_module("update-status")
 OLD = "2000-01-01T00:00:00+00:00"
@@ -344,6 +346,70 @@ class ScopedApprovalTest(unittest.TestCase):
 
 
 class ProviderStatusTest(unittest.TestCase):
+    @staticmethod
+    def check(identity: str, state: str, run: int, *, attempt: int = 1,
+              workflow: str = "lint-workflow", app: str = "actions-app") -> dict:
+        return {"__typename": "CheckRun", "id": identity, "name": "lint", "status": "COMPLETED",
+                "conclusion": state, "detailsUrl": f"https://github.com/test/actions/runs/{run}",
+                "checkSuite": {"app": {"id": app, "name": "GitHub Actions", "slug": "github-actions"},
+                               "workflowRun": {"runNumber": run, "runAttempt": attempt,
+                                               "workflow": {"id": workflow, "name": "Lint"}}}}
+
+    def normalize_checks(self, checks: list[dict], *, complete: bool = True) -> dict:
+        pr = raw_pr(15647)
+        pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"] = {
+            "state": "FAILURE", "contexts": {"totalCount": len(checks), "nodes": checks,
+                                               "pageInfo": {"hasNextPage": not complete}}}
+        return updater.normalize(pr)
+
+    def test_new_attempt_replaces_cancellation_without_changing_raw_rollup(self) -> None:
+        old, current = self.check("old", "CANCELLED", 5957), self.check("new", "SUCCESS", 5958)
+        result = self.normalize_checks([current, old])
+        self.assertEqual([check["id"] for check in result["checks"]["contexts"]], ["new"])
+        self.assertEqual([check["id"] for check in result["checks"]["supersededContexts"]], ["old"])
+        self.assertEqual((result["checks"]["state"], result["checks"]["total"], result["checks"]["reportedTotal"]),
+                         ("FAILURE", 1, 2))
+        self.assertEqual(updater.check_states(result), {"SUCCESS"})
+        self.assertEqual(updater.check_report([result], {})["checkFailures"], [])
+        # A complete inventory explains the obsolete aggregate, but does not
+        # change GitHub's merge gate or permit an incomplete list to pass.
+        self.assertFalse(checks_passed(result))
+        incomplete = self.normalize_checks([old, current], complete=False)
+        self.assertIn("FAILURE", updater.check_states(incomplete))
+
+    def test_latest_failure_pending_and_rerun_are_not_hidden(self) -> None:
+        for state, expected in [("FAILURE", "FAILURE"), ("IN_PROGRESS", "IN_PROGRESS")]:
+            newer = self.check("new", state, 5957, attempt=2)
+            if state == "IN_PROGRESS":
+                newer.update(status=state, conclusion=None)
+            result = self.normalize_checks([self.check("old", "CANCELLED", 5957), newer])
+            self.assertEqual(updater.check_states(result), {expected})
+            self.assertEqual([check["id"] for check in result["checks"]["contexts"]], ["new"])
+            self.assertEqual(bool(updater.check_report([result], {})["checkFailures"]), state == "FAILURE")
+
+    def test_different_workflows_apps_and_same_attempt_jobs_remain_distinct(self) -> None:
+        checks = [self.check("old", "CANCELLED", 1),
+                  self.check("workflow", "SUCCESS", 2, workflow="other-workflow"),
+                  self.check("app", "SUCCESS", 2, app="other-app"),
+                  self.check("same-attempt", "SUCCESS", 1)]
+        result = self.normalize_checks(checks)
+        self.assertEqual([check["id"] for check in result["checks"]["contexts"]],
+                         ["old", "workflow", "app", "same-attempt"])
+        self.assertEqual(result["checks"]["supersededContexts"], [])
+        self.assertIn("CANCELLED", updater.check_states(result))
+
+    def test_missing_provider_identity_does_not_supersede_checks(self) -> None:
+        for field in ("app", "workflowRun"):
+            old = self.check("old", "CANCELLED", 1)
+            old["checkSuite"][field] = None
+            result = self.normalize_checks([old, self.check("new", "SUCCESS", 2)])
+            self.assertEqual(result["checks"]["supersededContexts"], [])
+            self.assertEqual(len(result["checks"]["contexts"]), 2)
+        missing_rank = self.check("old", "CANCELLED", 1)
+        del missing_rank["checkSuite"]["workflowRun"]["runAttempt"]
+        self.assertEqual(self.normalize_checks([missing_rank, self.check("new", "SUCCESS", 2)])
+                         ["checks"]["supersededContexts"], [])
+
     def test_provider_description_survives_collection(self):
         pr = raw_pr(13855)
         pr["repository"]["nameWithOwner"] = "buildbuddy-io/buildbuddy"

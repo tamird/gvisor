@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from reapproval import reminder_plan
-from work_states import FAILURES, check_purpose, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
+from work_states import FAILURES, check_purpose, check_states, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
 
 
 ROOT = Path(__file__).resolve().parent
@@ -27,7 +27,9 @@ CHECKS = """
 commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
   state contexts(first:100) { totalCount pageInfo { hasNextPage }
     nodes { __typename
-      ... on CheckRun { id name status conclusion detailsUrl checkSuite { app { name slug } workflowRun { workflow { name } } } }
+      ... on CheckRun { id name status conclusion detailsUrl checkSuite {
+        app { id name slug } workflowRun { runNumber runAttempt workflow { id name } }
+      } }
       ... on StatusContext { id context state targetUrl description }
     }
   }
@@ -152,6 +154,27 @@ def changed_references(current: dict, previous: dict) -> list[dict]:
             if prior.get(item["id"]) != item]
 
 
+def current_check_attempts(contexts: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Separate older attempts only when the provider identifies the workflow."""
+    latest: dict[tuple[str, str, str], tuple[int, int]] = {}
+    identities = []
+    for check in contexts:
+        key = check.get("appId"), check.get("workflowId"), check["name"]
+        rank = check.get("runNumber"), check.get("runAttempt")
+        identified = (check.get("kind") == "check-run" and all(isinstance(value, str) and value for value in key)
+                      and all(type(value) is int and value > 0 for value in rank))
+        identity = (key, rank) if identified else None
+        identities.append(identity)
+        if identity is not None:
+            latest[key] = max(latest.get(key, rank), rank)
+    current, superseded = [], []
+    for check, identity in zip(contexts, identities):
+        # Retain every job at the newest rank, including equal-name matrix jobs.
+        destination = superseded if identity is not None and identity[1] < latest[identity[0]] else current
+        destination.append(check)
+    return current, superseded
+
+
 def normalize(pr: dict) -> dict:
     commits = pr["commits"]["nodes"]
     if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
@@ -166,13 +189,15 @@ def normalize(pr: dict) -> dict:
                 state = item["conclusion"] if item["status"] == "COMPLETED" else item["status"]
                 suite = item["checkSuite"]
                 app = suite.get("app") or {}
-                workflow = ((suite.get("workflowRun") or {}).get("workflow") or {}).get("name")
+                run = suite.get("workflowRun") or {}
+                workflow = run.get("workflow") or {}
                 # This repository-owned workflow requests reviewers; it does not
                 # validate contributor source. Keep its raw outcome observable.
                 context = {"id": item["id"], "name": item["name"], "state": state or "UNKNOWN",
                                  "url": public_url(item["detailsUrl"]), "kind": "check-run",
-                                 "app": app.get("name"), "appSlug": app.get("slug"),
-                                 "workflow": workflow}
+                                 "app": app.get("name"), "appSlug": app.get("slug"), "appId": app.get("id"),
+                                 "workflow": workflow.get("name"), "workflowId": workflow.get("id"),
+                                 "runNumber": run.get("runNumber"), "runAttempt": run.get("runAttempt")}
                 context["purpose"] = check_purpose(context)
                 contexts.append(context)
             else:
@@ -180,8 +205,10 @@ def normalize(pr: dict) -> dict:
                                  "url": public_url(item["targetUrl"]), "description": item.get("description"),
                                  "app": None, "kind": "status",
                                  "purpose": "validation"})
-        checks = {"state": rollup["state"], "total": connection["totalCount"],
-                  "complete": not connection["pageInfo"]["hasNextPage"], "contexts": contexts}
+        current, superseded = current_check_attempts(contexts)
+        checks = {"state": rollup["state"], "total": connection["totalCount"] - len(superseded),
+                  "reportedTotal": connection["totalCount"], "supersededContexts": superseded,
+                  "complete": not connection["pageInfo"]["hasNextPage"], "contexts": current}
     threads = pr["reviewThreads"]
     normalized = {
         "number": pr["number"], "repo": pr["repository"]["nameWithOwner"], "title": pr["title"], "url": pr["url"],
@@ -442,7 +469,7 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 observation["importedSourceHead"] = pr["sourceHead"]
                 if active:
                     imports.append(observation)
-            if active and (failed or checks.get("state") in FAILURES):
+            if active and (failed or check_states(pr) & FAILURES):
                 failures.append({**observation, "followup": assignment})
             unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
             if active and unresolved:

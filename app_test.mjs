@@ -876,6 +876,25 @@ test('review-level holds and incomplete discussion remain unknown instead of aut
   assert.deepEqual(idsFor(node), ['agent-refresh']);
 });
 
+test('superseded attempts stay visible without creating a current source failure', () => {
+  const context = client(), node = attentionNode();
+  const old = { ...node.github.checks.contexts[0], id: 'old', state: 'CANCELLED' };
+  node.github.checks.state = 'FAILURE';
+  node.github.checks.supersededContexts = [old];
+  node.github.checks.reportedTotal = node.github.checks.total + 1;
+  context.nodeInput = node;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Success');
+  assert.match(vm.runInContext('checkInfo(nodeInput.github).detail', context), /1 superseded.*aggregate is FAILURE/);
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  node.github.checks.complete = false;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Failure');
+  node.github.checks.complete = true;
+  node.github.checks.contexts[0].state = 'IN_PROGRESS';
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Pending');
+  node.github.checks.contexts[0].state = 'FAILURE';
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Failure');
+});
+
 test('a confirmed conflict takes priority over opaque import progress', () => {
   const node = attentionNode(15337);
   node.github.checks.contexts = [serviceStatus('import/copybara', 'SUCCESS')];

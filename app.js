@@ -139,9 +139,10 @@ function codeCheckStates(pr) {
   const result = new Set(validationChecks(pr).map(check => check.state));
   const aggregate = pr?.checks?.state;
   const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check) || isApprovalGate(pr, check));
+  const explainedChecks = [...administrative, ...(pr?.checks?.supersededContexts || [])];
   const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
-  const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && administrative.some(check => FAILURE_STATES.has(check.state))
-    || pending.has(aggregate) && administrative.some(check => pending.has(check.state)));
+  const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && explainedChecks.some(check => FAILURE_STATES.has(check.state))
+    || pending.has(aggregate) && explainedChecks.some(check => pending.has(check.state)));
   if (aggregate && !explained) result.add(aggregate);
   return result;
 }
@@ -160,7 +161,7 @@ function checkInfo(pr) {
     : approvalGates.length ? { text: "Approval required", tone: "pending", glyph: "○" }
       : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
       : { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
 const ATTENTION_REASONS = [
@@ -490,9 +491,10 @@ function appendChecks(container, pr, heading) {
   section.dataset.pr = prIdentity(pr);
   summary.append(document.createTextNode(`${heading} · `), badge(info)); section.append(summary);
   section.append(element("p", "detail-meta", info.detail));
-  for (const check of pr.checks?.contexts || []) {
+  for (const check of [...(pr.checks?.contexts || []), ...(pr.checks?.supersededContexts || [])]) {
     const row = element("div", "check-row");
-    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? " · approval required; not run" : ""}`));
+    const historical = pr.checks.supersededContexts?.includes(check);
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${historical ? " · superseded attempt" : check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? " · approval required; not run" : ""}`));
     if (check.description) row.title = check.description;
     if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
     section.append(row);
@@ -1550,7 +1552,9 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
             /^[a-f0-9]{40}$/.test(event.source.headRefOid) && Number.isFinite(Date.parse(event.source.updatedAt)) &&
             typeof event.source.title === "string" && typeof event.source.body === "string" &&
             (event.source.author == null || typeof event.source.author.login === "string")))) throw new Error("Invalid PR cross-references");
-      for (const check of item.checks?.contexts || []) {
+      if (item.checks?.supersededContexts !== undefined && (!Array.isArray(item.checks.supersededContexts) ||
+          item.checks.reportedTotal !== item.checks.total + item.checks.supersededContexts.length)) throw new Error("Invalid check attempt inventory");
+      for (const check of [...(item.checks?.contexts || []), ...(item.checks?.supersededContexts || [])]) {
         if (check.description != null && typeof check.description !== "string") throw new Error("Invalid check description");
         if (check.id !== undefined && (typeof check.id !== "string" || !check.id.trim())) throw new Error("Invalid check identity");
         if (check.purpose !== undefined && !["validation", "reviewer-assignment"].includes(check.purpose)) throw new Error("Invalid check purpose");

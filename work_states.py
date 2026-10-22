@@ -88,11 +88,12 @@ def check_states(pr: dict) -> set[str]:
     aggregate = checks.get("state")
     administrative = {item["state"] for item in checks.get("contexts", [])
                       if item.get("purpose") == "reviewer-assignment" or is_import_status(item) or is_approval_gate(pr, item)}
+    explained_states = administrative | {item["state"] for item in checks.get("supersededContexts", [])}
     explained = complete_checks(pr) and (
-        aggregate in FAILURES and bool(administrative & FAILURES)
-        or aggregate in PENDING and bool(administrative & PENDING))
+        aggregate in FAILURES and bool(explained_states & FAILURES)
+        or aggregate in PENDING and bool(explained_states & PENDING))
     # Preserve aggregate problems unless the complete inventory explains them
-    # with a known administrative result of the same class.
+    # with an administrative or superseded result of the same class.
     if isinstance(aggregate, str) and not explained:
         states.add(aggregate)
     return states
