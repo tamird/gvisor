@@ -1,35 +1,75 @@
-name: CI
+name: State scalar ARM regression
 
 "on":
-  push:
-    branches:
-      - "*"
+  workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  scalar:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Run the existing generated scalar regression on native ARM
+        timeout-minutes: 40
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION="$(cat images/default/bazelversion)"
+          export QUALIFICATION_NATIVE_BAZEL="$(command -v bazel)"
+          export QUALIFICATION_NATIVE_PATH="$PATH"
+          export BUILD_WORKSPACE_DIRECTORY="$GITHUB_WORKSPACE"
+          export BUILDBUDDY_ARTIFACTS_DIRECTORY="$RUNNER_TEMP/state-scalar-arm"
+          export APPLICABILITY_AUTH_RC="$RUNNER_TEMP/state-scalar-arm-auth.bazelrc"
+          trap 'rm -f -- "$APPLICABILITY_AUTH_RC"' EXIT
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import time
+          secret = os.environ["BUILDBUDDY_API_KEY"]
+          if not secret:
+              raise RuntimeError("Missing repository Remote Bazel credential")
+          artifacts = Path(os.environ["BUILDBUDDY_ARTIFACTS_DIRECTORY"])
+          artifacts.mkdir()
+          rc = Path(os.environ["APPLICABILITY_AUTH_RC"])
+          rc.touch(mode=0o600)
+          rc.write_text("\n".join([
+              "build --remote_executor=grpcs://remote.buildbuddy.io",
+              "build --remote_cache=grpcs://remote.buildbuddy.io",
+              "build --bes_backend=grpcs://remote.buildbuddy.io",
+              "build --bes_results_url=https://app.buildbuddy.io/invocation/",
+              "build --remote_timeout=10m",
+              "build --remote_header=x-buildbuddy-api-key=" + secret,
+              "build --bes_header=x-buildbuddy-api-key=" + secret,
+          ]) + "\n")
+          os.environ["APPLICABILITY_WORK_DEADLINE"] = str(time.monotonic() + 1800)
+          os.environ["APPLICABILITY_QUALIFICATION_CONFIG"] = json.dumps({
+              "source": os.environ["GITHUB_SHA"],
+              "targets": ["//pkg/state/tests:tests_test"],
+          })
+          (artifacts / "toolchain-preparation.json").write_text(json.dumps({
+              "source": os.environ["GITHUB_SHA"], "runner_os": os.environ["RUNNER_OS"],
+              "runner_arch": os.environ["RUNNER_ARCH"],
+              "bazel": os.environ["QUALIFICATION_NATIVE_BAZEL"],
+              "bazel_version": os.environ["USE_BAZEL_VERSION"],
+              "route": "Native ARM local TestRunner; declared compilation on RBE",
+          }, indent=2) + "\n")
+          raise SystemExit(subprocess.run(["python3", ".github/state_scalar_arm.py"]).returncode)
+          PY
+      - name: Retain source-bound test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualification-arm64-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/state-scalar-arm/qualification.tar.gz
+          if-no-files-found: error
