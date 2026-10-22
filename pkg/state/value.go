@@ -35,21 +35,8 @@ type valueOperations struct {
 	save func(*encodeState, valueHandle, encodeStrategy, *wire.Object)
 	load func(*decodeState, *objectDecodeState, valueHandle, wire.Object)
 
-	zero  func(valueHandle)
-	copy  func(valueHandle) valueHandle
-	bool  func(valueHandle) bool
-	int   func(valueHandle) int64
-	uint  func(valueHandle) uint64
-	float func(valueHandle) float64
-	cmplx func(valueHandle) complex128
-	text  func(valueHandle) string
-
-	setBool    func(valueHandle, bool)
-	setInt     func(valueHandle, int64) int64
-	setUint    func(valueHandle, uint64) uint64
-	setFloat   func(valueHandle, float64) float64
-	setComplex func(valueHandle, complex128) complex128
-	setString  func(valueHandle, string)
+	zero func(valueHandle)
+	copy func(valueHandle) valueHandle
 
 	mapStorage *mapStorage
 	sequence   func(valueHandle) sequenceView
@@ -129,40 +116,6 @@ func reflectedCopy(v valueHandle) valueHandle {
 	return handleWithOperations(copy, v.ops)
 }
 
-func reflectedBool(v valueHandle) bool          { return v.reflected().Bool() }
-func reflectedInt(v valueHandle) int64          { return v.reflected().Int() }
-func reflectedUint(v valueHandle) uint64        { return v.reflected().Uint() }
-func reflectedFloat(v valueHandle) float64      { return v.reflected().Float() }
-func reflectedComplex(v valueHandle) complex128 { return v.reflected().Complex() }
-func reflectedString(v valueHandle) string      { return v.reflected().String() }
-
-func reflectedSetBool(v valueHandle, x bool)     { v.reflected().SetBool(x) }
-func reflectedSetString(v valueHandle, x string) { v.reflected().SetString(x) }
-
-func reflectedSetInt(v valueHandle, x int64) int64 {
-	object := v.reflected()
-	object.SetInt(x)
-	return object.Int()
-}
-
-func reflectedSetUint(v valueHandle, x uint64) uint64 {
-	object := v.reflected()
-	object.SetUint(x)
-	return object.Uint()
-}
-
-func reflectedSetFloat(v valueHandle, x float64) float64 {
-	object := v.reflected()
-	object.SetFloat(x)
-	return object.Float()
-}
-
-func reflectedSetComplex(v valueHandle, x complex128) complex128 {
-	object := v.reflected()
-	object.SetComplex(x)
-	return object.Complex()
-}
-
 // loadValue is the sole value entry. Nil and interface envelopes are common
 // protocol behavior; the destination table owns the remaining operation.
 func (ds *decodeState) loadValue(ods *objectDecodeState, target valueHandle, encoded wire.Object) {
@@ -193,63 +146,67 @@ func (es *encodeState) saveValue(value valueHandle, how encodeStrategy, dest *wi
 }
 
 func saveBool(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
-	*dest = wire.Bool(v.ops.bool(v))
+	*dest = wire.Bool(v.object.Bool())
 }
 func loadBool(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
-	v.ops.setBool(v, bool(encoded.(wire.Bool)))
+	v.object.SetBool(bool(encoded.(wire.Bool)))
 }
 func saveInt(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
-	*dest = wire.Int(v.ops.int(v))
+	*dest = wire.Int(v.object.Int())
 }
 func loadInt(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
 	x := int64(encoded.(wire.Int))
-	checkInt(x, v.ops.setInt(v, x))
+	v.object.SetInt(x)
+	checkInt(x, v.object.Int())
 }
 func saveUint(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
-	*dest = wire.Uint(v.ops.uint(v))
+	*dest = wire.Uint(v.object.Uint())
 }
 func loadUint(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
 	x := uint64(encoded.(wire.Uint))
-	checkUint(x, v.ops.setUint(v, x))
+	v.object.SetUint(x)
+	checkUint(x, v.object.Uint())
 }
 func saveFloat(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
 	if v.ops.kind == reflect.Float32 {
-		*dest = wire.Float32(v.ops.float(v))
+		*dest = wire.Float32(v.object.Float())
 	} else {
-		*dest = wire.Float64(v.ops.float(v))
+		*dest = wire.Float64(v.object.Float())
 	}
 }
 func loadFloat(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
 	if x, ok := encoded.(wire.Float32); ok {
-		v.ops.setFloat(v, float64(x))
+		v.object.SetFloat(float64(x))
 	} else {
 		x := float64(encoded.(wire.Float64))
-		checkFloat(x, v.ops.setFloat(v, x))
+		v.object.SetFloat(x)
+		checkFloat(x, v.object.Float())
 	}
 }
 func saveComplex(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
 	if v.ops.kind == reflect.Complex64 {
-		x := wire.Complex64(v.ops.cmplx(v))
+		x := wire.Complex64(v.object.Complex())
 		*dest = &x
 	} else {
-		x := wire.Complex128(v.ops.cmplx(v))
+		x := wire.Complex128(v.object.Complex())
 		*dest = &x
 	}
 }
 func loadComplex(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
 	if x, ok := encoded.(*wire.Complex64); ok {
-		v.ops.setComplex(v, complex128(*x))
+		v.object.SetComplex(complex128(*x))
 	} else {
 		x := complex128(*encoded.(*wire.Complex128))
-		checkComplex(x, v.ops.setComplex(v, x))
+		v.object.SetComplex(x)
+		checkComplex(x, v.object.Complex())
 	}
 }
 func saveString(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
-	x := wire.String(v.ops.text(v))
+	x := wire.String(v.object.String())
 	*dest = &x
 }
 func loadString(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
-	v.ops.setString(v, string(*encoded.(*wire.String)))
+	v.object.SetString(string(*encoded.(*wire.String)))
 }
 
 func savePointer(es *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
