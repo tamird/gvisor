@@ -197,3 +197,90 @@ func TestArrayDestinationFlags(t *testing.T) {
 		t.Errorf("slice destination = %v, want %v", got, want)
 	}
 }
+
+// Preserve supported array-to-slice and interface delegation at the same
+// public Load boundary that rejects wrong-shaped empty values below.
+func TestLegacyValueDestinations(t *testing.T) {
+	var nilInterface any
+	var integerInterface any = int64(17)
+	for _, test := range []struct {
+		name        string
+		source      any
+		destination any
+		want        any
+	}{
+		{"array_in_slice", &[2]int64{17, 29}, &[]int64{0, 0}, []int64{17, 29}},
+		{"interface_in_scalar", &integerInterface, new(int64), int64(17)},
+		{"nil_interface_in_scalar", &nilInterface, new(int64(23)), int64(23)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			if _, err := Save(t.Context(), &buf, test.source); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Load(t.Context(), &buf, test.destination); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := reflect.ValueOf(test.destination).Elem().Interface(), test.want; !reflect.DeepEqual(got, want) {
+				t.Errorf("Load = %v, want %v", got, want)
+			}
+		})
+	}
+}
+
+func TestNilLeavesDestination(t *testing.T) {
+	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}} {
+		// A non-nil channel is otherwise an unsupported decode destination.
+		integer, channel := int64(17), make(chan int)
+		for _, destination := range []any{&integer, &channel} {
+			original := reflect.ValueOf(destination).Elem().Interface()
+			var buf bytes.Buffer
+			writer := wire.Writer{Writer: &buf}
+			if err := WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, encoded)
+			if _, err := Load(t.Context(), &buf, destination); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := reflect.ValueOf(destination).Elem().Interface(), original; got != want {
+				t.Errorf("zero %T changed destination to %v, want %v", encoded, got, want)
+			}
+		}
+	}
+}
+
+// Empty collections and zero references must still match the destination type.
+func TestWrongDestinationShape(t *testing.T) {
+	emptyStruct := wire.Struct{}
+	emptyStruct.Alloc(0)
+	for _, test := range []struct {
+		name        string
+		encoded     wire.Object
+		destination any
+		wantErr     string
+	}{
+		{"array_in_string", &wire.ObjectArray{}, new(string), "expected *wire.String"},
+		{"array_in_map", &wire.ObjectArray{}, new(map[int]int), "expected *wire.Map"},
+		{"map_in_pointer", &wire.Map{}, new(*int), "expected *wire.Ref"},
+		{"struct_in_integer", &emptyStruct, new(int64), "expected wire.Int"},
+		{"map_in_slice", &wire.Map{}, new([]int64), "expected wire.Array"},
+		{"reference_in_integer", &wire.Ref{}, new(int64), "expected wire.Int"},
+		{"slice_in_integer", &wire.Slice{}, new(int64), "expected wire.Int"},
+		{"reference_in_channel", &wire.Ref{}, new(chan int), "cannot restore *wire.Ref into chan int"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writer := wire.Writer{Writer: &buf}
+			if err := WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, test.encoded)
+			if _, err := Load(t.Context(), &buf, test.destination); err == nil || !strings.Contains(err.Error(), test.wantErr) {
+				t.Fatalf("Load error = %v, want %q", err, test.wantErr)
+			}
+		})
+	}
+}
