@@ -476,7 +476,7 @@ func assignMap(target, object reflect.Value) {
 
 // assignSlice owns runtime array construction, interior slicing and the
 // dynamic destination's ordinary assignment relation.
-func (ds *decodeState) assignSlice(obj reflect.Value, x *wire.Slice) {
+func (ds *decodeState) assignSlice(obj reflect.Value, x *wire.Slice, body objectBody) {
 	// See *wire.Ref above; same applies.
 	if id := objectID(x.Ref.Root); id == 0 {
 		return
@@ -484,7 +484,7 @@ func (ds *decodeState) assignSlice(obj reflect.Value, x *wire.Slice) {
 	// Note that it's fine to slice the array here and assume that
 	// contents will still be filled in later on.
 	typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-	v := walkChild(&x.Ref, ds.register(&x.Ref, typ, nil))
+	v := walkChild(&x.Ref, ds.register(&x.Ref, typ, body))
 	obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 }
 

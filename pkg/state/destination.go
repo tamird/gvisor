@@ -134,7 +134,8 @@ func FloatOps[T ~float32 | ~float64](_ *T) floatOps[T] { return floatOps[T]{} }
 
 func (floatOps[T]) Restore(d Decoder, target *T) {
 	if value, ok := d.encoded.(wire.Float32); ok {
-		*target = T(value)
+		// Match the existing reflected scalar conversion, including NaN quieting.
+		*target = T(float64(value))
 	} else {
 		value := requireWire[wire.Float64](d.encoded)
 		*target = T(value)
@@ -220,12 +221,7 @@ func MapOps[M ~map[K]V, K comparable, V any, KO Destination[K], VO Destination[V
 
 func (op mapOps[M, K, V, KO, VO]) Restore(d Decoder, target *M) {
 	if ref, ok := d.encoded.(*wire.Ref); ok {
-		if objectID(ref.Root) != 0 {
-			object := walkChild(ref, d.ds.register(ref, reflect.TypeFor[M](), typedBody[M, mapOps[M, K, V, KO, VO]]{}))
-			// Preserve assignability between named and unnamed maps and the
-			// existing read-only flags on interior map fields.
-			assignMap(reflect.ValueOf(target).Elem(), object)
-		}
+		d.ds.restoreReference(reflect.ValueOf(target).Elem(), ref, typedBody[M, mapOps[M, K, V, KO, VO]]{})
 		return
 	}
 	restoreMapEntries(d, typedMap[M, K, V]{target}, typedCell[K, KO]{}, typedCell[V, VO]{}, requireWire[*wire.Map](d.encoded))
@@ -264,11 +260,7 @@ func SliceOps[S ~[]E, E any, EO Destination[E]](_ *S, _ EO) sliceOps[S, E, EO] {
 
 func (sliceOps[S, E, EO]) Restore(d Decoder, target *S) {
 	if slice, ok := d.encoded.(*wire.Slice); ok {
-		if objectID(slice.Ref.Root) != 0 {
-			typ := reflect.ArrayOf(int(slice.Capacity), reflect.TypeFor[E]())
-			object := walkChild(&slice.Ref, d.ds.register(&slice.Ref, typ, backingArrayBody[E, EO]{}))
-			reflect.ValueOf(target).Elem().Set(reflectValueRWSlice3(object, 0, int(slice.Length), int(slice.Capacity)))
-		}
+		d.ds.assignSlice(reflect.ValueOf(target).Elem(), slice, backingArrayBody[E, EO]{})
 		return
 	}
 	// Manual Array-to-slice loads must re-read the actual slice header after
@@ -340,13 +332,5 @@ func PointerOps[P ~*E, E any, EO Destination[E]](_ *P, _ EO) pointerOps[P, E, EO
 
 func (pointerOps[P, E, EO]) Restore(d Decoder, target *P) {
 	ref := requireWire[*wire.Ref](d.encoded)
-	if objectID(ref.Root) == 0 {
-		return
-	}
-	object := d.ds.register(ref, reflect.TypeFor[E](), typedBody[E, EO]{})
-	if len(ref.Dots) != 0 {
-		reflect.ValueOf(target).Elem().Set(reflectValueRWAddr(walkChild(ref, object)))
-	} else {
-		reflect.ValueOf(target).Elem().Set(object.Addr())
-	}
+	d.ds.restoreReference(reflect.ValueOf(target).Elem(), ref, typedBody[E, EO]{})
 }

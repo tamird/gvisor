@@ -407,12 +407,12 @@ func TestNilEmptyArrayDestination(t *testing.T) {
 	// Save compresses a zero array to Nil. Emit both valid wire operations
 	// explicitly: Nil needs no storage, but Array still needs an array view.
 	for _, test := range []struct {
-		name    string
-		value   wire.Object
-		wantErr bool
+		name      string
+		value     wire.Object
+		wantError string
 	}{
 		{name: "nil", value: wire.Nil{}},
-		{name: "array", value: &wire.ObjectArray{}, wantErr: true},
+		{name: "array", value: &wire.ObjectArray{}, wantError: "reflect: call of reflect.Value.Type on zero Value"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var encoded bytes.Buffer
@@ -424,8 +424,12 @@ func TestNilEmptyArrayDestination(t *testing.T) {
 			wire.Save(&writer, test.value)
 			var target *[0]int
 			_, err := state.Load(t.Context(), &encoded, target)
-			if got, want := err != nil, test.wantErr; got != want {
-				t.Errorf("Load error = %v (failed %t), want failed %t", err, got, want)
+			if test.wantError != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantError) {
+					t.Errorf("Load error = %v, want %q", err, test.wantError)
+				}
+			} else if err != nil {
+				t.Fatal(err)
 			}
 		})
 	}
