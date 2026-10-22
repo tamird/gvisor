@@ -1,0 +1,16 @@
+Use Bazel's complete action environment for compiler probes. Copying
+default_shell_env includes only fixed variables, omitting inherited PATH.
+GCC then cannot find its linker and reports available functions as missing.
+https://github.com/bazelbuild/bazel/blob/9c68c9a6b/src/main/java/com/google/devtools/build/lib/analysis/config/BuildConfigurationValue.java#L543-L557
+
+diff --git a/autoconf/private/autoconf_library.bzl b/autoconf/private/autoconf_library.bzl
+--- a/autoconf/private/autoconf_library.bzl
++++ b/autoconf/private/autoconf_library.bzl
+@@ -462,6 +462,7 @@ def autoconf_impl_common(ctx, resolve_toolchain):
+             mnemonic = "CcAutoconfCheck",
+             progress_message = "CcAutoconfCheck %{label} - " + check_name,
+             env = env | ctx.configuration.default_shell_env,
++            use_default_shell_env = True,
+             tools = toolchain_info.cc_toolchain.all_files,
+             # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+             execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},

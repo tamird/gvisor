@@ -411,6 +411,20 @@ exceptions:
       - GPL-3.0
       - GPL-3.0-or-later
     exception_rationale: *helper_image_resolver
+  - dependency: gawk
+    license: LicenseRef-Gawk-source-bundle
+    exception_rationale: >-
+      GNU awk is a separate image-assembly build tool, not an image
+      payload or a library linked into released gVisor binaries. The
+      manually audited archive includes GPL program code, the AGPL
+      persistent-memory allocator selected by the default Linux build,
+      LGPL and BSD support, X11 and public-domain components, and GNU
+      build-script distribution and output exceptions. Its unshipped
+      documentation includes GFDL manuals with the GNU General Public
+      License, Introduction, and History invariant sections, specified
+      cover texts, and separate copying and translation permissions.
+      These terms apply only to the exact pinned source bundle and
+      require renewed review when its URL or archive hash changes.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
