@@ -25,7 +25,7 @@ type mapStorage struct {
 	newKey   func(reflect.Value) reflect.Value
 	newValue func(reflect.Value) reflect.Value
 	insert   func(reflect.Value, reflect.Value, reflect.Value)
-	visit    func(reflect.Value, reflect.Value, reflect.Value, func(reflect.Value, reflect.Value))
+	visit    func(reflect.Value, mapEncoder)
 }
 
 // mapStorageProvider supplies an immutable storage adapter. Selection happens
@@ -53,12 +53,26 @@ var reflectedMap = mapStorage{
 	insert: func(v, key, value reflect.Value) {
 		v.SetMapIndex(key, value)
 	},
-	visit: func(v, key, value reflect.Value, visit func(reflect.Value, reflect.Value)) {
+	visit: func(v reflect.Value, encoder mapEncoder) {
+		keyType, valueType := v.Type().Key(), v.Type().Elem()
+		var key, value reflect.Value
+		if !encoder.retainKey {
+			key = reflect.New(keyType).Elem()
+		}
+		if !encoder.retainValue {
+			value = reflect.New(valueType).Elem()
+		}
 		iter := v.MapRange()
 		for iter.Next() {
+			if encoder.retainKey {
+				key = reflect.New(keyType).Elem()
+			}
+			if encoder.retainValue {
+				value = reflect.New(valueType).Elem()
+			}
 			key.SetIterKey(iter)
 			value.SetIterValue(iter)
-			visit(key, value)
+			encoder.encode(key, value)
 		}
 	},
 }
@@ -80,11 +94,30 @@ func typedMapStorage[M ~map[K]V, K comparable, V any]() mapStorage {
 		insert: func(v, k, x reflect.Value) {
 			(*typedStorage[M](v))[*typedStorage[K](k)] = *typedStorage[V](x)
 		},
-		visit: func(v, k, x reflect.Value, visit func(reflect.Value, reflect.Value)) {
-			object, keySlot, valueSlot := typedStorage[M](v), typedStorage[K](k), typedStorage[V](x)
+		visit: func(v reflect.Value, encoder mapEncoder) {
+			object := typedStorage[M](v)
+			var keySlot *K
+			var valueSlot *V
+			var k, x reflect.Value
+			if !encoder.retainKey {
+				keySlot = new(K)
+				k = reflect.ValueOf(keySlot).Elem()
+			}
+			if !encoder.retainValue {
+				valueSlot = new(V)
+				x = reflect.ValueOf(valueSlot).Elem()
+			}
 			for key, value := range *object {
+				if encoder.retainKey {
+					keySlot = new(K)
+					k = reflect.ValueOf(keySlot).Elem()
+				}
+				if encoder.retainValue {
+					valueSlot = new(V)
+					x = reflect.ValueOf(valueSlot).Elem()
+				}
 				*keySlot, *valueSlot = key, value
-				visit(k, x)
+				encoder.encode(k, x)
 			}
 		},
 	}
