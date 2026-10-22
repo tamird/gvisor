@@ -84,10 +84,20 @@ image_apt.install(
 )
 use_repo(image_apt, "helper_image_packages")
 
-### LLVM
-# TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+http_archive(
+    name = "linux_pidfd",
+    build_file = "//images/basic:linux_pidfd.BUILD",
+    patch_strip = 1,
+    patches = ["//images/basic:pidfd_supported_tests.patch"],
+    sha256 = "c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3",
+    strip_prefix = "linux-6.8",
+    urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.tar.xz"],
+)
+
+### LLVM
+# TODO: try using "llvm-raw" from BCR
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",

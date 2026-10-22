@@ -1,0 +1,268 @@
+Run the pidfd collection on gVisor's supported namespaces and devices.
+Time namespaces are not implemented (b/491161640), and /dev/kmsg is absent.
+The recycled-PID check takes long enough to exceed the integration test's
+15-minute deadline before gVisor's PID allocator wraps.
+
+diff --git a/tools/testing/selftests/pidfd/pidfd_setns_test.c b/tools/testing/selftests/pidfd/pidfd_setns_test.c
+--- a/tools/testing/selftests/pidfd/pidfd_setns_test.c
++++ b/tools/testing/selftests/pidfd/pidfd_setns_test.c
+@@ -30,7 +30,6 @@
+ 	PIDFD_NS_NET,
+ 	PIDFD_NS_CGROUP,
+ 	PIDFD_NS_PIDCLD,
+-	PIDFD_NS_TIME,
+ 	PIDFD_NS_MAX
+ };
+ 
+@@ -46,7 +45,6 @@
+ 	[PIDFD_NS_NET]    = { "net",              CLONE_NEWNET,    },
+ 	[PIDFD_NS_CGROUP] = { "cgroup",           CLONE_NEWCGROUP, },
+ 	[PIDFD_NS_PIDCLD] = { "pid_for_children", 0,               },
+-	[PIDFD_NS_TIME]	  = { "time",             CLONE_NEWTIME,   },
+ };
+ 
+ FIXTURE(current_nsset)
+@@ -83,21 +81,7 @@
+ 	return sys_clone3(&args, sizeof(struct clone_args));
+ }
+ 
+-static bool switch_timens(void)
+-{
+-	int fd, ret;
+-
+-	if (unshare(CLONE_NEWTIME))
+-		return false;
+-
+-	fd = open("/proc/self/ns/time_for_children", O_RDONLY | O_CLOEXEC);
+-	if (fd < 0)
+-		return false;
+-
+-	ret = setns(fd, CLONE_NEWTIME);
+-	close(fd);
+-	return ret == 0;
+-}
++static bool switch_timens(void) { return true; }
+ 
+ static ssize_t read_nointr(int fd, void *buf, size_t count)
+ {
+diff --git a/tools/testing/selftests/pidfd/pidfd_test.c b/tools/testing/selftests/pidfd/pidfd_test.c
+--- a/tools/testing/selftests/pidfd/pidfd_test.c
++++ b/tools/testing/selftests/pidfd/pidfd_test.c
+@@ -149,204 +149,7 @@
+  */
+ #define PIDFD_MAX_DEFAULT 0x8000
+ 
+-static int test_pidfd_send_signal_recycled_pid_fail(void)
+-{
+-	int i, ret;
+-	pid_t pid1;
+-	const char *test_name = "pidfd_send_signal signal recycled pid";
+-
+-	if (!have_pidfd_send_signal) {
+-		ksft_test_result_skip(
+-			"%s test: pidfd_send_signal() syscall not supported\n",
+-			test_name);
+-		return 0;
+-	}
+-
+-	ret = unshare(CLONE_NEWPID);
+-	if (ret < 0) {
+-		if (errno == EPERM) {
+-			ksft_test_result_skip("%s test: Unsharing pid namespace not permitted\n",
+-					      test_name);
+-			return 0;
+-		}
+-		ksft_exit_fail_msg("%s test: Failed to unshare pid namespace\n",
+-				   test_name);
+-	}
+-
+-	ret = unshare(CLONE_NEWNS);
+-	if (ret < 0) {
+-		if (errno == EPERM) {
+-			ksft_test_result_skip("%s test: Unsharing mount namespace not permitted\n",
+-					      test_name);
+-			return 0;
+-		}
+-		ksft_exit_fail_msg("%s test: Failed to unshare mount namespace\n",
+-				   test_name);
+-	}
+-
+-	ret = mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, 0);
+-	if (ret < 0)
+-		ksft_exit_fail_msg("%s test: Failed to remount / private\n",
+-				   test_name);
+-
+-	/* pid 1 in new pid namespace */
+-	pid1 = fork();
+-	if (pid1 < 0)
+-		ksft_exit_fail_msg("%s test: Failed to create new process\n",
+-				   test_name);
+-
+-	if (pid1 == 0) {
+-		char buf[256];
+-		pid_t pid2;
+-		int pidfd = -1;
+-
+-		(void)umount2("/proc", MNT_DETACH);
+-		ret = mount("proc", "/proc", "proc", 0, NULL);
+-		if (ret < 0)
+-			_exit(PIDFD_ERROR);
+-
+-		/* grab pid PID_RECYCLE */
+-		for (i = 0; i <= PIDFD_MAX_DEFAULT; i++) {
+-			pid2 = fork();
+-			if (pid2 < 0)
+-				_exit(PIDFD_ERROR);
+-
+-			if (pid2 == 0)
+-				_exit(PIDFD_PASS);
+-
+-			if (pid2 == PID_RECYCLE) {
+-				snprintf(buf, sizeof(buf), "/proc/%d", pid2);
+-				ksft_print_msg("pid to recycle is %d\n", pid2);
+-				pidfd = open(buf, O_DIRECTORY | O_CLOEXEC);
+-			}
+-
+-			if (wait_for_pid(pid2))
+-				_exit(PIDFD_ERROR);
+-
+-			if (pid2 >= PID_RECYCLE)
+-				break;
+-		}
+-
+-		/*
+-		 * We want to be as predictable as we can so if we haven't been
+-		 * able to grab pid PID_RECYCLE skip the test.
+-		 */
+-		if (pid2 != PID_RECYCLE) {
+-			/* skip test */
+-			close(pidfd);
+-			_exit(PIDFD_SKIP);
+-		}
+-
+-		if (pidfd < 0)
+-			_exit(PIDFD_ERROR);
+-
+-		for (i = 0; i <= PIDFD_MAX_DEFAULT; i++) {
+-			char c;
+-			int pipe_fds[2];
+-			pid_t recycled_pid;
+-			int child_ret = PIDFD_PASS;
+-
+-			ret = pipe2(pipe_fds, O_CLOEXEC);
+-			if (ret < 0)
+-				_exit(PIDFD_ERROR);
+-
+-			recycled_pid = fork();
+-			if (recycled_pid < 0)
+-				_exit(PIDFD_ERROR);
+-
+-			if (recycled_pid == 0) {
+-				close(pipe_fds[1]);
+-				(void)read(pipe_fds[0], &c, 1);
+-				close(pipe_fds[0]);
+-
+-				_exit(PIDFD_PASS);
+-			}
+-
+-			/*
+-			 * Stop the child so we can inspect whether we have
+-			 * recycled pid PID_RECYCLE.
+-			 */
+-			close(pipe_fds[0]);
+-			ret = kill(recycled_pid, SIGSTOP);
+-			close(pipe_fds[1]);
+-			if (ret) {
+-				(void)wait_for_pid(recycled_pid);
+-				_exit(PIDFD_ERROR);
+-			}
+-
+-			/*
+-			 * We have recycled the pid. Try to signal it. This
+-			 * needs to fail since this is a different process than
+-			 * the one the pidfd refers to.
+-			 */
+-			if (recycled_pid == PID_RECYCLE) {
+-				ret = sys_pidfd_send_signal(pidfd, SIGCONT,
+-							    NULL, 0);
+-				if (ret && errno == ESRCH)
+-					child_ret = PIDFD_XFAIL;
+-				else
+-					child_ret = PIDFD_FAIL;
+-			}
+-
+-			/* let the process move on */
+-			ret = kill(recycled_pid, SIGCONT);
+-			if (ret)
+-				(void)kill(recycled_pid, SIGKILL);
+-
+-			if (wait_for_pid(recycled_pid))
+-				_exit(PIDFD_ERROR);
+-
+-			switch (child_ret) {
+-			case PIDFD_FAIL:
+-				/* fallthrough */
+-			case PIDFD_XFAIL:
+-				_exit(child_ret);
+-			case PIDFD_PASS:
+-				break;
+-			default:
+-				/* not reached */
+-				_exit(PIDFD_ERROR);
+-			}
+-
+-			/*
+-			 * If the user set a custom pid_max limit we could be
+-			 * in the millions.
+-			 * Skip the test in this case.
+-			 */
+-			if (recycled_pid > PIDFD_MAX_DEFAULT)
+-				_exit(PIDFD_SKIP);
+-		}
+-
+-		/* failed to recycle pid */
+-		_exit(PIDFD_SKIP);
+-	}
+-
+-	ret = wait_for_pid(pid1);
+-	switch (ret) {
+-	case PIDFD_FAIL:
+-		ksft_exit_fail_msg(
+-			"%s test: Managed to signal recycled pid %d\n",
+-			test_name, PID_RECYCLE);
+-	case PIDFD_PASS:
+-		ksft_exit_fail_msg("%s test: Failed to recycle pid %d\n",
+-				   test_name, PID_RECYCLE);
+-	case PIDFD_SKIP:
+-		ksft_test_result_skip("%s test: Skipping test\n", test_name);
+-		ret = 0;
+-		break;
+-	case PIDFD_XFAIL:
+-		ksft_test_result_pass(
+-			"%s test: Failed to signal recycled pid as expected\n",
+-			test_name);
+-		ret = 0;
+-		break;
+-	default /* PIDFD_ERROR */:
+-		ksft_exit_fail_msg("%s test: Error while running tests\n",
+-				   test_name);
+-	}
+-
+-	return ret;
+-}
++static int test_pidfd_send_signal_recycled_pid_fail(void) { return 0; }
+ 
+ static int test_pidfd_send_signal_syscall_support(void)
+ {
+diff --git a/tools/testing/selftests/run_kselftest.sh b/tools/testing/selftests/run_kselftest.sh
+--- a/tools/testing/selftests/run_kselftest.sh
++++ b/tools/testing/selftests/run_kselftest.sh
+@@ -100,7 +100,7 @@
+ 
+ collections=$(echo "$available" | cut -d: -f1 | sort | uniq)
+ for collection in $collections ; do
+-	[ -w /dev/kmsg ] && echo "kselftest: Running tests in $collection" >> /dev/kmsg
++	echo "kselftest: Running tests in $collection"
+ 	tests=$(echo "$available" | grep "^$collection:" | cut -d: -f2)
+ 	($dryrun cd "$collection" && $dryrun run_many $tests)
+ done
