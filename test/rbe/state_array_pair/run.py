@@ -67,7 +67,7 @@ def cohort() -> list[Sample]:
     for side in ('before', 'after'):
         for name in timed:
             rows.append(Sample(f'warmup-{side}-{name}', side, name, '100ms', False))
-    for block in range(12):
+    for block in range(16):
         for name in timed:
             for side in (('before', 'after') if block % 2 == 0 else ('after', 'before')):
                 rows.append(Sample(f'sample-{block:02d}-{side}-{name}', side, name, '1s', True))
