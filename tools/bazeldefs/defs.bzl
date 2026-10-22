@@ -4,7 +4,9 @@ load("@bazel_skylib//:bzl_library.bzl", _bzl_library = "bzl_library")
 load("@bazel_skylib//rules:build_test.bzl", _build_test = "build_test")
 load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _string_flag = "string_flag")
 load("@bazel_skylib//rules:expand_template.bzl", _expand_template = "expand_template")
+load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 load("@com_google_protobuf//bazel:proto_library.bzl", _proto_library = "proto_library")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 build_test = _build_test
 bzl_library = _bzl_library
@@ -57,7 +59,6 @@ def select_system(linux = ["__linux__"], darwin = [], **_kwargs):
 arch_config = [
     "@io_bazel_rules_go//go/config:race",
     "//command_line_option:cpu",
-    "//command_line_option:crosstool_top",
     "//command_line_option:platforms",
 ]
 
@@ -67,7 +68,6 @@ def arm64_config(_settings, _attr):
         # Targets with an explicit race attribute still use instrumentation.
         "@io_bazel_rules_go//go/config:race": False,
         "//command_line_option:cpu": "aarch64",
-        "//command_line_option:crosstool_top": "@crosstool//:toolchains",
         # Permit targets that explicitly enable race instrumentation to use cgo.
         # Ordinary targets still inherit the pure build setting from .bazelrc.
         "//command_line_option:platforms": "//tools/bazeldefs:linux_arm64",
@@ -78,7 +78,6 @@ def amd64_config(_settings, _attr):
         # See above.
         "@io_bazel_rules_go//go/config:race": False,
         "//command_line_option:cpu": "k8",
-        "//command_line_option:crosstool_top": "@crosstool//:toolchains",
         # See above.
         "//command_line_option:platforms": "//tools/bazeldefs:linux_amd64",
     }
@@ -159,23 +158,64 @@ def target_emulators(name):
         tags = ["manual"],
     )
 
-def bpf_program(name, src, bpf_object, visibility, hdrs):
-    """Generates BPF object files from .c source code.
+def _bpf_program_impl(ctx):
+    resource_dir = ctx.attr._clang_resource_dir[DirectoryInfo]
+    kernel_headers = ctx.attr._kernel_headers[DirectoryInfo]
+    libbpf = ctx.attr._libbpf[CcInfo].compilation_context
 
-    Args:
-      name: target name for BPF program.
-      src: BPF program source code in C.
-      bpf_object: name of generated bpf object code.
-      visibility: target visibility.
-      hdrs: header files, but currently unsupported.
-    """
-    if hdrs != []:
-        fail("hdrs attribute is unsupported")
+    args = ctx.actions.args()
+    args.add_all(["-O2", "-Wall", "-Werror", "--target=bpfel"])
 
-    native.genrule(
-        name = name,
-        srcs = [src],
-        visibility = visibility,
-        outs = [bpf_object],
-        cmd = "clang -O2 -Wall -Werror -target bpf -c $< -o $@ -I/usr/include/$$(uname -m)-linux-gnu",
+    # Keep the oldest BPF ISA instead of inheriting Clang's default (now v3):
+    # https://github.com/llvm/llvm-project/blob/85ac56026/llvm/lib/Target/BPF/BPFSubtarget.cpp#L75
+    args.add("-mcpu=v1")
+    args.add("-nostdinc")
+    args.add("-resource-dir", resource_dir.path)
+    args.add("-isystem", resource_dir.path + "/include")
+    args.add("-isystem", kernel_headers.path)
+    args.add_all(libbpf.includes, before_each = "-isystem")
+    args.add_all(libbpf.quote_includes, before_each = "-iquote")
+    args.add_all(libbpf.system_includes, before_each = "-isystem")
+    args.add("-c", ctx.file.src)
+    args.add("-o", ctx.outputs.bpf_object)
+    ctx.actions.run(
+        executable = ctx.executable._clang,
+        arguments = [args],
+        inputs = depset(
+            [ctx.file.src],
+            transitive = [
+                resource_dir.transitive_files,
+                kernel_headers.transitive_files,
+                libbpf.headers,
+            ],
+        ),
+        outputs = [ctx.outputs.bpf_object],
+        mnemonic = "BPFCompile",
+        progress_message = "Compiling BPF program %{label}",
     )
+    return [DefaultInfo(files = depset([ctx.outputs.bpf_object]))]
+
+bpf_program = rule(
+    implementation = _bpf_program_impl,
+    doc = "Compiles a BPF program with declared compiler and header inputs.",
+    attrs = {
+        "src": attr.label(allow_single_file = [".c"], mandatory = True),
+        "bpf_object": attr.output(mandatory = True),
+        "_clang": attr.label(
+            default = "//tools/bazeldefs:bpf_clang",
+            executable = True,
+            allow_single_file = True,
+            cfg = "exec",
+        ),
+        "_clang_resource_dir": attr.label(
+            default = "//tools/bazeldefs:clang_resource_dir",
+            providers = [DirectoryInfo],
+            cfg = "exec",
+        ),
+        "_kernel_headers": attr.label(
+            default = "@kernel_headers//:kernel_headers_directory",
+            providers = [DirectoryInfo],
+        ),
+        "_libbpf": attr.label(default = "@libbpf//:bpf_headers", providers = [CcInfo]),
+    },
+)
