@@ -5,5 +5,10 @@ def format(target):
     return json.encode({
         "label": str(target.label),
         "files": sorted([file.path for file in target.files.to_list()]),
-        "options": {str(key): str(value) for key, value in options.items()},
+        "options": {
+            str(key): str(value)
+            for key, value in options.items()
+            if str(key) in ["//command_line_option:cpu", "//command_line_option:platforms"] or
+               str(key).endswith("//go/config:race") or str(key).endswith("//go/config:pure")
+        },
     })
