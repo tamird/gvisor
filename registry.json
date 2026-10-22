@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T04:43:16.532266+00:00",
+    "updatedAt": "2026-10-22T05:11:37.984351+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17828,25 +17828,25 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-tcpdump",
-      "head": "6188be369fba6edc67f233e6876b49e52d636dbe",
+      "head": "aa7a6cd447c10dd64e9676daf02ccf9d4cb492dc",
       "title": "Build tcpdump and its test sender with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/6188be369fba6edc67f233e6876b49e52d636dbe",
+      "url": "https://github.com/tamird/gvisor/commit/aa7a6cd447c10dd64e9676daf02ccf9d4cb492dc",
       "group": "bazel",
-      "status": "Agent work: remote build and catalog recovery",
-      "updatedAt": "2026-10-22T04:10:12.606345+00:00",
-      "summary": "The image includes the audited tcpdump/libpcap NOTICE payloads and a released Bison correction for the observed remote compile failure. A later build completed its AMD64 targets but failed while sorting the execution log; the reporting recovery preserves that failure and continues independent checks only after successful builds. The exact-pin manual-license audit reuses #16051 and is being validated separately. No complete image/runtime or uncached compiler-proof claim is made. No contributor question is pending.\n\nPreserved history:\n\nThe published image now includes the exact audited source-level tcpdump/libpcap NOTICE payloads, including terms absent from the root LICENSE files. The first runtime attempt stopped at formatting before compilation. The reviewed RBE retry is running at exact qualification source 4e2af3ab92 (invocation 1f889089); no remote compiler or runtime success is claimed. The dependency-specific manual license proposal reuses the existing exact-pin mechanism in #16051 and awaits canonical catalog/policy validation. Current BCR pins remain unchanged. No contributor question is pending.\n\nPreserved source history:\n\nThe published source builds pinned BCR tcpdump/libpcap and a static Go UDP sender over the basic-image foundation. Two independent source reviews pass. The first canonical catalog attempt failed and its owner is diagnosing the retained result. Runtime submission is held while the existing qualified remote-execution configuration is bound to compiler actions; Docker consumer execution remains local to the hosted worker. Prior image correctness results remain valid but do not prove RBE compilation. No contributor question is pending.",
+      "status": "Agent work: runtime passed; catalog validation",
+      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
+      "summary": "Both architecture archives, static tcpdump/sender binaries and the three complete NOTICE payloads pass. The exact image passes Make rebuild/reload, both owning analyzers and the maintained TestTcpdump lo/any cases: five positive records and no skips. Prior authenticated remote compiler evidence is reused through unchanged binary identities; this final run makes no fresh uncached compilation claim. Canonical full Fetch/Verify is running separately with the exact reviewed source-bundle records and package-specific exceptions. No contributor question is pending.",
       "links": [
         {
-          "label": "Complete current source change",
-          "url": "https://github.com/tamird/gvisor/compare/1d562c448fe89ced8d0b98f9eed5fedb3b614c3b...6188be369fba6edc67f233e6876b49e52d636dbe"
+          "label": "Current source and complete notices",
+          "url": "https://github.com/tamird/gvisor/commit/aa7a6cd447c10dd64e9676daf02ccf9d4cb492dc"
+        },
+        {
+          "label": "Final archive and runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/d792ff5b-553f-49fb-8953-5f8001b538f0"
         },
         {
           "label": "Existing manual-artifact prerequisite",
           "url": "https://github.com/google/gvisor/pull/16051"
-        },
-        {
-          "label": "Preserved remote Bison compile failure",
-          "url": "https://app.buildbuddy.io/invocation/1f889089-1a51-4e4a-a434-2a25ac1f3f48"
         }
       ]
     },
@@ -17887,9 +17887,9 @@
       "title": "Validate restore kinds against destination types",
       "url": "https://github.com/tamird/gvisor/commit/5d5f2da2a33dea00e4d905cf4121c8507f089f9d",
       "group": "runtime",
-      "status": "Agent work: measured regression under diagnosis",
-      "updatedAt": "2026-10-22T04:43:16.532266+00:00",
-      "summary": "Normal and race correctness checks pass for the separate destination-kind change, which retains the original graph and collection engine. Its fixed sixteen-pair array-to-kind comparison found UDP Load 3.56% slower (p=.001), unchanged allocation counts and 4,096 additional bytes in each fixture binary. The proposal is held while bounded CPU and compiler diagnostics examine this regression. No contributor request or performance improvement is claimed.",
+      "status": "Agent work: direct-assertion correction under comparison",
+      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
+      "summary": "Normal and race correctness checks pass for the separate destination-kind change, which retains the original graph and collection engine. Its fixed sixteen-pair array-to-kind comparison found UDP Load 3.56% slower (p=.001), unchanged allocation counts and 4,096 additional bytes in each fixture binary. CPU/compiler diagnostics establish that the added helper shapes do not inline; they do not attribute the full regression. A narrow direct-assertion correction passes correctness checks and is undergoing the same matched comparison. The proposal remains held, with no contributor request or speed claim.",
       "links": [
         {
           "label": "Matched array-to-kind comparison",
@@ -17906,21 +17906,25 @@
       "title": "Assemble the ACL test image from pinned packages",
       "url": "https://github.com/tamird/gvisor/commit/b3c4bb586ed08c6135226ecdffd0d0a4d94d567a",
       "group": "bazel",
-      "status": "Agent work: archive and catalog recovery",
-      "updatedAt": "2026-10-22T04:43:16.532266+00:00",
-      "summary": "The released gawk update fixes the observed remote compile failure. Both architecture archive/context builds now pass with retained remote assembly evidence. The archive inspector stopped because it expected usr/bin/setfacl instead of the actual bin/setfacl package path; the path correction is peer-reviewed and its retry awaits the shared compact evidence helper. Make and both native/systrap consumers remain unverified. The exact gawk source-bundle entry and exception are published; the full two-source catalog recovery is running with the qualified checker and candidate-only hosted GNU materialization, with remote cache reads/uploads disabled for those support actions. Original wrong-checker and native-toolchain failures remain retained. No contributor review is pending.",
+      "status": "Agent work: runtime passed; GNU audit diagnosis",
+      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
+      "summary": "Both architecture archive/context checks, executable and shared-library closure, account files and notices pass. Make rebuild/reload and the unchanged ACL consumer pass under native runc and gVisor, with two positive cases and no skips. The compact run retained remote action audits separately and downloaded 3.43 MB; its initial local collector permission failure and result-reader correction are preserved. The full canonical catalog remains failed: its hosted GNU gawk build reaches a configuration-probe conflict. A bounded same-configuration diagnostic is running; no package defines have been forced and no catalog success is claimed. The published exact gawk source-bundle entry and exception remain unchanged. No contributor question is pending.",
       "links": [
         {
           "label": "Current image and scoped audit source",
           "url": "https://github.com/tamird/gvisor/commit/b3c4bb586ed08c6135226ecdffd0d0a4d94d567a"
         },
         {
-          "label": "Both-CPU build success and inspector failure",
-          "url": "https://app.buildbuddy.io/invocation/e0285733-d6c1-4d74-ae21-4c5e9decf3ca"
+          "label": "Final image and two-runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/fa2ea416-3032-43ce-bb51-37521fceb169"
         },
         {
-          "label": "Canonical full catalog recovery",
+          "label": "Preserved canonical catalog failure",
           "url": "https://app.buildbuddy.io/invocation/de09a813-f078-458e-83be-e2fc2c66d4ed"
+        },
+        {
+          "label": "Focused GNU probe diagnostic recovery",
+          "url": "https://app.buildbuddy.io/invocation/a4ae5e4c-906d-4daf-b20a-443f5a1ac14c"
         }
       ]
     },
@@ -17933,9 +17937,9 @@
       "title": "Declare the file-capability test image",
       "url": "https://github.com/tamird/gvisor/commit/69fa551ae84169d8a1ed1f2b2ee689638e28cde4",
       "group": "bazel",
-      "status": "Agent work: validation in progress",
-      "updatedAt": "2026-10-22T04:43:16.532266+00:00",
-      "summary": "The declared package image retains the executable capability on /mnt/cat and its unchanged consumers. The published product includes the reviewed gawk release correction. Runtime qualification awaits the shared compact evidence helper. Its canonical catalog reuses the qualified independent checker, candidate-only hosted GNU support build and the same reviewed exact gawk source-bundle entry. No consumer or complete image success is claimed; no contributor request is pending."
+      "status": "Agent work: capability literal and catalog recovery",
+      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
+      "summary": "The declared image retains the intended executable capability on /mnt/cat and its unchanged consumers. Runtime qualification stopped before image execution because Bazel rejects hexadecimal string escapes in the capability literal; the equivalent twenty-byte octal correction is being validated. The full canonical catalog separately reproduces the shared hosted-GNU gawk configuration failure. Its existing exact source-bundle entry is preserved while the owning probe diagnostic runs. No runtime success or contributor request is claimed."
     }
   ],
   "edges": [
