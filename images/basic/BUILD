@@ -48,7 +48,7 @@ image_layer(
     srcs = {"/mnt/cat": ":filecap_cat"},
     default_metadata = file_metadata(
         mode = "0755",
-        pax_records = {"SCHILY.xattr.security.capability": "\x01\x00\x00\x02\x00\x10\x00\x00" + "\x00" * 12},
+        pax_records = {"SCHILY.xattr.security.capability": "\001\000\000\002\000\020\000\000" + "\000" * 12},
     ),
 )
 
