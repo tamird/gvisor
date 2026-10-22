@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T07:15:56.035422+00:00",
+    "updatedAt": "2026-10-22T07:32:00.566327+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17923,14 +17923,14 @@
       "id": "branch:rules-img-libacl",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "qualification/libacl-license-retention",
-      "head": "81d05fc8bf13374011589dbd833dffb8bf7a4e09",
+      "ref": "rules-img-libacl-on-gnu",
+      "head": "2fb06f22a7f2becb7907a0dc0ab6456a68e9916c",
       "title": "Assemble the ACL test image from pinned packages",
-      "url": "https://github.com/tamird/gvisor/commit/81d05fc8bf13374011589dbd833dffb8bf7a4e09",
+      "url": "https://github.com/tamird/gvisor/commit/2fb06f22a7f2becb7907a0dc0ab6456a68e9916c",
       "group": "bazel",
-      "status": "Agent work: final catalog verification",
-      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
-      "summary": "Ordinary GNU Make passes with the shared Autoconf correction and no diagnostic PATH override. Both architecture archives, full filesystems, configurations and twelve executable hashes remain identical to the accepted image, preserving Make and native-runc/gVisor consumer results. Canonical Fetch produced all 291 entries, including 92 APT records. Verify rejected four singleton license lists; the exact checker schema requires scalar values. That source-only correction is independently reviewed and published, and a Verify-only run is active against the retained canonical output. The earlier timeout and classification/schema failures remain preserved. A final image-only child above the shared GNU prerequisite is prepared locally with the exact candidate tree; contributor review awaits Verify.",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T07:32:00.566327+00:00",
+      "summary": "The image is published as a separate commit above the shared GNU prerequisite with exactly the qualified tree. Both architecture archives, complete filesystems, configurations and twelve executable hashes match the accepted image; Make and unchanged native-runc/gVisor consumer results remain applicable. Canonical Fetch produced all 291 entries, including 92 APT records, and final Verify passes after correcting four singleton license-list scalars to the checker’s required schema. Original timeout, classification and schema failures remain preserved, as does cached-action attribution. Contributor review for this exact image commit is pending, conditional on the shared GNU and existing image/license prerequisites.",
       "links": [
         {
           "label": "Ordinary GNU entry passes",
@@ -17961,10 +17961,23 @@
           "url": "https://app.buildbuddy.io/invocation/7ca56968-7664-4ea1-bf2a-a9474076e5b7"
         },
         {
-          "label": "Verify-only recovery in progress",
+          "label": "Final canonical Verify passes",
           "url": "https://app.buildbuddy.io/invocation/9edab404-3555-46ba-8f24-5803b0613ce0"
+        },
+        {
+          "label": "Final image-only source",
+          "url": "https://github.com/tamird/gvisor/commit/2fb06f22a7f2becb7907a0dc0ab6456a68e9916c"
+        },
+        {
+          "label": "Image change above shared prerequisite",
+          "url": "https://github.com/tamird/gvisor/compare/87e9a842f2c13a1b71ec7d18aad6564c9d758f66...2fb06f22a7f2becb7907a0dc0ab6456a68e9916c"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "2fb06f22a7f2becb7907a0dc0ab6456a68e9916c",
+        "url": "https://github.com/tamird/gvisor/commit/2fb06f22a7f2becb7907a0dc0ab6456a68e9916c"
+      }
     },
     {
       "id": "branch:rules-img-filecap",
@@ -18020,8 +18033,8 @@
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/1e5f6855a0266377284df6feaa9a1b9f78e93c1b",
       "status": "Agent work: compilation and image qualification",
-      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
-      "summary": "The published source declares seven Linux v6.8 C selftests, their headers and existing runner files, using the selected target toolchain. It preserves the documented time-namespace and recycled-PID exclusions, BusyBox commands and GNU timeout with the existing 45-second deadline. Source review is accepted. The first compilation run disconnected without a result; the same bounded retry adds phase markers and is active. Compilation/profile-helper equality, image closure, Make, the unchanged PIDFD consumer and canonical catalog remain required. The owner is preparing composition on the reviewed shared GNU prerequisite; no compile or runtime success is claimed.",
+      "updatedAt": "2026-10-22T07:32:00.566327+00:00",
+      "summary": "The published source declares seven Linux v6.8 C selftests, their headers and existing runner files, using the selected target toolchain. It preserves the documented time-namespace and recycled-PID exclusions, BusyBox commands and GNU timeout with the existing 45-second deadline. Source review is accepted. The first compilation run disconnected without a result; the same bounded retry adds phase markers and is active. Compilation/profile-helper equality, image closure, Make, the unchanged PIDFD consumer and canonical catalog remain required. The exact image delta is published above the shared GNU prerequisite. Its canonical audit packet is independently reviewed: it resolves the new candidate graph during Fetch and requires unchanged catalog and lock inputs during Verify. Whole Linux archive licensing is not established by the retained selftest subset; any classification failure remains visible. No compile, runtime or catalog success is claimed.",
       "links": [
         {
           "label": "Reviewed source",
@@ -18030,6 +18043,10 @@
         {
           "label": "Published qualification source",
           "url": "https://github.com/tamird/gvisor/commit/97df0ac17f3a5a2e57e1cf0c9c36ff70d9edebe1"
+        },
+        {
+          "label": "Image delta on shared GNU prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/a5fad05641ac246761943242ccd42190b57c3187"
         }
       ]
     },
