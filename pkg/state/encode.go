@@ -456,6 +456,23 @@ func mapValueMayRetain(kind reflect.Kind) bool {
 	}
 }
 
+// mapEncoder owns the wire writes and cell-retention policy for one traversal.
+// Storage adapters receive it by value and supply cells with that lifetime.
+type mapEncoder struct {
+	es                     *encodeState
+	wire                   *wire.Map
+	index                  int
+	retainKey, retainValue bool
+}
+
+func (e *mapEncoder) encode(key, value reflect.Value) {
+	// Map keys must be encoded using the full value because the type will be
+	// omitted after the first key.
+	e.es.encodeObject(key, encodeAsValue, &e.wire.Keys[e.index])
+	e.es.encodeObject(value, encodeAsValue, &e.wire.Values[e.index])
+	e.index++
+}
+
 // encodeMap owns wire allocation and retained-cell policy. Storage adapters
 // enumerate keys and values without making serialization decisions.
 func (es *encodeState) encodeMap(obj reflect.Value, dest *wire.Object) {
@@ -475,25 +492,11 @@ func (es *encodeState) encodeMap(obj reflect.Value, dest *wire.Object) {
 		return
 	}
 	storage := storageForMap(obj)
-	key, value := storage.newKey(obj), storage.newValue(obj)
-	retainKey, retainValue := mapValueMayRetain(key.Kind()), mapValueMayRetain(value.Kind())
-	i := 0
-	storage.visit(obj, key, value, func(k, v reflect.Value) {
-		if retainKey {
-			copy := storage.newKey(obj)
-			copy.Set(k)
-			k = copy
-		}
-		if retainValue {
-			copy := storage.newValue(obj)
-			copy.Set(v)
-			v = copy
-		}
-		// Map keys must be encoded using the full value because the
-		// type will be omitted after the first key.
-		es.encodeObject(k, encodeAsValue, &m.Keys[i])
-		es.encodeObject(v, encodeAsValue, &m.Values[i])
-		i++
+	storage.visit(obj, mapEncoder{
+		es:          es,
+		wire:        m,
+		retainKey:   mapValueMayRetain(obj.Type().Key().Kind()),
+		retainValue: mapValueMayRetain(obj.Type().Elem().Kind()),
 	})
 }
 
