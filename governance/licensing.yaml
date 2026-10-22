@@ -28,6 +28,246 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: apt/filecap_image_packages/amd64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: &filecap_packages >-
+      The pinned capability-test image includes this package and its
+      runtime dependencies as separate executables, libraries or data.
+      The complete Debian package notice and common license texts are
+      retained in the image. These payloads are not linked into released
+      gVisor binaries.
+  - dependency: apt/filecap_image_packages/amd64/coreutils
+    license:
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libattr1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libcap2
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libcap2-bin
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: &filecap_libcrypt >-
+      The exact pinned package reuses the previously audited per-file
+      LicenseRef-libxcrypt-4.4.27 inventory. The capability-test image
+      includes the library and its complete Debian copyright notice; the
+      retained package URL and SHA-256 bind this exception. The library
+      is not linked into released gVisor binaries.
+  - dependency: apt/filecap_image_packages/amd64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/amd64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/base-files
+    license:
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/coreutils
+    license:
+      - BSD-3-Clause
+      - GFDL-1.2-no-invariants-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - ISC
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/gcc-12-base
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libacl1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libattr1
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libc6
+    license:
+      - BSD-3-Clause
+      - GFDL-1.3
+      - GPL-2.0
+      - GPL-2.0-only
+      - HPND
+      - ISC
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - Spencer-94
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libcap2
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libcap2-bin
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libcrypt1
+    license: LicenseRef-libxcrypt-4.4.27
+    exception_rationale: *filecap_libcrypt
+  - dependency: apt/filecap_image_packages/arm64/libgcc-s1
+    license:
+      - Artistic-1.0-Perl
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSD-4-Clause-UC
+      - GFDL-1.2
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - HPND
+      - LGPL-2.0-or-later
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+      - NCSA
+      - Spencer-94
+      - Unicode-DFS-2015
+      - Zlib
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libgmp10
+    license:
+      - GPL-2.0
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-3.0
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/libselinux1
+    license:
+      - GPL-2.0
+      - LGPL-2.1
+      - libselinux-1.0
+    exception_rationale: *filecap_packages
+  - dependency: apt/filecap_image_packages/arm64/mawk
+    license:
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *filecap_packages
   - dependency: apt/helper_image_packages/amd64/base-files
     license:
       - GPL-2.0-or-later

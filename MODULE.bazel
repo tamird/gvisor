@@ -94,7 +94,18 @@ image_apt.install(
         "libselinux1 (= 3.3-1build2)",
     ],
 )
-use_repo(image_apt, "helper_image_packages")
+image_apt.install(
+    dependency_set = "filecap_image_packages",
+    packages = [
+        # Common license texts referenced by the runtime packages' notices.
+        "base-files (= 12ubuntu4.7)",
+        # cat, cp and sleep used by the file-capability tests.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # setcap and getcap exercise capability attributes on writable files.
+        "libcap2-bin (= 1:2.44-1ubuntu0.22.04.3)",
+    ],
+)
+use_repo(image_apt, "filecap_image_packages", "helper_image_packages")
 
 ### LLVM
 # TODO: try using "llvm-raw" from BCR

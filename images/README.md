@@ -49,6 +49,19 @@ The grouped packages expose `//images/benchmarks:profile_helper_archive` and
 for Make. The stable image names remain `benchmarks/profile-helper` and
 `gpu/ollama/client`.
 
+## File-capability test image
+
+`//images/basic:filecap` packages GNU coreutils and the `setcap`/`getcap`
+commands from the declared Ubuntu snapshot. Its `/mnt/cat` has
+`cap_net_admin=ep`, encoded directly in the image layer's extended
+attributes. Assembly needs neither root privileges nor `CAP_SETFCAP`.
+The existing runtime tests check that the attribute survives image loading
+and controls the capabilities granted on execution.
+
+`//images/basic:filecap_archives` builds AMD64 and ARM64 archives together.
+The existing `make load-basic_filecap` interface selects and loads the
+archive for the requested architecture.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.
