@@ -31,8 +31,8 @@ import qualification_report as report
 
 
 SOURCES = {
-    "before": "1014ae8b6b1425902cc72519a7f7795f97e2dc3f",
-    "after": "b25ab8afd58f71a930232ae0f5c74c96762edd40",
+    "before": "3b159fe670bfc2d25b4db7b38844fb98f97d7d0c",
+    "after": "8d7571b489d38a9610857750efc6325956b3db0b",
 }
 TOOL_SOURCE = "5203b735d8991e2e4f00568c8b6c850761dd8ef6"
 ALL_SOURCES = SOURCES | {"statistics": TOOL_SOURCE}
@@ -46,6 +46,9 @@ COMMON_INPUTS = [
     "tools/rules_go_symbols.patch", "tools/rules_go_export.patch",
     "runsc/container/BUILD", "runsc/container/lifecycle_bench_test.go",
     "pkg/test/testutil/testutil.go", "pkg/test/testutil/testutil_runfiles.go",
+    "tools/bazeldefs/BUILD", "tools/bazeldefs/defs.bzl",
+    "runsc/sandbox/bpf/BUILD", "tools/xdp/cmd/bpf/BUILD",
+    "tools/libbpf_headers.patch",
 ]
 WORKER_IMAGE = "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
 BENCHMARK_ARGUMENTS = [
