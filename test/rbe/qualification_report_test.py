@@ -2569,6 +2569,7 @@ def interrupted(signum, _frame):
     sys.exit(0)
 
 signal.signal(signal.SIGINT, interrupted)
+Path(os.environ['TEST_WORK_STATUS']).write_text(Path('/proc/self/status').read_text())
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
     stream.write(json.dumps({
         'arguments': sys.argv[1:],
@@ -2650,6 +2651,7 @@ signal.pause()
                     "TEST_ANALYSIS": str(analysis_path),
                     "TEST_WORK_STARTED": str(started),
                     "TEST_WORK_SIGNAL": str(interrupted),
+                    "TEST_WORK_STATUS": str(workspace / "work-status"),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
                 environment.pop("RUNTIME_TESTS_FILTER", None)
@@ -2660,12 +2662,30 @@ signal.pause()
                     ["bash", "test/rbe/actions.sh", *options],
                     cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
-                self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
-                self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
+                timeout = shutil.which("timeout", path=environment["PATH"])
+                self.assertIsNotNone(timeout, "The deadline fixture requires timeout on PATH")
+                timeout_version = subprocess.run(
+                    [timeout, "--version"], capture_output=True, text=True, timeout=5, check=False,
+                )
+                status_path = workspace / "work-status"
+                verdict_path = runner_temp / "qualification/verdict.json"
+                diagnostic = {
+                    "phase": phase, "architecture": architecture, "runtime_filter": runtime_filter,
+                    "timeout": timeout, "timeout_resolved": str(Path(timeout).resolve()),
+                    "timeout_version": timeout_version.stdout + timeout_version.stderr,
+                    "returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr,
+                    "child_status": status_path.read_text() if status_path.exists() else None,
+                    "verdict": report.read_json(verdict_path) if verdict_path.exists() else None,
+                    "received_signal": interrupted.read_text() if interrupted.exists() else None,
+                }
+                if output := os.environ.get("TEST_UNDECLARED_OUTPUTS_DIR"):
+                    report.write_json(Path(output) / f"deadline-{index}.json", diagnostic)
+                self.assertEqual(result.returncode == 0, phase == "command-pass", diagnostic)
+                self.assertEqual(started.exists(), phase != "preflight", diagnostic)
                 if phase in ("preflight", "command-pass", "command-fail"):
                     self.assertFalse(interrupted.exists(), result.stdout + result.stderr)
                 else:
-                    self.assertEqual(interrupted.read_text(), str(signal.SIGINT), result.stdout + result.stderr)
+                    self.assertEqual(diagnostic["received_signal"], str(signal.SIGINT), diagnostic)
                 if phase.endswith("-selection"):
                     observations = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
                     commands = [row["arguments"] for row in observations if "test" in row["arguments"]]
