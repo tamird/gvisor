@@ -31,6 +31,7 @@ import signal
 import subprocess
 import sys
 import time
+from typing import Literal
 import xml.etree.ElementTree as ET
 
 
@@ -61,9 +62,19 @@ class Sample:
     workload: str
     benchtime: str
     measured: bool
+    profile: Literal['cpu', 'alloc'] | None = None
 
 
-def cohort() -> list[Sample]:
+def cohort(profiles: bool = False) -> list[Sample]:
+    if profiles:
+        # Fixed iteration counts make allocation totals directly comparable.
+        # Allocation instrumentation never runs in a CPU-profile process.
+        return [Sample(f'{kind}-{side}-{name}', side, name, iterations, False, kind)
+                for kind, iterations, workloads in (
+                    ('cpu', '20000x', ('save_adoption', 'save_udp', 'load_udp', 'save_manual', 'load_manual')),
+                    ('alloc', '1000x', ('save_manual', 'load_manual')))
+                for name in workloads
+                for side in (('before', 'after') if kind == 'cpu' else ('after', 'before'))]
     rows = []
     timed = list(WORKLOADS)
     for side in ('before', 'after'):
@@ -121,12 +132,12 @@ def child(cpu: int, output: Path, argv: list[str]) -> int:
     return status
 
 
-def main(package: Path, reporter: Path) -> int:
+def main(package: Path, reporter: Path | None) -> int:
     package = package.resolve(strict=True)
     output = Path(os.environ['TEST_UNDECLARED_OUTPUTS_DIR']).resolve(strict=True)
     cpu = min(os.sched_getaffinity(0))
     assert platform.machine() == 'x86_64', platform.machine()
-    plan = cohort()
+    plan = cohort(profiles=reporter is None)
     outer_xml = Path(os.environ['XML_OUTPUT_FILE']).resolve()
     write_json(output / 'selection.json', [asdict(row) for row in plan])
     write_json(output / 'host.json', {
@@ -181,6 +192,11 @@ def main(package: Path, reporter: Path) -> int:
             argv = [str(binary), '-test.run=^$', '-test.bench=' + spec.selector,
                     '-test.benchtime=' + sample.benchtime, '-test.benchmem',
                     '-test.count=1', '-test.cpu=1', '-test.v=false']
+            profile = directory / 'profile.pb.gz'
+            if sample.profile == 'cpu':
+                argv.append('-test.cpuprofile=' + str(profile))
+            elif sample.profile == 'alloc':
+                argv.extend(['-test.memprofile=' + str(profile), '-test.memprofilerate=1'])
             environment = dict(os.environ, GOMAXPROCS='1', GODEBUG='inittrace=1',
                 TEST_SRCDIR=str(arm), TEST_WORKSPACE='_main', RUNFILES_DIR=str(arm),
                 TEST_UNDECLARED_OUTPUTS_DIR=str(directory), XML_OUTPUT_FILE=str(directory / 'test.xml'),
@@ -194,7 +210,7 @@ def main(package: Path, reporter: Path) -> int:
                     stderr=subprocess.STDOUT, start_new_session=True)
                 try:
                     while process.poll() is None and not cancellation:
-                        remaining = 60 - (time.monotonic() - started)
+                        remaining = (120 if sample.profile else 60) - (time.monotonic() - started)
                         if remaining <= 0:
                             timed_out = True
                             break
@@ -264,8 +280,8 @@ def main(package: Path, reporter: Path) -> int:
                     pass
                 case _:
                     raise ValueError(f'{sample.name}: expected one {spec.benchmark} row; got {lines!r}')
-            if sample.benchtime == '1x':
-                assert int(line.split()[1]) == 1, (sample.name, line)
+            if sample.benchtime.endswith('x'):
+                assert int(line.split()[1]) == int(sample.benchtime[:-1]), (sample.name, line)
             parts = line.split()
             metrics = {parts[i + 1]: float(parts[i]) for i in range(2, len(parts), 2)}
             assert {'ns/op', 'B/op', 'allocs/op', 'wire-B/op'} <= metrics.keys(), (sample.name, metrics)
@@ -283,17 +299,23 @@ def main(package: Path, reporter: Path) -> int:
                 if sample.workload not in ('save_manual', 'load_manual'):
                     assert len(wire_digests[sample.workload]) == 1, (sample.workload, wire_digests[sample.workload])
             record.update(metrics=metrics, row=line)
+            if sample.profile:
+                data = profile.read_bytes()
+                assert data.startswith(b'\x1f\x8b') and len(data) > 20, sample.name
+                record['profileIdentity'] = {'path': str(profile.relative_to(output)),
+                                            'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
             completed.append(record)
             if sample.measured:
                 benchfiles[sample.side].extend(['pkg: gvisor.dev/gvisor/' + spec.package, line])
         write_json(output / 'process-results.json', completed)
-        for side, lines in benchfiles.items():
-            (output / f'{side}.bench').write_text('goos: linux\ngoarch: amd64\n' + '\n'.join(lines) + '\n')
         print('PAIR_RESULTS ' + json.dumps(completed), flush=True)
-        print('PAIR_BENCHSTAT_BEGIN', flush=True)
-        subprocess.run([str(reporter), str(output / 'before.bench'),
-                        str(output / 'after.bench')], check=True, timeout=60)
-        print('PAIR_BENCHSTAT_END', flush=True)
+        if reporter is not None:
+            for side, lines in benchfiles.items():
+                (output / f'{side}.bench').write_text('goos: linux\ngoarch: amd64\n' + '\n'.join(lines) + '\n')
+            print('PAIR_BENCHSTAT_BEGIN', flush=True)
+            subprocess.run([str(reporter), str(output / 'before.bench'),
+                            str(output / 'after.bench')], check=True, timeout=60)
+            print('PAIR_BENCHSTAT_END', flush=True)
         if cancellation:
             return cancellation
         print('PASS', flush=True)
@@ -324,6 +346,8 @@ if __name__ == '__main__':
     match sys.argv[1:]:
         case ['--child', cpu, output, *argv] if argv:
             raise SystemExit(child(int(cpu), Path(output), argv))
+        case ['--profiles']:
+            raise SystemExit(main(Path(__file__).absolute().parent, None))
         case [reporter]:
             raise SystemExit(main(Path(__file__).absolute().parent, Path(reporter).resolve(strict=True)))
         case _:
