@@ -173,19 +173,74 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 	Failf("array %T cannot restore %s", encoded, target.Type())
 }
 
-// Narrowing stores precede validation, matching reflect.SetInt/SetUint and
-// the existing scalar decoder's partial-write behavior on a malformed value.
+// restoreIntValue restores a destination with a signed integer Kind.
+func restoreIntValue(target reflect.Value, value wire.Int) {
+	if !target.CanSet() {
+		// Preserve reflect's read-only and unaddressable error diagnostics.
+		target.SetInt(int64(value))
+	}
+	// CanSet implies addressability. Convert UnsafeAddr immediately so no
+	// uintptr outlives the expression; the typed store keeps the object live.
+	pointer := unsafe.Pointer(target.UnsafeAddr())
+	switch target.Kind() {
+	case reflect.Int:
+		restoreInt((*int)(pointer), value)
+	case reflect.Int8:
+		restoreInt((*int8)(pointer), value)
+	case reflect.Int16:
+		restoreInt((*int16)(pointer), value)
+	case reflect.Int32:
+		restoreInt((*int32)(pointer), value)
+	case reflect.Int64:
+		restoreInt((*int64)(pointer), value)
+	}
+}
+
+// restoreUintValue restores a destination with an unsigned integer Kind.
+func restoreUintValue(target reflect.Value, value wire.Uint) {
+	if !target.CanSet() {
+		// Preserve reflect's read-only and unaddressable error diagnostics.
+		target.SetUint(uint64(value))
+	}
+	// See restoreIntValue for the addressability and pointer-lifetime contract.
+	pointer := unsafe.Pointer(target.UnsafeAddr())
+	switch target.Kind() {
+	case reflect.Uint:
+		restoreUint((*uint)(pointer), value)
+	case reflect.Uint8:
+		restoreUint((*uint8)(pointer), value)
+	case reflect.Uint16:
+		restoreUint((*uint16)(pointer), value)
+	case reflect.Uint32:
+		restoreUint((*uint32)(pointer), value)
+	case reflect.Uint64:
+		restoreUint((*uint64)(pointer), value)
+	case reflect.Uintptr:
+		restoreUint((*uintptr)(pointer), value)
+	}
+}
+
+// Scalar and array destinations use the same narrowing stores and validation.
+// The store precedes validation, preserving partial writes on malformed values.
+func restoreInt[T ~int | ~int8 | ~int16 | ~int32 | ~int64](target *T, value wire.Int) {
+	*target = T(value)
+	checkInt(int64(value), int64(*target))
+}
+
+func restoreUint[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](target *T, value wire.Uint) {
+	*target = T(value)
+	checkUint(uint64(value), uint64(*target))
+}
+
 func restoreIntArray[T ~int | ~int8 | ~int16 | ~int32 | ~int64](target []T, values []wire.Int) {
 	for i, value := range values {
-		target[i] = T(value)
-		checkInt(int64(value), int64(target[i]))
+		restoreInt(&target[i], value)
 	}
 }
 
 func restoreUintArray[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](target []T, values []wire.Uint) {
 	for i, value := range values {
-		target[i] = T(value)
-		checkUint(uint64(value), uint64(target[i]))
+		restoreUint(&target[i], value)
 	}
 }
 

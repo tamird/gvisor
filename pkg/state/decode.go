@@ -557,13 +557,9 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, target reflect.Value
 	case reflect.Bool:
 		target.SetBool(bool(value.(wire.Bool)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v := int64(value.(wire.Int))
-		target.SetInt(v)
-		checkInt(v, target.Int())
+		restoreIntValue(target, value.(wire.Int))
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		v := uint64(value.(wire.Uint))
-		target.SetUint(v)
-		checkUint(v, target.Uint())
+		restoreUintValue(target, value.(wire.Uint))
 	case reflect.Float32, reflect.Float64:
 		if v, ok := value.(wire.Float32); ok {
 			target.SetFloat(float64(v))

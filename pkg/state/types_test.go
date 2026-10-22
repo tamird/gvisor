@@ -198,6 +198,36 @@ func TestArrayDestinationFlags(t *testing.T) {
 	}
 }
 
+func TestIntegerDestinationFlags(t *testing.T) {
+	private := struct {
+		signed   int64
+		unsigned uint64
+	}{17, 29}
+	want := private
+	for _, test := range []struct {
+		name    string
+		target  reflect.Value
+		value   wire.Object
+		wantErr string
+	}{
+		{"signed_read_only", reflect.ValueOf(&private).Elem().Field(0), wire.Int(7), "reflect.Value.SetInt using value obtained using unexported field"},
+		{"unsigned_read_only", reflect.ValueOf(&private).Elem().Field(1), wire.Uint(11), "reflect.Value.SetUint using value obtained using unexported field"},
+		{"signed_unaddressable", reflect.ValueOf(int64(17)), wire.Int(7), "reflect.Value.SetInt using unaddressable value"},
+		{"unsigned_unaddressable", reflect.ValueOf(uint64(29)), wire.Uint(11), "reflect.Value.SetUint using unaddressable value"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var ds decodeState
+			err := safely(func() { ds.decodeObject(nil, test.target, test.value) })
+			if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), test.wantErr) {
+				t.Fatalf("restore error = %v, want wrapped %q", err, test.wantErr)
+			}
+		})
+	}
+	if private != want {
+		t.Errorf("read-only destination = %v, want %v", private, want)
+	}
+}
+
 // Preserve supported array-to-slice and interface delegation at the same
 // public Load boundary that rejects wrong-shaped empty values below.
 func TestLegacyValueDestinations(t *testing.T) {
