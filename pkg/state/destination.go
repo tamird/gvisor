@@ -287,11 +287,7 @@ func ArrayOps[A any, E any, EO Destination[E]](_ *A, _ []E, _ EO) arrayOps[A, E,
 func (arrayOps[A, E, EO]) Restore(d Decoder, target *A) {
 	// Go has no array-length type parameter. Obtain one view, then use the
 	// same typed element traversal as graph-owned backing arrays.
-	array := reflect.ValueOf(target).Elem()
-	if array.Kind() != reflect.Array || array.Type().Elem() != reflect.TypeFor[E]() {
-		Failf("array operation for %s has element %s", array.Type(), reflect.TypeFor[E]())
-	}
-	elements := array.Slice(0, array.Len()).Interface().([]E)
+	elements := arrayView[E](reflect.ValueOf(target).Elem())
 	restoreArrayElements(d, typedArray[E]{elements}, typedCell[E, EO]{}, requireWire[wire.Array](d.encoded))
 }
 
@@ -313,7 +309,7 @@ func (backingArrayBody[E, EO]) restore(d Decoder, target reflect.Value) {
 	}
 	// One view of the authoritative complete array, including unused slice
 	// capacity. The array's allocation and interior addresses never change.
-	elements := target.Slice(0, target.Len()).Interface().([]E)
+	elements := arrayView[E](target)
 	restoreArrayElements(d, typedArray[E]{elements}, typedCell[E, EO]{}, requireWire[wire.Array](value))
 }
 
