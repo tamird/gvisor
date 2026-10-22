@@ -204,7 +204,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref, ops *valueOpera
 			// Ensure the map types match.
 			existing := seg.Value()
 			if existing.obj.Type() != obj.Type() {
-				Failf("overlapping map objects at 0x%x: [new object] %#v [existing object type] %s", addr, obj, existing.obj)
+				Failf("overlapping map objects at 0x%x: [new object] %#v [existing object type] %s", addr, obj, existing.obj.reflected())
 			}
 
 			// No sense recording refs, maps may not be replaced by

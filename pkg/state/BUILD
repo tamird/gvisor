@@ -78,7 +78,7 @@ go_library(
         "stats.go",
         "types.go",
         "value.go",
-        "value_storage.go",
+        "value_storage_unsafe.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state",
     marshal = False,
