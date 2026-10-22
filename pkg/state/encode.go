@@ -651,45 +651,19 @@ func (es *encodeState) encodeInterface(obj reflect.Value, dest *wire.Object) {
 	es.encodeObject(obj, encodeAsValue, &i.Value)
 }
 
-// isPrimitive returns true if this is a primitive object, or a composite
-// object composed entirely of primitives.
-func isPrimitiveZero(typ reflect.Type) bool {
+// zeroArrayMayOmit reports whether an all-zero array can omit its elements.
+// Struct elements must still run StateSave, including through nested arrays.
+func zeroArrayMayOmit(typ reflect.Type) bool {
+	for typ.Kind() == reflect.Array {
+		typ = typ.Elem()
+	}
 	switch typ.Kind() {
-	case reflect.Ptr:
-		// Pointers are always treated as primitive types because we
-		// won't encode directly from here. Returning true here won't
-		// prevent the object from being encoded correctly.
-		return true
-	case reflect.Bool:
-		return true
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return true
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return true
-	case reflect.Float32, reflect.Float64:
-		return true
-	case reflect.Complex64, reflect.Complex128:
-		return true
-	case reflect.String:
-		return true
-	case reflect.Slice:
-		// The slice itself a primitive, but not necessarily the array
-		// that points to. This is similar to a pointer.
-		return true
-	case reflect.Array:
-		// We cannot treat an array as a primitive, because it may be
-		// composed of structures or other things with side-effects.
-		return isPrimitiveZero(typ.Elem())
-	case reflect.Interface:
-		// Since we now that this type is the zero type, the interface
-		// value must be zero. Therefore this is primitive.
-		return true
 	case reflect.Struct:
 		return false
-	case reflect.Map:
-		// The isPrimitiveZero function is called only on zero-types to
-		// see if it's safe to serialize. Since a zero map has no
-		// elements, it is safe to treat as a primitive.
+	case reflect.Ptr, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128,
+		reflect.String, reflect.Slice, reflect.Interface, reflect.Map:
 		return true
 	default:
 		Failf("unknown type %q", typ.Name())
@@ -714,63 +688,111 @@ const (
 
 // encodeObject encodes an object.
 func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest *wire.Object) {
-	if how == encodeDefault && isPrimitiveZero(obj.Type()) && obj.IsZero() {
-		*dest = wire.Nil{}
-		return
-	}
 	switch obj.Kind() {
 	case reflect.Ptr: // Fast path: first.
+		isNil := obj.IsNil()
+		if how == encodeDefault && isNil {
+			break
+		}
 		r := new(wire.Ref)
 		*dest = r
-		if obj.IsNil() {
-			// May be in an array or elsewhere such that a value is
-			// required. So we encode as a reference to the zero
-			// object, which does not exist. Note that this has to
-			// be handled correctly in the decode path as well.
-			return
+		if !isNil {
+			es.resolve(obj, r)
 		}
-		es.resolve(obj, r)
+		return
 	case reflect.Bool:
-		*dest = wire.Bool(obj.Bool())
+		v := obj.Bool()
+		if how == encodeDefault && !v {
+			break
+		}
+		*dest = wire.Bool(v)
+		return
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		*dest = wire.Int(obj.Int())
+		v := obj.Int()
+		if how == encodeDefault && v == 0 {
+			break
+		}
+		*dest = wire.Int(v)
+		return
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		*dest = wire.Uint(obj.Uint())
+		v := obj.Uint()
+		if how == encodeDefault && v == 0 {
+			break
+		}
+		*dest = wire.Uint(v)
+		return
 	case reflect.Float32:
-		*dest = wire.Float32(obj.Float())
+		v := obj.Float()
+		if how == encodeDefault && v == 0 {
+			break
+		}
+		*dest = wire.Float32(v)
+		return
 	case reflect.Float64:
-		*dest = wire.Float64(obj.Float())
+		v := obj.Float()
+		if how == encodeDefault && v == 0 {
+			break
+		}
+		*dest = wire.Float64(v)
+		return
 	case reflect.Complex64:
-		c := wire.Complex64(obj.Complex())
+		v := obj.Complex()
+		if how == encodeDefault && v == 0 {
+			break
+		}
+		c := wire.Complex64(v)
 		*dest = &c // Needs alloc.
+		return
 	case reflect.Complex128:
-		c := wire.Complex128(obj.Complex())
+		v := obj.Complex()
+		if how == encodeDefault && v == 0 {
+			break
+		}
+		c := wire.Complex128(v)
 		*dest = &c // Needs alloc.
+		return
 	case reflect.String:
-		s := wire.String(obj.String())
+		v := obj.String()
+		if how == encodeDefault && v == "" {
+			break
+		}
+		s := wire.String(v)
 		*dest = &s // Needs alloc.
+		return
 	case reflect.Array:
+		if how == encodeDefault && zeroArrayMayOmit(obj.Type()) && obj.IsZero() {
+			break
+		}
 		es.encodeArray(obj, dest)
+		return
 	case reflect.Slice:
+		isNil := obj.IsNil()
+		if how == encodeDefault && isNil {
+			break
+		}
 		s := &wire.Slice{
 			Capacity: wire.Uint(obj.Cap()),
 			Length:   wire.Uint(obj.Len()),
 		}
 		*dest = s
-		// Note that we do need to provide a wire.Slice type here as
-		// how is not encodeDefault. If this were the case, then it
-		// would have been caught by the IsZero check above and we
-		// would have just used wire.Nil{}.
-		if obj.IsNil() {
-			return
+		if !isNil {
+			// Slices need pointer resolution, including unused capacity.
+			es.resolve(arrayFromSlice(obj), &s.Ref)
 		}
-		// Slices need pointer resolution.
-		es.resolve(arrayFromSlice(obj), &s.Ref)
+		return
 	case reflect.Interface:
+		if how == encodeDefault && obj.IsNil() {
+			break
+		}
 		es.encodeInterface(obj, dest)
+		return
 	case reflect.Struct:
 		es.encodeStruct(obj, dest)
+		return
 	case reflect.Map:
+		if how == encodeDefault && obj.IsNil() {
+			break
+		}
 		if how == encodeMapAsValue {
 			es.encodeMap(obj, dest)
 			return
@@ -778,10 +800,17 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		r := new(wire.Ref)
 		*dest = r
 		es.resolve(obj, r)
+		return
 	default:
+		if how == encodeDefault {
+			Failf("unknown type %q", obj.Type().Name())
+		}
 		Failf("unknown object %#v", obj.Interface())
 		panic("unreachable")
 	}
+	// Full-value contexts must retain their representation even for zero
+	// values. Only the default strategy reaches this shared omission.
+	*dest = wire.Nil{}
 }
 
 // Save serializes the object graph rooted at obj.
