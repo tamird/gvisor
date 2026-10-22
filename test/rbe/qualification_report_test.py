@@ -3964,6 +3964,53 @@ signal.pause()
                 (self.root / "download.tar.gz").unlink()
                 shutil.rmtree(invocation)
 
+    def test_bundle_preserves_outcome_when_remote_audit_metadata_is_malformed(self) -> None:
+        for name, expected in (("pass", "INCOMPLETE"), ("fail", "FAIL")):
+            with self.subTest(name=name):
+                invocation = self.fixture(name)
+                (self.evidence / "remote-audits.json").write_text('{"unfinished":')
+                artifact, producer = self.artifact(invocation, native=True)
+                value = report.receipt(artifact, report.file_record(artifact)["sha256"], producer["sources"][0])
+                self.assertEqual(value["status"], expected)
+                self.assertTrue(any("Remote audit metadata" in error for error in value["errors"]), value)
+                self.assertEqual(value["case_counts"], producer["case_counts"])
+                shutil.rmtree(invocation)
+
+    def test_native_collection_verifies_remote_audits_without_downloading(self) -> None:
+        invocation = self.fixture()
+        audit = self.root / "execution.json.gz"
+        audit.write_bytes(b"full execution evidence retained by the provider")
+        identity = report.retain_audit(audit, self.evidence)
+        with self.assertRaisesRegex(ValueError, "Duplicate remote audit"):
+            report.retain_audit(audit, self.evidence)
+        artifact, producer = self.artifact(invocation, native=True)
+        self.assertEqual(producer["remote_audits"], {audit.name: report.file_record(audit)})
+        with tarfile.open(artifact) as archive:
+            self.assertNotIn(audit.name, archive.getnames())
+        metadata = self.native_metadata(artifact, producer)
+        advertised = {"name": audit.name, "uri": (
+            f"bytestream://remote.buildbuddy.io/blobs/{identity['sha256']}/{identity['bytes']}")}
+        for fault in (None, "missing", "duplicate", "digest"):
+            with self.subTest(fault=fault):
+                current = {**metadata, "artifacts": [*metadata["artifacts"], advertised]}
+                if fault == "missing":
+                    current["artifacts"].pop()
+                elif fault == "duplicate":
+                    current["artifacts"].append(advertised)
+                elif fault == "digest":
+                    current["artifacts"][-1] = {**advertised, "uri": advertised["uri"].replace(
+                        identity["sha256"], "0" * 64)}
+                # Only the ordinary bundle has a GetFile response. An audit
+                # download would exhaust these responses and fail this test.
+                value = self.native_collect(current, [self.metadata_response(current),
+                                                       self.native_response(artifact.read_bytes())])
+                status = "INCOMPLETE" if fault else "PASS"
+                self.assertEqual((value["status"], value["producer_status"], value["audit_upload_status"]),
+                                 (status, "PASS", status))
+                self.assertEqual(value["downloaded_bytes"], artifact.stat().st_size)
+                self.assertEqual(value["case_counts"], producer["case_counts"])
+                (self.root / "download.tar.gz").unlink()
+
     def test_native_collection_retains_failure_when_bundle_is_missing_or_invalid(self) -> None:
         artifact, producer = self.artifact(self.fixture("fail"), native=True)
         metadata = self.native_metadata(artifact, producer)

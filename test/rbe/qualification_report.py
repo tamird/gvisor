@@ -2353,6 +2353,30 @@ def archive_evidence(directory: Path, output: Path) -> None:
                 archive.add(path, arcname=str(path.relative_to(directory)), recursive=False)
 
 
+def retain_audit(path: Path, directory: Path) -> dict[str, object]:
+    """Bind a separately uploaded audit file without copying it into the bundle."""
+    if path.resolve().is_relative_to(directory.resolve()):
+        raise ValueError("Remote audit must be outside the ordinary evidence directory")
+    if path.name == "qualification.tar.gz":
+        raise ValueError("Remote audit must not replace the qualification bundle")
+    destination = directory / "remote-audits.json"
+    audits = read_json(destination) if destination.exists() else {}
+    if path.name in audits:
+        raise ValueError(f"Duplicate remote audit: {path.name}")
+    identity = file_record(path)
+    audits[path.name] = identity
+    write_json(destination, audits)
+    return {"name": path.name, **identity}
+
+
+def execution_summary(action: dict[str, object]) -> dict[str, object]:
+    """Keep execution proof fields while binding the full input-heavy record."""
+    encoded = json.dumps(action, sort_keys=True, separators=(",", ":")).encode()
+    return {**{key: value for key, value in action.items() if key != "inputs"},
+            "input_count": len(sequence(action["inputs"])),
+            "full_record_sha256": hashlib.sha256(encoded).hexdigest()}
+
+
 def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
     rows = []
     errors = []
@@ -2390,6 +2414,15 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
             result["matrix_audit_evidence"] = file_record(audits)
         except (OSError, ValueError) as error:
             errors.append(f"Matrix audit metadata: {error}")
+            if result["status"] != "FAIL":
+                result["status"] = "INCOMPLETE"
+    remote_audits = directory / "remote-audits.json"
+    if remote_audits.exists():
+        try:
+            result["remote_audits"] = read_json(remote_audits)
+            result["remote_audits_evidence"] = file_record(remote_audits)
+        except (OSError, ValueError) as error:
+            errors.append(f"Remote audit metadata: {error}")
             if result["status"] != "FAIL":
                 result["status"] = "INCOMPLETE"
     write_json(directory / "verdict.json", result)
@@ -2914,6 +2947,7 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         raise ValueError("Artifact, partial download and receipt paths must differ")
     execution: dict[str, object] = {"invocationId": invocation_id}
     observation_retries: list[dict[str, str]] = []
+    downloaded = 0
     result: dict[str, object]
     deadline = time.monotonic() + timeout_seconds
 
@@ -3034,17 +3068,36 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         remaining()
         result = receipt(artifact, sha256, expected_source, targets, deadline=deadline)
         result["producer_status"] = result["status"]
+        result["audit_artifacts"] = []
+        result["audit_upload_errors"] = []
+        for name, raw_identity in mapping(result.get("remote_audits", {})).items():
+            expected_audit = mapping(raw_identity)
+            advertised = [mapping(item) for item in sequence(invocation.get("artifacts", []))
+                          if mapping(item).get("name") == name]
+            expected_tail = f"/blobs/{expected_audit['sha256']}/{expected_audit['bytes']}"
+            if (len(advertised) != 1 or
+                    urlsplit(string(advertised[0].get("uri"))).scheme != "bytestream" or
+                    not urlsplit(string(advertised[0].get("uri"))).netloc or
+                    not urlsplit(string(advertised[0].get("uri"))).path.endswith(expected_tail)):
+                result["audit_upload_errors"].append(f"Remote audit missing or identity differs: {name}")
+            else:
+                result["audit_artifacts"].append({**advertised[0], **expected_audit})
+        result["audit_upload_status"] = "INCOMPLETE" if result["audit_upload_errors"] else "PASS"
+        if result["audit_upload_errors"] and result["status"] == "PASS":
+            result["status"] = "INCOMPLETE"
         if execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False:
             result["status"] = "FAIL"
         elif execution.get("invocationStatus") != "COMPLETE_INVOCATION_STATUS" and result["status"] != "FAIL":
             result["status"] = "INCOMPLETE"
         remaining()
         result["collection_status"] = "COMPLETE"
+        result["consumer_verified_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     except (OSError, HTTPException, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
         failed = execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False
         result = {"schema_version": 1, "status": "FAIL" if failed else "INCOMPLETE",
                   "collection_status": "ERROR", "collection_error": str(error)}
     result["native_invocation"] = execution
+    result["downloaded_bytes"] = downloaded
     result["observation_retries"] = observation_retries
     result["submitted_source"] = expected_source
     result["collection_finished_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()

@@ -39,11 +39,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          outputs=("$RUNNER_TEMP"/qualification/invocation-*/reports/*/testlogs/test/rbe/qualification_report_test/test.outputs/lifecycle-pass)
-          (( ${#outputs[@]} == 1 ))
-          test -d "${outputs[0]}/compact/qualification"
-          printf 'LIFECYCLE_REPLAY_OUTPUT=%s\n' "${outputs[0]}" >> "$GITHUB_ENV"
+          python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import unquote, urlsplit
+
+          outputs = []
+          for events in (Path(os.environ["RUNNER_TEMP"]) / "qualification").glob("invocation-*/events.jsonl"):
+              for line in events.read_text().splitlines():
+                  event = json.loads(line)
+                  if event.get("id", {}).get("testResult", {}).get("label") != "//test/rbe:qualification_report_test":
+                      continue
+                  for output in event["testResult"]["testActionOutput"]:
+                      if output["name"] == "test.outputs/lifecycle-pass/compact/qualification/manifest.json":
+                          outputs.append(output["uri"])
+          if len(outputs) != 1:
+              raise ValueError(f"Expected one declared replay manifest, got {outputs}")
+          uri = urlsplit(outputs[0])
+          if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
+              raise ValueError("Replay output is not a local declared artifact")
+          manifest = Path(unquote(uri.path)).resolve(strict=True)
+          with open(os.environ["GITHUB_ENV"], "a") as stream:
+              stream.write(f"LIFECYCLE_REPLAY_OUTPUT={manifest.parents[2]}\n")
+          PYTHON
       - name: Retain the verified compact result
         if: always() && env.LIFECYCLE_REPLAY_OUTPUT != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
