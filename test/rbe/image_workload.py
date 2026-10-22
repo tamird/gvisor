@@ -56,3 +56,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     raise ValueError(f"Profile-helper output changed: {row['owner']}")
         finally:
             destination.write_text(json.dumps(comparisons, indent=2) + "\n")
+    if config.get("runtime", False):
+        import image_pidfd_runtime
+        image_pidfd_runtime.run(invoke, evidence, private)

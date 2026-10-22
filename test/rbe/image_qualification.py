@@ -232,11 +232,12 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
         for architecture in ("x86_64", "aarch64"):
+            preparation_targets = CONFIG.get("preparation_targets", {}).get(architecture, TARGETS)
             prepared = invoke("dependency-preparation-" + architecture,
                               ["cquery", "--config=" + architecture,
                                "--compilation_mode=opt", "--lockfile_mode=update",
                                "--noannounce_rc", "--output=label",
-                               "set(" + " ".join(TARGETS) + ")"],
+                               "set(" + " ".join(preparation_targets) + ")"],
                               "command", targets=[])
             if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
                 raise RuntimeError("Configured dependency preparation failed or changed tracked source")
