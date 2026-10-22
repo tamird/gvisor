@@ -11,6 +11,8 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
+bazel_dep(name = "bzip2", version = "1.0.8.bcr.4")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 
@@ -60,6 +62,16 @@ single_version_override(
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
 use_repo(tar_toolchains, "bsd_tar_toolchains")
 
+# Coreutils releases include configure and generated sources, so rebuilding
+# Autotools is unnecessary. Fail if the unused bootstrap tools are invoked.
+foreign_cc_tools = use_extension("@rules_foreign_cc//foreign_cc:extensions.bzl", "tools")
+foreign_cc_tools.autoconf(mode = "noop")
+foreign_cc_tools.automake(mode = "noop")
+foreign_cc_tools.m4(mode = "noop")
+use_repo(foreign_cc_tools, "rules_foreign_cc_toolchains")
+
+register_toolchains("@rules_foreign_cc_toolchains//:all")
+
 # The images consume selected files from these packages, without running their
 # installation scripts. The snapshot fixes the packages for both architectures.
 image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
@@ -96,10 +108,40 @@ image_apt.install(
 )
 use_repo(image_apt, "helper_image_packages")
 
-### LLVM
-# TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+http_archive(
+    name = "coreutils_source",
+    build_file = "//images:coreutils.BUILD",
+    sha256 = "394024eda0a5955217ceda9cd1201e65dc8fa3aa29c2951135a49521d57c3cc3",
+    strip_prefix = "coreutils-9.11",
+    urls = ["https://ftp.gnu.org/gnu/coreutils/coreutils-9.11.tar.xz"],
+)
+
+# Build the shell and selected utility applets from the same reviewed source.
+http_archive(
+    name = "busybox_source",
+    build_file = "//images:busybox.BUILD",
+    sha256 = "34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2",
+    strip_prefix = "busybox-1.38.0",
+    urls = ["https://busybox.net/downloads/busybox-1.38.0.tar.bz2"],
+)
+
+http_archive(
+    name = "linux_pidfd",
+    build_file = "//images/basic:linux_pidfd.BUILD",
+    patch_strip = 1,
+    patches = [
+        "//images/basic:pidfd_supported_tests.patch",
+        "//images/basic:pidfd_clone_args.patch",
+    ],
+    sha256 = "c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3",
+    strip_prefix = "linux-6.8",
+    urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.tar.xz"],
+)
+
+### LLVM
+# TODO: try using "llvm-raw" from BCR
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",

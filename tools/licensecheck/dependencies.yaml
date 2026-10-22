@@ -5,6 +5,7 @@
 # Reviewed entries are retained on fetch failures only when the source and any
 # declared archive hash match. The reported error remains a retrieval or
 # classification limitation, not a successful automatic audit.
+# LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -609,6 +610,18 @@
   commit: f7a0894074d194bcf19eec5411fec0528f7f4180
   sha256: 3369c58038b4d55c08928affafb653716eb1e7b3cabb4a391aef979dd921f4e1
   license: MIT
+- dependency: busybox_source
+  version: https://busybox.net/downloads/busybox-1.38.0.tar.bz2
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2
+  license: LicenseRef-BusyBox-1.38.0-source-bundle
+- dependency: bzip2
+  version: https://mirror.bazel.build/sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269
+  license: bzip2-1.0.6
 - dependency: cel-spec
   version: https://github.com/google/cel-spec/archive/refs/tags/v0.25.1.tar.gz
   retrieved: "2026-08-27"
@@ -675,6 +688,12 @@
   commit: f4b10eef3a7b114033d52c8d83ad43b105a150b3
   sha256: 2c8a2520ef58c3d2a6e9e0392ec2cea37adb17db4e00c903d48415fd809397f8
   license: Apache-2.0
+- dependency: coreutils_source
+  version: https://ftp.gnu.org/gnu/coreutils/coreutils-9.11.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 394024eda0a5955217ceda9cd1201e65dc8fa3aa29c2951135a49521d57c3cc3
+  license: LicenseRef-Coreutils-9.11-source-bundle
 - dependency: envoy_api
   version: https://github.com/envoyproxy/data-plane-api/archive/84e84367f2560cdb47b9bb78fd3e615feb80c3e4.tar.gz
   retrieved: "2026-10-06"
@@ -731,8 +750,8 @@
   license: MIT
 - dependency: github.com/cenkalti/backoff
   version: v2.2.1+incompatible
-  retrieved: "2026-08-27"
-  commit: 5267b6dd4d2666b980a911bf235efa276222cbe2
+  retrieved: "2026-10-22"
+  commit: ""
   sha256: f8196815a1b4d25e5b8158029d5264801fc8aa5ff128ccf30752fd169693d43b
   license: MIT
 - dependency: github.com/cespare/xxhash/v2
@@ -1604,6 +1623,12 @@
   license:
     - Apache-2.0
     - NCSA
+- dependency: linux_pidfd
+  version: https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3
+  license: LicenseRef-Linux-6.8-source-bundle
 - dependency: llvm-raw
   version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
   retrieved: "2026-10-21"
@@ -1659,6 +1684,12 @@
   retrieved: "2026-10-21"
   commit: b9da1141985c4a84f696326006e0d85659c40747
   sha256: 5d43f4f44f0f0fb614194a07a6dcf7b29338cfc8ab7f6129ad1e4403c1ad1c73
+  license: Apache-2.0
+- dependency: rules_foreign_cc
+  version: https://github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz
+  retrieved: "2026-10-22"
+  commit: 931cb33cf882380394a9c32dcd548259a2a0a357
+  sha256: 327b3fcacde97b9665424db2b6c37e6f8da59ecc783dc5b8683c69396f820a12
   license: Apache-2.0
 - dependency: rules_go
   version: https://github.com/bazel-contrib/rules_go/releases/download/v0.63.0/rules_go-v0.63.0.zip
