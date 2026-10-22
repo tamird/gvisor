@@ -49,6 +49,18 @@ The grouped packages expose `//images/benchmarks:profile_helper_archive` and
 for Make. The stable image names remain `benchmarks/profile-helper` and
 `gpu/ollama/client`.
 
+## ACL test image
+
+`//images/basic:libacl` packages `setfacl`, `getfacl`, Dash and GNU coreutils
+from the declared Ubuntu snapshot, including their dependencies and license
+notices. Its account files define the `alice` user and `employees` group used
+by `TestLibaclOnTmpMount` to check named ACL inheritance on tmpfs. No package
+installation scripts run while assembling the image.
+
+`//images/basic:libacl_archives` builds AMD64 and ARM64 archives together.
+The existing `make load-basic_libacl` interface loads the selected architecture
+under the test-facing `basic/libacl` name.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.
