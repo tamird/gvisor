@@ -69,9 +69,9 @@ make(
     lib_source = "@busybox_source//:source",
     out_binaries = ["busybox"],
     out_data_files = ["busybox.config"],
-    postfix_script = """mkdir -p "$INSTALLDIR/bin"
-cp busybox "$INSTALLDIR/bin/busybox"
-cp .config "$INSTALLDIR/busybox.config"
+    postfix_script = """mkdir -p "$$INSTALLDIR/bin"
+cp busybox "$$INSTALLDIR/bin/busybox"
+cp .config "$$INSTALLDIR/busybox.config"
 """,
     targets = [
         "allnoconfig",
