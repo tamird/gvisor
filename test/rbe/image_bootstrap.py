@@ -1,4 +1,5 @@
 """Bootstrap the pinned reporter with private, authenticated Bazel diagnostics."""
+import datetime
 import hashlib
 import json
 import os
@@ -83,11 +84,26 @@ with tempfile.TemporaryDirectory(prefix="syscall-applicability-auth-") as tempor
                  *apt_options, "install", "--yes", "--no-install-recommends", *packages],
             ]
             for setup_command in setup_commands:
-                print("Preparing compiler packages: " + ("update" if "update" in setup_command else "install"), flush=True)
-                status = subprocess.run(["timeout", "--signal=TERM", "--kill-after=5s",
-                    str(max(0.001, deadline - time.monotonic())), *setup_command],
+                phase = "update" if "update" in setup_command else "install"
+                # Package setup must leave time for the actual qualification.
+                # Retain each phase's timing and native exit if setup stalls.
+                seconds = min(300, max(0.001, deadline - time.monotonic()))
+                step = {"phase": phase, "timeout_seconds": seconds,
+                        "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+                apt_selection.setdefault("steps", []).append(step)
+                (artifacts / "compiler-apt-sources.json").write_text(json.dumps(apt_selection, indent=2) + "\n")
+                print("Preparing compiler packages: " + phase + " (300s limit)", flush=True)
+                status = subprocess.run(["timeout", "--verbose", "--signal=TERM", "--kill-after=5s",
+                    str(seconds), *setup_command],
                     stdout=stdout, stderr=stderr).returncode
+                step.update(native_exit=status,
+                            finished_at=datetime.datetime.now(datetime.timezone.utc).isoformat())
+                (artifacts / "compiler-apt-sources.json").write_text(json.dumps(apt_selection, indent=2) + "\n")
                 if status:
+                    # Process names and wait channels contain no command-line
+                    # credentials and can identify surviving package helpers.
+                    subprocess.run(["ps", "-eo", "pid,ppid,stat,wchan:32,etime,comm"],
+                                   stdout=stdout, stderr=stderr, timeout=10)
                     raise RuntimeError("Upstream compiler prerequisite installation failed")
             apt_selection["source_files_after"] = source_identity()
             apt_selection["git_after"] = {"path": str(git_path), "sha256": hashlib.sha256(git_path.read_bytes()).hexdigest(),
