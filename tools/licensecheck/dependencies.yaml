@@ -610,6 +610,12 @@
   commit: f7a0894074d194bcf19eec5411fec0528f7f4180
   sha256: 3369c58038b4d55c08928affafb653716eb1e7b3cabb4a391aef979dd921f4e1
   license: MIT
+- dependency: busybox_source
+  version: https://busybox.net/downloads/busybox-1.38.0.tar.bz2
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2
+  license: LicenseRef-BusyBox-1.38.0-source-bundle
 - dependency: cel-spec
   version: https://github.com/google/cel-spec/archive/refs/tags/v0.25.1.tar.gz
   retrieved: "2026-08-27"
@@ -676,6 +682,12 @@
   commit: f4b10eef3a7b114033d52c8d83ad43b105a150b3
   sha256: 2c8a2520ef58c3d2a6e9e0392ec2cea37adb17db4e00c903d48415fd809397f8
   license: Apache-2.0
+- dependency: coreutils_source
+  version: https://ftp.gnu.org/gnu/coreutils/coreutils-9.11.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 394024eda0a5955217ceda9cd1201e65dc8fa3aa29c2951135a49521d57c3cc3
+  license: LicenseRef-Coreutils-9.11-source-bundle
 - dependency: envoy_api
   version: https://github.com/envoyproxy/data-plane-api/archive/84e84367f2560cdb47b9bb78fd3e615feb80c3e4.tar.gz
   retrieved: "2026-10-06"

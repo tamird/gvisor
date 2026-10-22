@@ -411,6 +411,31 @@ exceptions:
       - GPL-3.0
       - GPL-3.0-or-later
     exception_rationale: *helper_image_resolver
+  - dependency: busybox_source
+    license: LicenseRef-BusyBox-1.38.0-source-bundle
+    exception_rationale: >-
+      This exact BusyBox release supplies a standalone shell and selected
+      utility applets for the PIDFD test image, not code linked into
+      released gVisor binaries. Its aggregate LICENSE specifies GPL-2.0
+      only; individual files retain GPL/LGPL, BSD, MIT, ISC, bzip2 and
+      public-domain terms. The image keeps the aggregate license and
+      supplemental shell and support-source notices. Unused applets and
+      build inputs remain distinct from the shipped executable.
+      This manual record applies only to the exact URL and archive hash
+      and requires renewed review when either changes.
+  - dependency: coreutils_source
+    license: LicenseRef-Coreutils-9.11-source-bundle
+    exception_rationale: >-
+      This exact GNU Coreutils release supplies only standalone timeout
+      for the PIDFD test image, not code linked into released gVisor
+      binaries. Timeout is GPL-3.0-or-later; bundled support and build
+      sources retain GPL/LGPL, BSD, ISC, X11, public-domain and GNU
+      distribution exceptions, with alternative CC0, OpenSSL or Apache
+      terms for unused BLAKE2 sources. Unshipped documentation includes
+      GFDL-1.3-or-later without invariant sections or cover texts. The
+      image keeps COPYING and supplemental support-source notices.
+      This manual record applies only to the exact URL and
+      archive hash and requires renewed review when either changes.
   - dependency: gawk
     license: LicenseRef-Gawk-source-bundle
     exception_rationale: >-
