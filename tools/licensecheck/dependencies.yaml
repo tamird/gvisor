@@ -1089,6 +1089,18 @@
   license:
     - Apache-2.0
     - MIT
+- dependency: libpcap
+  version: https://www.tcpdump.org/release/libpcap-1.10.5.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 84fa89ac6d303028c1c5b754abff77224f45eca0a94eb1a34ff0aa9ceece3925
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - ISC
+    - LicenseRef-CMU-Stanford-permission-acknowledgement
+  manually_audited: true
 - dependency: llvm-raw
   version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
   retrieved: "2026-08-27"
@@ -1198,6 +1210,26 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: tcpdump
+  version: https://www.tcpdump.org/release/tcpdump-4.99.6.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 40a8cefd45f0d2a06827e6658efb830d484868c449ad80f7efb33516af44f3da
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - BSD-4-Clause
+    - ISC
+    - LicenseRef-CMU-Stanford-permission-acknowledgement
+    - LicenseRef-DEC-Compaq-supporting-documentation
+    - LicenseRef-DEC-permission-nonendorsement
+    - LicenseRef-IKP-entire-notice-retention
+    - LicenseRef-SJG-notice-preservation
+    - LicenseRef-SunRPC-product-distribution
+    - LicenseRef-TUT-publication-acknowledgement
+    - LicenseRef-UCB-LBL-distribution-acknowledgement
+    - LicenseRef-UCB-due-credit
+  manually_audited: true
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"
