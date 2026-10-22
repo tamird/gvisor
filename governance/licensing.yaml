@@ -451,6 +451,22 @@ exceptions:
       grant permits redistribution with copyright notices, conditions and
       disclaimers retained, and prohibits using contributors' names for
       endorsement without permission.
+  - dependency: linux_pidfd
+    license: LicenseRef-Linux-6.8-source-bundle
+    exception_rationale: >-
+      This exact Linux 6.8 source archive supplies standalone GPL-2.0
+      pidfd selftests, their headers and runner scripts. The image does
+      not contain a built kernel or the unused drivers and documentation.
+      COPYING specifies GPL-2.0 with Linux-syscall-note for the kernel
+      aggregate; individual files retain their GPL/LGPL, alternative
+      permissive, combined-license and documentation terms. The retained
+      primary notices include the full LICENSES directory, GFDL terms,
+      and the JFFS2 inline/template exception and FlashPoint alternative.
+      The complete member and raw SPDX indexes preserve the scope of
+      the review, including files without SPDX annotations; they do not
+      establish an exhaustive inventory of embedded grants. This manual
+      record applies only to the exact URL and archive hash and requires
+      renewed review when either changes.
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception

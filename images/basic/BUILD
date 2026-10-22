@@ -114,6 +114,8 @@ _PIDFD_FILES = {
     "/opt/kselftest/run_kselftest.sh": _SELFTESTS + "run_kselftest.sh",
     "/usr/share/licenses/pidfd-tests/COPYING": "@linux_pidfd//:COPYING",
     "/usr/share/licenses/pidfd-tests/GPL-2.0": "@linux_pidfd//:LICENSES/preferred/GPL-2.0",
+    "/usr/share/licenses/pidfd-tests/Linux-syscall-note": "@linux_pidfd//:LICENSES/exceptions/Linux-syscall-note",
+    "/usr/share/licenses/pidfd-tests/license-rules.rst": "@linux_pidfd//:Documentation/process/license-rules.rst",
 }
 
 _PIDFD_FILES.update({
@@ -124,7 +126,11 @@ _PIDFD_FILES.update({
 # Keep the exact patched sources available when diagnosing a selftest failure.
 _PIDFD_FILES.update({
     "/src/pidfd-tests/pidfd/" + name: _SELFTESTS + "pidfd/" + name
-    for name in [name + ".c" for name in _PIDFD_TESTS] + ["Makefile", "config", "pidfd.h"]
+    for name in [name + ".c" for name in _PIDFD_TESTS] + [
+        "Makefile",
+        "config",
+        "pidfd.h",
+    ]
 })
 
 _PIDFD_MODES = {
@@ -134,7 +140,11 @@ _PIDFD_MODES = {
 
 _PIDFD_MODES.update({
     "/opt/kselftest/" + name: file_metadata(mode = "0755")
-    for name in ["run_kselftest.sh", "kselftest/runner.sh", "kselftest/prefix.pl"]
+    for name in [
+        "run_kselftest.sh",
+        "kselftest/runner.sh",
+        "kselftest/prefix.pl",
+    ]
 })
 
 image_layer(
@@ -172,8 +182,8 @@ _PIDFD_TIMEOUT_MEMBERS = [
 
 package_layer(
     name = "pidfd_timeout_layer",
-    members = _PIDFD_TIMEOUT_MEMBERS,
     out = "pidfd-timeout.tar",
+    members = _PIDFD_TIMEOUT_MEMBERS,
     packages = _PIDFD_TIMEOUT_PACKAGES,
 )
 

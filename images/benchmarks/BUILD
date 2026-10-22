@@ -91,8 +91,8 @@ _COREUTILS_PACKAGES = [
 
 package_layer(
     name = "profile_helper_coreutils_layer",
-    members = _COREUTILS_MEMBERS,
     out = "profile-helper-coreutils.tar",
+    members = _COREUTILS_MEMBERS,
     packages = _COREUTILS_PACKAGES,
 )
 
