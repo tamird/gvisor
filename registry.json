@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T01:46:42.502640+00:00",
+    "updatedAt": "2026-10-22T02:09:48.683937+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3781,17 +3781,17 @@
       "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
       "status": "open",
-      "summary": "The user-requested rebase for the exact current-head Copybara migration error is published at aec69d67941f on master 7d17d8564110. Independent review verified patch equivalence. The recorded migration error belongs to earlier fed35fe5a8a2; current-head checks and import progress remain separate and pending.\n\nPreserved earlier source record:\n\nEtienne approved exact current source fed35fe5a8 at 2026-10-21 22:39:20 UTC. The corrected header-only amendment now has current-head maintainer approval. Import #16042 still identifies old source a616 and its diagnosed elfutils HTTP 403 failures remain stale-source evidence. The remaining action is import refresh/progression; no further author source change or duplicate reviewer message is indicated.\n\nPreserved earlier observations:\n\nThe newly highlighted public Buildkite 51735 failure is fully diagnosed: all 23 terminal failed jobs across 12 steps, including the recovered full ARM64 unit log, fail fetching elfutils 0.195 from sourceware.org with HTTP 403. Import #16042 at 5f91f4f3 still identifies old source a6168c6433, which analyzes libbpf_impl for BPF header inputs. Published source fed35fe5 already selects the patched public bpf_headers target; its scoped change is equivalent to the contributor-approved 4847 revision, whose 14 configured BPF builds and dependency-closure checks passed without libbpf_impl or elfutils. This stale-import failure is not current-source execution. The last maintainer approval is for a616, so current amendment review and import refresh remain necessary. The rationale and request were already posted on October 20; no duplicate comment, new source edit or unchanged-source retry is warranted. Prior approvals, raw failed imports and current-source checks remain separate.\n\nPreserved earlier observations:\n\nThe later public Buildkite build 51689 on import c6f0ca876 repeats the same old-source libbpf_impl → elfutils 0.195 HTTP 403 failure in all 23 terminal failed jobs across 11 groups. That import still uses source a616 and lacks current fed35 header-only changes. No new current-source repair, retry or comment is indicated; the inaccessible internal build 33379 cause remains unproved.\n\nImport #16042 at 0da8ed07dfc9 omits the current header-only libbpf amendment: it still analyzes libbpf_impl and elfutils. Its completed AMD64 and ARM64 smoke attempts in public Buildkite 51686 fail during //:release analysis when the elfutils 0.195 download returns HTTP 403. The current fed35fe5a8a2 source avoids that dependency path; its checks and reviewer state remain separate. Maintainers need to review and re-import the current amendment, whose rationale is already posted. The failed attempts and automatic retries are retained; no new current-source repair or comment is needed.\n\nEarlier evidence:\n\nImport #16042 at 595245c3e3ad now has public Buildkite 51680 FAILURE; Go generation and exported Go tests pass, and the internal pipeline remains pending. Its exact Copybara footer still identifies older source a6168c6433e1, not current fed35fe5a8a2. Current source checks remain SUCCESS. This obsolete-source import result does not establish a current source defect or release a source repair.\n\nEarlier evidence:\n\nImport #16042 advanced to 595245c3e3ad; fresh Gazelle and lint checks pass while Go generation and Buildkite 51680/33372 are pending. Its exact Copybara footer still identifies older source a6168c6433e1, not current fed35fe5a8a2. The prior failed 7e828 import results remain historical. Current source checks pass, so this refresh does not release a source repair or qualify the current source.\n\nEarlier evidence:\n\nImport #16042 at 7e828edb4d48 now reports public Buildkite 51677 and internal Buildkite 33369 FAILURE, while Go generation and Go tests pass. Its exact Copybara footer still identifies earlier source a6168c6433e1 rather than current fed35fe5a8a2. These import results do not qualify or establish a failure of the current source, whose checks remain SUCCESS. No new source repair or retry is inferred.\n\nEarlier evidence:\n\nImport #16042 advanced to 7e828edb4d48 on October 21 at 05:59 UTC. Its Gazelle check passes and remaining jobs are pending, but its exact Copybara footer still identifies earlier source a6168c6433e1 rather than current fed35fe5a8a2. These new results do not qualify the current source head or establish a new source failure. The current source checks remain separate.\n\nEarlier evidence:\n\nThe authorized Gazelle rebase is complete at fed35fe5a8. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at fed35fe5a8a2b4cac2f065e70a9f83b538f42929 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe newly published4847ada9 head has current Gazelle job118635968518 failing solely on the inherited unused //pkg/zip dependency in tools/nogo/check/BUILD. This exact new-head log is distinct from the earlier elfutils403 import failure and contains only that generated deletion. Existing16031 carries the shared correction; the approved BPF amendment is delivered, with no new source fix or retry inferred.\n\nThe user-approved header-only BPF amendment is published at4847ada9b4, mechanically equivalent to0975 on currentd5b. Root verified exact lease, matching public/tracking head and body, MERGEABLE state and the authorized reviewer reply. Public lint passes; other current checks remain pending. The earlier21831 import retains distinct elfutils403 analysis, Go-export cleanup and shared Gazelle failures; it is not validation of the new source. Contributor review and delivery are complete.\n\nAt current imported21831/sourcea616, all18 final failed Buildkite51510 jobs fail analysis fetching elfutils0.195 from sourceware.org with HTTP403 through libbpf_impl. The approved header-only amendment is the existing remedy. Independently, generate118611820066 pushed the Go branch then failed temporary repository cleanup with Directory not empty; the exported go-tests FAILURE follows that cleanup trap and maps to15598. Gazelle118611820658 has only the inherited unused //pkg/zip deletion corrected by16031. No new workload failure or independent source fix is established.\n\nAt matching import16042/26a5, all six currently observed final failed public51507 jobs stop before tests while libbpf_impl fetches elfutils0.195 and receives HTTP403. Three syscall jobs fail building //:release; Docker cgroupv2, hostnet and benchmark-smoke jobs fail //runsc:runsc analysis in the repository pre-command. This is the mechanism already addressed by qualified amendment0975, whose contributor decision remains pending. The build is still in progress; no whole-build outcome or private33221 cause is inferred. Shared Gazelle correction16031 remains separate.\n\nMatching import16042 refreshed to 26a5ae0b on d5b while public source remains a616. Its exact Gazelle job118560565129 requests only the inherited production //pkg/zip deletion, still owned through correction16031/Etienne. Buildkite51507 and internal33221 are pending; the old elfutils HTTP403 failures remain bound to their earlier jobs. Qualified header-only amendment0975 remains a separate pending contributor decision.\n\nMatching import16042 refreshed to1aee3a73ae48c3f81a5c764449df35bc72f5ec88 while source remains a616. Its exact current Gazelle job118486864595 requests only the inherited production //pkg/zip deletion, still owned through correction16031/Etienne. Current public51501 has two observed failed final attempts (Containerd2.2.3 and Go runtime): both stop in the repository pre-command while //runsc:runsc analysis fetches elfutils0.195 through libbpf_impl and receives HTTP403. Their runtime commands never run. This is the existing header-only amendment0975 mechanism; build-wide completion and private33214 cause are not inferred. The qualified0975 header-only amendment remains a separate contributor decision; no latest-run BPF failure is inferred.\n\nHeader-only libbpf proposal 0975ddf1b2 is qualified through integration 83c287b388: all seven BPF build owners passed on each architecture, both configured graphs exclude elfutils/libbpf_impl, and buildifier passed. Independent compact review verified exact source, graphs, canonical verdicts and timing (4.606 s automatic, manual collection 0); this is build/graph/lint proof, not runtime or standalone toolchain identity. Root requested contributor review once at 05:29 UTC for the PR amendment, description and prepared reply. Public PR remains a6168c643. Compare the complete revisions with git -C ~/code/gvisor range-diff a6168c643^! 0975ddf1b2^!.\n\nBounded public-job diagnosis is complete: all 18 latest failed jobs in Buildkite51498 stopped in analysis on the sourceware.org elfutils0.195 HTTP403 download. The BPF rule consumes only libbpf headers, while the current BCR target also analyzes its userspace implementation and elfutils. Root owns a minimal header-only target correction and focused validation; runtime behavior has not been exercised by these failed jobs. The separate inherited ZIP/Gazelle failure still awaits the existing correction in green import16031. Private33211’s cause remains unobserved.\n\nThe 05:01 UTC snapshot shows new public Buildkite51498 and private33211 failures on the unchanged, exact-source import16042/f3b63a0a. Root owns bounded public failed-job diagnosis; the causes are not yet established. This is distinct from the already diagnosed Gazelle dependency deletion, whose shared correction is present in green import16031 and assigned to Etienne. Source a6168c64 and the active import are preserved; no retry, rebase or BPF topic fix is inferred.\n\nNew import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
+      "summary": "Milan asked why the libbpf patch is needed on the current aec69d source. Inspection confirms that :bpf analyzes :libbpf_impl and fetches elfutils/zlib before a consumer can read CcInfo.compilation_context; no C++ linking by the BPF action is implied. The small factored bpf_headers target remains necessary for the observed analysis/fetch isolation. A comment-only clarification is published separately at f3afdd4523 and awaits the contributor decision already requested. Its executable patch and BPF rule match the qualified source with 14 configured BPF builds and both dependency-closure checks. Tamir already replied on the thread; no duplicate reply is pending. Public PR source remains aec69d.\n\nPreserved source and review history:\n\nThe user-requested rebase for the exact current-head Copybara migration error is published at aec69d67941f on master 7d17d8564110. Independent review verified patch equivalence. The recorded migration error belongs to earlier fed35fe5a8a2; current-head checks and import progress remain separate and pending.\n\nPreserved earlier source record:\n\nEtienne approved exact current source fed35fe5a8 at 2026-10-21 22:39:20 UTC. The corrected header-only amendment now has current-head maintainer approval. Import #16042 still identifies old source a616 and its diagnosed elfutils HTTP 403 failures remain stale-source evidence. The remaining action is import refresh/progression; no further author source change or duplicate reviewer message is indicated.\n\nPreserved earlier observations:\n\nThe newly highlighted public Buildkite 51735 failure is fully diagnosed: all 23 terminal failed jobs across 12 steps, including the recovered full ARM64 unit log, fail fetching elfutils 0.195 from sourceware.org with HTTP 403. Import #16042 at 5f91f4f3 still identifies old source a6168c6433, which analyzes libbpf_impl for BPF header inputs. Published source fed35fe5 already selects the patched public bpf_headers target; its scoped change is equivalent to the contributor-approved 4847 revision, whose 14 configured BPF builds and dependency-closure checks passed without libbpf_impl or elfutils. This stale-import failure is not current-source execution. The last maintainer approval is for a616, so current amendment review and import refresh remain necessary. The rationale and request were already posted on October 20; no duplicate comment, new source edit or unchanged-source retry is warranted. Prior approvals, raw failed imports and current-source checks remain separate.\n\nPreserved earlier observations:\n\nThe later public Buildkite build 51689 on import c6f0ca876 repeats the same old-source libbpf_impl → elfutils 0.195 HTTP 403 failure in all 23 terminal failed jobs across 11 groups. That import still uses source a616 and lacks current fed35 header-only changes. No new current-source repair, retry or comment is indicated; the inaccessible internal build 33379 cause remains unproved.\n\nImport #16042 at 0da8ed07dfc9 omits the current header-only libbpf amendment: it still analyzes libbpf_impl and elfutils. Its completed AMD64 and ARM64 smoke attempts in public Buildkite 51686 fail during //:release analysis when the elfutils 0.195 download returns HTTP 403. The current fed35fe5a8a2 source avoids that dependency path; its checks and reviewer state remain separate. Maintainers need to review and re-import the current amendment, whose rationale is already posted. The failed attempts and automatic retries are retained; no new current-source repair or comment is needed.\n\nEarlier evidence:\n\nImport #16042 at 595245c3e3ad now has public Buildkite 51680 FAILURE; Go generation and exported Go tests pass, and the internal pipeline remains pending. Its exact Copybara footer still identifies older source a6168c6433e1, not current fed35fe5a8a2. Current source checks remain SUCCESS. This obsolete-source import result does not establish a current source defect or release a source repair.\n\nEarlier evidence:\n\nImport #16042 advanced to 595245c3e3ad; fresh Gazelle and lint checks pass while Go generation and Buildkite 51680/33372 are pending. Its exact Copybara footer still identifies older source a6168c6433e1, not current fed35fe5a8a2. The prior failed 7e828 import results remain historical. Current source checks pass, so this refresh does not release a source repair or qualify the current source.\n\nEarlier evidence:\n\nImport #16042 at 7e828edb4d48 now reports public Buildkite 51677 and internal Buildkite 33369 FAILURE, while Go generation and Go tests pass. Its exact Copybara footer still identifies earlier source a6168c6433e1 rather than current fed35fe5a8a2. These import results do not qualify or establish a failure of the current source, whose checks remain SUCCESS. No new source repair or retry is inferred.\n\nEarlier evidence:\n\nImport #16042 advanced to 7e828edb4d48 on October 21 at 05:59 UTC. Its Gazelle check passes and remaining jobs are pending, but its exact Copybara footer still identifies earlier source a6168c6433e1 rather than current fed35fe5a8a2. These new results do not qualify the current source head or establish a new source failure. The current source checks remain separate.\n\nEarlier evidence:\n\nThe authorized Gazelle rebase is complete at fed35fe5a8. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at fed35fe5a8a2b4cac2f065e70a9f83b538f42929 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe newly published4847ada9 head has current Gazelle job118635968518 failing solely on the inherited unused //pkg/zip dependency in tools/nogo/check/BUILD. This exact new-head log is distinct from the earlier elfutils403 import failure and contains only that generated deletion. Existing16031 carries the shared correction; the approved BPF amendment is delivered, with no new source fix or retry inferred.\n\nThe user-approved header-only BPF amendment is published at4847ada9b4, mechanically equivalent to0975 on currentd5b. Root verified exact lease, matching public/tracking head and body, MERGEABLE state and the authorized reviewer reply. Public lint passes; other current checks remain pending. The earlier21831 import retains distinct elfutils403 analysis, Go-export cleanup and shared Gazelle failures; it is not validation of the new source. Contributor review and delivery are complete.\n\nAt current imported21831/sourcea616, all18 final failed Buildkite51510 jobs fail analysis fetching elfutils0.195 from sourceware.org with HTTP403 through libbpf_impl. The approved header-only amendment is the existing remedy. Independently, generate118611820066 pushed the Go branch then failed temporary repository cleanup with Directory not empty; the exported go-tests FAILURE follows that cleanup trap and maps to15598. Gazelle118611820658 has only the inherited unused //pkg/zip deletion corrected by16031. No new workload failure or independent source fix is established.\n\nAt matching import16042/26a5, all six currently observed final failed public51507 jobs stop before tests while libbpf_impl fetches elfutils0.195 and receives HTTP403. Three syscall jobs fail building //:release; Docker cgroupv2, hostnet and benchmark-smoke jobs fail //runsc:runsc analysis in the repository pre-command. This is the mechanism already addressed by qualified amendment0975, whose contributor decision remains pending. The build is still in progress; no whole-build outcome or private33221 cause is inferred. Shared Gazelle correction16031 remains separate.\n\nMatching import16042 refreshed to 26a5ae0b on d5b while public source remains a616. Its exact Gazelle job118560565129 requests only the inherited production //pkg/zip deletion, still owned through correction16031/Etienne. Buildkite51507 and internal33221 are pending; the old elfutils HTTP403 failures remain bound to their earlier jobs. Qualified header-only amendment0975 remains a separate pending contributor decision.\n\nMatching import16042 refreshed to1aee3a73ae48c3f81a5c764449df35bc72f5ec88 while source remains a616. Its exact current Gazelle job118486864595 requests only the inherited production //pkg/zip deletion, still owned through correction16031/Etienne. Current public51501 has two observed failed final attempts (Containerd2.2.3 and Go runtime): both stop in the repository pre-command while //runsc:runsc analysis fetches elfutils0.195 through libbpf_impl and receives HTTP403. Their runtime commands never run. This is the existing header-only amendment0975 mechanism; build-wide completion and private33214 cause are not inferred. The qualified0975 header-only amendment remains a separate contributor decision; no latest-run BPF failure is inferred.\n\nHeader-only libbpf proposal 0975ddf1b2 is qualified through integration 83c287b388: all seven BPF build owners passed on each architecture, both configured graphs exclude elfutils/libbpf_impl, and buildifier passed. Independent compact review verified exact source, graphs, canonical verdicts and timing (4.606 s automatic, manual collection 0); this is build/graph/lint proof, not runtime or standalone toolchain identity. Root requested contributor review once at 05:29 UTC for the PR amendment, description and prepared reply. Public PR remains a6168c643. Compare the complete revisions with git -C ~/code/gvisor range-diff a6168c643^! 0975ddf1b2^!.\n\nBounded public-job diagnosis is complete: all 18 latest failed jobs in Buildkite51498 stopped in analysis on the sourceware.org elfutils0.195 HTTP403 download. The BPF rule consumes only libbpf headers, while the current BCR target also analyzes its userspace implementation and elfutils. Root owns a minimal header-only target correction and focused validation; runtime behavior has not been exercised by these failed jobs. The separate inherited ZIP/Gazelle failure still awaits the existing correction in green import16031. Private33211’s cause remains unobserved.\n\nThe 05:01 UTC snapshot shows new public Buildkite51498 and private33211 failures on the unchanged, exact-source import16042/f3b63a0a. Root owns bounded public failed-job diagnosis; the causes are not yet established. This is distinct from the already diagnosed Gazelle dependency deletion, whose shared correction is present in green import16031 and assigned to Etienne. Source a6168c64 and the active import are preserved; no retry, rebase or BPF topic fix is inferred.\n\nNew import #16042 at f3b63a0a exactly matches current source a6168c64. Its Gazelle job118456317218 failed only because tools/nogo/check:check inherits the unwanted production //pkg/zip dependency from merged 760b. The exact emitted hunk is the same shared correction already present in green #16031 and reported to Etienne. Other import checks were pending at the 04:38 observation. This is not a new BPF topic defect; preserve the source and active import while the shared correction progresses.\n\nThe patch approved by EtiennePerot on 2026-10-17T05:41:24Z at be5bda6e54 is independently verified unchanged at a6168c6433. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at a6168c6433e1 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at be5bda6e54 on upstream 383c1da19b. The BPF compiler, header and rule changes are unchanged; upstream imports and test dependencies are retained. GitHub reports the head mergeable. EtiennePerot was notified to review the new head. The native re-request returned HTTP 404; the existing fvoznika request remains. Earlier approval does not apply to this new head.\n\nEarlier source-specific record:\n\nThe published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
       "number": 15337,
       "head": "aec69d67941f62115cfb17bd89ee537407844687",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-22T00:44:41.757842+00:00",
+      "updatedAt": "2026-10-22T02:04:28.217656+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "aec69d67941f62115cfb17bd89ee537407844687",
-        "observedAt": "2026-10-22T01:44:47.504469+00:00",
-        "disposition": "Address current reviewer feedback",
-        "nextAction": "Inspect whether the header-split patch is needed by the BPF compilation context, prepare the smallest correction and remote validation if needed, and draft a response to the reviewer without posting it.",
+        "observedAt": "2026-10-22T02:04:28.217656+00:00",
+        "disposition": "Clarification prepared; contributor decision pending",
+        "nextAction": "Review the separate exact f3afdd4523 comment-only proposal. Preserve current public aec69d and existing reply; publish the amendment only after the recorded contributor decision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15337#issuecomment-6291225567",
           "https://buildkite.com/gvisor/pipeline/builds/51686#01a15d8f-3cef-4db2-97e0-5a82959961b4",
@@ -3802,7 +3802,9 @@
           "https://github.com/google/gvisor/commit/5f91f4f3b7ef745ec2aa62f2d167f48954814dcf",
           "https://github.com/google/gvisor/pull/15337#pullrequestreview-5607094359",
           "https://github.com/tamird/gvisor/commit/aec69d67941f62115cfb17bd89ee537407844687",
-          "https://github.com/google/gvisor/pull/15337#discussion_r4343677223"
+          "https://github.com/google/gvisor/pull/15337#discussion_r4343677223",
+          "https://github.com/tamird/gvisor/commit/f3afdd452329cd0ffe5b09f35aa7a9073aae34b8",
+          "https://github.com/google/gvisor/pull/15337#discussion_r4343710598"
         ]
       },
       "refinement": {
@@ -11023,9 +11025,9 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "2724adf2e45cb7b07527b76b26a1d265b293a2d8",
-        "observedAt": "2026-10-22T00:44:41.757842+00:00",
-        "disposition": "Requested rebase delivered; observe current CI/import",
-        "nextAction": "Follow the published source through existing CI, maintainer review and import. Preserve existing approvals and dependency holds; no duplicate rebase or reviewer reminder.",
+        "observedAt": "2026-10-22T02:05:50.003395+00:00",
+        "disposition": "Current-source public import failure under bounded diagnosis",
+        "nextAction": "Inspect public Buildkite51808 for exact current-source import16167; keep internal33502 PASS and prior canonical formatting PASS separate. No source repair inferred before diagnosis.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15868",
           "https://github.com/google/gvisor/actions/runs/39365307402/job/118440688314",
@@ -11034,7 +11036,9 @@
           "https://github.com/google/gvisor/pull/15919#issuecomment-6278816021",
           "https://github.com/google/gvisor/pull/16048",
           "https://github.com/tamird/gvisor/commit/2bbd38f698e43f490acc7e57a4d6eafdfc6b1516",
-          "https://github.com/tamird/gvisor/commit/2724adf2e45cb7b07527b76b26a1d265b293a2d8"
+          "https://github.com/tamird/gvisor/commit/2724adf2e45cb7b07527b76b26a1d265b293a2d8",
+          "https://github.com/google/gvisor/pull/16167",
+          "https://buildkite.com/gvisor/pipeline/builds/51808"
         ]
       },
       "evidence": [
@@ -17659,6 +17663,86 @@
         }
       ],
       "number": 16168
+    },
+    {
+      "id": "branch:review/hermetic-bpf-header-analysis",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/hermetic-bpf-header-analysis",
+      "head": "f3afdd452329cd0ffe5b09f35aa7a9073aae34b8",
+      "title": "Explain the libbpf header analysis boundary",
+      "url": "https://github.com/tamird/gvisor/commit/f3afdd452329cd0ffe5b09f35aa7a9073aae34b8",
+      "group": "bazel",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T02:04:28.217656+00:00",
+      "summary": "Clarify that the header-only target avoids configured analysis and fetching of libbpf implementation dependencies. Reading only CcInfo.compilation_context does not prune those configured deps; the BPF action does not link the userspace library. Only the patch preamble changes. The executable patch and owning BPF rule equal already-qualified0975; no new build or test result is claimed. Parent requested contributor review of this exact fork commit; public PR #15337 remains aec69d and no new reviewer reply has been posted.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "f3afdd452329cd0ffe5b09f35aa7a9073aae34b8",
+        "url": "https://github.com/tamird/gvisor/commit/f3afdd452329cd0ffe5b09f35aa7a9073aae34b8"
+      },
+      "refinement": {
+        "before": {
+          "head": "aec69d67941f62115cfb17bd89ee537407844687"
+        },
+        "after": {
+          "head": "f3afdd452329cd0ffe5b09f35aa7a9073aae34b8"
+        }
+      },
+      "links": [
+        {
+          "label": "Current source PR and reviewer thread",
+          "url": "https://github.com/google/gvisor/pull/15337#discussion_r4343677223"
+        },
+        {
+          "label": "Author reply already posted",
+          "url": "https://github.com/google/gvisor/pull/15337#discussion_r4343710598"
+        },
+        {
+          "label": "Preserved BPF builds and dependency-closure validation",
+          "url": "https://app.buildbuddy.io/invocation/1f3352af-04fd-4505-94c2-46d645fda44d"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-fsstress",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-fsstress",
+      "head": "8e45c79086ef50a61ed70379f89a5b684ea75db9",
+      "title": "Build the filesystem stress-test image with Bazel",
+      "url": "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
+      "group": "bazel",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T02:09:48.683937+00:00",
+      "summary": "Build pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. Exact 8e45 contributor review is pending; open after #16097 if approved. No ARM execution or performance claim.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "8e45c79086ef50a61ed70379f89a5b684ea75db9",
+        "url": "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9"
+      },
+      "links": [
+        {
+          "label": "Complete change over basic image foundation",
+          "url": "https://github.com/tamird/gvisor/compare/1d562c448fe89ced8d0b98f9eed5fedb3b614c3b...8e45c79086ef50a61ed70379f89a5b684ea75db9"
+        },
+        {
+          "label": "GNU dual-architecture build",
+          "url": "https://app.buildbuddy.io/invocation/69c89b33-491d-49c4-a5a2-e3a97a5dfc96"
+        },
+        {
+          "label": "Image and existing filesystem consumers",
+          "url": "https://app.buildbuddy.io/invocation/d5246ab2-9bc0-43d6-95eb-b832bc3cecca"
+        },
+        {
+          "label": "Canonical license audit",
+          "url": "https://app.buildbuddy.io/invocation/1b3c6471-e585-45a9-9d42-8382fa675414"
+        },
+        {
+          "label": "ENTRYPOINT two-worker create proof",
+          "url": "https://app.buildbuddy.io/invocation/fe7b2570-6a93-4ebe-a1b8-0a348df57c34"
+        }
+      ]
     }
   ],
   "edges": [
@@ -19296,8 +19380,8 @@
       "to": "pr:15337",
       "type": "includes",
       "role": "proposed_update",
-      "reason": "Source-qualified proposal is pending contributor authorization; public source remains unchanged.",
-      "evidence": "https://github.com/tamird/gvisor/commit/0975ddf1b2cec1c5af952d089c963a40f60aa4e6"
+      "reason": "Historical approved header-only amendment was delivered to this source PR. It is not a pending contributor decision.",
+      "evidence": "https://github.com/tamird/gvisor/commit/4847ada9b4990b81c498e2f11a7e27144e106075"
     },
     {
       "from": "branch:review/go-export-sidecars",
@@ -19690,6 +19774,21 @@
       "type": "depends_on",
       "reason": "The complete nested-runtime image qualification uses this independent fixture correction to align the intentional host cgroup mount with its namespace.",
       "evidence": "https://github.com/tamird/gvisor/commit/25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb"
+    },
+    {
+      "from": "branch:review/hermetic-bpf-header-analysis",
+      "to": "pr:15337",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Separate comment-only amendment awaits the already-requested contributor decision; public source remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/f3afdd452329cd0ffe5b09f35aa7a9073aae34b8"
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-fsstress",
+      "type": "depends_on",
+      "reason": "Uses the declared basic image foundation and shared image outputs/Make interface; contributor request is conditional on this prerequisite landing.",
+      "evidence": "https://github.com/google/gvisor/pull/16097"
     }
   ],
   "investigations": [
