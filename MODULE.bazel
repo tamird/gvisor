@@ -15,6 +15,9 @@ bazel_dep(name = "rules_img", version = "0.3.23")
 # Capture loopback packets in the container image tests.
 bazel_dep(name = "tcpdump", version = "4.99.6")
 
+# Use Bison's libc++ header fixes when building libpcap's parser generator.
+bazel_dep(name = "bison", version = "3.8.2.bcr.11")
+
 # Keep the capture library consistent with its bundled source notices.
 bazel_dep(name = "libpcap", version = "1.10.5.bcr.3")
 bazel_dep(name = "rules_cc", version = "0.2.25")
