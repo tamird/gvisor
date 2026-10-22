@@ -60,6 +60,15 @@ single_version_override(
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
 use_repo(tar_toolchains, "bsd_tar_toolchains")
 
+# Coreutils releases include configure and generated sources, so rebuilding
+# Autotools is unnecessary. Fail if the unused bootstrap tools are invoked.
+foreign_cc_tools = use_extension("@rules_foreign_cc//foreign_cc:extensions.bzl", "tools")
+foreign_cc_tools.autoconf(mode = "noop")
+foreign_cc_tools.automake(mode = "noop")
+foreign_cc_tools.m4(mode = "noop")
+use_repo(foreign_cc_tools, "rules_foreign_cc_toolchains")
+register_toolchains("@rules_foreign_cc_toolchains//:all")
+
 # The images consume selected files from these packages, without running their
 # installation scripts. The snapshot fixes the packages for both architectures.
 image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
