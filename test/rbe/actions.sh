@@ -18,6 +18,18 @@ set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
 
+# GNU timeout supplies the process-group interrupt and grace-period contract.
+# Ubuntu's uutils provider keeps GNU coreutils installed as gnu-prefixed tools.
+qualification_timeout=$(command -v gnutimeout || command -v timeout)
+[[ $qualification_timeout == /* ]]
+qualification_timeout_version=$("$qualification_timeout" --version)
+if [[ $qualification_timeout_version != 'timeout (GNU coreutils) '* ]]; then
+  printf 'Qualification requires GNU timeout; selected %s: %s\n' \
+    "$qualification_timeout" "$qualification_timeout_version" >&2
+  exit 2
+fi
+export qualification_timeout
+
 for argument in "$@"; do
   if [[ $argument != --bazel-option=--?* ]]; then
     printf 'Expected --bazel-option=--FLAG, got: %s\n' "$argument" >&2
@@ -120,14 +132,14 @@ cleanup() {
       # Source provenance is a separate audit, not a rewrite of the workload's
       # canonical exit. Missing/failed audits make matrix composition incomplete.
       local audit_status=0
-      timeout --signal=TERM --kill-after=5s 600s \
+      "$qualification_timeout" --signal=TERM --kill-after=5s 600s \
         python3 "$qualification_workspace/test/rbe/qualification_report.py" source-image-row \
         --directory "$qualification_artifacts" --decoder "${QUALIFICATION_DECODER:-}" || audit_status=$?
       printf '%s\n' "$audit_status" > "$qualification_artifacts/source-image-audit-exit.txt"
     fi
     # Reconcile on the coordinator and upload one archive. Preserve the original
     # command failure if reporting or final cleanup also fails.
-    timeout --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
+    "$qualification_timeout" --signal=TERM --kill-after=5s 600s python3 "$qualification_workspace/test/rbe/qualification_report.py" bundle \
       --directory "$qualification_artifacts" --runner-exit "$status" --capture-exit "$capture_status" \
       --output "${BUILDBUDDY_ARTIFACTS_DIRECTORY:-$RUNNER_TEMP}/qualification.tar.gz" || bundle_status=$?
     if [[ -n ${BUILDBUDDY_ARTIFACTS_DIRECTORY:-} ]]; then
@@ -148,6 +160,8 @@ RUNNER_TEMP=${RUNNER_TEMP:-$(mktemp -d)}
 export RUNNER_TEMP
 mkdir -p "$RUNNER_TEMP/qualification"
 qualification_artifacts=$RUNNER_TEMP/qualification
+printf '%s\n' "$qualification_timeout" > "$qualification_artifacts/timeout-path.txt"
+printf '%s\n' "$qualification_timeout_version" > "$qualification_artifacts/timeout-version.txt"
 qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
 # BuildBuddy reuses the last startup options for its final workspace-lock check.
 # Its coordinator must still be able to read this file after our cleanup.
@@ -414,7 +428,7 @@ qualification_bazel() {
       printf 'Qualification work deadline exhausted.\n' >&2
       return 124
     fi
-    prefix+=(timeout --signal=INT --kill-after=30s "${remaining}s")
+    prefix+=("$qualification_timeout" --signal=INT --kill-after=30s "${remaining}s")
   fi
   "${prefix[@]}" "$qualification_bazel_binary" --bazelrc="$qualification_rc" "$@"
 }
@@ -489,7 +503,7 @@ bazel() {
       "--build_event_json_file=$expected_events" --build_event_json_file_path_conversion=false \
       "${target_args[@]}" || result=$?
     printf '%s\n' "$result" > "$directory/preflight-exit.txt" || capture_status=1
-    "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+    "${capture_prefix[@]}" "$qualification_timeout" --signal=TERM --kill-after=5s 300s \
       python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
       --events "$expected_events" --output "$directory/expected.jsonl" \
       --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
@@ -540,7 +554,7 @@ bazel() {
     cat -- "$directory/stdout.log" || capture_status=$?
     cat -- "$directory/stderr.log" >&2 || capture_status=$?
   else
-    "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+    "${capture_prefix[@]}" "$qualification_timeout" --signal=TERM --kill-after=5s 300s \
       python3 "$qualification_workspace/test/rbe/qualification_report.py" capture \
       --events "$raw_events" --output "$directory/events.jsonl" \
       --output-root "$qualification_workspace/bazel-out" --report-dir "$directory/reports" \
@@ -590,7 +604,7 @@ CONTEXT
   else
     verdict_options=(verdict --events "$directory/events.jsonl" --manifest "$directory/events.jsonl.manifest.json" "${verdict_options[@]}")
   fi
-  "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 300s \
+  "${capture_prefix[@]}" "$qualification_timeout" --signal=TERM --kill-after=5s 300s \
     python3 "$qualification_workspace/test/rbe/qualification_report.py" "${verdict_options[@]}" \
     --context "$directory/context.json" --output "$directory/verdict.json" \
     || verdict_status=$?

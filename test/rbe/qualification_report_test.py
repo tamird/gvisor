@@ -2662,17 +2662,14 @@ signal.pause()
                     ["bash", "test/rbe/actions.sh", *options],
                     cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
-                timeout = shutil.which("timeout", path=environment["PATH"])
-                self.assertIsNotNone(timeout, "The deadline fixture requires timeout on PATH")
-                timeout_version = subprocess.run(
-                    [timeout, "--version"], capture_output=True, text=True, timeout=5, check=False,
-                )
+                timeout = (runner_temp / "qualification/timeout-path.txt").read_text().strip()
+                timeout_version = (runner_temp / "qualification/timeout-version.txt").read_text()
                 status_path = workspace / "work-status"
                 verdict_path = runner_temp / "qualification/verdict.json"
                 diagnostic = {
                     "phase": phase, "architecture": architecture, "runtime_filter": runtime_filter,
                     "timeout": timeout, "timeout_resolved": str(Path(timeout).resolve()),
-                    "timeout_version": timeout_version.stdout + timeout_version.stderr,
+                    "timeout_version": timeout_version,
                     "returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr,
                     "child_status": status_path.read_text() if status_path.exists() else None,
                     "verdict": report.read_json(verdict_path) if verdict_path.exists() else None,
