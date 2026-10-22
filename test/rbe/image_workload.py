@@ -145,15 +145,18 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                  "--extra_execution_platforms=@rules_rs//rs/platforms:" + exec_triple,
                  "--output=label", query],
             ).splitlines()
-            if len(lines) != 1:
-                raise ValueError("Expected one configured Rust compiler for " + exec_triple)
-            label = lines[0].split(" ", 1)[0]
-            if not re.fullmatch(r"@@?(?:[^/]+[+])?" + re.escape(compiler_repository) +
-                                r"//:rustc", label):
-                raise ValueError("Unexpected configured Darwin compiler: " + label)
+            if not lines or len(set(lines)) != len(lines):
+                raise ValueError("Expected distinct configured Rust compiler dependencies for " + exec_triple)
+            labels = {line.split(" ", 1)[0] for line in lines}
+            if len(labels) != 1 or not all(
+                re.fullmatch(r"@@?(?:[^/]+[+])?" + re.escape(compiler_repository) + r"//:rustc", label)
+                for label in labels
+            ):
+                raise ValueError("Unexpected configured Darwin compilers: " + repr(sorted(labels)))
+            label = next(iter(labels))
             records["darwin_execution_analysis"].append({
                 "execution_triple": exec_triple, "target_triple": target_triple,
-                "compiler_label": label, "configured_compiler": lines[0],
+                "compiler_label": label, "configured_compilers": lines,
                 "requested_execution_platform": "@rules_rs//rs/platforms:" + exec_triple,
                 "execution_performed": False,
             })
