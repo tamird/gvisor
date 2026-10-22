@@ -591,7 +591,13 @@ def main() -> None:
     temporary.replace(output)
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
-    print(json.dumps(check_report(prs, previous)))
+    # gh run view scans lines with Go's default 64 KiB token limit. A single
+    # aggregate report can hide the rest of this step, including human feedback.
+    for kind, observations in check_report(prs, previous).items():
+        for observation in observations:
+            print(json.dumps({kind: [observation]}))
+        if not observations:
+            print(json.dumps({kind: []}))
     for source in prs:
         for pr in (source, *source["imports"]):
             if (pr.get("repo", REPO), pr["number"]) not in refreshed:

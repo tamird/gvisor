@@ -163,6 +163,33 @@ class CollectorHistoryTest(unittest.TestCase):
                 self.assertEqual(self.path.read_bytes(), self.original_bytes)
                 self.assertFalse((self.root / ".github-status.json.tmp").exists())
 
+    def test_large_check_inventory_keeps_following_feedback_in_cli_logs(self) -> None:
+        # A retained workflow emitted a 136 KiB aggregate line. gh run view's
+        # default bufio.Scanner then omitted that line and the feedback tail.
+        observation = {"repo": "google/gvisor", "source": 15931, "number": 15931,
+                       "sourceHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
+                       "failedChecks": [{"name": "feedback/copybara", "state": "FAILURE",
+                                         "description": "Internal check diagnostic " * 20}]}
+        report = {"checkFailures": [observation] * 100, "changedChecks": []}
+        self.assertGreater(len(json.dumps(report).encode()), 64 * 1024)
+        comment = {"id": "inline-new", "url": "https://github.com/google/gvisor/pull/3#discussion_r1",
+                   "body": "The sysctl write can return EACCES.", "createdAt": LATER, "updatedAt": LATER,
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        self.raw[3]["reviewThreads"].update(totalCount=1, nodes=[
+            {"id": "thread-new", "isResolved": False, "isOutdated": False, "path": "setup.cc", "line": 1,
+             "comments": {"nodes": [comment], "pageInfo": {"hasPreviousPage": False}}}])
+        with mock.patch.object(updater, "check_report", return_value=report), mock.patch("builtins.print") as output:
+            current = self.collect()
+        lines = [call.args[0] for call in output.call_args_list]
+        self.assertLess(max(len(line.encode()) for line in lines), 64 * 1024)
+        events = [json.loads(line) for line in lines if line.startswith("{")]
+        self.assertEqual([item for event in events for item in event.get("checkFailures", [])],
+                         report["checkFailures"])
+        self.assertIn({"changedChecks": []}, events)
+        feedback = [item for event in events for item in event.get("feedback", [])]
+        self.assertEqual([item["id"] for item in feedback], [comment["id"]])
+        self.assertEqual(next(pr for pr in current["prs"] if pr["number"] == 3)["threads"]["unresolved"], 1)
+
     def test_same_number_keeps_repository_history_and_direct_review_policy(self) -> None:
         repo = "buildbuddy-io/buildbuddy"
         self.registry["meta"]["repositories"] = {"google/gvisor": "copybara", repo: "none"}
