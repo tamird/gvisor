@@ -24,6 +24,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         root = Path((evidence / "invocation-execution-root/stdout.log").read_text().strip())
         if not root.is_absolute() or not root.is_dir():
             raise ValueError("Invalid canonical execution root")
+        guarded = invoke("execution-log-stream-guards",
+                         ["run", "--lockfile_mode=error", "--noannounce_rc",
+                          "@rules_python//python/bin:python", "--",
+                          str(Path.cwd() / "test/rbe/image_execution_test.py")], "command", targets=[])
+        if guarded["status"] != "PASS":
+            raise RuntimeError("Execution-log streaming guards failed")
         for architecture in ("x86_64", "aarch64"):
             selected = [*options, "--config=" + architecture,
                         "--platforms=" + config["image_platforms"][architecture]]
@@ -36,7 +42,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 row["analysis_status"] = analysis["status"]
                 if analysis["status"] != "PASS":
                     raise RuntimeError("Complete clang-tidy selection failed analysis")
-                execution = evidence / (phase + "-execution.json")
+                # Keep incomplete raw logs out of the compact evidence bundle.
+                execution = private / (phase + "-execution.json")
                 expected = evidence / ("invocation-" + phase + "-analysis") / "events.jsonl"
                 built = invoke(phase, ["build", *selected, "--execution_log_json_file=" + str(execution),
                                "--noexecution_log_sort", *patterns], "build", (expected,), targets=[])
