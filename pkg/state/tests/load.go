@@ -16,6 +16,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 
 	"gvisor.dev/gvisor/pkg/state"
 )
@@ -32,6 +33,17 @@ type afterLoadStruct struct {
 
 func (a *afterLoadStruct) afterLoad(context.Context) {
 	a.v++
+}
+
+// +stateify savable
+type waitLoadStruct struct {
+	v any `state:"wait"`
+}
+
+func (w *waitLoadStruct) afterLoad(context.Context) {
+	if got, want := w.v.(*afterLoadStruct).v, 1; got != want {
+		panic(fmt.Sprintf("waitLoadStruct.afterLoad: dependency value = %d, want %d", got, want))
+	}
 }
 
 // +stateify savable

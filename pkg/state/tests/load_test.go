@@ -47,6 +47,15 @@ func TestLoadHooks(t *testing.T) {
 	})
 }
 
+func TestInterfaceWaitOrdering(t *testing.T) {
+	runWithBothEngines(t, func(t *testing.T) {
+		runTestCases(t, false, "", []any{
+			waitLoadStruct{v: &afterLoadStruct{v: 1}},
+			&waitLoadStruct{v: &afterLoadStruct{v: 1}},
+		})
+	})
+}
+
 func TestCycles(t *testing.T) {
 	// cs is a single object cycle.
 	cs := cycleStruct{nil}
