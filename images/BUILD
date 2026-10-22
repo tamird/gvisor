@@ -75,6 +75,7 @@ make(
 cp busybox "$$INSTALLDIR/bin/busybox"
 cp .config "$$INSTALLDIR/busybox.config"
 """,
+    set_file_prefix_map = True,
     target_compatible_with = ["@platforms//os:linux"],
     targets = [
         "allnoconfig",
