@@ -540,81 +540,113 @@ func checkComplex(value, stored complex128) {
 	}
 }
 
-// decodeObject decodes a object value.
-func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) {
-	switch x := encoded.(type) {
-	case wire.Nil: // Fast path: first.
-		// We leave obj alone here. That's because if obj represents an
-		// interface, it may have been imbued with type information in
-		// decodeInterface, and we don't want to destroy that.
-	case *wire.Ref:
-		// Nil pointers may be encoded in a "forceValue" context. For
-		// those we just leave it alone as the value will already be
-		// correct (nil).
-		if id := objectID(x.Root); id == 0 {
-			return
-		}
-
-		// Note that if this is a map type, we go through a level of
-		// indirection to allow for map aliasing.
-		if obj.Kind() == reflect.Map {
-			v := ds.register(x, obj.Type())
-			if v.IsNil() {
-				// Note that we don't want to clobber the map
-				// if has already been decoded by decodeMap. We
-				// just make it so that we have a consistent
-				// reference when that eventually does happen.
-				v.Set(reflect.MakeMap(v.Type()))
-			}
-			obj.Set(v)
-			return
-		}
-
-		// Normal assignment: authoritative only if no dots.
-		v := ds.register(x, obj.Type().Elem())
-		obj.Set(reflectValueRWAddr(v))
-	case wire.Bool:
-		obj.SetBool(bool(x))
-	case wire.Int:
-		obj.SetInt(int64(x))
-		checkInt(int64(x), obj.Int())
-	case wire.Uint:
-		obj.SetUint(uint64(x))
-		checkUint(uint64(x), obj.Uint())
-	case wire.Float32:
-		obj.SetFloat(float64(x))
-	case wire.Float64:
-		obj.SetFloat(float64(x))
-		checkFloat(float64(x), obj.Float())
-	case *wire.Complex64:
-		obj.SetComplex(complex128(*x))
-	case *wire.Complex128:
-		obj.SetComplex(complex128(*x))
-		checkComplex(complex128(*x), obj.Complex())
-	case *wire.String:
-		obj.SetString(string(*x))
-	case *wire.Slice:
-		// See *wire.Ref above; same applies.
-		if id := objectID(x.Ref.Root); id == 0 {
-			return
-		}
-		// Note that it's fine to slice the array here and assume that
-		// contents will still be filled in later on.
-		typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-		v := ds.register(&x.Ref, typ)
-		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
-	case wire.Array:
-		ds.decodeArray(ods, obj, x)
-	case *wire.Struct:
-		ds.decodeStruct(ods, obj, x)
-	case *wire.Map:
-		ds.decodeMap(ods, obj, x)
-	case *wire.Interface:
-		ds.decodeInterface(ods, obj, x)
-	default:
-		// Should not happen, not propagated as an error.
-		Failf("unknown object %#v for %q", encoded, obj.Type().Name())
+// decodeObject selects the operation from the destination's Go type and checks
+// that the encoded value has the corresponding wire representation. Generated
+// fields, manual loaders and dynamically allocated graph objects share this path.
+func (ds *decodeState) decodeObject(ods *objectDecodeState, target reflect.Value, value wire.Object) {
+	if _, ok := value.(wire.Nil); ok {
+		return
 	}
+	if wrapped, ok := value.(*wire.Interface); ok {
+		// Preserve nil-interface delegation and manual interface unwrapping.
+		// decodeInterface checks assignability at that boundary.
+		ds.decodeInterface(ods, target, wrapped)
+		return
+	}
+	switch target.Kind() {
+	case reflect.Bool:
+		target.SetBool(bool(requireWire[wire.Bool](value)))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		v := int64(requireWire[wire.Int](value))
+		target.SetInt(v)
+		checkInt(v, target.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		v := uint64(requireWire[wire.Uint](value))
+		target.SetUint(v)
+		checkUint(v, target.Uint())
+	case reflect.Float32, reflect.Float64:
+		if v, ok := value.(wire.Float32); ok {
+			target.SetFloat(float64(v))
+		} else {
+			v := float64(requireWire[wire.Float64](value))
+			target.SetFloat(v)
+			checkFloat(v, target.Float())
+		}
+	case reflect.Complex64, reflect.Complex128:
+		if v, ok := value.(*wire.Complex64); ok {
+			target.SetComplex(complex128(*v))
+		} else {
+			v := complex128(*requireWire[*wire.Complex128](value))
+			target.SetComplex(v)
+			checkComplex(v, target.Complex())
+		}
+	case reflect.String:
+		target.SetString(string(*requireWire[*wire.String](value)))
+	case reflect.Pointer:
+		ds.decodeReference(target, requireWire[*wire.Ref](value))
+	case reflect.Slice:
+		if slice, ok := value.(*wire.Slice); ok {
+			if objectID(slice.Ref.Root) != 0 {
+				// The graph owns the full backing array, including capacity.
+				typ := reflect.ArrayOf(int(slice.Capacity), target.Type().Elem())
+				object := ds.register(&slice.Ref, typ)
+				target.Set(reflectValueRWSlice3(object, 0, int(slice.Length), int(slice.Capacity)))
+			}
+		} else {
+			// Manual savers can encode an array into an existing slice.
+			ds.decodeArray(ods, target, requireWire[wire.Array](value))
+		}
+	case reflect.Array:
+		ds.decodeArray(ods, target, requireWire[wire.Array](value))
+	case reflect.Map:
+		if ref, ok := value.(*wire.Ref); ok {
+			ds.decodeReference(target, ref)
+		} else {
+			ds.decodeMap(ods, target, requireWire[*wire.Map](value))
+		}
+	case reflect.Struct:
+		ds.decodeStruct(ods, target, requireWire[*wire.Struct](value))
+	default:
+		Failf("cannot restore %T into %s", value, target.Type())
+	}
+}
+
+func requireWire[T wire.Object](value wire.Object) T {
+	v, ok := value.(T)
+	if !ok {
+		Failf("expected %s, got %T", reflect.TypeFor[T](), value)
+	}
+	return v
+}
+
+// decodeReference resolves graph references, map aliases and interior pointers
+// for validated pointer and map destinations.
+func (ds *decodeState) decodeReference(obj reflect.Value, ref *wire.Ref) {
+	// Nil pointers may be encoded in a "forceValue" context. For
+	// those we just leave it alone as the value will already be
+	// correct (nil).
+	if id := objectID(ref.Root); id == 0 {
+		return
+	}
+
+	// Note that if this is a map type, we go through a level of
+	// indirection to allow for map aliasing.
+	if obj.Kind() == reflect.Map {
+		v := ds.register(ref, obj.Type())
+		if v.IsNil() {
+			// Note that we don't want to clobber the map
+			// if has already been decoded by decodeMap. We
+			// just make it so that we have a consistent
+			// reference when that eventually does happen.
+			v.Set(reflect.MakeMap(v.Type()))
+		}
+		obj.Set(v)
+		return
+	}
+
+	// Normal assignment: authoritative only if no dots.
+	v := ds.register(ref, obj.Type().Elem())
+	obj.Set(reflectValueRWAddr(v))
 }
 
 // Load deserializes the object graph rooted at obj.
