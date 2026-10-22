@@ -248,3 +248,42 @@ func TestCommonEngineStoragePermissions(t *testing.T) {
 		t.Fatalf("wrong-type destination = %d, want %d", got, want)
 	}
 }
+
+func TestCommonEngineIntegerNarrowing(t *testing.T) {
+	type smallInt int8
+	ops := integerOperations[smallInt]()
+	for _, test := range []struct {
+		name    string
+		encoded wire.Int
+		want    smallInt
+		wantErr string
+	}{
+		{"minimum", -128, -128, ""},
+		{"maximum", 127, 127, ""},
+		{"underflow", -129, 127, "signed integer truncated from -129 to 127"},
+		{"overflow", 128, -128, "signed integer truncated from 128 to -128"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var value smallInt
+			handle := typedHandle(&value, &ops)
+			ds := decodeState{}
+			err := safely(func() { ds.loadValue(nil, handle, test.encoded) })
+			if test.wantErr == "" {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), test.wantErr) {
+				t.Fatalf("Load error = %v, want ErrState containing %q", err, test.wantErr)
+			}
+			if value != test.want {
+				t.Fatalf("stored value = %d, want %d", value, test.want)
+			}
+			var encoded wire.Object
+			es := encodeState{}
+			es.saveValue(handle, encodeDefault, &encoded)
+			if got, want := encoded, wire.Int(test.want); got != want {
+				t.Fatalf("saved value = %v, want %v", got, want)
+			}
+		})
+	}
+}
