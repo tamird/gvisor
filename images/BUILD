@@ -73,6 +73,8 @@ configure_make(
     linkopts = ["-static"],
     out_binaries = ["timeout"],
     out_include_dir = "",
+    # configure compiles absolute source paths; keep worker roots out of output.
+    set_file_prefix_map = True,
     target_compatible_with = [
         "@llvm//constraints/libc:musl",
         "@platforms//os:linux",
