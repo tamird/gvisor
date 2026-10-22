@@ -63,6 +63,8 @@ make(
         "BUSYBOX_HOSTCC": "$(execpath :busybox_hostcc)",
         "BUSYBOX_NM": "$(execpath :busybox_nm)",
         "KCONFIG_ALLCONFIG": "$(execpath busybox/pidfd.config)",
+        # Keep generated configuration and banners independent of wall time.
+        "KCONFIG_NOTIMESTAMP": "1",
     },
     lib_source = "@busybox_source//:source",
     out_binaries = ["busybox"],
