@@ -17,7 +17,8 @@ destination = Path(sys.argv[1])
 output_base = Path(os.environ["APPLICABILITY_OUTPUT_BASE"])
 options = ["--lockfile_mode=error", "--noannounce_rc", "--compilation_mode=opt",
            "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"]]
-startup = ["--bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"]]
+startup = ["--output_base=" + str(output_base),
+           "--bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"]]
 programs = ["pidfd_test", "pidfd_fdinfo_test", "pidfd_open_test", "pidfd_poll_test",
             "pidfd_wait", "pidfd_getfd_test", "pidfd_setns_test"]
 installed_sources = {
@@ -54,7 +55,8 @@ def run(arguments):
 
 try:
     records["source"] = run(["git", "rev-parse", "HEAD"]).strip()
-    execution_root = Path(run(["bazel", *startup, "info", *options, "execution_root"]).strip())
+    records["execution_root_output"] = run(["bazel", *startup, "info", *options, "execution_root"])
+    execution_root = Path(records["execution_root_output"].strip())
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError("Invalid canonical execution root")
     for architecture, config, machine in (("amd64", "x86_64", "Advanced Micro Devices X86-64"),
