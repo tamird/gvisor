@@ -135,7 +135,14 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
                 continue
             if result.returncode == 0:
                 info = json.loads(result.stdout)
-                if (int(Path("/var/run/docker.pid").read_text()) == daemon_pid and
+                try:
+                    observed_pid = int(pidfile.read_text())
+                except FileNotFoundError:
+                    observed_pid = None
+                    records.setdefault("daemon_readiness_observations", []).append(
+                        {"pid": daemon_pid, "restoring": restoring, "pidfile": "absent",
+                         "docker_info_exit": result.returncode})
+                if (observed_pid == daemon_pid and
                         info["SecurityOptions"] == expected_security):
                     for key in ("ID", "DockerRootDir", "Driver", "ServerVersion"):
                         if info[key] != records["server_info_before"][key]:
@@ -218,6 +225,10 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             time.sleep(0.1)
         else:
             raise RuntimeError("Docker did not expose the configured runtime")
+        if configuration.get("lifecycle_only", False):
+            records["status"] = "PASS"
+            yield records
+            return
         image_name = "gvisor.dev/images/" + image_component + ":latest"
         image_key = image_component.replace("/", "_")
         image_make = make
