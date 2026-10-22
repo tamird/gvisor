@@ -540,6 +540,12 @@ class ReapprovalReminderTest(unittest.TestCase):
                 with self.assertRaises(subprocess.TimeoutExpired):
                     updater.reapproval_reminders(post=True)
                 self.assertEqual(transport.call_count - calls, 2)
+                transport.side_effect = [subprocess.CompletedProcess([], 0, "tamird\n", ""),
+                                         subprocess.CalledProcessError(1, "gh", stderr="permission denied (HTTP 403)")]
+                calls = transport.call_count
+                with self.assertRaisesRegex(RuntimeError, r"permission denied \(HTTP 403\); not retried"):
+                    updater.reapproval_reminders(post=True)
+                self.assertEqual(transport.call_count - calls, 2)
 
 
 if __name__ == "__main__":

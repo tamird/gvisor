@@ -491,11 +491,15 @@ def reapproval_reminders(post: bool = False) -> None:
             continue
         # Never retry this mutation: an interrupted response may have posted.
         # The next scheduled run reads the exact marker from GitHub history.
-        response = subprocess.run(
-            ["gh", "api", "--method", "POST", f"repos/{pr['repo']}/issues/{pr['number']}/comments",
-             "--input", "-"], input=json.dumps({"body": plan["body"]}),
-            text=True, capture_output=True, check=True, timeout=60,
-        )
+        try:
+            response = subprocess.run(
+                ["gh", "api", "--method", "POST", f"repos/{pr['repo']}/issues/{pr['number']}/comments",
+                 "--input", "-"], input=json.dumps({"body": plan["body"]}),
+                text=True, capture_output=True, check=True, timeout=60,
+            )
+        except subprocess.CalledProcessError as error:
+            detail = error.stderr.strip() if error.stderr else "gh returned no diagnostic"
+            raise RuntimeError(f"Reminder POST for {pr['repo']}#{pr['number']} failed: {detail}; not retried") from None
         comment = json.loads(response.stdout)
         if comment.get("body") != plan["body"] or comment.get("user", {}).get("login") != OWNER:
             raise RuntimeError("Posted reminder readback does not match its planned body and owner")
