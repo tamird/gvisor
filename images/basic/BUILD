@@ -1,6 +1,6 @@
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
-load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@rules_rs//rs:rust_binary.bzl", "rust_binary")
 load("//images:img.bzl", "image_outputs")
 
 package(
@@ -64,7 +64,7 @@ rust_binary(
     # The C++ runtime would override Rust's bundled unwind implementation.
     features = ["-static_link_cpp_runtimes"],
     rustc_flags = ["-Clink-self-contained=yes"],
-    target_compatible_with = ["@llvm//constraints/libc:musl"],
+    target_compatible_with = ["@rules_rs//rs/platforms/constraints:musl"],
 )
 
 image_layer(
@@ -78,7 +78,7 @@ image_layer(
 image_layer(
     name = "rust_notice_layer",
     srcs = {
-        "/usr/share/licenses/rust/COPYRIGHT-library.html": "@rust_image_x86_64__x86_64-unknown-linux-musl__stable_tools//:share/doc/rust/COPYRIGHT-library.html",
+        "/usr/share/licenses/rust/COPYRIGHT-library.html": "@rustc_linux_x86_64_1_99_1//:share/doc/rust/COPYRIGHT-library.html",
         "/usr/share/licenses/rust/NOTICE": "rust/NOTICE",
     },
     create_parent_directories = "enabled",
@@ -100,8 +100,8 @@ image_index(
     name = "rust",
     manifests = [":rust_manifest"],
     platforms = select({
-        "@platforms//cpu:aarch64": ["@llvm//platforms:linux_aarch64_musl"],
-        "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
+        "@platforms//cpu:aarch64": ["@rules_rs//rs/platforms:aarch64-unknown-linux-musl"],
+        "@platforms//cpu:x86_64": ["@rules_rs//rs/platforms:x86_64-unknown-linux-musl"],
     }),
     tags = ["manual"],
 )
@@ -110,8 +110,8 @@ image_index(
     name = "rust_index",
     manifests = [":rust_manifest"],
     platforms = [
-        "@llvm//platforms:linux_aarch64_musl",
-        "@llvm//platforms:linux_x86_64_musl",
+        "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
+        "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
     ],
     tags = ["manual"],
 )

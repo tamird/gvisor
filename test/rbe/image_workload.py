@@ -20,7 +20,7 @@ OUTPUTS = ["//images/basic:rust_archive", "//images/basic:rust_context"]
 ARCHITECTURES = {62: "amd64", 183: "arm64"}
 TRIPLES = {"amd64": "x86_64-unknown-linux-musl", "arm64": "aarch64-unknown-linux-musl"}
 DIAGNOSTICS = ["--@rules_rust//rust/settings:per_crate_rustc_flag=" + BINARY + "@" + flag
-               for flag in ("--print=link-args", "-Clink-arg=--trace", "-Wlinker_messages")]
+               for flag in ("--print=link-args", "-Clink-arg=-Wl,--trace", "-Wlinker_messages")]
 DIAGNOSTICS.append("--@rules_rust//rust/settings:error_format=json")
 
 
@@ -130,6 +130,39 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         execution_root = Path(command("rust-execution-root", ["info", *options, "execution_root"]).strip())
         if not execution_root.is_absolute() or not execution_root.is_dir():
             raise ValueError("Invalid canonical execution root")
+        # These queries configure Darwin execution platforms without running
+        # any Darwin action. Linux builds below remain the execution evidence.
+        records["darwin_execution_analysis"] = []
+        for cpu in ("x86_64", "aarch64"):
+            exec_triple = cpu + "-apple-darwin"
+            target_triple = cpu + "-unknown-linux-musl"
+            configured = json.loads(command(
+                "rust-darwin-exec-" + cpu,
+                ["aquery", *options, "--lockfile_mode=update",
+                 "--platforms=@rules_rs//rs/platforms:" + target_triple,
+                 "--extra_execution_platforms=@rules_rs//rs/platforms:" + exec_triple,
+                 "--output=jsonproto", 'mnemonic("Rustc", ' + BINARY + ')'],
+            ))
+            target_ids = {str(row["id"]) for row in configured.get("targets", [])
+                          if row.get("label") == BINARY}
+            actions = [row for row in configured.get("actions", [])
+                       if str(row.get("targetId")) in target_ids and row.get("mnemonic") == "Rustc"]
+            if len(actions) != 1:
+                raise ValueError("Expected one configured Rust owner for " + exec_triple)
+            action = actions[0]
+            compilers = [argument for argument in action.get("arguments", [])
+                         if re.fullmatch(r"external/(?:[^/]+[+])?rustc_darwin_" +
+                                         re.escape(cpu) + r"_1_99_1/bin/rustc", argument)]
+            if len(compilers) != 1:
+                raise ValueError("Darwin analysis did not select the declared Rust compiler: " + exec_triple)
+            platform = action.get("executionPlatform", "")
+            if not platform.endswith("//rs/platforms:" + exec_triple):
+                raise ValueError("Unexpected Darwin execution platform: " + platform)
+            records["darwin_execution_analysis"].append({
+                "execution_triple": exec_triple, "target_triple": target_triple,
+                "compiler": compilers[0], "execution_platform": platform,
+                "execution_performed": False,
+            })
         # The native index performs the architecture split. Diagnostic flags
         # apply only to the single Rust owner in this configured graph.
         for variant, flags in (("normal", []), ("trace", DIAGNOSTICS)):
