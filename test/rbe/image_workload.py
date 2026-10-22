@@ -10,6 +10,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     targets = config["targets"]
     image_targets = config["image_targets"]
     profile_targets = list(dict.fromkeys(row["owner"] for row in config["profile_helper_outputs"]))
+    profile_mode = "--compilation_mode=" + config["profile_helper_compilation_mode"]
     if set(image_targets).intersection(profile_targets) or set(targets) != set(image_targets + profile_targets):
         raise ValueError("PIDFD and profile-helper target partitions must cover the selected build")
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
@@ -25,7 +26,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     for architecture in ("x86_64", "aarch64"):
         platform = "--platforms=" + config["image_platforms"][architecture]
         for phase, selected, platform_options in (("pidfd", image_targets, [platform]),
-                                                  ("profile-helper", profile_targets, [])):
+                                                  ("profile-helper", profile_targets, [profile_mode])):
             execution_log = evidence / (architecture + "-" + phase + "-execution.json")
             built = invoke(phase + "-" + architecture,
                            ["build", *options, "--config=" + architecture, *platform_options, "--keep_going",
@@ -34,6 +35,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if built["status"] != "PASS":
                 raise RuntimeError(phase + " image build failed for " + architecture)
             record_execution(execution_log, architecture, phase)
+    for architecture in ("x86_64", "aarch64"):
         expected = [row for row in config["profile_helper_outputs"]
                     if row["architecture"] == architecture]
         comparisons = []
@@ -41,7 +43,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         try:
             for index, row in enumerate(expected):
                 name = f"profile-output-{architecture}-{index}"
-                result = invoke(name, ["cquery", *options, "--config=" + architecture,
+                result = invoke(name, ["cquery", *options, "--config=" + architecture, profile_mode,
                                       "--output=files", row["owner"]],
                                 "command", targets=[])
                 if result["status"] != "PASS":

@@ -233,12 +233,15 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # this canonical lock; the separate license audit covers the full graph.
         for architecture in ("x86_64", "aarch64"):
             graphs = [("images", CONFIG["image_targets"], ["--platforms=" + CONFIG["image_platforms"][architecture]])]
+            profile_targets = list(dict.fromkeys(row["owner"] for row in CONFIG["profile_helper_outputs"]))
+            graphs.append(("profile-helper", profile_targets,
+                           ["--compilation_mode=" + CONFIG["profile_helper_compilation_mode"]]))
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
                 graphs.append(("runtime", runtime_targets, []))
-            for name, preparation_targets, platform_options in graphs:
+            for name, preparation_targets, configuration_options in graphs:
                 prepared = invoke("dependency-preparation-" + architecture + "-" + name,
-                                  ["cquery", "--config=" + architecture, *platform_options,
-                                   "--compilation_mode=opt", "--lockfile_mode=update",
+                                  ["cquery", "--config=" + architecture,
+                                   "--compilation_mode=opt", *configuration_options, "--lockfile_mode=update",
                                    "--noannounce_rc", "--output=label",
                                    "set(" + " ".join(preparation_targets) + ")"],
                                   "command", targets=[])
