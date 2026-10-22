@@ -10,10 +10,10 @@ import qualification_report as report
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     targets = config["targets"]
-    pairs = config["comparison_pairs"]
+    expected = config["expected_outputs"]
     record = {"status": "INCOMPLETE", "source": config["source"],
-              "scope": "Controlled same-toolchain archive/context equality; no runtime replay or fresh-execution assumption",
-              "query_phases": [], "architectures": [], "differences": []}
+              "scope": "Exact archive/context equality; no runtime replay or fresh-execution assumption",
+              "query_phases": [], "architectures": []}
     options = ["--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
                "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"]]
 
@@ -29,7 +29,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         if not execution_root.is_absolute() or not execution_root.is_dir():
             raise ValueError("Invalid canonical execution root")
         for architecture in ("x86_64", "aarch64"):
-            row = {"architecture": architecture, "status": "INCOMPLETE", "outputs": [], "pairs": []}
+            row = {"architecture": architecture, "status": "INCOMPLETE", "outputs": []}
             architecture_options = config["architecture_options"][architecture]
             record["architectures"].append(row)
             execution = private / (architecture + "-execution.json")
@@ -70,26 +70,18 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         raise ValueError("Expected a named single output: " + line)
             if set(paths) != {label.split(":")[1] for label in targets}:
                 raise ValueError("Configured output set differs")
-            identities = {}
             for label in targets:
                 path = paths[label.split(":")[1]]
                 with path.open("rb") as stream:
                     actual = {"sha256": hashlib.file_digest(stream, "sha256").hexdigest(),
                               "bytes": os.fstat(stream.fileno()).st_size}
                 item = by_label[label]
-                identities[label] = actual
+                wanted = expected[architecture][label]
                 row["outputs"].append({"owner": label, "path": str(path),
-                                       "actual": actual, "advertised": item})
-                if actual != {key: item[key] for key in ("sha256", "bytes")}:
+                                       "actual": actual, "advertised": item, "expected": wanted})
+                if actual != wanted or actual != {key: item[key] for key in ("sha256", "bytes")}:
                     raise ValueError("Qualified output identity differs: " + architecture + " " + label)
-            for current, before in pairs.items():
-                equal = identities[current] == identities[before]
-                row["pairs"].append({"current": current, "before": before, "equal": equal})
-                if not equal:
-                    record["differences"].append({"architecture": architecture, "current": current, "before": before})
-            row["status"] = "FAIL" if any(not pair["equal"] for pair in row["pairs"]) else "PASS"
-        if record["differences"]:
-            raise ValueError("Controlled resource output pairs differ")
+            row["status"] = "PASS"
         record["status"] = "PASS"
     finally:
         report.write_json(evidence / "image-output-equivalence.json", record)

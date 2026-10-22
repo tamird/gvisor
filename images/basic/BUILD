@@ -68,8 +68,8 @@ image_outputs(
 image_layer(
     name = "libacl_accounts",
     srcs = {
-        "/etc/group": "libacl/group",
-        "/etc/passwd": "libacl/passwd",
+        "/etc/group": "libacl.group",
+        "/etc/passwd": "libacl.passwd",
     },
     default_metadata = file_metadata(mode = "0644"),
 )
@@ -147,16 +147,16 @@ genrule(
 image_layer(
     name = "sudo_configuration",
     srcs = {
-        "/etc/group": "sudo/group",
-        "/etc/pam.d/common-account": "sudo/common-account",
-        "/etc/pam.d/common-auth": "sudo/common-auth",
-        "/etc/pam.d/common-password": "sudo/common-password",
-        "/etc/pam.d/common-session": "sudo/common-session",
-        "/etc/pam.d/common-session-noninteractive": "sudo/common-session",
-        "/etc/passwd": "sudo/passwd",
-        "/etc/shadow": "sudo/shadow",
+        "/etc/group": "sudo.group",
+        "/etc/pam.d/common-account": "sudo.common-account",
+        "/etc/pam.d/common-auth": "sudo.common-auth",
+        "/etc/pam.d/common-password": "sudo.common-password",
+        "/etc/pam.d/common-session": "sudo.common-session",
+        "/etc/pam.d/common-session-noninteractive": "sudo.common-session",
+        "/etc/passwd": "sudo.passwd",
+        "/etc/shadow": "sudo.shadow",
         "/etc/sudoers": ":sudoers_file",
-        "/etc/sudoers.d/test-admins": "sudo/test-admins",
+        "/etc/sudoers.d/test-admins": "sudo.sudoers",
     },
     default_metadata = file_metadata(mode = "0644"),
     file_metadata = {
