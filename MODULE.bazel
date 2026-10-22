@@ -11,6 +11,7 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 
@@ -97,6 +98,15 @@ image_apt.install(
 use_repo(image_apt, "helper_image_packages")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Build the shell and selected utility applets from the same reviewed source.
+http_archive(
+    name = "busybox_source",
+    build_file = "//images:busybox.BUILD",
+    sha256 = "34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2",
+    strip_prefix = "busybox-1.38.0",
+    urls = ["https://busybox.net/downloads/busybox-1.38.0.tar.bz2"],
+)
 
 http_archive(
     name = "linux_pidfd",

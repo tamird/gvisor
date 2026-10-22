@@ -187,9 +187,31 @@ package_layer(
     packages = _PIDFD_TIMEOUT_PACKAGES,
 )
 
+image_layer(
+    name = "pidfd_applets_layer",
+    symlinks = {
+        "/bin/" + applet: "/bin/busybox"
+        for applet in [
+            "basename",
+            "cat",
+            "cut",
+            "dirname",
+            "grep",
+            "realpath",
+            "sed",
+            "sh",
+            "sleep",
+            "sort",
+            "tee",
+            "tr",
+            "uniq",
+            "wc",
+        ]
+    },
+)
+
 image_manifest(
     name = "pidfd_tests",
-    base = "@test_busybox",
     cmd = [
         "/bin/sh",
         "-ec",
@@ -203,11 +225,16 @@ else
 fi
 """,
     ],
+    env = {"PATH": "/usr/bin:/bin"},
     layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        ":pidfd_applets_layer",
         ":pidfd_timeout_layer",
         ":pidfd_tests_layer",
     ],
     tags = ["manual"],
+    user = "0:0",
     working_dir = "/opt/kselftest",
 )
 
