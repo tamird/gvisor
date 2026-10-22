@@ -1,7 +1,7 @@
 """Collector history retention and reopening through the real main path."""
 
 import copy
-from datetime import datetime
+from datetime import datetime, timezone
 import importlib
 import json
 from pathlib import Path
@@ -33,6 +33,7 @@ def raw_pr(number: int, state: str = "OPEN", *, author: str = "tamird", head: in
         "labels": {"nodes": [], "pageInfo": {"hasNextPage": False}},
         "comments": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
         "reviews": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
+        "reviewDismissals": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
         "reviewRequests": {"nodes": [], "pageInfo": {"hasNextPage": False}},
         "reviewThreads": {"nodes": [], "totalCount": 0, "pageInfo": {"hasNextPage": False}},
         "timelineItems": {"nodes": [], "pageInfo": {"hasPreviousPage": False}},
@@ -332,6 +333,153 @@ class ProviderStatusTest(unittest.TestCase):
         self.assertEqual(result["checks"]["contexts"][0]["description"], check["description"])
         self.assertEqual(result["checks"]["contexts"][0]["state"], "ERROR")
         self.assertIn("description", updater.CHECKS.split("... on StatusContext", 1)[1])
+
+
+class ReapprovalReminderTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.now = datetime(2026, 10, 22, 16, 30, tzinfo=timezone.utc)
+        self.raw = raw_pr(7, head=8)
+        self.review = {"kind": "review", "id": "approval-7", "url": "https://github.com/google/gvisor/pull/7#review",
+                       "body": "", "state": "APPROVED", "submittedAt": OLD, "updatedAt": OLD,
+                       "author": {"login": "maintainer", "__typename": "User"},
+                       "authorAssociation": "MEMBER", "commit": {"oid": f"{7:040x}"}}
+        self.raw["reviews"]["nodes"] = [self.review]
+        self.node = {"id": "pr:7", "type": "pr", "repo": "google/gvisor", "number": 7,
+                     "reapproval": {"kind": "content-amendment", "method": "reviewed-source-diff",
+                                    "head": f"{8:040x}", "approvedHead": f"{7:040x}", "diffSha256": "c" * 64,
+                                    "summary": "Make now invokes the declared builder.",
+                                    "evidence": "https://github.com/google/gvisor/compare/old..new"}}
+
+    def plan(self, now: datetime | None = None) -> dict:
+        return updater.reminder_plan(retained(self.raw), self.node, now or self.now, "tamird")
+
+    def test_business_hours_follow_pacific_dst_and_weekdays(self) -> None:
+        for stamp, due in [("2026-10-22T15:59:59+00:00", False), ("2026-10-22T16:00:00+00:00", True),
+                           ("2026-10-23T00:00:00+00:00", False), ("2026-10-24T16:00:00+00:00", False),
+                           ("2026-11-02T16:59:59+00:00", False), ("2026-11-02T17:00:00+00:00", True)]:
+            with self.subTest(stamp=stamp):
+                self.assertEqual(self.plan(datetime.fromisoformat(stamp))["status"] == "due", due)
+        with self.assertRaisesRegex(ValueError, "timezone"):
+            self.plan(datetime(2026, 10, 22, 16, 30))
+
+    def test_exact_amendment_and_maintainer_binding(self) -> None:
+        plan = self.plan()
+        self.assertEqual((plan["approvedHead"], plan["head"], plan["approvers"]),
+                         (f"{7:040x}", f"{8:040x}", ["maintainer"]))
+        self.assertIn("🚨 @maintainer", plan["body"])
+        self.assertIn(f"commit/{7:040x}", plan["body"])
+        self.assertIn(f"commit/{8:040x}", plan["body"])
+        self.assertIn("Posted by Codex on behalf of @tamird.", plan["body"])
+        for key, value in [("head", "a" * 40), ("approvedHead", "a" * 40), ("diffSha256", "bad")]:
+            with self.subTest(key=key), mock.patch.dict(self.node["reapproval"], {key: value}):
+                self.assertNotEqual(self.plan()["status"], "due")
+        with mock.patch.dict(self.node, {"reapproval": {}}):
+            self.assertEqual(self.plan()["status"], "needs-evidence")
+        with mock.patch.dict(self.node, {"approvedPatch": {"head": f"{8:040x}"}}):
+            self.assertEqual(self.plan()["reason"], "reviewed-patch-preserving-rebase")
+        for author, association in [({"login": "tamird", "__typename": "User"}, "OWNER"),
+                                    ({"login": "bot", "__typename": "Bot"}, "MEMBER"),
+                                    ({"login": "outsider", "__typename": "User"}, "NONE")]:
+            with self.subTest(author=author), mock.patch.dict(self.review, {"author": author, "authorAssociation": association}):
+                self.assertNotEqual(self.plan()["status"], "due")
+
+    def test_current_approval_changes_requested_draft_and_closed_stop_reminders(self) -> None:
+        for state, reason in [("APPROVED", "current-head-approved"),
+                              ("CHANGES_REQUESTED", "current-head-needs-source-work")]:
+            current = {**self.review, "id": "new-review", "state": state, "submittedAt": LATER,
+                       "author": {"login": "another-maintainer", "__typename": "User"},
+                       "commit": {"oid": f"{8:040x}"}}
+            with mock.patch.dict(self.raw["reviews"], {"nodes": [self.review, current]}):
+                self.assertEqual(self.plan()["reason"], reason)
+                current["authorAssociation"] = "NONE"
+                self.assertEqual(self.plan()["status"], "due")
+        for change in [{"isDraft": True}, {"state": "CLOSED"}, {"author": {"login": "other"}},
+                       {"repository": {"nameWithOwner": "tamird/gvisor"}}]:
+            with self.subTest(change=change), mock.patch.dict(self.raw, change):
+                self.assertNotEqual(self.plan()["status"], "due")
+
+    def test_outside_hours_retains_amendment_and_unknown_evidence_classification(self) -> None:
+        early = datetime(2026, 10, 22, 15, 30, tzinfo=timezone.utc)
+        planned = self.plan(early)
+        self.assertEqual(planned["status"], "deferred")
+        self.assertIn("Copybara may still import", planned["body"])
+        with mock.patch.dict(self.node, {"reapproval": {}}):
+            self.assertEqual(self.plan(early)["status"], "needs-evidence")
+
+    def test_one_exact_current_approval_clears_alarm_despite_review_requests(self) -> None:
+        # This alarm concerns stale approved bytes, not aggregate merge readiness.
+        self.raw["reviews"]["nodes"] = [{**self.review, "submittedAt": LATER, "commit": {"oid": f"{8:040x}"}}]
+        self.raw["reviewDecision"] = "REVIEW_REQUIRED"
+        self.raw["reviewRequests"]["nodes"] = [{"requestedReviewer": {"__typename": "User", "login": "maintainer"}}]
+        self.assertEqual(self.plan()["reason"], "current-head-approved")
+        self.raw["headHistory"]["nodes"] = [
+            {"createdAt": "2000-01-03T00:00:00Z", "afterCommit": {"oid": f"{8:040x}"}}]
+        self.assertNotEqual(self.plan().get("reason"), "current-head-approved")
+
+    def test_dismissed_approval_requires_original_state_evidence(self) -> None:
+        self.review["state"] = "DISMISSED"
+        self.assertNotEqual(self.plan()["status"], "due")
+        self.raw["reviewDismissals"]["nodes"] = [
+            {"id": "dismissal", "createdAt": LATER, "previousReviewState": "APPROVED", "review": {"id": "approval-7"}}]
+        self.assertEqual(self.plan()["status"], "due")
+        self.raw["reviewDismissals"]["nodes"][0]["previousReviewState"] = "CHANGES_REQUESTED"
+        self.assertNotEqual(self.plan()["status"], "due")
+        self.raw["reviewDismissals"]["pageInfo"]["hasPreviousPage"] = True
+        self.assertEqual(self.plan()["reason"], "incomplete-review-or-comment-history")
+
+    def test_comment_history_deduplicates_a_full_hour_including_head_changes(self) -> None:
+        comment = {"kind": "comment", "author": {"login": "tamird", "__typename": "User"},
+                   "createdAt": "2026-10-22T15:30:01Z", "body": self.plan()["body"]}
+        self.raw["comments"]["nodes"] = [comment]
+        self.assertEqual(self.plan()["reason"], "reminded-within-one-hour")
+        comment["body"] = comment["body"].replace(f"head={8:040x}", "head=" + "e" * 40)
+        self.assertEqual(self.plan()["reason"], "reminded-within-one-hour")
+        comment["createdAt"] = "2026-10-22T15:30:00Z"
+        self.assertEqual(self.plan()["status"], "due")
+        self.raw["comments"]["pageInfo"]["hasPreviousPage"] = True
+        self.assertEqual(self.plan()["status"], "due")  # The retained window covers the full hour.
+        comment["createdAt"] = "2026-10-22T16:29:00Z"
+        self.assertEqual(self.plan()["reason"], "incomplete-reminder-window")
+
+    def test_post_uses_fresh_state_and_never_retries_an_ambiguous_write(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "github-status.json").write_text(json.dumps({"prs": [retained(self.raw)]}))
+            registry = {"meta": {"repo": "google/gvisor", "owner": "tamird"}, "nodes": [self.node]}
+            comments = []
+
+            def run(args: list[str], **kwargs) -> subprocess.CompletedProcess:
+                if args == ["gh", "api", "user", "--jq", ".login"]:
+                    return subprocess.CompletedProcess(args, 0, "tamird\n", "")
+                self.assertEqual(args[:4], ["gh", "api", "--method", "POST"])
+                body = json.loads(kwargs["input"])["body"]
+                comments.append(body)
+                return subprocess.CompletedProcess(args, 0, json.dumps({"body": body, "user": {"login": "tamird"},
+                        "html_url": "https://github.com/google/gvisor/pull/7#issuecomment-1", "created_at": self.now.isoformat()}), "")
+
+            with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
+                    mock.patch.object(updater, "datetime") as clock, \
+                    mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}), \
+                    mock.patch.object(updater.subprocess, "run", side_effect=run) as transport:
+                clock.now.return_value = self.now
+                updater.reapproval_reminders(post=True)
+                self.assertEqual(len(comments), 1)
+                self.raw["reviews"]["nodes"] = [{**self.review, "commit": {"oid": f"{8:040x}"}}]
+                updater.reapproval_reminders(post=True)
+                self.assertEqual(len(comments), 1)
+                self.raw["reviews"]["nodes"] = [self.review]
+                self.raw["headRefOid"] = "a" * 40
+                self.raw["commits"]["nodes"][0]["commit"]["oid"] = "a" * 40
+                updater.reapproval_reminders(post=True)
+                self.assertEqual(len(comments), 1)
+                self.raw["headRefOid"] = f"{8:040x}"
+                self.raw["commits"]["nodes"][0]["commit"]["oid"] = f"{8:040x}"
+                transport.side_effect = [subprocess.CompletedProcess([], 0, "tamird\n", ""),
+                                         subprocess.TimeoutExpired("gh", 60)]
+                calls = transport.call_count
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    updater.reapproval_reminders(post=True)
+                self.assertEqual(transport.call_count - calls, 2)
 
 
 if __name__ == "__main__":

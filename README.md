@@ -152,6 +152,45 @@ new public approval. This supports the operational distinction above; it does
 not document Copybara's internal policy or establish that a rebase caused every
 observed progression.
 
+### Reapproval after amendments
+
+The existing refresh workflow can remind prior human maintainer approvers with
+🚨 once per hour, weekdays from 09:00 until 17:00 America/Los_Angeles. It applies
+only to open, non-draft `google/gvisor` source PRs. One fresh current-head human
+maintainer approval stops this alarm even if the aggregate review decision or
+pending review requests still prevent merge readiness. Current-head maintainer
+changes requested require source work first. A dismissed review qualifies as a
+former approval only when GitHub's
+review-dismissal event records its previous state as approved.
+
+Delivery owners record exact `reapproval` evidence in the existing registry:
+the approved and amended heads, `kind: content-amendment`,
+`method: reviewed-source-diff`, the SHA256 of the complete reviewed source diff,
+a concise change summary, and its public evidence URL. Compare the complete
+topic patches and preserve changed bytes, whitespace, modes and paths; a
+different commit SHA or patch ID does not establish an amendment. Verify the
+single-commit shape before using parent-to-head patches. Proven patch-preserving
+rebases remain excluded. Unknown changes are reported as `needs-evidence` for
+the delivery owner to reconcile, never guessed from stale approval alone.
+
+`python3 update-status.py --reapproval-reminders plan` prints the concrete
+selection and comment text without writing to GitHub. The `post` mode verifies
+the configured owner credential and refreshes each candidate's head, review
+history and comments immediately before posting. The comment links the exact
+old and amended commits and retains delegated attribution. Its hidden marker
+and GitHub creation time enforce a full hour between reminders, including
+across head changes; no separate reminder database is kept. Mutations are never
+automatically retried after an ambiguous response. GitHub has no atomic
+expected-head condition for issue comments, so the post-read reports any
+observed head or closure race explicitly.
+
+Scheduled posting requires the dedicated `WORK_MAP_COMMENT_TOKEN` secret for
+the configured owner with permission to comment on these source PRs. Without
+it, the workflow only plans reminders and reports posting disabled. The normal
+repository token continues to collect public metadata. Foreground authorized
+posting can use the existing local GitHub CLI credential and the same code;
+do not start a second periodic monitor or copy that credential into Actions.
+
 The snapshot also retains public top-level comments, review bodies and inline
 replies by their GitHub IDs, with authors, timestamps, reviewed commits and
 thread resolution state. The updater prints new or changed feedback from other

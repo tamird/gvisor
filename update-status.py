@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Publish public GitHub metadata using the existing authenticated gh session."""
 
+import argparse
 import json
 import re
 import subprocess
@@ -8,6 +9,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from reapproval import reminder_plan
 from work_states import FAILURES, check_purpose, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
 
 
@@ -43,8 +45,12 @@ comments(last:100) { pageInfo { hasPreviousPage } nodes {
   id url body createdAt updatedAt author { login __typename }
 } }
 reviews(last:100) { pageInfo { hasPreviousPage } nodes {
-  id url body state submittedAt updatedAt author { login __typename } commit { oid }
+  id url body state submittedAt updatedAt authorAssociation author { login __typename } commit { oid }
 } }
+reviewDismissals:timelineItems(last:100,itemTypes:[REVIEW_DISMISSED_EVENT]) {
+  pageInfo { hasPreviousPage }
+  nodes { ... on ReviewDismissedEvent { id createdAt previousReviewState review { id } } }
+}
 reviewRequests(first:100) { pageInfo { hasNextPage } nodes { requestedReviewer {
   __typename ... on User { login } ... on Team { name slug }
 } } }
@@ -187,11 +193,15 @@ def normalize(pr: dict) -> dict:
                                  if (event.get("afterCommit") or {}).get("oid") == pr["headRefOid"]), default=None),
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
         "headRepo": (pr["headRepository"] or {}).get("nameWithOwner"),
+        "authorLogin": (pr.get("author") or {}).get("login"),
         "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
         "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
         "mergeCommit": (pr.get("mergeCommit") or {}).get("oid"),
         "githubReviewDecision": pr["reviewDecision"],
         "reviewsComplete": not pr["reviews"]["pageInfo"]["hasPreviousPage"],
+        "commentsComplete": not pr["comments"]["pageInfo"]["hasPreviousPage"],
+        "reviewDismissals": {"complete": not pr.get("reviewDismissals", {}).get("pageInfo", {}).get("hasPreviousPage", True),
+                             "items": pr.get("reviewDismissals", {}).get("nodes", [])},
         "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
         "reviewRequestsComplete": not pr["reviewRequests"]["pageInfo"]["hasNextPage"],
         "mergeable": pr["mergeable"],
@@ -440,6 +450,53 @@ def check_report(prs: list[dict], previous: dict) -> dict:
     return {"checkFailures": failures, "changedChecks": changes, "activeImports": imports}
 
 
+def reapproval_reminders(post: bool = False) -> None:
+    """Use the existing snapshot as an index, then refresh before each write."""
+    snapshot = json.loads((ROOT / "github-status.json").read_text())
+    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]
+             if node["type"] == "pr"}
+    if post:
+        identity = subprocess.run(["gh", "api", "user", "--jq", ".login"],
+                                  text=True, capture_output=True, check=True, timeout=30)
+        if identity.stdout.strip() != OWNER:
+            raise RuntimeError("Reminder credential does not belong to the configured owner")
+    for pr in snapshot["prs"]:
+        if pr.get("repo") != "google/gvisor" or pr.get("status") != "open":
+            continue
+        node = nodes.get((pr["repo"], pr["number"]), {})
+        # Older snapshots lack author association. Refresh only recorded
+        # amendments; missing proof is visible without spending write budget.
+        if node.get("reapproval", {}).get("head") != pr["head"]:
+            print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER)))
+            continue
+        raw = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"])[pr["number"]]
+        current = normalize(raw)
+        current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
+        plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER)
+        if current["head"] != pr["head"]:
+            plan.update(status="skipped", reason="head-changed-since-snapshot")
+        if not post or plan["status"] != "due":
+            print(json.dumps(plan))
+            continue
+        # Never retry this mutation: an interrupted response may have posted.
+        # The next scheduled run reads the exact marker from GitHub history.
+        response = subprocess.run(
+            ["gh", "api", "--method", "POST", f"repos/{pr['repo']}/issues/{pr['number']}/comments",
+             "--input", "-"], input=json.dumps({"body": plan["body"]}),
+            text=True, capture_output=True, check=True, timeout=60,
+        )
+        comment = json.loads(response.stdout)
+        if comment.get("body") != plan["body"] or comment.get("user", {}).get("login") != OWNER:
+            raise RuntimeError("Posted reminder readback does not match its planned body and owner")
+        print(json.dumps({**plan, "status": "posted", "url": comment["html_url"],
+                          "createdAt": comment["created_at"]}))
+        # GitHub issue comments have no atomic expected-head precondition.
+        # Retain any observed post/write race explicitly; never assert approval.
+        after = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"])[pr["number"]]
+        if after["headRefOid"] != current["head"] or after["state"] != "OPEN":
+            raise RuntimeError(f"PR #{pr['number']} changed while reminder {comment['html_url']} was posted")
+
+
 def main() -> None:
     policies = repository_policies(REGISTRY)
     output = ROOT / "github-status.json"
@@ -507,4 +564,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--reapproval-reminders", choices=("plan", "post"),
+                        help="Use the existing snapshot and fresh GitHub reads for approved amendments")
+    arguments = parser.parse_args()
+    if arguments.reapproval_reminders:
+        reapproval_reminders(post=arguments.reapproval_reminders == "post")
+    else:
+        main()

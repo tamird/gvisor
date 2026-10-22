@@ -3943,7 +3943,17 @@
           "label": "Header-only target proposed in BCR",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11261"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "approvedHead": "aec69d67941f62115cfb17bd89ee537407844687",
+        "head": "f3afdd452329cd0ffe5b09f35aa7a9073aae34b8",
+        "parent": "7d17d85641106925b52618eb8651a3e1d673fab1",
+        "diffSha256": "0af47513fd3533987bcf2ea500a8ca2ebc719b04ac25c470481f8d85d542f576",
+        "summary": "The amendment corrects the libbpf patch explanation: the header-only target avoids analyzing and fetching userspace implementation dependencies. The implementation has landed, but this revised explanation is not in current master.",
+        "evidence": "https://github.com/google/gvisor/compare/aec69d67941f62115cfb17bd89ee537407844687..f3afdd452329cd0ffe5b09f35aa7a9073aae34b8"
+      }
     },
     {
       "id": "branch:hermetic-compiler-review",
@@ -11109,6 +11119,16 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39365307287/job/118440687561"
           }
         ]
+      },
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "approvedHead": "2724adf2e45cb7b07527b76b26a1d265b293a2d8",
+        "head": "44d286a1dac57803fe5572fab769e6591eb1f903",
+        "parent": "7d17d85641106925b52618eb8651a3e1d673fab1",
+        "diffSha256": "043907208355e8603d1a5c3f4b17bbb8c115f5447fd6f3099e1ec37427b7d52b",
+        "summary": "The amendment routes Make lint and lint-fix through the existing Bazel builder, correcting the old import\u2019s missing-bazel failure.",
+        "evidence": "https://github.com/google/gvisor/compare/2724adf2e45cb7b07527b76b26a1d265b293a2d8..44d286a1dac57803fe5572fab769e6591eb1f903"
       }
     },
     {
