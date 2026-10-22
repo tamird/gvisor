@@ -43,38 +43,44 @@ func storageForMap(object reflect.Value) *mapStorage {
 	return &reflectedMap
 }
 
-var reflectedMap = mapStorage{
-	newKey: func(v reflect.Value) reflect.Value {
-		return reflect.New(v.Type().Key()).Elem()
-	},
-	newValue: func(v reflect.Value) reflect.Value {
-		return reflect.New(v.Type().Elem()).Elem()
-	},
-	insert: func(v, key, value reflect.Value) {
-		v.SetMapIndex(key, value)
-	},
-	visit: func(v reflect.Value, encoder mapEncoder) {
-		keyType, valueType := v.Type().Key(), v.Type().Elem()
-		var key, value reflect.Value
-		if !encoder.retainKey {
-			key = reflect.New(keyType).Elem()
-		}
-		if !encoder.retainValue {
-			value = reflect.New(valueType).Elem()
-		}
-		iter := v.MapRange()
-		for iter.Next() {
-			if encoder.retainKey {
+var reflectedMap mapStorage
+
+func init() {
+	// Traversal can recursively select reflectedMap. Populate its immutable
+	// operation table after package variables have been initialized.
+	reflectedMap = mapStorage{
+		newKey: func(v reflect.Value) reflect.Value {
+			return reflect.New(v.Type().Key()).Elem()
+		},
+		newValue: func(v reflect.Value) reflect.Value {
+			return reflect.New(v.Type().Elem()).Elem()
+		},
+		insert: func(v, key, value reflect.Value) {
+			v.SetMapIndex(key, value)
+		},
+		visit: func(v reflect.Value, encoder mapEncoder) {
+			keyType, valueType := v.Type().Key(), v.Type().Elem()
+			var key, value reflect.Value
+			if !encoder.retainKey {
 				key = reflect.New(keyType).Elem()
 			}
-			if encoder.retainValue {
+			if !encoder.retainValue {
 				value = reflect.New(valueType).Elem()
 			}
-			key.SetIterKey(iter)
-			value.SetIterValue(iter)
-			encoder.encode(key, value)
-		}
-	},
+			iter := v.MapRange()
+			for iter.Next() {
+				if encoder.retainKey {
+					key = reflect.New(keyType).Elem()
+				}
+				if encoder.retainValue {
+					value = reflect.New(valueType).Elem()
+				}
+				key.SetIterKey(iter)
+				value.SetIterValue(iter)
+				encoder.encode(key, value)
+			}
+		},
+	}
 }
 
 // typedStorage checks the exact Go type and write permissions before exposing
