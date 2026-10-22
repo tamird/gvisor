@@ -1751,7 +1751,7 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     if kind not in ("test", "benchmark", "build", "analysis", "command") or kind != "command" and (kind == "analysis") != analysis:
         errors.append("Command kind does not match original analysis/execution arguments")
     command = next((arg for arg in arguments if not arg.startswith("-")), None)
-    allowed_commands = ("run", "query", "mod") if kind == "command" else ("test", "build")
+    allowed_commands = ("run", "query", "cquery", "info", "mod") if kind == "command" else ("test", "build")
     if command not in allowed_commands or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
     if command == "mod" and arguments[arguments.index(command):arguments.index(command) + 2] != ["mod", "deps"]:
@@ -1782,7 +1782,7 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
 
 
 def command_verdict(context: Path) -> dict[str, object]:
-    """Retain run/query/dependency preparation without inventing execution owners."""
+    """Retain native command results without inventing test or build owners."""
     started = time.monotonic()
     info, errors = source_context(context)
     if info["command_kind"] != "command":

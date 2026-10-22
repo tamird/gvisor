@@ -892,6 +892,14 @@ class QualificationReportTest(unittest.TestCase):
     def test_command_completion_preserves_streams_and_failure_evidence(self) -> None:
         for command, exit_code, damage, status in (
             ("query", 0, None, "PASS"),
+            ("cquery", 0, None, "PASS"),
+            ("cquery", 23, None, "FAIL"),
+            ("cquery", 0, "source-after", "INCOMPLETE"),
+            ("info", 0, None, "PASS"),
+            ("info", 23, None, "FAIL"),
+            ("info", 0, "native-exit", "INCOMPLETE"),
+            ("build", 0, None, "INCOMPLETE"),
+            ("test", 0, None, "INCOMPLETE"),
             ("run", 0, "empty", "PASS"),
             ("run", 23, None, "FAIL"),
             ("query", 23, "stderr", "FAIL"),
