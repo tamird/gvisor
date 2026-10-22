@@ -29,6 +29,7 @@ import traceback
 from urllib.parse import unquote, urlsplit
 
 import qualification_report as report
+import collect_actions
 
 
 SOURCES = {
@@ -433,47 +434,10 @@ class Comparison:
             report.write_json(self.results / "failure.json", {"error": str(error), "at": utc_now()})
             self.runner_exit = self.runner_exit or 1
         finally:
-            bundles = {}
-            execution_finished = []
             try:
                 self.git("switch", "--detach", self.original)
                 if self.git("status", "--porcelain", "--untracked-files=no"):
                     raise RuntimeError("Qualification checkout is dirty after restoration")
-                self.guard_credentials()
-                for side in self.sources:
-                    directory = self.results / side
-                    directory.mkdir(exist_ok=True)
-                    archive = self.results / (side + ".tar.gz")
-                    result = report.bundle(directory, self.runner_exit, self.capture_exit, archive)
-                    identity = report.file_record(archive)
-                    # Authenticate the completed bundle here, before any upload.
-                    # Routine consumers need only this receipt and its manifest.
-                    try:
-                        receipt = report.receipt(archive, identity["sha256"], self.sources[side])
-                        execution_finished.extend(row["execution_finished_at"]
-                                                  for row in receipt["invocations"]
-                                                  if row["execution_finished_at"] is not None)
-                    except (OSError, ValueError) as error:
-                        receipt = {"status": "INCOMPLETE", "error": str(error)}
-                    receipt_path = self.results / (side + "-receipt.json")
-                    report.write_json(receipt_path, receipt)
-                    bundles[side] = {"path": archive.name, "status": receipt["status"], **identity,
-                                     "receipt": report.file_record(receipt_path)}
-                    if receipt["status"] != "PASS":
-                        self.runner_exit = self.runner_exit or 1
-                verified_at = utc_now()
-                finished_at = max(execution_finished, default=None)
-                report.write_json(self.results / "comparison.json", {
-                    "status": "PASS" if self.runner_exit == 0 and len(self.samples) == 34 else "FAIL",
-                    "sources": SOURCES, "statistics_source": TOOL_SOURCE,
-                    "bundles": bundles, "samples": self.samples,
-                    "lock": self.lock_digest, "finished_at": utc_now(),
-                    "execution_finished_at": finished_at, "verified_at": verified_at,
-                    "execution_to_verified_seconds": (
-                        datetime.datetime.fromisoformat(verified_at) -
-                        datetime.datetime.fromisoformat(finished_at)).total_seconds() if finished_at else None,
-                    "scope": "Native fresh-container TimeToReady with ordinary warm host caches; two CPUs, opt, systrap and systrap_overlay",
-                })
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
                 traceback.print_exc()
                 report.write_json(self.results / "reporting-failure.json", {"error": str(error), "at": utc_now()})
@@ -481,19 +445,19 @@ class Comparison:
             finally:
                 self.rc.unlink(missing_ok=True)
                 self.guard_credentials()
-                compact = self.results / "compact"
-                compact.mkdir()
-                # Expanded invocation trees stay out of the upload. Their full
-                # contents remain in the authenticated audit bundles above.
-                for path in self.results.iterdir():
-                    if path.is_file() and path.suffix in (".json", ".bench", ".txt", ".lock"):
-                        shutil.copyfile(path, compact / path.name)
-                report.write_json(compact / "manifest.json", {
-                    "status": "PASS" if self.runner_exit == 0 else "FAIL",
-                    "source": self.original, "bundles": bundles,
-                    "files": {path.name: report.file_record(path) for path in sorted(compact.iterdir())},
-                    "verified_at": utc_now(),
-                })
+                try:
+                    manifest = collect_actions.publish_lifecycle(self.results, self.sources, {
+                        "status": "PASS" if self.runner_exit == 0 and len(self.samples) == 34 else "FAIL",
+                        "sources": SOURCES, "statistics_source": TOOL_SOURCE,
+                        "samples": self.samples, "lock": self.lock_digest, "finished_at": utc_now(),
+                        "scope": "Native fresh-container TimeToReady with ordinary warm host caches; two CPUs, opt, systrap and systrap_overlay",
+                    }, self.runner_exit, self.capture_exit, coordinator_source=self.original)
+                    if manifest["status"] != "PASS":
+                        self.runner_exit = self.runner_exit or 1
+                except (OSError, ValueError) as error:
+                    traceback.print_exc()
+                    report.write_json(self.results / "reporting-failure.json", {"error": str(error), "at": utc_now()})
+                    self.runner_exit = self.runner_exit or 1
         return self.runner_exit
 
 

@@ -26,17 +26,18 @@ jobs:
             3b159fe670bfc2d25b4db7b38844fb98f97d7d0c \
             a95346674cc69b541fdd99c00c3c4c0c85ff10a9 \
             5203b735d8991e2e4f00568c8b6c850761dd8ef6 \
-            aa42f89132b16eda9c39e0acea0dcbb0e463deee
+            2ae0fa74b79b45954b33433de7e08c5e4571fec9
           mkdir "$RUNNER_TEMP/state-lifecycle"
           cp .github/state_lifecycle.py "$RUNNER_TEMP/state-lifecycle/driver.py"
-          for file in qualification_report.py unit_matrix.py; do
-            git show "aa42f89132b16eda9c39e0acea0dcbb0e463deee:test/rbe/$file" \
+          for file in qualification_report.py unit_matrix.py collect_actions.py; do
+            git show "2ae0fa74b79b45954b33433de7e08c5e4571fec9:test/rbe/$file" \
               > "$RUNNER_TEMP/state-lifecycle/$file"
           done
           cd "$RUNNER_TEMP/state-lifecycle"
           sha256sum --check --strict <<'HASHES'
           66057fa29bab9ec896041526b4d90ec80196edc11e289f410f57e246540bdc9d  qualification_report.py
           209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37  unit_matrix.py
+          867c03954b1bbcb63b845999effbb4b90fceaeef75f040a71c3cc9efa0fff1ac  collect_actions.py
           HASHES
           command -v bazelisk
           sudo -n true
