@@ -104,7 +104,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         if kind != "command":
             command.append("--build_event_json_file=" + str(raw_events))
         (directory / "arguments.txt").write_text(json.dumps(command) if kind == "command" else "\n".join(command) + "\n")
-        (directory / "expected-targets.txt").write_text("\n".join(targets) + "\n")
+        (directory / "expected-targets.txt").write_text("".join(target + "\n" for target in targets))
         git_record(directory / "commit.txt", "cat-file", "commit", SOURCE)
         git_record(directory / "before.txt", "status", "--porcelain", "--untracked-files=no")
         lock = workspace / "MODULE.bazel.lock"
@@ -257,7 +257,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                            'command', targets=[])
         if formatted['status'] != 'PASS':
             raise RuntimeError('Canonical buildifier failed')
-        report.write_json(evidence / 'remote-compiler-config.json', {'options': ['--remote_executor=grpcs://remote.buildbuddy.io', '--remote_cache=grpcs://remote.buildbuddy.io', '--bes_backend=grpcs://remote.buildbuddy.io', '--bes_results_url=https://app.buildbuddy.io/invocation/', '--remote_timeout=10m', '--spawn_strategy=remote', '--noremote_local_fallback', '--jobs=400', '--remote_cache_compression', '--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo', '--remote_default_exec_properties=OSFamily=linux', '--remote_default_exec_properties=Arch=amd64', '--remote_default_exec_properties=workload-isolation-type=oci', '--remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02', '--strategy=TestRunner=local', '--local_test_jobs=1', '--noremote_upload_local_results'], 'properties': REMOTE_PROPERTIES, 'configuration_source': 'state-lifecycle-final-state_lifecycle.py', 'test_runner': 'local'})
+        report.write_json(evidence / 'remote-compiler-config.json', {'options': ['--remote_executor=grpcs://remote.buildbuddy.io', '--remote_cache=grpcs://remote.buildbuddy.io', '--bes_backend=grpcs://remote.buildbuddy.io', '--bes_results_url=https://app.buildbuddy.io/invocation/', '--remote_timeout=10m', '--spawn_strategy=remote', '--noremote_local_fallback', '--jobs=400', '--remote_cache_compression', '--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo', '--remote_default_exec_properties=OSFamily=linux', '--remote_default_exec_properties=Arch=amd64', '--remote_default_exec_properties=workload-isolation-type=oci', '--remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02', '--strategy=TestRunner=local', '--local_test_jobs=1', '--noremote_upload_local_results', '--extra_toolchains=@llvm//toolchain:linux_x86_64_to_linux_x86_64,@llvm//toolchain:linux_x86_64_to_linux_aarch64'], 'properties': REMOTE_PROPERTIES, 'configuration_source': 'state-lifecycle-final-state_lifecycle.py', 'test_runner': 'local'})
         import image_workload
         image_workload.run(invoke, record_execution, evidence, private, output_root)
         workload_completed = True
