@@ -104,7 +104,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         if kind != "command":
             command.append("--build_event_json_file=" + str(raw_events))
         (directory / "arguments.txt").write_text(json.dumps(command) if kind == "command" else "\n".join(command) + "\n")
-        (directory / "expected-targets.txt").write_text("\n".join(targets) + "\n")
+        (directory / "expected-targets.txt").write_text("".join(target + "\n" for target in targets))
         git_record(directory / "commit.txt", "cat-file", "commit", SOURCE)
         git_record(directory / "before.txt", "status", "--porcelain", "--untracked-files=no")
         lock = workspace / "MODULE.bazel.lock"
