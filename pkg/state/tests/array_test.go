@@ -412,7 +412,7 @@ func TestNilEmptyArrayDestination(t *testing.T) {
 		wantError string
 	}{
 		{name: "nil", value: wire.Nil{}},
-		{name: "array", value: &wire.ObjectArray{}, wantError: "reflect: call of reflect.Value.Type on zero Value"},
+		{name: "array", value: &wire.ObjectArray{}, wantError: "reflect: call of reflect.Value.Interface on zero Value"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var encoded bytes.Buffer
