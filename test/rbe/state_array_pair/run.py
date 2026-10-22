@@ -15,7 +15,7 @@
 
 """Run a fixed paired Go benchmark cohort in one Bazel test action.
 
-The four input executables are built from the two source revisions before this
+The input executables are built from the two source revisions before this
 TestRunner starts. Each observation still starts a new executable process.
 """
 from dataclasses import asdict, dataclass
@@ -49,6 +49,8 @@ WORKLOADS = {
     'load_udp': Workload(UDP, 'udp_test', '^BenchmarkUDPReceiveQueueLoad$/^32$', 'BenchmarkUDPReceiveQueueLoad/32'),
     'save_adoption': Workload(STATE, 'benchmark_test', '^BenchmarkEncoding$/^adopt_captured$/^state$', 'BenchmarkEncoding/adopt_captured/state'),
     'load_adoption': Workload(STATE, 'benchmark_test', '^BenchmarkDecoding$/^adopt_captured$/^state$', 'BenchmarkDecoding/adopt_captured/state'),
+    'save_manual': Workload('pkg/state', 'common_engine_benchmark_test', '^BenchmarkCommonEngineSave$', 'BenchmarkCommonEngineSave'),
+    'load_manual': Workload('pkg/state', 'common_engine_benchmark_test', '^BenchmarkCommonEngineLoad$', 'BenchmarkCommonEngineLoad'),
 }
 
 
@@ -271,14 +273,15 @@ def main(package: Path, reporter: Path) -> int:
             assert metrics['ns/op'] > 0, (sample.name, metrics)
             wire_sizes.setdefault(sample.workload, set()).add(metrics['wire-B/op'])
             assert len(wire_sizes[sample.workload]) == 1, (sample.workload, wire_sizes[sample.workload])
-            if sample.workload in ('save_udp', 'load_udp', 'save_ptr', 'load_ptr', 'save_adoption', 'load_adoption'):
+            if sample.workload in ('save_udp', 'load_udp', 'save_ptr', 'load_ptr', 'save_adoption', 'load_adoption', 'save_manual', 'load_manual'):
                 digests = re.findall(r'^(?:queue|state)-wire-sha256\[[^]]+\]: ([0-9a-f]{64})$', text, re.M)
                 match digests:
                     case [digest]:
                         wire_digests.setdefault(sample.workload, set()).add(digest)
                     case _:
                         raise ValueError(f'{sample.name}: expected one wire digest, got {digests!r}')
-                assert len(wire_digests[sample.workload]) == 1, (sample.workload, wire_digests[sample.workload])
+                if sample.workload not in ('save_manual', 'load_manual'):
+                    assert len(wire_digests[sample.workload]) == 1, (sample.workload, wire_digests[sample.workload])
             record.update(metrics=metrics, row=line)
             completed.append(record)
             if sample.measured:

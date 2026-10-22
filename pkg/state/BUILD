@@ -97,3 +97,11 @@ go_test(
     embed = [":state"],
     deps = ["//pkg/state/wire"],
 )
+
+# Manual storage-operation fixture for the matched common-engine experiment.
+go_test(
+    name = "common_engine_benchmark_test",
+    size = "small",
+    srcs = ["common_engine_bench_test.go"],
+    embed = [":state"],
+)
