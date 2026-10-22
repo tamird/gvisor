@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-22T03:56:41.831007+00:00",
-  "registryDate": "2026-10-22T03:29:58.915583+00:00",
+  "registryDate": "2026-10-22T04:10:12.606345+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -134624,7 +134624,7 @@
         "since": "2026-10-22T02:04:28.217656+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T03:29:58.915583+00:00"
+        "observedAt": "2026-10-22T04:10:12.606345+00:00"
       }
     },
     "branch:rules-img-fsstress": {
@@ -134633,7 +134633,7 @@
         "since": "2026-10-22T02:09:48.683937+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T03:29:58.915583+00:00"
+        "observedAt": "2026-10-22T04:10:12.606345+00:00"
       }
     },
     "branch:fix/goimports-make-wrapper": {
@@ -134642,7 +134642,7 @@
         "since": "2026-10-22T02:47:46.142999+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T03:29:58.915583+00:00"
+        "observedAt": "2026-10-22T04:10:12.606345+00:00"
       }
     },
     "branch:rules-img-symlink-resolv": {
@@ -134651,7 +134651,16 @@
         "since": "2026-10-22T02:47:46.142999+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T03:29:58.915583+00:00"
+        "observedAt": "2026-10-22T04:10:12.606345+00:00"
+      }
+    },
+    "branch:state-wire-storage": {
+      "contributor-review": {
+        "scope": "9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d",
+        "since": "2026-10-22T04:10:12.606345+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-22T04:10:12.606345+00:00"
       }
     }
   },
