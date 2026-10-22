@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T16:33:38.995140+00:00",
+    "updatedAt": "2026-10-22T16:58:09.729341+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18167,14 +18167,14 @@
       "id": "branch:rules-img-pidfd",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-pidfd-final",
-      "head": "4be5f8af9583734137eff7132b3d6b2a49fddd83",
+      "ref": "rules-img-pidfd-scratch",
+      "head": "4217084f534a8e0df109de9961630f24d3386d10",
       "title": "Build the pidfd selftest image from Linux sources",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/4be5f8af9583734137eff7132b3d6b2a49fddd83",
-      "status": "Contributor approved; explicit runtime-base correction in progress",
-      "updatedAt": "2026-10-22T13:06:03.180730+00:00",
-      "summary": "The contributor approved the complete PIDFD migration at 4be5 and requested a scratch base with explicit executable inputs wherever possible, across all images. Root owns this separate base-minimization audit; Hostinet is preparing the first PIDFD utility-source prototype. Existing two-architecture builds, seven AMD64 selftest programs, Make and the 246-entry catalog pass; one nested unsupported-kcmp skip remains explicit. Those results describe the prior image and do not qualify the proposed base replacement.\n\nThe standalone image source and exact Linux source-bundle audit are published at 552c. Final canonical Fetch/Verify pass with 246 unchanged catalog blocks. Both target architectures, four profile-helper output gates and the AMD64 runtime now pass; one nested kcmp case is skipped. The profile-helper gates were explicitly rebound after proving the sole content change was an obsolete crosstool repository-mapping row. Root is completing final source applicability review before the contributor proposal; no ARM runtime result is claimed.",
+      "url": "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10",
+      "status": "Scratch refinement ready for contributor review",
+      "updatedAt": "2026-10-22T16:58:09.729341+00:00",
+      "summary": "The scratch refinement is published at 4217084f534a on the approved GNU prerequisite. The image explicitly builds BusyBox ash, its selected utilities, and GNU timeout from pinned sources. Both target architectures pass archive, configuration, notice and nine-static-executable checks; four profile-helper outputs remain byte-identical. AMD64 utility and timeout probes, the seven PIDFD programs, Make rebuild/reload and cleanup pass, with one nested unsupported-kcmp skip retained. Full canonical Fetch and Verify pass for all 250 catalog entries. There is no ARM runtime or fresh cached-action execution claim. Contributor review of this refinement is pending; the earlier approval of 4be5 is preserved separately.\n\nPreserved earlier source and approval record:\n\nThe contributor approved the complete PIDFD migration at 4be5 and requested a scratch base with explicit executable inputs wherever possible, across all images. Root owns this separate base-minimization audit; Hostinet is preparing the first PIDFD utility-source prototype. Existing two-architecture builds, seven AMD64 selftest programs, Make and the 246-entry catalog pass; one nested unsupported-kcmp skip remains explicit. Those results describe the prior image and do not qualify the proposed base replacement.\n\nThe standalone image source and exact Linux source-bundle audit are published at 552c. Final canonical Fetch/Verify pass with 246 unchanged catalog blocks. Both target architectures, four profile-helper output gates and the AMD64 runtime now pass; one nested kcmp case is skipped. The profile-helper gates were explicitly rebound after proving the sole content change was an obsolete crosstool repository-mapping row. Root is completing final source applicability review before the contributor proposal; no ARM runtime result is claimed.",
       "links": [
         {
           "label": "Reviewed source",
@@ -18211,24 +18211,44 @@
         {
           "label": "Final image runtime qualification",
           "url": "https://app.buildbuddy.io/invocation/bbe1c78b-1263-4d9b-9597-ac1902fdac22"
+        },
+        {
+          "label": "Published scratch refinement",
+          "url": "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10"
+        },
+        {
+          "label": "Refinement from the approved image",
+          "url": "https://github.com/tamird/gvisor/compare/4be5f8af9583734137eff7132b3d6b2a49fddd83...4217084f534a8e0df109de9961630f24d3386d10"
+        },
+        {
+          "label": "Scratch image and AMD64 runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/4717e114-250e-4b5d-9843-533b3bf236b3"
+        },
+        {
+          "label": "Full 250-entry canonical Fetch and Verify",
+          "url": "https://app.buildbuddy.io/invocation/dc5afb5b-c27f-46d5-9127-f1cba633f1bb"
         }
       ],
       "refinement": {
         "before": {
-          "head": "2bbfff9da916427fb22ef2d63e57d92c33df14a1"
+          "head": "4be5f8af9583734137eff7132b3d6b2a49fddd83"
         },
         "after": {
-          "head": "4be5f8af9583734137eff7132b3d6b2a49fddd83"
+          "head": "4217084f534a8e0df109de9961630f24d3386d10"
         }
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "4be5f8af9583734137eff7132b3d6b2a49fddd83",
-        "observedAt": "2026-10-22T13:06:03.180730+00:00",
-        "disposition": "Contributor approved; explicit runtime-base correction in progress",
-        "nextAction": "Qualify the requested explicit scratch-base inputs while preserving runner, timeout and process-parent behavior.",
+        "sourceHead": "4217084f534a8e0df109de9961630f24d3386d10",
+        "observedAt": "2026-10-22T16:58:09.729341+00:00",
+        "disposition": "Qualified scratch refinement; contributor review pending",
+        "nextAction": "Root owns the contributor decision for the exact scratch refinement and subsequent dependency-aware delivery. Do not carry the prior image approval onto the changed payload or replay completed qualification.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4be5f8af9583734137eff7132b3d6b2a49fddd83"
+          "https://github.com/tamird/gvisor/commit/4be5f8af9583734137eff7132b3d6b2a49fddd83",
+          "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10",
+          "https://github.com/tamird/gvisor/compare/4be5f8af9583734137eff7132b3d6b2a49fddd83...4217084f534a8e0df109de9961630f24d3386d10",
+          "https://app.buildbuddy.io/invocation/4717e114-250e-4b5d-9843-533b3bf236b3",
+          "https://app.buildbuddy.io/invocation/dc5afb5b-c27f-46d5-9127-f1cba633f1bb"
         ]
       }
     },

@@ -483,6 +483,16 @@ class ReapprovalReminderTest(unittest.TestCase):
         comment["createdAt"] = "2026-10-22T16:29:00Z"
         self.assertEqual(self.plan()["reason"], "incomplete-reminder-window")
 
+    def test_reminder_query_omits_only_scope_restricted_team_details(self) -> None:
+        with mock.patch.object(updater, "graphql", return_value={"repository": {"p7": self.raw}}) as query:
+            updater.fetch_numbers([7], timeline=False)
+            full = query.call_args.args[0]
+            updater.fetch_numbers([7], timeline=False, team_details=False)
+            public = query.call_args.args[0]
+        self.assertIn("... on Team { name slug }", full)
+        self.assertNotIn("... on Team", public)
+        self.assertEqual(public, full.replace(" ... on Team { name slug }", ""))
+
     def test_post_uses_fresh_state_and_never_retries_an_ambiguous_write(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -501,10 +511,13 @@ class ReapprovalReminderTest(unittest.TestCase):
 
             with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
                     mock.patch.object(updater, "datetime") as clock, \
-                    mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}), \
+                    mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}) as fetch, \
                     mock.patch.object(updater.subprocess, "run", side_effect=run) as transport:
                 clock.now.return_value = self.now
                 updater.reapproval_reminders(post=True)
+                self.assertEqual(fetch.call_args_list, [
+                    mock.call([7], timeline=False, repo="google/gvisor", team_details=False),
+                    mock.call([7], timeline=False, repo="google/gvisor", team_details=False)])
                 self.assertEqual(len(comments), 1)
                 self.raw["reviews"]["nodes"] = [{**self.review, "commit": {"oid": f"{8:040x}"}}]
                 updater.reapproval_reminders(post=True)

@@ -229,11 +229,13 @@ def normalize(pr: dict) -> dict:
     return normalized
 
 
-def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO) -> dict[int, dict]:
+def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO, *, team_details: bool = True) -> dict[int, dict]:
     result = {}
     owner, name = repo.split("/")
+    # Reminder decisions need individual reviews, not organization team names.
+    selected_fields = FIELDS if team_details else FIELDS.replace(" ... on Team { name slug }", "")
     for start in range(0, len(numbers), PR_BATCH_SIZE):
-        fields = " ".join(f"p{number}:pullRequest(number:{number}){{{FIELDS}{TIMELINE if timeline else 'body'}}}"
+        fields = " ".join(f"p{number}:pullRequest(number:{number}){{{selected_fields}{TIMELINE if timeline else 'body'}}}"
                           for number in numbers[start:start + PR_BATCH_SIZE])
         response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')
         for pr in response["repository"].values():
@@ -479,7 +481,7 @@ def reapproval_reminders(post: bool = False) -> None:
         if node.get("reapproval", {}).get("head") != pr["head"]:
             print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER)))
             continue
-        raw = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"])[pr["number"]]
+        raw = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
         current = normalize(raw)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
@@ -507,7 +509,7 @@ def reapproval_reminders(post: bool = False) -> None:
                           "createdAt": comment["created_at"]}))
         # GitHub issue comments have no atomic expected-head precondition.
         # Retain any observed post/write race explicitly; never assert approval.
-        after = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"])[pr["number"]]
+        after = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"], team_details=False)[pr["number"]]
         if after["headRefOid"] != current["head"] or after["state"] != "OPEN":
             raise RuntimeError(f"PR #{pr['number']} changed while reminder {comment['html_url']} was posted")
 
