@@ -77,6 +77,8 @@ go_library(
         "state_race.go",
         "stats.go",
         "types.go",
+        "value.go",
+        "value_storage.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state",
     marshal = False,
@@ -93,7 +95,10 @@ go_library(
 go_test(
     name = "state_test",
     size = "small",
-    srcs = ["types_test.go"],
+    srcs = [
+        "types_test.go",
+        "value_test.go",
+    ],
     embed = [":state"],
     deps = ["//pkg/state/wire"],
 )
