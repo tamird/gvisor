@@ -34,19 +34,29 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           bash test/rbe/actions.sh "--bazel-option=--test_env=LIFECYCLE_REPLAY_SOURCE=$GITHUB_SHA"
-      - name: Retain the verified compact result
+      - name: Locate the authenticated replay outputs
         if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          outputs=("$RUNNER_TEMP"/qualification/invocation-*/reports/*/testlogs/test/rbe/qualification_report_test/test.outputs/lifecycle-pass)
+          (( ${#outputs[@]} == 1 ))
+          test -d "${outputs[0]}/compact/qualification"
+          printf 'LIFECYCLE_REPLAY_OUTPUT=%s\n' "${outputs[0]}" >> "$GITHUB_ENV"
+      - name: Retain the verified compact result
+        if: always() && env.LIFECYCLE_REPLAY_OUTPUT != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: state-lifecycle-result-attempt-${{ github.run_attempt }}
-          path: ${{ github.workspace }}/bazel-testlogs/test/rbe/qualification_report_test/test.outputs/lifecycle-pass/compact/
+          path: ${{ env.LIFECYCLE_REPLAY_OUTPUT }}/compact/
           if-no-files-found: error
       - name: Retain the separate audit bundles
-        if: always()
+        if: always() && env.LIFECYCLE_REPLAY_OUTPUT != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: state-lifecycle-audit-attempt-${{ github.run_attempt }}
-          path: ${{ github.workspace }}/bazel-testlogs/test/rbe/qualification_report_test/test.outputs/lifecycle-pass/*.tar.gz
+          path: ${{ env.LIFECYCLE_REPLAY_OUTPUT }}/*.tar.gz
           compression-level: 0
           if-no-files-found: error
       - name: Retain owning test and negative-control evidence

@@ -27,6 +27,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -2562,6 +2563,12 @@ import os
 from pathlib import Path
 import signal
 import sys
+
+def interrupted(signum, _frame):
+    Path(os.environ['TEST_WORK_SIGNAL']).write_text(str(signum))
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, interrupted)
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
     stream.write(json.dumps({
         'arguments': sys.argv[1:],
@@ -2601,6 +2608,7 @@ signal.pause()
                 runner_temp = workspace / "temporary"
                 runner_temp.mkdir()
                 started = workspace / "work-started"
+                interrupted = workspace / "work-signal"
                 analysis = [json.loads(line) for line in (FIXTURES / "analysis-no-build/events.jsonl").read_text().splitlines()]
                 configured = next(event for event in analysis if "configured" in event)
                 configured["configured"].setdefault("tag", []).append("jtreg-results")
@@ -2641,6 +2649,7 @@ signal.pause()
                     "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
                     "TEST_ANALYSIS": str(analysis_path),
                     "TEST_WORK_STARTED": str(started),
+                    "TEST_WORK_SIGNAL": str(interrupted),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
                 environment.pop("RUNTIME_TESTS_FILTER", None)
@@ -2653,6 +2662,10 @@ signal.pause()
                 )
                 self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
                 self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
+                if phase in ("preflight", "command-pass", "command-fail"):
+                    self.assertFalse(interrupted.exists(), result.stdout + result.stderr)
+                else:
+                    self.assertEqual(interrupted.read_text(), str(signal.SIGINT), result.stdout + result.stderr)
                 if phase.endswith("-selection"):
                     observations = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
                     commands = [row["arguments"] for row in observations if "test" in row["arguments"]]
