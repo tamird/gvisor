@@ -80,6 +80,7 @@ go_library(
         "value.go",
         "value_storage_unsafe.go",
     ],
+    gc_goopts = ["-m=2"],
     importpath = "gvisor.dev/gvisor/pkg/state",
     marshal = False,
     stateify = False,
