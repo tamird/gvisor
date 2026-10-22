@@ -13,7 +13,8 @@ from image_archive import archive, elf_closure, identity, resolve
 os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 destination = Path(sys.argv[1])
 output_base = Path(os.environ["APPLICABILITY_OUTPUT_BASE"])
-startup = ["--bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"]]
+startup = ["--output_base=" + str(output_base),
+           "--bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"]]
 options = ["--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
            "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"]]
 records = {"status": "INCOMPLETE", "commands": [], "architectures": [], "metadata_errors": []}
@@ -45,7 +46,9 @@ def run(arguments):
 
 try:
     records["source"] = run(["git", "rev-parse", "HEAD"]).strip()
-    execution_root = Path(run(["bazel", *startup, "info", *options, "execution_root"]).strip())
+    execution_root_output = run(["bazel", *startup, "info", *options, "execution_root"])
+    records["execution_root_output"] = execution_root_output
+    execution_root = Path(execution_root_output.strip())
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError("Invalid canonical execution root")
     for architecture, config, machine, triplet in (

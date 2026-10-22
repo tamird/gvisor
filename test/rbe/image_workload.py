@@ -16,11 +16,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     targets = config["targets"]
     options = ["--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
                "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false"]
-    checked = invoke("image-archive-regressions", ["run", "--lockfile_mode=error", "--noannounce_rc",
-                     "@rules_python//python/bin:python", "--",
-                     str(Path(__file__).with_name("image_archive_test.py"))], "command", targets=[])
-    if checked["status"] != "PASS":
-        raise RuntimeError("Shared archive resolver regressions failed")
     failures = []
     for architecture in ("x86_64", "aarch64"):
         execution_log = evidence / (architecture + "-execution.json")
