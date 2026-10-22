@@ -131,6 +131,51 @@ arch_genrule(
     template = "filecap_%s.tar",
 )
 
+image_layer(
+    name = "fsstress_layer",
+    srcs = {
+        "/run.sh": "fsstress/run.sh",
+        "/usr/bin/fsstress": "@ltp//:fsstress",
+        "/usr/share/doc/fsstress/COPYING": "@ltp//:COPYING",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {
+        "/run.sh": file_metadata(mode = "0755"),
+        "/usr/bin/fsstress": file_metadata(mode = "0755"),
+    },
+    include_runfiles = False,
+    symlinks = {"/bin/sh": "/bin/busybox"},
+)
+
+image_manifest(
+    name = "fsstress_manifest",
+    entrypoint = ["/run.sh"],
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":fsstress_layer",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+    working_dir = "/",
+)
+
+image_index(
+    name = "fsstress",
+    manifests = [":fsstress_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "fsstress",
+    image = ":fsstress",
+    image_name = "basic/fsstress",
+)
+
 # Exercise containerd's resolver mounts through a symlink in the image.
 image_layer(
     name = "symlink_resolv_layer",

@@ -448,6 +448,13 @@ exceptions:
       University of Illinois/NCSA grant, which permits redistribution with
       copyright notices, conditions and disclaimers retained and prohibits
       using contributors' names for endorsement without permission.
+  - dependency: ltp
+    license: GPL-2.0-only
+    exception_rationale: >-
+      LTP's fsstress is a standalone filesystem test executable. It runs in
+      test containers and is not linked into released gVisor binaries.
+      Its source archive and GPLv2 license are retained with the build inputs,
+      and the test image includes the license text.
   - dependency: qemu_user_amd64
     license: GPL-2.0-only
     exception_rationale: >-
