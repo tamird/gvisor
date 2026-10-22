@@ -180,7 +180,7 @@ func TestArrayDestinationFlags(t *testing.T) {
 			wire.Save(&wire.Writer{Writer: &saved}, &wire.ObjectArray{Contents: []wire.Object{wire.Int(7), wire.Int(11)}})
 			encoded := wire.Load(&wire.Reader{Reader: &saved})
 			var ds decodeState
-			err := safely(func() { ds.decodeObject(nil, test.target, encoded) })
+			err := safely(func() { ds.loadValue(nil, reflectedHandle(test.target), encoded) })
 			if test.wantErr == "" {
 				if err != nil {
 					t.Fatal(err)

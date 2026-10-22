@@ -66,14 +66,15 @@ type objectDecodeState struct {
 	// object is valid, obj contains a final storage location for the
 	// object. This is immutable.
 	//
-	// Note that this must be addressable (obj.Addr() must not panic).
+	// The retained storage must be addressable. Its operations are selected
+	// at first discovery and are not replaced after the body has begun.
 	//
 	// The obj passed to the decode methods below will equal this obj only
 	// in the case of decoding the top-level object. However, the passed
 	// obj may represent individual fields, elements of a slice, etc. that
-	// are effectively embedded within the reflect.Value below but with
+	// are effectively embedded within the retained allocation but with
 	// distinct types.
-	obj reflect.Value
+	obj valueHandle
 
 	// blockedBy is the number of dependencies this object has.
 	blockedBy int
@@ -251,7 +252,7 @@ func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object, c
 		// Refs can encode pointers and maps.
 		ds.wait(ods, objectID(rv.Root), callback)
 	} else if sv, ok := encoded.(*wire.Slice); ok && sv.Ref.Root != 0 {
-		// See decodeObject; we need to wait for the array (if non-nil).
+		// See loadSlice; we need to wait for the array (if non-nil).
 		ds.wait(ods, objectID(sv.Ref.Root), callback)
 	} else if iv, ok := encoded.(*wire.Interface); ok {
 		// It's an interface (wait recursively).
@@ -296,7 +297,7 @@ func (ds *decodeState) growObjectsByID(id objectID) {
 	}
 }
 
-func (ds *decodeState) addObject(id objectID, obj reflect.Value) *objectDecodeState {
+func (ds *decodeState) addObject(id objectID, obj valueHandle) *objectDecodeState {
 	ods := &objectDecodeState{
 		id:  id,
 		obj: obj,
@@ -315,7 +316,7 @@ func (ds *decodeState) addObject(id objectID, obj reflect.Value) *objectDecodeSt
 // This type is only used to instantiate a new object if it has not been
 // registered previously. This depends on the type provided if none is
 // available in the object itself.
-func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
+func (ds *decodeState) register(r *wire.Ref, typ reflect.Type, ops *valueOperations) reflect.Value {
 	// Grow the objectsByID slice.
 	id := objectID(r.Root)
 
@@ -323,23 +324,24 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	ds.growObjectsByID(id)
 	ods := ds.objectsByID[id-1]
 	if ods != nil {
-		return walkChild(r.Dots, ods.obj)
+		return walkChild(r.Dots, ods.obj.reflected())
 	}
 
 	// Create the object.
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
+		ops = nil // The allocation belongs to the enclosing object, not its child.
 	}
 	v := reflect.New(typ)
-	ods = ds.addObject(id, v.Elem())
+	ods = ds.addObject(id, handleWithOperations(v.Elem(), ops))
 
 	// Process any deferred objects & callbacks.
 	if encoded, ok := ds.deferred[id]; ok {
 		delete(ds.deferred, id)
-		ds.decodeObject(ods, ods.obj, encoded)
+		ds.loadValue(ods, ods.obj, encoded)
 	}
 
-	return walkChild(r.Dots, ods.obj)
+	return walkChild(r.Dots, ods.obj.reflected())
 }
 
 // objectDecoder is for decoding structs.
@@ -358,14 +360,14 @@ type objectDecoder struct {
 }
 
 // load is helper for the public methods on Source.
-func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func()) {
+func (od *objectDecoder) load(slot int, obj valueHandle, wait bool, fn func()) {
 	// Note that we have reconciled the type and may remap the fields here
 	// to match what's expected by the decoder. The "slot" parameter here
 	// is in terms of the local type, where the fields in the encoded
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
 	v := *od.encoded.Field(od.rte.FieldOrder[slot])
-	od.ds.decodeObject(od.ods, objPtr.Elem(), v)
+	od.ds.loadValue(od.ods, obj, v)
 	if wait {
 		// Mark this individual object a blocker.
 		od.ds.waitObject(od.ods, v, fn)
@@ -413,40 +415,31 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 }
 
-// decodeMap decodes a map value.
-func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
-	if obj.IsNil() {
-		// See pointerTo.
-		obj.Set(reflect.MakeMap(obj.Type()))
-	}
-	keyType, valueType := obj.Type().Key(), obj.Type().Elem()
-	// Struct loaders and array element loaders can retain their addresses in
-	// delayed callbacks. Other kinds are copied into the map; interface values
-	// get independent dynamic storage in decodeInterface.
-	reuseKey := keyType.Kind() != reflect.Struct && keyType.Kind() != reflect.Array
-	reuseValue := valueType.Kind() != reflect.Struct && valueType.Kind() != reflect.Array
-	var kv, vv reflect.Value
-	for i := 0; i < len(encoded.Keys); i++ {
-		if i == 0 || !reuseKey {
-			kv = reflect.New(keyType).Elem()
+// decodeMap owns storage lifetime, nil initialization and graph dependencies.
+// A storage adapter allocates cells and inserts their values; it never decodes.
+func (ds *decodeState) decodeMap(ods *objectDecodeState, obj valueHandle, encoded *wire.Map) {
+	storage := obj.ops.mapStorage
+	storage.ensure(obj)
+	var key, value valueHandle
+	for i := range encoded.Keys {
+		// Struct and array loaders can retain their cells in delayed hooks.
+		// Other values are copied into the map, with independent dynamic
+		// storage for interface payloads. Nil leaves a destination unchanged.
+		if i == 0 || key.ops.kind == reflect.Struct || key.ops.kind == reflect.Array {
+			key = storage.newKey(obj)
 		} else {
-			// Nil wire values leave the destination unchanged.
-			kv.SetZero()
+			key.ops.zero(key)
 		}
-		if i == 0 || !reuseValue {
-			vv = reflect.New(valueType).Elem()
+		if i == 0 || value.ops.kind == reflect.Struct || value.ops.kind == reflect.Array {
+			value = storage.newValue(obj)
 		} else {
-			vv.SetZero()
+			value.ops.zero(value)
 		}
-
-		// Decode the objects.
-		ds.decodeObject(ods, kv, encoded.Keys[i])
-		ds.decodeObject(ods, vv, encoded.Values[i])
+		ds.loadValue(ods, key, encoded.Keys[i])
+		ds.loadValue(ods, value, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
-
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		storage.insert(obj, key, value)
 	}
 }
 
@@ -477,7 +470,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	if _, ok := encoded.Type.(wire.TypeSpecNil); ok {
 		// Special case; the nil object. Just decode directly, which
 		// will read nil from the wire (if encoded correctly).
-		ds.decodeObject(ods, obj, encoded.Value)
+		ds.loadValue(ods, reflectedHandle(obj), encoded.Value)
 		return
 	}
 
@@ -494,7 +487,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 
 	// With the object now having sufficient type information to actually
 	// have Set called on it, we can proceed to decode the value.
-	ds.decodeObject(ods, obj, encoded.Value)
+	ds.loadValue(ods, reflectedHandle(obj), encoded.Value)
 }
 
 // isFloatEq determines if x and y represent the same value.
@@ -540,80 +533,10 @@ func checkComplex(value, stored complex128) {
 	}
 }
 
-// decodeObject selects the operation from the destination's Go type and checks
-// that the encoded value has the corresponding wire representation. Generated
-// fields, manual loaders and dynamically allocated graph objects share this path.
-func (ds *decodeState) decodeObject(ods *objectDecodeState, target reflect.Value, value wire.Object) {
-	if _, ok := value.(wire.Nil); ok {
-		return
-	}
-	if wrapped, ok := value.(*wire.Interface); ok {
-		// Preserve nil-interface delegation and manual interface unwrapping.
-		// decodeInterface checks assignability at that boundary.
-		ds.decodeInterface(ods, target, wrapped)
-		return
-	}
-	switch target.Kind() {
-	case reflect.Bool:
-		target.SetBool(bool(value.(wire.Bool)))
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v := int64(value.(wire.Int))
-		target.SetInt(v)
-		checkInt(v, target.Int())
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		v := uint64(value.(wire.Uint))
-		target.SetUint(v)
-		checkUint(v, target.Uint())
-	case reflect.Float32, reflect.Float64:
-		if v, ok := value.(wire.Float32); ok {
-			target.SetFloat(float64(v))
-		} else {
-			v := float64(value.(wire.Float64))
-			target.SetFloat(v)
-			checkFloat(v, target.Float())
-		}
-	case reflect.Complex64, reflect.Complex128:
-		if v, ok := value.(*wire.Complex64); ok {
-			target.SetComplex(complex128(*v))
-		} else {
-			v := complex128(*value.(*wire.Complex128))
-			target.SetComplex(v)
-			checkComplex(v, target.Complex())
-		}
-	case reflect.String:
-		target.SetString(string(*value.(*wire.String)))
-	case reflect.Pointer:
-		ds.decodeReference(target, value.(*wire.Ref))
-	case reflect.Slice:
-		if slice, ok := value.(*wire.Slice); ok {
-			if objectID(slice.Ref.Root) != 0 {
-				// The graph owns the full backing array, including capacity.
-				typ := reflect.ArrayOf(int(slice.Capacity), target.Type().Elem())
-				object := ds.register(&slice.Ref, typ)
-				target.Set(reflectValueRWSlice3(object, 0, int(slice.Length), int(slice.Capacity)))
-			}
-		} else {
-			// Manual savers can encode an array into an existing slice.
-			ds.decodeArray(ods, target, value.(wire.Array))
-		}
-	case reflect.Array:
-		ds.decodeArray(ods, target, value.(wire.Array))
-	case reflect.Map:
-		if ref, ok := value.(*wire.Ref); ok {
-			ds.decodeReference(target, ref)
-		} else {
-			ds.decodeMap(ods, target, value.(*wire.Map))
-		}
-	case reflect.Struct:
-		ds.decodeStruct(ods, target, value.(*wire.Struct))
-	default:
-		Failf("cannot restore %T into %s", value, target.Type())
-	}
-}
-
 // decodeReference resolves graph references, map aliases and interior pointers
 // for validated pointer and map destinations.
-func (ds *decodeState) decodeReference(obj reflect.Value, ref *wire.Ref) {
+func (ds *decodeState) decodeReference(target valueHandle, ref *wire.Ref) {
+	obj := target.reflected()
 	// Nil pointers may be encoded in a "forceValue" context. For
 	// those we just leave it alone as the value will already be
 	// correct (nil).
@@ -624,7 +547,7 @@ func (ds *decodeState) decodeReference(obj reflect.Value, ref *wire.Ref) {
 	// Note that if this is a map type, we go through a level of
 	// indirection to allow for map aliasing.
 	if obj.Kind() == reflect.Map {
-		v := ds.register(ref, obj.Type())
+		v := ds.register(ref, obj.Type(), target.ops)
 		if v.IsNil() {
 			// Note that we don't want to clobber the map
 			// if has already been decoded by decodeMap. We
@@ -637,7 +560,7 @@ func (ds *decodeState) decodeReference(obj reflect.Value, ref *wire.Ref) {
 	}
 
 	// Normal assignment: authoritative only if no dots.
-	v := ds.register(ref, obj.Type().Elem())
+	v := ds.register(ref, obj.Type().Elem(), childOperations(target.ops.element))
 	obj.Set(reflectValueRWAddr(v))
 }
 
@@ -651,7 +574,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 	})
 
 	// Add the root object with ID 1.
-	_ = ds.addObject(1, obj)
+	_ = ds.addObject(1, reflectedHandle(obj))
 
 	// Read the number of objects.
 	numObjects, object, err := ReadHeader(&ds.r)
@@ -689,7 +612,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 				ods = ds.lookup(id)
 				if ods != nil {
 					// Decode the object.
-					ds.decodeObject(ods, ods.obj, encoded)
+					ds.loadValue(ods, ods.obj, encoded)
 				} else {
 					// If an object hasn't had interest registered
 					// previously or isn't yet valid, we deferred

@@ -157,7 +157,7 @@ type Sink struct {
 //		m.Load(1, &x.B) // Field is B.
 //	}
 func (s Sink) Save(slot int, objPtr any) {
-	s.internal.save(slot, reflect.ValueOf(objPtr).Elem())
+	s.internal.save(slot, reflectedHandle(reflect.ValueOf(objPtr).Elem()))
 }
 
 // SaveValue adds the given object value to the map.
@@ -177,7 +177,7 @@ func (s Sink) Save(slot int, objPtr any) {
 //		})
 //	}
 func (s Sink) SaveValue(slot int, obj any) {
-	s.internal.save(slot, reflect.ValueOf(obj))
+	s.internal.save(slot, reflectedHandle(reflect.ValueOf(obj)))
 }
 
 // Context returns the context object provided at save time.
@@ -225,7 +225,7 @@ type Source struct {
 //
 // See Sink.Save for an example.
 func (s Source) Load(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), false, nil)
+	s.internal.load(slot, reflectedHandle(reflect.ValueOf(objPtr).Elem()), false, nil)
 }
 
 // LoadWait loads the given objects from the map, and marks it as requiring all
@@ -233,7 +233,7 @@ func (s Source) Load(slot int, objPtr any) {
 //
 // See Sink.Save for an example.
 func (s Source) LoadWait(slot int, objPtr any) {
-	s.internal.load(slot, reflect.ValueOf(objPtr), true, nil)
+	s.internal.load(slot, reflectedHandle(reflect.ValueOf(objPtr).Elem()), true, nil)
 }
 
 // LoadValue loads the given object value from the map.
@@ -241,7 +241,7 @@ func (s Source) LoadWait(slot int, objPtr any) {
 // See Sink.SaveValue for an example.
 func (s Source) LoadValue(slot int, objPtr any, fn func(any)) {
 	o := reflect.ValueOf(objPtr)
-	s.internal.load(slot, o, true, func() { fn(o.Elem().Interface()) })
+	s.internal.load(slot, reflectedHandle(o.Elem()), true, func() { fn(o.Elem().Interface()) })
 }
 
 // AfterLoad schedules a function execution when all objects have been
