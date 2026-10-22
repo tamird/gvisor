@@ -30,10 +30,14 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                             "--noexecution_log_sort", *config["targets"]],
                            "build", targets=config["targets"])
             # Retain build failures and continue the independent architecture.
-            if execution_log.is_file():
-                record_execution(execution_log, architecture, "busybox")
             row = {"architecture": architecture, "build_status": built["status"], "outputs": {}}
             records["architectures"].append(row)
+            if execution_log.is_file():
+                try:
+                    record_execution(execution_log, architecture, "busybox")
+                except (OSError, ValueError, RuntimeError) as error:
+                    row["execution_evidence_error"] = str(error)
+                    failed = True
             queries = {
                 "binary": ("//images:busybox_binary", []),
                 "config": ("//images:busybox_config", []),

@@ -1,5 +1,4 @@
 """Check selected BusyBox configuration, ELF closure and native runner commands."""
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -17,7 +16,8 @@ destination = Path(sys.argv[3])
 records = {"source": builds["source"], "status": "INCOMPLETE", "architectures": [], "commands": []}
 applets = ["basename", "cat", "cut", "dirname", "grep", "realpath", "sed", "sh",
            "sleep", "sort", "tee", "tr", "uniq", "wc"]
-required = set(Path("images/busybox/pidfd.config").read_text().splitlines())
+required = {line for line in Path("images/busybox/pidfd.config").read_text().splitlines()
+            if line.startswith("CONFIG_")}
 container_name = "qualification-pidfd-busybox-probe"
 
 
