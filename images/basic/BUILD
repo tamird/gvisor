@@ -45,8 +45,14 @@ image_layer(
     srcs = {
         "/usr/bin/tcpdump": "@tcpdump",
         "/usr/bin/tcpdump_sender": ":tcpdump_sender",
+        "/usr/share/licenses/bison/NOTICE": "bison.NOTICE",
         "/usr/share/licenses/libpcap/NOTICE": "libpcap.NOTICE",
         "/usr/share/licenses/tcpdump/NOTICE": "tcpdump.NOTICE",
+    },
+    file_metadata = {
+        "/usr/share/licenses/bison/NOTICE": file_metadata(mode = "0644"),
+        "/usr/share/licenses/libpcap/NOTICE": file_metadata(mode = "0644"),
+        "/usr/share/licenses/tcpdump/NOTICE": file_metadata(mode = "0644"),
     },
     include_runfiles = False,
 )
