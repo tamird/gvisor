@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import signal
 import subprocess
@@ -156,7 +157,9 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
         records["server_info_before"] = json.loads(run(["docker", "info", "--format={{json .}}"]))
         make = ["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
-                "OPTIONS=--compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
+                "BAZEL_OPTIONS=" + shlex.join(["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
+                    "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
+                    *configuration.get("bazel_options", [])]),
                 "STARTUP_OPTIONS=--output_base=" + os.environ["APPLICABILITY_OUTPUT_BASE"] + " --bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
                 "REMOTE_IMAGE_PREFIX=qualification.invalid/images"]
         run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])

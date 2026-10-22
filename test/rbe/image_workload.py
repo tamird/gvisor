@@ -109,6 +109,15 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         runtimes = {}
         with ExitStack() as scopes:
             for side, revision in (("before", config["before_source"]), ("after", source)):
+                # The GNU baseline expects compiler executables in /usr/bin;
+                # its release build and Make refresh need the same builder.
+                execution_options = []
+                if side == "before":
+                    execution_options.append("--remote_default_exec_properties=container-image=" +
+                                             config["before_execution_image"])
+                runtime_record = {"side": side, "source": revision, "status": "INCOMPLETE",
+                                  "execution_options": execution_options}
+                records["runtime_builds"].append(runtime_record)
                 command(["git", "switch", "--detach", revision])
                 for name, expected_hash in config["matched_inputs"].items():
                     if hashlib.sha256((workspace / name).read_bytes()).hexdigest() != expected_hash:
@@ -117,12 +126,15 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     lock.write_bytes(candidate_lock)
                 prepared = invoke(side + "-release-preparation", ["cquery", "--config=x86_64",
                     "--compilation_mode=opt", "--lockfile_mode=update", "--noannounce_rc",
-                    "--output=label", "//:release"], "command", targets=[], source=revision)
+                    *execution_options, "--output=label", "//:release"], "command", targets=[], source=revision)
+                runtime_record["preparation"] = {key: prepared[key] for key in ("status", "native_exit")}
                 if prepared["status"] != "PASS":
                     raise RuntimeError("Release dependency preparation failed")
-                built = invoke(side + "-release", ["build", *options, "//:release"], "build",
+                built = invoke(side + "-release", ["build", *options, *execution_options, "//:release"], "build",
                                targets=["//:release"], source=revision)
                 directory = evidence / ("invocation-" + side + "-release") if side == "after" else evidence / "source-builds" / (side + "-release")
+                runtime_record["build"] = {key: built[key] for key in ("status", "native_exit", "source", "expected")}
+                runtime_record["build"]["verdict"] = str((directory / "verdict.json").relative_to(evidence))
                 release = outputs(built, directory, ["//:release"])
                 by_name = {}
                 for row in release:
@@ -137,6 +149,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 runtime = scopes.enter_context(prepared_runtime(destination / "runtime.json", runtime_directory, {
                     "runtime_name": runtime_name, "runtime_flags": ["--platform=systrap"],
                     "image_name": "benchmarks/alpine", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
+                    "bazel_options": execution_options,
                 }))
                 expected = set(config["runtime_paths"])
                 if not expected <= by_name.keys():
@@ -149,7 +162,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         raise ValueError("Copied runtime differs from its configured release output")
                 runtimes[side] = {"name": runtime_name, "source": revision,
                     "files": runtime["runtime_files"], "configuration": runtime["config_after"]["runtimes"][runtime_name]}
-                records["runtime_builds"].append({"side": side, "source": revision, "release_outputs": release})
+                runtime_record.update({"status": "PASS", "release_outputs": release})
             if command(["git", "rev-parse", "HEAD"]) != source:
                 raise ValueError("Candidate source was not restored")
             shutil.copy2(staged / "startup_test", package / "startup_test")
@@ -172,6 +185,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 raise RuntimeError("Startup cohort failed")
         records["status"] = "PASS"
     finally:
+        if records["status"] != "PASS":
+            records["status"] = "FAIL"
         try:
             subprocess.run(["git", "switch", "--detach", source], check=True, timeout=30)
             lock.write_bytes(candidate_lock)
