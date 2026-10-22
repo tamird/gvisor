@@ -49,9 +49,8 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 // decodeArray owns length checks and the homogeneous wire-kind dispatch.
 // Composite elements can invoke hooks, so their destination is indexed anew
 // for each element. Primitive elements have no graph dependencies or hooks.
-func (ds *decodeState) decodeArray(ods *objectDecodeState, obj valueHandle, encoded wire.Array) {
-	view := obj.ops.sequence(obj)
-	length := view.length
+func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value, encoded wire.Array) {
+	length := target.Len()
 	if encoded.Len() != length {
 		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
 	}
@@ -61,14 +60,14 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, obj valueHandle, enco
 	switch values := encoded.(type) {
 	case *wire.ObjectArray:
 		for i, value := range values.Contents {
-			ds.loadValue(ods, view.index(view, i), value)
+			ds.decodeObject(ods, target.Index(i), value)
 			ds.waitObject(ods, value, nil)
 		}
 		return
 	case *wire.RefArray:
 		for i := range values.Contents {
 			value := &values.Contents[i]
-			ds.loadValue(ods, view.index(view, i), value)
+			ds.decodeObject(ods, target.Index(i), value)
 			ds.waitObject(ods, value, nil)
 		}
 		return
@@ -77,7 +76,6 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, obj valueHandle, enco
 	// The actual reflected flags must allow writes, even for an unexported
 	// field. A slice value itself need not be addressable; its elements must
 	// be. Defined scalar types have the same memory layout as their Kind.
-	target := obj.reflected()
 	element := target.Index(0)
 	if !element.CanSet() {
 		Failf("array element of type %s is not settable", element.Type())
