@@ -13,7 +13,7 @@ cc_binary(
     name = "syscallbench",
     srcs = ["syscallbench.c"],
     copts = ["-O2"],
-    static = True,
+    features = ["fully_static_link"],
     # The assembly loop and seccomp filters use the Linux x86-64 ABI.
     target_compatible_with = [
         "@platforms//cpu:x86_64",
