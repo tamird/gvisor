@@ -51,10 +51,18 @@ jobs:
           export LIFECYCLE_BAZELISK="$(command -v bazelisk)"
           sudo -n -H --preserve-env=BUILDBUDDY_API_KEY,GITHUB_SHA,GITHUB_WORKSPACE,RUNNER_TEMP,LIFECYCLE_BAZELISK \
             python3 "$RUNNER_TEMP/state-lifecycle/driver.py"
-      - name: Retain source-bound results and original evidence
+      - name: Retain the remotely verified result
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: state-lifecycle-attempt-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/state-lifecycle/results/
+          name: state-lifecycle-result-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/state-lifecycle/results/compact/
+          if-no-files-found: error
+      - name: Retain the full audit bundles
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-lifecycle-audit-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/state-lifecycle/results/*.tar.gz
+          compression-level: 0
           if-no-files-found: error
