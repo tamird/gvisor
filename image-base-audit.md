@@ -54,12 +54,18 @@ proof of utility compatibility. Retain existing consumers as validation.
 ## First implementation
 
 Hostinet owns the PIDFD prototype on `rules-img-pidfd-scratch`, preserving
-approved4be5. BCR Toybox0.8.12.bcr.1 provides a source-built static utility
-binary, but its shell is unsuitable: it lacks the runner's `set -o pipefail`
-semantics. The source check prevents a known-invalid remote build. Dash's
-implemented pipefail and source-built BusyBox ash are being compared for
-compatibility and maintainable build integration. Toybox is not a required
-choice. No upstream runner behavior will be weakened to fit a replacement.
+approved4be5. It builds BusyBox 1.38.0 from the pinned upstream archive using
+upstream Make and a limited allnoconfig fragment. The image starts from
+scratch and installs the resulting static executable with fourteen explicit
+applet paths. The shell retains the runner's pipefail behavior; the required
+tr character classes are enabled. Toybox's shell lacked pipefail, and a
+separate Dash build required more integration code.
+
+Build inputs select target ARCH and CC/AR/NM separately from execution HOSTCC.
+Kconfig timestamps are disabled. The pinned RBE execution image supplies build
+shell utilities; this does not claim those tools were individually built
+from source. The first both-architecture build and native shell/timeout probe
+is submitted; no successful runtime or source-closure claim is made yet.
 
 GNU timeout is currently an explicitly selected prebuilt package executable;
 removing the parent OCI image alone does not make that binary source-built.
