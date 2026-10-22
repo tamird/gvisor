@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T06:45:54.128992+00:00",
+    "updatedAt": "2026-10-22T07:15:56.035422+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17832,9 +17832,9 @@
       "title": "Build tcpdump and its test sender with Bazel",
       "url": "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
       "group": "bazel",
-      "status": "Agent work: catalog Verify recovery",
-      "updatedAt": "2026-10-22T06:42:28.854317+00:00",
-      "summary": "The final image source and complete notices are published. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated remote compiler evidence is reused through unchanged executable identities; the final runtime run makes no fresh compilation claim. Canonical Fetch produced the complete catalog, but Verify still needs its retained-lock recovery. The accepted operation has not exposed an invocation, so its owner is reconciling that operation before submitting a smaller artifact-reference request. No cause is established for the launch visibility gap. No contributor question is pending.",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
+      "summary": "The final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor review is pending, conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -17847,8 +17847,17 @@
         {
           "label": "Existing manual-artifact prerequisite",
           "url": "https://github.com/google/gvisor/pull/16051"
+        },
+        {
+          "label": "Canonical Verify of complete retained catalog",
+          "url": "https://app.buildbuddy.io/invocation/a6b08264-0204-41db-ac52-8705cfb73827"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "1393d4449850b660d77e4b1ebb2906e322d7c855",
+        "url": "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855"
+      }
     },
     {
       "id": "branch:state-wire-storage",
@@ -17914,23 +17923,15 @@
       "id": "branch:rules-img-libacl",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "qualification/libacl-autoconf-shell-env",
-      "head": "4e5bfa93a32c7592356c4d5219526aa997291abc",
+      "ref": "qualification/libacl-license-retention",
+      "head": "81d05fc8bf13374011589dbd833dffb8bf7a4e09",
       "title": "Assemble the ACL test image from pinned packages",
-      "url": "https://github.com/tamird/gvisor/commit/4e5bfa93a32c7592356c4d5219526aa997291abc",
+      "url": "https://github.com/tamird/gvisor/commit/81d05fc8bf13374011589dbd833dffb8bf7a4e09",
       "group": "bazel",
-      "status": "Agent work: bounded catalog diagnosis",
-      "updatedAt": "2026-10-22T06:42:28.854317+00:00",
-      "summary": "Ordinary GNU Make passes with the shared Autoconf correction and no diagnostic PATH override. Both architecture archives, contexts, complete filesystems, configurations and twelve executable hashes remain identical to the accepted image, preserving the Make and native-runc/gVisor consumer results. Full catalog collection subsequently timed out with empty Fetch streams and no completed catalog record; that failure is retained and its cause is unresolved. One bounded diagnostic reuses the exact source and retained graph locks, captures the checker stack if it stalls, and terminates the owned process group before restoring source files. Full Fetch and Verify remain required. The shared action-environment correction is a separate prerequisite; contributor review has not been requested.",
+      "status": "Agent work: final catalog verification",
+      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
+      "summary": "Ordinary GNU Make passes with the shared Autoconf correction and no diagnostic PATH override. Both architecture archives, full filesystems, configurations and twelve executable hashes remain identical to the accepted image, preserving Make and native-runc/gVisor consumer results. Canonical Fetch produced all 291 entries, including 92 APT records. Verify rejected four singleton license lists; the exact checker schema requires scalar values. That source-only correction is independently reviewed and published, and a Verify-only run is active against the retained canonical output. The earlier timeout and classification/schema failures remain preserved. A final image-only child above the shared GNU prerequisite is prepared locally with the exact candidate tree; contributor review awaits Verify.",
       "links": [
-        {
-          "label": "Current image and scoped audit source",
-          "url": "https://github.com/tamird/gvisor/commit/4e5bfa93a32c7592356c4d5219526aa997291abc"
-        },
-        {
-          "label": "Shared action-environment prerequisite",
-          "url": "https://github.com/tamird/gvisor/commit/811225b0160cee5a3e0b09e23b9e95e340c1d2e0"
-        },
         {
           "label": "Ordinary GNU entry passes",
           "url": "https://app.buildbuddy.io/invocation/e1ee4886-f4f0-42cf-b372-c97d71c79179"
@@ -17948,8 +17949,20 @@
           "url": "https://app.buildbuddy.io/invocation/36b829cf-b79e-45d9-9db1-58011032446c"
         },
         {
-          "label": "Bounded catalog diagnostic in progress",
-          "url": "https://app.buildbuddy.io/invocation/bbd3d0fd-5344-49ed-8f91-0794cd653b52"
+          "label": "Corrected scalar policy and exact catalog",
+          "url": "https://github.com/tamird/gvisor/commit/81d05fc8bf13374011589dbd833dffb8bf7a4e09"
+        },
+        {
+          "label": "Shared GNU prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+        },
+        {
+          "label": "Canonical Fetch and preserved schema failure",
+          "url": "https://app.buildbuddy.io/invocation/7ca56968-7664-4ea1-bf2a-a9474076e5b7"
+        },
+        {
+          "label": "Verify-only recovery in progress",
+          "url": "https://app.buildbuddy.io/invocation/9edab404-3555-46ba-8f24-5803b0613ce0"
         }
       ]
     },
@@ -17957,19 +17970,15 @@
       "id": "branch:rules-img-filecap",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "qualification/rules-img-filecap-autoconf-licenses",
-      "head": "92f612b34ef4590eb5f544cfc471c721b045e75e",
+      "ref": "rules-img-filecap-on-gnu",
+      "head": "d4b6e3538c9b2b674f638904666d14b02ff48bf9",
       "title": "Declare the file-capability test image",
-      "url": "https://github.com/tamird/gvisor/commit/92f612b34ef4590eb5f544cfc471c721b045e75e",
+      "url": "https://github.com/tamird/gvisor/commit/d4b6e3538c9b2b674f638904666d14b02ff48bf9",
       "group": "bazel",
-      "status": "Agent work: final source composition",
-      "updatedAt": "2026-10-22T06:45:54.128992+00:00",
-      "summary": "Both architecture archives and capability metadata, Make rebuild/reload and all twenty-two unchanged runtime records pass with no skips. After the shared Autoconf correction, both complete image inventories, twelve executables and capability bytes remain identical; that comparison uses cached assembly and makes no fresh execution claim. The catalog failure was limited to two libcrypt notices under the filecap package hub. The corrected source retains all 245 prior entries, the 26 actual new package entries and two exact-artifact manual libcrypt records, with dependency-specific exceptions. Full canonical Fetch and Verify and their retained evidence are independently accepted: 273 entries, including 74 APT records. The owner is composing the final source. Earlier failures remain preserved. No contributor decision has been requested.",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
+      "summary": "The complete qualified filecap tree is now a separate image commit above the shared GNU prerequisite; no implementation or catalog bytes changed during that composition. Both architecture archives, complete inventories, twelve executable identities and capability bytes match the runtime-qualified image. Make rebuild/reload and all twenty-two unchanged runtime records pass with no skips. Canonical Fetch and Verify pass with 273 entries, including 74 APT records and two exact-artifact libcrypt records. Earlier failures and cached-action attribution remain explicit. Contributor review for exactd4b6 is pending, conditional on the shared GNU and existing image/license prerequisites.",
       "links": [
-        {
-          "label": "Published image and scoped catalog correction",
-          "url": "https://github.com/tamird/gvisor/commit/92f612b34ef4590eb5f544cfc471c721b045e75e"
-        },
         {
           "label": "Passing image and runtime qualification",
           "url": "https://app.buildbuddy.io/invocation/0944a583-369e-4336-858c-d37632d53328"
@@ -17983,10 +17992,23 @@
           "url": "https://app.buildbuddy.io/invocation/3c737b85-e0b1-46f5-a490-934ddf4e89ac"
         },
         {
-          "label": "Shared action-environment prerequisite",
-          "url": "https://github.com/tamird/gvisor/commit/811225b0160cee5a3e0b09e23b9e95e340c1d2e0"
+          "label": "Final image source",
+          "url": "https://github.com/tamird/gvisor/commit/d4b6e3538c9b2b674f638904666d14b02ff48bf9"
+        },
+        {
+          "label": "Image-only change above shared prerequisite",
+          "url": "https://github.com/tamird/gvisor/compare/87e9a842f2c13a1b71ec7d18aad6564c9d758f66...d4b6e3538c9b2b674f638904666d14b02ff48bf9"
+        },
+        {
+          "label": "Shared GNU prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "d4b6e3538c9b2b674f638904666d14b02ff48bf9",
+        "url": "https://github.com/tamird/gvisor/commit/d4b6e3538c9b2b674f638904666d14b02ff48bf9"
+      }
     },
     {
       "id": "branch:rules-img-pidfd",
@@ -17998,8 +18020,8 @@
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/1e5f6855a0266377284df6feaa9a1b9f78e93c1b",
       "status": "Agent work: compilation and image qualification",
-      "updatedAt": "2026-10-22T06:42:28.854317+00:00",
-      "summary": "The published source declares seven Linux v6.8 C selftests, their headers and existing runner files, using the selected target toolchain. It preserves the documented time-namespace and recycled-PID exclusions, BusyBox commands and GNU timeout with the existing 45-second deadline. Source review is accepted. The first remote stage is submitted for both architectures and compares the shared profile-helper outputs with their accepted identities. Image closure, Make, the unchanged PIDFD consumer and canonical catalog remain required; no compile or runtime result is claimed yet.",
+      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
+      "summary": "The published source declares seven Linux v6.8 C selftests, their headers and existing runner files, using the selected target toolchain. It preserves the documented time-namespace and recycled-PID exclusions, BusyBox commands and GNU timeout with the existing 45-second deadline. Source review is accepted. The first compilation run disconnected without a result; the same bounded retry adds phase markers and is active. Compilation/profile-helper equality, image closure, Make, the unchanged PIDFD consumer and canonical catalog remain required. The owner is preparing composition on the reviewed shared GNU prerequisite; no compile or runtime success is claimed.",
       "links": [
         {
           "label": "Reviewed source",
@@ -18008,6 +18030,42 @@
         {
           "label": "Published qualification source",
           "url": "https://github.com/tamird/gvisor/commit/97df0ac17f3a5a2e57e1cf0c9c36ff70d9edebe1"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-gnu-prerequisite",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-gnu-prerequisite",
+      "head": "87e9a842f2c13a1b71ec7d18aad6564c9d758f66",
+      "title": "Fix GNU tools used for image assembly",
+      "group": "bazel",
+      "url": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T07:15:56.035422+00:00",
+      "summary": "Upgrade gawk to 5.4.0 to fix _REGEX_NELTS compilation errors in the image assembly toolchain. Preserve the inherited default action environment for configure probes: copying only fixed variables omitted PATH, so GCC could not find its selected ld.gold and incorrectly rejected available Unicode functions. The ordinary GNU Make path now passes without a PATH override, and both architecture image outputs remain identical to previously qualified inputs. The exact-source gawk bundle audit and scoped exception cover the selected AGPL allocator, GPL program and documentation/support terms. This is a separate prerequisite on the native Go image foundation; exact87e9 contributor review is pending. Tcpdump retains its different existing dependency graph.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "87e9a842f2c13a1b71ec7d18aad6564c9d758f66",
+        "url": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+      },
+      "links": [
+        {
+          "label": "Shared prerequisite source",
+          "url": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+        },
+        {
+          "label": "Change over native Go foundation",
+          "url": "https://github.com/tamird/gvisor/compare/4094323ff5a37d180f904fb030b4ccce2d1435dd...87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+        },
+        {
+          "label": "Ordinary GNU Make qualification",
+          "url": "https://app.buildbuddy.io/invocation/e1ee4886-f4f0-42cf-b372-c97d71c79179"
+        },
+        {
+          "label": "Both architecture output identity",
+          "url": "https://app.buildbuddy.io/invocation/26412b0a-a283-4f79-bb09-fbe45edc5d37"
         }
       ]
     }
@@ -20093,18 +20151,18 @@
       "evidence": "https://github.com/tamird/gvisor/commit/5d5f2da2a33dea00e4d905cf4121c8507f089f9d"
     },
     {
-      "from": "branch:native-go-images",
+      "from": "branch:rules-img-gnu-prerequisite",
       "to": "branch:rules-img-libacl",
       "type": "depends_on",
-      "reason": "Uses the approved helper base and pinned package-image foundation.",
-      "evidence": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd"
+      "reason": "Uses the reviewed shared gawk upgrade, configure-probe environment correction and exact-source audit above the native Go image foundation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
     },
     {
-      "from": "branch:native-go-images",
+      "from": "branch:rules-img-gnu-prerequisite",
       "to": "branch:rules-img-filecap",
       "type": "depends_on",
-      "reason": "Uses the existing helper base and pinned package-image foundation; no libacl proposal dependency.",
-      "evidence": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd"
+      "reason": "Uses the reviewed shared gawk upgrade, configure-probe environment correction and exact-source audit above the native Go image foundation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
     },
     {
       "from": "branch:native-go-images",
@@ -20112,6 +20170,13 @@
       "type": "depends_on",
       "reason": "Reuses the approved native-image foundation, helper package closure and shared image outputs.",
       "evidence": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd"
+    },
+    {
+      "from": "branch:native-go-images",
+      "to": "branch:rules-img-gnu-prerequisite",
+      "type": "depends_on",
+      "reason": "The shared GNU tool correction is factored on the approved native Go image and package foundation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
     }
   ],
   "investigations": [
