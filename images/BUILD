@@ -56,8 +56,8 @@ make(
         "busybox/make.sh",
     ],
     data = [
-        ":busybox_nm",
         "busybox/pidfd.config",
+        ":busybox_nm",
     ],
     env = {
         "BUSYBOX_HOSTCC": "$(execpath :busybox_hostcc)",
@@ -73,11 +73,11 @@ make(
 cp busybox "$$INSTALLDIR/bin/busybox"
 cp .config "$$INSTALLDIR/busybox.config"
 """,
+    target_compatible_with = ["@platforms//os:linux"],
     targets = [
         "allnoconfig",
         "busybox",
     ],
-    target_compatible_with = ["@platforms//os:linux"],
     tool_prefix = "$(execpath busybox/make.sh)",
 )
 
