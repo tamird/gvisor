@@ -285,3 +285,19 @@ func TestWrongDestinationShape(t *testing.T) {
 		})
 	}
 }
+
+// A dependency root must not become nil when narrowed to the internal object ID.
+func TestWaitNonzeroRoot(t *testing.T) {
+	var buf bytes.Buffer
+	writer := wire.Writer{Writer: &buf}
+	if err := WriteHeader(&writer, 1, true); err != nil {
+		t.Fatal(err)
+	}
+	wire.Save(&writer, wire.Uint(1))
+	wire.Save(&writer, &wire.ObjectArray{Contents: []wire.Object{&wire.Ref{Root: 1 << 32}}})
+	var destination [1]*int
+	_, err := Load(t.Context(), &buf, &destination)
+	if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), "error decoding object ID 1") {
+		t.Fatalf("Load error = %v, want ErrState with object context for nonzero dependency", err)
+	}
+}

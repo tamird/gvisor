@@ -60,15 +60,15 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 	switch values := encoded.(type) {
 	case *wire.ObjectArray:
 		for i, value := range values.Contents {
-			ds.decodeObject(ods, target.Index(i), value)
-			ds.waitObject(ods, value, nil)
+			root := ds.decodeObject(ods, target.Index(i), value)
+			ds.wait(ods, root, nil)
 		}
 		return
 	case *wire.RefArray:
 		for i := range values.Contents {
 			value := &values.Contents[i]
-			ds.decodeObject(ods, target.Index(i), value)
-			ds.waitObject(ods, value, nil)
+			root := ds.decodeObject(ods, target.Index(i), value)
+			ds.wait(ods, root, nil)
 		}
 		return
 	}
