@@ -131,7 +131,7 @@ func (es *encodeState) encodeReferenceArray(obj reflect.Value, dest *wire.Object
 			continue
 		}
 		a.current = pointer
-		es.resolve(value, &a.Contents[i], nil)
+		es.resolve(value, &a.Contents[i])
 	}
 	a.current = nil
 }
