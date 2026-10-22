@@ -114,7 +114,7 @@ arch_genrule(
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
-    srcs = {"/tmp/foo/file.txt": "tmpfile.txt"},
+    srcs = {"/tmp/foo/file.txt": "tmpfile/file.txt"},
     create_parent_directories = "enabled",
     default_metadata = file_metadata(mode = "0644"),
     # Keep the base image's sticky /tmp when adding its child directory.
