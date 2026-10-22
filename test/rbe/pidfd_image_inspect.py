@@ -141,7 +141,11 @@ try:
                 raise ValueError("GNU timeout architecture differs")
             interpreters = re.findall(r"Requesting program interpreter: ([^\]]+)", segments)
             needed = re.findall(r"\(NEEDED\).*Shared library: \[([^\]]+)\]", dynamic)
-            if len(interpreters) != 1 or needed != ["libc.so.6"]:
+            expected_interpreter = ("/lib64/ld-linux-x86-64.so.2" if architecture == "amd64"
+                                    else "/lib/ld-linux-aarch64.so.1")
+            expected_needed = (["libc.so.6"] if architecture == "amd64"
+                               else ["libc.so.6", "ld-linux-aarch64.so.1"])
+            if interpreters != [expected_interpreter] or needed != expected_needed:
                 raise ValueError(f"Unexpected GNU timeout dependencies: {interpreters}, {needed}")
             for installed in (interpreters[0], "lib/" +
                               ("x86_64-linux-gnu" if architecture == "amd64" else "aarch64-linux-gnu") + "/libc.so.6"):
