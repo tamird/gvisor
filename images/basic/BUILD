@@ -39,13 +39,14 @@ go_binary(
     static = True,
 )
 
+# Source files carry additional notices beyond each project's root LICENSE.
 image_layer(
     name = "tcpdump_layer",
     srcs = {
         "/usr/bin/tcpdump": "@tcpdump",
         "/usr/bin/tcpdump_sender": ":tcpdump_sender",
-        "/usr/share/licenses/libpcap/LICENSE": "@libpcap//:LICENSE",
-        "/usr/share/licenses/tcpdump/LICENSE": "@tcpdump//:LICENSE",
+        "/usr/share/licenses/libpcap/NOTICE": "libpcap.NOTICE",
+        "/usr/share/licenses/tcpdump/NOTICE": "tcpdump.NOTICE",
     },
     include_runfiles = False,
 )
