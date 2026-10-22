@@ -1,0 +1,101 @@
+Use the selftests' clone3 arguments with older toolchain kernel headers.
+The setns helper already constructs __clone_args; size that actual object.
+Reuse the existing clone3 helper in pidfd_wait instead of requiring the
+toolchain headers to declare struct clone_args.
+
+These changes follow the clone3 compatibility portion of upstream commit
+59a42b0e78888e2d9a459b12e8d1eb09fb4a3c7b (selftests/pidfd: add pidfs file
+handle selftests), without its new tests or unrelated helper changes:
+https://github.com/torvalds/linux/commit/59a42b0e7
+
+diff --git a/tools/testing/selftests/pidfd/pidfd_setns_test.c b/tools/testing/selftests/pidfd/pidfd_setns_test.c
+--- a/tools/testing/selftests/pidfd/pidfd_setns_test.c
++++ b/tools/testing/selftests/pidfd/pidfd_setns_test.c
+@@ -78,7 +78,7 @@
+ 		.pidfd		= ptr_to_u64(pidfd),
+ 	};
+ 
+-	return sys_clone3(&args, sizeof(struct clone_args));
++	return sys_clone3(&args, sizeof(args));
+ }
+ 
+ static bool switch_timens(void) { return true; }
+diff --git a/tools/testing/selftests/pidfd/pidfd_wait.c b/tools/testing/selftests/pidfd/pidfd_wait.c
+--- a/tools/testing/selftests/pidfd/pidfd_wait.c
++++ b/tools/testing/selftests/pidfd/pidfd_wait.c
+@@ -17,20 +17,14 @@
+ #include <unistd.h>
+ 
+ #include "pidfd.h"
++#include "../clone3/clone3_selftests.h"
+ #include "../kselftest_harness.h"
+-
+-#define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
+ 
+ /* Attempt to de-conflict with the selftests tree. */
+ #ifndef SKIP
+ #define SKIP(s, ...)	XFAIL(s, ##__VA_ARGS__)
+ #endif
+ 
+-static pid_t sys_clone3(struct clone_args *args)
+-{
+-	return syscall(__NR_clone3, args, sizeof(struct clone_args));
+-}
+-
+ static int sys_waitid(int which, pid_t pid, siginfo_t *info, int options,
+ 		      struct rusage *ru)
+ {
+@@ -41,7 +35,7 @@
+ {
+ 	int pidfd = -1;
+ 	pid_t parent_tid = -1;
+-	struct clone_args args = {
++	struct __clone_args args = {
+ 		.parent_tid = ptr_to_u64(&parent_tid),
+ 		.pidfd = ptr_to_u64(&pidfd),
+ 		.flags = CLONE_PIDFD | CLONE_PARENT_SETTID,
+@@ -68,7 +62,7 @@
+ 	EXPECT_EQ(close(pidfd), 0);
+ 	pidfd = -1;
+ 
+-	pid = sys_clone3(&args);
++	pid = sys_clone3(&args, sizeof(args));
+ 	ASSERT_GE(pid, 0);
+ 
+ 	if (pid == 0)
+@@ -89,7 +83,7 @@
+ {
+ 	int pidfd = -1;
+ 	pid_t parent_tid = -1;
+-	struct clone_args args = {
++	struct __clone_args args = {
+ 		.parent_tid = ptr_to_u64(&parent_tid),
+ 		.pidfd = ptr_to_u64(&pidfd),
+ 		.flags = CLONE_PIDFD | CLONE_PARENT_SETTID,
+@@ -102,7 +96,7 @@
+ 	};
+ 
+ 	ASSERT_EQ(pipe(pfd), 0);
+-	pid = sys_clone3(&args);
++	pid = sys_clone3(&args, sizeof(args));
+ 	ASSERT_GE(pid, 0);
+ 
+ 	if (pid == 0) {
+@@ -151,7 +145,7 @@
+ 	int pidfd;
+ 	unsigned int flags = 0;
+ 	pid_t parent_tid = -1;
+-	struct clone_args args = {
++	struct __clone_args args = {
+ 		.parent_tid = ptr_to_u64(&parent_tid),
+ 		.flags = CLONE_PARENT_SETTID,
+ 		.exit_signal = SIGCHLD,
+@@ -178,7 +172,7 @@
+ 	ASSERT_EQ(errno, ECHILD);
+ 	EXPECT_EQ(close(pidfd), 0);
+ 
+-	pid = sys_clone3(&args);
++	pid = sys_clone3(&args, sizeof(args));
+ 	ASSERT_GE(pid, 0);
+ 
+ 	if (pid == 0) {

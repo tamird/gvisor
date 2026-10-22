@@ -118,7 +118,10 @@ http_archive(
     name = "linux_pidfd",
     build_file = "//images/basic:linux_pidfd.BUILD",
     patch_strip = 1,
-    patches = ["//images/basic:pidfd_supported_tests.patch"],
+    patches = [
+        "//images/basic:pidfd_supported_tests.patch",
+        "//images/basic:pidfd_clone_args.patch",
+    ],
     sha256 = "c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3",
     strip_prefix = "linux-6.8",
     urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.tar.xz"],
