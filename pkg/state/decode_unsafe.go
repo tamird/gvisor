@@ -46,6 +46,16 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 	return reflectValueRWAddr(arr).Elem().Slice3(i, j, k)
 }
 
+// arrayView returns a typed view of an addressable array. Its storage stays
+// owned by the graph or field; constructing the view does not allocate a
+// reflected slice header. The view includes the complete backing array.
+func arrayView[E any](array reflect.Value) []E {
+	if array.Kind() != reflect.Array || array.Type().Elem() != reflect.TypeFor[E]() {
+		Failf("array operation for %s has element %s", array.Type(), reflect.TypeFor[E]())
+	}
+	return unsafe.Slice((*E)(array.Addr().UnsafePointer()), array.Len())
+}
+
 // restoreArray owns length checks and the homogeneous wire-kind dispatch.
 // Composite elements can invoke hooks, so their destination is indexed anew
 // for each element. Primitive elements have no graph dependencies or hooks.
