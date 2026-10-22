@@ -17,8 +17,12 @@ package state
 import (
 	"bytes"
 	"context"
+	"errors"
 	"reflect"
+	"strings"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 // These mutually recursive types use flat tables. Their runtime graph is
@@ -212,5 +216,35 @@ func TestCommonEngineRetainedMapValues(t *testing.T) {
 	}
 	if output[3][0].result == output[5][0].result {
 		t.Fatal("distinct callback results share storage")
+	}
+}
+
+func TestCommonEngineStoragePermissions(t *testing.T) {
+	private := struct{ value int64 }{value: 13}
+	var wrongType uint64 = 17
+	for _, test := range []struct {
+		name    string
+		object  reflect.Value
+		wantErr string
+	}{
+		{"unaddressable", reflect.ValueOf(int64(11)), "unaddressable value"},
+		{"read_only", reflect.ValueOf(&private).Elem().Field(0), "unexported field"},
+		{"wrong_type", reflect.ValueOf(&wrongType).Elem(), "incompatible typed storage"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ds := decodeState{}
+			err := safely(func() {
+				ds.loadValue(nil, handleWithOperations(test.object, &engineIntOps), wire.Int(29))
+			})
+			if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), test.wantErr) {
+				t.Fatalf("Load error = %v, want ErrState containing %q", err, test.wantErr)
+			}
+		})
+	}
+	if got, want := private.value, int64(13); got != want {
+		t.Fatalf("read-only destination = %d, want %d", got, want)
+	}
+	if got, want := wrongType, uint64(17); got != want {
+		t.Fatalf("wrong-type destination = %d, want %d", got, want)
 	}
 }

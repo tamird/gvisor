@@ -72,11 +72,13 @@ type sequenceView struct {
 }
 
 func reflectedSequence(v valueHandle) sequenceView {
-	return sequenceView{object: v, length: v.reflected().Len(), index: reflectedIndex}
+	object := v.reflected()
+	return sequenceView{object: v, length: object.Len(),
+		element: operationsFor(object.Type().Elem()), index: reflectedIndex}
 }
 
 func reflectedIndex(v sequenceView, i int) valueHandle {
-	return reflectedHandle(v.object.reflected().Index(i))
+	return handleWithOperations(v.object.reflected().Index(i), v.element)
 }
 
 // There is one immutable table per reflected kind, independent of registered
@@ -120,10 +122,20 @@ func init() {
 	tables[reflect.Interface].save = saveInterface
 }
 
-func typedZero[T any](v valueHandle) { var zero T; *v.storage.(*T) = zero }
+// typedStorage checks the exact Go type and write permissions before exposing
+// an address. The immediate UnsafeAddr conversion keeps the retained value's
+// storage live; typed stores retain Go's write barriers for pointer fields.
+func typedStorage[T any](v valueHandle) *T {
+	if !v.object.CanSet() || v.object.Type() != reflect.TypeFor[T]() {
+		panic("incompatible typed storage")
+	}
+	return (*T)(unsafe.Pointer(v.object.UnsafeAddr()))
+}
+
+func typedZero[T any](v valueHandle) { var zero T; *typedStorage[T](v) = zero }
 func typedCopy[T any](v valueHandle) valueHandle {
 	copy := new(T)
-	*copy = *v.storage.(*T)
+	*copy = *typedStorage[T](v)
 	return typedHandle(copy, v.ops)
 }
 
@@ -133,9 +145,9 @@ func integerOperations[T ~int | ~int8 | ~int16 | ~int32 | ~int64]() valueOperati
 	return valueOperations{
 		kind: reflect.TypeFor[T]().Kind(), save: saveInt, load: loadInt,
 		zero: typedZero[T], copy: typedCopy[T],
-		int: func(v valueHandle) int64 { return int64(*v.storage.(*T)) },
+		int: func(v valueHandle) int64 { return int64(*typedStorage[T](v)) },
 		setInt: func(v valueHandle, x int64) int64 {
-			p := v.storage.(*T)
+			p := typedStorage[T](v)
 			*p = T(x)
 			return int64(*p)
 		},
@@ -148,20 +160,20 @@ func mapOperations[M ~map[K]V, K comparable, V any](key, value func() *valueOper
 		zero: typedZero[M], copy: typedCopy[M],
 		mapStorage: &mapStorage{
 			key: key, value: value,
-			length: func(v valueHandle) int { return len(*v.storage.(*M)) },
-			isNil:  func(v valueHandle) bool { return *v.storage.(*M) == nil },
+			length: func(v valueHandle) int { return len(*typedStorage[M](v)) },
+			isNil:  func(v valueHandle) bool { return *typedStorage[M](v) == nil },
 			ensure: func(v valueHandle) {
-				p := v.storage.(*M)
+				p := typedStorage[M](v)
 				if *p == nil {
 					*p = make(M)
 				}
 			},
 			newKey:   func(v valueHandle) valueHandle { return typedHandle(new(K), v.ops.mapStorage.key()) },
 			newValue: func(v valueHandle) valueHandle { return typedHandle(new(V), v.ops.mapStorage.value()) },
-			insert:   func(v, k, x valueHandle) { (*v.storage.(*M))[*k.storage.(*K)] = *x.storage.(*V) },
+			insert:   func(v, k, x valueHandle) { (*typedStorage[M](v))[*typedStorage[K](k)] = *typedStorage[V](x) },
 			visit: func(v, k, x valueHandle, visit func(valueHandle, valueHandle)) {
-				for key, value := range *v.storage.(*M) {
-					*k.storage.(*K), *x.storage.(*V) = key, value
+				for key, value := range *typedStorage[M](v) {
+					*typedStorage[K](k), *typedStorage[V](x) = key, value
 					visit(k, x)
 				}
 			},
@@ -173,12 +185,12 @@ func sliceOperations[S ~[]E, E any](element, backing func() *valueOperations) va
 	return valueOperations{kind: reflect.Slice, save: saveSlice, load: loadSlice,
 		zero: typedZero[S], copy: typedCopy[S], element: element, backing: backing,
 		sequence: func(v valueHandle) sequenceView {
-			return sequenceView{object: v, length: len(*v.storage.(*S)), element: v.ops.element(), index: sliceIndex[S, E]}
+			return sequenceView{object: v, length: len(*typedStorage[S](v)), element: v.ops.element(), index: sliceIndex[S, E]}
 		}}
 }
 
 func sliceIndex[S ~[]E, E any](v sequenceView, i int) valueHandle {
-	return typedHandle(&(*v.object.storage.(*S))[i], v.element)
+	return typedHandle(&(*typedStorage[S](v.object))[i], v.element)
 }
 
 func backingOperations[E any](element func() *valueOperations) valueOperations {
