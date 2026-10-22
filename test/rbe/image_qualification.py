@@ -240,6 +240,9 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     workload_completed = False
     try:
         report.write_json(evidence / "authentication.json", {"startup_arguments": startup, "headers": ["remote_header", "bes_header"], "secret_retained": False})
+        import image_workload
+        retained_graph = (image_workload.prepare_graph_recovery(CONFIG, evidence, private)
+                          if "retained_graph" in CONFIG else None)
         # Resolve the configured image graph, without evaluating unrelated
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
@@ -258,15 +261,15 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         reject_credentials(info.stdout)
         output_root = Path(info.stdout.decode().strip())
         os.environ["APPLICABILITY_OUTPUT_BASE"] = str(output_root)
-        formatted = invoke('00-buildifier', ['run', '--lockfile_mode=error', '--noannounce_rc',
-                           '@rules_python//python/bin:python', '--', '-c',
-                           'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "buildifier"]).returncode)'],
-                           'command', targets=[])
-        if formatted['status'] != 'PASS':
-            raise RuntimeError('Canonical buildifier failed')
+        if retained_graph is None:
+            formatted = invoke('00-buildifier', ['run', '--lockfile_mode=error', '--noannounce_rc',
+                               '@rules_python//python/bin:python', '--', '-c',
+                               'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "buildifier"]).returncode)'],
+                               'command', targets=[])
+            if formatted['status'] != 'PASS':
+                raise RuntimeError('Canonical buildifier failed')
         report.write_json(evidence / 'remote-compiler-config.json', {'options': ['--remote_executor=grpcs://remote.buildbuddy.io', '--remote_cache=grpcs://remote.buildbuddy.io', '--bes_backend=grpcs://remote.buildbuddy.io', '--bes_results_url=https://app.buildbuddy.io/invocation/', '--remote_timeout=10m', '--spawn_strategy=remote', '--noremote_local_fallback', '--jobs=400', '--remote_cache_compression', '--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo', '--remote_default_exec_properties=OSFamily=linux', '--remote_default_exec_properties=Arch=amd64', '--remote_default_exec_properties=workload-isolation-type=oci', '--remote_default_exec_properties=container-image=docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02', '--strategy=TestRunner=local', '--local_test_jobs=1', '--noremote_upload_local_results'], 'properties': REMOTE_PROPERTIES, 'configuration_source': 'state-lifecycle-final-state_lifecycle.py', 'test_runner': 'local'})
-        import image_workload
-        image_workload.run(invoke, record_execution, evidence, private, output_root)
+        image_workload.run(invoke, record_execution, evidence, private, output_root, retained_graph)
         workload_completed = True
 
     except (OSError, ValueError, RuntimeError, TimeoutError, subprocess.SubprocessError):

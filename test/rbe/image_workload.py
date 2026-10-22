@@ -1,15 +1,137 @@
 """Check the compiler migration through its existing build and test owners."""
 
+import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
+import shutil
+import subprocess
+import tarfile
+import time
+import urllib.request
 
 import qualification_report as report
 
 
-def validate_graph(invoke, evidence: Path, options: list[str], groups: list[dict]) -> dict:
-    """Compare the transitioned owners with the existing four direct queries."""
+def prepare_graph_recovery(config: dict, evidence: Path, private: Path) -> dict:
+    """Reuse exact prior native queries and lock; keep the prior overall failure."""
+    supplier = config["retained_graph"]
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", supplier["source"], config["source"]],
+        text=True, timeout=30).splitlines()
+    if set(changed) != {"test/rbe/image_workload.py", "test/rbe/image_qualification.py"}:
+        raise ValueError(f"Graph recovery changed compiled or formatter inputs: {changed}")
+    expected = supplier["artifact"]
+    request = urllib.request.Request(
+        "https://app.buildbuddy.io/api/v1/GetFile",
+        data=json.dumps({"uri": expected["uri"]}).encode(),
+        headers={"Content-Type": "application/json",
+                 "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+    deadline = float(os.environ["APPLICABILITY_WORK_DEADLINE"])
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("Retained graph retrieval deadline exhausted")
+    artifact = private / "retained-compiler-graph.tar.gz"
+    size = 0
+    digest = hashlib.sha256()
+    with urllib.request.urlopen(request, timeout=min(60, remaining)) as response, artifact.open("wb") as output:
+        while chunk := response.read(1024 * 1024):
+            size += len(chunk)
+            if size > expected["bytes"] or time.monotonic() >= deadline:
+                raise ValueError("Retained graph exceeded its size or time bound")
+            digest.update(chunk)
+            output.write(chunk)
+    if (size, digest.hexdigest()) != (expected["bytes"], expected["sha256"]):
+        raise ValueError("Retained graph archive identity differs")
+    shutil.copyfile(artifact, evidence / artifact.name)
+    with tarfile.open(artifact) as archive:
+        def member(name: str) -> bytes:
+            entries = [entry for entry in archive.getmembers() if entry.name == name]
+            match entries:
+                case [entry] if entry.isfile():
+                    return archive.extractfile(entry).read()
+                case _:
+                    raise ValueError("Expected one regular retained graph member: " + name)
+
+        def command(name: str) -> bytes:
+            directory = "invocation-" + name + "/"
+            native = json.loads(member(directory + "verdict.json"))
+            if native["source"] != supplier["source"] or native["status"] != "PASS" or native["native_exit"] != 0:
+                raise ValueError("Retained native query/formatter failed: " + name)
+            for stream in native["command_outputs"].values():
+                raw = member(directory + stream["path"])
+                if (len(raw), hashlib.sha256(raw).hexdigest()) != (stream["bytes"], stream["sha256"]):
+                    raise ValueError("Retained command stream identity differs: " + name)
+            return member(directory + "stdout.log")
+
+        if command("00-buildifier"):
+            raise ValueError("Retained formatter proposed source changes")
+        combined = [json.loads(line) for line in command("compiler-matrix-graph").splitlines()]
+        direct = [json.loads(line) for line in command("compiler-reference-x86_64-normal").splitlines()]
+        lock = member(supplier["lock"]["member"])
+        if (len(lock), hashlib.sha256(lock).hexdigest()) != (supplier["lock"]["bytes"], supplier["lock"]["sha256"]):
+            raise ValueError("Retained graph lock identity differs")
+        for name in ("00-buildifier", "compiler-matrix-graph", "compiler-reference-x86_64-normal"):
+            if any(member("invocation-" + name + "/lock-" + suffix) != lock for suffix in ("before", "after")):
+                raise ValueError("Retained graph consumer changed the lock: " + name)
+        prior = json.loads(member("compiler-current-build.json"))
+        if prior != {"source": supplier["source"], "status": "INCOMPLETE", "builds": [], "tests": []}:
+            raise ValueError("Unexpected retained producer record")
+    Path("MODULE.bazel.lock").write_bytes(lock)
+    report.write_json(evidence / "retained-graph-provenance.json", {
+        "supplier": supplier, "prior_producer": prior, "changed_paths": changed,
+        "reused_native_phases": ["00-buildifier", "compiler-matrix-graph", "compiler-reference-x86_64-normal"],
+        "scope": "Reuse successful individual phases; original overall FAIL remains unchanged."})
+    return {"combined": combined, "references": {"x86_64-normal": direct}}
+
+
+def source_label(label: str) -> str:
+    # This is only canonical spelling for the main repository, not alias
+    # resolution. Never erase an external repository or a source-owned suffix.
+    if label.startswith("@@//"):
+        return label[2:]
+    if label.startswith("//"):
+        return label
+    raise ValueError(f"Unexpected source repository: {label}")
+
+
+def graph_settings(row: dict) -> dict:
+    native = {"cpu": "//command_line_option:cpu", "platforms": "//command_line_option:platforms"}
+    booleans = {name: "@@rules_go+//go/config:" + name for name in ("race", "pure")}
+    options = row["options"]
+    if set(options) - (set(native.values()) | set(booleans.values())):
+        raise ValueError(f"Unknown graph option owner or setting: {options}")
+    result = {}
+    for name, key in native.items():
+        value = options.get(key)
+        if not isinstance(value, str) or not value:
+            raise ValueError(f"Missing required native setting {name}: {value!r}")
+        result[name] = value
+    for name, key in booleans.items():
+        # Bazel 8.8.1 omits default Starlark values. These exact rules_go 0.63
+        # flags default to False; a missing native option remains an error.
+        value = options.get(key, "False")
+        if value not in ("True", "False"):
+            raise ValueError(f"Invalid {name} setting: {value!r}")
+        result[name] = value == "True"
+    return result
+
+
+def graph_output(row: dict) -> tuple[str, str]:
+    match row["files"]:
+        case [path] if isinstance(path, str):
+            parts = PurePosixPath(path).parts
+        case other:
+            raise ValueError(f"Expected one configured output: {other!r}")
+    if (".." in parts or len(parts) < 4 or parts[0] != "bazel-out" or parts[2] != "bin" or
+            not re.fullmatch(r"(k8|aarch64)-opt(?:-ST-[0-9a-f]{12})?", parts[1])):
+        raise ValueError(f"Unexpected configured output path: {path}")
+    return parts[1], "/".join(parts[3:])
+
+
+def validate_graph(invoke, evidence: Path, options: list[str], groups: list[dict], retained: dict) -> dict:
+    """Join every wrapper to its source owner and direct-reference settings."""
     formatter = str(Path.cwd() / "test/rbe/compiler_matrix/options.cquery")
 
     def query(name: str, expression: str, extra: list[str]) -> list[dict]:
@@ -20,53 +142,55 @@ def validate_graph(invoke, evidence: Path, options: list[str], groups: list[dict
         return [json.loads(line) for line in
                 (evidence / ("invocation-" + name) / "stdout.log").read_text().splitlines()]
 
-    def settings(row: dict) -> dict:
-        selected = {}
-        for name in ("cpu", "platforms", "race", "pure"):
-            suffix = ("//command_line_option:" if name in ("cpu", "platforms") else "//go/config:") + name
-            matches = [value for key, value in row["options"].items() if key.endswith(suffix)]
-            match matches:
-                case [value]:
-                    selected[name] = value
-                case _:
-                    raise ValueError(f"Expected one {name} setting for {row['label']}: {matches}")
-        return selected
-
     roots = {root: target for group in groups for root, target in group["roots"].items()}
-    labels = sorted(set(roots) | set(roots.values()))
-    expression = "filter(" + json.dumps("^(" + "|".join(re.escape(label) for label in labels) + ")$")
-    expression += ", deps(set(" + " ".join(roots) + ")))"
-    combined = query("compiler-matrix-graph", expression, [])
+    root_set = "set(" + " ".join(roots) + ")"
+    # Query strings do not process JSON escapes. Only shim was missing from the
+    # old original-owner rows; do not repeat that full dependency query.
+    expression = root_set + ' union filter("^//shim:containerd-shim-runsc-v1$", deps(' + root_set + "))"
+    recovered = query("compiler-matrix-missing", expression, [])
+    combined = retained["combined"] + recovered
     joins = []
     for group in groups:
-        direct = query("compiler-reference-" + group["name"],
-                       "set(" + " ".join(group["targets"]) + ")", group["options"])
+        direct = retained["references"].get(group["name"])
+        if direct is None:
+            direct = query("compiler-reference-" + group["name"],
+                           "set(" + " ".join(group["targets"]) + ")", group["options"])
+        cpu = "k8" if group["architecture"] == "x86_64" else "aarch64"
+        race = group["name"].endswith("-race")
         for root, target in group["roots"].items():
-            matches = [row for row in combined if row["label"] == root]
-            match matches:
-                case [wrapper] if len(wrapper["files"]) == 1:
-                    pass
+            # Pinned with_cfg 1.0 uses a native.alias frontend for filegroups.
+            # Bind those exact source-owned names; do not strip arbitrary suffixes.
+            wrappers = [row for row in recovered if source_label(row["label"]) == root + "_with_cfg"]
+            match wrappers:
+                case [wrapper]:
+                    _, relative = graph_output(wrapper)
                 case _:
-                    raise ValueError(f"Expected one single-output matrix root {root}: {matches}")
-            reference = [row for row in direct if row["label"] == target and row["files"] == wrapper["files"]]
-            match reference:
-                case [original]:
-                    pass
-                case _:
-                    raise ValueError(f"Matrix output differs from direct owner {target}: {wrapper}, {reference}")
-            origin = [row for row in combined if row["label"] == target and
-                      row["files"] == original["files"] and settings(row) == settings(original)]
-            if not origin:
-                raise ValueError(f"Matrix has no matching configured original owner: {original}")
+                    raise ValueError(f"Expected one explicit matrix wrapper {root}: {wrappers}")
+            actual = target + "_with_cfg" if target == "//tools/ioctl_sniffer:ioctl_hook_gnu" else target
+            references = [row for row in direct if source_label(row["label"]) == actual and
+                          graph_settings(row)["cpu"] == cpu and graph_settings(row)["race"] == race and
+                          graph_settings(row)["pure"] != race]
+            names = {graph_output(row)[1] for row in references}
+            if names != {relative}:
+                raise ValueError(f"Missing or ambiguous direct output for {target}: {references}")
+            # cquery returns aliases and actual configured targets. Preserve all
+            # distinct effective-setting variants, and require their full set to
+            # agree; do not choose a convenient duplicate or ignore an extra one.
+            candidates = [row for row in combined if source_label(row["label"]) == actual and
+                          row["files"] == wrapper["files"]]
+            variants = lambda rows: {json.dumps(graph_settings(row), sort_keys=True) for row in rows}
+            if not candidates or variants(candidates) != variants(references):
+                raise ValueError(f"Configured owner/settings differ for {target}: {candidates}, {references}")
             joins.append({"group": group["name"], "root": root, "original_target": target,
-                          "files": original["files"], "settings": settings(original)})
+                          "actual_label": actual, "wrapper": wrapper, "combined_owners": candidates,
+                          "direct_owners": references, "relative_output": relative})
     if len(joins) != len(roots) or len(roots) != 40:
         raise ValueError(f"Expected all 40 configured compiler roots, got {len(joins)}")
     return {"status": "PASS", "configured_outputs": joins,
-            "scope": "Configured graph and output-path equality only; no compiler output was built or inspected"}
+            "scope": "Source-owner, effective transition-setting and relative-output equality. Configuration directories retained; no binary/action/cache equivalence or build credit."}
 
 
-def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
+def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path, retained_graph: dict | None = None) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
@@ -78,7 +202,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             records["status"] = "PASS"
             return
         if config.get("graph_only", False):
-            records["graph_validation"] = validate_graph(invoke, evidence, options, config["build_groups"])
+            if retained_graph is None:
+                raise ValueError("Graph recovery requires the authenticated prior evidence")
+            records["graph_validation"] = validate_graph(invoke, evidence, options, config["build_groups"], retained_graph)
             records["status"] = "PASS"
             return
         result = invoke("execution-root", ["info", *options, "execution_root"], "command", targets=[])
