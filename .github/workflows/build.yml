@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           git fetch --no-tags origin \
             3b159fe670bfc2d25b4db7b38844fb98f97d7d0c \
-            8d7571b489d38a9610857750efc6325956b3db0b \
+            a95346674cc69b541fdd99c00c3c4c0c85ff10a9 \
             5203b735d8991e2e4f00568c8b6c850761dd8ef6 \
             aa42f89132b16eda9c39e0acea0dcbb0e463deee
           mkdir "$RUNNER_TEMP/state-lifecycle"

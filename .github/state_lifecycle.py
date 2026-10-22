@@ -33,7 +33,7 @@ import qualification_report as report
 
 SOURCES = {
     "before": "3b159fe670bfc2d25b4db7b38844fb98f97d7d0c",
-    "after": "8d7571b489d38a9610857750efc6325956b3db0b",
+    "after": "a95346674cc69b541fdd99c00c3c4c0c85ff10a9",
 }
 TOOL_SOURCE = "5203b735d8991e2e4f00568c8b6c850761dd8ef6"
 ALL_SOURCES = SOURCES | {"statistics": TOOL_SOURCE}
@@ -420,10 +420,10 @@ class Comparison:
             self.prepare()
             for side in ["before", "after"]:
                 self.sample(side, "warmup", True, None)
-            for pair in range(12):
+            for pair in range(16):
                 for side in (["before", "after"] if pair % 2 == 0 else ["after", "before"]):
                     self.sample(side, f"pair-{pair:02}", False, pair)
-            if len(self.samples) != 26:
+            if len(self.samples) != 34:
                 raise RuntimeError("Incomplete lifecycle sample schedule")
             self.statistics()
         except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
@@ -446,7 +446,7 @@ class Comparison:
                     if result["status"] != "PASS":
                         self.runner_exit = self.runner_exit or 1
                 report.write_json(self.results / "comparison.json", {
-                    "status": "PASS" if self.runner_exit == 0 and len(self.samples) == 26 else "FAIL",
+                    "status": "PASS" if self.runner_exit == 0 and len(self.samples) == 34 else "FAIL",
                     "sources": SOURCES, "statistics_source": TOOL_SOURCE,
                     "bundles": bundles, "samples": self.samples,
                     "lock": self.lock_digest, "finished_at": utc_now(),
