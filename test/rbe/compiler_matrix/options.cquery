@@ -1,0 +1,9 @@
+"""Record native cquery identities without building the selected outputs."""
+
+def format(target):
+    options = build_options(target)
+    return json.encode({
+        "label": str(target.label),
+        "files": sorted([file.path for file in target.files.to_list()]),
+        "options": {str(key): str(value) for key, value in options.items()},
+    })

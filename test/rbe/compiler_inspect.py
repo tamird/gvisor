@@ -56,7 +56,7 @@ try:
             files = {}
             machine = "Advanced Micro Devices X86-64" if group["architecture"] == "x86_64" else "AArch64"
             for output in group["outputs"]:
-                label = output["identity"]["label"]
+                label = output["original_target"]
                 path = Path(output["materialized_path"])
                 if identity(path) != {key: output[key] for key in ("sha256", "bytes")}:
                     raise ValueError("Output changed since its BEP join: " + label)
@@ -65,7 +65,8 @@ try:
                 segments = command([readelf, "--program-headers", str(path)])
                 dynamic = command([readelf, "--dynamic", str(path)])
                 needed = re.findall(r"\(NEEDED\).*Shared library: \[([^\]]+)\]", dynamic)
-                row["outputs"].append({"label": label, **identity(path), "header": header,
+                row["outputs"].append({"label": label, "configured_root": output["identity"],
+                                       **identity(path), "header": header,
                                        "segments": segments, "dynamic": dynamic, "needed": needed})
                 if machine not in header:
                     raise ValueError("Wrong target architecture: " + label)
