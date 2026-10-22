@@ -7,7 +7,11 @@ package(
 
 go_library(
     name = "wire",
-    srcs = ["wire.go"],
+    srcs = [
+        "array.go",
+        "load.go",
+        "wire.go",
+    ],
     importpath = "gvisor.dev/gvisor/pkg/state/wire",
     marshal = False,
     stateify = False,
