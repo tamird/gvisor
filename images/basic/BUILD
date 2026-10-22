@@ -235,6 +235,7 @@ image_outputs(
 )
 
 # Qualification-only originals for controlled resource-label comparisons.
+# Preserve original target labels in layer history as well as installed bytes.
 image_layer(
     name = "tmpfile_layer_before",
     srcs = {"/tmp/foo/file.txt": "tmpfile.txt"},
@@ -242,6 +243,7 @@ image_layer(
     default_metadata = file_metadata(mode = "0644"),
     # Keep the base image's sticky /tmp when adding its child directory.
     file_metadata = {"/tmp": file_metadata(mode = "1777")},
+    history = ["bazel build //images/basic:tmpfile_layer"],
 )
 
 image_manifest(
@@ -281,6 +283,7 @@ image_layer(
         "/etc/sudoers": file_metadata(mode = "0440"),
         "/etc/sudoers.d/test-admins": file_metadata(mode = "0440"),
     },
+    history = ["bazel build //images/basic:sudo_configuration"],
     # The privilege tests use this absolute path; the package installs usr/bin.
     symlinks = {"/bin/whoami": "/usr/bin/whoami"},
 )
@@ -310,6 +313,7 @@ image_layer(
         "/etc/passwd": "libacl.passwd",
     },
     default_metadata = file_metadata(mode = "0644"),
+    history = ["bazel build //images/basic:libacl_accounts"],
 )
 
 image_manifest(
@@ -342,6 +346,7 @@ image_layer(
         "/usr/share/licenses/libpcap/NOTICE": file_metadata(mode = "0644"),
         "/usr/share/licenses/tcpdump/NOTICE": file_metadata(mode = "0644"),
     },
+    history = ["bazel build //images/basic:tcpdump_layer"],
     include_runfiles = False,
 )
 
@@ -371,6 +376,7 @@ image_layer(
         "/run.sh": file_metadata(mode = "0755"),
         "/usr/bin/fsstress": file_metadata(mode = "0755"),
     },
+    history = ["bazel build //images/basic:fsstress_layer"],
     include_runfiles = False,
 )
 
