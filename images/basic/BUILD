@@ -56,18 +56,6 @@ image_outputs(
 )
 
 # Build the example with Rust's self-contained musl runtime.
-platform(
-    name = "rust_amd64_platform",
-    flags = ["--@rules_rust//rust/settings:toolchain_linker_preference=rust"],
-    parents = ["@llvm//platforms:linux_x86_64_musl"],
-)
-
-platform(
-    name = "rust_arm64_platform",
-    flags = ["--@rules_rust//rust/settings:toolchain_linker_preference=rust"],
-    parents = ["@llvm//platforms:linux_aarch64_musl"],
-)
-
 rust_binary(
     name = "rust_hello_world",
     srcs = ["rust/helloworld.rs"],
@@ -110,8 +98,8 @@ image_index(
     name = "rust",
     manifests = [":rust_manifest"],
     platforms = select({
-        "@platforms//cpu:aarch64": [":rust_arm64_platform"],
-        "@platforms//cpu:x86_64": [":rust_amd64_platform"],
+        "@platforms//cpu:aarch64": ["@llvm//platforms:linux_aarch64_musl"],
+        "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
     }),
     tags = ["manual"],
 )
@@ -120,8 +108,8 @@ image_index(
     name = "rust_index",
     manifests = [":rust_manifest"],
     platforms = [
-        ":rust_amd64_platform",
-        ":rust_arm64_platform",
+        "@llvm//platforms:linux_aarch64_musl",
+        "@llvm//platforms:linux_x86_64_musl",
     ],
     tags = ["manual"],
 )
