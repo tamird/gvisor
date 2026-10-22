@@ -88,6 +88,13 @@
   commit: 3de43ed45e1c7923d53c4db56ca3de3e46601580
   sha256: 37cdfbc6faefea94f7b37760a305c98c08981116c2bc9e821e3b423221fad8c8
   license: Apache-2.0
+- dependency: bison
+  version: https://mirror.bazel.build/ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 9bba0214ccf7f1079c5d59210045227bcf619519840ebfa80cd3849cff5a5bf2
+  license: LicenseRef-Bison-source-bundle
+  manually_audited: true
 - dependency: buildkite_pipeline_schema
   version: https://raw.githubusercontent.com/buildkite/pipeline-schema/f7a0894074d194bcf19eec5411fec0528f7f4180/schema.json
   retrieved: "2026-08-27"
