@@ -25,7 +25,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         "--platforms=" + config["image_platforms"][architecture]]
             execution_log = evidence / (architecture + "-busybox-execution.json")
             built = invoke("busybox-" + architecture,
-                           ["build", *selected, "--keep_going", "--output_groups=+make_logs",
+                           ["build", *selected, "--keep_going", "--output_groups=+Make_logs",
                             "--execution_log_json_file=" + str(execution_log),
                             "--noexecution_log_sort", *config["targets"]],
                            "build", targets=config["targets"])
@@ -41,7 +41,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             queries = {
                 "binary": ("//images:busybox_binary", []),
                 "config": ("//images:busybox_config", []),
-                "logs": ("//images:busybox_build", ["--output_groups=make_logs"]),
+                "logs": ("//images:busybox_build", ["--output_groups=Make_logs"]),
                 "tools": ('filter("^//images:busybox_(hostcc|nm)$", deps(//images:busybox_build))', []),
             }
             for name, (query, extra) in queries.items():
