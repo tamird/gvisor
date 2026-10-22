@@ -8,6 +8,10 @@ from pathlib import Path
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     targets = config["targets"]
+    image_targets = config["image_targets"]
+    profile_targets = list(dict.fromkeys(row["owner"] for row in config["profile_helper_outputs"]))
+    if set(image_targets).intersection(profile_targets) or set(targets) != set(image_targets + profile_targets):
+        raise ValueError("PIDFD and profile-helper target partitions must cover the selected build")
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
                "--build_event_json_file_path_conversion=false"]
@@ -19,14 +23,17 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError(f"Invalid canonical execution root: {execution_root}")
     for architecture in ("x86_64", "aarch64"):
-        execution_log = evidence / (architecture + "-execution.json")
-        built = invoke("pidfd-" + architecture,
-                       ["build", *options, "--config=" + architecture,
-                        "--execution_log_json_file=" + str(execution_log),
-                        "--noexecution_log_sort", *targets], "build", targets=targets)
-        if built["status"] != "PASS":
-            raise RuntimeError("Pidfd image build failed for " + architecture)
-        record_execution(execution_log, architecture)
+        platform = "--platforms=" + config["image_platforms"][architecture]
+        for phase, selected, platform_options in (("pidfd", image_targets, [platform]),
+                                                  ("profile-helper", profile_targets, [])):
+            execution_log = evidence / (architecture + "-" + phase + "-execution.json")
+            built = invoke(phase + "-" + architecture,
+                           ["build", *options, "--config=" + architecture, *platform_options, "--keep_going",
+                            "--execution_log_json_file=" + str(execution_log),
+                            "--noexecution_log_sort", *selected], "build", targets=selected)
+            if built["status"] != "PASS":
+                raise RuntimeError(phase + " image build failed for " + architecture)
+            record_execution(execution_log, architecture, phase)
         expected = [row for row in config["profile_helper_outputs"]
                     if row["architecture"] == architecture]
         comparisons = []

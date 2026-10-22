@@ -14,6 +14,7 @@ from image_archive import archive, identity, resolve
 
 os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 destination = Path(sys.argv[1])
+qualification = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
 output_base = Path(os.environ["APPLICABILITY_OUTPUT_BASE"])
 options = ["--lockfile_mode=error", "--noannounce_rc", "--compilation_mode=opt",
            "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"]]
@@ -65,6 +66,7 @@ try:
         records["architectures"].append(row)
         # One query per architecture resolves all inputs and outputs together.
         query = run(["bazel", *startup, "cquery", *options, "--config=" + config,
+                     "--platforms=" + qualification["image_platforms"][config],
                      "--output=starlark", "--starlark:expr=" +
                      "json.encode([str(target.label), target.label.name, [f.path for f in target.files.to_list()]])",
                      "set(" + " ".join(labels) + ")"])

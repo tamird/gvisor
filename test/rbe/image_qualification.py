@@ -171,18 +171,19 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             report.write_json(directory / "verdict.json", result)
         return result
 
-    def record_execution(path: Path, architecture: str) -> None:
+    def record_execution(path: Path, architecture: str, phase: str) -> None:
         """Retain selected native actions without treating cache hits as execution."""
         global runner_exit, capture_exit
-        record = {"architecture": architecture, "status": "INCOMPLETE", "runner_counts": {},
+        record = {"architecture": architecture, "phase": phase, "status": "INCOMPLETE", "runner_counts": {},
                   "image_actions": [], "expected_properties": REMOTE_PROPERTIES,
                   "scope": "Selected image build actions; mnemonics distinguish compilation and assembly"}
-        destination = evidence / (architecture + "-image-execution.json")
+        prefix = architecture + "-" + phase
+        destination = evidence / (prefix + "-image-execution.json")
         try:
             raw = path.read_bytes().replace(credential, b"[REDACTED]")
             reject_credentials(raw)
             text = raw.decode()
-            compressed = artifacts / (architecture + "-execution.json.gz")
+            compressed = artifacts / (prefix + "-execution.json.gz")
             with gzip.open(compressed, "wb") as output:
                 output.write(raw)
             record["execution_log"] = report.retain_audit(compressed, evidence)
@@ -231,15 +232,18 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
         for architecture in ("x86_64", "aarch64"):
-            preparation_targets = CONFIG.get("preparation_targets", {}).get(architecture, TARGETS)
-            prepared = invoke("dependency-preparation-" + architecture,
-                              ["cquery", "--config=" + architecture,
-                               "--compilation_mode=opt", "--lockfile_mode=update",
-                               "--noannounce_rc", "--output=label",
-                               "set(" + " ".join(preparation_targets) + ")"],
-                              "command", targets=[])
-            if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
-                raise RuntimeError("Configured dependency preparation failed or changed tracked source")
+            graphs = [("images", CONFIG["image_targets"], ["--platforms=" + CONFIG["image_platforms"][architecture]])]
+            if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
+                graphs.append(("runtime", runtime_targets, []))
+            for name, preparation_targets, platform_options in graphs:
+                prepared = invoke("dependency-preparation-" + architecture + "-" + name,
+                                  ["cquery", "--config=" + architecture, *platform_options,
+                                   "--compilation_mode=opt", "--lockfile_mode=update",
+                                   "--noannounce_rc", "--output=label",
+                                   "set(" + " ".join(preparation_targets) + ")"],
+                                  "command", targets=[])
+                if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
+                    raise RuntimeError("Configured dependency preparation failed or changed tracked source")
         with (private / "info.stderr").open("wb") as stderr:
             info = subprocess.run(["bazel", *startup, "info", "--downloader_config=" + str(downloader), "--config=x86_64", "--lockfile_mode=error", "--noannounce_rc", "output_base"], stdout=subprocess.PIPE, stderr=stderr, timeout=remaining())
         replay_output(private / "info.stderr", sys.stderr.buffer)

@@ -97,6 +97,11 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         image_key = image_component.replace("/", "_")
         image_make = make
         records["image_platform"] = "--config=x86_64"
+        if image_platform := configuration.get("image_platform"):
+            records["image_platform"] += " --platforms=" + image_platform
+            # Make appends its architecture config after OPTIONS; the libc
+            # selection must follow that config to survive its expansion.
+            image_make = [*make, "_image_context_options=" + records["image_platform"]]
         run([*image_make, "rebuild-" + image_key])
         built = json.loads(run(["docker", "image", "inspect", image_name]))[0]
         records["built_image"] = built
