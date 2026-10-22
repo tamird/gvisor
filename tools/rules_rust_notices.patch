@@ -1,0 +1,13 @@
+Expose the std notice bundle already extracted from the pinned compiler.
+This lets images retain the release attribution without another download
+or a checked-in copy of its generated HTML.
+
+--- a/rust/private/repository_utils.bzl
++++ b/rust/private/repository_utils.bzl
+@@ -46,4 +46,6 @@
+ _build_file_for_compiler_template = """\
++exports_files(["share/doc/rust/COPYRIGHT-library.html"])
++
+ filegroup(
+     name = "rustc",
+     srcs = ["bin/rustc{binary_ext}"],
