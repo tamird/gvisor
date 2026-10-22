@@ -17,6 +17,8 @@ package state
 import (
 	"reflect"
 	"unsafe"
+
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 // mapStorage only accesses Go storage. The common map encoder and decoder own
@@ -82,8 +84,8 @@ func reflectedIndex(v sequenceView, i int) valueHandle {
 }
 
 // There is one immutable table per reflected kind, independent of registered
-// types, checkpoint schemas and Load calls. Typed storage uses the same save
-// and load functions with different accessors.
+// types, checkpoint schemas and Load calls. Scalar operations access storage
+// directly; graph and collection operations share traversal and wire policy.
 var reflectedOperations [reflect.UnsafePointer + 1]valueOperations
 
 func init() {
@@ -91,10 +93,6 @@ func init() {
 	for kind := reflect.Invalid; kind <= reflect.UnsafePointer; kind++ {
 		tables[kind] = valueOperations{
 			kind: kind, zero: reflectedZero, copy: reflectedCopy,
-			bool: reflectedBool, int: reflectedInt, uint: reflectedUint,
-			float: reflectedFloat, cmplx: reflectedComplex, text: reflectedString,
-			setBool: reflectedSetBool, setInt: reflectedSetInt, setUint: reflectedSetUint,
-			setFloat: reflectedSetFloat, setComplex: reflectedSetComplex, setString: reflectedSetString,
 		}
 	}
 	tables[reflect.Bool].save, tables[reflect.Bool].load = saveBool, loadBool
@@ -143,14 +141,17 @@ func typedCopy[T any](v valueHandle) valueHandle {
 // produce flat tables once; no constructor runs while saving or loading.
 func integerOperations[T ~int | ~int8 | ~int16 | ~int32 | ~int64]() valueOperations {
 	return valueOperations{
-		kind: reflect.TypeFor[T]().Kind(), save: saveInt, load: loadInt,
-		zero: typedZero[T], copy: typedCopy[T],
-		int: func(v valueHandle) int64 { return int64(*typedStorage[T](v)) },
-		setInt: func(v valueHandle, x int64) int64 {
+		kind: reflect.TypeFor[T]().Kind(),
+		save: func(_ *encodeState, v valueHandle, _ encodeStrategy, dest *wire.Object) {
+			*dest = wire.Int(int64(*typedStorage[T](v)))
+		},
+		load: func(_ *decodeState, _ *objectDecodeState, v valueHandle, encoded wire.Object) {
+			x := int64(encoded.(wire.Int))
 			p := typedStorage[T](v)
 			*p = T(x)
-			return int64(*p)
+			checkInt(x, int64(*p))
 		},
+		zero: typedZero[T], copy: typedCopy[T],
 	}
 }
 
@@ -182,10 +183,11 @@ func mapOperations[M ~map[K]V, K comparable, V any](key, value func() *valueOper
 }
 
 func sliceOperations[S ~[]E, E any](element, backing func() *valueOperations) valueOperations {
+	index := sliceIndex[S, E]
 	return valueOperations{kind: reflect.Slice, save: saveSlice, load: loadSlice,
 		zero: typedZero[S], copy: typedCopy[S], element: element, backing: backing,
 		sequence: func(v valueHandle) sequenceView {
-			return sequenceView{object: v, length: len(*typedStorage[S](v)), element: v.ops.element(), index: sliceIndex[S, E]}
+			return sequenceView{object: v, length: len(*typedStorage[S](v)), element: v.ops.element(), index: index}
 		}}
 }
 
@@ -194,6 +196,7 @@ func sliceIndex[S ~[]E, E any](v sequenceView, i int) valueHandle {
 }
 
 func backingOperations[E any](element func() *valueOperations) valueOperations {
+	index := backingIndex[E]
 	return valueOperations{kind: reflect.Array, save: saveArray, load: loadArray,
 		zero: reflectedZero, copy: reflectedCopy, element: element,
 		sequence: func(v valueHandle) sequenceView {
@@ -202,7 +205,7 @@ func backingOperations[E any](element func() *valueOperations) valueOperations {
 				Failf("backing array %s has incompatible element type %s", object.Type(), reflect.TypeFor[E]())
 			}
 			return sequenceView{base: object.Addr().UnsafePointer(), length: object.Len(),
-				element: v.ops.element(), index: backingIndex[E]}
+				element: v.ops.element(), index: index}
 		}}
 }
 
