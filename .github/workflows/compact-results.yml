@@ -1,0 +1,59 @@
+name: Compact qualification result replay
+
+"on":
+  push:
+    branches: [qualification/harness-compact-results]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    env:
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: local
+      QUALIFICATION_ARCH: amd64
+      QUALIFICATION_LANES: test
+      QUALIFICATION_HEADER_BASE: ""
+      QUALIFICATION_COS_GZIP_BASE64: ""
+      QUALIFICATION_COS_SHA256: ""
+      QUALIFICATION_TARGETS: //test/rbe:qualification_report_test //:github_actions_test //:github_workflows_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Replay retained results through the owning tests
+        timeout-minutes: 25
+        shell: bash
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          bash test/rbe/actions.sh "--bazel-option=--test_env=LIFECYCLE_REPLAY_SOURCE=$GITHUB_SHA"
+      - name: Retain the verified compact result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-lifecycle-result-attempt-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/bazel-testlogs/test/rbe/qualification_report_test/test.outputs/lifecycle-pass/compact/
+          if-no-files-found: error
+      - name: Retain the separate audit bundles
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: state-lifecycle-audit-attempt-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/bazel-testlogs/test/rbe/qualification_report_test/test.outputs/lifecycle-pass/*.tar.gz
+          compression-level: 0
+          if-no-files-found: error
+      - name: Retain owning test and negative-control evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualification-amd64-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualification.tar.gz
+          compression-level: 0
+          if-no-files-found: error
