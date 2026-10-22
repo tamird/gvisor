@@ -54,15 +54,17 @@ make(
     build_data = [
         ":busybox_hostcc",
         "busybox/make.sh",
+        "@bzip2//:bzip2",
     ],
     data = [
         "busybox/pidfd.config",
         ":busybox_nm",
     ],
     env = {
+        "BUSYBOX_BZIP2": "$(execpath @bzip2//:bzip2)",
+        "BUSYBOX_CONFIG": "$(execpath busybox/pidfd.config)",
         "BUSYBOX_HOSTCC": "$(execpath :busybox_hostcc)",
         "BUSYBOX_NM": "$(execpath :busybox_nm)",
-        "KCONFIG_ALLCONFIG": "$(execpath busybox/pidfd.config)",
         # Keep generated configuration and banners independent of wall time.
         "KCONFIG_NOTIMESTAMP": "1",
     },
@@ -76,6 +78,7 @@ cp .config "$$INSTALLDIR/busybox.config"
     target_compatible_with = ["@platforms//os:linux"],
     targets = [
         "allnoconfig",
+        "defconfig",
         "busybox",
     ],
     tool_prefix = "$(execpath busybox/make.sh)",
