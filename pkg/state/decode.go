@@ -555,20 +555,20 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, target reflect.Value
 	}
 	switch target.Kind() {
 	case reflect.Bool:
-		target.SetBool(bool(requireWire[wire.Bool](value)))
+		target.SetBool(bool(value.(wire.Bool)))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		v := int64(requireWire[wire.Int](value))
+		v := int64(value.(wire.Int))
 		target.SetInt(v)
 		checkInt(v, target.Int())
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		v := uint64(requireWire[wire.Uint](value))
+		v := uint64(value.(wire.Uint))
 		target.SetUint(v)
 		checkUint(v, target.Uint())
 	case reflect.Float32, reflect.Float64:
 		if v, ok := value.(wire.Float32); ok {
 			target.SetFloat(float64(v))
 		} else {
-			v := float64(requireWire[wire.Float64](value))
+			v := float64(value.(wire.Float64))
 			target.SetFloat(v)
 			checkFloat(v, target.Float())
 		}
@@ -576,14 +576,14 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, target reflect.Value
 		if v, ok := value.(*wire.Complex64); ok {
 			target.SetComplex(complex128(*v))
 		} else {
-			v := complex128(*requireWire[*wire.Complex128](value))
+			v := complex128(*value.(*wire.Complex128))
 			target.SetComplex(v)
 			checkComplex(v, target.Complex())
 		}
 	case reflect.String:
-		target.SetString(string(*requireWire[*wire.String](value)))
+		target.SetString(string(*value.(*wire.String)))
 	case reflect.Pointer:
-		ds.decodeReference(target, requireWire[*wire.Ref](value))
+		ds.decodeReference(target, value.(*wire.Ref))
 	case reflect.Slice:
 		if slice, ok := value.(*wire.Slice); ok {
 			if objectID(slice.Ref.Root) != 0 {
@@ -594,29 +594,21 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, target reflect.Value
 			}
 		} else {
 			// Manual savers can encode an array into an existing slice.
-			ds.decodeArray(ods, target, requireWire[wire.Array](value))
+			ds.decodeArray(ods, target, value.(wire.Array))
 		}
 	case reflect.Array:
-		ds.decodeArray(ods, target, requireWire[wire.Array](value))
+		ds.decodeArray(ods, target, value.(wire.Array))
 	case reflect.Map:
 		if ref, ok := value.(*wire.Ref); ok {
 			ds.decodeReference(target, ref)
 		} else {
-			ds.decodeMap(ods, target, requireWire[*wire.Map](value))
+			ds.decodeMap(ods, target, value.(*wire.Map))
 		}
 	case reflect.Struct:
-		ds.decodeStruct(ods, target, requireWire[*wire.Struct](value))
+		ds.decodeStruct(ods, target, value.(*wire.Struct))
 	default:
 		Failf("cannot restore %T into %s", value, target.Type())
 	}
-}
-
-func requireWire[T wire.Object](value wire.Object) T {
-	v, ok := value.(T)
-	if !ok {
-		Failf("expected %s, got %T", reflect.TypeFor[T](), value)
-	}
-	return v
 }
 
 // decodeReference resolves graph references, map aliases and interior pointers
