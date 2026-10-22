@@ -43,6 +43,17 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     def command(argv):
         return subprocess.check_output(argv, text=True, timeout=min(60, remaining())).strip()
 
+    def fetch(record, destination):
+        request = urllib.request.Request(
+            "https://app.buildbuddy.io/api/v1/GetFile",
+            data=json.dumps({"uri": record["uri"]}).encode(),
+            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with urllib.request.urlopen(request, timeout=min(60, remaining())) as response:
+            data = response.read(record["bytes"] + 1)
+        if len(data) != record["bytes"] or hashlib.sha256(data).hexdigest() != record["sha256"]:
+            raise ValueError("Source-built input identity mismatch: " + str(destination))
+        destination.write_bytes(data)
+
     def outputs(result, directory, expected):
         if result["status"] != "PASS" or result["native_exit"]:
             raise RuntimeError("Source-bound build failed")
@@ -62,30 +73,22 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         return rows
 
     try:
-        common_targets = ["//test/benchmarks/base:startup_test", "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat"]
+        common_targets = ["//test/benchmarks/base:startup_test"]
         built = invoke("startup-harness", ["build", *options, *common_targets], "build", targets=common_targets)
         common = outputs(built, evidence / "invocation-startup-harness", common_targets)
-        harnesses = [row for row in common if report.Owner.parse(row["identity"]).label == common_targets[0]]
-        if len(harnesses) != 1:
+        if len(common) != 1:
             raise ValueError("Expected one configured startup harness")
-        harness = harnesses[0]
-        reporters = [row for row in common if report.Owner.parse(row["identity"]).label == common_targets[1]]
-        if len(reporters) != 1 or len(common) != 2:
-            raise ValueError("Expected exactly the harness and benchstat executables")
-        benchstat = reporters[0]
+        harness = common[0]
         shutil.copy2(harness["materialized_path"], staged / "startup_test")
+        # Reuse the source-built measurement tool without changing either
+        # runtime's dependency graph just to build the reporter.
+        benchstat = config["benchstat"]
+        fetch(benchstat, staged / "benchstat")
+        (staged / "benchstat").chmod(0o755)
 
         fixture = config["fixture"]
-        request = urllib.request.Request(
-            "https://app.buildbuddy.io/api/v1/GetFile",
-            data=json.dumps({"uri": fixture["uri"]}).encode(),
-            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
-        with urllib.request.urlopen(request, timeout=min(60, remaining())) as response:
-            archive_bytes = response.read(fixture["bytes"] + 1)
-        if len(archive_bytes) != fixture["bytes"] or hashlib.sha256(archive_bytes).hexdigest() != fixture["sha256"]:
-            raise ValueError("Source-built sleep image archive identity mismatch")
         archive = private / "sleep-image.tar"
-        archive.write_bytes(archive_bytes)
+        fetch(fixture, archive)
         result = subprocess.run(["docker", "image", "inspect", tag, "--format={{.Id}}"],
                                 capture_output=True, text=True, timeout=min(30, remaining()))
         if result.returncode == 0:
@@ -150,8 +153,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if command(["git", "rev-parse", "HEAD"]) != source:
                 raise ValueError("Candidate source was not restored")
             shutil.copy2(staged / "startup_test", package / "startup_test")
+            shutil.copy2(staged / "benchstat", package / "benchstat")
             inputs = {"harness": {key: harness[key] for key in ("bytes", "sha256")},
-                      "benchstat": {key: benchstat[key] for key in ("bytes", "sha256")},
+                      "benchstat": benchstat,
                       "runtimes": runtimes, "image": records["image"]}
             report.write_json(package / "inputs.json", inputs)
             report.write_json(evidence / "startup-inputs.json", inputs)

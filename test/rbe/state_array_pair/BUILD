@@ -6,11 +6,11 @@ py_test(
     size = "large",
     timeout = "long",
     srcs = ["run.py"],
-    args = ["$(rootpath @org_golang_x_perf//cmd/benchstat)"],
+    args = ["$(rootpath benchstat)"],
     data = [
+        "benchstat",
         "inputs.json",
         "startup_test",
-        "@org_golang_x_perf//cmd/benchstat",
     ],
     local = True,
     main = "run.py",
