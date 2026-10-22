@@ -102,6 +102,7 @@ def _syscall_test(
         in_sandbox_cgroup = "v1",
         requires_atime = False,
         **kwargs):
+    limit_ephemeral_ports = limit_ephemeral_ports and (network == "host" or platform == "native")
     if limit_ephemeral_ports:
         container = True
 
