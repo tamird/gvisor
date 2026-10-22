@@ -11,6 +11,9 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "tcpdump", version = "4.99.6")
+bazel_dep(name = "bison", version = "3.8.2.bcr.11")
+bazel_dep(name = "libpcap", version = "1.10.5.bcr.3")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 
@@ -35,6 +38,12 @@ bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
 bazel_dep(name = "protoc-gen-validate", version = "1.3.0")
 bazel_dep(name = "xds", version = "0.0.0-20251210-ee656c7")
 bazel_dep(name = "cel-spec", version = "0.25.1")
+
+single_version_override(
+    module_name = "tcpdump",
+    patch_strip = 1,
+    patches = ["//images/basic:tcpdump_static.patch"],
+)
 
 governance = use_extension("//governance/tools/maintainers:repositories.bzl", "governance")
 use_repo(governance, "governance_areas")
@@ -124,6 +133,21 @@ single_version_override(
     patch_strip = 1,
     patches = ["//tools:libbpf_headers.patch"],
 )
+
+image_apt.install(
+    dependency_set = "acl_image_packages",
+    packages = [
+        # setfacl and getfacl exercise default ACL inheritance on tmpfs.
+        "acl (= 2.3.1-1)",
+        # Common license texts referenced by the packages' copyright files.
+        "base-files (= 12ubuntu4.7)",
+        # GNU sleep infinity keeps the container running; mkdir creates its test directory.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # /bin/sh executes the test's directory creation and redirection commands.
+        "dash (= 0.5.11+git20210903+057cd650a4ed-3build1)",
+    ],
+)
+use_repo(image_apt, "acl_image_packages")
 
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
@@ -315,6 +339,14 @@ http_file(
 )
 
 ### Docker integration test images
+http_archive(
+    name = "ltp",
+    build_file = "//images/basic:ltp.BUILD",
+    sha256 = "b9837481134fa6eabce91c2fba57d96695f81360468f83e11e6982584ad4d29d",
+    strip_prefix = "ltp-full-20260930",
+    urls = ["https://github.com/linux-test-project/ltp/releases/download/20260930/ltp-full-20260930.tar.xz"],
+)
+
 # Pin both architectures of the existing test distributions. Image assembly
 # uses declared layers and does not require a Docker daemon.
 img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")

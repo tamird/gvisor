@@ -1,0 +1,4 @@
+# Unix profile from libpam-runtime; extraction does not run pam-auth-update.
+auth [success=1 default=ignore] pam_unix.so nullok
+auth requisite pam_deny.so
+auth required pam_permit.so

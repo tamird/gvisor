@@ -1,0 +1,14 @@
+Build tcpdump with its declared libraries linked statically. The test image
+uses BusyBox and does not provide tcpdump's dynamic loader or C library;
+static linking keeps the executable independent of that base's libc.
+
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -539,6 +539,7 @@
+ # libpcap >= 1.10.5 provides the corresponding functions.
+ cc_binary(
+     name = "tcpdump",
++    features = ["fully_static_link"],
+     srcs = [
+         "fptype.c",
+         "tcpdump.c",

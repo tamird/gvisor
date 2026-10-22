@@ -234,6 +234,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             preparation_targets = CONFIG.get("preparation_targets", {}).get(architecture, TARGETS)
             prepared = invoke("dependency-preparation-" + architecture,
                               ["cquery", "--config=" + architecture,
+                               *CONFIG.get("architecture_options", {}).get(architecture, []),
                                "--compilation_mode=opt", "--lockfile_mode=update",
                                "--noannounce_rc", "--output=label",
                                "set(" + " ".join(preparation_targets) + ")"],
