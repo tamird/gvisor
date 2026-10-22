@@ -1,168 +1,183 @@
-"""Check the compiler migration through its existing build and test owners."""
-
+"""Compare startup using source-bound release sets and one fixed sleep image."""
+from contextlib import ExitStack
 import hashlib
 import json
 import os
 from pathlib import Path
 import shutil
-import tarfile
+import subprocess
 import time
 import urllib.request
+from urllib.parse import unquote, urlsplit
 
 import qualification_report as report
-
-
-def retained_outputs(config, evidence: Path, private: Path) -> dict:
-    """Materialize completed native outputs; do not rebuild or relabel them."""
-    supplier = config["retained_builds"]
-
-    def fetch(uri: str, expected: dict, destination: Path) -> None:
-        request = urllib.request.Request(
-            "https://app.buildbuddy.io/api/v1/GetFile",
-            data=json.dumps({"uri": uri}).encode(),
-            headers={"Content-Type": "application/json",
-                     "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
-        remaining = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
-        if remaining <= 0:
-            raise TimeoutError("Retained compiler output materialization deadline exhausted")
-        size = 0
-        digest = hashlib.sha256()
-        with urllib.request.urlopen(request, timeout=min(60, remaining)) as response, destination.open("wb") as output:
-            while chunk := response.read(1024 * 1024):
-                size += len(chunk)
-                if size > expected["bytes"] or time.monotonic() >= float(os.environ["APPLICABILITY_WORK_DEADLINE"]):
-                    raise ValueError("Retained compiler output exceeded its size or time bound")
-                digest.update(chunk)
-                output.write(chunk)
-        if {"bytes": size, "sha256": digest.hexdigest()} != {key: expected[key] for key in ("bytes", "sha256")}:
-            raise ValueError("Retained compiler output identity differs")
-
-    artifact = private / "retained-compiler-qualification.tar.gz"
-    fetch(supplier["artifact"]["uri"], supplier["artifact"], artifact)
-    shutil.copyfile(artifact, evidence / artifact.name)
-    restored = {}
-    downloaded = {}
-    with tarfile.open(artifact) as archive:
-        def member(name: str) -> bytes:
-            matches = [entry for entry in archive.getmembers() if entry.name == name]
-            if len(matches) != 1 or not matches[0].isfile():
-                raise ValueError("Expected one regular retained compiler member: " + name)
-            return archive.extractfile(matches[0]).read()
-
-        manifest = json.loads(member("compiler-current-build.json"))
-        if manifest["source"] != supplier["source"]:
-            raise ValueError("Retained compiler source differs")
-        for name in supplier["groups"]:
-            expected = next(group for group in config["build_groups"] if group["name"] == name)
-            groups = [group for group in manifest["builds"] if group["name"] == name]
-            if len(groups) != 1 or groups[0]["status"] != "PASS" or any(groups[0][key] != value for key, value in expected.items()):
-                raise ValueError("Retained compiler group differs: " + name)
-            group = groups[0]
-            native = json.loads(member("invocation-" + name + "/verdict.json"))
-            if native["source"] != supplier["source"] or native["status"] != "PASS" or native["native_exit"] != 0:
-                raise ValueError("Retained compiler native verdict differs: " + name)
-            events = evidence / ("retained-" + name + ".events.jsonl")
-            events.write_bytes(member("invocation-" + name + "/events.jsonl"))
-            owners = {(report.Owner(owner["label"], owner["configuration"]), "default") for owner in native["expected"]}
-            outputs = report.advertised_build_outputs(events, owners)
-            if outputs != [{key: value for key, value in output.items() if key != "materialized_path"} for output in group["outputs"]]:
-                raise ValueError("Retained compiler outputs differ from native BEP: " + name)
-            for output in group["outputs"]:
-                identity = (output["sha256"], output["bytes"])
-                if identity not in downloaded:
-                    path = private / ("retained-output-" + output["sha256"])
-                    uri = supplier["cas_uri_prefix"] + output["sha256"] + "/" + str(output["bytes"])
-                    fetch(uri, output, path)
-                    downloaded[identity] = path
-                output["materialized_path"] = str(downloaded[identity])
-            group["build_source"] = supplier["source"]
-            group["build_invocation"] = supplier["invocation_id"]
-            restored[name] = group
-    report.write_json(evidence / "retained-compiler-builds.json", {
-        "supplier": supplier, "groups": list(restored.values()),
-        "scope": "Exact prior outputs materialized from CAS; no new compilation or execution proof."})
-    return restored
+from image_runtime import prepared_runtime
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    options = ["--compilation_mode=opt", "--lockfile_mode=error",
-               "--remote_download_outputs=all", "--noannounce_rc",
-               "--build_event_json_file_path_conversion=false"]
-    records = {"source": config["source"], "status": "INCOMPLETE", "builds": [], "tests": []}
-    failed = False
+    source = config["source"]
+    workspace = Path.cwd()
+    lock = workspace / "MODULE.bazel.lock"
+    candidate_lock = lock.read_bytes()
+    package = workspace / "test/rbe/state_array_pair"
+    staged = private / "common-harness"
+    staged.mkdir()
+    options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
+               "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
+               "--noannounce_rc"]
+    records = {"status": "INCOMPLETE", "source": source, "product": config["product"],
+               "before_source": config["before_source"],
+               "qualifier_static_prerequisite": config["qualifier_static_prerequisite"],
+               "runtime_builds": []}
+    before_tag = None
+    tag_installed = False
+    tag = "gvisor.dev/images/benchmarks/alpine:latest"
+
+    def remaining():
+        value = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic() - 90
+        if value <= 0:
+            raise TimeoutError("Startup qualification exhausted its work deadline")
+        return value
+
+    def command(argv):
+        return subprocess.check_output(argv, text=True, timeout=min(60, remaining())).strip()
+
+    def outputs(result, directory, expected):
+        if result["status"] != "PASS" or result["native_exit"]:
+            raise RuntimeError("Source-bound build failed")
+        owners = {report.Owner(row["label"], row["configuration"]) for row in result["expected"]}
+        if len(owners) != len(expected) or {owner.label for owner in owners} != set(expected):
+            raise ValueError("Unexpected configured build owners")
+        rows = report.advertised_build_outputs(directory / "events.jsonl", {(owner, "default") for owner in owners})
+        for row in rows:
+            uri = urlsplit(row["uri"])
+            if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
+                raise ValueError("Build output was not materialized")
+            path = Path(unquote(uri.path)).resolve(strict=True)
+            path.relative_to(output_root.resolve())
+            if report.file_record(path) != {"bytes": row["bytes"], "sha256": row["sha256"]}:
+                raise ValueError("Materialized output differs from BEP")
+            row["materialized_path"] = str(path)
+        return rows
+
     try:
-        result = invoke("execution-root", ["info", *options, "execution_root"], "command", targets=[])
-        if result["status"] != "PASS":
-            raise RuntimeError("Cannot identify canonical execution root")
-        root = Path((evidence / "invocation-execution-root/stdout.log").read_text().strip())
-        if not root.is_absolute() or not root.is_dir():
-            raise ValueError("Invalid canonical execution root")
-        completed = retained_outputs(config, evidence, private)
-        for group in config["build_groups"]:
-            if group["name"] in completed:
-                records["builds"].append(completed[group["name"]])
-                continue
-            row = {**group, "build_source": config["source"], "status": "INCOMPLETE"}
-            records["builds"].append(row)
-            phase = group["name"]
-            # Unprocessed or incomplete raw logs must not enter the compact
-            # evidence scan or bundle if the recorder fails.
-            execution = private / (phase + "-execution.json")
-            built = invoke(phase, ["build", *options, *group["options"], "--keep_going",
-                           "--execution_log_json_file=" + str(execution), "--noexecution_log_sort",
-                           *group["targets"]], "build", targets=group["targets"])
-            row["build_status"] = built["status"]
-            if execution.is_file():
-                try:
-                    record_execution(execution, group["architecture"], phase)
-                except (OSError, ValueError, RuntimeError) as error:
-                    # The shared recorder retains runner/capture FAIL. Continue
-                    # unrelated groups without granting execution proof here.
-                    row["execution_error"] = str(error)
-                    failed = True
-            else:
-                row["execution_error"] = "Native execution log missing"
-                failed = True
-            if built["status"] != "PASS":
-                failed = True
-                continue
-            try:
-                owners = {(report.Owner(owner["label"], owner["configuration"]), "default")
-                          for owner in built["expected"]}
-                outputs = report.advertised_build_outputs(evidence / ("invocation-" + phase) / "events.jsonl", owners)
-                if len(outputs) != len(group["targets"]) or {out["identity"]["label"] for out in outputs} != set(group["targets"]):
-                    raise ValueError("Expected one default executable or library per configured owner")
-                row["outputs"] = outputs
-                for output in outputs:
-                    relative = Path(output["name"])
-                    if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("bazel-out",):
-                        raise ValueError("Unexpected configured output: " + output["name"])
-                    actual = report.file_record(root / relative)
-                    if actual != {key: output[key] for key in ("sha256", "bytes")}:
-                        raise ValueError("Materialized output differs from default BEP identity")
-                    output["materialized_path"] = str(root / relative)
-                row["status"] = "PASS"
-            except (OSError, ValueError) as error:
-                row["output_error"] = str(error)
-                failed = True
-        # Every successful independent build retains its outputs even if another
-        # architecture failed. The inspector consumes only complete owner sets.
-        manifest = evidence / "compiler-builds.json"
-        report.write_json(manifest, records)
-        inspected = invoke("compiler-output-inspection",
-                           ["run", *options, "@rules_python//python/bin:python", "--",
-                            str(Path.cwd() / "test/rbe/compiler_inspect.py"), str(manifest),
-                            str(evidence / "compiler-outputs.json")], "command", targets=[])
-        failed |= inspected["status"] != "PASS"
-        for group in config["test_groups"]:
-            result = invoke(group["name"], ["test", *options, *group["options"], "--keep_going",
-                            "--nocache_test_results", "--test_output=errors", *group["targets"]],
-                            "test", targets=group["targets"])
-            records["tests"].append({**group, "status": result["status"]})
-            failed |= result["status"] != "PASS"
-        if failed:
-            raise RuntimeError("One or more compiler build, output, or owning test gates failed")
+        common_targets = ["//test/benchmarks/base:startup_test", "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat"]
+        built = invoke("startup-harness", ["build", *options, *common_targets], "build", targets=common_targets)
+        common = outputs(built, evidence / "invocation-startup-harness", common_targets)
+        harnesses = [row for row in common if report.Owner.parse(row["identity"]).label == common_targets[0]]
+        if len(harnesses) != 1:
+            raise ValueError("Expected one configured startup harness")
+        harness = harnesses[0]
+        reporters = [row for row in common if report.Owner.parse(row["identity"]).label == common_targets[1]]
+        if len(reporters) != 1 or len(common) != 2:
+            raise ValueError("Expected exactly the harness and benchstat executables")
+        benchstat = reporters[0]
+        shutil.copy2(harness["materialized_path"], staged / "startup_test")
+
+        fixture = config["fixture"]
+        request = urllib.request.Request(
+            "https://app.buildbuddy.io/api/v1/GetFile",
+            data=json.dumps({"uri": fixture["uri"]}).encode(),
+            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with urllib.request.urlopen(request, timeout=min(60, remaining())) as response:
+            archive_bytes = response.read(fixture["bytes"] + 1)
+        if len(archive_bytes) != fixture["bytes"] or hashlib.sha256(archive_bytes).hexdigest() != fixture["sha256"]:
+            raise ValueError("Source-built sleep image archive identity mismatch")
+        archive = private / "sleep-image.tar"
+        archive.write_bytes(archive_bytes)
+        result = subprocess.run(["docker", "image", "inspect", tag, "--format={{.Id}}"],
+                                capture_output=True, text=True, timeout=min(30, remaining()))
+        if result.returncode == 0:
+            before_tag = result.stdout.strip()
+        else:
+            # A daemon failure must not be mistaken for an absent image tag.
+            command(["docker", "info", "--format={{.ID}}"])
+            if tag in command(["docker", "image", "ls", "--format={{.Repository}}:{{.Tag}}"]).splitlines():
+                raise RuntimeError("Existing image tag could not be inspected")
+        command(["docker", "load", "--input", str(archive)])
+        image = json.loads(command(["docker", "image", "inspect", "sha256:" + fixture["config_sha256"]]))[0]
+        if image["Architecture"] != "amd64" or image["Id"] != "sha256:" + fixture["config_sha256"]:
+            raise ValueError("Loaded image differs from the qualified fixture")
+        command(["docker", "tag", image["Id"], tag])
+        tag_installed = True
+        records["image"] = {"id": image["Id"], "tag": tag, "fixture": fixture,
+                            "workload": "source-built scratch sleep image; not Alpine"}
+        runtimes = {}
+        with ExitStack() as scopes:
+            for side, revision in (("before", config["before_source"]), ("after", source)):
+                command(["git", "switch", "--detach", revision])
+                for name, expected_hash in config["matched_inputs"].items():
+                    if hashlib.sha256((workspace / name).read_bytes()).hexdigest() != expected_hash:
+                        raise ValueError("Shared startup source changed: " + name)
+                if side == "after":
+                    lock.write_bytes(candidate_lock)
+                prepared = invoke(side + "-release-preparation", ["cquery", "--config=x86_64",
+                    "--compilation_mode=opt", "--lockfile_mode=update", "--noannounce_rc",
+                    "--output=label", "//:release"], "command", targets=[], source=revision)
+                if prepared["status"] != "PASS":
+                    raise RuntimeError("Release dependency preparation failed")
+                built = invoke(side + "-release", ["build", *options, "//:release"], "build",
+                               targets=["//:release"], source=revision)
+                directory = evidence / ("invocation-" + side + "-release") if side == "after" else evidence / "source-builds" / (side + "-release")
+                release = outputs(built, directory, ["//:release"])
+                by_name = {}
+                for row in release:
+                    _, separator, name = row["materialized_path"].rpartition("/release/")
+                    if not separator or name in by_name:
+                        raise ValueError("Unexpected release output layout")
+                    by_name[name] = row
+                destination = evidence / (side + "-runtime")
+                destination.mkdir()
+                runtime_directory = private / (side + "-runtime")
+                runtime_name = "runsc-compiler-startup-" + side
+                runtime = scopes.enter_context(prepared_runtime(destination / "runtime.json", runtime_directory, {
+                    "runtime_name": runtime_name, "runtime_flags": ["--platform=systrap"],
+                    "image_name": "benchmarks/alpine", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
+                }))
+                expected = set(config["runtime_paths"])
+                if not expected <= by_name.keys():
+                    raise ValueError("Configured release omitted a required runtime file")
+                actual = {str(Path(row["path"]).relative_to(runtime_directory)): row for row in runtime["runtime_files"]}
+                if actual.keys() != expected:
+                    raise ValueError("Copied runtime omitted release files")
+                for name, row in actual.items():
+                    if any(row[key] != by_name[name][key] for key in ("bytes", "sha256")):
+                        raise ValueError("Copied runtime differs from its configured release output")
+                runtimes[side] = {"name": runtime_name, "source": revision,
+                    "files": runtime["runtime_files"], "configuration": runtime["config_after"]["runtimes"][runtime_name]}
+                records["runtime_builds"].append({"side": side, "source": revision, "release_outputs": release})
+            if command(["git", "rev-parse", "HEAD"]) != source:
+                raise ValueError("Candidate source was not restored")
+            shutil.copy2(staged / "startup_test", package / "startup_test")
+            inputs = {"harness": {key: harness[key] for key in ("bytes", "sha256")},
+                      "benchstat": {key: benchstat[key] for key in ("bytes", "sha256")},
+                      "runtimes": runtimes, "image": records["image"]}
+            report.write_json(package / "inputs.json", inputs)
+            report.write_json(evidence / "startup-inputs.json", inputs)
+            selected = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
+                        "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
+                        "--test_env=GO_TEST_WRAP_TESTV=1"]
+            targets = ["//test/rbe/state_array_pair:paired_test"]
+            analysis = invoke("startup-analysis", ["test", *selected, "--nobuild", *targets], "analysis")
+            if analysis["status"] != "PASS":
+                raise RuntimeError("Startup test selection failed")
+            tested = invoke("startup-paired", ["test", *selected, *targets], "test",
+                            (evidence / "invocation-startup-analysis/events.jsonl",))
+            if tested["status"] != "PASS":
+                raise RuntimeError("Startup cohort failed")
         records["status"] = "PASS"
     finally:
-        report.write_json(evidence / "compiler-current-build.json", records)
+        try:
+            subprocess.run(["git", "switch", "--detach", source], check=True, timeout=30)
+            lock.write_bytes(candidate_lock)
+            if tag_installed:
+                restore = ["docker", "tag", before_tag, tag] if before_tag else ["docker", "image", "rm", tag]
+                subprocess.run(restore, check=True, capture_output=True, timeout=30)
+            records["cleanup"] = "PASS"
+        except (OSError, subprocess.SubprocessError):
+            records["status"] = "FAIL"
+            records["cleanup"] = "FAIL"
+            raise
+        finally:
+            report.write_json(evidence / "startup-comparison.json", records)

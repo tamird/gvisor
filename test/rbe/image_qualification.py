@@ -94,11 +94,18 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     def git_record(path: Path, *arguments: str) -> None:
         path.write_bytes(subprocess.check_output(["git", *arguments], timeout=min(30, remaining())))
 
-    def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (), targets: list[str] = TARGETS) -> dict:
+    def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (),
+               targets: list[str] = TARGETS, source: str = SOURCE) -> dict:
         global runner_exit
+        if source not in (SOURCE, CONFIG["before_source"]):
+            raise ValueError("Unrecognized comparison source")
+        if subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() != source:
+            raise RuntimeError("Unexpected comparison source")
+        if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]):
+            raise RuntimeError("Comparison source is dirty")
         preparing_lock = kind == "command" and "--lockfile_mode=update" in arguments
-        directory = evidence / ("invocation-" + name)
-        directory.mkdir()
+        directory = evidence / ("invocation-" + name) if source == SOURCE else evidence / "source-builds" / name
+        directory.mkdir(parents=True)
         raw_events = private / (name + ".events.jsonl")
         events = directory / "events.jsonl"
         option_index = 2 if arguments[:2] == ["mod", "deps"] else 1
@@ -107,13 +114,13 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             command.append("--build_event_json_file=" + str(raw_events))
         (directory / "arguments.txt").write_text(json.dumps(command) if kind == "command" else "\n".join(command) + "\n")
         (directory / "expected-targets.txt").write_text("".join(target + "\n" for target in targets))
-        git_record(directory / "commit.txt", "cat-file", "commit", SOURCE)
+        git_record(directory / "commit.txt", "cat-file", "commit", source)
         git_record(directory / "before.txt", "status", "--porcelain", "--untracked-files=no")
         lock = workspace / "MODULE.bazel.lock"
         if preparing_lock:
             if subprocess.check_output(["git", "ls-files", "--", "MODULE.bazel.lock"], timeout=min(30, remaining())):
                 raise RuntimeError("Upstream dependency preparation expected an untracked lock")
-            preparation = {"source": SOURCE, "arguments": command,
+            preparation = {"source": source, "arguments": command,
                            "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                            "lock_before": report.file_record(lock) if lock.is_file() else None,
                            "tracked_lock": False}
@@ -155,7 +162,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                 traceback.print_exc()
                 capture_status = 1
             (directory / "capture-exit").write_text(str(capture_status) + "\n")
-            context = {"expected_source": SOURCE, "command_kind": kind, "execution_finished_at": finished,
+            context = {"expected_source": source, "command_kind": kind, "execution_finished_at": finished,
                        "commit_file": "commit.txt", "source_before": "before.txt", "source_after": "after.txt",
                        "final_head": "head.txt", "executed_arguments": "arguments.txt", "native_exit": "native-exit",
                        "capture_exit": "capture-exit"}
