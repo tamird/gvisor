@@ -46,6 +46,8 @@ single_version_override(
 archive_override(
     module_name = "google_benchmark",
     integrity = "sha256-rMXHwPvthVxKqi18PDb7grDBXCj04VHj9nnC/AqkBK8=",
+    patch_strip = 1,
+    patches = ["//tools:benchmark-umbrella-exports.patch"],
     strip_prefix = "benchmark-1.10.0",
     urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.10.0.tar.gz"],
 )
