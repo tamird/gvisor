@@ -163,14 +163,17 @@ changes requested require source work first. A dismissed review qualifies as a
 former approval only when GitHub's
 review-dismissal event records its previous state as approved.
 
-Delivery owners record exact `reapproval` evidence in the existing registry:
+Delivery owners record exact `reapproval` evidence in the same registry update as
+each authorized source publication:
 the approved and amended heads, `kind: content-amendment`,
 `method: reviewed-source-diff`, the SHA256 of the complete reviewed source diff,
 a concise change summary, and its public evidence URL. Compare the complete
 topic patches and preserve changed bytes, whitespace, modes and paths; a
 different commit SHA or patch ID does not establish an amendment. Verify the
-single-commit shape before using parent-to-head patches. Proven patch-preserving
-rebases remain excluded. Unknown changes are reported as `needs-evidence` for
+single-commit shape before using parent-to-head patches. The same reviewed
+evidence with `kind: patch-preserving-rebase` excludes a proven equivalent
+rebase only from this alarm. It does not restore a dismissed approval or remove
+an explicit maintainer re-review request. Unknown changes are reported as `needs-evidence` for
 the delivery owner to reconcile, never guessed from stale approval alone.
 
 `python3 update-status.py --reapproval-reminders plan` prints the concrete

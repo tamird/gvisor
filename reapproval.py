@@ -73,7 +73,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str) -> dict:
         return skip("reviewed-patch-preserving-rebase")
     proof = node.get("reapproval", {})
     match proof:
-        case {"head": str(head), "approvedHead": str(old), "kind": "content-amendment",
+        case {"head": str(head), "approvedHead": str(old),
+              "kind": ("content-amendment" | "patch-preserving-rebase") as kind,
               "method": "reviewed-source-diff", "diffSha256": str(digest),
               "summary": str(summary), "evidence": str(evidence)}:
             if (head != pr["head"] or head == old or not re.fullmatch(r"[0-9a-f]{40}", head)
@@ -82,6 +83,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str) -> dict:
                 return {**skip("invalid-amendment-evidence"), "status": "needs-evidence"}
         case _:
             return {**skip("missing-exact-content-amendment-evidence"), "status": "needs-evidence"}
+    if kind == "patch-preserving-rebase":
+        return skip("reviewed-patch-preserving-rebase")
     approvers = sorted(item["author"]["login"] for item in prior_approvals
                        if (item.get("commit") or {}).get("oid") == old
                        and item.get("authorAssociation") in {"MEMBER", "OWNER", "COLLABORATOR"})

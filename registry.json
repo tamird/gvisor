@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T15:02:27.314002+00:00",
+    "updatedAt": "2026-10-22T16:04:09.749783+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6173,7 +6173,16 @@
           "url": "https://github.com/tamird/gvisor/commit/f933b98d789aeaa672c6fa5baa735ecd96c59b61"
         }
       ],
-      "number": 16085
+      "number": 16085,
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "f933b98d789aeaa672c6fa5baa735ecd96c59b61",
+        "approvedHead": "9be200e2e42f243bbbf9d598a788580879f6ff54",
+        "diffSha256": "9f69003ed17a5ccf0ad58a2ec144c44dcedc0f34c77b414872bb011e4a3d54da",
+        "summary": "Complete changed bytes, whitespace, paths and modes identical; range-diff equals. Retained pre-rebase snapshot records original exact9be approvals before provider reassociation.",
+        "evidence": "https://github.com/google/gvisor/compare/9be200e2e42f243bbbf9d598a788580879f6ff54..f933b98d789aeaa672c6fa5baa735ecd96c59b61"
+      }
     },
     {
       "id": "pr:15500",
@@ -6385,7 +6394,16 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/d14afa764b0fb774ee56982cc47a359ee846c56a"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "d14afa764b0fb774ee56982cc47a359ee846c56a",
+        "approvedHead": "72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a",
+        "diffSha256": "20abce363a9a68337699e1204194aac2c3240ab06de3dd922ff4607efe7d6394",
+        "summary": "The amendment adds the direct linux/capability.h and linux_capability_util.h providers needed by the Landlock test, replacing the indirect capability_util.h include. The privilege-drop behavior is unchanged.",
+        "evidence": "https://github.com/google/gvisor/compare/72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a..d14afa764b0fb774ee56982cc47a359ee846c56a"
+      }
     },
     {
       "id": "pr:15509",
@@ -6699,6 +6717,15 @@
         "after": {
           "head": "4128ff3f61d93975cdd9d04706e8a61341675088"
         }
+      },
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "4128ff3f61d93975cdd9d04706e8a61341675088",
+        "approvedHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
+        "diffSha256": "1298689d7fe543d7a8e5a1f42d58a0822141000892077436314d6b6b248ce737",
+        "summary": "Complete runner changed bytes, whitespace, paths and modes match. Make applies identical unit-test selection insertion to each parent, preserving newer upstream examples/tracereplay selection. Explicit dismissal and maintainer re-review remain required; exemption affects hourly content-amendment alarm only.",
+        "evidence": "https://github.com/google/gvisor/compare/400d11eea2e9923c8e1d111b9f4a56b8fffc9082..4128ff3f61d93975cdd9d04706e8a61341675088"
       }
     },
     {

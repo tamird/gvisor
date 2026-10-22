@@ -398,6 +398,19 @@ class ReapprovalReminderTest(unittest.TestCase):
             with self.subTest(change=change), mock.patch.dict(self.raw, change):
                 self.assertNotEqual(self.plan()["status"], "due")
 
+    def test_reminder_only_rebase_proof_preserves_dismissed_review(self) -> None:
+        self.review["state"] = "DISMISSED"
+        self.raw["reviewDismissals"]["nodes"] = [
+            {"id": "dismissal", "createdAt": LATER, "previousReviewState": "APPROVED", "review": {"id": "approval-7"}}]
+        self.node["reapproval"]["kind"] = "patch-preserving-rebase"
+        self.assertEqual(self.plan()["reason"], "reviewed-patch-preserving-rebase")
+        self.assertEqual(self.review["state"], "DISMISSED")
+        self.assertNotIn("approvedPatch", self.node)
+        for key, value in [("head", "a" * 40), ("approvedHead", "bad"),
+                           ("diffSha256", "bad"), ("kind", "unreviewed-rebase")]:
+            with self.subTest(key=key), mock.patch.dict(self.node["reapproval"], {key: value}):
+                self.assertEqual(self.plan()["status"], "needs-evidence")
+
     def test_outside_hours_retains_amendment_and_unknown_evidence_classification(self) -> None:
         early = datetime(2026, 10, 22, 15, 30, tzinfo=timezone.utc)
         planned = self.plan(early)
