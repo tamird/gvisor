@@ -20,6 +20,7 @@ license(
 )
 
 exports_files([
+    ".clang-tidy",
     "CODEOWNERS",
     "LICENSE",
     "README.md",
