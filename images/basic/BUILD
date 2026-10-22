@@ -60,7 +60,10 @@ image_layer(
     },
     default_metadata = file_metadata(mode = "0644"),
     file_metadata = {
-        "/etc/shadow": file_metadata(mode = "0640", gid = 42),
+        "/etc/shadow": file_metadata(
+            gid = 42,
+            mode = "0640",
+        ),
         # sudo's postinst sets this mode when installing the package normally.
         "/etc/sudoers": file_metadata(mode = "0440"),
         "/etc/sudoers.d/test-admins": file_metadata(mode = "0440"),
