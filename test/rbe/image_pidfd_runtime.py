@@ -23,6 +23,11 @@ def run(invoke, evidence: Path, private: Path) -> None:
                         str(contents_path)], "command", targets=[])
     if inspected["status"] != "PASS":
         raise RuntimeError("Pidfd archive/source/runtime closure verification failed")
+    probed = invoke("busybox-shell-probes", [*python, str(scripts / "busybox_probe.py"),
+                    str(evidence / "busybox-build-inputs.json"), str(contents_path),
+                    str(evidence / "busybox-probes.json")], "command", targets=[])
+    if probed["status"] != "PASS":
+        raise RuntimeError("Source-built shell and timeout probes failed")
     contents = report.read_json(contents_path)
     programs = next([item["name"] for item in row["static_programs"]]
                     for row in contents["architectures"] if row["architecture"] == "amd64")

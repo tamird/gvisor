@@ -47,6 +47,11 @@ try:
         row = {"architecture": build["architecture"], "binary": identity(binary),
                "config": identity(config), "missing_config": sorted(required - configured)}
         records["architectures"].append(row)
+        markers = (b"/buildbuddy-execroot/", b"/root/workspace/", b"/tmp/image-qualification-", b"/Users/")
+        payload = binary.read_bytes()
+        row["build_root_markers"] = [marker.decode() for marker in markers if marker in payload]
+        if row["build_root_markers"]:
+            raise ValueError("BusyBox contains a worker-specific build path")
         if row["missing_config"]:
             raise ValueError(f"Resolved configuration dropped required options: {row['missing_config']}")
         row["file_header"] = run(["readelf", "--file-header", str(binary)])
@@ -96,7 +101,7 @@ try:
     records["applets"] = available
     if not set(applets) <= set(available):
         raise ValueError("BusyBox applet inventory omits reached commands")
-    run([*base, r'''set -o pipefail
+    version = run([*base, r'''set -o pipefail
 if (exit 23) | cat; then exit 91; else test "$?" -eq 23; fi
 test "$(printf ' a\tB\n' | tr -d '[:blank:][:cntrl:]')" = aB
 test "$(printf 'a-b' | tr -c '[:alnum:]_' '_')" = a_b
@@ -111,6 +116,8 @@ test "$(realpath /tmp/../tmp)" = /tmp
 sleep 0
 /usr/bin/timeout --version
 '''])
+    if not version.startswith("timeout (GNU coreutils) 9.11\n"):
+        raise ValueError("Runtime timeout version differs from the declared source")
     run([*base, "/usr/bin/timeout 5 /bin/sh -c 'exit 7'"], expected=7)
     run([*base, "/usr/bin/timeout --foreground 1 /bin/sleep 5"], expected=124)
     run([*base, r'''set +e

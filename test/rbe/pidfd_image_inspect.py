@@ -3,7 +3,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import subprocess
 import sys
 import tarfile
@@ -37,6 +36,7 @@ installed_sources.update({
 })
 labels = ["//images/basic:" + name for name in [*programs, "pidfd_tests_archive", "pidfd_tests_context", "pidfd_test_list"]]
 labels += ["@linux_pidfd//:" + name for name in installed_sources.values()]
+labels += ["//images:timeout_binary", "//images:busybox_binary"]
 records = {"status": "INCOMPLETE", "commands": [], "architectures": []}
 
 
@@ -105,6 +105,21 @@ try:
         for image_path, source_name in installed_sources.items():
             if files[image_path]["sha256"] != identity(outputs[source_name])["sha256"]:
                 raise ValueError("Installed source or notice differs: " + image_path)
+        notices = {
+            "usr/share/licenses/busybox/NOTICE": identity(Path("images/busybox/NOTICE"))["sha256"],
+            "usr/share/licenses/coreutils/NOTICE": identity(Path("images/coreutils/NOTICE"))["sha256"],
+            "usr/share/licenses/musl/NOTICE": identity(Path("images/musl/NOTICE"))["sha256"],
+            "usr/share/licenses/coreutils/COPYING": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+            "usr/share/licenses/busybox/LICENSE": "bbfc9843646d483c334664f651c208b9839626891d8f17604db2146962f43548",
+        }
+        row["utility_notices"] = {}
+        for image_path, digest in notices.items():
+            row["utility_notices"][image_path] = files[image_path]
+            if files[image_path]["sha256"] != digest or files[image_path]["mode"] != 0o644:
+                raise ValueError("Installed utility notice differs: " + image_path)
+        expected_elf = {"opt/kselftest/pidfd/" + name for name in programs} | {"bin/busybox", "usr/bin/timeout"}
+        if set(elf_files) != expected_elf:
+            raise ValueError("Scratch image ELF inventory differs from the declared static programs")
         for image_path in ("opt/kselftest/run_kselftest.sh", "opt/kselftest/kselftest/runner.sh",
                            "opt/kselftest/kselftest/prefix.pl", "usr/bin/timeout"):
             if files[resolve(files, image_path)]["mode"] & 0o111 != 0o111:
@@ -130,33 +145,24 @@ try:
                 })
                 if machine not in header or "INTERP" in segments or "(NEEDED)" in dynamic:
                     raise ValueError("Selftest is not static for its target architecture: " + name)
-            timeout_path = resolve(files, "usr/bin/timeout")
-            path = temporary / "timeout"
-            path.write_bytes(elf_files[timeout_path])
-            segments = run(["readelf", "--program-headers", str(path)])
-            dynamic = run(["readelf", "--dynamic", str(path)])
-            row["timeout"] = {"path": timeout_path, "file_header": run(["readelf", "--file-header", str(path)]),
-                              "program_headers": segments, "dynamic": dynamic}
-            if machine not in row["timeout"]["file_header"]:
-                raise ValueError("GNU timeout architecture differs")
-            interpreters = re.findall(r"Requesting program interpreter: ([^\]]+)", segments)
-            needed = re.findall(r"\(NEEDED\).*Shared library: \[([^\]]+)\]", dynamic)
-            expected_interpreter = ("/lib64/ld-linux-x86-64.so.2" if architecture == "amd64"
-                                    else "/lib/ld-linux-aarch64.so.1")
-            expected_needed = (["libc.so.6"] if architecture == "amd64"
-                               else ["libc.so.6", "ld-linux-aarch64.so.1"])
-            if interpreters != [expected_interpreter] or needed != expected_needed:
-                raise ValueError(f"Unexpected GNU timeout dependencies: {interpreters}, {needed}")
-            for installed in (interpreters[0], "lib/" +
-                              ("x86_64-linux-gnu" if architecture == "amd64" else "aarch64-linux-gnu") + "/libc.so.6"):
-                resolved = resolve(files, installed)
-                path = temporary / ("dependency-" + str(len(row["timeout_dependencies"])))
-                path.write_bytes(elf_files[resolved])
+            row["static_utilities"] = []
+            for name, image_path, owner in (("timeout", "usr/bin/timeout", "timeout_binary"),
+                                             ("busybox", "bin/busybox", "busybox_binary")):
+                payload = elf_files[image_path]
+                if (hashlib.sha256(payload).hexdigest() != identity(outputs[owner])["sha256"]
+                        or files[image_path]["mode"] != 0o755):
+                    raise ValueError("Installed utility differs from its compiled output: " + name)
+                path = temporary / name
+                path.write_bytes(payload)
                 header = run(["readelf", "--file-header", str(path)])
-                row["timeout_dependencies"].append({"path": installed, "resolved": resolved,
-                                                    "file_header": header, **files[resolved]})
-                if machine not in header:
-                    raise ValueError("Timeout dependency architecture differs: " + resolved)
+                segments = run(["readelf", "--program-headers", str(path)])
+                dynamic = run(["readelf", "--dynamic", str(path)])
+                row["static_utilities"].append({
+                    "name": name, "installed_path": image_path, "output": identity(outputs[owner]),
+                    "file_header": header, "program_headers": segments, "dynamic": dynamic,
+                })
+                if machine not in header or "INTERP" in segments or "(NEEDED)" in dynamic:
+                    raise ValueError("Utility is not static for its target architecture: " + name)
         row["runtime_inputs"] = {
             "status": "PASS", "source": records["source"], "archive": row["archive"],
             "config_sha256": row["config_sha256"], "inventory": identity(inventory),
