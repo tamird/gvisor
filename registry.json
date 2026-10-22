@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T20:28:08.548768+00:00",
+    "updatedAt": "2026-10-22T20:51:29.370222+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12464,13 +12464,15 @@
       "summary": "The quiet rebase is published at 5c36118d69d861a79bd6f97df9b77e0a64d44ddf and GitHub reports MERGEABLE. Independent review verified that all145 added/removed source lines match the prior patch; only upstream import context changed. Public checks are newly running; no new comment or runtime result is claimed.\n\nRoot assigned the existing #15931 conflict/rebase action to Hostinet in the released pr14353 checkout. The current public head remains 194f76d696; exact source and any conflict resolution require review before publication.\n\nRead the host network namespace's ephemeral port range during initialization and refresh it from the destination host on restore. Existing exhaustion tests use a private namespace with a narrow range. The approved change is published as #15931, including the Linux source citation and the two-line clang-format correction. Lint passes on the corrected head; current service checks are shown separately.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Context-only rebase delivered; ordinary current-head checks and review follow-up",
+        "disposition": "Current internal checks failed; matching public import passes",
         "sourceHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
-        "observedAt": "2026-10-19T23:54:37.789260+00:00",
-        "nextAction": "Follow exact current-head checks, human feedback and import progression through the existing watcher.",
+        "observedAt": "2026-10-22T20:52:33.431429+00:00",
+        "nextAction": "Obtain a maintainer diagnostic for the current internal failure before choosing a source correction. Exact-source public import #16148 passes all public checks; do not infer the internal failure has the same cause or send an unrequested public comment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15931",
-          "https://github.com/tamird/gvisor/commit/5c36118d69d861a79bd6f97df9b77e0a64d44ddf"
+          "https://github.com/tamird/gvisor/commit/5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
+          "https://github.com/google/gvisor/pull/16148",
+          "https://buildkite.com/gvisor/pipeline/builds/51886"
         ]
       },
       "evidence": [
@@ -16948,10 +16950,10 @@
       "summary": "The requested post-#16046 rebase is published at 7a48d5a71efe on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16096 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Quoted-error delivery, conntrack lookup and NAT rewriting reuse the existing IPv6 extension-header iterator and agree on the final protocol and offset. Valid truncated quotes and first/atomic fragments remain supported; incomplete extensions and non-first fragments are rejected. Independent review accepted the failing-before evidence and the corrected 13-owner gate: 17,858 positive XML records including parents, with seven analyzer owners reporting both architectures. The final subject-only amendment has the same tree as qualified 89f154da36. This proposal is independent of the forwarding-checksum correction and the deprecation-policy PR.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Delivered; current-head CI and maintainer review remain",
+        "disposition": "Current Copybara migration error; maintainer diagnostic needed",
         "sourceHead": "7a48d5a71efe1439fcb2621e3209e26cdd78393b",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow the exact PR through the existing authorized cadence when it resumes. The contributor decision is complete; no repeated review request or additional source change is pending.",
+        "observedAt": "2026-10-22T20:52:33.431429+00:00",
+        "nextAction": "Track the exact current-head migration error. No matching public import or diagnostic is exposed; obtain an authorized maintainer diagnostic before choosing a source correction. Do not blindly rebase or send an unrequested public comment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16096",
           "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d",
@@ -17720,9 +17722,9 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "8b47e3b5e93b8e0ad38643efb08feb0a66438c8d",
-        "observedAt": "2026-10-22T01:44:47.504469+00:00",
-        "disposition": "Delivered; awaiting current-head CI and maintainer review",
-        "nextAction": "Follow the published current head through the existing ordinary updater; do not repeat the contributor question or validation.",
+        "observedAt": "2026-10-22T20:52:33.431429+00:00",
+        "disposition": "Current Copybara migration error; maintainer diagnostic needed",
+        "nextAction": "Track the exact current-head migration error. No matching public import or diagnostic is exposed; obtain an authorized maintainer diagnostic before choosing a source correction. Do not blindly rebase or send an unrequested public comment.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb",
           "https://app.buildbuddy.io/invocation/d34c2337-c216-4b83-a69c-93cb7801707f",
@@ -18551,15 +18553,15 @@
       "title": "Register restore dependencies during decoding",
       "url": "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962",
       "group": "runtime",
-      "status": "Contributor review requested; prerequisites pending",
-      "updatedAt": "2026-10-22T20:28:08.548768+00:00",
-      "summary": "The first contributor review question is pending for this separate decoder simplification. It removes four net production lines by registering dependencies while decoding, preserving dependency ordering and validation. Normal and race checks pass. The fixed production comparison detects no timing change in graph Save/Load or UDP Save/Load; allocation counts and wire data are unchanged. The measured graph executable is 4,096 bytes smaller; the UDP executable is unchanged. No speedup is claimed.\n\nThis is a sibling of the approved encoder change. Opening also requires the existing array-storage and destination-kind prerequisites.",
+      "status": "Contributor approved; waiting for decoder prerequisites",
+      "updatedAt": "2026-10-22T20:51:29.370222+00:00",
+      "summary": "Contributor approved this decoder simplification for opening after its existing prerequisites. It removes four net production lines by registering dependencies while decoding, preserving dependency ordering and validation. Normal and race checks pass. The fixed production comparison detects no timing change in graph Save/Load or UDP Save/Load; allocation counts and wire data are unchanged. The measured graph executable is 4,096 bytes smaller; the UDP executable is unchanged. No speedup is claimed.\n\nThis is a sibling of the approved encoder change. Opening also requires the existing array-storage and destination-kind prerequisites.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "b9797d128902a3966efa681c432d2f7a7be36962",
-        "observedAt": "2026-10-22T20:28:08.548768+00:00",
-        "disposition": "Contributor review requested; prerequisites pending",
-        "nextAction": "Await the existing contributor decision and prerequisite landings; do not send a duplicate review question.",
+        "observedAt": "2026-10-22T20:51:29.370222+00:00",
+        "disposition": "Contributor approved; waiting for decoder prerequisites",
+        "nextAction": "Open after the existing array-storage and destination-kind prerequisites land; preserve the approved patch and do not ask again.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962"
         ]
