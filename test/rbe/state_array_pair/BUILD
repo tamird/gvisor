@@ -7,14 +7,11 @@ py_test(
     timeout = "long",
     srcs = ["run.py"],
     main = "run.py",
-    args = ["$(rootpath @org_golang_x_perf//cmd/benchstat)"],
+    args = ["--profiles"],
     data = [
         "inputs.json",
-        "arms/before/_main/pkg/state/tests/benchmark/benchmark_test",
         "arms/before/_main/pkg/tcpip/transport/udp/udp_test",
-        "arms/after/_main/pkg/state/tests/benchmark/benchmark_test",
         "arms/after/_main/pkg/tcpip/transport/udp/udp_test",
-        "@org_golang_x_perf//cmd/benchstat",
     ],
     tags = ["manual"],
 )
