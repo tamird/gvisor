@@ -65,6 +65,8 @@ image_layer(
         "/etc/sudoers": file_metadata(mode = "0440"),
         "/etc/sudoers.d/test-admins": file_metadata(mode = "0440"),
     },
+    # The privilege tests use this absolute path; the package installs usr/bin.
+    symlinks = {"/bin/whoami": "/usr/bin/whoami"},
 )
 
 pkg_tar(
