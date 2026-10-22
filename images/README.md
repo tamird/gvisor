@@ -49,6 +49,18 @@ The grouped packages expose `//images/benchmarks:profile_helper_archive` and
 for Make. The stable image names remain `benchmarks/profile-helper` and
 `gpu/ollama/client`.
 
+## Privilege test image
+
+The `basic/sudo` image uses snapshot-pinned distribution packages for sudo,
+PAM, strace, capabilities and the GNU utilities used by the privilege tests.
+Package extraction preserves executable modes and library dependencies but
+runs no installation scripts. The image therefore declares its accounts,
+passwordless group policy, home directories and shared Unix PAM configuration.
+The default image user remains `alice`; tests select `bob` or root explicitly.
+
+`//images/basic:sudo_archive` and `:sudo_context` expose the assembled image
+and its Make context. `make load-basic_sudo` keeps the existing test image name.
+
 ## Adding new images
 
 Images can be assembled with `rules_img`; see `basic/BUILD` for examples.

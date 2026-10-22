@@ -1,0 +1,2 @@
+# The privilege tests run passwordless sudo as alice in this group.
+%container_admins ALL=(ALL) NOPASSWD:ALL
