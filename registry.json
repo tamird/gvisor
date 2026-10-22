@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T20:22:02.746107+00:00",
+    "updatedAt": "2026-10-22T20:28:08.548768+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18541,6 +18541,39 @@
           "url": "https://app.buildbuddy.io/invocation/cd1eee73-f8e5-403a-9c27-1f3e8df30ded"
         }
       ]
+    },
+    {
+      "id": "branch:state-decoder-dependencies",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "state-decoder-dependencies",
+      "head": "b9797d128902a3966efa681c432d2f7a7be36962",
+      "title": "Register restore dependencies during decoding",
+      "url": "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962",
+      "group": "runtime",
+      "status": "Contributor review requested; prerequisites pending",
+      "updatedAt": "2026-10-22T20:28:08.548768+00:00",
+      "summary": "The first contributor review question is pending for this separate decoder simplification. It removes four net production lines by registering dependencies while decoding, preserving dependency ordering and validation. Normal and race checks pass. The fixed production comparison detects no timing change in graph Save/Load or UDP Save/Load; allocation counts and wire data are unchanged. The measured graph executable is 4,096 bytes smaller; the UDP executable is unchanged. No speedup is claimed.\n\nThis is a sibling of the approved encoder change. Opening also requires the existing array-storage and destination-kind prerequisites.",
+      "followup": {
+        "owner": "node_tls_sni",
+        "sourceHead": "b9797d128902a3966efa681c432d2f7a7be36962",
+        "observedAt": "2026-10-22T20:28:08.548768+00:00",
+        "disposition": "Contributor review requested; prerequisites pending",
+        "nextAction": "Await the existing contributor decision and prerequisite landings; do not send a duplicate review question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962"
+        ]
+      },
+      "links": [
+        {
+          "label": "Complete proposed change",
+          "url": "https://github.com/tamird/gvisor/compare/6a5814d55aa2c2cefc256644c11de8598944c095...b9797d128902a3966efa681c432d2f7a7be36962"
+        },
+        {
+          "label": "Fixed production comparison",
+          "url": "https://app.buildbuddy.io/invocation/cc62fddf-578f-4e93-80f9-5604341db0a3"
+        }
+      ]
     }
   ],
   "edges": [
@@ -20675,6 +20708,13 @@
       "type": "depends_on",
       "reason": "The approved encoder change is a direct child of the retained destination-kind proposal.",
       "evidence": "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962"
+    },
+    {
+      "from": "branch:state-destination-kind",
+      "to": "branch:state-decoder-dependencies",
+      "type": "depends_on",
+      "reason": "The decoder simplification is a direct child of the destination-kind proposal, independent of the encoder change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962"
     }
   ],
   "investigations": [
