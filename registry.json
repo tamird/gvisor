@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T05:11:37.984351+00:00",
+    "updatedAt": "2026-10-22T05:39:22.632495+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17883,19 +17883,32 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "state-destination-kind",
-      "head": "5d5f2da2a33dea00e4d905cf4121c8507f089f9d",
+      "head": "6a5814d55aa2c2cefc256644c11de8598944c095",
       "title": "Validate restore kinds against destination types",
-      "url": "https://github.com/tamird/gvisor/commit/5d5f2da2a33dea00e4d905cf4121c8507f089f9d",
+      "url": "https://github.com/tamird/gvisor/commit/6a5814d55aa2c2cefc256644c11de8598944c095",
       "group": "runtime",
-      "status": "Agent work: direct-assertion correction under comparison",
-      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
-      "summary": "Normal and race correctness checks pass for the separate destination-kind change, which retains the original graph and collection engine. Its fixed sixteen-pair array-to-kind comparison found UDP Load 3.56% slower (p=.001), unchanged allocation counts and 4,096 additional bytes in each fixture binary. CPU/compiler diagnostics establish that the added helper shapes do not inline; they do not attribute the full regression. A narrow direct-assertion correction passes correctness checks and is undergoing the same matched comparison. The proposal remains held, with no contributor request or speed claim.",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-22T05:39:22.632495+00:00",
+      "summary": "Contributor review is pending for the destination-kind correction, conditional on the homogeneous-array prerequisite. It rejects incompatible empty or zero wire values in the existing decoder and passes normal and race checks. The final direct-assertion version has no detected timing difference in the fixed sixteen-pair, 136-child array-to-kind comparison: graph Load +0.31% (p=.210), UDP Load -0.22% (p=.270), with unchanged allocation counts and wire format. The graph test binary grows 4,096 bytes; UDP is unchanged. The earlier generic-helper regression and compiler evidence remain preserved; no speed or startup claim is made.",
       "links": [
         {
-          "label": "Matched array-to-kind comparison",
+          "label": "Complete proposed change",
+          "url": "https://github.com/tamird/gvisor/compare/9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d...6a5814d55aa2c2cefc256644c11de8598944c095"
+        },
+        {
+          "label": "Final direct-assertion comparison",
+          "url": "https://app.buildbuddy.io/invocation/0d20ed63-fc0a-4eb9-b5ba-8df9972e2f5b"
+        },
+        {
+          "label": "Prior helper comparison retained",
           "url": "https://app.buildbuddy.io/invocation/be3ff09c-b36c-42dd-9e33-41ca13c2a244"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "6a5814d55aa2c2cefc256644c11de8598944c095",
+        "url": "https://github.com/tamird/gvisor/commit/6a5814d55aa2c2cefc256644c11de8598944c095"
+      }
     },
     {
       "id": "branch:rules-img-libacl",
@@ -17906,25 +17919,25 @@
       "title": "Assemble the ACL test image from pinned packages",
       "url": "https://github.com/tamird/gvisor/commit/b3c4bb586ed08c6135226ecdffd0d0a4d94d567a",
       "group": "bazel",
-      "status": "Agent work: runtime passed; GNU audit diagnosis",
-      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
-      "summary": "Both architecture archive/context checks, executable and shared-library closure, account files and notices pass. Make rebuild/reload and the unchanged ACL consumer pass under native runc and gVisor, with two positive cases and no skips. The compact run retained remote action audits separately and downloaded 3.43 MB; its initial local collector permission failure and result-reader correction are preserved. The full canonical catalog remains failed: its hosted GNU gawk build reaches a configuration-probe conflict. A bounded same-configuration diagnostic is running; no package defines have been forced and no catalog success is claimed. The published exact gawk source-bundle entry and exception remain unchanged. No contributor question is pending.",
+      "status": "Agent work: normal GNU configuration recovery",
+      "updatedAt": "2026-10-22T05:39:22.632495+00:00",
+      "summary": "Both architecture archives, executable closure, accounts and notices pass. Make rebuild/reload and the unchanged ACL consumer pass under native runc and gVisor. The canonical catalog remains blocked by the hosted GNU configuration path: its compiler probe actions omitted PATH, and GCC could not locate its selected Gold linker. On the same source graph, an explicit host-action PATH makes both Unicode probes and the owning package layer pass; Gold is present on that worker. The responsible Autoconf action-environment correction is now published for validation through ordinary Make without that diagnostic override. Its source and package-specific audit records remain separate from the completed runtime evidence. No catalog success or contributor question is claimed.",
       "links": [
         {
           "label": "Current image and scoped audit source",
           "url": "https://github.com/tamird/gvisor/commit/b3c4bb586ed08c6135226ecdffd0d0a4d94d567a"
         },
         {
-          "label": "Final image and two-runtime qualification",
+          "label": "Accepted image and two-runtime qualification",
           "url": "https://app.buildbuddy.io/invocation/fa2ea416-3032-43ce-bb51-37521fceb169"
         },
         {
-          "label": "Preserved canonical catalog failure",
-          "url": "https://app.buildbuddy.io/invocation/de09a813-f078-458e-83be-e2fc2c66d4ed"
+          "label": "Causal GNU validation",
+          "url": "https://app.buildbuddy.io/invocation/19307330-3bfb-4f7e-bb64-a823a7798026"
         },
         {
-          "label": "Focused GNU probe diagnostic recovery",
-          "url": "https://app.buildbuddy.io/invocation/a4ae5e4c-906d-4daf-b20a-443f5a1ac14c"
+          "label": "Normal-entry correction under validation",
+          "url": "https://github.com/tamird/gvisor/commit/4e5bfa93a32c7592356c4d5219526aa997291abc"
         }
       ]
     },
@@ -17933,13 +17946,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-filecap",
-      "head": "69fa551ae84169d8a1ed1f2b2ee689638e28cde4",
+      "head": "a4dfbc25c10bbc0534357c79f017791d1d1d0e67",
       "title": "Declare the file-capability test image",
-      "url": "https://github.com/tamird/gvisor/commit/69fa551ae84169d8a1ed1f2b2ee689638e28cde4",
+      "url": "https://github.com/tamird/gvisor/commit/a4dfbc25c10bbc0534357c79f017791d1d1d0e67",
       "group": "bazel",
       "status": "Agent work: capability literal and catalog recovery",
-      "updatedAt": "2026-10-22T05:11:37.984351+00:00",
-      "summary": "The declared image retains the intended executable capability on /mnt/cat and its unchanged consumers. Runtime qualification stopped before image execution because Bazel rejects hexadecimal string escapes in the capability literal; the equivalent twenty-byte octal correction is being validated. The full canonical catalog separately reproduces the shared hosted-GNU gawk configuration failure. Its existing exact source-bundle entry is preserved while the owning probe diagnostic runs. No runtime success or contributor request is claimed."
+      "updatedAt": "2026-10-22T05:39:22.632495+00:00",
+      "summary": "The declared image retains the intended executable capability on /mnt/cat and its unchanged consumers. The equivalent twenty-byte octal literal correction is published and its runtime qualification is running; the original Bazel hexadecimal-escape failure remains preserved. Canonical catalog recovery is held on the shared GNU Autoconf action-environment correction. The exact source-bundle audit record is retained. No runtime success or contributor request is claimed.",
+      "links": [
+        {
+          "label": "Published capability literal correction",
+          "url": "https://github.com/tamird/gvisor/commit/a4dfbc25c10bbc0534357c79f017791d1d1d0e67"
+        },
+        {
+          "label": "Current runtime qualification",
+          "url": "https://app.buildbuddy.io/invocation/0944a583-369e-4336-858c-d37632d53328"
+        }
+      ]
     }
   ],
   "edges": [

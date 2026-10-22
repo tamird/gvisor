@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-22T05:25:33.023198+00:00",
-  "registryDate": "2026-10-22T05:11:37.984351+00:00",
+  "registryDate": "2026-10-22T05:39:22.632495+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -131966,7 +131966,7 @@
     "pr:12483": {
       "maintainer-review": {
         "scope": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -131984,7 +131984,7 @@
     "pr:14338": {
       "maintainer-review": {
         "scope": "048d2635a582ab85720274b3cd8e515a781a3409",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -131993,7 +131993,7 @@
     "pr:14343": {
       "changes-requested": {
         "scope": "40f478e8cb1f7fa2216f34ca047b163d848d69a5",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132002,7 +132002,7 @@
     "pr:14345": {
       "maintainer-review": {
         "scope": "d582fa0671235b611ab31d8c2bf5974f5c7a4a5d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132038,7 +132038,7 @@
     "pr:14361": {
       "maintainer-review": {
         "scope": "752de31a1b3cbc9c800f64fc88c8148ff294888a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132236,7 +132236,7 @@
     "pr:15064": {
       "maintainer-review": {
         "scope": "9708dbc9f027a6eece93b1bb9b4f1638038ff31c",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132272,7 +132272,7 @@
     "pr:15106": {
       "maintainer-review": {
         "scope": "e758ff20aee552bab5474f8f36bc50efd5a74c8d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132299,14 +132299,14 @@
     "pr:15111": {
       "importing": {
         "scope": "15991:acdc4e37466b55da3d2e627da62150e424ccd4ae",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#15991: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d,15991:acdc4e37466b55da3d2e627da62150e424ccd4ae",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #15991",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132315,7 +132315,7 @@
     "pr:15114": {
       "changes-requested": {
         "scope": "636cec92b308662bb2da1b2c325f999c82e9e65a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132459,7 +132459,7 @@
     "pr:15145": {
       "changes-requested": {
         "scope": "812b2c65b5997d91ec702ece254ed0e8ff73ad6e",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132468,7 +132468,7 @@
     "pr:15146": {
       "changes-requested": {
         "scope": "04108da6a3cfe97d3990c7e36c1204ca9ca598f5",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132504,7 +132504,7 @@
     "pr:15153": {
       "maintainer-review": {
         "scope": "007e776dd0bd266a8af950058f34cefaf9bbc10c",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132648,14 +132648,14 @@
     "pr:15180": {
       "importing": {
         "scope": "16165:549a87d45e3afad6dfb07d4f0bcc308d9c0c7b63",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16165: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "255953d4f3fa36ea1965695407c1ef5d48733467,16165:549a87d45e3afad6dfb07d4f0bcc308d9c0c7b63",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16165",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132664,7 +132664,7 @@
     "pr:15181": {
       "maintainer-review": {
         "scope": "3255a52b212edcd2f526d3fb1afaa6d1523f7520",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132718,7 +132718,7 @@
     "pr:15189": {
       "maintainer-review": {
         "scope": "d45c60c8a5856894425a04026639eb103aa014df",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132817,14 +132817,14 @@
     "pr:15315": {
       "maintainer-review": {
         "scope": "ae6e695110f8fffeb9f45dd153fadeb4fdd9694e",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "importing": {
         "scope": "15942:e0ffc0b6115100b0f1906683f14313f72afce9dd",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#15942: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132842,14 +132842,14 @@
     "pr:15318": {
       "importing": {
         "scope": "16000:586fc1b9a51cd19c10bc8511aa366db2e72068fe",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16000: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "f4190d8782e72897c6a429b9b7795ec5104a6a57,16000:586fc1b9a51cd19c10bc8511aa366db2e72068fe",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16000",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132867,7 +132867,7 @@
     "pr:15321": {
       "maintainer-review": {
         "scope": "f2a8ca99073d65942e559209b87c9be8606e5849",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132876,7 +132876,7 @@
     "pr:15322": {
       "maintainer-review": {
         "scope": "1f9c427d908d8c78a0b69530e8ce315cab885948",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132948,7 +132948,7 @@
     "pr:15337": {
       "changes-requested": {
         "scope": "aec69d67941f62115cfb17bd89ee537407844687",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132957,7 +132957,7 @@
     "pr:15368": {
       "maintainer-review": {
         "scope": "886a52af8c85864aa628d04550ce5508dd91e8bc",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -132966,7 +132966,7 @@
     "pr:15370": {
       "maintainer-review": {
         "scope": "4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133020,7 +133020,7 @@
     "pr:15376": {
       "maintainer-review": {
         "scope": "86e93d6a1e10491391c176d6f43f66e4918e4b8b",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133092,14 +133092,14 @@
     "pr:15435": {
       "importing": {
         "scope": "15961:e469c2eead2938c21578f64cc76b596cb3e58322",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#15961: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "fe90ffd7a90f62ecbe9b8806dfa4d8de01361052,15961:e469c2eead2938c21578f64cc76b596cb3e58322",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #15961",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133162,7 +133162,7 @@
     "pr:15443": {
       "maintainer-review": {
         "scope": "7771b786fbba82026dea68352e7bbc954e6326f2",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133189,7 +133189,7 @@
     "pr:15449": {
       "maintainer-review": {
         "scope": "57834789e0f3343fc67a6bf2eb12544ea867a632",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133279,21 +133279,21 @@
     "pr:15499": {
       "failing": {
         "scope": "15910:445d4451f9b75b7bab89af73b0abae8a34d9ee71",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #15910 failing",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "changes-requested": {
         "scope": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "importing": {
         "scope": "15910:445d4451f9b75b7bab89af73b0abae8a34d9ee71",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#15910: open, checks failing, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133329,14 +133329,14 @@
     "pr:15503": {
       "importing": {
         "scope": "16001:8e6eefeea80baa3179cdaef06ffdcc3282fe8236",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16001: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "9661cdec7780c11a5508ff868d09b2c219e886d8,16001:8e6eefeea80baa3179cdaef06ffdcc3282fe8236",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16001",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133363,7 +133363,7 @@
     "pr:15508": {
       "maintainer-review": {
         "scope": "d14afa764b0fb774ee56982cc47a359ee846c56a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133444,7 +133444,7 @@
     "pr:15562": {
       "maintainer-review": {
         "scope": "4128ff3f61d93975cdd9d04706e8a61341675088",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133516,14 +133516,14 @@
     "pr:15583": {
       "importing": {
         "scope": "16166:b9e3bbd5311720a9e07398aacc098ce40d6bf7b9",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16166: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "d1e76f1cb67d158e427fed3c92f2d2e446bf8dc2,16166:b9e3bbd5311720a9e07398aacc098ce40d6bf7b9",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16166",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133559,7 +133559,7 @@
     "pr:15604": {
       "maintainer-review": {
         "scope": "68347953351371f33907fdf0a19b783d61671364",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133595,7 +133595,7 @@
     "pr:15634": {
       "maintainer-review": {
         "scope": "933263e71c97b0ae7bd0cb04489b2399fe4523f1",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133658,14 +133658,14 @@
     "pr:15647": {
       "failing": {
         "scope": "15647:1258537f7870ff8882318a40ce26634782b41dc7",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Source checks failing",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "maintainer-review": {
         "scope": "1258537f7870ff8882318a40ce26634782b41dc7",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133674,7 +133674,7 @@
     "pr:15648": {
       "maintainer-review": {
         "scope": "a995e732ebaf5a3eca318cef9e25b8506a0b72f0",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133701,7 +133701,7 @@
     "pr:15651": {
       "maintainer-review": {
         "scope": "89bbc33772fdf5eecec78d3b920b75fdb5e3918c",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133746,7 +133746,7 @@
     "pr:15668": {
       "maintainer-review": {
         "scope": "4215bbbbfc1ac58009b4afe6704d6b06cf64f599",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133755,7 +133755,7 @@
     "pr:15669": {
       "maintainer-review": {
         "scope": "aa13d6a12af50e982819d8f8c1a12c836ab3fa1a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133764,7 +133764,7 @@
     "pr:15670": {
       "awaiting-import": {
         "scope": "923b3b3e29403f6cdda08e995ba7edb5698426cf",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133773,7 +133773,7 @@
     "pr:15730": {
       "changes-requested": {
         "scope": "6e612931c9f7bc79cd779971206c199548d035ec",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133782,7 +133782,7 @@
     "pr:15738": {
       "maintainer-review": {
         "scope": "362335a9589aacf86f9b7e5bab22d4d83237f561",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133809,7 +133809,7 @@
     "pr:15769": {
       "maintainer-review": {
         "scope": "30e04099a439e6b2feb598698172275972ca5ab5",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133845,7 +133845,7 @@
     "pr:15814": {
       "maintainer-review": {
         "scope": "344906981e5d3bdb70d4e6366e5d261adcf6c510",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133881,14 +133881,14 @@
     "pr:15819": {
       "importing": {
         "scope": "15995:6f808c9e09d20e51fd4f9256127e5a02a3da1a5a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#15995: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "4d0adbc37ea91a904c84392d669a49509db5ad7c,15995:6f808c9e09d20e51fd4f9256127e5a02a3da1a5a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #15995",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133915,14 +133915,14 @@
     "pr:15868": {
       "failing": {
         "scope": "16167:ca012cfdacdb647b1528e7c615470288aea9b251",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16167 failing",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "importing": {
         "scope": "16167:ca012cfdacdb647b1528e7c615470288aea9b251",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16167: open, checks failing, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133931,7 +133931,7 @@
     "pr:15891": {
       "maintainer-review": {
         "scope": "b40e6d53e21629ae0f794c58a615626cb2430bcc",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133949,14 +133949,14 @@
     "pr:15916": {
       "importing": {
         "scope": "16020:56d69b1047942f60b5246521a92332efdf75f228",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16020: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "60399ad7b133ebe0c972fa54f430c889b36a88c2,16020:56d69b1047942f60b5246521a92332efdf75f228",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16020",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133965,7 +133965,7 @@
     "pr:15917": {
       "maintainer-review": {
         "scope": "ba76608088c0ce8b9a62cf004ab3c6287b3e3213",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -133974,7 +133974,7 @@
     "pr:15918": {
       "maintainer-review": {
         "scope": "fd2999b440601691d26f86ad5b8c2af2e5fe1fe9",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134019,7 +134019,7 @@
     "pr:15927": {
       "maintainer-review": {
         "scope": "8f47745351e6f996dc037c931e59b5e6bad4ad23",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134028,7 +134028,7 @@
     "pr:15929": {
       "maintainer-review": {
         "scope": "4e7230767cb93cf1af9b8bd2a876e060bd62de5c",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134037,7 +134037,7 @@
     "pr:15930": {
       "maintainer-review": {
         "scope": "2677c1640fce2a75ab17acbcdafd7a4c51e125f2",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134046,14 +134046,14 @@
     "pr:15931": {
       "importing": {
         "scope": "16148:3a05f51956cc12430584df3620fbea8466637f43",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16148: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf,16148:3a05f51956cc12430584df3620fbea8466637f43",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16148",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134098,7 +134098,7 @@
     "pr:15936": {
       "maintainer-review": {
         "scope": "408c0759a0588e58707336dc40585e469b9aa8be",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134107,7 +134107,7 @@
     "pr:15937": {
       "maintainer-review": {
         "scope": "6be1abc48dccd28dea019ea0783df8b59b65f851",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134116,7 +134116,7 @@
     "pr:15940": {
       "maintainer-review": {
         "scope": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134134,7 +134134,7 @@
     "pr:15950": {
       "maintainer-review": {
         "scope": "58cc8f3c129ead97b33ddb3c06d91dbe9b6ea63a",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134143,7 +134143,7 @@
     "pr:15951": {
       "maintainer-review": {
         "scope": "03c97723b87eab58d62166cede56bce2daf8f757",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134152,7 +134152,7 @@
     "pr:15952": {
       "maintainer-review": {
         "scope": "d85672221e5c33a590733b9121f8550cd02da2b3",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134170,7 +134170,7 @@
     "pr:15955": {
       "maintainer-review": {
         "scope": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134179,7 +134179,7 @@
     "pr:15956": {
       "maintainer-review": {
         "scope": "04556f955ae8672c86d643c97974be48e007fff7",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134197,14 +134197,14 @@
     "pr:15958": {
       "importing": {
         "scope": "16103:f02d9cf87300bd46929aad4eeb22fe844cfa5fcf",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "#16103: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
       },
       "waiting-merge": {
         "scope": "77360cb73e3f5c8a882de1538cedc569a5abc450,16103:f02d9cf87300bd46929aad4eeb22fe844cfa5fcf",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import #16103",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134213,7 +134213,7 @@
     "pr:15959": {
       "maintainer-review": {
         "scope": "3c82fee9c80d0a4a5a948f2deb26a966f56fa54d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134222,7 +134222,7 @@
     "pr:15960": {
       "maintainer-review": {
         "scope": "54930a297f2150c18d014c7dac994c4e8668264c",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134258,7 +134258,7 @@
     "pr:15970": {
       "maintainer-review": {
         "scope": "bb2628f9faafc740a6b302b7f9fbabe020f661eb",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134267,7 +134267,7 @@
     "pr:15977": {
       "maintainer-review": {
         "scope": "c6df8e6ac3e151bf3b74fa07623401f7c0ca0680",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134285,7 +134285,7 @@
     "pr:15980": {
       "maintainer-review": {
         "scope": "53565c5c381796c7c9a7fe408c8f96039dae3182",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134294,7 +134294,7 @@
     "pr:15981": {
       "maintainer-review": {
         "scope": "b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134303,7 +134303,7 @@
     "pr:15983": {
       "maintainer-review": {
         "scope": "9182165b35529ed529e72aeddf4c32bcc76ad67f",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134312,7 +134312,7 @@
     "pr:16006": {
       "maintainer-review": {
         "scope": "9e496b6e7ea84060f62d12783b0a94c609be74eb",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134348,7 +134348,7 @@
     "pr:16051": {
       "maintainer-review": {
         "scope": "1669fae493856ba8428381b93fabe3dbd7579131",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134357,7 +134357,7 @@
     "pr:16052": {
       "maintainer-review": {
         "scope": "fd6376945efa93664fec28669cc18e29c89b8648",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134366,7 +134366,7 @@
     "pr:16053": {
       "maintainer-review": {
         "scope": "46aadd608aa19c1bbc33a425475d8900d6c9b5a7",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134384,7 +134384,7 @@
     "pr:16055": {
       "maintainer-review": {
         "scope": "bd37d23bc935b2585ade8c056c26c8ca8fb17dc2",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134393,7 +134393,7 @@
     "pr:16056": {
       "maintainer-review": {
         "scope": "418508a782936d2e373ff49348715811e3efd45d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134402,7 +134402,7 @@
     "pr:16057": {
       "maintainer-review": {
         "scope": "a400475087d78a7359464817c6e45fc4c22bba73",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134411,7 +134411,7 @@
     "pr:16058": {
       "maintainer-review": {
         "scope": "8f0a165f212d14faf2a94070707708384a51d461",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134420,7 +134420,7 @@
     "pr:16059": {
       "maintainer-review": {
         "scope": "71a5b3cbd3d29e398d15772aa97df110a51c51f1",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134429,7 +134429,7 @@
     "pr:16065": {
       "maintainer-review": {
         "scope": "652a770689eb14bb070a9e16ac06328d03a7d88f",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134447,7 +134447,7 @@
     "pr:16076": {
       "maintainer-review": {
         "scope": "bc40a65c7d06164a2a6f941fbe86dd409699258d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134456,7 +134456,7 @@
     "pr:16077": {
       "maintainer-review": {
         "scope": "81c9463ba4d6b3a05019adcbe901f371a3b16515",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134465,7 +134465,7 @@
     "pr:16085": {
       "maintainer-review": {
         "scope": "f933b98d789aeaa672c6fa5baa735ecd96c59b61",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134474,7 +134474,7 @@
     "pr:16091": {
       "maintainer-review": {
         "scope": "f196722413a8793f5e7d6454e43654667650db98",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134483,7 +134483,7 @@
     "pr:16092": {
       "awaiting-import": {
         "scope": "473a5d133d00677815f5ad3914e8bd942f528c4c",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": "Import status failing; validation checks passed",
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134492,7 +134492,7 @@
     "pr:16095": {
       "maintainer-review": {
         "scope": "f0d94d832c79d41fe44fbe2bb68c27803bcee65e",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134501,7 +134501,7 @@
     "pr:16096": {
       "maintainer-review": {
         "scope": "7a48d5a71efe1439fcb2621e3209e26cdd78393b",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134510,7 +134510,7 @@
     "pr:16097": {
       "maintainer-review": {
         "scope": "1d562c448fe89ced8d0b98f9eed5fedb3b614c3b",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134519,7 +134519,7 @@
     "pr:16098": {
       "maintainer-review": {
         "scope": "5841fe0ef3c0344a39f78130fcbda1502e7195d6",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134528,7 +134528,7 @@
     "pr:16101": {
       "maintainer-review": {
         "scope": "c2d61fcd6e8dd2c19221406c7b962e5e05bf12ba",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134537,7 +134537,7 @@
     "pr:16162": {
       "maintainer-review": {
         "scope": "80eae6ef0140c2e8db531a5ced18d3143a02cce3",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134546,7 +134546,7 @@
     "pr:16168": {
       "maintainer-review": {
         "scope": "8b47e3b5e93b8e0ad38643efb08feb0a66438c8d",
-        "since": "2026-10-22T05:03:11.076043+00:00",
+        "since": "2026-10-22T05:25:28.922900+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:28.922900+00:00"
@@ -134573,21 +134573,21 @@
     "pr:buildbuddy-io/buildbuddy:13803": {
       "checks-pending": {
         "scope": "13803:48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
       },
       "conflicts": {
         "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
       },
       "maintainer-review": {
         "scope": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
@@ -134605,7 +134605,7 @@
     "pr:buildbuddy-io/buildbuddy:13826": {
       "maintainer-review": {
         "scope": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
@@ -134650,14 +134650,14 @@
     "pr:buildbuddy-io/buildbuddy:13858": {
       "checks-pending": {
         "scope": "13858:8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
       },
       "maintainer-review": {
         "scope": "8c704d5324518b02f430a3f5f0f9388549c65eab",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
@@ -134666,14 +134666,14 @@
     "pr:buildbuddy-io/buildbuddy:13882": {
       "checks-pending": {
         "scope": "13882:38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
       },
       "maintainer-review": {
         "scope": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
-        "since": "2026-10-22T05:03:14.331463+00:00",
+        "since": "2026-10-22T05:25:31.960718+00:00",
         "basis": "observed",
         "qualifier": "BuildBuddy requires approving review before these checks run",
         "observedAt": "2026-10-22T05:25:31.960718+00:00"
@@ -134691,46 +134691,55 @@
     "branch:review/hermetic-bpf-header-analysis": {
       "contributor-review": {
         "scope": "f3afdd452329cd0ffe5b09f35aa7a9073aae34b8",
-        "since": "2026-10-22T05:11:37.984351+00:00",
+        "since": "2026-10-22T05:39:22.632495+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T05:11:37.984351+00:00"
+        "observedAt": "2026-10-22T05:39:22.632495+00:00"
       }
     },
     "branch:rules-img-fsstress": {
       "contributor-review": {
         "scope": "8e45c79086ef50a61ed70379f89a5b684ea75db9",
-        "since": "2026-10-22T05:11:37.984351+00:00",
+        "since": "2026-10-22T05:39:22.632495+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T05:11:37.984351+00:00"
+        "observedAt": "2026-10-22T05:39:22.632495+00:00"
       }
     },
     "branch:fix/goimports-make-wrapper": {
       "contributor-review": {
         "scope": "c6748cd7287f0cb674d0781ecf914ebf340940cd",
-        "since": "2026-10-22T05:11:37.984351+00:00",
+        "since": "2026-10-22T05:39:22.632495+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T05:11:37.984351+00:00"
+        "observedAt": "2026-10-22T05:39:22.632495+00:00"
       }
     },
     "branch:rules-img-symlink-resolv": {
       "contributor-review": {
         "scope": "06a1ac32a39a557612731961754132d5b07d2d76",
-        "since": "2026-10-22T05:11:37.984351+00:00",
+        "since": "2026-10-22T05:39:22.632495+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T05:11:37.984351+00:00"
+        "observedAt": "2026-10-22T05:39:22.632495+00:00"
       }
     },
     "branch:state-wire-storage": {
       "contributor-review": {
         "scope": "9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d",
-        "since": "2026-10-22T05:11:37.984351+00:00",
+        "since": "2026-10-22T05:39:22.632495+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-22T05:11:37.984351+00:00"
+        "observedAt": "2026-10-22T05:39:22.632495+00:00"
+      }
+    },
+    "branch:state-destination-kind": {
+      "contributor-review": {
+        "scope": "6a5814d55aa2c2cefc256644c11de8598944c095",
+        "since": "2026-10-22T05:39:22.632495+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-22T05:39:22.632495+00:00"
       }
     }
   },
