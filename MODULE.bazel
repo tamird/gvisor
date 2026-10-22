@@ -12,6 +12,7 @@ bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
+bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 
 # Use gawk's regex fixes when compiling the image assembly tools.
@@ -113,6 +114,14 @@ single_version_override(
 )
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "coreutils_source",
+    build_file = "//images:coreutils.BUILD",
+    sha256 = "394024eda0a5955217ceda9cd1201e65dc8fa3aa29c2951135a49521d57c3cc3",
+    strip_prefix = "coreutils-9.11",
+    urls = ["https://ftp.gnu.org/gnu/coreutils/coreutils-9.11.tar.xz"],
+)
 
 http_archive(
     name = "linux_pidfd",
