@@ -1,10 +1,87 @@
 """Check the compiler migration through its existing build and test owners."""
 
+import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
+import tarfile
+import time
+import urllib.request
 
 import qualification_report as report
+
+
+def retained_outputs(config, evidence: Path, private: Path) -> dict:
+    """Materialize completed native outputs; do not rebuild or relabel them."""
+    supplier = config["retained_builds"]
+
+    def fetch(uri: str, expected: dict, destination: Path) -> None:
+        request = urllib.request.Request(
+            "https://app.buildbuddy.io/api/v1/GetFile",
+            data=json.dumps({"uri": uri}).encode(),
+            headers={"Content-Type": "application/json",
+                     "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        remaining = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("Retained compiler output materialization deadline exhausted")
+        size = 0
+        digest = hashlib.sha256()
+        with urllib.request.urlopen(request, timeout=min(60, remaining)) as response, destination.open("wb") as output:
+            while chunk := response.read(1024 * 1024):
+                size += len(chunk)
+                if size > expected["bytes"] or time.monotonic() >= float(os.environ["APPLICABILITY_WORK_DEADLINE"]):
+                    raise ValueError("Retained compiler output exceeded its size or time bound")
+                digest.update(chunk)
+                output.write(chunk)
+        if {"bytes": size, "sha256": digest.hexdigest()} != {key: expected[key] for key in ("bytes", "sha256")}:
+            raise ValueError("Retained compiler output identity differs")
+
+    artifact = private / "retained-compiler-qualification.tar.gz"
+    fetch(supplier["artifact"]["uri"], supplier["artifact"], artifact)
+    shutil.copyfile(artifact, evidence / artifact.name)
+    restored = {}
+    downloaded = {}
+    with tarfile.open(artifact) as archive:
+        def member(name: str) -> bytes:
+            matches = [entry for entry in archive.getmembers() if entry.name == name]
+            if len(matches) != 1 or not matches[0].isfile():
+                raise ValueError("Expected one regular retained compiler member: " + name)
+            return archive.extractfile(matches[0]).read()
+
+        manifest = json.loads(member("compiler-current-build.json"))
+        if manifest["source"] != supplier["source"]:
+            raise ValueError("Retained compiler source differs")
+        for name in supplier["groups"]:
+            expected = next(group for group in config["build_groups"] if group["name"] == name)
+            groups = [group for group in manifest["builds"] if group["name"] == name]
+            if len(groups) != 1 or groups[0]["status"] != "PASS" or any(groups[0][key] != value for key, value in expected.items()):
+                raise ValueError("Retained compiler group differs: " + name)
+            group = groups[0]
+            native = json.loads(member("invocation-" + name + "/verdict.json"))
+            if native["source"] != supplier["source"] or native["status"] != "PASS" or native["native_exit"] != 0:
+                raise ValueError("Retained compiler native verdict differs: " + name)
+            events = evidence / ("retained-" + name + ".events.jsonl")
+            events.write_bytes(member("invocation-" + name + "/events.jsonl"))
+            owners = {(report.Owner(owner["label"], owner["configuration"]), "default") for owner in native["expected"]}
+            outputs = report.advertised_build_outputs(events, owners)
+            if outputs != [{key: value for key, value in output.items() if key != "materialized_path"} for output in group["outputs"]]:
+                raise ValueError("Retained compiler outputs differ from native BEP: " + name)
+            for output in group["outputs"]:
+                identity = (output["sha256"], output["bytes"])
+                if identity not in downloaded:
+                    path = private / ("retained-output-" + output["sha256"])
+                    uri = supplier["cas_uri_prefix"] + output["sha256"] + "/" + str(output["bytes"])
+                    fetch(uri, output, path)
+                    downloaded[identity] = path
+                output["materialized_path"] = str(downloaded[identity])
+            group["build_source"] = supplier["source"]
+            group["build_invocation"] = supplier["invocation_id"]
+            restored[name] = group
+    report.write_json(evidence / "retained-compiler-builds.json", {
+        "supplier": supplier, "groups": list(restored.values()),
+        "scope": "Exact prior outputs materialized from CAS; no new compilation or execution proof."})
+    return restored
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -21,8 +98,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         root = Path((evidence / "invocation-execution-root/stdout.log").read_text().strip())
         if not root.is_absolute() or not root.is_dir():
             raise ValueError("Invalid canonical execution root")
+        completed = retained_outputs(config, evidence, private)
         for group in config["build_groups"]:
-            row = {**group, "status": "INCOMPLETE"}
+            if group["name"] in completed:
+                records["builds"].append(completed[group["name"]])
+                continue
+            row = {**group, "build_source": config["source"], "status": "INCOMPLETE"}
             records["builds"].append(row)
             phase = group["name"]
             # Unprocessed or incomplete raw logs must not enter the compact
