@@ -1,6 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:arch.bzl", "arch_genrule")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -31,6 +32,18 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+image_manifest(
+    name = "redis",
+    base = "@test_redis",
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "redis",
+    image = ":redis",
+    image_name = "basic/redis",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
@@ -52,4 +65,16 @@ image_outputs(
     name = "tmpfile",
     image = ":tmpfile",
     image_name = "basic/tmpfile",
+)
+
+arch_genrule(
+    name = "qualification_redis_archives",
+    src = ":redis_archive",
+    template = "qualification_redis_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_redis_contexts",
+    src = ":redis_context",
+    template = "qualification_redis_context_%s.tar",
 )

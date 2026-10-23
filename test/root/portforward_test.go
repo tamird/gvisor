@@ -33,8 +33,10 @@ import (
 
 	"github.com/moby/sys/capability"
 	"golang.org/x/sync/errgroup"
+
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
 	"gvisor.dev/gvisor/runsc/specutils"
@@ -52,7 +54,7 @@ func TestPortForwardLocalMode(t *testing.T) {
 		t.Fatalf("failed to create redis server: %v", err)
 	}
 
-	if err := waitUntilServerIsUp(ctx, server, redisPort); err != nil {
+	if err := waitUntilRedisIsUp(ctx, server, redisPort); err != nil {
 		t.Fatalf("failed to wait for redis server to be up: %v", err)
 	}
 
@@ -170,6 +172,19 @@ func getUnusedPort() (int, error) {
 	}
 	defer l.Close()
 	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+func waitUntilRedisIsUp(ctx context.Context, server *dockerutil.Container, port int) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	return testutil.PollContext(ctx, func() error {
+		out, err := server.Exec(ctx, dockerutil.ExecOpts{}, "redis-cli", "--raw", "-p", fmt.Sprintf("%d", port), "ping")
+		if err == nil && strings.TrimSpace(out) == "PONG" {
+			return nil
+		}
+		return fmt.Errorf("could not verify Redis is up: redis-cli error: %v, output: %s", err, out)
+	})
 }
 
 func waitUntilServerIsUp(ctx context.Context, server *dockerutil.Container, port int) error {

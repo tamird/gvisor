@@ -1,6 +1,7 @@
-"""Build both Bun image platforms and exercise the existing spawn benchmark."""
+"""Build both Redis image platforms and exercise the existing port-forward consumer."""
 import json
 import os
+import shlex
 from pathlib import Path
 
 
@@ -17,39 +18,36 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError("Invalid canonical execution root")
     targets = config["targets"]
-    query = 'filter("^(@@)?//images/benchmarks/bun-spawn:", deps(set(' + " ".join(targets) + ')))'
+    query = 'filter("^(@@)?//images/basic:", deps(set(' + " ".join(targets) + ')))'
     queried = invoke("mixed-image-owners", ["cquery", *options, "--output=starlark",
                      "--starlark:file=" + str(scripts / "image_query.bzl"), query], "command", targets=[])
     if queried["status"] != "PASS":
-        raise RuntimeError("Mixed Bun image owner query failed")
+        raise RuntimeError("Mixed Redis image owner query failed")
     rows = [json.loads(line) for line in (evidence / "invocation-mixed-image-owners/stdout.log").read_text().splitlines()]
     graph = {"source": config["source"], "execution_root": str(execution_root), "output_root": str(output_root), "rows": rows}
     (evidence / "image-configured-inputs.json").write_text(json.dumps(graph, indent=2) + "\n")
     for cpu in ("k8", "aarch64"):
         for kind in ("archive", "context"):
-            label = "//images/benchmarks/bun-spawn:bun_spawn_" + kind
+            label = "//images/basic:redis_" + kind
             selected = [row for row in rows if row["label"].removeprefix("@@") == label and row["cpu"] == cpu]
             if len(selected) != 1 or len(selected[0]["files"]) != 1:
-                raise ValueError(f"Expected one configured Bun output: {label} {cpu}: {selected}")
+                raise ValueError(f"Expected one configured Redis output: {label} {cpu}: {selected}")
     for label in targets:
         selected = [row for row in rows if row["label"].removeprefix("@@") == label]
         if len(selected) != 1 or len(selected[0]["files"]) != 2:
             raise ValueError(f"Expected two architecture outputs: {label}: {selected}")
-    if config.get("compiler_preflight", False):
-        queried = invoke("bun-compiler-actions", ["aquery", *options, *config["consumer_options"],
-                         "--output=jsonproto", 'mnemonic("CppCompile", deps(//test/benchmarks/base:bun_spawn_test))'],
-                         "command", targets=[])
-        if queried["status"] != "PASS":
-            raise RuntimeError("Bun consumer compiler action query failed")
-        actions = json.loads((evidence / "invocation-bun-compiler-actions/stdout.log").read_text())["actions"]
-        if not actions or any(row["mnemonic"] != "CppCompile" or not row.get("arguments") for row in actions):
-            raise ValueError("Expected configured Bun compiler actions with arguments")
-        report = {"source": config["source"], "consumer_options": config["consumer_options"],
-                  "actions": [{key: row[key] for key in ("targetId", "configurationId", "arguments")}
-                              for row in actions]}
-        (evidence / "bun-compiler-actions.json").write_text(json.dumps(report, indent=2) + "\n")
     if config.get("graph_only", False):
         return
+    formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt', "--"])
+    formatted = invoke("gofmt", ["run", *options, *config["consumer_options"],
+                       "--run_under=" + formatter, "@io_bazel_rules_go//go:go"], "command", targets=[])
+    if formatted["status"] != "PASS":
+        raise RuntimeError("Canonical Go formatting failed")
+    owner = "//test/root:portforward_test_nogo"
+    analyzed = invoke("redis-nogo", ["test", *options, *config["consumer_options"],
+                      "--nocache_test_results", "--test_output=all", owner], "test", targets=[owner])
+    if analyzed["status"] != "PASS" or analyzed["case_counts"] != {"failed": 0, "passed": 1, "skipped": 0}:
+        raise RuntimeError("Port-forward owning analyzer failed")
     execution_log = private / "mixed-images-execution.json"
     try:
         built = invoke("mixed-images", ["build", *options, "--keep_going",
@@ -58,11 +56,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     finally:
         record_execution(execution_log, "mixed", "images")
     if built["status"] != "PASS":
-        raise RuntimeError("Mixed Bun image build failed")
-    inspected = invoke("bun-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
-                       "@rules_python//python/bin:python", "--", str(scripts / "bun_image_inspect.py"), str(evidence)],
+        raise RuntimeError("Mixed Redis image build failed")
+    inspected = invoke("redis-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                       "@rules_python//python/bin:python", "--", str(scripts / "redis_image_inspect.py"), str(evidence)],
                        "command", targets=[])
     if inspected["status"] != "PASS":
-        raise RuntimeError("Pinned Bun base/script layer inspection failed")
-    import bun_image_runtime
-    bun_image_runtime.run(invoke, evidence, private)
+        raise RuntimeError("Pinned Redis base/script layer inspection failed")
+    import redis_image_runtime
+    redis_image_runtime.run(invoke, evidence, private)
