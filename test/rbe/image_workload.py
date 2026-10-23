@@ -1,4 +1,4 @@
-"""Pilot the six existing parallel iperf3 cases on source-matched runtimes."""
+"""Collect separate CPU profiles for the six qualified parallel iperf cases."""
 from collections import Counter
 import hashlib
 import json
@@ -240,10 +240,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             directory = evidence / side
             directory.mkdir()
             runtime = "qualification-netip-" + side + "-" + uuid.uuid4().hex
-            configuration = {"runtime_name": runtime, "runtime_flags": ["--platform=systrap", "--network=sandbox"],
+            configuration = {"runtime_name": runtime, "runtime_flags": ["--platform=systrap", "--network=sandbox", "--profile=true"],
                 "image_name": "benchmarks/iperf", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
                 "retained_release_files": records["builds"][side]["runtime_files"],
                 "release_supplier": {"source": revision, "phase": side + "-build"}}
+            profiles = directory / "profiles"
+            profiles.mkdir()
             with prepared_runtime(directory / "runtime.json", private / side, configuration) as prepared:
                 if inspect()["Id"] != supplier["config_id"]:
                     raise ValueError("Pilot image changed between arms")
@@ -252,7 +254,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=0", "--test_arg=-test.v=false",
                     "--test_arg=-test.run=^$", "--test_arg=-test.bench=^BenchmarkIperfManyConnections$",
                     "--test_arg=-test.benchtime=" + str(iterations) + "x", "--test_arg=-test.count=1",
-                    "--test_arg=-runtime=" + runtime]
+                    "--test_arg=-runtime=" + runtime, "--test_arg=-pprof-cpu=true",
+                    "--test_arg=-pprof-dir=" + str(profiles)]
                 analysis_directory = (evidence / "source-builds/before/pilot-analysis" if side == "before"
                                       else evidence / "invocation-after-pilot-analysis")
                 test_directory = (evidence / "source-builds/before/pilot" if side == "before"
@@ -286,6 +289,40 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 row["benchmark_output"] = actual_binary
                 row["observations"] = observations(raw, config["duration_seconds"], config["omit_seconds"])
                 row["runtime"] = prepared
+                expected_profiles = {profiles / runtime / name / "benchmarks/iperf/cpu.pprof" for name in NAMES}
+                if set(profiles.rglob("*.pprof")) != expected_profiles:
+                    raise ValueError("CPU profiles do not match all six actual sandboxed benchmark cases")
+                for path in expected_profiles:
+                    path.resolve(strict=True).relative_to(profiles.resolve())
+                    if not path.is_file() or path.stat().st_size == 0:
+                        raise ValueError("Missing or empty CPU profile: " + str(path))
+                # Read profiles with the declared SDK. Keep this inspection out
+                # of the separately executed timed cohort.
+                decode = shlex.join(["bash", "-c",
+                    'set -eu; go="$1"; shift; '
+                    'for profile in "$@"; do '
+                    '"$go" tool pprof -raw "$profile" > "$profile.raw"; '
+                    '"$go" tool pprof -top -nodecount=40 "$profile" > "$profile.top"; done', "--"])
+                decoded = invoke(side + "-cpu-profiles", ["run", *options, "--run_under=" + decode,
+                    "@io_bazel_rules_go//go:go", "--", *[str(path) for path in sorted(expected_profiles)]],
+                    "command", source=revision, directory=evidence / "source-builds" / side / "cpu-profiles", targets=[])
+                if decoded["status"] != "PASS" or decoded["native_exit"] != 0:
+                    raise RuntimeError("Declared SDK could not decode actual CPU profiles")
+                row["profiles"] = []
+                for path in sorted(expected_profiles):
+                    raw_path = Path(str(path) + ".raw")
+                    text = raw_path.read_text()
+                    samples_text = text.split("Samples:", 1)[1].split("Locations", 1)[0]
+                    if "samples/count cpu/nanoseconds" not in " ".join(samples_text.split()):
+                        raise ValueError("Unexpected CPU profile sample types")
+                    values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples_text, re.MULTILINE)]
+                    if not values or sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0:
+                        raise ValueError("CPU profile has no positive native samples")
+                    row["profiles"].append({"name": str(path.relative_to(profiles / runtime).parent.parent.parent),
+                        "path": str(path.relative_to(evidence)), **report.file_record(path),
+                        "sample_count": sum(value[0] for value in values),
+                        "cpu_nanoseconds": sum(value[1] for value in values),
+                        "raw": report.file_record(raw_path), "top": report.file_record(Path(str(path) + ".top"))})
                 row["status"] = "PASS"
             if json.loads((directory / "runtime.json").read_text())["cleanup"] != "PASS":
                 raise ValueError("Runtime configuration cleanup failed")
@@ -313,4 +350,4 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 raise RuntimeError("Pilot cleanup failed: " + str(records["cleanup_errors"]))
             records.update(status=completed, cleanup="PASS")
         finally:
-            report.write_json(evidence / "netip-many-pilot.json", records)
+            report.write_json(evidence / "netip-many-profile.json", records)
