@@ -95,3 +95,30 @@ def executable_aliases(files, elf_paths, expected):
             raise ValueError("Scratch image contains an unexpected ELF payload: " + installed)
         aliases[installed] = target
     return aliases
+
+
+def configured_inputs(rows, local_labels, source_names):
+    """Bind exact local owners and source rows selected by explicit repo labels."""
+    expected = {label.split(":", 1)[1] for label in local_labels} | set(source_names)
+    outputs = {}
+    source_repo = None
+    for label, name, paths in rows:
+        if name not in expected or name in outputs or len(paths) != 1 or label.rsplit(":", 1)[-1] != name:
+            raise ValueError(f"Unexpected configured output: {label}: {paths}")
+        path = paths[0]
+        parts = path.split("/")
+        if any(part in ("", ".", "..") for part in parts):
+            raise ValueError("Unexpected configured path: " + path)
+        if name in source_names:
+            repo, separator, target = label.partition("//:")
+            if (not separator or not repo.startswith("@@") or not repo[2:]
+                    or target != name or path != "external/" + repo[2:] + "/" + name
+                    or source_repo not in (None, repo)):
+                raise ValueError("Unexpected configured source owner: " + label)
+            source_repo = repo
+        elif label.removeprefix("@@") not in local_labels or parts[0] != "bazel-out":
+            raise ValueError("Unexpected configured local owner: " + label)
+        outputs[name] = path
+    if set(outputs) != expected:
+        raise ValueError("Configured image input/output set differs")
+    return outputs
