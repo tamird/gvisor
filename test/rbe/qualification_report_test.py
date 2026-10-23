@@ -1415,16 +1415,21 @@ class QualificationReportTest(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == "linux", "The Actions entry point requires Linux")
     def test_work_deadline_reaches_capture_and_bundle(self) -> None:
-        # Run the actual shell entry point and reporter. Only Git identity and
-        # Bazel are fixtures; the real timeout interrupts a waiting child.
+        # Run the actual shell entry point, credential helper and reporter.
+        # Git, Bazel and host setup are fixtures; deadlines use real timeouts.
         bazel_options = ["--config=plugin-tldk", "--define=literal=before#after with spaces"]
-        for phase in ("preflight", "execution", "command-pass", "command-fail", "command-timeout"):
-            with self.subTest(phase=phase):
-                workspace = self.root / phase
+        cases = [(phase, "remote", False) for phase in
+                 ("preflight", "execution", "command-pass", "command-fail", "command-timeout")]
+        cases += [(phase, "local", leak) for phase in ("test-pass", "test-fail")
+                  for leak in (False, True)]
+        for phase, execution, leak in cases:
+            with self.subTest(phase=phase, execution=execution, leak=leak):
+                workspace = self.root / f"{phase}-{execution}-{leak}"
                 scripts = workspace / "test/rbe"
                 scripts.mkdir(parents=True)
                 for name in (
                     "actions.sh",
+                    "credential_artifacts.py",
                     "license.bazelrc",
                     "qualification.bazelrc",
                     "qualify.sh",
@@ -1438,6 +1443,20 @@ class QualificationReportTest(unittest.TestCase):
                 binary = workspace / "bin"
                 binary.mkdir()
                 (binary / "python3").symlink_to(sys.executable)
+                if execution == "local":
+                    # Exercise the real Actions branch without mutating this
+                    # test's host. These are its observation/setup commands.
+                    for name, body in {
+                        "sudo": '[ "$*" = "-n true" ]',
+                        "sysctl": 'printf "0\\n"',
+                        "docker": 'exit 0',
+                        "systemctl": 'exit 0',
+                    }.items():
+                        tool = binary / name
+                        tool.write_text("#!/bin/sh\n" + body + "\n")
+                        tool.chmod(0o755)
+                    (workspace / "images/default").mkdir(parents=True)
+                    (workspace / "images/default/bazelversion").write_text("8.8.1\n")
                 git = binary / "git"
                 git.write_text("""#!/usr/bin/env python3
 import os
@@ -1460,9 +1479,34 @@ import json
 import os
 from pathlib import Path
 import signal
+import subprocess
 import sys
+if os.environ['QUALIFICATION_EXECUTION'] == 'local':
+    assert 'BUILDBUDDY_API_KEY' not in os.environ
+    configuration = Path(next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--bazelrc='))).read_text()
+    assert '--remote_header' not in configuration and '--bes_header' not in configuration
+    [helper] = [line.removeprefix('common --credential_helper=remote.buildbuddy.io=')
+                for line in configuration.splitlines()
+                if line.startswith('common --credential_helper=remote.buildbuddy.io=')]
+    response = subprocess.run([helper, 'get'], input=b'{"uri":"https://remote.buildbuddy.io"}',
+                              capture_output=True, check=False)
+    assert response.returncode == 0 and response.stderr == b''
+    assert json.loads(response.stdout) == {'headers': {'x-buildbuddy-api-key': ['SYNTHETIC-ACTIONS-CREDENTIAL']}}
+    assert 'SYNTHETIC-ACTIONS-CREDENTIAL' not in configuration
+    if os.environ['TEST_LEAK'] == 'true':
+        # Do not print even the synthetic value. Exercise final artifact gating.
+        (Path(os.environ['RUNNER_TEMP']) / 'qualification/leaked.txt').write_bytes(response.stdout)
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
     stream.write(json.dumps(sys.argv[1:]) + '\\n')
+if os.environ['TEST_PHASE'].startswith('test-'):
+    events = Path(next(arg.split('=', 1)[1] for arg in sys.argv if arg.startswith('--build_event_json_file=')))
+    values = [json.loads(line) for line in Path(os.environ['TEST_PASS_EVENTS']).read_text().splitlines()]
+    if '--nobuild' in sys.argv:
+        values = [event for event in values if any(key in event for key in ('configured', 'completed', 'finished'))]
+    else:
+        Path(os.environ['TEST_WORK_STARTED']).touch()
+    events.write_text(''.join(json.dumps(event) + '\\n' for event in values))
+    raise SystemExit(23 if '--nobuild' not in sys.argv and os.environ['TEST_PHASE'] == 'test-fail' else 0)
 if os.environ['TEST_PHASE'].startswith('command-'):
     Path(os.environ['TEST_WORK_STARTED']).touch()
     if os.environ['TEST_PHASE'] == 'command-timeout':
@@ -1485,6 +1529,7 @@ Path(os.environ['TEST_WORK_STARTED']).touch()
 signal.pause()
 """)
                 bazel.chmod(0o755)
+                (binary / "bazelisk").symlink_to(bazel)
                 runner_temp = workspace / "temporary"
                 runner_temp.mkdir()
                 started = workspace / "work-started"
@@ -1494,6 +1539,13 @@ signal.pause()
                 tagged = configured["id"]["targetConfigured"]["label"]
                 analysis_path = workspace / "analysis.jsonl"
                 analysis_path.write_text("".join(json.dumps(event) + "\n" for event in analysis))
+                passed = workspace / "bazel-out/fixture"
+                passed.mkdir(parents=True)
+                for name in ("test.log", "test.xml"):
+                    shutil.copyfile(FIXTURES / "pass" / name, passed / name)
+                pass_events = workspace / "pass-events.jsonl"
+                pass_events.write_text((FIXTURES / "pass/events.jsonl").read_text().replace(
+                    "file:///FIXTURE_OUTPUT", passed.as_uri()))
                 source = (FIXTURES / "pass/final-head.txt").read_text().strip()
                 environment = {
                     **os.environ,
@@ -1502,8 +1554,13 @@ signal.pause()
                     "RUNNER_TEMP": str(runner_temp),
                     "BUILDBUDDY_ARTIFACTS_DIRECTORY": str(runner_temp),
                     "QUALIFICATION_COMMIT": source,
-                    "QUALIFICATION_EXECUTION": "remote",
-                    "QUALIFICATION_ARCH": "amd64",
+                    "QUALIFICATION_EXECUTION": execution,
+                    "GITHUB_OUTPUT": str(workspace / "github-output"),
+                    "GITHUB_SERVER_URL": "https://github.com",
+                    "GITHUB_REPOSITORY": "fixture/repository",
+                    "GITHUB_REF_NAME": "qualification/synthetic",
+                    "TEST_LEAK": str(leak).lower(),
+                    "QUALIFICATION_ARCH": "arm64" if execution == "local" and os.uname().machine == "aarch64" else "amd64",
                     "QUALIFICATION_LANES": "gazelle" if phase.startswith("command-") else "test",
                     "QUALIFICATION_TARGETS": "" if phase.startswith("command-") else "//test/syscalls:exec_binary_test_native_amd64",
                     "QUALIFICATION_HEADER_BASE": "",
@@ -1511,21 +1568,32 @@ signal.pause()
                     "QUALIFICATION_COS_GZIP_BASE64": "",
                     "QUALIFICATION_COS_SHA256": "",
                     "QUALIFICATION_WORK_DEADLINE": str(time.monotonic() + (
-                        -1 if phase == "preflight" else 30 if phase in ("command-pass", "command-fail") else 5
+                        -1 if phase == "preflight" else 30 if phase in ("command-pass", "command-fail", "test-pass", "test-fail") else 5
                     )),
                     "TEST_PHASE": phase,
                     "TEST_HEAD": source,
                     "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
                     "TEST_ANALYSIS": str(analysis_path),
+                    "TEST_PASS_EVENTS": str(pass_events),
                     "TEST_WORK_STARTED": str(started),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
+                environment.pop("BUILDBUDDY_API_KEY", None)
+                if execution == "local":
+                    environment["BUILDBUDDY_API_KEY"] = "SYNTHETIC-ACTIONS-CREDENTIAL"
+                    environment.pop("BUILDBUDDY_ARTIFACTS_DIRECTORY")
                 options = [] if phase.startswith("command-") else [f"--bazel-option={option}" for option in bazel_options]
                 result = subprocess.run(
                     ["bash", "test/rbe/actions.sh", *options],
                     cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
-                self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
+                self.assertEqual(result.returncode == 0, phase in ("command-pass", "test-pass") and not leak, result.stdout + result.stderr)
+                if execution == "local":
+                    output = workspace / "github-output"
+                    self.assertEqual(output.read_text() if output.exists() else "",
+                                     "" if leak else "artifacts_safe=true\n")
+                    self.assertNotIn("SYNTHETIC-ACTIONS-CREDENTIAL", result.stdout + result.stderr)
+                    self.assertEqual(list(runner_temp.glob("qualification-credentials.*")), [])
                 self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
                 if phase == "execution":
                     commands = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
@@ -1548,9 +1616,10 @@ signal.pause()
                 artifact = runner_temp / "qualification.tar.gz"
                 self.assertTrue(artifact.is_file(), result.stdout + result.stderr)
                 value = report.read_json(runner_temp / "qualification/verdict.json")
-                expected_exit = 0 if phase == "command-pass" else 23 if phase == "command-fail" else 124
+                expected_exit = 0 if phase in ("command-pass", "test-pass") else 23 if phase in ("command-fail", "test-fail") else 124
                 self.assertEqual((value["status"], value["native_exit"]), ("PASS" if expected_exit == 0 else "FAIL", expected_exit), value)
-                self.assertEqual(value["runner_exit"], result.returncode, value)
+                self.assertEqual(value["runner_exit"], expected_exit, value)
+                self.assertEqual(result.returncode, expected_exit or int(leak), value)
                 if phase in ("command-pass", "command-fail"):
                     self.assertEqual([row["bazel_command"] for row in value["commands"]].count("run"), 2)
                     self.assertEqual([row["bazel_command"] for row in value["commands"]].count("query"), 1)
