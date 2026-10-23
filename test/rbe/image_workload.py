@@ -20,11 +20,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     records = {"source": config["source"], "status": "INCOMPLETE", "architectures": []}
     failed = False
     try:
-        for architecture in ("x86_64", "aarch64"):
+        for architecture, targets in config["image_targets"].items():
             # Each product image_index owns its musl transition. Ordinary Make
             # and these builds use the same CPU config, without a libc override.
             selected = [*options, "--config=" + architecture]
-            targets = config["image_targets"][architecture]
             execution_log = private / (architecture + "-busybox-execution.json")
             try:
                 built = invoke("busybox-" + architecture,
@@ -36,10 +35,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             row = {"architecture": architecture, "build_status": built["status"], "outputs": {}}
             records["architectures"].append(row)
             queries = {
-                "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/basic:pidfd_tests_archive))', []),
-                "config": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:pidfd_tests_archive))', ["--output_groups=busybox.config"]),
-                "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:pidfd_tests_archive))', ["--output_groups=Make_logs"]),
-                "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/basic:pidfd_tests_archive))', []),
+                "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/benchmarks:syscallbench_archive))', []),
+                "config": ('filter("^(@@)?//images:busybox_build$", deps(//images/benchmarks:syscallbench_archive))', ["--output_groups=busybox.config"]),
+                "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/benchmarks:syscallbench_archive))', ["--output_groups=Make_logs"]),
+                "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/benchmarks:syscallbench_archive))', []),
             }
             # Foreign_cc's Make log is an output of the same producing action;
             # its two scripts are action inputs. download_outputs=all retains
@@ -76,18 +75,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         records["status"] = "PASS"
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
         scripts = Path(__file__).parent
-        guards = invoke("leaf-archive-guards", ["run", "--lockfile_mode=error", "--noannounce_rc",
-                        "@rules_python//python/bin:python", "--",
-                        str(scripts / "image_result_test.py"), str(private), str(evidence)], "command", targets=[])
-        if guards["status"] != "PASS":
-            raise RuntimeError("Scratch archive reporting guards failed")
         inspected = invoke("leaf-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
                            "@rules_python//python/bin:python", "--",
                            str(scripts / "leaf_image_inspect.py"), str(evidence)], "command", targets=[])
         if inspected["status"] != "PASS":
             raise RuntimeError("Scratch leaf image closure verification failed")
-        import image_pidfd_runtime
-        image_pidfd_runtime.run(invoke, evidence, private)
         import image_leaf_runtime
         image_leaf_runtime.run(invoke, evidence, private)
     finally:

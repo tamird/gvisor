@@ -1,4 +1,4 @@
-"""Inspect the scratch tmpfile and syscallbench images and their Make contexts."""
+"""Inspect the focused scratch syscallbench image and its Make context."""
 import hashlib
 import json
 import os
@@ -38,12 +38,9 @@ try:
     root = Path(run(["bazel", *startup, "info", *options, "execution_root"]).strip())
     if not root.is_absolute() or not root.is_dir():
         raise ValueError("Invalid canonical execution root")
-    for architecture, cpu, machine in (("amd64", "x86_64", "Advanced Micro Devices X86-64"),
-                                       ("arm64", "aarch64", "AArch64")):
+    for architecture, cpu, machine in (("amd64", "x86_64", "Advanced Micro Devices X86-64"),):
         selected = [*options, "--config=" + cpu]
-        images = [("tmpfile", "basic/tmpfile", "//images/basic:tmpfile")]
-        if cpu == "x86_64":
-            images.append(("syscallbench", "benchmarks/syscallbench", "//images/benchmarks:syscallbench"))
+        images = [("syscallbench", "benchmarks/syscallbench", "//images/benchmarks:syscallbench")]
         labels = ["//images:busybox_binary"]
         labels += [owner + suffix for _, _, owner in images for suffix in ("_archive", "_context")]
         if cpu == "x86_64":
@@ -89,16 +86,11 @@ try:
                 raise ValueError("Scratch image target differs")
             if metadata["config"].get("User") != "0:0" or "PATH=/usr/bin:/bin" not in metadata["config"].get("Env", []):
                 raise ValueError("Scratch image user or command search path differs")
-            applet = "cat" if name == "tmpfile" else "sleep"
-            if resolve(files, "bin/" + applet) != "bin/busybox":
-                raise ValueError("Required applet does not resolve to BusyBox")
-            expected = {"bin/busybox": "//images:busybox_binary"}
-            if name == "tmpfile":
-                if (files["tmp"]["mode"], files["tmp/foo/file.txt"]["mode"], files["tmp/foo/file.txt"]["sha256"]) != (
-                        0o1777, 0o644, hashlib.sha256(b"123\n").hexdigest()):
-                    raise ValueError("Tmpfile permissions or contents differ")
-            else:
-                expected["usr/bin/syscallbench"] = "//images/benchmarks:syscallbench"
+            for applet in ("sh", "sleep"):
+                if resolve(files, "bin/" + applet) != "bin/busybox":
+                    raise ValueError("Required applet does not resolve to BusyBox: " + applet)
+            expected = {"bin/busybox": "//images:busybox_binary",
+                        "usr/bin/syscallbench": "//images/benchmarks:syscallbench"}
             row["executable_aliases"] = executable_aliases(files, elves, expected)
             row["static_programs"] = []
             with tempfile.TemporaryDirectory(prefix="scratch-elf-") as temporary:

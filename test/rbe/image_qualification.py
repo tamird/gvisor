@@ -189,7 +189,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             size = 0
             # Bound memory by one action, preserving the exact redacted text
             # and existing compact action proof. Publish only a complete audit.
-            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb") as output:
+            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb", compresslevel=1) as output:
                 for text, action in execution_records(stream):
                     redacted = text.replace(credential.decode(), "[REDACTED]")
                     raw = redacted.encode()
@@ -243,7 +243,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # Resolve the configured image graph, without evaluating unrelated
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
-        for architecture in ("x86_64", "aarch64"):
+        # Prepare exactly the target architectures selected by this workload.
+        for architecture in CONFIG["image_targets"]:
             graphs = [("images", CONFIG["image_targets"][architecture], [])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
                 graphs.append(("runtime", runtime_targets, []))

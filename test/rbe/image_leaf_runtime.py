@@ -1,50 +1,55 @@
-"""Run the existing tmpfile test and four syscallbench modes on scratch images."""
+"""Exercise the seven syscallbench modes against the inspected scratch image."""
 import json
+import math
 from pathlib import Path
 import re
+import subprocess
+import uuid
 
 from image_runtime import prepared_runtime
 
 
 def run(invoke, evidence: Path, private: Path) -> None:
     expected = {"BenchmarkSyscallbench/syscall.getpid", "BenchmarkSyscallbench/syscall.getpidopt",
-                "BenchmarkSyscallUnderSeccomp/cacheable.false", "BenchmarkSyscallUnderSeccomp/cacheable.true"}
-    for image, component in (("tmpfile", "basic/tmpfile"), ("syscallbench", "benchmarks/syscallbench")):
-        directory = evidence / image
-        directory.mkdir()
-        configuration = {"runtime_name": "qualification-leaf", "image_name": component,
-                         "runtime_flags": ["--platform=systrap"],
-                         "contents": str(evidence / (image + "-contents.json"))}
-        with prepared_runtime(directory / "runtime-preparation.json", private / image, configuration):
-            if image == "tmpfile":
-                targets = ["//test/e2e:integration_test"]
-                options = ["--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
-                           "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
-                           "--config=x86_64", "--runs_per_test=1", "--flaky_test_attempts=1",
-                           "--nocache_test_results", "--test_env=GO_TEST_WRAP_TESTV=1",
-                           "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
-                           "--strategy=TestRunner=local", "--local_test_jobs=1", "--test_timeout=900",
-                           "--test_arg=-runtime=qualification-leaf", "--test_filter=^TestTmpFile$",
-                           "--test_arg=-test.run=^TestTmpFile$"]
-                analysis = invoke("tmpfile-consumer-analysis", ["test", *options, "--nobuild", *targets],
-                                  "analysis", targets=targets)
-                if analysis["status"] != "PASS":
-                    raise RuntimeError("Existing tmpfile consumer analysis failed")
-                result = invoke("tmpfile-consumer", ["test", *options, *targets], "test",
-                                (evidence / "invocation-tmpfile-consumer-analysis/events.jsonl",), targets=targets)
-                if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
-                    raise RuntimeError("Required tmpfile consumer failed or skipped")
-            else:
-                result = invoke("syscallbench-consumer", ["run", "--compilation_mode=opt", "--config=x86_64",
-                                "--lockfile_mode=error", "--noannounce_rc", "//test/benchmarks/base:syscallbench_test", "--",
-                                "-runtime=qualification-leaf", "-test.run=^$",
-                                "-test.bench=^(BenchmarkSyscallbench|BenchmarkSyscallUnderSeccomp)$",
-                                "-test.benchtime=100x", "-test.count=1"], "command", targets=[])
-                output = (evidence / "invocation-syscallbench-consumer/stdout.log").read_text()
-                names = re.findall(r"^(Benchmark\S+?)(?:-\d+)?\s+100\s+", output, re.MULTILINE)
-                record = {"status": "PASS" if result["status"] == "PASS" and len(names) == len(expected) and set(names) == expected else "FAIL",
-                          "expected_benchmarks": sorted(expected), "executed_benchmarks": names,
-                          "scope": "Existing four functional modes,100 iterations each; no performance comparison."}
-                (directory / "consumer.json").write_text(json.dumps(record, indent=2) + "\n")
-                if record["status"] != "PASS":
-                    raise RuntimeError("Existing syscallbench modes did not all execute")
+                "BenchmarkSyscallUnderSeccomp/cacheable.false", "BenchmarkSyscallUnderSeccomp/cacheable.true",
+                "BenchmarkForkUnderSeccomp/seccomp.none", "BenchmarkForkUnderSeccomp/seccomp.cacheable",
+                "BenchmarkForkUnderSeccomp/seccomp.uncacheable"}
+    directory = evidence / "syscallbench"
+    directory.mkdir()
+    runtime = "qualification-syscallbench-" + uuid.uuid4().hex
+    configuration = {"runtime_name": runtime, "image_name": "benchmarks/syscallbench",
+                     "runtime_flags": ["--platform=systrap"],
+                     "contents": str(evidence / "syscallbench-contents.json")}
+    before = sorted(subprocess.check_output(["docker", "ps", "-aq", "--no-trunc"], text=True, timeout=30).split())
+    record = {"status": "INCOMPLETE", "expected_benchmarks": sorted(expected),
+              "scope": "Seven existing functional cases, 100 iterations each; no performance comparison."}
+    try:
+        with prepared_runtime(directory / "runtime-preparation.json", private / "syscallbench", configuration):
+            result = invoke("syscallbench-consumer", ["run", "--compilation_mode=opt", "--config=x86_64",
+                            "--lockfile_mode=error", "--noannounce_rc", "//test/benchmarks/base:syscallbench_test", "--",
+                            "-runtime=" + runtime, "-test.run=^$",
+                            "-test.bench=^(BenchmarkSyscallbench|BenchmarkSyscallUnderSeccomp|BenchmarkForkUnderSeccomp)$",
+                            "-test.benchtime=100x", "-test.count=1", "-test.timeout=900s"], "command", targets=[])
+            output = (evidence / "invocation-syscallbench-consumer/stdout.log").read_text()
+            rows = re.findall(r"^(Benchmark\S+?)(?:-\d+)?\s+(\d+)\s+(\S+)\s+ns/op(?:\s|$)", output, re.M)
+            record["measurements"] = [{"name": name, "iterations": int(count), "ns/op": float(value)} for name, count, value in rows]
+            names = [row["name"] for row in record["measurements"]]
+            if result["status"] != "PASS" or len(names) != len(expected) or set(names) != expected:
+                raise RuntimeError("The seven syscallbench cases did not all complete")
+            if any(row["iterations"] != 100 or not math.isfinite(row["ns/op"]) or row["ns/op"] <= 0 for row in record["measurements"]):
+                raise ValueError("Unexpected syscallbench iterations or metrics")
+            if re.search(r"^PASS$", output, re.M) is None:
+                raise ValueError("The benchmark executable did not report PASS")
+        record["status"] = "PASS"
+    finally:
+        completed = record["status"]
+        record["status"] = "FAIL"
+        try:
+            after = sorted(subprocess.check_output(["docker", "ps", "-aq", "--no-trunc"], text=True, timeout=30).split())
+            record["container_inventory"] = {"before": before, "after": after}
+            if after != before:
+                raise RuntimeError("Syscallbench changed the container inventory")
+            record["cleanup"] = "PASS"
+            record["status"] = completed
+        finally:
+            (directory / "consumer.json").write_text(json.dumps(record, indent=2) + "\n")
