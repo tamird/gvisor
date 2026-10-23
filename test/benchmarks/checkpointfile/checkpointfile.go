@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -59,6 +60,8 @@ import (
 	"gvisor.dev/gvisor/runsc/boot"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
 )
+
+var ociBundleRoot = flag.String("oci-bundle-root", "/run/containerd/io.containerd.runtime.v2.task/moby", "Directory containing each container's OCI bundle")
 
 const (
 	// workers is the number of nginx worker processes.
@@ -226,7 +229,7 @@ var checkpointFileNames = map[string]bool{
 // containerSpec returns the names that runsc may give the container, and the
 // destinations of its root and mounts, from its spec.
 func containerSpec(id string) (names, mounts []string, err error) {
-	data, err := os.ReadFile(filepath.Join("/run/containerd/io.containerd.runtime.v2.task/moby", id, "config.json"))
+	data, err := os.ReadFile(filepath.Join(*ociBundleRoot, id, "config.json"))
 	if err != nil {
 		return nil, nil, err
 	}

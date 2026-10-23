@@ -196,7 +196,8 @@ def main(reporter: Path) -> int:
             argv = [str(binary), "-test.run=^$", "-test.bench=^BenchmarkCheckpointFile$",
                     "-test.benchtime=" + sample.benchtime, "-test.benchmem", "-test.count=1",
                     "-test.cpu=1", "-test.v=false", "-runtime=" + manifest["runtimes"][sample.side]["name"],
-                    "-config_path=/etc/docker/daemon.json", "-test-checkpoint=true"]
+                    "-config_path=/etc/docker/daemon.json", "-test-checkpoint=true",
+                    "-oci-bundle-root=" + manifest["oci_bundle_root"]]
             environment = dict(os.environ, GOMAXPROCS="1", GO_TEST_WRAP="1",
                 GO_TEST_RUN_FROM_BAZEL="1", TEST_BINARY=str(binary),
                 TEST_TMPDIR=str(directory / "tmp"), XML_OUTPUT_FILE=str(directory / "test.xml"),
