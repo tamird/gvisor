@@ -118,6 +118,20 @@ image_layer(
     visibility = ["//images:__subpackages__"],
 )
 
+# Keep the upstream Nginx filesystem intact, including its /bin symlink.
+image_layer(
+    name = "busybox_netstat_layer",
+    srcs = {
+        "/usr/local/bin/netstat": ":busybox_binary",
+        "/usr/share/licenses/busybox/LICENSE": "@busybox_source//:LICENSE",
+        "/usr/share/licenses/busybox/NOTICE": "busybox/NOTICE",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/local/bin/netstat": file_metadata(mode = "0755")},
+    include_runfiles = False,
+    visibility = ["//images/basic:__pkg__"],
+)
+
 # The PIDFD runner uses GNU timeout's exit-status and process-group behavior.
 # Link it statically so scratch images do not need a distribution's loader.
 configure_make(
