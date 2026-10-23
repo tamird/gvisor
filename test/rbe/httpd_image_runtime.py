@@ -16,7 +16,7 @@ from image_runtime import prepare_benchmark_helpers, prepared_runtime
 
 
 def run(invoke, evidence: Path, private: Path) -> None:
-    records = {"status": "INCOMPLETE", "scope": "AMD64 runtime; ARM64 pinned image/layer inspection only", "commands": [], "consumers": []}
+    records = {"status": "INCOMPLETE", "scope": "AMD64 runtime; ARM64 pinned image/layer inspection only", "commands": [], "consumers": [], "diagnostic_errors": []}
     scripts = Path(__file__).parent
     python = ["run", "--lockfile_mode=error", "--noannounce_rc", "@rules_python//python/bin:python", "--"]
 
@@ -177,23 +177,28 @@ def run(invoke, evidence: Path, private: Path) -> None:
                         response = connection.getresponse()
                         raw = response.read(1024 * 1024 + 1)
                         headers = {key.lower(): value for key, value in response.getheaders()}
+                        row = {"path": path, "accept_encoding": encoding, "status": response.status,
+                               "headers": headers, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                        response_record["responses"].append(row)
                         if len(raw) > 1024 * 1024 or response.status != status or headers.get("content-type", "").split(";", 1)[0] != content_type:
                             raise ValueError("Apache response status/MIME/size differs: " + path)
-                        if encoding == "gzip":
+                        # mod_filter bypasses non-200 responses unless filter-errordocs is set.
+                        compressed = encoding == "gzip" and status == 200
+                        if compressed:
                             if headers.get("content-encoding") != "gzip":
                                 raise ValueError("Apache omitted the configured gzip response filter")
                             body = gzip.decompress(raw)
-                            if body != plain:
-                                raise ValueError("Compression changed the Apache response bytes")
                         else:
                             if headers.get("content-encoding") not in (None, "identity"):
-                                raise ValueError("Apache compressed an identity-only request")
-                            body = plain = raw
+                                raise ValueError("Apache unexpectedly compressed the response: " + path)
+                            body = raw
+                        row.update(decoded_bytes=len(body), decoded_sha256=hashlib.sha256(body).hexdigest())
+                        if encoding == "identity":
+                            plain = body
+                        elif body != plain:
+                            raise ValueError("Accept-Encoding changed the decoded Apache response bytes")
                         if path == "latin1k.txt" and body != bytes(1024):
                             raise ValueError("The actual benchmark command did not preserve zero-filled content")
-                        response_record["responses"].append({"path": path, "accept_encoding": encoding, "status": response.status,
-                            "headers": headers, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
-                            "decoded_bytes": len(body), "decoded_sha256": hashlib.sha256(body).hexdigest()})
                     finally:
                         connection.close()
             response_record["status"] = "PASS"
@@ -218,7 +223,6 @@ def run(invoke, evidence: Path, private: Path) -> None:
             configuration = {"runtime_name": runtime, "image_name": package + "/httpd",
                              "runtime_flags": ["--platform=systrap", "--network=sandbox"], "contents": str(contents_path)}
             with prepared_runtime(directory / "runtime-preparation.json", private / runtime, configuration):
-                diagnostics(runtime, amd64["config_sha256"], package, directory)
                 if package == "basic":
                     consumer("httpd-image", "//test/image:image_test", runtime, "^TestHttpd$", {"TestHttpd"})
                     prepared = invoke("httpd-containerd-prepare", [*python, str(scripts / "root_image_runtime.py"), str(evidence), "prepare"], "command", targets=[])
@@ -244,6 +248,14 @@ def run(invoke, evidence: Path, private: Path) -> None:
                     consumer("httpd-benchmark", "//test/benchmarks/network:httpd_test", runtime, "^$", set(),
                              ["--test_arg=-test.bench=^BenchmarkHttpd$/^filesize\\.(1Kb|1Mb|notfound)$/^concurrency\\.(1|25)$",
                               "--test_arg=-test.benchtime=100x", "--test_arg=-test.count=1"])
+                # Keep independent consumers running when supplemental diagnostics fail.
+                try:
+                    diagnostics(runtime, amd64["config_sha256"], package, directory)
+                except (OSError, ValueError, RuntimeError, subprocess.SubprocessError, http.client.HTTPException) as error:
+                    records["diagnostic_errors"].append({"package": package, "error": str(error)})
+                containers = sorted(command(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
+                if containers != records["containers_before"]:
+                    raise RuntimeError("Apache diagnostics left containers behind: " + package)
         records["benchmark_client_images"] = {}
         for name in ("hey", "util"):
             helper = records["benchmark_helpers"][name]
@@ -255,6 +267,8 @@ def run(invoke, evidence: Path, private: Path) -> None:
         records["containers_after"] = sorted(command(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
         if records["containers_after"] != records["containers_before"]:
             raise RuntimeError("Apache consumers left containers behind")
+        if records["diagnostic_errors"]:
+            raise ValueError("Apache diagnostics failed: " + str(records["diagnostic_errors"]))
         records["status"] = "PASS"
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError, http.client.HTTPException) as error:
         records.update(status="FAIL", error=str(error))
