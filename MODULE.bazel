@@ -116,14 +116,7 @@ rust_toolchains.toolchain(
     version = "1.99.1",
 )
 
-# Rust generates the library notice from the release source, independently
-# of the target platform. Read it from the Linux x86-64 compiler distribution;
-# this documentation alias does not select the build host toolchain.
-use_repo(
-    rust_toolchains,
-    "default_rust_toolchains",
-    rust_compiler_notices = "rustc_linux_x86_64_1_99_1",
-)
+use_repo(rust_toolchains, "default_rust_toolchains")
 
 register_toolchains("@default_rust_toolchains//...")
 

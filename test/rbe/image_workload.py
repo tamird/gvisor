@@ -24,6 +24,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         return (evidence / ("invocation-" + name) / "stdout.log").read_text()
 
     try:
+        query("module-command-regressions", ["run", "--lockfile_mode=error", "--noannounce_rc",
+              "@rules_python//python/bin:python", "--",
+              str(Path(__file__).with_name("mod_tidy_report_test.py"))])
+        query("module-tidy", ["mod", "tidy", "--lockfile_mode=error", "--noannounce_rc"])
         execution_root = Path(query("output-execution-root", ["info", *options, "execution_root"]).strip())
         if not execution_root.is_absolute() or not execution_root.is_dir():
             raise ValueError("Invalid canonical execution root")
@@ -46,6 +50,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         # run its native filter once on the AMD64 coordinator.
         targets = ["//pkg/eventchannel:eventchannel_nogo"]
         checked = invoke("protobuf-nogo", ["test", "--config=x86_64", *options,
+                         "--remote_download_outputs=all",
+                         "--build_event_json_file_path_conversion=false",
                          "--nocache_test_results", "--test_output=errors", *targets],
                          "test", targets=targets)
         record["protobuf_consumers"].append({"phase": "protobuf-nogo", "status": checked["status"]})
