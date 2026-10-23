@@ -520,6 +520,19 @@ exceptions:
       University of Illinois/NCSA grant, which permits redistribution with
       copyright notices, conditions and disclaimers retained and prohibits
       using contributors' names for endorsement without permission.
+  - dependency: php_test_source
+    license: LicenseRef-PHP-8.5.11-source-bundle
+    exception_rationale: >-
+      Supplies the complete PHP source fixture, PHPT tests and companion
+      files for the runtime test image, not code linked into gVisor release
+      binaries. The fixture retains the PHP and Zend license texts and
+      acknowledgments, bundled-library notices and source-header grants,
+      including LGPL components, permissive grants and GNU build-helper
+      exceptions. Only two test prerequisite declarations are patched;
+      the source and notice files remain available in the image. This
+      record covers the exact source URL and archive hash, separately from
+      the pinned official interpreter image, and requires renewed review
+      when either source pin changes.
   - dependency: qemu_user_amd64
     license: GPL-2.0-only
     exception_rationale: >-
