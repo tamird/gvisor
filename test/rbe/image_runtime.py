@@ -146,7 +146,19 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     try:
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
         make = image_make_arguments()
-        run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+        retained = configuration.get("retained_release_files")
+        if retained is None:
+            run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+        else:
+            # The caller joins retained files to a successful configured
+            # //:release before entering this scope. Image checks stay below.
+            for name, expected in retained.items():
+                path = runtime_directory / name
+                path.resolve(strict=True).relative_to(runtime_directory.resolve())
+                actual = record_file(path)
+                if any(actual[key] != expected[key] for key in ("bytes", "sha256")):
+                    raise ValueError("Retained release file changed: " + name)
+            records["release_supplier"] = configuration["release_supplier"]
         runsc = runtime_directory / "runsc"
         if not runsc.is_file() or not (runtime_directory / "gvisor-bin").is_dir():
             raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")
