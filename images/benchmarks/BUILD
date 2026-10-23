@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs", "package_layer")
@@ -25,13 +26,10 @@ _HTTP_PAYLOAD_SIZES_KIB = [
 
 # Apache and Nginx serve the same zero-filled payloads in their benchmarks.
 [
-    genrule(
+    write_file(
         name = "http_payload_%dk" % size,
-        outs = ["http/latin%dk.txt" % size],
-        cmd = '"$(execpath //images:busybox_binary)" dd if=/dev/zero of=$@ bs=1024 count=%d' % size,
-        # tools selects the execution configuration, not the image CPU.
-        exec_compatible_with = ["@platforms//os:linux"],
-        tools = ["//images:busybox_binary"],
+        out = "http/latin%dk.txt" % size,
+        content = ["\x00" * (size * 1024)],
     )
     for size in _HTTP_PAYLOAD_SIZES_KIB
 ]

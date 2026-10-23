@@ -22,8 +22,8 @@ if [ "$(uname -m)" = "${HTTPD_TARGET_ARCH:?}" ]; then
 fi
 
 # Split the declared emulator command into its executable and fixed options.
-# EXT_BUILD_ROOT may contain spaces; it is added after splitting the execpath.
+# foreign_cc has already made the declared executable path absolute.
 set -- ${HTTPD_EMULATOR:?} "$@"
 emulator=$1
 shift
-exec "${EXT_BUILD_ROOT:?}/$emulator" "$@"
+exec "$emulator" "$@"

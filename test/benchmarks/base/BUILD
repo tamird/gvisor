@@ -21,6 +21,7 @@ go_library(
 benchmark_test(
     name = "startup_test",
     srcs = ["startup_test.go"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
@@ -35,6 +36,7 @@ benchmark_test(
 benchmark_test(
     name = "size_test",
     srcs = ["size_test.go"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
@@ -88,6 +90,7 @@ benchmark_test(
 benchmark_test(
     name = "usage_test",
     srcs = ["usage_test.go"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = False,
     deps = [
         ":base",

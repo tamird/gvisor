@@ -47,13 +47,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         raise ValueError(f"Unexpected diagnostic group: {label} {cpu}: {item}")
                 case _:
                     raise ValueError(f"Unexpected target owner: {label} {cpu}: {selected}")
-    exec_tools = [item for item in rows if item["label"].removeprefix("@@") == "//images:busybox_binary"
-                  and item["is_exec"] is True]
-    match exec_tools:
-        case [item] if item["cpu"] == "k8" and len(item["files"]) == 1:
-            pass
-        case _:
-            raise ValueError(f"Expected one AMD64 execution BusyBox for DD: {exec_tools}")
     for label in targets:
         selected = [item for item in rows if item["label"].removeprefix("@@") == label]
         match selected:

@@ -239,7 +239,6 @@ try:
     if graph["source"] != config["source"] or proof["status"] != "PASS":
         raise ValueError("Mixed graph/native proof is not exact-source PASS")
     records["module"] = identity(Path("MODULE.bazel"))
-    records["execution_busybox"] = static_elf(output("//images:busybox_binary", "k8", True), "Advanced Micro Devices X86-64")
     records["shared_layers"] = []
     for architecture, cpu, machine in (("amd64", "k8", "Advanced Micro Devices X86-64"), ("arm64", "aarch64", "AArch64")):
         programs = {label: static_elf(output(label, cpu), machine) for label in
@@ -260,17 +259,15 @@ try:
             installed = "local/latin" + str(size) + "k.txt"
             expected_hash = hashlib.sha256(bytes(size * 1024)).hexdigest()
             path = output("//images/benchmarks:http_payload_" + str(size) + "k", cpu)
-            joined = producer(path)
-            if (joined["output"]["bytes"], joined["output"]["sha256"]) != (size * 1024, expected_hash):
+            payload = identity(path)
+            if (payload["bytes"], payload["sha256"]) != (size * 1024, expected_hash):
                 raise ValueError("Declared benchmark payload differs")
             for image in ("benchmarks/nginx", "benchmarks/httpd"):
                 item = inspected[image]["files"][installed]
                 if (item["mode"], item["bytes"], item["sha256"]) != (0o644, size * 1024, expected_hash):
                     raise ValueError("Shared benchmark payload differs: " + image)
-            exec_path = str(output("//images:busybox_binary", "k8", True).relative_to(root))
-            if not any(exec_path in arg for arg in joined["action"]["commandArgs"]):
-                raise ValueError("Payload producer did not invoke declared execution BusyBox")
-            shared["payloads"].append({"installed": installed, "producer": joined})
+            shared["payloads"].append({"installed": installed,
+                "owner": owner("//images/benchmarks:http_payload_" + str(size) + "k", cpu), "output": payload})
         for installed in ("usr/sbin/nginx", "etc/passwd", "etc/group", "etc/nginx/mime.types", "usr/share/licenses/nginx/LICENSE"):
             basic = inspected["basic/nginx"]["files"][installed]
             benchmark = inspected["benchmarks/nginx"]["files"][installed]
