@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T05:13:28.927269+00:00",
+    "updatedAt": "2026-10-23T05:25:58.911041+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18629,35 +18629,20 @@
       "title": "Review the checkpoint serialization benchmark",
       "url": "https://github.com/google/gvisor/pull/16198",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-23T00:06:36.853785+00:00",
-      "summary": "Root verified consolidated approval 5622342411 on exact 8f26710e, with one nonblocking GOMEMLIMIT clarification. Hostinet owns future consolidated review publication with the same Node and WorkMap peers; root is copied. User-requested independent review continues on changed heads or substantive external reviews until merge. The current revision avoids retained page buffers and disables percentage-triggered GC during the deliberately partial codec fixture. No merge action is authorized.",
-      "reviewWatch": {
-        "owner": "hostinet_delivery",
-        "reviewers": [
-          "hostinet_delivery",
-          "node_tls_sni",
-          "work_map_current"
-        ],
-        "reviewedHead": "8f26710e0cbd6ffc4f357b2d44cee4e8a3d4b767",
-        "reviewedReviewIds": [
-          "PRR_kwDOB9IlXs8AAAABTxcMww",
-          "5622342411"
-        ],
-        "reviewedCommentIds": [
-          "PRRC_kwDOB9IlXs8AAAABA4ppyA",
-          "4354759913"
-        ]
-      },
+      "status": "merged",
+      "updatedAt": "2026-10-23T05:25:58.911041+00:00",
+      "summary": "Merged October 23 at 05:22:41Z on exact reviewed source 8f26710e. Matching import #16226 merged three seconds earlier. The requested continuing independent review is complete and its standing subscription is removed. Preserve the consolidated approval, nonblocking memory-limit clarification and source findings as evidence for future state benchmarking. The benchmark remains a deliberately partial codec fixture; merge does not add execution or performance evidence.\n\nCompleted review record:\n\nRoot verified consolidated approval 5622342411 on exact 8f26710e, with one nonblocking GOMEMLIMIT clarification. Hostinet owns future consolidated review publication with the same Node and WorkMap peers; root is copied. User-requested independent review continues on changed heads or substantive external reviews until merge. The current revision avoids retained page buffers and disables percentage-triggered GC during the deliberately partial codec fixture. No merge action is authorized.",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "8f26710e0cbd6ffc4f357b2d44cee4e8a3d4b767",
-        "disposition": "Continuing review through merge",
-        "nextAction": "Route each new head or substantive external review/comment, including automated review to the same three agents, deduplicated by the existing snapshot head and feedback IDs. Hostinet publishes one consolidated review under the existing user authorization, copying root. Stop review work when merged; record closure without merging.",
+        "disposition": "Continuing review complete at merge",
+        "nextAction": "No further review or standing subscription for this request. Preserve existing findings for future benchmarking.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16198#pullrequestreview-5621877955",
-          "https://github.com/google/gvisor/pull/16198#discussion_r4354369992"
-        ]
+          "https://github.com/google/gvisor/pull/16198#discussion_r4354369992",
+          "https://github.com/google/gvisor/pull/16226"
+        ],
+        "observedAt": "2026-10-23T05:25:58.911041+00:00"
       },
       "evidence": [
         {
