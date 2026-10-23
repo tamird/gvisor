@@ -12,7 +12,7 @@ import uuid
 import xml.etree.ElementTree as ET
 
 import qualification_report as report
-from image_runtime import prepared_runtime
+from image_runtime import prepare_benchmark_helpers, prepared_runtime
 
 
 def run(invoke, evidence: Path, private: Path) -> None:
@@ -216,15 +216,21 @@ def run(invoke, evidence: Path, private: Path) -> None:
                         if checked["status"] != "PASS":
                             raise RuntimeError("Containerd consumer cleanup failed")
                 else:
-                    # These are the existing caller's native client/readiness
-                    # fixtures, not part of the migrated Apache image closure.
-                    command(["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
-                             "REMOTE_IMAGE_PREFIX=qualification.invalid/images", "rebuild-benchmarks_hey", "rebuild-benchmarks_util"])
-                    records["benchmark_client_images"] = [json.loads(command(["docker", "image", "inspect", "gvisor.dev/images/benchmarks/" + name + ":latest"]))
-                                                           for name in ("hey", "util")]
+                    configuration = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+                    records["benchmark_helpers"] = prepare_benchmark_helpers(
+                        evidence / "benchmark-helper-images.json", private / "benchmark-helper-images",
+                        configuration["benchmark_utility"])
                     consumer("httpd-benchmark", "//test/benchmarks/network:httpd_test", runtime, "^$", set(),
                              ["--test_arg=-test.bench=^BenchmarkHttpd$/^filesize\\.(1Kb|1Mb|notfound)$/^concurrency\\.(1|25)$",
                               "--test_arg=-test.benchtime=100x", "--test_arg=-test.count=1"])
+        records["benchmark_client_images"] = {}
+        for name in ("hey", "util"):
+            helper = records["benchmark_helpers"][name]
+            match json.loads(command(["docker", "image", "inspect", helper["name"]])):
+                case [image] if image["Id"] == helper["image"]["Id"]:
+                    records["benchmark_client_images"][name] = image
+                case other:
+                    raise ValueError(f"Benchmark helper identity changed: {name}: {other}")
         records["containers_after"] = sorted(command(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
         if records["containers_after"] != records["containers_before"]:
             raise RuntimeError("Apache consumers left containers behind")

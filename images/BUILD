@@ -22,7 +22,7 @@ pkg_tar(
     visibility = ["//images:__subpackages__"],
 )
 
-# Both static Go helpers use this base. Additional runtime commands belong to
+# Static Go helpers use this base. Additional runtime commands belong to
 # the image whose caller needs them.
 image_manifest(
     name = "helper_base",

@@ -33,10 +33,16 @@ single images via individual `load` targets, or pull all images via a single
 
 ## Go helper images
 
-The Ollama client and benchmark profiling helper are static Go programs built
-with the repository toolchain. Their images share `//images:helper_base`,
-which supplies CA trust and a writable `/tmp`. The selected architecture
-controls the programs and package inputs.
+The Ollama client, benchmark profiling helper, and hey HTTP client are static
+Go programs built with the repository toolchain. Their images share
+`//images:helper_base`, which supplies CA trust and a writable `/tmp`. The
+selected architecture controls the programs and package inputs.
+
+The hey client is pinned in `MODULE.bazel` and built from its upstream Go
+module. Its callers run `hey` directly, so its image needs no shell or
+external downloader.
+`//images/benchmarks:hey_archive` and `hey_context`
+serve the existing `benchmarks/hey` image name.
 
 The profiling helper's Kubernetes caller also invokes `mkdir`, `chmod`, and
 `rm --one-file-system` directly. Its image adds these GNU commands, their
