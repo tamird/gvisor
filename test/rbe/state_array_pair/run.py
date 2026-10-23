@@ -45,12 +45,11 @@ def containers() -> set[str]:
         ["docker", "ps", "--all", "--quiet", "--no-trunc"], text=True, timeout=10).split())
 
 
-def main(reporter: Path) -> int:
+def main(binary: Path, reporter: Path) -> int:
     package = Path(__file__).resolve().parent
     output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
     xml = Path(os.environ["XML_OUTPUT_FILE"])
     manifest = json.loads((package / "inputs.json").read_text())
-    binary = package / "startup_test"
     if (hashlib.sha256(binary.read_bytes()).hexdigest() != manifest["harness"]["sha256"] or
             binary.stat().st_size != manifest["harness"]["bytes"]):
         raise ValueError("The common startup harness differs from its configured output")
@@ -221,4 +220,4 @@ def main(reporter: Path) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(Path(sys.argv[1]).resolve(strict=True)))
+    raise SystemExit(main(Path(sys.argv[1]).resolve(strict=True), Path(sys.argv[2]).resolve(strict=True)))

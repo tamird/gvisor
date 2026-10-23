@@ -6,9 +6,9 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tarfile
 import time
 import urllib.request
-from urllib.parse import unquote, urlsplit
 
 import qualification_report as report
 from image_runtime import prepared_runtime
@@ -21,8 +21,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     lock = workspace / "MODULE.bazel.lock"
     candidate_lock = lock.read_bytes()
     package = workspace / "test/rbe/state_array_pair"
-    staged = private / "common-harness"
-    staged.mkdir()
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
                "--noannounce_rc"]
@@ -54,37 +52,48 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise ValueError("Source-built input identity mismatch: " + str(destination))
         destination.write_bytes(data)
 
-    def outputs(result, directory, expected):
-        if result["status"] != "PASS" or result["native_exit"]:
-            raise RuntimeError("Source-bound build failed")
-        owners = {report.Owner(row["label"], row["configuration"]) for row in result["expected"]}
-        if len(owners) != len(expected) or {owner.label for owner in owners} != set(expected):
-            raise ValueError("Unexpected configured build owners")
-        rows = report.advertised_build_outputs(directory / "events.jsonl", {(owner, "default") for owner in owners})
-        for row in rows:
-            uri = urlsplit(row["uri"])
-            if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
-                raise ValueError("Build output was not materialized")
-            path = Path(unquote(uri.path)).resolve(strict=True)
-            path.relative_to(output_root.resolve())
-            if report.file_record(path) != {"bytes": row["bytes"], "sha256": row["sha256"]}:
-                raise ValueError("Materialized output differs from BEP")
-            row["materialized_path"] = str(path)
-        return rows
-
     try:
-        common_targets = ["//test/benchmarks/base:startup_test"]
-        built = invoke("startup-harness", ["build", *options, *common_targets], "build", targets=common_targets)
-        common = outputs(built, evidence / "invocation-startup-harness", common_targets)
-        if len(common) != 1:
-            raise ValueError("Expected one configured startup harness")
-        harness = common[0]
-        shutil.copy2(harness["materialized_path"], staged / "startup_test")
-        # Reuse the source-built measurement tool without changing either
-        # runtime's dependency graph just to build the reporter.
+        # Reuse only the exact outputs of the completed source-bound builds.
+        # The prior overall failure remains a failure: its first warmup failed.
+        supplier = config["release_supplier"]
+        archive = private / "release-evidence.tar.gz"
+        fetch(supplier, archive)
+        with tarfile.open(archive) as bundle:
+            entries = [entry for entry in bundle if entry.isfile()]
+            if len({entry.name for entry in entries}) != len(entries):
+                raise ValueError("Duplicate retained evidence member")
+            members = {entry.name: bundle.extractfile(entry).read() for entry in entries}
+        previous = json.loads(members["startup-comparison.json"])
+        prior_inputs = json.loads(members["startup-inputs.json"])
+        if (previous["source"] != supplier["source"] or
+                previous["before_source"] != config["before_source"] or
+                previous["product"] != config["product"] or
+                previous["qualifier_static_prerequisite"] != config["qualifier_static_prerequisite"] or
+                previous["status"] != "FAIL" or previous["cleanup"] != "PASS"):
+            raise ValueError("Retained source or failure evidence differs")
+        records["release_supplier"] = supplier
+        records["prior_status"] = previous["status"]
+        shutil.copy2(archive, evidence / "retained-release-evidence.tar.gz")
+        for name, expected_hash in config["matched_inputs"].items():
+            if hashlib.sha256((workspace / name).read_bytes()).hexdigest() != expected_hash:
+                raise ValueError("Shared startup source changed: " + name)
+        harness = prior_inputs["harness"]
+        common = json.loads(members["invocation-startup-harness/verdict.json"])
+        if common["source"] != supplier["source"] or common["status"] != "PASS" or common["native_exit"] != 0:
+            raise ValueError("Retained common harness build failed")
+        events = evidence / "retained-harness-events.jsonl"
+        events.write_bytes(members["invocation-startup-harness/events.jsonl"])
+        owners = {report.Owner(row["label"], row["configuration"]) for row in common["expected"]}
+        if len(owners) != 1 or next(iter(owners)).label != "//test/benchmarks/base:startup_test":
+            raise ValueError("Unexpected retained harness owner")
+        outputs = report.advertised_build_outputs(events, {(owner, "default") for owner in owners})
+        if len(outputs) != 1 or any(outputs[0][key] != harness[key] for key in ("bytes", "sha256")):
+            raise ValueError("Retained harness differs from its native BEP")
         benchstat = config["benchstat"]
-        fetch(benchstat, staged / "benchstat")
-        (staged / "benchstat").chmod(0o755)
+        if prior_inputs["benchstat"] != benchstat:
+            raise ValueError("Retained measurement tool differs")
+        fetch(benchstat, package / "benchstat")
+        (package / "benchstat").chmod(0o755)
 
         fixture = config["fixture"]
         archive = private / "sleep-image.tar"
@@ -108,45 +117,47 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                             "workload": "source-built scratch sleep image; not Alpine"}
         runtimes = {}
         with ExitStack() as scopes:
-            for side, revision in (("before", config["before_source"]), ("after", source)):
-                runtime_record = {"side": side, "source": revision, "status": "INCOMPLETE",
-                                  "execution_image": config["execution_image"]}
-                records["runtime_builds"].append(runtime_record)
-                command(["git", "switch", "--detach", revision])
-                for name, expected_hash in config["matched_inputs"].items():
-                    if hashlib.sha256((workspace / name).read_bytes()).hexdigest() != expected_hash:
-                        raise ValueError("Shared startup source changed: " + name)
-                if side == "after":
-                    lock.write_bytes(candidate_lock)
-                prepared = invoke(side + "-release-preparation", ["cquery", "--config=x86_64",
-                    "--compilation_mode=opt", "--lockfile_mode=update", "--noannounce_rc",
-                    "--output=label", "//:release"], "command", targets=[], source=revision)
-                runtime_record["preparation"] = {key: prepared[key] for key in ("status", "native_exit")}
-                if prepared["status"] != "PASS":
-                    raise RuntimeError("Release dependency preparation failed")
-                built = invoke(side + "-release", ["build", *options, "//:release"], "build",
-                               targets=["//:release"], source=revision)
-                directory = evidence / ("invocation-" + side + "-release") if side == "after" else evidence / "source-builds" / (side + "-release")
-                runtime_record["build"] = {key: built[key] for key in ("status", "native_exit", "source", "expected")}
-                runtime_record["build"]["verdict"] = str((directory / "verdict.json").relative_to(evidence))
-                release = outputs(built, directory, ["//:release"])
-                by_name = {}
+            for side, revision in (("before", config["before_source"]), ("after", supplier["source"])):
+                prior = next(row for row in previous["runtime_builds"] if row["side"] == side)
+                verdict_path = prior["build"]["verdict"]
+                built = json.loads(members[verdict_path])
+                if (prior["source"] != revision or prior["status"] != "PASS" or
+                        prior["execution_image"] != config["execution_image"] or
+                        built["source"] != revision or built["status"] != "PASS" or built["native_exit"] != 0):
+                    raise ValueError("Retained release build did not pass on its exact source")
+                owners = {report.Owner(row["label"], row["configuration"]) for row in built["expected"]}
+                if len(owners) != 1 or next(iter(owners)).label != "//:release":
+                    raise ValueError("Unexpected retained release owner")
+                events = evidence / ("retained-" + side + "-release-events.jsonl")
+                events.write_bytes(members[verdict_path.replace("verdict.json", "events.jsonl")])
+                release = report.advertised_build_outputs(events, {(owner, "default") for owner in owners})
+                if len(release) != 8:
+                    raise ValueError("Incomplete retained release outputs")
                 for row in release:
-                    _, separator, name = row["materialized_path"].rpartition("/release/")
-                    if not separator or name in by_name:
-                        raise ValueError("Unexpected release output layout")
-                    by_name[name] = row
+                    matches = [old for old in prior["release_outputs"] if old["name"] == row["name"]]
+                    if len(matches) != 1 or any(matches[0][key] != row[key] for key in ("identity", "uri", "bytes", "sha256")):
+                        raise ValueError("Retained release output differs from its native BEP")
+                by_name = {row["name"].split("/release/", 1)[1]: row for row in release}
+                expected = set(config["runtime_paths"])
+                if set(by_name) != expected | {"containerd-shim-runsc-v1"}:
+                    raise ValueError("Unexpected retained release layout")
                 destination = evidence / (side + "-runtime")
                 destination.mkdir()
                 runtime_directory = private / (side + "-runtime")
+                retained = {}
+                for name in sorted(expected):
+                    row = by_name[name]
+                    path = runtime_directory / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    fetch(dict(row, uri="bytestream://remote.buildbuddy.io/blobs/" + row["sha256"] + "/" + str(row["bytes"])), path)
+                    path.chmod(0o755)
+                    retained[name] = {key: row[key] for key in ("bytes", "sha256")}
                 runtime_name = "runsc-compiler-startup-" + side
                 runtime = scopes.enter_context(prepared_runtime(destination / "runtime.json", runtime_directory, {
                     "runtime_name": runtime_name, "runtime_flags": ["--platform=systrap"],
                     "image_name": "benchmarks/alpine", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
+                    "retained_release_files": retained, "release_supplier": {"invocation": supplier["invocation"], "source": revision},
                 }))
-                expected = set(config["runtime_paths"])
-                if not expected <= by_name.keys():
-                    raise ValueError("Configured release omitted a required runtime file")
                 actual = {str(Path(row["path"]).relative_to(runtime_directory)): row for row in runtime["runtime_files"]}
                 if actual.keys() != expected:
                     raise ValueError("Copied runtime omitted release files")
@@ -155,11 +166,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         raise ValueError("Copied runtime differs from its configured release output")
                 runtimes[side] = {"name": runtime_name, "source": revision,
                     "files": runtime["runtime_files"], "configuration": runtime["config_after"]["runtimes"][runtime_name]}
-                runtime_record.update({"status": "PASS", "release_outputs": release})
+                records["runtime_builds"].append(dict(prior, reused=True, supplier=supplier["invocation"]))
             if command(["git", "rev-parse", "HEAD"]) != source:
-                raise ValueError("Candidate source was not restored")
-            shutil.copy2(staged / "startup_test", package / "startup_test")
-            shutil.copy2(staged / "benchstat", package / "benchstat")
+                raise ValueError("Current qualifier source changed")
             inputs = {"harness": {key: harness[key] for key in ("bytes", "sha256")},
                       "benchstat": benchstat,
                       "runtimes": runtimes, "image": records["image"]}

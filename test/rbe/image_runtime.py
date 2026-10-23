@@ -161,7 +161,21 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
                     "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"]]),
                 "STARTUP_OPTIONS=--output_base=" + os.environ["APPLICABILITY_OUTPUT_BASE"] + " --bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
                 "REMOTE_IMAGE_PREFIX=qualification.invalid/images"]
-        run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+        retained = configuration.get("retained_release_files")
+        if retained is None:
+            run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+        else:
+            # Completion-only callers authenticate these source-built files
+            # against the previous invocation's configured default outputs.
+            if not configuration.get("lifecycle_only"):
+                raise ValueError("Retained releases require lifecycle-only preparation")
+            for name, expected in retained.items():
+                path = runtime_directory / name
+                path.resolve(strict=True).relative_to(runtime_directory.resolve())
+                actual = record_file(path)
+                if any(actual[key] != expected[key] for key in ("bytes", "sha256")):
+                    raise ValueError("Retained release file changed: " + name)
+            records["release_supplier"] = configuration["release_supplier"]
         runsc = runtime_directory / "runsc"
         if not runsc.is_file() or not (runtime_directory / "gvisor-bin").is_dir():
             raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")

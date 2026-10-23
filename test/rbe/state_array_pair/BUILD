@@ -6,11 +6,14 @@ py_test(
     size = "large",
     timeout = "long",
     srcs = ["run.py"],
-    args = ["$(rootpath benchstat)"],
+    args = [
+        "$(rootpath //test/benchmarks/base:startup_test)",
+        "$(rootpath benchstat)",
+    ],
     data = [
         "benchstat",
         "inputs.json",
-        "startup_test",
+        "//test/benchmarks/base:startup_test",
     ],
     local = True,
     main = "run.py",
