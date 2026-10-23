@@ -28,6 +28,15 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: github.com/opencontainers/go-digest
+    license:
+      - Apache-2.0
+      - CC-BY-SA-4.0
+    exception_rationale: >-
+      The Go source uses Apache-2.0. The upstream README.md and
+      CONTRIBUTING.md use CC-BY-SA-4.0 under LICENSE.docs. These
+      documentation files are not compiled into gVisor; their terms
+      remain recorded in the complete source archive catalog.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
@@ -65,17 +74,22 @@ exceptions:
       in its DPDK patch series. This records those existing dependencies
       when replacing the plugin's implicit source downloads with pinned
       Bazel inputs. The optional GPL packetdrill integration is not built.
-  - dependency: llvm-raw
-    license:
-      - Apache-2.0 WITH LLVM-exception
-      - NCSA
+  - dependency: llvm-project
+    license: LicenseRef-LLVM-23.1.2-parser-source-notices
     exception_rationale: >-
-      LLVM is part of the NVIDIA GPU test toolchain only and is not
-      distributed with gVisor. The LLVM exception only relaxes
-      Apache-2.0's requirements. LICENSE.TXT also includes LLVM's legacy
-      University of Illinois/NCSA grant, which permits redistribution with
-      copyright notices, conditions and disclaimers retained and prohibits
-      using contributors' names for endorsement without permission.
+      This pinned LLVM source archive supplies Clang and LLVM libraries
+      for the NVIDIA driver compatibility parser and its tests, not
+      gVisor release binaries. The reviewed root, Clang and LLVM notices
+      contain Apache-2.0 with the LLVM exception and the legacy NCSA
+      grant. The retained Support notices additionally include Henry
+      Spencer's conditions and BSD-3-Clause for regular expressions,
+      and BLAKE3's CC0-1.0 or Apache-2.0 alternative. Copyright notices,
+      conditions, disclaimers and the regular-expression attribution
+      requirements remain applicable. These root and selected library
+      notices do not establish an exhaustive inventory of grants in
+      the archive or all compiled files. This manual record applies
+      only to the exact archive URL and checksum; a changed pin
+      requires renewed review.
   - dependency: plugin_dpdk
     license:
       - BSD-3-Clause
