@@ -203,13 +203,15 @@ def run(invoke, evidence: Path, private: Path) -> None:
                         connection.close()
             response_record["status"] = "PASS"
         finally:
-            logs = subprocess.run(["docker", "logs", name], capture_output=True, text=True, timeout=30)
-            (directory / "httpd-response-container.log").write_text(logs.stdout + logs.stderr)
-            response_record["logs"] = report.file_record(directory / "httpd-response-container.log")
-            cleanup = subprocess.run(["docker", "rm", "--force", name], capture_output=True, text=True, timeout=30)
-            response_record["cleanup"] = {"native_exit": cleanup.returncode, "stdout": cleanup.stdout, "stderr": cleanup.stderr}
-            if cleanup.returncode and "No such container" not in cleanup.stderr:
-                raise RuntimeError("Failed to remove the task-owned Apache diagnostic container")
+            try:
+                logs = subprocess.run(["docker", "logs", name], capture_output=True, text=True, timeout=30)
+                (directory / "httpd-response-container.log").write_text(logs.stdout + logs.stderr)
+                response_record["logs"] = report.file_record(directory / "httpd-response-container.log")
+            finally:
+                cleanup = subprocess.run(["docker", "rm", "--force", name], capture_output=True, text=True, timeout=30)
+                response_record["cleanup"] = {"native_exit": cleanup.returncode, "stdout": cleanup.stdout, "stderr": cleanup.stderr}
+                if cleanup.returncode and "No such container" not in cleanup.stderr:
+                    raise RuntimeError("Failed to remove the task-owned Apache diagnostic container")
 
     try:
         records["containers_before"] = sorted(command(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
