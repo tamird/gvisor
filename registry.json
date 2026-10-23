@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T06:16:01.869757+00:00",
+    "updatedAt": "2026-10-23T06:43:52.767656+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21340,8 +21340,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-19T22:28:19.323049+00:00",
-      "summary": "The RACK reordering fixture proposal is qualified and now awaits the contributor decision requested for exact commit 8643925c8874de893b4971b810841098ff16aa33. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. No upstream PR has been opened.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
+      "updatedAt": "2026-10-23T06:43:52.767656+00:00",
+      "summary": "The contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -21964,7 +21964,7 @@
           ]
         }
       ],
-      "nextStep": "Await the contributor decision for exact proposal8643925c8874de893b4971b810841098ff16aa33; root owns integration and any approved PR delivery. Preserve original raw failures/skips and source-bound proof.",
+      "nextStep": "Follow existing PR #16055 for current-head CI, maintainer review and import events. Contributor approval and delivery are complete; do not ask again or open a duplicate PR. Preserve original raw failures/skips and source-bound proof.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -22047,8 +22047,12 @@
           "url": "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2"
         },
         {
-          "label": "Qualified RACK fixture proposal awaiting contributor review",
+          "label": "Contributor-approved RACK fixture source; delivered as #16055",
           "url": "https://github.com/tamird/gvisor/commit/8643925c8874de893b4971b810841098ff16aa33"
+        },
+        {
+          "label": "Delivered RACK reordering test",
+          "url": "https://github.com/google/gvisor/pull/16055"
         }
       ],
       "comparisons": [
@@ -29108,7 +29112,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-23T06:16:01.869757+00:00",
+      "updatedAt": "2026-10-23T06:43:52.767656+00:00",
       "summary": "The user approved PIDFD and requested scratch bases wherever possible across all images. The existing helper_base already has no parent image and supplies declared certificates and /tmp metadata; its image users do not need a blanket base rewrite. Remaining BusyBox and Alpine users need an explicit command/loader inventory before replacement. This is agent work under the requested correction, separate from resource-file relocation.",
       "findings": [
         {
@@ -29146,9 +29150,18 @@
               "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
             }
           ]
+        },
+        {
+          "text": "The profile-helper source proposal fda0e4 replaces the packaged GNU mkdir/chmod/rm and runtime libraries with the existing declared Coreutils producer, preserving GNU rm --one-file-system and the shared PIDFD timeout output. Source and consumer review are complete; the fork source is published. Node owns the required both-CPU image/static-output, actual mounted-filesystem boundary and PIDFD qualification. No runtime pass or contributor approval is inferred.",
+          "evidence": [
+            {
+              "label": "Published profile-helper source proposal",
+              "url": "https://github.com/tamird/gvisor/commit/fda0e4f7ca952259c8b5eab335e5e12194d0bdea"
+            }
+          ]
         }
       ],
-      "nextStep": "Node owns source-built Nginx qualification and canonical licensing. Hostinet owns the authorized Apache source design for basic/httpd and benchmarks/httpd, sharing a declared producer while preserving image-specific runtime and benchmark defaults. Apache has no contributor review request or runtime result yet. Continue the existing command/loader inventory.",
+      "nextStep": "Node owns remaining source-built Nginx readiness and final integration after accepted runtime and canonical license results. Hostinet owns Apache qualification for basic/httpd and benchmarks/httpd with their separate runtime and benchmark defaults. Node owns remote qualification of the independently reviewed, source-published profile-helper fda0e4 utility closure. Apache and profile-helper have no contributor review request or runtime result yet. Continue the existing command/loader inventory.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
