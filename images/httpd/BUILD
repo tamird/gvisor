@@ -20,7 +20,9 @@ exports_files([
 _EMULATOR = target_emulator()
 
 # Configure and the target generator share the exact emulator command.
-_PREFIX = 'HTTPD_EMULATOR="' + _EMULATOR.cmd + '" '
+# Root it explicitly: the configure wrapper's EXT_BUILD_ROOT suppresses
+# foreign_cc's automatic prefixing of all execpaths in the same attribute.
+_PREFIX = 'HTTPD_EMULATOR="$$EXT_BUILD_ROOT$$/' + _EMULATOR.cmd + '" '
 
 _TARGET = select({
     "@platforms//cpu:aarch64": ["--host=aarch64-linux-musl"],
@@ -103,12 +105,9 @@ configure_make(
     build_data = _TOOLS,
     configure_in_place = True,
     configure_options = [
-        "--disable-shared",
         "--disable-util-dso",
-        "--enable-static",
         "--with-apr=$$EXT_BUILD_DEPS$$/apr",
         "--with-dbm=sdbm",
-        "--with-expat=yes",
         "--without-apr-iconv",
         "--without-berkeley-db",
         "--without-crypto",
