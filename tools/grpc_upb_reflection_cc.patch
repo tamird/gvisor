@@ -1,0 +1,43 @@
+Declare the C++ reflection headers used by gRPC 1.84.
+
+Protobuf 37 moved these headers from reflection to reflection_cc.
+Keep the C dependencies and declare the C++ target at each owning library.
+Remove this patch when gRPC declares those dependencies upstream.
+https://github.com/protocolbuffers/protobuf/blob/51a9b17260f86e7bbb30107d6241ddcec5fc4089/upb/reflection/BUILD#L74-L99
+
+--- a/BUILD
++++ b/BUILD
+@@ -4793,6 +4793,7 @@
+         "@com_google_protobuf//upb/json",
+         "@com_google_protobuf//upb/mem",
+         "@com_google_protobuf//upb/reflection",
++        "@com_google_protobuf//upb/reflection:reflection_cc",
+         "@com_google_protobuf//upb/text",
+     ],
+ )
+--- a/src/core/BUILD
++++ b/src/core/BUILD
+@@ -1036,6 +1036,7 @@
+         "//src/core:function_signature",
+         "//src/core:json",
+         "@com_google_protobuf//upb/reflection",
++        "@com_google_protobuf//upb/reflection:reflection_cc",
+     ],
+ )
+ 
+@@ -12044,6 +12045,7 @@
+         "//:channelz_upbdefs",
+         "@com_google_protobuf//upb/mem",
+         "@com_google_protobuf//upb/reflection",
++        "@com_google_protobuf//upb/reflection:reflection_cc",
+         "@com_google_protobuf//upb/text",
+     ],
+ )
+@@ -12394,6 +12396,7 @@
+         "@com_google_protobuf//upb/json",
+         "@com_google_protobuf//upb/mem",
+         "@com_google_protobuf//upb/reflection",
++        "@com_google_protobuf//upb/reflection:reflection_cc",
+     ],
+ )
+ 
