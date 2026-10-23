@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T17:07:43.181351+00:00",
+    "updatedAt": "2026-10-23T17:18:23.883889+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10788,27 +10788,23 @@
       "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
       "title": "Validate FIB attributes by netlink ID",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea",
-      "status": "Needs contributor review",
-      "summary": "The FIB attribute-policy proposal is refreshed and independently source-reviewed on current upstream dd6f after prerequisite #15816 merged. The original policy/test patch is unchanged: validate keyed netlink IDs, network-order register bounds before narrowing, and unknown flag bits. The published review commit is 0001544109. Prior failing-before and corrected qualification evidence remains source-specific; no fresh workload was run. Contributor approval is required before an upstream PR.\n\nPreserved earlier record:\n\nThe presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
-      "updatedAt": "2026-10-23T17:07:43.181351+00:00",
+      "url": "https://github.com/google/gvisor/pull/16264",
+      "status": "Delivered as PR #16264",
+      "summary": "The contributor explicitly approved 00015441096e607fb99bb6d303dfd54a8ac2d3ea. The reviewed patch is delivered as PR #16264 at 00015441096e607fb99bb6d303dfd54a8ac2d3ea. The exact approved FIB source was published without another source change. Provider head and body are verified; the PR is open, non-draft and mergeable, with public CI starting. No merge or auto-merge was requested.\n\nPreserved source and review record:\n\nThe FIB attribute-policy proposal is refreshed and independently source-reviewed on current upstream dd6f after prerequisite #15816 merged. The original policy/test patch is unchanged: validate keyed netlink IDs, network-order register bounds before narrowing, and unknown flag bits. The published review commit is 0001544109. Prior failing-before and corrected qualification evidence remains source-specific; no fresh workload was run. Contributor approval is required before an upstream PR.\n\nPreserved earlier record:\n\nThe presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
+      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Refreshed source proposal ready for contributor review",
+        "owner": "work_map_current",
+        "disposition": "Contributor-approved patch delivered; current public CI and maintainer review pending",
         "sourceHead": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
-        "observedAt": "2026-10-23T17:07:43.181351+00:00",
-        "nextAction": "Obtain the contributor decision for published 0001544109 before opening an upstream PR; preserve original 7f846 qualification scope and exact range-diff.",
+        "observedAt": "2026-10-23T17:18:23.883889+00:00",
+        "nextAction": "Follow PR #16264 through the existing snapshot and route substantive current-head failures or review feedback. No new contributor decision or duplicate PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
           "https://app.buildbuddy.io/invocation/3cb3ddab-5b91-4622-b809-afbb3270ac65",
           "https://github.com/torvalds/linux/blob/ab185e0c4/net/netfilter/nft_fib.c#L21-L26",
-          "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea"
+          "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+          "https://github.com/google/gvisor/pull/16264"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
-        "url": "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea"
       },
       "refinement": {
         "before": {
@@ -14565,23 +14561,24 @@
       "id": "branch:proc-task-id-parsing",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proc-task-id-parsing",
-      "head": "4674542b6d227e33df83826e466678187e1315ae",
+      "ref": "review/proc-task-id-current",
+      "head": "5dceaf054ade4dc098eb9f90d37b732897fe916d",
       "title": "Reject noncanonical procfs task IDs",
-      "url": "https://github.com/tamird/gvisor/commit/4674542b6d227e33df83826e466678187e1315ae",
+      "url": "https://github.com/google/gvisor/pull/16266",
       "group": "runtime",
-      "status": "Needs contributor review",
-      "summary": "Linux and gVisor before/after checks verify the new InvalidTaskNames regression: native Linux passes while both original gVisor modes fail; native and both corrected gVisor modes pass. The before/after source delta contains only the two parser fixes. Three owning checks add 59 passing cases with no gaps or skips; automatic verification followed execution by 4.994385 seconds. Independent compact review ties the tested implementation to standalone proposal 4674542b6d. Initial target-loading failures and collector reattachments remain recorded. Root sent the contributor-review question for exact 4674542b6d; opening the upstream PR now awaits that decision.",
-      "updatedAt": "2026-10-23T16:48:35.250327+00:00",
+      "status": "Delivered as PR #16266",
+      "summary": "The contributor explicitly approved 4674542b6d227e33df83826e466678187e1315ae. The reviewed patch is delivered as PR #16266 at 5dceaf054ade4dc098eb9f90d37b732897fe916d. The task-ID change was mechanically refreshed onto current dd6f with exact changed-line streams; only the attribution footer was removed from the record. Separate FD/fdinfo work is excluded. Provider head and body are verified; the PR is open, non-draft and mergeable, with public CI starting. No merge or auto-merge was requested.\n\nPreserved source and review record:\n\nLinux and gVisor before/after checks verify the new InvalidTaskNames regression: native Linux passes while both original gVisor modes fail; native and both corrected gVisor modes pass. The before/after source delta contains only the two parser fixes. Three owning checks add 59 passing cases with no gaps or skips; automatic verification followed execution by 4.994385 seconds. Independent compact review ties the tested implementation to standalone proposal 4674542b6d. Initial target-loading failures and collector reattachments remain recorded. Root sent the contributor-review question for exact 4674542b6d; opening the upstream PR now awaits that decision.",
+      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Validated proposal awaiting contributor review",
-        "sourceHead": "4674542b6d227e33df83826e466678187e1315ae",
-        "observedAt": "2026-10-19T15:10:06.032874+00:00",
-        "nextAction": "Await the contributor decision already requested for exact standalone 4674542b6d; open the upstream PR only after approval. No duplicate question.",
+        "owner": "work_map_current",
+        "disposition": "Contributor-approved patch delivered; current public CI and maintainer review pending",
+        "sourceHead": "5dceaf054ade4dc098eb9f90d37b732897fe916d",
+        "observedAt": "2026-10-23T17:18:23.883889+00:00",
+        "nextAction": "Follow PR #16266 through the existing snapshot and route substantive current-head failures or review feedback. No new contributor decision or duplicate PR.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/d642e02b-64ef-4667-822b-92ff8ed55d8b",
-          "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2"
+          "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2",
+          "https://github.com/google/gvisor/pull/16266"
         ]
       },
       "evidence": [
@@ -14590,10 +14587,14 @@
           "url": "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "4674542b6d227e33df83826e466678187e1315ae",
-        "url": "https://github.com/tamird/gvisor/commit/4674542b6d227e33df83826e466678187e1315ae"
+      "refinement": {
+        "before": {
+          "head": "4674542b6d227e33df83826e466678187e1315ae"
+        },
+        "after": {
+          "head": "5dceaf054ade4dc098eb9f90d37b732897fe916d"
+        },
+        "command": "git -C ~/code/gvisor range-diff 4674542b6d^! 5dceaf054a^!"
       }
     },
     {
@@ -18353,9 +18354,9 @@
       "title": "Build the pidfd selftest image from Linux sources",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10",
-      "status": "Scratch refinement ready for contributor review",
-      "updatedAt": "2026-10-23T16:48:35.250327+00:00",
-      "summary": "The scratch refinement is published at 4217084f534a on the approved GNU prerequisite. The image explicitly builds BusyBox ash, its selected utilities, and GNU timeout from pinned sources. Both target architectures pass archive, configuration, notice and nine-static-executable checks; four profile-helper outputs remain byte-identical. AMD64 utility and timeout probes, the seven PIDFD programs, Make rebuild/reload and cleanup pass, with one nested unsupported-kcmp skip retained. Full canonical Fetch and Verify pass for all 250 catalog entries. There is no ARM runtime or fresh cached-action execution claim. Contributor review of this refinement is pending; the earlier approval of 4be5 is preserved separately.\n\nPreserved earlier source and approval record:\n\nThe contributor approved the complete PIDFD migration at 4be5 and requested a scratch base with explicit executable inputs wherever possible, across all images. Root owns this separate base-minimization audit; Hostinet is preparing the first PIDFD utility-source prototype. Existing two-architecture builds, seven AMD64 selftest programs, Make and the 246-entry catalog pass; one nested unsupported-kcmp skip remains explicit. Those results describe the prior image and do not qualify the proposed base replacement.\n\nThe standalone image source and exact Linux source-bundle audit are published at 552c. Final canonical Fetch/Verify pass with 246 unchanged catalog blocks. Both target architectures, four profile-helper output gates and the AMD64 runtime now pass; one nested kcmp case is skipped. The profile-helper gates were explicitly rebound after proving the sole content change was an obsolete crosstool repository-mapping row. Root is completing final source applicability review before the contributor proposal; no ARM runtime result is claimed.",
+      "status": "Parked by contributor; await linux.bzl readiness",
+      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
+      "summary": "The contributor did not approve expanded PIDFD revision 4217084f534a and explicitly parked it. Revisit the approach using linux.bzl when that project is ready; readiness is not established. Do not open a PR, rebase, qualify, or request further review for this revision. Earlier 4be5 approval and scratch direction remain separate grants.\n\nPreserved historical source and validation record:\n\nThe scratch refinement is published at 4217084f534a on the approved GNU prerequisite. The image explicitly builds BusyBox ash, its selected utilities, and GNU timeout from pinned sources. Both target architectures pass archive, configuration, notice and nine-static-executable checks; four profile-helper outputs remain byte-identical. AMD64 utility and timeout probes, the seven PIDFD programs, Make rebuild/reload and cleanup pass, with one nested unsupported-kcmp skip retained. Full canonical Fetch and Verify pass for all 250 catalog entries. There is no ARM runtime or fresh cached-action execution claim. Contributor review of this refinement is pending; the earlier approval of 4be5 is preserved separately.\n\nPreserved earlier source and approval record:\n\nThe contributor approved the complete PIDFD migration at 4be5 and requested a scratch base with explicit executable inputs wherever possible, across all images. Root owns this separate base-minimization audit; Hostinet is preparing the first PIDFD utility-source prototype. Existing two-architecture builds, seven AMD64 selftest programs, Make and the 246-entry catalog pass; one nested unsupported-kcmp skip remains explicit. Those results describe the prior image and do not qualify the proposed base replacement.\n\nThe standalone image source and exact Linux source-bundle audit are published at 552c. Final canonical Fetch/Verify pass with 246 unchanged catalog blocks. Both target architectures, four profile-helper output gates and the AMD64 runtime now pass; one nested kcmp case is skipped. The profile-helper gates were explicitly rebound after proving the sole content change was an obsolete crosstool repository-mapping row. Root is completing final source applicability review before the contributor proposal; no ARM runtime result is claimed.",
       "links": [
         {
           "label": "Reviewed source",
@@ -18421,9 +18422,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "4217084f534a8e0df109de9961630f24d3386d10",
-        "observedAt": "2026-10-22T16:58:09.729341+00:00",
-        "disposition": "Qualified scratch refinement; contributor review pending",
-        "nextAction": "Root owns the contributor decision for the exact scratch refinement and subsequent dependency-aware delivery. Do not carry the prior image approval onto the changed payload or replay completed qualification.",
+        "observedAt": "2026-10-23T17:18:23.883889+00:00",
+        "disposition": "Explicit contributor hold; no active preparation or review request",
+        "nextAction": "Keep 421708 parked. Reassess with linux.bzl only after its readiness is established under renewed work direction; no PR, rebase, qualification, or reviewer ping for this revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4be5f8af9583734137eff7132b3d6b2a49fddd83",
           "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10",
@@ -18431,11 +18432,6 @@
           "https://app.buildbuddy.io/invocation/4717e114-250e-4b5d-9843-533b3bf236b3",
           "https://app.buildbuddy.io/invocation/dc5afb5b-c27f-46d5-9127-f1cba633f1bb"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "4217084f534a8e0df109de9961630f24d3386d10",
-        "url": "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10"
       }
     },
     {
@@ -19310,6 +19306,84 @@
           "https://github.com/google/gvisor/pull/14458"
         ]
       }
+    },
+    {
+      "id": "pr:16264",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/nft-fib-attribute-policy-current",
+      "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+      "title": "Validate FIB attributes by netlink ID",
+      "group": "runtime",
+      "url": "https://github.com/google/gvisor/pull/16264",
+      "status": "open",
+      "summary": "The contributor explicitly approved 00015441096e607fb99bb6d303dfd54a8ac2d3ea. The reviewed patch is delivered as PR #16264 at 00015441096e607fb99bb6d303dfd54a8ac2d3ea. The exact approved FIB source was published without another source change. Provider head and body are verified; the PR is open, non-draft and mergeable, with public CI starting. No merge or auto-merge was requested.\n\nPreserved source and review record:\n\nThe FIB attribute-policy proposal is refreshed and independently source-reviewed on current upstream dd6f after prerequisite #15816 merged. The original policy/test patch is unchanged: validate keyed netlink IDs, network-order register bounds before narrowing, and unknown flag bits. The published review commit is 0001544109. Prior failing-before and corrected qualification evidence remains source-specific; no fresh workload was run. Contributor approval is required before an upstream PR.\n\nPreserved earlier record:\n\nThe presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
+      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
+      "followup": {
+        "owner": "work_map_current",
+        "disposition": "Contributor-approved patch delivered; current public CI and maintainer review pending",
+        "sourceHead": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+        "observedAt": "2026-10-23T17:18:23.883889+00:00",
+        "nextAction": "Follow PR #16264 through the existing snapshot and route substantive current-head failures or review feedback. No new contributor decision or duplicate PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
+          "https://app.buildbuddy.io/invocation/3cb3ddab-5b91-4622-b809-afbb3270ac65",
+          "https://github.com/torvalds/linux/blob/ab185e0c4/net/netfilter/nft_fib.c#L21-L26",
+          "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+          "https://github.com/google/gvisor/pull/16264"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "7f84642711b199ca89be629ddc832804d5039d3c"
+        },
+        "after": {
+          "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea"
+        },
+        "command": "git -C ~/code/gvisor range-diff 7f84642711^! 0001544109^!"
+      },
+      "number": 16264
+    },
+    {
+      "id": "pr:16266",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/proc-task-id-current",
+      "head": "5dceaf054ade4dc098eb9f90d37b732897fe916d",
+      "title": "Reject noncanonical procfs task IDs",
+      "url": "https://github.com/google/gvisor/pull/16266",
+      "group": "runtime",
+      "status": "open",
+      "summary": "The contributor explicitly approved 4674542b6d227e33df83826e466678187e1315ae. The reviewed patch is delivered as PR #16266 at 5dceaf054ade4dc098eb9f90d37b732897fe916d. The task-ID change was mechanically refreshed onto current dd6f with exact changed-line streams; only the attribution footer was removed from the record. Separate FD/fdinfo work is excluded. Provider head and body are verified; the PR is open, non-draft and mergeable, with public CI starting. No merge or auto-merge was requested.\n\nPreserved source and review record:\n\nLinux and gVisor before/after checks verify the new InvalidTaskNames regression: native Linux passes while both original gVisor modes fail; native and both corrected gVisor modes pass. The before/after source delta contains only the two parser fixes. Three owning checks add 59 passing cases with no gaps or skips; automatic verification followed execution by 4.994385 seconds. Independent compact review ties the tested implementation to standalone proposal 4674542b6d. Initial target-loading failures and collector reattachments remain recorded. Root sent the contributor-review question for exact 4674542b6d; opening the upstream PR now awaits that decision.",
+      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
+      "followup": {
+        "owner": "work_map_current",
+        "disposition": "Contributor-approved patch delivered; current public CI and maintainer review pending",
+        "sourceHead": "5dceaf054ade4dc098eb9f90d37b732897fe916d",
+        "observedAt": "2026-10-23T17:18:23.883889+00:00",
+        "nextAction": "Follow PR #16266 through the existing snapshot and route substantive current-head failures or review feedback. No new contributor decision or duplicate PR.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/d642e02b-64ef-4667-822b-92ff8ed55d8b",
+          "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2",
+          "https://github.com/google/gvisor/pull/16266"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Procfs owning checks: 59 PASS, no gaps",
+          "url": "https://app.buildbuddy.io/invocation/cdcf8be0-0b4c-44b1-ba3a-60bf3c12a8f2"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "4674542b6d227e33df83826e466678187e1315ae"
+        },
+        "after": {
+          "head": "5dceaf054ade4dc098eb9f90d37b732897fe916d"
+        },
+        "command": "git -C ~/code/gvisor range-diff 4674542b6d^! 5dceaf054a^!"
+      },
+      "number": 16266
     }
   ],
   "edges": [
