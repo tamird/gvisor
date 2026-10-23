@@ -20,12 +20,11 @@ packaging, not a claim those package binaries were built from source.
 
 | Image | Inherited base | Observed runtime requirement |
 | --- | --- | --- |
-| syscallbench | BusyBox | sleep 24h keeps the container alive for repeated execs |
-| tmpfile | Alpine | cat reads the mounted /tmp fixture |
+| syscallbench | BusyBox; scratch replacement awaiting validation | sleep 24h keeps the container alive for repeated execs |
+| tmpfile | Alpine; scratch replacement awaiting validation | cat reads the mounted /tmp fixture |
 | symlink-resolv | BusyBox | sleep, readlink and cat exercise containerd resolver setup |
 | tcpdump | BusyBox | sleep infinity; sh redirects capture output to container logs |
 | fsstress | BusyBox | sh remains parent so workers do not see parent PID 1 |
-| PIDFD | BusyBox | sh, thirteen utility applets, GNU timeout; the C test itself execs /bin/sleep |
 | basic/alpine, basic/busybox | Their named upstream images | Shared fixture consumers require a wider command inventory before changing payloads |
 
 The proposed replacement starts from scratch and adds the required
@@ -51,32 +50,50 @@ commands, the replacement must preserve these concrete runtime contracts:
 This is a source inventory, not runtime qualification or an exhaustive
 proof of utility compatibility. Retain existing consumers as validation.
 
-## First implementation
+## Qualified PIDFD replacement
 
-Hostinet owns the PIDFD prototype on `rules-img-pidfd-scratch`, preserving
-approved4be5. It builds BusyBox 1.38.0 from the pinned upstream archive using
-upstream Make and a limited allnoconfig fragment. The image starts from
-scratch and installs the resulting static executable with fourteen explicit
-applet paths. The shell retains the runner's pipefail behavior; the required
-tr character classes are enabled. Toybox's shell lacked pipefail, and a
-separate Dash build required more integration code.
+The [PIDFD image](https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10)
+starts from scratch. It builds BusyBox 1.38.0 with a limited allnoconfig
+fragment and installs fourteen explicit applet paths. Its shell supports
+the runner's pipefail behavior, and tr supports the required character
+classes. GNU timeout is built from Coreutils 9.11 and linked statically
+against musl; it supplies the exit-status and process-group behavior used
+by the PIDFD runner. Both programs carry their license notices.
+
+Both architecture image builds and their link-closure checks pass. All seven
+PIDFD programs pass in the existing AMD64 runtime checks; one unsupported
+kcmp case remains skipped within a program. The full license audit passes.
+ARM64 runtime execution is not covered by these results. The published
+commit has the same source tree as the qualified 592a453393 revision.
+
+The result records are `pidfd-scratch-final-root-acceptance.json`,
+`qualification-pidfd-scratch-runtime-retry2-outcome.json`, and
+`qualification-pidfd-scratch-licenses-retry1-outcome.json`. They retain the
+build, runtime and license boundaries rather than treating removal of the
+parent image as proof of complete source closure.
 
 Build inputs select target ARCH and CC/AR/NM separately from execution HOSTCC.
-Kconfig timestamps are disabled. The pinned RBE execution image supplies build
-shell utilities; this does not claim those tools were individually built
-from source. The first both-architecture build and native shell/timeout probe
-is submitted; no successful runtime or source-closure claim is made yet.
+Kconfig timestamps are disabled. The pinned RBE execution image still
+supplies build shell utilities. Other image profiles also retain declared
+prebuilt packages for mkdir/chmod/rm and some shared libraries; those inputs
+remain part of the source-build audit.
 
-GNU timeout is currently an explicitly selected prebuilt package executable;
-removing the parent OCI image alone does not make that binary source-built.
-Qualify both architecture link closures, shell/timeout behavior and the
-actual seven PIDFD programs before accepting a replacement. The immutable
-runtime inventory is `pidfd-scratch-base-audit.json`.
+## Next replacements
+
+The [tmpfile and syscallbench change](https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03)
+reuses the source-built BusyBox binary. Tmpfile installs only cat's applet
+path alongside its payload and sticky /tmp directory. Syscallbench installs
+sleep's path and enables duration suffixes for its existing sleep 24h
+command. Both images start from scratch and include the executable's
+notices. Source review and remote consumer validation are pending.
+
+Retain the existing tests as acceptance checks: TestTmpFile must read the
+fixture, and all four syscallbench modes must run through their long-lived
+container. Recheck PIDFD consumers when changing the shared applet build.
+The remaining resolver, tcpdump, fsstress and shared fixture bases need
+individual command inventories and their existing consumer tests.
 
 Prefer reusable source executables with explicit per-image installed paths.
-Do not replace one implicit default utility image with another. No new native
-test runner or generic image framework is required for this experiment.
-
-WorkMap continues the separately approved resource-file relocations; these
-do not change runtime bases. New image openings wait only where their base
-actually needs correction. Existing scratch-based changes retain approvals.
+Do not replace one implicit default utility image with another. Resource
+file relocations are independent and do not change runtime bases. Existing
+scratch-based changes retain their contributor approvals.

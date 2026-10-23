@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T00:16:49.319978+00:00",
+    "updatedAt": "2026-10-23T00:37:10.846175+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -15481,33 +15481,34 @@
       "id": "branch:upgrade/nodejs-26.12.0",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "upgrade/nodejs-26.12.0-reviewed",
-      "head": "4624725855c2650587f81828d182ed66fdcd5f7e",
+      "ref": "review/nodejs-26.12.0-without-sni",
+      "head": "4679222fbe470d0f75f1382d71206d8a927b6bbc",
       "title": "Upgrade Node.js runtime tests to 26.12.0",
-      "url": "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e",
+      "url": "https://github.com/tamird/gvisor/commit/4679222fbe470d0f75f1382d71206d8a927b6bbc",
       "group": "runtime",
-      "status": "Contributor approved; waiting for SNI, procfs and licensing prerequisites",
-      "updatedAt": "2026-10-20T10:31:57.388095+00:00",
+      "status": "Contributor approved; waiting for procfs and licensing prerequisites",
+      "updatedAt": "2026-10-23T00:37:10.846175+00:00",
       "refinement": {
         "before": {
-          "head": "4b4be636405594d798f3197885869cdd66b1c17f"
+          "head": "4624725855c2650587f81828d182ed66fdcd5f7e"
         },
         "after": {
-          "head": "4624725855c2650587f81828d182ed66fdcd5f7e"
+          "head": "4679222fbe470d0f75f1382d71206d8a927b6bbc"
         }
       },
-      "summary": "Contributor approved the complete Node 26.12.0 proposal 462472585 at 10:27 UTC: open after SNI #15960, procfs creation and the public licensing prerequisites land. This single commit combines the qualified image/proctor upgrade with the exact 552 npm catalog rows and eight grants; its tree equals the accepted 8aa catalog child. The full runtime, canonical legacy-Docker image and offline public policy proofs remain separately bound to their tested sources. No new execution occurred for consolidation. The earlier 4b4 upgrade and 8aa catalog refs remain preserved, with no separate catalog proposal. Delivery is authorized after prerequisites; no repeat contributor review is needed for the unchanged tree. Refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 4b4be6364^! 462472585^!.",
+      "summary": "The approved Node 26.12.0 proposal is now 4679222f after removing only the redundant SNI patch and its application. The test is already excluded in the selected Node source, upstream Node #66835 merged, and obsolete gVisor #15960 is closed. Independent source review preserves the selected tests, runtime pins, catalog and policy grants; the prior approved 462472585 commit remains retained. Delivery remains authorized after the procfs and licensing prerequisites. No new contributor question or runtime execution is claimed.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Approved complete Node activation waits for prerequisite merges",
-        "sourceHead": "4624725855c2650587f81828d182ed66fdcd5f7e",
-        "observedAt": "2026-10-20T10:31:04.422941+00:00",
-        "nextAction": "After SNI #15960, procfs creation and generic licensing/classifier prerequisites land, refresh and publish the approved upgrade with source-equivalence review. Preserve #15146 hold and existing independent contributor decisions.",
+        "owner": "node_tls_sni",
+        "disposition": "Approved Node activation waits for remaining prerequisite merges",
+        "sourceHead": "4679222fbe470d0f75f1382d71206d8a927b6bbc",
+        "observedAt": "2026-10-23T00:37:10.846175+00:00",
+        "nextAction": "After procfs creation and generic licensing/classifier prerequisites land, refresh and publish the approved upgrade with source-equivalence review. Preserve #15146 hold. The obsolete SNI prerequisite is satisfied and must not be reopened.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e",
           "https://github.com/tamird/gvisor/actions/runs/39388037075",
           "https://github.com/tamird/gvisor/actions/runs/39397545416",
-          "https://app.buildbuddy.io/invocation/ab1e0708-9f27-4a92-a9de-d044f403e32c"
+          "https://app.buildbuddy.io/invocation/ab1e0708-9f27-4a92-a9de-d044f403e32c",
+          "https://github.com/tamird/gvisor/commit/4679222fbe470d0f75f1382d71206d8a927b6bbc"
         ]
       },
       "evidence": [
@@ -15522,6 +15523,10 @@
         {
           "label": "Approved complete Node upgrade and catalog",
           "url": "https://github.com/tamird/gvisor/commit/4624725855c2650587f81828d182ed66fdcd5f7e"
+        },
+        {
+          "label": "Approved proposal without redundant SNI patch",
+          "url": "https://github.com/tamird/gvisor/commit/4679222fbe470d0f75f1382d71206d8a927b6bbc"
         }
       ]
     },
@@ -18653,6 +18658,26 @@
           "https://github.com/nodejs/node/pull/66835"
         ]
       }
+    },
+    {
+      "id": "branch:rules-img-scratch-leaf-images",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-scratch-leaf-images",
+      "head": "6cae99aa007bf7b1f87e5fe0a8f047be228f7e03",
+      "title": "Use explicit source-built utilities for tmpfile and syscallbench",
+      "group": "bazel",
+      "url": "https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03",
+      "status": "Agent work; source review and remote qualification pending",
+      "updatedAt": "2026-10-23T00:37:10.846175+00:00",
+      "summary": "The scratch extension reuses the qualified PIDFD source-built utilities for tmpfile cat and syscallbench sleep. Root owns source; Node owns independent review and remote image/consumer validation. It depends on the PIDFD utility source and remains within the existing image-runtime-bases investigation. No contributor review or successful new image execution is claimed.",
+      "followup": {
+        "owner": "node_tls_sni",
+        "sourceHead": "6cae99aa007bf7b1f87e5fe0a8f047be228f7e03",
+        "observedAt": "2026-10-23T00:37:10.846175+00:00",
+        "disposition": "Source review and remote qualification",
+        "nextAction": "Finish the exact source peer and existing image harness validation; root integrates the results."
+      }
     }
   ],
   "edges": [
@@ -20827,6 +20852,13 @@
         "https://github.com/google/gvisor/pull/16092",
         "https://github.com/google/gvisor/commit/be5315ead3c87c1aa398c027123f030f7c551623"
       ]
+    },
+    {
+      "from": "branch:rules-img-pidfd",
+      "to": "branch:rules-img-scratch-leaf-images",
+      "type": "blocked_by",
+      "reason": "Reuses the declared source-built BusyBox utility inputs.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03"
     }
   ],
   "investigations": [
@@ -28603,7 +28635,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-22T14:12:37.334326+00:00",
+      "updatedAt": "2026-10-23T00:37:10.846175+00:00",
       "summary": "The user approved PIDFD and requested scratch bases wherever possible across all images. The existing helper_base already has no parent image and supplies declared certificates and /tmp metadata; its image users do not need a blanket base rewrite. Remaining BusyBox and Alpine users need an explicit command/loader inventory before replacement. This is agent work under the requested correction, separate from resource-file relocation.",
       "findings": [
         {
@@ -28616,16 +28648,16 @@
           ]
         },
         {
-          "text": "The first PIDFD scratch prototype builds BusyBox 1.38.0 from pinned source with upstream Make and a small allnoconfig fragment. It installs a static shell and fourteen explicit applet paths, enables required tr character classes and preserves pipefail. Execution HOSTCC and target CC/NM/ARCH are separate; remote first-build and actual consumer qualification remain required. The explicitly packaged GNU timeout is still prebuilt.",
+          "text": "PIDFD now builds both BusyBox 1.38.0 and GNU timeout from pinned sources and packages explicit static executable paths in scratch. Both CPU image closures and all seven AMD64 programs pass; the nested unsupported-kcmp skip remains. Canonical Fetch/Verify passes. These results do not claim ARM runtime execution.",
           "evidence": [
             {
-              "label": "Existing approved PIDFD source",
-              "url": "https://github.com/tamird/gvisor/commit/4be5f8af9583734137eff7132b3d6b2a49fddd83"
+              "label": "Qualified PIDFD scratch source",
+              "url": "https://github.com/tamird/gvisor/commit/4217084f534a8e0df109de9961630f24d3386d10"
             }
           ]
         },
         {
-          "text": "Removing a parent image does not make every runtime input source-built. Remaining explicit prebuilt inputs include PIDFD GNU timeout, profile-helper GNU mkdir/chmod/rm, and packaged libc/runtime closures. Reuse declared build support for the required GNU utilities where practical; keep this as one remaining source-input workstream rather than a separate task for each package.",
+          "text": "Removing a parent image does not make every runtime input source-built. Remaining explicit prebuilt inputs include profile-helper GNU mkdir/chmod/rm and packaged libc/runtime closures. PIDFD timeout is now source-built. Continue the existing source-input workstream without creating a separate task for every package.",
           "evidence": [
             {
               "label": "Runtime base and command audit",
@@ -28634,11 +28666,15 @@
           ]
         }
       ],
-      "nextStep": "Qualify the source-built PIDFD BusyBox inputs and actual runner, then apply explicit runtime inputs to other inherited-base consumers. Use native rules_img image_index platform transitions for a later combined architecture target; do not change current comparison scopes.",
+      "nextStep": "Root published scratch tmpfile/syscallbench source6cae99aa using the qualified PIDFD utilities. Node owns independent source review and actual remote image/consumer gates; no contributor review or new runtime result yet. Root continues the remaining command/loader inventory.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
           "url": "https://tamird.github.io/gvisor/image-base-audit.md"
+        },
+        {
+          "label": "Scratch leaf-image source under qualification",
+          "url": "https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03"
         }
       ]
     }
