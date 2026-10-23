@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T07:53:47.725964+00:00",
+    "updatedAt": "2026-10-23T08:28:04.397811+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19147,6 +19147,52 @@
           "head": "72883973765180ad8372bd0f3aa75a243d010353"
         }
       }
+    },
+    {
+      "id": "branch:source-built-profile-helper",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rules-img-source-profile-helper",
+      "head": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
+      "title": "Build profiling utilities from source",
+      "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
+      "group": "bazel",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-23T08:28:04.397811+00:00",
+      "summary": "Build GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
+        "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
+        "observedAt": "2026-10-23T08:28:04.397811+00:00",
+        "disposition": "Contributor review pending",
+        "nextAction": "Await the existing contributor decision, then deliver after shared utilities and their recorded compiler/image/license prerequisites. Do not repeat completed qualification or the contributor question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "fda0e4f7ca952259c8b5eab335e5e12194d0bdea"
+        },
+        "after": {
+          "head": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
+        }
+      },
+      "links": [
+        {
+          "label": "Qualified native host and both-CPU output evidence",
+          "url": "https://app.buildbuddy.io/invocation/0f8f16a2-8bec-4175-86ef-e30d18b0c161"
+        },
+        {
+          "label": "Earlier source proposal",
+          "url": "https://github.com/tamird/gvisor/commit/fda0e4f7ca952259c8b5eab335e5e12194d0bdea"
+        }
+      ]
     }
   ],
   "edges": [
@@ -21425,6 +21471,13 @@
       "to": "branch:source-built-nginx-image",
       "type": "depends_on",
       "reason": "Uses the shared source utility, notice and target-musl foundation; its existing explicit compiler/basic/license ancestry remains required.",
+      "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+    },
+    {
+      "from": "branch:source-image-utilities",
+      "to": "branch:source-built-profile-helper",
+      "type": "depends_on",
+      "reason": "Reuses the declared shared Coreutils source/generator and musl image-platform foundation; inherited compiler, image and license prerequisites remain.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     }
   ],
@@ -29206,7 +29259,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-23T07:53:47.725964+00:00",
+      "updatedAt": "2026-10-23T08:28:04.397811+00:00",
       "summary": "The user approved PIDFD and requested scratch bases wherever possible across all images. The existing helper_base already has no parent image and supplies declared certificates and /tmp metadata; its image users do not need a blanket base rewrite. Remaining BusyBox and Alpine users need an explicit command/loader inventory before replacement. This is agent work under the requested correction, separate from resource-file relocation.",
       "findings": [
         {
@@ -29246,11 +29299,15 @@
           ]
         },
         {
-          "text": "The profile-helper proposal fda0e4 replaces packaged GNU mkdir/chmod/rm and runtime libraries with the declared Coreutils producer. The final qualification passes both CPU image/static-output gates and actual native-host mkdir/chmod/rm --one-file-system, helper configuration and stream checks. Exact timeout binaries and whole PIDFD archives match retained qualified outputs, so PIDFD execution is reused. No Kubernetes or native ARM execution is claimed. Earlier failed preparations and the single reporting-count correction remain retained; Node owns final source formatting/application before a contributor proposal.",
+          "text": "The final profile-helper proposal1ef503 is published with an actual pending contributor question. It replaces packaged GNU mkdir/chmod/rm and runtime libraries with the declared Coreutils producer. Both CPU image/static-output gates and native-host mkdir/chmod/rm --one-file-system, helper configuration and stream checks passed. Exact timeout binaries and whole PIDFD archives match retained qualified outputs, so PIDFD execution is reused. No Kubernetes or native ARM execution is claimed. Earlier failed preparations and the single reporting-count correction remain retained.",
           "evidence": [
             {
               "label": "Published profile-helper source proposal",
               "url": "https://github.com/tamird/gvisor/commit/fda0e4f7ca952259c8b5eab335e5e12194d0bdea"
+            },
+            {
+              "label": "Final profile-helper proposal awaiting contributor review",
+              "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
             }
           ]
         },
@@ -29277,7 +29334,7 @@
           ]
         }
       ],
-      "nextStep": "Basic Nginx source and port-forward readiness have actual pending contributor questions on their published nodes. Node owns benchmark Nginx/Empty correctness and later paired performance, plus final publication binding for the completed profile-helper qualification. Hostinet owns Apache probe recovery, runtime validation and canonical licensing. These remaining proposals have no contributor question yet. Assess benchmarks/util HTTP readiness against source BusyBox wget after current gates; preserve distribution consumers requiring package installation.",
+      "nextStep": "Basic Nginx source, port-forward readiness and source-built profile-helper now have actual pending contributor questions on their published nodes. Node owns benchmark Nginx/Empty correctness and later paired performance. Hostinet owns Apache probe recovery and runtime validation; its canonical 257-record audit passed. Root owns the separately reviewed HTTP readiness-image replacement, whose changed shared BusyBox bytes require fresh union validation. No contributor question is inferred for these still-active benchmark/HTTP proposals; preserve distribution consumers requiring package installation.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
