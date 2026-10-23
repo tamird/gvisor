@@ -181,7 +181,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         (evidence / "release-genrules.json").write_text(query + "\n")
         graph = json.loads(query)
         labels = {row["id"]: row["label"] for row in graph["targets"]}
-        [vdso] = [row for row in graph["actions"] if labels[row["targetId"]] == "//vdso:vdso"]
         fragments = {row["id"]: row for row in graph["pathFragments"]}
 
         def artifact_path(fragment_id: int) -> str:
@@ -193,6 +192,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             return "/".join(reversed(parts))
 
         artifacts = {row["id"]: artifact_path(row["pathFragmentId"]) for row in graph["artifacts"]}
+        [vdso] = [row for row in graph["actions"] if labels[row["targetId"]] == "//vdso:vdso"
+                  and [artifacts[item] for item in row["outputIds"]] == ["bazel-out/k8-opt/bin/vdso/vdso.so"]]
         deps = {row["id"]: row for row in graph["depSetOfFiles"]}
         pending, visited, inputs = list(vdso["inputDepSetIds"]), set(), set()
         while pending:
