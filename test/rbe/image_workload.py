@@ -1,4 +1,5 @@
-"""Pilot the six existing parallel iperf3 cases on source-matched runtimes."""
+"""Compare six parallel iperf3 cases with balanced source-matched pairs."""
+from contextlib import ExitStack
 from collections import Counter
 import hashlib
 import json
@@ -59,7 +60,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     tag = "gvisor.dev/images/benchmarks/iperf:latest"
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
                "--extra_toolchains=@llvm//toolchain:all", "--remote_download_outputs=all", "--noannounce_rc"]
-    records = {"source": source, "status": "INCOMPLETE", "builds": {}, "samples": [],
+    records = {"source": source, "status": "INCOMPLETE", "builds": {}, "samples": [], "arms": {},
                "commands": [], "cleanup": "INCOMPLETE", "cleanup_errors": []}
     original_tag = None
     tag_changed = False
@@ -121,6 +122,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
 
     try:
         check_source(source)
+        benchstat = private / "benchstat"
+        fetch(config["benchstat"], benchstat)
+        benchstat.chmod(0o755)
+        records["benchstat"] = config["benchstat"]
         records["host"] = {"cpuinfo": Path("/proc/cpuinfo").read_text(),
                            "affinity": sorted(os.sched_getaffinity(0)),
                            "boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
@@ -229,53 +234,77 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
 
         iterations = config["iterations"]
         if iterations != 1:
-            raise ValueError("Timed pilot requires exactly one transfer per case")
+            raise ValueError("Timed cohort requires exactly one transfer per case")
         manifest = evidence / "iperf-declared-benchmarks.json"
         report.write_json(manifest, {"owners": {BENCHMARK: [
             {"name": name, "count": 1, "iterations": iterations,
              "units": ["ns/op", "bandwidth.bytes_per_second"]} for name in sorted(NAMES)]}})
-        for side, revision in (("before", config["before_source"]), ("after", source)):
-            command("switch-" + side, ["git", "switch", "--detach", revision])
-            check_source(revision)
-            directory = evidence / side
-            directory.mkdir()
-            runtime = "qualification-netip-" + side + "-" + uuid.uuid4().hex
-            configuration = {"runtime_name": runtime, "runtime_flags": ["--platform=systrap", "--network=sandbox"],
-                "image_name": "benchmarks/iperf", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
-                "retained_release_files": records["builds"][side]["runtime_files"],
-                "release_supplier": {"source": revision, "phase": side + "-build"}}
-            with prepared_runtime(directory / "runtime.json", private / side, configuration) as prepared:
-                if inspect()["Id"] != supplier["config_id"]:
-                    raise ValueError("Pilot image changed between arms")
-                selected = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
+        if config["pairs"] != 16:
+            raise ValueError("The prespecified cohort requires exactly 16 pairs")
+        revisions = {"before": config["before_source"], "after": source}
+        with ExitStack() as stack:
+            arguments, analyses = {}, {}
+            for side, revision in revisions.items():
+                command("switch-" + side, ["git", "switch", "--detach", revision])
+                check_source(revision)
+                directory = evidence / side
+                directory.mkdir()
+                runtime = "qualification-netip-" + side + "-" + uuid.uuid4().hex
+                configuration = {"runtime_name": runtime, "runtime_flags": ["--platform=systrap", "--network=sandbox"],
+                    "image_name": "benchmarks/iperf", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
+                    "retained_release_files": records["builds"][side]["runtime_files"],
+                    "release_supplier": {"source": revision, "phase": side + "-build"}}
+                prepared = stack.enter_context(prepared_runtime(directory / "runtime.json", private / side, configuration))
+                records["arms"][side] = prepared
+                arguments[side] = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
                     "--test_sharding_strategy=disabled", "--nozip_undeclared_test_outputs", "--test_timeout=600",
                     "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=0", "--test_arg=-test.v=false",
                     "--test_arg=-test.run=^$", "--test_arg=-test.bench=^BenchmarkIperfManyConnections$",
                     "--test_arg=-test.benchtime=" + str(iterations) + "x", "--test_arg=-test.count=1",
                     "--test_arg=-runtime=" + runtime]
-                analysis_directory = (evidence / "source-builds/before/pilot-analysis" if side == "before"
-                                      else evidence / "invocation-after-pilot-analysis")
-                test_directory = (evidence / "source-builds/before/pilot" if side == "before"
-                                  else evidence / "invocation-after-pilot")
-                analysis = invoke(side + "-pilot-analysis", ["test", *selected, "--nobuild", BENCHMARK], "analysis",
-                                  targets=[BENCHMARK], source=revision, directory=analysis_directory)
+                directory = (evidence / "source-builds/before/cohort-analysis" if side == "before"
+                             else evidence / "invocation-after-cohort-analysis")
+                analysis = invoke(side + "-cohort-analysis", ["test", *arguments[side], "--nobuild", BENCHMARK], "analysis",
+                                  targets=[BENCHMARK], source=revision, directory=directory)
                 if analysis["status"] != "PASS":
-                    raise RuntimeError(side + " pilot analysis failed")
-                tested = invoke(side + "-pilot", ["test", *selected, BENCHMARK], "test",
-                    (analysis_directory / "events.jsonl",),
-                    targets=[BENCHMARK], source=revision, directory=test_directory, declared_benchmarks=manifest, retain_outputs=True)
-                row = {"side": side, "source": revision, "status": "INCOMPLETE", "native": tested}
+                    raise RuntimeError(side + " cohort analysis failed")
+                analyses[side] = directory / "events.jsonl"
+
+            def verify_worker() -> None:
+                if (sorted(os.sched_getaffinity(0)) != records["host"]["affinity"]
+                        or Path("/proc/sys/kernel/random/boot_id").read_text().strip() != records["host"]["boot_id"]
+                        or inspect()["Id"] != supplier["config_id"]):
+                    raise ValueError("Cohort worker affinity, boot identity or image changed")
+                registered = json.loads(Path("/etc/docker/daemon.json").read_text())["runtimes"]
+                for arm in records["arms"].values():
+                    if registered[arm["runtime"]] != arm["config_after"]["runtimes"][arm["runtime"]]:
+                        raise ValueError("Cohort runtime registration changed")
+
+            def measure(side: str, pair: int | None) -> None:
+                revision = revisions[side]
+                command("switch-" + side, ["git", "switch", "--detach", revision])
+                check_source(revision)
+                verify_worker()
+                name = side + "-warmup" if pair is None else f"pair-{pair:02d}-{side}"
+                test_directory = (evidence / "source-builds/before" / name if side == "before"
+                                  else evidence / ("invocation-" + name))
+                row = {"side": side, "pair": pair, "phase": name, "source": revision, "status": "INCOMPLETE"}
                 records["samples"].append(row)
+                started = time.monotonic()
+                tested = invoke(name, ["test", *arguments[side], BENCHMARK], "test", (analyses[side],),
+                    targets=[BENCHMARK], source=revision, directory=test_directory,
+                    declared_benchmarks=manifest, retain_outputs=True)
+                row.update(native=tested, elapsed_seconds=time.monotonic() - started)
                 if tested["status"] != "PASS" or tested["native_exit"] != 0:
-                    raise RuntimeError(side + " native many-connection pilot failed")
+                    raise RuntimeError(side + " native many-connection cohort failed")
                 match tested["executed"]:
                     case [attempt] if not attempt["cached_locally"] and not attempt["execution_info"].get("cachedRemotely", False):
                         pass
                     case _:
-                        raise ValueError("Pilot must have one uncached native test attempt")
+                        raise ValueError("Each cohort sample must have one uncached native test attempt")
                 _, reports, errors = report.retained_reports(report.manifest_path(test_directory / "events.jsonl"))
                 if errors:
-                    raise ValueError("Cannot authenticate pilot reports: " + str(errors))
+                    raise ValueError("Cannot authenticate cohort reports: " + str(errors))
                 raw = [json.loads(path.read_text()) for (owner, name), path in sorted(reports.items())
                        if owner.owner.label == BENCHMARK and name.startswith("test.outputs/iperf-") and name.endswith(".json")]
                 [configured] = tested["expected"]
@@ -285,12 +314,29 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     raise ValueError("Timed benchmark differs from its completed premeasurement build")
                 row["benchmark_output"] = actual_binary
                 row["observations"] = observations(raw, config["duration_seconds"], config["omit_seconds"])
-                row["runtime"] = prepared
+                verify_worker()
+                if sorted(command("containers-after-" + name, ["docker", "ps", "-aq", "--no-trunc"]).split()) != records["containers_before"]:
+                    raise ValueError("Cohort left containers after " + name)
                 row["status"] = "PASS"
-            if json.loads((directory / "runtime.json").read_text())["cleanup"] != "PASS":
-                raise ValueError("Runtime configuration cleanup failed")
-            if sorted(command("containers-after-" + side, ["docker", "ps", "-aq", "--no-trunc"]).split()) != records["containers_before"]:
-                raise ValueError("Pilot left containers after " + side)
+
+            for side in revisions:
+                measure(side, None)
+            for pair in range(config["pairs"]):
+                for side in (("before", "after") if pair % 2 == 0 else ("after", "before")):
+                    measure(side, pair)
+        for side in revisions:
+            runtime = json.loads((evidence / side / "runtime.json").read_text())
+            if runtime["cleanup"] != "PASS":
+                raise ValueError(side + " runtime configuration cleanup failed")
+            with (evidence / (side + ".bench")).open("w") as stream:
+                for row in records["samples"]:
+                    if row["side"] == side and row["pair"] is not None:
+                        [attempt] = row["native"]["executed"]
+                        for sample in attempt["benchmarks"]:
+                            metrics = " ".join(f"{value} {unit}" for unit, value in sample["metrics"].items())
+                            print(sample["name"], sample["iterations"], metrics, file=stream)
+        output = command("benchstat", [str(benchstat), str(evidence / "before.bench"), str(evidence / "after.bench")])
+        (evidence / "benchstat.txt").write_text(output + "\n")
         records["status"] = "PASS"
     finally:
         completed = records["status"]
@@ -313,4 +359,4 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 raise RuntimeError("Pilot cleanup failed: " + str(records["cleanup_errors"]))
             records.update(status=completed, cleanup="PASS")
         finally:
-            report.write_json(evidence / "netip-many-pilot.json", records)
+            report.write_json(evidence / "netip-many-cohort.json", records)
