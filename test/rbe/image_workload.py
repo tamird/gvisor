@@ -23,7 +23,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                            "build", targets=[target])
         finally:
             record_execution(execution, "x86_64", "vdso")
-        if built["status"] != "PASS" or len(built["expected"]) != 1:
+        if built["status"] != "PASS" or built["native_exit"] != 0 or len(built["expected"]) != 1:
             raise RuntimeError("The owning vDSO build did not pass")
         audit = json.loads((evidence / "x86_64-vdso-image-execution.json").read_text())
         actions = [row for row in audit["image_actions"] if row["targetLabel"] == target]
@@ -36,6 +36,18 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             {(report.Owner(owner["label"], owner["configuration"]), "default")})
         if len(outputs) != 1 or not outputs[0]["name"].endswith("/vdso.so"):
             raise ValueError("Expected the sole configured vDSO output")
+        output = outputs[0]
+        match output["uri"].split("/bazel-out/", 1):
+            case [_, relative]:
+                output_path = "bazel-out/" + relative
+            case _:
+                raise ValueError("Expected a configured vDSO output path")
+        producers = [item for item in actions[0]["actualOutputs"]
+                     if item["path"] == output_path
+                     and item.get("digest", {}).get("hash") == output["sha256"]
+                     and int(item.get("digest", {}).get("sizeBytes", -1)) == output["bytes"]]
+        if len(producers) != 1 or output["name"] != output_path:
+            raise ValueError("Native vDSO output differs from its configured default BEP output")
         result.update(status="PASS", owner=owner, outputs=outputs, action=actions[0],
                       scope="One AMD64 vDSO build only; no Bun/netip runtime or other architecture credit")
     finally:
