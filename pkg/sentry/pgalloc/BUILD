@@ -208,6 +208,7 @@ go_test(
     size = "small",
     srcs = [
         "pgalloc_64k_test.go",
+        "pgalloc_recycled_benchmark_test.go",
         "pgalloc_test.go",
         "save_restore_test.go",
     ],
