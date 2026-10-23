@@ -173,7 +173,13 @@ arch_genrule(
     template = "qualification_httpd_context_%s.tar",
 )
 
-_HTTP_PAYLOAD_SIZES = [1, 10, 100, 1024, 10240]
+_HTTP_PAYLOAD_SIZES = [
+    1,
+    10,
+    100,
+    1024,
+    10240,
+]
 
 [
     write_file(
