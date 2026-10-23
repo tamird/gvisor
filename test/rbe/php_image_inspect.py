@@ -138,7 +138,9 @@ try:
                     actual["sha256"], actual["bytes"], 0o755 if source.stat().st_mode & 0o111 else 0o644)
         actual_files = {name: (item["sha256"], item["bytes"], item["mode"])
                         for name, item in files.items() if item["type"] == "0"}
-        if not expected_files or actual_files != expected_files or any(item["type"] not in ("0", "5") for item in files.values()):
+        if not expected_files or actual_files != expected_files or any(
+                item["type"] not in ("0", "5") or (item["uid"], item["gid"]) != (0, 0)
+                for item in files.values()):
             raise ValueError("Appended PHP source files differ from the configured patched repository")
         phpt = sorted(name.removeprefix("root/php-8.5.11/") for name in actual_files if name.endswith(".phpt"))
         if len(phpt) != 21872 or hashlib.sha256(("\n".join(phpt) + "\n").encode()).hexdigest() != config["phpt_names_sha256"]:
