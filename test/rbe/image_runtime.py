@@ -34,7 +34,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     daemon_executable = None
     daemon_cwd = None
     daemon_ready = False
-    seccomp_changed = False
+    daemon_changed = False
 
     def remaining():
         seconds = deadline - time.monotonic()
@@ -105,7 +105,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         daemon_pid = None
         daemon_child = None
 
-    def start_daemon(expected_security: list[str], restoring: bool = False) -> dict:
+    def start_daemon(expected_security: list[str], expected_experimental: bool, restoring: bool = False) -> dict:
         nonlocal daemon_pid, daemon_start_ticks, daemon_child, daemon_ready
         if daemon_pid is not None:
             raise RuntimeError("Refuse to start a second Docker daemon")
@@ -144,14 +144,15 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
                         {"pid": daemon_pid, "restoring": restoring, "pidfile": "absent",
                          "docker_info_exit": result.returncode})
                 if (observed_pid == daemon_pid and
-                        info["SecurityOptions"] == expected_security):
+                        info["SecurityOptions"] == expected_security and
+                        info["ExperimentalBuild"] == expected_experimental):
                     for key in ("ID", "DockerRootDir", "Driver", "ServerVersion"):
                         if info[key] != records["server_info_before"][key]:
                             raise RuntimeError("Restart changed Docker identity: " + key)
                     daemon_ready = True
                     return info
             time.sleep(0.1)
-        raise RuntimeError("Docker did not expose the exact fixture seccomp profile")
+        raise RuntimeError("Docker did not expose the exact fixture startup configuration")
 
     try:
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
@@ -194,11 +195,14 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             if installed["runtimes"].get(name) != value:
                 raise RuntimeError("Runtime installation changed an existing runtime")
         records["config_after"] = installed
-        if profile_name := configuration.get("seccomp_profile"):
-            if records["server_before"]["Version"] != configuration["docker_version"]:
-                raise RuntimeError("Fixture seccomp profile does not match the Docker version")
+        profile_name = configuration.get("seccomp_profile")
+        experimental = configuration.get("docker_experimental", False)
+        experimental_changed = experimental and not records["server_info_before"]["ExperimentalBuild"]
+        if (profile_name or experimental) and records["server_before"]["Version"] != configuration["docker_version"]:
+            raise RuntimeError("Fixture startup settings do not match the Docker version")
+        if profile_name or experimental_changed:
             security = records["server_info_before"]["SecurityOptions"]
-            if "name=seccomp,profile=builtin" not in security or "seccomp-profile" in original_config:
+            if profile_name and ("name=seccomp,profile=builtin" not in security or "seccomp-profile" in original_config):
                 raise RuntimeError("Fixture requires the pinned built-in Docker seccomp profile")
             daemon_pid = int(Path("/var/run/docker.pid").read_text())
             process = Path("/proc") / str(daemon_pid)
@@ -206,27 +210,32 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             daemon_executable = (process / "exe").resolve()
             daemon_cwd = (process / "cwd").resolve(strict=True)
             daemon_start_ticks = start_ticks(process)
+            changed_flags = ({"--seccomp-profile"} if profile_name else set()) | ({"--experimental"} if experimental_changed else set())
             if (daemon_executable != Path(shutil.which("dockerd")).resolve() or
                     Path(daemon_arguments[0]).name != "dockerd" or
-                    any(arg.startswith("--seccomp-profile") for arg in daemon_arguments)):
-                raise RuntimeError("Worker daemon identity or seccomp options differ")
+                    any(arg.split("=", 1)[0] in changed_flags for arg in daemon_arguments)):
+                raise RuntimeError("Worker daemon identity or startup options differ")
             # Keep the existing private environment in memory; never retain it.
             daemon_environment = dict(item.decode().split("=", 1) for item in
                                       (process / "environ").read_bytes().split(b"\0") if item)
             records["daemon_arguments"] = daemon_arguments
             records["daemon_executable"] = str(daemon_executable)
             records["daemon_cwd"] = str(daemon_cwd)
-            records["seccomp_profile"] = record_file(Path(profile_name))
-            installed["seccomp-profile"] = profile_name
+            if profile_name:
+                records["seccomp_profile"] = record_file(Path(profile_name))
+                installed["seccomp-profile"] = profile_name
+            if experimental_changed:
+                installed["experimental"] = True
             config_path.write_text(json.dumps(installed, indent=2) + "\n")
-            seccomp_changed = True
-            # Docker 24 reads its default seccomp profile only at startup.
+            daemon_changed = True
+            # Docker 24 installs experimental routes and its seccomp profile at startup.
             # Preserve its argv, environment, data directory and configuration.
             stop_daemon()
-            expected_security = ["name=seccomp,profile=" + profile_name if value ==
+            expected_security = ["name=seccomp,profile=" + profile_name if profile_name and value ==
                                  "name=seccomp,profile=builtin" else value for value in security]
-            records["fixture_server_info"] = start_daemon(expected_security)
-            records["daemon_action"] = "Restart sole disposable daemon with the pinned fixture profile"
+            records["fixture_server_info"] = start_daemon(
+                expected_security, experimental or records["server_info_before"]["ExperimentalBuild"])
+            records["daemon_action"] = "Restart sole disposable daemon with declared fixture startup settings"
         else:
             reload_daemon()
             records["daemon_action"] = "Reload existing daemon runtimes"
@@ -235,7 +244,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             result = subprocess.run(["docker", "info", "--format={{json .}}"], capture_output=True, text=True, timeout=min(5, remaining()))
             if result.returncode == 0:
                 info = json.loads(result.stdout)
-                if runtime_name in info["Runtimes"]:
+                if runtime_name in info["Runtimes"] and (not experimental or info["ExperimentalBuild"]):
                     records["server_info"] = info
                     break
             time.sleep(0.1)
@@ -279,9 +288,11 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             # This disposable worker has one owner. Restore its original
             # runtime configuration even if installation or the consumer fails.
             config_path.write_bytes(original_bytes)
-            if seccomp_changed:
+            if daemon_changed:
                 stop_daemon()
-                records["restored_server_info"] = start_daemon(records["server_info_before"]["SecurityOptions"], restoring=True)
+                records["restored_server_info"] = start_daemon(
+                    records["server_info_before"]["SecurityOptions"],
+                    records["server_info_before"]["ExperimentalBuild"], restoring=True)
                 if records["restored_server_info"]["Runtimes"] != records["server_info_before"]["Runtimes"]:
                     raise RuntimeError("Cleanup did not restore the original Docker runtimes")
             else:

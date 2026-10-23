@@ -188,6 +188,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 runtime = scopes.enter_context(prepared_runtime(directory / "runtime.json", runtime_directory, {
                     "runtime_name": name, "runtime_flags": ["--platform=systrap"],
                     "image_name": "benchmarks/nginx", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
+                    "docker_experimental": True, "docker_version": "24.0.9",
                     "retained_release_files": retained, "release_supplier": {"source": revision},
                 }))
                 inputs["runtimes"][side] = {"name": name, "source": revision, "files": runtime["runtime_files"],
