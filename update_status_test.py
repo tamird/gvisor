@@ -403,6 +403,33 @@ class CheckReportTest(unittest.TestCase):
         self.assertEqual(report["checkFailures"], [])
         self.assertEqual(report["changedChecks"][0]["status"], "closed")
 
+    def test_terminal_source_keeps_failed_import_history_out_of_current_attention(self) -> None:
+        source = retained(raw_pr(3))
+        old_import = linked(imported(103, 3), 3)
+        failure = {"id": "generate-1", "kind": "check-run", "name": "generate", "state": "FAILURE"}
+        old_import["checks"] = {"state": "FAILURE", "total": 1, "complete": True, "contexts": [failure]}
+        old_import["mergeable"] = "CONFLICTING"
+        source["imports"] = [old_import]
+        previous = {"prs": [copy.deepcopy(source)]}
+        for status in ("merged", "closed"):
+            with self.subTest(status=status):
+                source["status"] = status
+                retained_source = copy.deepcopy(source)
+                report = updater.check_report([source], previous)
+                for field in ("checkFailures", "activeImports", "mergeabilityIssues"):
+                    self.assertEqual(report[field], [], field)
+                for field in ("changedChecks", "changedMergeability"):
+                    self.assertEqual([(item["number"], item["sourceStatus"], item["status"])
+                                      for item in report[field]], [(103, status, "open")])
+                self.assertEqual(source, retained_source)
+                repeated = updater.check_report([source], {"prs": [retained_source]})
+                self.assertEqual(repeated["changedChecks"], [])
+                self.assertEqual(repeated["changedMergeability"], [])
+        terminal = {"prs": [copy.deepcopy(source)]}
+        source["status"] = "open"
+        reopened = updater.check_report([source], terminal)
+        self.assertEqual([item["number"] for item in reopened["checkFailures"]], [103])
+
 
 class ScopedApprovalTest(unittest.TestCase):
     def test_scoped_detail_retains_approval_and_force_push_boundary(self) -> None:

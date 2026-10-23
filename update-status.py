@@ -476,6 +476,7 @@ def check_report(prs: list[dict], previous: dict) -> dict:
     failures, changes, imports, mergeability, mergeability_changes = [], [], [], [], []
     for source in prs:
         repo = source.get("repo", REPO)
+        source_status_changed = source["status"] != prior.get((repo, source["number"]), {}).get("status")
         followup = owners.get((repo, source["number"]), {})
         assignment = {key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
                       if key in followup}
@@ -486,7 +487,7 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             failed = [check for check in checks.get("contexts", []) if check["state"] in FAILURES]
             old_checks = old.get("checks") or {}
             old_failed = [check for check in old_checks.get("contexts", []) if check["state"] in FAILURES]
-            active = pr["status"] in {"open", "draft"}
+            active = source["status"] in {"open", "draft"} and pr["status"] in {"open", "draft"}
             observation = {
                 "repo": repo, "source": source["number"], "sourceHead": source["head"],
                 "sourceStatus": source["status"], "number": pr["number"], "url": pr["url"],
@@ -510,14 +511,14 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             if active and unresolved:
                 mergeability.append({**observation, "followup": assignment})
             if (unresolved or old.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
-                    or old.get("branchHead") and old["branchHead"] != old.get("head")) and any(
+                    or old.get("branchHead") and old["branchHead"] != old.get("head")) and (source_status_changed or any(
                 pr.get(key) != old.get(key) for key in ("head", "branchHead", "base", "status", "mergeable", "mergeState")
-            ):
+            )):
                 mergeability_changes.append({**observation, "followup": assignment})
             # Include resolution and closure, and re-report failures after a head
             # change even if the service reuses its status-context identifier.
             if (failed or old_failed or checks.get("state") in FAILURES or old_checks.get("state") in FAILURES) and (
-                (pr["head"], pr["status"], pr.get("sourceHead"), checks) !=
+                source_status_changed or (pr["head"], pr["status"], pr.get("sourceHead"), checks) !=
                 (old.get("head"), old.get("status"), old.get("sourceHead"), old_checks)
             ):
                 changes.append(observation)
