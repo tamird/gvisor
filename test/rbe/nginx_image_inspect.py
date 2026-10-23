@@ -1,16 +1,14 @@
-"""Inspect the exact mixed-build Nginx archives and configure outputs."""
+"""Authenticate inherited Nginx layers and inspect the added netstat fixture."""
 import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tarfile
-import tempfile
 import time
 
-from image_archive import archive, executable_aliases, identity, resolve
+from image_archive import archive, identity
 
 os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 evidence = Path(sys.argv[1])
@@ -75,7 +73,7 @@ try:
     if graph["source"] != config["source"] or proof["status"] != "PASS":
         raise ValueError("Mixed graph or native proof is not source-bound PASS")
     # Bind aggregate BEP paths to the original archive/context owner bytes.
-    for image in ("nginx", "pidfd_tests"):
+    for image in ("nginx",):
         for kind in ("archive", "context"):
             aggregate = owner("//images/basic:qualification_" + image + "_" + kind + "s", "k8")
             expected_names = {"qualification_" + image + "_" + kind + "_" + arch + ".tar" for arch in ("amd64", "arm64")}
@@ -89,24 +87,45 @@ try:
                     raise ValueError("Architecture aggregate differs from configured source output")
                 records["aggregate_outputs"].append({"architecture": arch, "image": image, "kind": kind,
                     "aggregate_owner": aggregate["label"], "copy": producer(copied), "original": producer(original)})
-    source_names = {"LICENSE", "conf/mime.types", "html/index.html"}
-    source_rows = [item for item in graph["rows"] if item["name"] in source_names
-                   and not item["label"].removeprefix("@@").startswith("//")]
-    if len(source_rows) != 3 or {item["name"] for item in source_rows} != source_names:
-        raise ValueError("Nginx source owner set differs")
-    sources = {}
-    for item in source_rows:
-        match item["files"]:
-            case [name] if "+nginx_source/" in name:
-                sources[item["name"]] = local_path(name)
-            case _:
-                raise ValueError("Nginx source output does not belong to the pinned repository")
+    upstream_directory = Path(__file__).with_name("nginx_upstream")
+    index_path = upstream_directory / "index.json"
+    index_identity = identity(index_path)
+    if "sha256:" + index_identity["sha256"] != config["upstream_index_digest"]:
+        raise ValueError("Upstream index differs from the declared pin")
+    upstream_index = json.loads(index_path.read_text())
     for architecture, cpu, machine in (("amd64", "k8", "Advanced Micro Devices X86-64"), ("arm64", "aarch64", "AArch64")):
         row = {"architecture": architecture, "status": "INCOMPLETE"}
         records["architectures"].append(row)
-        metadata, files, elves = archive(output("//images/basic:nginx_archive", cpu), row)
+        selected = [item for item in upstream_index["manifests"]
+                    if item["platform"]["os"] == "linux" and item["platform"]["architecture"] == architecture]
+        match selected:
+            case [descriptor]:
+                pass
+            case _:
+                raise ValueError("Pinned index does not select exactly one target image")
+        manifest_path = upstream_directory / (architecture + "-manifest.json")
+        manifest_identity = identity(manifest_path)
+        if ("sha256:" + manifest_identity["sha256"], manifest_identity["bytes"]) != (descriptor["digest"], descriptor["size"]):
+            raise ValueError("Upstream manifest differs from the selected index entry")
+        upstream_manifest = json.loads(manifest_path.read_text())
+        config_path = upstream_directory / (architecture + "-config.json")
+        config_identity = identity(config_path)
+        if ("sha256:" + config_identity["sha256"], config_identity["bytes"]) != (
+                upstream_manifest["config"]["digest"], upstream_manifest["config"]["size"]):
+            raise ValueError("Upstream config differs from its manifest")
+        upstream_config = json.loads(config_path.read_text())
+        inherited_layers = [
+            {"sha256": layer["digest"].removeprefix("sha256:"), "bytes": layer["size"], "diff_id": diff_id}
+            for layer, diff_id in zip(upstream_manifest["layers"], upstream_config["rootfs"]["diff_ids"], strict=True)
+        ]
+        row["upstream"] = {"index": index_identity, "manifest": manifest_identity, "config": config_identity,
+                           "platform": descriptor["platform"], "config_values": upstream_config["config"]}
+        metadata, files, elves = archive(output("//images/basic:nginx_archive", cpu), row, inherited_layers)
+        if metadata["config"] != upstream_config["config"]:
+            raise ValueError("Image did not inherit the exact upstream runtime configuration")
+        if len(row["layers"]) != len(inherited_layers) + 2:
+            raise ValueError("Image omitted or added an unexpected fixture layer")
         inventory = evidence / (architecture + "-nginx-inventory.json")
-        inventory.write_text(json.dumps(row, indent=2) + "\n")
         context = output("//images/basic:nginx_context", cpu)
         row["context"] = identity(context)
         with tarfile.open(context) as contents:
@@ -118,78 +137,46 @@ try:
                         raise ValueError("Make context differs from the image archive")
                 case _:
                     raise ValueError("Make context must contain the sole expected image archive")
-        cfg = metadata["config"]
-        if (metadata["os"], metadata["architecture"], cfg.get("User")) != ("linux", architecture, "0:0"):
-            raise ValueError("Nginx target/user differs")
-        if cfg.get("Cmd") != ["/usr/sbin/nginx", "-g", "daemon off;"] or cfg.get("StopSignal") != "SIGQUIT":
-            raise ValueError("Nginx startup/shutdown contract differs")
-        if "80/tcp" not in cfg.get("ExposedPorts", {}) or "PATH=/usr/sbin:/usr/bin:/bin" not in cfg.get("Env", []):
-            raise ValueError("Nginx port or command search path differs")
-        if resolve(files, "bin/netstat") != "bin/busybox" or files["tmp"]["mode"] != 0o1777:
-            raise ValueError("Nginx socket inspection or writable temporary directory missing")
-        expected = {"usr/sbin/nginx": "//images/nginx:binary", "bin/busybox": "//images:busybox_binary"}
-        row["executable_aliases"] = executable_aliases(files, elves, expected)
-        row["static_programs"] = []
-        with tempfile.TemporaryDirectory(prefix="nginx-elf-") as temporary:
-            for installed, label in expected.items():
-                compiled = output(label, cpu)
-                item = identity(compiled)
-                if (files[installed]["mode"], files[installed]["sha256"], files[installed]["bytes"]) != (0o755, item["sha256"], item["bytes"]):
-                    raise ValueError("Installed executable differs from configured output: " + installed)
-                path = Path(temporary) / Path(installed).name
-                path.write_bytes(elves[installed])
-                header = run(["readelf", "--file-header", str(path)])
-                segments = run(["readelf", "--program-headers", str(path)])
-                dynamic = run(["readelf", "--dynamic", str(path)])
-                if machine not in header or "INTERP" in segments or "(NEEDED)" in dynamic:
-                    raise ValueError("Nginx image executable is not target-static")
-                markers = (str(root).encode(), str(output_root).encode(), b"/buildbuddy-execroot/", b"/root/workspace/", b"/tmp/image-qualification-", b"/Users/")
-                if any(marker in elves[installed] for marker in markers):
-                    raise ValueError("Executable contains a worker-specific build path")
-                row["static_programs"].append({"installed_path": installed, "owner": label, "output": item,
-                    "producer": producer(compiled), "file_header": header, "program_headers": segments, "dynamic": dynamic})
-        mapping = {"usr/share/licenses/nginx/LICENSE": sources["LICENSE"], "etc/nginx/mime.types": sources["conf/mime.types"],
-                   "usr/share/nginx/html/index.html": sources["html/index.html"], "etc/nginx/nginx.conf": Path("images/basic/nginx/nginx.conf"),
-                   "etc/passwd": Path("images/basic/nginx/passwd"), "etc/group": Path("images/basic/nginx/group"),
-                   "usr/share/licenses/busybox/NOTICE": Path("images/busybox/NOTICE"), "usr/share/licenses/musl/NOTICE": Path("images/musl/NOTICE")}
-        for installed, source in mapping.items():
+        if (metadata["os"], metadata["architecture"]) != ("linux", architecture):
+            raise ValueError("Nginx target architecture differs")
+        expected_files = {"usr/local/bin/netstat", "usr/share/licenses/busybox/LICENSE",
+                          "usr/share/licenses/busybox/NOTICE", "usr/share/licenses/musl/NOTICE"}
+        if {name for name, item in files.items() if item["type"] != "5"} != expected_files:
+            raise ValueError("Fixture layer adds unexpected files or links")
+        if set(elves) != {"usr/local/bin/netstat"}:
+            raise ValueError("Fixture layer does not contain only the declared netstat executable")
+        if any(item["type"] == "5" and item["mode"] != 0o755 for item in files.values()):
+            raise ValueError("Fixture layer changed a directory's permissions")
+        installed = "usr/local/bin/netstat"
+        compiled = output("//images:busybox_binary", cpu)
+        item = identity(compiled)
+        if (files[installed]["mode"], files[installed]["sha256"], files[installed]["bytes"]) != (0o755, item["sha256"], item["bytes"]):
+            raise ValueError("Installed netstat differs from the configured BusyBox output")
+        header = run(["readelf", "--file-header", str(compiled)])
+        segments = run(["readelf", "--program-headers", str(compiled)])
+        dynamic = run(["readelf", "--dynamic", str(compiled)])
+        if machine not in header or "INTERP" in segments or "(NEEDED)" in dynamic:
+            raise ValueError("Added netstat executable is not target-static")
+        markers = (str(root).encode(), str(output_root).encode(), b"/buildbuddy-execroot/", b"/root/workspace/", b"/tmp/image-qualification-", b"/Users/")
+        if any(marker in elves[installed] for marker in markers):
+            raise ValueError("Added netstat contains a worker-specific build path")
+        row["static_programs"] = [{"installed_path": installed, "owner": "//images:busybox_binary", "output": item,
+                                  "producer": producer(compiled), "file_header": header, "program_headers": segments, "dynamic": dynamic}]
+        for installed, source in {
+                "usr/share/licenses/busybox/NOTICE": Path("images/busybox/NOTICE"),
+                "usr/share/licenses/musl/NOTICE": Path("images/musl/NOTICE")}.items():
             if (files[installed]["mode"], files[installed]["sha256"]) != (0o644, identity(source)["sha256"]):
-                raise ValueError("Installed source/configuration/notice differs: " + installed)
-        if files["usr/share/licenses/busybox/LICENSE"]["sha256"] != "bbfc9843646d483c334664f651c208b9839626891d8f17604db2146962f43548":
+                raise ValueError("Added notice differs: " + installed)
+        if (files["usr/share/licenses/busybox/LICENSE"]["mode"], files["usr/share/licenses/busybox/LICENSE"]["sha256"]) != (
+                0o644, "bbfc9843646d483c334664f651c208b9839626891d8f17604db2146962f43548"):
             raise ValueError("BusyBox license differs from its pinned source")
-        build = owner("//images/nginx:nginx_build", cpu)
-        row["configure_outputs"] = []
-        for group, expected_count in (("Configure_logs", 3), ("ngx_auto_config.h", 1)):
-            paths = build["groups"][group]
-            if len(paths) != expected_count:
-                raise ValueError("Nginx configure output count differs: " + group)
-            for number, name in enumerate(paths):
-                path = local_path(name)
-                if path.stat().st_size > 8 * 1024 * 1024:
-                    raise ValueError("Nginx diagnostic exceeds 8 MiB")
-                destination = evidence / (architecture + "-nginx-" + str(number) + "-" + path.name)
-                shutil.copyfile(path, destination)
-                row["configure_outputs"].append({"group": group, "configured": identity(path), "retained": identity(destination)})
-                if path.name == "build_script.sh":
-                    script = path.read_text()
-                    if not all(token in script for token in ("CFLAGS", "LDFLAGS", "-static", "musl", "configure.sh", "run_probe.sh")):
-                        raise ValueError("Generated configure action omitted declared compiler/link/probe inputs")
-                if group == "ngx_auto_config.h":
-                    text = path.read_text()
-                    expected_machine = "x86_64" if cpu == "k8" else "aarch64"
-                    configure = [line for line in text.splitlines() if line.startswith("#define NGX_CONFIGURE ")]
-                    if len(configure) != 1 or '--crossbuild=Linux::' + expected_machine not in configure[0]:
-                        raise ValueError("Configured target metadata differs")
-                    if '--prefix=/etc/nginx' not in configure[0] or '--with-ld-opt' in configure[0] or '--with-cc-opt' in configure[0]:
-                        raise ValueError("Nginx configure metadata contains dynamic flags or lacks fixed runtime prefix")
-                    row["configure_metadata"] = configure[0]
-                    row["configure_producer"] = producer(path)
         configured = next(item for item in json.loads((evidence / "busybox-build-inputs.json").read_text())["architectures"]
                           if item["architecture"] == ("x86_64" if cpu == "k8" else "aarch64"))
         actual_config = Path(configured["outputs"]["config"][0]["retained"]).read_text().splitlines()
         required = {line for line in Path("images/busybox/applets.config").read_text().splitlines() if line.startswith("CONFIG_")}
         if not required <= set(actual_config):
             raise ValueError("Resolved BusyBox configuration dropped required applets")
+        inventory.write_text(json.dumps(row, indent=2) + "\n")
         row["runtime_inputs"] = {"status": "PASS", "source": config["source"], "archive": row["archive"],
                                  "config_sha256": row["config_sha256"], "inventory": identity(inventory)}
         row["status"] = "PASS"

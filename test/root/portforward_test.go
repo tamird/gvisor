@@ -33,6 +33,7 @@ import (
 
 	"github.com/moby/sys/capability"
 	"golang.org/x/sync/errgroup"
+
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"

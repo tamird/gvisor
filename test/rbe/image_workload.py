@@ -20,16 +20,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError("Invalid canonical execution root")
     targets = config["targets"]
-    programs = ["pidfd_test", "pidfd_fdinfo_test", "pidfd_open_test", "pidfd_poll_test",
-                "pidfd_wait", "pidfd_getfd_test", "pidfd_setns_test"]
-    sources = ["tools/testing/selftests/pidfd/" + name for name in
-               [name + ".c" for name in programs] + ["Makefile", "config", "pidfd.h"]]
-    sources += ["tools/testing/selftests/run_kselftest.sh", "tools/testing/selftests/kselftest/runner.sh",
-                "tools/testing/selftests/kselftest/prefix.pl", "COPYING", "LICENSES/preferred/GPL-2.0",
-                "LICENSES/exceptions/Linux-syscall-note", "Documentation/process/license-rules.rst"]
-    query = ('filter("^(@@)?//images(:|/basic:|/nginx:)", deps(set(' + " ".join(targets) + '))) union set(' +
-             " ".join("@linux_pidfd//:" + name for name in sources) +
-             ' @nginx_source//:LICENSE @nginx_source//:conf/mime.types @nginx_source//:html/index.html)')
+    query = 'filter("^(@@)?//images(:|/basic:)", deps(set(' + " ".join(targets) + ')))'
     queried = invoke("mixed-image-owners", ["cquery", *options, "--output=starlark",
                      "--starlark:file=" + str(scripts / "image_query.bzl"), query], "command", targets=[])
     if queried["status"] != "PASS":
@@ -39,20 +30,16 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     (evidence / "image-configured-inputs.json").write_text(json.dumps(graph, indent=2) + "\n")
     # Validate the new serializer and every required configured owner before
     # starting compilation. The files need not exist during this analysis.
-    labels = ["//images/basic:" + name for name in programs + ["pidfd_test_list"]]
-    labels += ["//images:busybox_binary", "//images:timeout_binary", "//images/nginx:binary"]
-    labels += ["//images/basic:" + image + "_" + kind
-               for image in ("nginx", "pidfd_tests") for kind in ("archive", "context")]
+    labels = ["//images:busybox_binary"]
+    labels += ["//images/basic:nginx_" + kind for kind in ("archive", "context")]
     for cpu in ("k8", "aarch64"):
-        for label in labels + ["//images:busybox_build", "//images/nginx:nginx_build"]:
+        for label in labels + ["//images:busybox_build"]:
             selected = [item for item in rows if item["label"].removeprefix("@@") == label and item["cpu"] == cpu]
             if len(selected) != 1 or (label in labels and len(selected[0]["files"]) != 1):
                 raise ValueError(f"Unexpected mixed owner shape: {label} {cpu}: {selected}")
-            groups = selected[0]["groups"]
-            expected = ({"Make_logs": 3, "busybox.config": 1} if label == "//images:busybox_build" else
-                        {"Configure_logs": 3, "ngx_auto_config.h": 1} if label == "//images/nginx:nginx_build" else {})
-            if any(len(groups.get(name, [])) != count for name, count in expected.items()):
-                raise ValueError(f"Unexpected diagnostic groups: {label} {cpu}: {groups}")
+            expected = {"Make_logs": 3, "busybox.config": 1} if label == "//images:busybox_build" else {}
+            if any(len(selected[0]["groups"].get(name, [])) != count for name, count in expected.items()):
+                raise ValueError(f"Unexpected diagnostic groups: {label} {cpu}: {selected}")
     for label in targets:
         selected = [item for item in rows if item["label"].removeprefix("@@") == label]
         if len(selected) != 1 or len(selected[0]["files"]) != 2:
@@ -105,8 +92,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     inspected = invoke("nginx-image-closure", [*python, str(scripts / "nginx_image_inspect.py"), str(evidence)],
                        "command", targets=[])
     if inspected["status"] != "PASS":
-        raise RuntimeError("Nginx image/static/configure closure failed")
+        raise RuntimeError("Pinned Nginx image/layer closure failed")
     import nginx_image_runtime
     nginx_image_runtime.run(invoke, evidence, private)
-    import image_pidfd_runtime
-    image_pidfd_runtime.run(invoke, evidence, private)

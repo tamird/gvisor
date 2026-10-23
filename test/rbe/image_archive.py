@@ -10,7 +10,8 @@ def identity(path):
     return {"path": str(path), "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
-def archive(path, record):
+def archive(path, record, inherited_layers=()):
+    """Inspect added files; authenticate opaque base layers by pinned identities."""
     files = {}
     elf_files = {}
     record["archive"] = identity(path)
@@ -24,13 +25,25 @@ def archive(path, record):
         config = json.loads(config_bytes)
         record["config"] = config
         record["config_sha256"] = hashlib.sha256(config_bytes).hexdigest()
-        for layer, diff_id in zip(manifest["Layers"], config["rootfs"]["diff_ids"], strict=True):
+        if len(inherited_layers) > len(manifest["Layers"]):
+            raise ValueError("Image omitted inherited layers")
+        record["inherited_layer_count"] = len(inherited_layers)
+        record["files_scope"] = "appended layers" if inherited_layers else "entire image"
+        for index, (layer, diff_id) in enumerate(zip(manifest["Layers"], config["rootfs"]["diff_ids"], strict=True)):
             payload = outer.extractfile(layer).read()
             item = {"name": layer, "bytes": len(payload),
                     "sha256": hashlib.sha256(payload).hexdigest(), "expected_diff_id": diff_id}
             record["layers"].append(item)
             if layer != "blobs/sha256/" + item["sha256"]:
                 raise RuntimeError("Stored layer differs from its blob identity")
+            if index < len(inherited_layers):
+                expected = inherited_layers[index]
+                if (item["sha256"], item["bytes"], diff_id) != (expected["sha256"], expected["bytes"], expected["diff_id"]):
+                    raise ValueError("Inherited layer differs from its pinned upstream identity")
+                item["inherited"] = True
+                # The upstream config supplies the diff-ID. Do not present it
+                # as a fresh decompression or inspect upstream package contents.
+                continue
             with tarfile.open(fileobj=io.BytesIO(payload), mode="r:*") as encoded:
                 encoded.fileobj.seek(0)
                 uncompressed = encoded.fileobj.read()
