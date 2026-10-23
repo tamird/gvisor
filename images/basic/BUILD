@@ -39,6 +39,43 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+# Exercise containerd's resolver mounts through a symlink in the image.
+image_layer(
+    name = "symlink_resolv_layer",
+    symlinks = {
+        "/bin/cat": "/bin/busybox",
+        "/bin/readlink": "/bin/busybox",
+        "/bin/sleep": "/bin/busybox",
+        "/etc/resolv.conf": "../tmp/resolv.conf",
+    },
+)
+
+image_manifest(
+    name = "symlink_resolv_manifest",
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":symlink_resolv_layer",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
+    name = "symlink_resolv",
+    manifests = [":symlink_resolv_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "symlink_resolv",
+    image = ":symlink_resolv",
+    image_name = "basic/symlink-resolv",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
