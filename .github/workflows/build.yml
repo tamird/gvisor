@@ -86,7 +86,7 @@ jobs:
     # Ubuntu 26.04's Azure kernel fixes nested SVM CR2 save/restore for KVM lanes.
     # https://github.com/torvalds/linux/commit/5c247d08b
     runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'amd64' || inputs.architecture == 'all' && inputs.lanes == 'syscalls-rc') && (contains(format(',{0},', inputs.local_test_requirements), ',kvm,') || contains(fromJSON('["container","container-v1","container-v1-pilot","kvm","syscalls-kvm","syscalls-rc-pilot","syscalls-rc","startup","posture","benchmarks","pgo"]'), inputs.lanes)) && 'ubuntu-26.04' || inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.lanes == 'pgo' && 155 || inputs.execution == 'local' && inputs.architecture == 'all' && inputs.lanes == 'unit' && 155 || inputs.execution == 'local' && inputs.lanes == 'container-v1' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 120 || inputs.execution == 'remote' && (inputs.architecture == 'all' || contains(fromJSON('["build","test","pgo"]'), inputs.lanes) || inputs.architecture == 'amd64' && inputs.lanes == 'build-all' || inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes)) && 155 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-save","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'container-v1-pilot' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
+    timeout-minutes: ${{ inputs.lanes == 'credential-sentinel' && 15 || inputs.lanes == 'pgo' && 155 || inputs.execution == 'local' && inputs.architecture == 'all' && inputs.lanes == 'unit' && 155 || inputs.execution == 'local' && inputs.lanes == 'container-v1' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 120 || inputs.execution == 'remote' && (inputs.architecture == 'all' || contains(fromJSON('["build","test","pgo"]'), inputs.lanes) || inputs.architecture == 'amd64' && inputs.lanes == 'build-all' || inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes)) && 155 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-save","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'container-v1-pilot' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
     permissions:
       contents: read
     env:
@@ -104,6 +104,7 @@ jobs:
       QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
     steps:
     - name: Check the Remote Bazel credential
+      if: inputs.lanes != 'credential-sentinel'
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -116,7 +117,7 @@ jobs:
         persist-credentials: false
 
     - name: Download the pinned BuildBuddy CLI
-      if: env.QUALIFICATION_EXECUTION == 'remote'
+      if: env.QUALIFICATION_EXECUTION == 'remote' && inputs.lanes != 'credential-sentinel'
       shell: bash
       run: |
         curl --fail --silent --show-error --location --max-time 120 \
@@ -128,7 +129,7 @@ jobs:
         chmod +x "$RUNNER_TEMP/bb"
 
     - name: Qualify on Remote Bazel
-      if: env.QUALIFICATION_EXECUTION == 'remote'
+      if: env.QUALIFICATION_EXECUTION == 'remote' && inputs.lanes != 'credential-sentinel'
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -155,15 +156,64 @@ jobs:
           --script='bash test/rbe/actions.sh'
 
     - name: Coordinate qualification on Actions
-      if: env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions'
+      id: actions_qualification
+      if: (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions') && inputs.lanes != 'credential-sentinel'
       timeout-minutes: ${{ inputs.lanes == 'pgo' && 145 || inputs.execution == 'local' && inputs.architecture == 'all' && inputs.lanes == 'unit' && 145 || inputs.execution == 'local' && inputs.lanes == 'container-v1' && 150 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 115 || env.QUALIFICATION_EXECUTION == 'remote-actions' && 145 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-save","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'container-v1-pilot' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: bash test/rbe/actions.sh
 
+    - name: Check Actions credential publication with synthetic inputs
+      if: inputs.lanes == 'credential-sentinel'
+      timeout-minutes: 12
+      shell: bash
+      run: |
+        set -euo pipefail
+        [[ $(id -u) != 0 ]]
+        export USE_BAZEL_VERSION=$(<images/default/bazelversion)
+        out="$RUNNER_TEMP/credential-sentinel"
+        mkdir -p "$out"
+        git rev-parse HEAD > "$out/source.txt"
+        preparation_status=0
+        bazel --ignore_all_rc_files cquery --lockfile_mode=update \
+          'set(//test/rbe:credential_artifacts_test //test/rbe:qualification_report_test)' \
+          > "$out/preparation-stdout.txt" 2> "$out/preparation-stderr.txt" || preparation_status=$?
+        printf '%s\n' "$preparation_status" > "$out/preparation-exit.txt"
+        if (( preparation_status != 0 )); then exit "$preparation_status"; fi
+        cp MODULE.bazel.lock "$out/MODULE.bazel.lock"
+        sha256sum MODULE.bazel.lock > "$out/lock-sha256.txt"
+        status=0
+        for owner in credential_artifacts_test qualification_report_test; do
+          arguments=()
+          if [[ $owner == qualification_report_test ]]; then
+            arguments+=(--test_arg=QualificationReportTest.test_work_deadline_reaches_capture_and_bundle)
+          fi
+          native_status=0
+          bazel --ignore_all_rc_files test --lockfile_mode=error \
+            --strategy=TestRunner=local --nocache_test_results \
+            --test_timeout=180 --test_output=all --test_arg=-v "${arguments[@]}" \
+            "//test/rbe:$owner" \
+            > "$out/$owner-stdout.txt" 2> "$out/$owner-stderr.txt" || native_status=$?
+          printf '%s\n' "$native_status" > "$out/$owner-native-exit.txt"
+          if (( native_status != 0 )); then status=$native_status; fi
+          logs=$(bazel --ignore_all_rc_files info bazel-testlogs --lockfile_mode=error)
+          for file in test.log test.xml; do
+            cp "$logs/test/rbe/$owner/$file" "$out/$owner-$file" || status=1
+          done
+        done
+        exit "$status"
+
+    - name: Retain synthetic credential regression evidence
+      if: always() && inputs.lanes == 'credential-sentinel'
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: credential-sentinel
+        path: ${{ runner.temp }}/credential-sentinel
+        if-no-files-found: error
+
     - name: Retain the qualification verdict and evidence bundle
-      if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
+      if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions') && steps.actions_qualification.outputs.artifacts_safe == 'true'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: qualification-${{ inputs.architecture }}-attempt-${{ github.run_attempt }}
