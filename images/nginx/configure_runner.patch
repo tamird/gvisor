@@ -6,6 +6,7 @@ the target OS and machine explicitly instead of inheriting the execution CPU.
 Probe execution remains native when no runner is supplied.
 Honor the linker environment without embedding temporary toolchain paths
 in nginx -V configure metadata. Fixed target and runtime options remain.
+Give header checks the same target compiler and linker flags as feature checks.
 Remove this patch when upstream exposes equivalent cross-probe support.
 
 Upstream: https://github.com/nginx/nginx/blob/release-1.31.7/auto/feature
@@ -121,3 +122,16 @@ diff --git a/auto/options b/auto/options
  CPU=NO
  
  NGX_RPATH=NO
+diff --git a/auto/include b/auto/include
+--- a/auto/include
++++ b/auto/include
+@@ -28,7 +28,8 @@
+ END
+ 
+ 
+-ngx_test="$CC -o $NGX_AUTOTEST $NGX_AUTOTEST.c"
++ngx_test="$CC $CC_TEST_FLAGS $CC_AUX_FLAGS \
++          -o $NGX_AUTOTEST $NGX_AUTOTEST.c $NGX_TEST_LD_OPT"
+ 
+ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
+ 
