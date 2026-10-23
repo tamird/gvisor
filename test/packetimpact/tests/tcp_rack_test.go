@@ -263,7 +263,12 @@ func TestRACKWithReorder(t *testing.T) {
 	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
 	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
 	seqNum1 := *conn.RemoteSeqNum(t)
+	// Hold congestion control constant across the two implementations.
+	dut.SetSockOpt(t, acceptFd, unix.SOL_TCP, unix.TCP_CONGESTION, []byte("reno"))
 	cc := strings.TrimRight(string(dut.GetSockOpt(t, acceptFd, unix.SOL_TCP, unix.TCP_CONGESTION, 16)), "\x00")
+	if got, want := cc, "reno"; got != want {
+		t.Fatalf("TCP_CONGESTION = %q, want %q", got, want)
+	}
 	logTCPInfo := func(stage string, info linux.TCPInfo) {
 		t.Logf("RACK_DIAGNOSTIC stage=%s cc=%q mss=%d cwnd=%d ssthresh=%d ca_state=%d rtt_us=%d", stage, cc, info.SndMss, info.SndCwnd, info.SndSsthresh, info.CaState, info.RTT)
 	}
@@ -340,6 +345,10 @@ func TestRACKWithReorder(t *testing.T) {
 	}
 
 	seqNum1.UpdateForward(seqnum.Size(numPkts * payloadSize))
+	// ExpectData tracks the end of the last matched segment, including old
+	// retransmissions. Restore the cumulative receive position before expecting
+	// new data, so queued first-flight retransmissions cannot match this flight.
+	*conn.RemoteSeqNum(t) = seqNum1
 	sendTime := time.Now()
 	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
 
