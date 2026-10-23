@@ -11,6 +11,7 @@ import tarfile
 import time
 import urllib.request
 
+from image_execution import require_go_link_variant
 import qualification_report as report
 
 
@@ -190,7 +191,19 @@ def validate_graph(invoke, evidence: Path, options: list[str], groups: list[dict
             "scope": "Source-owner, effective transition-setting and relative-output equality. Configuration directories retained; no binary/action/cache equivalence or build credit."}
 
 
-def bind_built_outputs(outputs: list[dict], expected_outputs: dict[str, str], proof: dict) -> None:
+def declared_variants(groups: list[dict]) -> dict[str, str]:
+    """Declare Go-capable owners, including the explicitly pure webhook."""
+    race_targets = {target for group in groups if group["name"].endswith("-race")
+                    for target in group["targets"]}
+    return {label: ("native" if target == "//tools/ioctl_sniffer:ioctl_hook_gnu"
+                    else "race" if group["name"].endswith("-race") and target != "//webhook:webhook"
+                    else "pure")
+            for group in groups for label, target in group["roots"].items()
+            if target in race_targets}
+
+
+def bind_built_outputs(outputs: list[dict], expected_outputs: dict[str, str], proof: dict,
+                       variants: dict[str, str]) -> None:
     """Join configured outputs to the graph and their actual native actions."""
     if proof["status"] != "PASS":
         raise ValueError("Native action evidence did not complete")
@@ -209,6 +222,22 @@ def bind_built_outputs(outputs: list[dict], expected_outputs: dict[str, str], pr
             case [action] if action["digest"].get("hash") and action["exitCode"] == 0 and not action["status"]:
                 output["native_action"] = {key: action[key] for key in
                                            ("digest", "targetLabel", "mnemonic", "runner", "cacheHit", "full_record_sha256")}
+                variant = variants.get(output["identity"]["label"])
+                if variant is None:
+                    if action["mnemonic"] == "GoLink":
+                        raise ValueError("Missing declared variant for GoLink output")
+                    output["variant"] = {"kind": "non-Go", "go_race_credit": False}
+                elif variant == "native":
+                    if action["mnemonic"] != "CppLink":
+                        raise ValueError("Expected the native C++ companion link action")
+                    output["variant"] = {"kind": "native", "go_race_credit": False}
+                elif variant in ("race", "pure"):
+                    race = variant == "race"
+                    output["variant"] = require_go_link_variant(
+                        action, race=race, cgo=race,
+                        linkmode="external" if race else "internal")
+                else:
+                    raise ValueError(f"Unknown declared GoLink variant: {variant}")
             case _:
                 raise ValueError("Expected one native producing action for " + output["name"])
 
@@ -221,6 +250,16 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     records = {"source": config["source"], "status": "INCOMPLETE", "builds": [], "tests": []}
     failed = False
     try:
+        if config.get("variant_validation", False):
+            result = invoke("compiler-native-variants", [
+                "run", "--lockfile_mode=error", "--noannounce_rc",
+                "@rules_python//python/bin:python", "--",
+                str(Path.cwd() / "test/rbe/image_variant_test.py"),
+                str(private), str(evidence)], "command", targets=[])
+            if result["status"] != "PASS":
+                raise RuntimeError("Retained native variant validation failed")
+            records["status"] = "PASS"
+            return
         if config.get("format_only", False):
             records["status"] = "PASS"
             return
@@ -296,7 +335,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     output["materialized_path"] = str(root / relative)
                 if build_only:
                     proof = json.loads((evidence / (batch["architecture"] + "-" + phase + "-image-execution.json")).read_text())
-                    bind_built_outputs(outputs, expected_outputs, proof)
+                    bind_built_outputs(outputs, expected_outputs, proof, declared_variants(selected))
                 for row in rows:
                     row["outputs"] = [{**output, "original_target": row["roots"][output["identity"]["label"]]}
                                       for output in outputs if output["identity"]["label"] in row["roots"]]
