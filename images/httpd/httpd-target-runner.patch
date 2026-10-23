@@ -4,6 +4,7 @@ The generated configure script is the pinned release build input, so no
 Autoconf bootstrap or cached feature answers are needed.
 Upstream Autoconf execution contract: https://www.gnu.org/software/autoconf/manual/autoconf.html#Runtime
 
+diff --git a/configure b/configure
 --- a/configure
 +++ b/configure
 @@ -2351,7 +2351,7 @@
@@ -33,6 +34,7 @@ Upstream Autoconf execution contract: https://www.gnu.org/software/autoconf/manu
      else
  	{ { printf '%s\n' "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
  printf '%s\n' "$as_me: error: in '$ac_pwd':" >&2;}
+diff --git a/server/Makefile.in b/server/Makefile.in
 --- a/server/Makefile.in
 +++ b/server/Makefile.in
 @@ -29,7 +29,7 @@

@@ -44,7 +44,7 @@ func BenchmarkStartupEmpty(b *testing.B) {
 		container := machine.GetContainer(ctx, b)
 		b.StartTimer()
 		if err := container.Spawn(ctx, dockerutil.RunOpts{
-			Image: "benchmarks/alpine",
+			Image: "basic/busybox",
 		}, "sleep", "100"); err != nil {
 			b.Fatalf("failed to start container: %v", err)
 		}
@@ -174,7 +174,7 @@ func BenchmarkCheckpointEmpty(b *testing.B) {
 			defer container.CleanUp(ctx)
 
 			if err := container.Spawn(ctx, dockerutil.RunOpts{
-				Image: "benchmarks/alpine",
+				Image: "basic/busybox",
 			}, "sleep", "1000"); err != nil {
 				b.Fatalf("failed to spawn container: %v", err)
 			}
@@ -216,7 +216,7 @@ func BenchmarkRestoreEmpty(b *testing.B) {
 			defer container.CleanUp(ctx)
 
 			if err := container.Spawn(ctx, dockerutil.RunOpts{
-				Image: "benchmarks/alpine",
+				Image: "basic/busybox",
 			}, "sleep", "1000"); err != nil {
 				b.Fatalf("failed to spawn container: %v", err)
 			}

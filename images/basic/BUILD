@@ -29,9 +29,56 @@ image_outputs(
     image_name = "basic/alpine",
 )
 
+pkg_tar(
+    name = "busybox_home",
+    empty_dirs = ["root"],
+    mode = "0700",
+)
+
+# The containerd HOME tests resolve the root account from /etc/passwd.
+# Leave HOME unset so the image cannot supply the value being tested.
+image_layer(
+    name = "busybox_filesystem",
+    srcs = {
+        "/etc/group": "busybox/group",
+        "/etc/passwd": "busybox/passwd",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    symlinks = {
+        "/bin/" + applet: "/bin/busybox"
+        for applet in [
+            "dd",
+            "df",
+            "grep",
+            "setsid",
+            "sh",
+            "sleep",
+            "stat",
+            "true",
+        ]
+    },
+)
+
 image_manifest(
+    name = "busybox_manifest",
+    cmd = ["sh"],
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":busybox_home",
+        ":busybox_filesystem",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
     name = "busybox",
-    base = "@test_busybox",
+    manifests = [":busybox_manifest"],
+    platforms = _MUSL_PLATFORMS,
     tags = ["manual"],
 )
 
@@ -222,63 +269,6 @@ image_outputs(
     name = "nginx",
     image = ":nginx",
     image_name = "basic/nginx",
-)
-
-pkg_tar(
-    name = "httpd_directories",
-    empty_dirs = ["usr/local/apache2/logs"],
-    mode = "0755",
-)
-
-image_layer(
-    name = "httpd_fixture_layer",
-    srcs = {
-        "/usr/local/apache2/conf/httpd.conf": "httpd/httpd.conf",
-        "/usr/local/apache2/htdocs/index.html": "@httpd_source//:docs/docroot/index.html",
-        "/usr/local/bin/httpd-foreground": "httpd/httpd-foreground",
-    },
-    default_metadata = file_metadata(mode = "0644"),
-    file_metadata = {"/usr/local/bin/httpd-foreground": file_metadata(mode = "0755")},
-    symlinks = {
-        "/bin/rm": "/bin/busybox",
-        "/bin/sh": "/bin/busybox",
-    },
-)
-
-image_manifest(
-    name = "httpd_manifest",
-    cmd = ["httpd-foreground"],
-    config_fragment = "//images/httpd:ports.json",
-    env = {
-        "HTTPD_PREFIX": "/usr/local/apache2",
-        "PATH": "/usr/local/apache2/bin:/usr/local/bin:/usr/bin:/bin",
-    },
-    layers = [
-        "//images:helper_filesystem",
-        "//images:busybox_layer",
-        "//images:musl_notice_layer",
-        "//images/httpd:accounts_layer",
-        "//images/httpd:server_layer",
-        ":httpd_directories",
-        ":httpd_fixture_layer",
-    ],
-    stop_signal = "SIGWINCH",
-    tags = ["manual"],
-    user = "0:0",
-    working_dir = "/usr/local/apache2",
-)
-
-image_index(
-    name = "httpd",
-    manifests = [":httpd_manifest"],
-    platforms = _MUSL_PLATFORMS,
-    tags = ["manual"],
-)
-
-image_outputs(
-    name = "httpd",
-    image = ":httpd",
-    image_name = "basic/httpd",
 )
 
 # The integration test checks that mounting /tmp preserves image contents.
@@ -493,4 +483,28 @@ arch_genrule(
     name = "qualification_httpd_contexts",
     src = ":httpd_context",
     template = "qualification_httpd_context_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_nginx_archives",
+    src = ":nginx_archive",
+    template = "qualification_nginx_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_nginx_contexts",
+    src = ":nginx_context",
+    template = "qualification_nginx_context_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_busybox_archives",
+    src = ":busybox_archive",
+    template = "qualification_busybox_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_busybox_contexts",
+    src = ":busybox_context",
+    template = "qualification_busybox_context_%s.tar",
 )

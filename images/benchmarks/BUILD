@@ -15,7 +15,13 @@ _MUSL_PLATFORMS = select({
     "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
 })
 
-_HTTP_PAYLOAD_SIZES_KIB = [1, 10, 100, 1024, 10240]
+_HTTP_PAYLOAD_SIZES_KIB = [
+    1,
+    10,
+    100,
+    1024,
+    10240,
+]
 
 # Apache and Nginx serve the same zero-filled payloads in their benchmarks.
 [
@@ -282,4 +288,16 @@ arch_genrule(
     name = "qualification_httpd_contexts",
     src = ":httpd_context",
     template = "qualification_httpd_context_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_nginx_archives",
+    src = ":nginx_archive",
+    template = "qualification_nginx_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_nginx_contexts",
+    src = ":nginx_context",
+    template = "qualification_nginx_context_%s.tar",
 )

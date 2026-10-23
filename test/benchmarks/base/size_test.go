@@ -54,7 +54,7 @@ func BenchmarkSizeEmpty(b *testing.B) {
 		container := machine.GetContainer(ctx, b)
 		containers = append(containers, container)
 		if err := container.Spawn(ctx, dockerutil.RunOpts{
-			Image: "benchmarks/alpine",
+			Image: "basic/busybox",
 		}, "sh", "-c", "echo Hello && sleep 1000"); err != nil {
 			base.CleanUpContainers(ctx, containers)
 			b.Fatalf("failed to run container: %v", err)
