@@ -108,6 +108,7 @@ configure_make(
         "--disable-util-dso",
         "--with-apr=$$EXT_BUILD_DEPS$$/apr",
         "--with-dbm=sdbm",
+        "--with-expat=$$EXT_BUILD_DEPS$$",
         "--without-apr-iconv",
         "--without-berkeley-db",
         "--without-crypto",
