@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T10:28:00.997901+00:00",
+    "updatedAt": "2026-10-23T10:36:42.897796+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18876,12 +18876,6 @@
           "head": "6a38390bf36512b773254ef75cd36180c635b1f2",
           "base": "3987e82eec1bd08624a05637ac079b4dbce48799"
         }
-      },
-      "contributorReview": {
-        "status": "approved",
-        "head": "6a38390bf36512b773254ef75cd36180c635b1f2",
-        "url": "https://github.com/tamird/gvisor/commit/6a38390bf36512b773254ef75cd36180c635b1f2",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -18903,12 +18897,6 @@
         "nextAction": "Report the four missing reflection_cc dependencies to grpc/grpc, cite the report in the existing patch, and preserve recorded delivery prerequisites; no repeated approval question."
       },
       "updatedAt": "2026-10-23T10:24:09.947344+00:00",
-      "contributorReview": {
-        "status": "approved",
-        "head": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
-        "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
-      },
       "refinement": {
         "before": {
           "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
@@ -18988,12 +18976,6 @@
           "https://github.com/google/gvisor/pull/16249"
         ]
       },
-      "contributorReview": {
-        "status": "approved",
-        "head": "eb6c08906b44606535842f03a5554638ca42f325",
-        "url": "https://github.com/tamird/gvisor/commit/eb6c08906b44606535842f03a5554638ca42f325",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
-      },
       "number": 16249,
       "refinement": {
         "before": {
@@ -19026,12 +19008,6 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c"
         ]
-      },
-      "contributorReview": {
-        "status": "approved",
-        "head": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-        "url": "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -19055,12 +19031,6 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
         ]
-      },
-      "contributorReview": {
-        "status": "approved",
-        "head": "e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-        "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -19117,12 +19087,6 @@
           "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8"
         ]
       },
-      "contributorReview": {
-        "status": "changes_requested",
-        "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
-      },
       "links": [
         {
           "label": "Existing image-version PR and separate grant",
@@ -19140,6 +19104,11 @@
         "after": {
           "head": "7c5f96976d1aaf76483834c41dd091700f4141a8"
         }
+      },
+      "contributorChangesRequested": {
+        "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
+        "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -19164,12 +19133,6 @@
           "https://github.com/google/gvisor/pull/16250"
         ]
       },
-      "contributorReview": {
-        "status": "approved",
-        "head": "72883973765180ad8372bd0f3aa75a243d010353",
-        "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
-      },
       "refinement": {
         "before": {
           "head": "2d9e001b8829aa5d56ea1c9ae1bb75a12e87f9c6"
@@ -19193,12 +19156,6 @@
       "status": "Contributor approved; waiting for prerequisites",
       "updatedAt": "2026-10-23T10:24:09.947344+00:00",
       "summary": "The contributor explicitly approved 1ef50322e. Both-CPU static outputs and native AMD64 host helper checks remain accepted; delivery retains shared utilities/compiler/image/license prerequisites.\n\nEarlier source-specific record:\n\nBuild GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
-      "contributorReview": {
-        "status": "approved",
-        "head": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
-        "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
-      },
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
