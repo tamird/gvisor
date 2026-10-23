@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T08:28:04.397811+00:00",
+    "updatedAt": "2026-10-23T09:15:16.492872+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10730,19 +10730,21 @@
       "title": "Exercise RACK with complete TCP segments",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
-      "status": "Held for Nagle/GSO correction",
-      "summary": "The packet test now uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; extraction onto current master has not been rebuilt. Enabling the test also requires the separate Nagle/GSO correction, which depends on #15635. No contributor decision has been requested for this held proposal.",
-      "updatedAt": "2026-10-15T00:27:22.098671+00:00",
+      "status": "Agent preparation; prerequisites landed",
+      "summary": "The Nagle/GSO prerequisite #15926 merged on October 21, after its packet-cleanup prerequisite #15635 merged on October 17. The previous landing hold is cleared. Root is refreshing the retained packet fixture on current master and will qualify its existing Linux and Netstack cases before requesting contributor review. No upstream publication is approved yet.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
+      "updatedAt": "2026-10-23T09:15:16.492872+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Held for Nagle/GSO correction",
+        "disposition": "Agent preparation after prerequisite landings",
         "sourceHead": "fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
-        "observedAt": "2026-10-15T00:27:22.098671+00:00",
-        "nextAction": "After the Nagle/GSO prerequisite lands, refresh this tested patch and request contributor review before opening its PR.",
+        "observedAt": "2026-10-23T09:15:16.492872+00:00",
+        "nextAction": "Refresh the retained packet fixture against current master, review its complete delta and qualify the existing focused Linux/Netstack cases. Request contributor review of the concrete refreshed proposal before opening an upstream PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
           "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4",
-          "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba"
+          "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba",
+          "https://github.com/google/gvisor/pull/15635",
+          "https://github.com/google/gvisor/pull/15926"
         ]
       }
     },
@@ -20618,13 +20620,14 @@
       "type": "blocked_by"
     },
     {
-      "from": "branch:tcp-nagle-gso",
+      "from": "pr:15926",
       "to": "branch:review/tcp-rack-packet-fixture",
       "type": "depends_on",
-      "reason": "Enabling the RACK packet test requires the Nagle/GSO sender correction; retain the expected-failure marker until that runtime prerequisite lands.",
+      "reason": "The RACK packet fixture requires the Nagle/GSO sender correction delivered in #15926. That prerequisite has landed, so preparation may proceed; contributor review still precedes upstream publication.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
-        "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97"
+        "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
+        "https://github.com/google/gvisor/pull/15926"
       ]
     },
     {
