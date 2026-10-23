@@ -86,6 +86,14 @@ class NativeVariantsTest(unittest.TestCase):
                     if set(group["targets"]) != set(configured["targets"]):
                         raise ValueError("Retained build target set differs")
                     groups.append((group, member(archive, proof_name)))
+                if name == "old":
+                    # Later phases reuse outputs whose producer is recorded in
+                    # an earlier phase of this same authenticated invocation.
+                    if any(proof["status"] != "PASS" for _, proof in groups):
+                        raise ValueError("Retained native action evidence did not complete")
+                    proof = {"status": "PASS", "image_actions": [
+                        action for _, phase_proof in groups for action in phase_proof["image_actions"]]}
+                    groups = [(group, proof) for group, _ in groups]
                 cls.datasets[name] = groups
 
     def test_current_all_forty(self) -> None:
