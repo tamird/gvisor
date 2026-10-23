@@ -41,7 +41,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise ValueError("Unexpected configured LLVM source repository")
         for name, source in (("llvm-targets.bzl", "llvm/targets.bzl"),
                              ("llvm-clang.BUILD.bazel", "clang/BUILD.bazel")):
-            shutil.copyfile(root / relative / source, evidence / name)
+            shutil.copyfile(output_root / relative / source, evidence / name)
         targets = ast.literal_eval((evidence / "llvm-targets.bzl").read_text().split("=", 1)[1].strip())
         if targets != config["llvm_targets"]:
             raise ValueError(f"Configured LLVM targets differ: {targets!r}")
