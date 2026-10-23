@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T18:50:53.058692+00:00",
+    "updatedAt": "2026-10-23T19:03:48.138984+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2548,26 +2548,27 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "A separate contributor preview at 9b469b1928628f1124992e8af1746435f6b04a8e addresses the reviewer’s allocator performance finding while preserving fault-contained recycled-page clearing. The upstream PR remains at 3255a52b212edcd2f526d3fb1afaa6d1523f7520. Root owns the contributor decision and substantive reviewer response; the earlier acknowledgement did not complete the repair.\n\nEarlier published source record:\n\nThe requested post-#16046 rebase is published at 3255a52b212e on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe merge conflict is resolved in published head 854bf04d57 on upstream 3f35bca89c. Independent review verified the sole adaptation is an explicit uint64 huge-page-size conversion in the replacement loop, preserving upstream type preparation and the allocator behavior; BUILD and test files are byte-identical to the prior head. GitHub reports MERGEABLE and new-head source checks are running. Historical runtime qualification keeps its recorded source. Existing reviewer requests are preserved; no prior human approval was established.\n\nThe new exact-head conflict is assigned to hostinet_delivery in the released pr14353 checkout. The next step is a minimal rebase preserving the reviewed allocator behavior and tests, followed by independent source review and exact-lease publication. Earlier qualification remains bound to its recorded sources.\n\nGitHub now reports a merge conflict at unchanged head 4006dae11b, verified 2026-10-19T18:05:30.863749+00:00. The last published observation was mergeable at 2026-10-19T17:42:59.616657+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nThe upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
+      "summary": "The contributor-approved allocator correction is published at 9b469b1928628f1124992e8af1746435f6b04a8e. Root verified matching PR/fork heads, mergeability and the reviewed description, then replied in the original performance thread at 19:01:04Z on October 23. The requested Xeon comparison remains open; publication and the contributor decision are complete.\n\nEarlier source record:\n\nA separate contributor preview at 9b469b1928628f1124992e8af1746435f6b04a8e addresses the reviewer’s allocator performance finding while preserving fault-contained recycled-page clearing. The upstream PR remains at 3255a52b212edcd2f526d3fb1afaa6d1523f7520. Root owns the contributor decision and substantive reviewer response; the earlier acknowledgement did not complete the repair.\n\nEarlier published source record:\n\nThe requested post-#16046 rebase is published at 3255a52b212e on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe merge conflict is resolved in published head 854bf04d57 on upstream 3f35bca89c. Independent review verified the sole adaptation is an explicit uint64 huge-page-size conversion in the replacement loop, preserving upstream type preparation and the allocator behavior; BUILD and test files are byte-identical to the prior head. GitHub reports MERGEABLE and new-head source checks are running. Historical runtime qualification keeps its recorded source. Existing reviewer requests are preserved; no prior human approval was established.\n\nThe new exact-head conflict is assigned to hostinet_delivery in the released pr14353 checkout. The next step is a minimal rebase preserving the reviewed allocator behavior and tests, followed by independent source review and exact-lease publication. Earlier qualification remains bound to its recorded sources.\n\nGitHub now reports a merge conflict at unchanged head 4006dae11b, verified 2026-10-19T18:05:30.863749+00:00. The last published observation was mergeable at 2026-10-19T17:42:59.616657+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nThe upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
         "owner": "root",
-        "disposition": "Measured amendment available for contributor review; upstream unchanged",
-        "sourceHead": "3255a52b212edcd2f526d3fb1afaa6d1523f7520",
+        "disposition": "Approved amendment delivered; Xeon comparison remains open",
+        "sourceHead": "9b469b1928628f1124992e8af1746435f6b04a8e",
         "observedAt": "2026-10-23T17:48:10.680201+00:00",
-        "nextAction": "Root owns the decision on preview 9b469b1928628f1124992e8af1746435f6b04a8e, followed by approved publication and a substantive response to the performance finding. No duplicate acknowledgement.",
+        "nextAction": "Root owns the requested Xeon comparison and any further substantive reviewer feedback. No duplicate acknowledgement or automatic review alert.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/tamird/gvisor/commit/854bf04d57cd4bb5ec7edfb124852a4cd8361eca",
           "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520",
           "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
           "https://github.com/google/gvisor/pull/15181#discussion_r4362531544",
-          "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e"
+          "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
+          "https://github.com/google/gvisor/pull/15181#discussion_r4363233296"
         ]
       },
-      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
-      "head": "3255a52b212edcd2f526d3fb1afaa6d1523f7520",
+      "updatedAt": "2026-10-23T19:03:48.138984+00:00",
+      "head": "9b469b1928628f1124992e8af1746435f6b04a8e",
       "evidence": [
         {
           "label": "Published post-16046 rebase",
@@ -19532,14 +19533,9 @@
       "title": "Keep recycled allocation clearing fault-contained without large-page regressions",
       "url": "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
-      "summary": "The preview commits the requested range before invoking the reader and clears recycled pages inside safecopy’s fault handler, returning ENOMEM when backing fails. On AMD64 CPUs with ERMS, clears of at least 2 KiB use REP STOSQ. Allocator/fault checks and both-CPU unaligned-clear checks passed. A three-arm AMD64 comparison used 51 children: three warmups and sixteen balanced observations of all six cases per arm. The corrected large hot-page regressions are removed; measured 4 KiB hot and cold costs remain 1.72% and 2.92% above the baseline. The original report-URI failure is retained alongside authenticated report recovery; no benchmark rerun was needed. The published PR is unchanged until the contributor decision.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "9b469b1928628f1124992e8af1746435f6b04a8e",
-        "url": "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e"
-      },
+      "status": "Delivered as #15181",
+      "updatedAt": "2026-10-23T19:03:48.138984+00:00",
+      "summary": "The contributor-approved amendment is delivered as #15181 at 9b469b1928628f1124992e8af1746435f6b04a8e. The original review thread has the measured result and remains open for the requested Xeon comparison.\n\nEarlier preview record:\n\nThe preview commits the requested range before invoking the reader and clears recycled pages inside safecopy’s fault handler, returning ENOMEM when backing fails. On AMD64 CPUs with ERMS, clears of at least 2 KiB use REP STOSQ. Allocator/fault checks and both-CPU unaligned-clear checks passed. A three-arm AMD64 comparison used 51 children: three warmups and sixteen balanced observations of all six cases per arm. The corrected large hot-page regressions are removed; measured 4 KiB hot and cold costs remain 1.72% and 2.92% above the baseline. The original report-URI failure is retained alongside authenticated report recovery; no benchmark rerun was needed. The published PR is unchanged until the contributor decision.",
       "refinement": {
         "before": {
           "head": "3255a52b212edcd2f526d3fb1afaa6d1523f7520"
@@ -19551,12 +19547,13 @@
       "followup": {
         "owner": "root",
         "sourceHead": "9b469b1928628f1124992e8af1746435f6b04a8e",
-        "disposition": "Contributor preview published; reviewer response remains owned",
-        "nextAction": "Obtain the contributor decision, then publish the approved amendment and answer the existing performance thread with the measured result.",
+        "disposition": "Approved amendment delivered; Xeon comparison remains open",
+        "nextAction": "Root owns the requested Xeon comparison and any further substantive reviewer feedback. No duplicate acknowledgement or automatic review alert.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
           "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
-          "https://app.buildbuddy.io/invocation/24cb849b-5b99-47ca-83db-64403b07fe8b"
+          "https://app.buildbuddy.io/invocation/24cb849b-5b99-47ca-83db-64403b07fe8b",
+          "https://github.com/google/gvisor/pull/15181#discussion_r4363233296"
         ]
       }
     },
@@ -21897,10 +21894,10 @@
       "from": "branch:pr15181-protected-allocation",
       "to": "pr:15181",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Unpublished measured amendment to the existing PR; contributor review precedes upstream publication.",
+      "reason": "Contributor-approved amendment is published on the existing PR; the requested Xeon comparison remains separate.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e"
+        "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
+        "https://github.com/google/gvisor/pull/15181#discussion_r4363233296"
       ]
     },
     {
