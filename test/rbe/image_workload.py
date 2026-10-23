@@ -19,7 +19,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     package = workspace / "test/rbe/state_array_pair"
     benchmark = "//pkg/sentry/pgalloc:pgalloc_test"
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
-               "--remote_download_outputs=all", "--noannounce_rc"]
+               "--remote_download_outputs=toplevel", "--noannounce_rc"]
     record = {"source": source, "status": "INCOMPLETE", "builds": [], "cleanup": "INCOMPLETE"}
     inputs = {"binaries": {}, "benchstat": config["benchstat"]}
 
