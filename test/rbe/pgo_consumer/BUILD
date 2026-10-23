@@ -26,6 +26,8 @@ go_reset_target(
     dep = "//tools/profiletool",
 )
 
+# The profile is data: AMD64 releases also analyze ARM64 templates. Keep the
+# measured-platform constraint on the release consumer, not this merge.
 genrule(
     name = "merged_profile",
     srcs = [
@@ -42,10 +44,6 @@ genrule(
         "manual",
         "qualification-output-group=default",
     ],
-    target_compatible_with = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
-    ],
     tools = [":profiletool"],
     visibility = ["//visibility:public"],
 )
@@ -57,5 +55,9 @@ filegroup(
     tags = [
         "manual",
         "qualification-output-group=default",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
     ],
 )
