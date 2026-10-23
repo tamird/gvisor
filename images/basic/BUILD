@@ -145,7 +145,10 @@ image_layer(
         "/usr/bin/fsstress": file_metadata(mode = "0755"),
     },
     include_runfiles = False,
-    symlinks = {"/bin/sh": "/bin/busybox"},
+    symlinks = {
+        "/bin/rm": "/bin/busybox",
+        "/bin/sh": "/bin/busybox",
+    },
 )
 
 image_manifest(
