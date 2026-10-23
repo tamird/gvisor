@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/docker/docker/api/types/mount"
 	"gvisor.dev/gvisor/pkg/cleanup"
@@ -34,12 +33,7 @@ import (
 func WaitUntilContainerServing(ctx context.Context, machine Machine, container *dockerutil.Container, port int) error {
 	var logger testutil.DefaultLogger = "util"
 	probe := machine.GetNativeContainer(ctx, logger)
-	defer func() {
-		// The caller may have canceled ctx while waiting for the server.
-		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
-		defer cancel()
-		probe.CleanUp(cleanupCtx)
-	}()
+	defer probe.CleanUp(context.WithoutCancel(ctx))
 
 	cmd := fmt.Sprintf("while ! wget -q --spider http://%s:%d; do true; done", "server", port)
 	_, err := probe.Run(ctx, dockerutil.RunOpts{
