@@ -514,6 +514,7 @@ class ProviderStatusTest(unittest.TestCase):
 
 class ReapprovalReminderTest(unittest.TestCase):
     def setUp(self) -> None:
+        self.maintainers = frozenset({"maintainer", "another-maintainer", "nybidari", "aaltinaydev"})
         self.now = datetime(2026, 10, 22, 16, 30, tzinfo=timezone.utc)
         self.raw = raw_pr(7, head=8)
         self.review = {"kind": "review", "id": "approval-7", "url": "https://github.com/google/gvisor/pull/7#review",
@@ -528,7 +529,41 @@ class ReapprovalReminderTest(unittest.TestCase):
                                     "evidence": "https://github.com/google/gvisor/compare/old..new"}}
 
     def plan(self, now: datetime | None = None) -> dict:
-        return updater.reminder_plan(retained(self.raw), self.node, now or self.now, "tamird")
+        return updater.reminder_plan(retained(self.raw), self.node, now or self.now, "tamird", self.maintainers)
+
+    def test_canonical_roster_supplements_repository_association(self) -> None:
+        for login, association in [("nybidari", "CONTRIBUTOR"), ("aaltinaydev", "NONE")]:
+            with self.subTest(login=login):
+                self.review["author"] = {"login": login, "__typename": "User"}
+                self.review["authorAssociation"] = association
+                self.assertEqual(self.plan()["approvers"], [login])
+        self.review.update(state="APPROVED", submittedAt=LATER, commit={"oid": f"{8:040x}"})
+        self.assertEqual(self.plan()["reason"], "current-head-approved")
+        self.review["author"] = {"login": "outside-roster", "__typename": "User"}
+        for association in ["CONTRIBUTOR", "NONE"]:
+            self.review["authorAssociation"] = association
+            self.assertEqual(self.plan()["reason"], "no-prior-approval")
+        for association in ["MEMBER", "OWNER", "COLLABORATOR"]:
+            self.review["authorAssociation"] = association
+            self.assertEqual(self.plan()["reason"], "current-head-approved")
+
+    def test_generated_roster_excludes_emeritus_and_rejects_malformed_rows(self) -> None:
+        text = ("<!-- Generated from governance/maintainers.yaml by\n"
+                "     //governance/tools/maintainers:maintainers_gen; do not edit directly. -->\n\n"
+                "Name | GitHub ID | Company/Organization\n"
+                "---- | --------- | --------------------\n"
+                "Nayana Bidari | [@nybidari](https://github.com/nybidari) | Google\n"
+                "Etienne Perot | [@EtiennePerot](https://github.com/etienneperot) | Google\n"
+                "\n## Emeritus Maintainers\n"
+                "Adin Scannell | [@amscanne](https://github.com/amscanne) | 2023-03-03\n")
+        self.assertEqual(updater.maintainer_logins(text), frozenset({"nybidari", "etienneperot"}))
+        for malformed in (text.replace("https://github.com/nybidari", "https://github.com/outsider"),
+                          text.replace("## Emeritus Maintainers", "## Former maintainers"),
+                          text.replace("Nayana Bidari |", "Nayana Bidari ")):
+            with self.subTest(text=malformed), self.assertRaises(ValueError):
+                updater.maintainer_logins(malformed)
+        with mock.patch.object(updater, "graphql", return_value={"repository": {"object": {"oid": "a" * 40, "text": text}}}):
+            self.assertEqual(updater.fetch_maintainers(), frozenset({"nybidari", "etienneperot"}))
 
     def test_business_hours_follow_pacific_dst_and_weekdays(self) -> None:
         for stamp, due in [("2026-10-22T15:59:59+00:00", False), ("2026-10-22T16:00:00+00:00", True),
@@ -568,6 +603,7 @@ class ReapprovalReminderTest(unittest.TestCase):
                        "commit": {"oid": f"{8:040x}"}}
             with mock.patch.dict(self.raw["reviews"], {"nodes": [self.review, current]}):
                 self.assertEqual(self.plan()["reason"], reason)
+                current["author"] = {"login": "outsider", "__typename": "User"}
                 current["authorAssociation"] = "NONE"
                 self.assertEqual(self.plan()["status"], "due")
         for change in [{"isDraft": True}, {"state": "CLOSED"}, {"author": {"login": "other"}},
@@ -668,6 +704,7 @@ class ReapprovalReminderTest(unittest.TestCase):
                         "html_url": "https://github.com/google/gvisor/pull/7#issuecomment-1", "created_at": self.now.isoformat()}), "")
 
             with mock.patch.multiple(updater, ROOT=root, REGISTRY=registry), \
+                    mock.patch.object(updater, "fetch_maintainers", return_value=self.maintainers), \
                     mock.patch.object(updater, "datetime") as clock, \
                     mock.patch.object(updater, "fetch_numbers", return_value={7: self.raw}) as fetch, \
                     mock.patch.object(updater.subprocess, "run", side_effect=run) as transport:

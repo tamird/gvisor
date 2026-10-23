@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from reapproval import reminder_plan
+from reapproval import maintainer_logins, reminder_plan
 from work_states import FAILURES, check_purpose, check_states, effective_approval, record_states, remember_mergeability, review_decision, repository_policies
 
 
@@ -525,6 +525,19 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             "mergeabilityIssues": mergeability, "changedMergeability": mergeability_changes}
 
 
+def fetch_maintainers() -> frozenset[str]:
+    """Use project governance, not GitHub repository association, for authority."""
+    response = graphql('query { repository(owner:"google",name:"gvisor") { '
+                       'object(expression:"HEAD:MAINTAINERS.md") { oid ... on Blob { text } } } }')
+    roster = response["repository"]["object"]
+    if not roster or not isinstance(roster.get("text"), str):
+        raise RuntimeError("Canonical gVisor maintainer roster is unavailable")
+    maintainers = maintainer_logins(roster["text"])
+    print(json.dumps({"maintainerRoster": {"repo": "google/gvisor", "path": "MAINTAINERS.md",
+                                          "blob": roster["oid"], "logins": sorted(maintainers)}}))
+    return maintainers
+
+
 def reapproval_reminders(post: bool = False) -> None:
     """Use the existing snapshot as an index, then refresh before each write."""
     snapshot = json.loads((ROOT / "github-status.json").read_text())
@@ -535,6 +548,7 @@ def reapproval_reminders(post: bool = False) -> None:
                                   text=True, capture_output=True, check=True, timeout=30)
         if identity.stdout.strip() != OWNER:
             raise RuntimeError("Reminder credential does not belong to the configured owner")
+    maintainers = fetch_maintainers()
     for pr in snapshot["prs"]:
         if pr.get("repo") != "google/gvisor" or pr.get("status") != "open":
             continue
@@ -542,13 +556,13 @@ def reapproval_reminders(post: bool = False) -> None:
         # Older snapshots lack author association. Refresh only recorded
         # amendments; missing proof is visible without spending write budget.
         if node.get("reapproval", {}).get("head") != pr["head"]:
-            print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER)))
+            print(json.dumps(reminder_plan(pr, node, datetime.now(timezone.utc), OWNER, maintainers)))
             continue
         raw = fetch_numbers([pr["number"]], timeline=False, repo=pr["repo"], team_details=False)[pr["number"]]
         recheck_unknown_mergeability([raw], repo=pr["repo"])
         current = normalize(raw)
         current["importPolicy"] = repository_policies(REGISTRY).get(pr["repo"])
-        plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER)
+        plan = reminder_plan(current, node, datetime.now(timezone.utc), OWNER, maintainers)
         if current["head"] != pr["head"]:
             plan.update(status="skipped", reason="head-changed-since-snapshot")
         if not post or plan["status"] != "due":

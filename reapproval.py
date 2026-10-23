@@ -9,7 +9,28 @@ MARKER = "<!-- codex-reapproval-reminder:v1 "
 PACIFIC = ZoneInfo("America/Los_Angeles")
 
 
-def reminder_plan(pr: dict, node: dict, now: datetime, owner: str) -> dict:
+def maintainer_logins(text: str) -> frozenset[str]:
+    """Read current maintainers from the repository's generated public roster."""
+    current, separator, _ = text.partition("\n## Emeritus Maintainers\n")
+    if (not text.startswith("<!-- Generated from governance/maintainers.yaml by\n")
+            or not separator):
+        raise ValueError("Canonical maintainer roster format is missing")
+    rows = [line for line in current.splitlines() if "|" in line]
+    if len(rows) < 3 or not rows[0].startswith("Name ") or set(rows[1]) - set("-| "):
+        raise ValueError("Canonical current-maintainer table is missing")
+    logins = []
+    for row in rows[2:]:
+        match = re.fullmatch(r"[^|]+\|\s*\[@([A-Za-z0-9-]+)\]\(https://github\.com/([A-Za-z0-9-]+)\)\s*\|[^|]+", row)
+        if not match or match[1].casefold() != match[2].casefold():
+            raise ValueError("Malformed canonical maintainer row")
+        logins.append(match[1].casefold())
+    if len(logins) != len(set(logins)):
+        raise ValueError("Duplicate canonical maintainer identity")
+    return frozenset(logins)
+
+
+def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
+                  maintainers: frozenset[str]) -> dict:
     """Fail closed unless an exact reviewed amendment still needs approval."""
     result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head")}
 
@@ -41,7 +62,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str) -> dict:
     reviews = [item for item in pr["feedback"]["items"] if item.get("kind") == "review"
                and (item.get("author") or {}).get("__typename") == "User"
                and (item.get("author") or {}).get("login") not in {None, owner}
-               and item.get("authorAssociation") in {"MEMBER", "OWNER", "COLLABORATOR"}]
+               and (item.get("authorAssociation") in {"MEMBER", "OWNER", "COLLABORATOR"}
+                    or item["author"]["login"].casefold() in maintainers)]
     latest = {}
     for item in reviews:
         if item.get("state") not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
@@ -91,8 +113,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str) -> dict:
     if kind == "patch-preserving-rebase":
         return skip("reviewed-patch-preserving-rebase")
     approvers = sorted(item["author"]["login"] for item in prior_approvals
-                       if (item.get("commit") or {}).get("oid") == old
-                       and item.get("authorAssociation") in {"MEMBER", "OWNER", "COLLABORATOR"})
+                       if (item.get("commit") or {}).get("oid") == old)
     if not approvers:
         return skip("no-matching-prior-maintainer-approval")
     for item in comments:

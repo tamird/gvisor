@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T01:31:41.984709+00:00",
+    "updatedAt": "2026-10-23T03:47:40.867437+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4627,13 +4627,13 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-23T02:22:55.395594+00:00",
-      "summary": "The equivalent conflict rebase is published at fdca42b6803f. Independent review verified the approved syscall body, preservation of current MTU bounds and removal of stale includes. The provider reports this exact head as MERGEABLE. Existing validation remains tied to its original source; new checks and Copybara progress are followed normally.\n\nThe earlier source ae6e695110f8 had an internal feedback failure despite green matching public import #15942. That observation remains historical and does not describe the rebased head. The October21 maintainer approval covered 10e4c37aaf37; the rebase is not a new maintainer review. No duplicate approval reminder is warranted for this equivalent rebase.",
+      "updatedAt": "2026-10-23T03:47:40.867437+00:00",
+      "summary": "The current head fdca42b6803f is published and mergeable, with green public checks. Etienne explicitly invalidated prior approvals after the rebase and requested nybidari re-review on October23. The reviewed diff now preserves landed MTU bounds and adds Kind to the existing NICOptions block; the syscall test body remains byte-identical. This changed patch text requires a fresh review despite equivalent intent.\n\nEarlier internal feedback failure belongs to source ae6e695110f8 and does not describe the current head.",
       "number": 15315,
       "followup": {
-        "disposition": "Equivalent conflict rebase delivered; current checks and import pending",
+        "disposition": "Fresh maintainer review required after explicit approval dismissal",
         "owner": "work_map_current",
-        "nextAction": "Follow current-head checks and import progression; preserve the earlier failure and approval identities. Do not repeat the completed rebase or send an amendment reminder for unchanged topic content.",
+        "nextAction": "Use the existing hourly Pacific-business-hours reminder for the exact amended head and prior nybidari approval. Root reviewed the reported diff discrepancy; no source defect or repeated rebase/test work is indicated.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
@@ -4649,21 +4649,23 @@
           "https://github.com/google/gvisor/pull/15315#issuecomment-6324815128",
           "https://github.com/tamird/gvisor/compare/fbbeb1a403d52642fe5add8ad0cf0b626c04d185...10e4c37aaf37f2b81b9223df485d9525559ea572",
           "https://github.com/google/gvisor/pull/15315#pullrequestreview-5605349233",
-          "https://github.com/tamird/gvisor/commit/ae6e695110f8fffeb9f45dd153fadeb4fdd9694e"
+          "https://github.com/tamird/gvisor/commit/ae6e695110f8fffeb9f45dd153fadeb4fdd9694e",
+          "https://github.com/google/gvisor/pull/15315#issuecomment-6356642198",
+          "https://github.com/tamird/gvisor/commit/fdca42b6803f6582ddff03b58138f01f7a32aec8"
         ],
-        "reviewedAt": "2026-10-21T19:49:28Z",
+        "reviewedAt": "2026-10-23T03:25:59Z",
         "sourceHead": "fdca42b6803f6582ddff03b58138f01f7a32aec8",
-        "reviewDecision": "APPROVED",
+        "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-23T02:22:55.395594+00:00"
+        "observedAt": "2026-10-23T03:47:40.867437+00:00"
       },
       "head": "fdca42b6803f6582ddff03b58138f01f7a32aec8",
       "refinement": {
         "before": {
-          "head": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185"
+          "head": "ae6e695110f8fffeb9f45dd153fadeb4fdd9694e"
         },
         "after": {
-          "head": "10e4c37aaf37f2b81b9223df485d9525559ea572"
+          "head": "fdca42b6803f6582ddff03b58138f01f7a32aec8"
         }
       },
       "evidence": [
@@ -4675,7 +4677,16 @@
           "label": "Equivalent current-master conflict rebase",
           "url": "https://github.com/tamird/gvisor/commit/fdca42b6803f6582ddff03b58138f01f7a32aec8"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "fdca42b6803f6582ddff03b58138f01f7a32aec8",
+        "approvedHead": "ae6e695110f8fffeb9f45dd153fadeb4fdd9694e",
+        "diffSha256": "562508890d55e35804591f269ef45210795738f5b48c0d71934970e94fbf2045",
+        "summary": "The rebase preserves the landed MTU bounds and uses the existing NICOptions block. The syscall test body is unchanged, but the patch text changed and the earlier approval was explicitly dismissed for re-review.",
+        "evidence": "https://github.com/tamird/gvisor/compare/ae6e695110f8fffeb9f45dd153fadeb4fdd9694e...fdca42b6803f6582ddff03b58138f01f7a32aec8"
+      }
     },
     {
       "id": "pr:15388",
