@@ -61,6 +61,12 @@ single_version_override(
     version = "35.1",
 )
 
+# Consume Protobuf's producer lock without repinning a transitive module.
+single_version_override(
+    module_name = "rules_rust",
+    version = "0.74.0",
+)
+
 # Expose the standard-library notice already downloaded with rustc.
 single_version_override(
     module_name = "rules_rs",
