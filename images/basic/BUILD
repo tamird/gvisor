@@ -39,6 +39,57 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+image_layer(
+    name = "nginx_layer",
+    srcs = {
+        "/etc/group": "nginx/group",
+        "/etc/nginx/mime.types": "@nginx_source//:conf/mime.types",
+        "/etc/nginx/nginx.conf": "nginx/nginx.conf",
+        "/etc/passwd": "nginx/passwd",
+        "/usr/sbin/nginx": "//images/nginx:binary",
+        "/usr/share/licenses/nginx/LICENSE": "@nginx_source//:LICENSE",
+        "/usr/share/nginx/html/index.html": "@nginx_source//:html/index.html",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/sbin/nginx": file_metadata(mode = "0755")},
+    include_runfiles = False,
+    # TestPortForwardStreamMode checks the listening socket before forwarding.
+    symlinks = {"/bin/netstat": "/bin/busybox"},
+)
+
+image_manifest(
+    name = "nginx_manifest",
+    cmd = [
+        "/usr/sbin/nginx",
+        "-g",
+        "daemon off;",
+    ],
+    config_fragment = "nginx/config.json",
+    env = {"PATH": "/usr/sbin:/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":nginx_layer",
+    ],
+    stop_signal = "SIGQUIT",
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
+    name = "nginx",
+    manifests = [":nginx_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "nginx",
+    image = ":nginx",
+    image_name = "basic/nginx",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
