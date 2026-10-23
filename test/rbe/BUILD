@@ -15,6 +15,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//tools:defs.bzl", "py_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
@@ -155,4 +156,15 @@ docker_command_test(
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
+)
+
+py_test(
+    name = "credential_artifacts_test",
+    srcs = [
+        "credential_artifacts.py",
+        "credential_artifacts_test.py",
+    ],
+    main = "credential_artifacts_test.py",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
 )

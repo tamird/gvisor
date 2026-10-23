@@ -43,9 +43,14 @@ if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
   options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
 fi
 temporary_files=()
+credential_directory=
 GVISOR_DOCKER_NETWORK=
 cleanup() {
   local status=$?
+  if [[ -n $credential_directory ]]; then
+    python3 test/rbe/credential_artifacts.py verify "$credential_directory" "$RUNNER_TEMP/qualification" || status=1
+    rm -rf -- "$credential_directory"
+  fi
   rm -f -- "${temporary_files[@]}"
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
@@ -68,6 +73,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     USE_BAZEL_VERSION=$(<images/default/bazelversion)
     command -v bazelisk
     : "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"
+    credential_directory=$(mktemp -d)
+    python3 test/rbe/credential_artifacts.py prepare "$credential_directory"
+    unset BUILDBUDDY_API_KEY
     qualification_rc=$(mktemp)
     temporary_files+=("$qualification_rc")
     export qualification_rc
@@ -102,10 +110,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=COMMIT_SHA=%s\n' "$QUALIFICATION_COMMIT"
       printf 'build:buildbuddy_remote_executor --build_metadata=REPO_URL=%s/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
-      printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-      printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+      printf 'common --credential_helper=remote.buildbuddy.io=%s/helper\n' "$credential_directory"
     } > "$qualification_rc"
-    unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
     bazel() {

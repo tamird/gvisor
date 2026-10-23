@@ -119,14 +119,13 @@ for arm in before after; do
   [[ $(git rev-parse HEAD) == "$source" ]]
   mkdir -p "$out/build-$arm"
   bazel build "${options[@]}" "--build_metadata=COMMIT_SHA=$source" \
-    "--build_event_json_file=$out/build-$arm/bep.jsonl" \
-    --build_event_json_file_path_conversion=false "${targets[@]}" \
+    "${targets[@]}" \
     > "$out/build-$arm/stdout.txt" 2> "$out/build-$arm/stderr.txt"
   printf '0\n' > "$out/build-$arm/exit.txt"
   bazel cquery "${options[@]}" "--build_metadata=COMMIT_SHA=$source" \
     'set(//test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin)' \
     --output=files > "$out/build-$arm/outputs.txt" 2> "$out/build-$arm/query-stderr.txt"
-  while IFS= read -r file; do sha256sum "$file"; done < "$out/build-$arm/outputs.txt" > "$out/build-$arm/output-hashes.txt"
+  while IFS= read -r file; do sudo -n sha256sum -- "$file"; done < "$out/build-$arm/outputs.txt" > "$out/build-$arm/output-hashes.txt"
   git diff --exit-code
   printf '%s\n' "$source" > "$out/build-$arm/source.txt"
 done
@@ -265,7 +264,6 @@ for scenario in "${scenarios[@]}"; do
   result=0
   timeout --signal=INT --kill-after=15s "$limit" bash -c 'bazel "$@"' _ run "${options[@]}" \
     "--build_metadata=COMMIT_SHA=$source" \
-    "--build_event_json_file=$trial/bep.jsonl" --build_event_json_file_path_conversion=false \
     "--execution_log_compact_file=$trial/run-execution.binpb" \
     //test/benchmarks/tcp:tcp_benchmark -- \
     "${flags[@]}" --no-user-ns --congestion-control "$first_cc" \
