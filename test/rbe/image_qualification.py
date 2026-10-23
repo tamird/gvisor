@@ -30,8 +30,7 @@ REPORTER_SOURCE = "462126434f0cdf5e56f37603c82b563b456f1ce8"
 REPORTER_HASHES = {'qualification_report.py': '3929b631d7d28c9dd97720281d8629af7a6bb611d670dafaf96793a4a8652e83', 'unit_matrix.py': '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37'}
 TARGETS = CONFIG["targets"]
 REMOTE_PROPERTIES = {'OSFamily': 'linux', 'Arch': 'amd64', 'workload-isolation-type': 'oci', 'container-image': 'docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02'}
-OPTIONS = ["--compilation_mode=opt", "--lockfile_mode=error", "--remote_download_outputs=all",
-           "--build_event_json_file_path_conversion=false", "--noannounce_rc"]
+OPTIONS = ["--compilation_mode=opt", "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
 workspace = Path(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 os.chdir(workspace)
 if subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() != SOURCE:
@@ -104,7 +103,10 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         option_index = 2 if arguments[:2] == ["mod", "deps"] else 1
         command = [*startup, *arguments[:option_index], "--downloader_config=" + str(downloader), *arguments[option_index:]]
         if kind != "command":
-            command.append("--build_event_json_file=" + str(raw_events))
+            # Capture owns local report files even when a callback supplies its
+            # own Bazel options. Keep their URI form at this shared boundary.
+            command.extend(["--build_event_json_file_path_conversion=false",
+                            "--build_event_json_file=" + str(raw_events)])
         (directory / "arguments.txt").write_text(json.dumps(command) if kind == "command" else "\n".join(command) + "\n")
         (directory / "expected-targets.txt").write_text("".join(target + "\n" for target in targets))
         git_record(directory / "commit.txt", "cat-file", "commit", SOURCE)

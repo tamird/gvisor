@@ -1,9 +1,8 @@
-"""Check command verdicts and reconcile one retained successful action query."""
+"""Complete the retained successful action-query projection without replaying tests."""
 import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import tarfile
 import time
 import urllib.request
@@ -13,38 +12,13 @@ import qualification_report as report
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    owner = "//test/rbe:qualification_report_test"
-    if config["targets"] != [owner]:
-        raise ValueError("Unexpected reporter regression owner")
+    if config["targets"]:
+        raise ValueError("Reporting completion must not select test owners")
+    for name, identity in config["retained_controls"]["files"].items():
+        if report.file_record(Path(__file__).with_name(name)) != identity:
+            raise ValueError("Reporter or test source differs from the executed controls: " + name)
     result = {"status": "INCOMPLETE", "source": config["source"], "supplier": config["retained_query"]}
     try:
-        tested = invoke("command-regression", [
-            "test", "--config=x86_64", "--lockfile_mode=error", "--noannounce_rc",
-            "--remote_download_outputs=all", "--strategy=TestRunner=local",
-            "--nocache_test_results", "--runs_per_test=1", "--flaky_test_attempts=1",
-            "--test_output=all", "--test_arg=-v", "--test_arg=QualificationReportTest.test_command_completion_preserves_streams_and_failure_evidence",
-            owner,
-        ], "test", targets=[owner])
-        if tested["status"] != "PASS" or len(tested["executed"]) != 1:
-            raise RuntimeError("Owning command regression did not pass once")
-        attempt = tested["executed"][0]
-        if attempt["cached_locally"] or attempt["execution_info"].get("cachedRemotely", False):
-            raise ValueError("Owning command regression was cached")
-        _, reports, errors = report.retained_reports(report.manifest_path(
-            evidence / "invocation-command-regression" / "events.jsonl"))
-        logs = [(identity, path) for (identity, name), path in reports.items() if name == "test.log"]
-        if errors or len(logs) != 1:
-            raise ValueError("Expected one authenticated owning unittest log")
-        identity, path = logs[0]
-        if {"label": identity.owner.label, "configuration": identity.owner.configuration} != tested["expected"][0]:
-            raise ValueError("Unittest log belongs to a different configured owner")
-        log = path.read_text()
-        method = "test_command_completion_preserves_streams_and_failure_evidence"
-        if (len(re.findall(r"^" + method + r" \([^\n]+\) \.\.\. ok$", log, re.MULTILINE)) != 1
-                or len(re.findall(r"^Ran 1 test in [0-9.]+s$", log, re.MULTILINE)) != 1
-                or len(re.findall(r"^OK$", log, re.MULTILINE)) != 1):
-            raise ValueError("Selected command unittest method did not complete exactly once")
-        result["selected_method"] = {"name": method, "test_log": report.file_record(path)}
         supplier = config["retained_query"]
         remaining = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
         if remaining <= 0:
@@ -91,6 +65,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise ValueError("Action query incorrectly grants build or test credit")
         result.update(status="PASS", original_status=original["status"], corrected_status=current["status"],
                       original_source=original["source"], workload_replays=0,
+                      retained_controls=config["retained_controls"], fresh_control_executions=0,
                       scope="Retained query reporting only; no new aquery, compile, test-consumer or runtime execution")
     finally:
         report.write_json(evidence / "aquery-report-checks.json", result)
