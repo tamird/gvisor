@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T13:29:48.932995+00:00",
+    "updatedAt": "2026-10-23T14:16:27.817455+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10730,15 +10730,15 @@
       "title": "Check RACK recovery with full TCP segments",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac",
-      "status": "Contributor review pending",
-      "summary": "Root requested contributor review of final 4a3722f493. After DSACK, acknowledged warmup restores capacity for the four-segment RACK flight; the fixture checks cwnd before preserving the original packet/timer assertions. All twelve inner Linux/Netstack cases and five qualification phases pass on tested f17eb; final source removes only a diagnostic log. The native parent remains FAIL because the bootstrap diagnostic stream exceeded its eight MiB cap after the authenticated complete PASS bundle was published. That reporting defect is separately fixed and qualified; no RACK rerun is claimed. Prerequisites #15635/#15926 are merged. Compare git range-diff fbf0f19b1^! 4a3722f493^!.\n\nEarlier source-specific record:\n\nThe Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
-      "updatedAt": "2026-10-23T13:00:23.434380+00:00",
+      "status": "Agent investigation in progress",
+      "summary": "The contributor challenged the warmup-only fixture correction. The earlier DSACK claimed duplicate bytes before the test observed a retransmission; Linux cwnd 10 versus Netstack cwnd 2 established the second-flight stall, not its undo cause. Node owns a focused diagnostic on source 3d37a66c9f: observe the actual retransmission, DSACK exactly that segment, retain congestion-control/window/recovery state, and run only TestRACKWithReorder on Linux and Netstack without the ten-ACK second warmup. No contributor decision or upstream publication is pending for 4a372.\n\nSuperseded contributor-review record (historical evidence):\n\nRoot requested contributor review of final 4a3722f493. After DSACK, acknowledged warmup restores capacity for the four-segment RACK flight; the fixture checks cwnd before preserving the original packet/timer assertions. All twelve inner Linux/Netstack cases and five qualification phases pass on tested f17eb; final source removes only a diagnostic log. The native parent remains FAIL because the bootstrap diagnostic stream exceeded its eight MiB cap after the authenticated complete PASS bundle was published. That reporting defect is separately fixed and qualified; no RACK rerun is claimed. Prerequisites #15635/#15926 are merged. Compare git range-diff fbf0f19b1^! 4a3722f493^!.\n\nEarlier source-specific record:\n\nThe Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
+      "updatedAt": "2026-10-23T14:16:27.817455+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Qualified fixture; contributor decision pending",
+        "owner": "node_tls_sni",
+        "disposition": "Authentic retransmission and DSACK investigation",
         "sourceHead": "4a3722f493797a2e4166e6e40301140256ce36ac",
-        "observedAt": "2026-10-23T13:00:23.434380+00:00",
-        "nextAction": "Await the existing contributor decision before upstream publication. Preserve native parent FAIL and accepted twelve-case qualification separately; no new review request or rerun.",
+        "observedAt": "2026-10-23T14:16:27.817455+00:00",
+        "nextAction": "Run the reviewed two-case diagnostic at 3d37a66c9f, reconcile actual packet/window evidence, and revise the fixture explanation from the observed result. Preserve earlier inner-case results and native parent failures separately; no upstream publication grant is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
           "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4",
@@ -10748,7 +10748,8 @@
           "https://github.com/tamird/gvisor/commit/0559479b2f36559df015775948aa01fdef201091",
           "https://app.buildbuddy.io/invocation/51d87f5c-a3e3-4c9d-88fa-c4c5bd5a30e3",
           "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac",
-          "https://app.buildbuddy.io/invocation/b0b5d4fb-440f-4c4e-896b-3d57069a6f87"
+          "https://app.buildbuddy.io/invocation/b0b5d4fb-440f-4c4e-896b-3d57069a6f87",
+          "https://github.com/tamird/gvisor/commit/3d37a66c9fff0f21b23856fbba55793c78e31c19"
         ]
       },
       "refinement": {
@@ -10758,11 +10759,6 @@
         "after": {
           "head": "4a3722f493797a2e4166e6e40301140256ce36ac"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "4a3722f493797a2e4166e6e40301140256ce36ac",
-        "url": "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac"
       }
     },
     {
