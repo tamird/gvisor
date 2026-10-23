@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T17:59:03.325594+00:00",
+    "updatedAt": "2026-10-23T18:30:58.931550+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -14191,10 +14191,10 @@
       "summary": "The requested post-#16046 rebase is published at 3f860783171d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at db16a02a3d. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nCurrent source-identical qualification at 01354f8a84 now establishes native Linux and gVisor comment parity: Actions 39144545744 passes eight selected cases on each backend, sixteen total without skips. Full package, Nogo and client qualification f2403420 passes eight owners with 877 cases, 88 existing skips and no gaps. The clean standalone proposal is published at 9d31765c323, one commit above verified current upstream/master 9e9495997e29. Independent range-diff confirms the executable patch is unchanged; the message only pins its Linux citation to 830b3c68c. The user approved this exact commit, which is now published as upstream PR #15955. The intended google/gvisor destination, exact head, complete description and OPEN state were verified by readback. The current public check rollup is SUCCESS, with existing skipped workflow checks retained. Reviewers manninglucas and zkoopmans are assigned; maintainer review remains pending.\n\nHistorical evidence: The existing source-reviewed candidate supports nftables compatibility comment matches and is now included unchanged in canonical 01354f8a84. Historical paired qualification used test-only source 8dbcf433a and fixed source 83aef0865: each gVisor owner changed from seven comment failures to all 259 cases passing; the client reported 178 passes and 84 unchanged skips; two unit owners reported 607 XML passes and three Nogo owners passed. The native result remained 226 passes, 26 failures and seven skips, including the seven comment failures, so Linux comment parity was not established. Separate capability observations used a different worker environment and do not erase those failures.",
       "followup": {
         "owner": "root",
-        "disposition": "Human fixture/predicate feedback; repair in progress",
+        "disposition": "Tested reviewer amendment; contributor decision pending",
         "sourceHead": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
         "observedAt": "2026-10-23T17:59:03.325471+00:00",
-        "nextAction": "Root owns the fixture-name and optional-value predicate corrections from reviewer comments4362555895 (created17:46:20Z) and4362573836 (created17:48:28Z); both became public with review5632267694 at17:48:42Z. Neither is addressed by acknowledgement. Complete a reviewable correction and substantive response before routine work.",
+        "nextAction": "Contributor preview 75ea53522a addresses the fixture and optional-value findings and passes 14/14 selected cases. Await that decision, then root releases equivalent current-base a6df5d5df1 and provides a substantive reviewer response. Upstream remains 3f86078317; neither an acknowledgement nor this preview is delivery.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6ac083de1c33f86f6601ac669434648892f511e8",
           "https://github.com/tamird/gvisor/commit/8dbcf433a1157055848789fe0f4e1f157d7ae9e0",
@@ -14207,7 +14207,9 @@
           "https://github.com/google/gvisor/pull/15955",
           "https://github.com/tamird/gvisor/commit/3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
           "https://github.com/google/gvisor/pull/15955#discussion_r4362555895",
-          "https://github.com/google/gvisor/pull/15955#discussion_r4362573836"
+          "https://github.com/google/gvisor/pull/15955#discussion_r4362573836",
+          "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb",
+          "https://app.buildbuddy.io/invocation/6263f4a2-400e-4940-b082-ca7f9518681c"
         ]
       },
       "number": 15955,
@@ -19424,6 +19426,44 @@
           "https://github.com/tamird/gvisor/commit/d8c746bbfea4cc4076e6903a48d2091c5cd760a9"
         ]
       }
+    },
+    {
+      "id": "branch:pr15955-review-correction",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "75ea53522a4988d2789ef608379c1eb0a4b889bb",
+      "head": "75ea53522a4988d2789ef608379c1eb0a4b889bb",
+      "title": "Use the netfilter fixture and check optional data",
+      "url": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-23T18:30:58.931550+00:00",
+      "summary": "The proposed reviewer correction uses the NetlinkNetfilterTest fixture and checks info_data.has_value() before dereferencing the optional value. Both selected fixture families pass all fourteen Linux/gVisor cases in qualification 6263f4a2. The contributor preview is 75ea53522a; the upstream PR remains at 3f86078317. Current-base a6df5d5df1 preserves the same patch and is reserved for release after the contributor decision.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "75ea53522a4988d2789ef608379c1eb0a4b889bb",
+        "url": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb"
+      },
+      "refinement": {
+        "before": {
+          "head": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3"
+        },
+        "after": {
+          "head": "75ea53522a4988d2789ef608379c1eb0a4b889bb"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Tested unpublished reviewer amendment; contributor decision pending",
+        "sourceHead": "75ea53522a4988d2789ef608379c1eb0a4b889bb",
+        "nextAction": "After the contributor decision, publish the equivalent current-base revision a6df5d5df1 and answer both reviewer findings with the actual correction. The upstream PR is unchanged.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb",
+          "https://app.buildbuddy.io/invocation/6263f4a2-400e-4940-b082-ca7f9518681c",
+          "https://github.com/google/gvisor/pull/15955#discussion_r4362555895",
+          "https://github.com/google/gvisor/pull/15955#discussion_r4362573836"
+        ]
+      }
     }
   ],
   "edges": [
@@ -21718,6 +21758,14 @@
       "type": "depends_on",
       "reason": "The shared parser preserves and builds on the separately approved task-ID spelling change.",
       "evidence": "https://github.com/google/gvisor/pull/16266"
+    },
+    {
+      "from": "branch:pr15955-review-correction",
+      "to": "pr:15955",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "The tested reviewer amendment is unpublished and awaits the contributor decision; the live PR remains at its existing head.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb"
     }
   ],
   "investigations": [
