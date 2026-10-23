@@ -57,12 +57,12 @@ make(
         "@bzip2//:bzip2",
     ],
     data = [
-        "busybox/pidfd.config",
+        "busybox/applets.config",
         ":busybox_nm",
     ],
     env = {
         "BUSYBOX_BZIP2": "$(execpath @bzip2//:bzip2)",
-        "BUSYBOX_CONFIG": "$(execpath busybox/pidfd.config)",
+        "BUSYBOX_CONFIG": "$(execpath busybox/applets.config)",
         "BUSYBOX_HOSTCC": "$(execpath :busybox_hostcc)",
         "BUSYBOX_NM": "$(execpath :busybox_nm)",
         # Keep generated configuration and banners independent of wall time.
@@ -127,7 +127,10 @@ configure_make(
         "Makefile",
         "-f",
         '"$$EXT_BUILD_ROOT$$/$(execpath coreutils/timeout.mk)"',
+        'GPERF="$$EXT_BUILD_ROOT$$/$(execpath @gperf//:gperf)"',
     ],
+    # Declare the generator used by the upstream iconv header rules.
+    build_data = ["@gperf//:gperf"],
     # timeout needs none of these optional system libraries or message catalogs.
     configure_options = [
         "--disable-acl",

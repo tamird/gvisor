@@ -463,6 +463,16 @@ exceptions:
       Not software: a bundle of CA root certificates from https://pki.goog,
       installed as trust anchors in test images only and never part of
       released gVisor binaries.
+  - dependency: gperf
+    license: LicenseRef-Gperf-3.1-source-bundle
+    exception_rationale: >-
+      GNU gperf generates Coreutils headers on the execution platform; it
+      is not an image payload or code linked into gVisor release binaries.
+      Its program and support sources are GPL-3.0-or-later. The archive
+      also retains X11 and public-domain build helpers, GNU distribution
+      exceptions and separate manual copying and translation terms.
+      This manual record applies only to the exact source URL and archive
+      hash and requires renewed review when either changes.
   - dependency: grpc
     license:
       - Apache-2.0
