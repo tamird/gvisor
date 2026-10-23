@@ -21,7 +21,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     workspace = Path.cwd()
     package = workspace / "test/rbe/state_array_pair"
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
-               "--remote_download_outputs=all", "--noannounce_rc"]
+               "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
+               "--noannounce_rc"]
     benchmark = "//test/benchmarks/checkpointfile:checkpointfile_test"
     build_targets = ["//:release", benchmark]
     record = {"source": source, "before_source": config["before_source"],
