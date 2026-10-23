@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T23:05:32.724596+00:00",
+    "updatedAt": "2026-10-23T23:16:03.213711+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -676,14 +676,14 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-23T04:10:38.252194+00:00",
+      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
       "summary": "The requested post-#16046 rebase is published at e758ff20aee5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 7d6a86c59d. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 7d6a86c59d028fa5bdd3cff67c2402007d1fc1f3 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent-head generate39438600334/job118682147248 at56ce completes export, the generated commit and local Go-branch push, then exits1 because removing its temporary repository reports Directory not empty. The retained log does not identify a concurrent writer. This is the existing disposable-clone cleanup failure class tracked with pending15598; no new topic amendment or retry is justified by this log. A later status-post403 is separate from the failing cleanup. Gazelle remains the independent inherited dependency correction in16031. Contributor approval and56ce delivery remain complete.\n\nThe user approved the ZIP compatibility refinement56ce, and root delivered it to public PR15106 with an exact old-d7dc lease. Local HEAD, origin tracking and provider head match56ce. Existing title/body already matched the approved change, so no rewrite or new public comment was needed. Contributor review is complete; current-head CI and import monitoring continues. Exact current-head Gazelle job118682146746 fails only on the inherited unused //pkg/zip production dependency, covered by16031. Current lint and fileheader checks pass; pending checks remain pending.\n\nThe user approved the ZIP compatibility refinement56ce, and root delivered it to public PR15106 with an exact old-d7dc lease. Local HEAD, origin tracking and provider head match56ce. Existing title/body already matched the approved change, so no rewrite or new public comment was needed. Contributor review is complete; current-head CI and import monitoring continues.\n\nAfter the approved mechanical publication, root found a separate compatibility issue with merged ZIP import enforcement760b: the Go-export helper still directly imports archive/zip. Root owns a narrow public amendment and its canonical validation in gvisor-15049. The mechanical rebase and authorized reply remain completed; they do not establish semantic validation against the new enforcement. Current Gazelle also retains the separate inherited unused //pkg/zip dependency covered by16031.\n\nExact current-head Gazelle job 118633416221 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe contributor-approved sidecar amendment is published at d7dcfd359c. Its code is unchanged from approved7709; the temporal context was removed from the commit/body and included in the authorized post-update reviewer comment. Root verified exact public head and matching tracking. No contributor decision remains.\n\nHistorical qualification and delivery evidence:\n\nThe revised proposal7709f36fdf is fully qualified and awaits the user contributor decision. Root owns delivery after approval; Hostinet has no remaining implementation or validation task. The unchanged publicfc959 conflict remains visible until approved delivery.\n\nThe revised Go-export proposal is qualified at 7709f36fdf and ready for the contributor-review workflow. Three owning tests retain seven passing cases from the exact d2e4 source; the actual archive matches all 2,496 expected files, including the new Go/C sidecars and README; final canonical buildifier passes after three formatting-only hunks. Original bootstrap/compiler/cache/configuration failures remain recorded. Public fc959 is unchanged, so its current conflict is not yet resolved by this unpublished amendment.\n\nThe image-only Ubuntu 22.04 continuation at d2e4 also completed FAIL: the upstream ARM64 sighandler_object link reports .rela.dyn/.crblob overlap. The retained setup confirms GCC 11 and clang 14; no archive-parity or lint success is claimed. All prior failures and seven recovered assembler/analyzer passes remain separate. Public fc9590023c is unchanged; root and Hostinet own source-backed diagnosis, with no blind retry.\n\nThe d2e4 sidecar proposal retains seven recovered assembler/analyzer passes. Its archive continuation failed compiling upstream sysmsg with the default Ubuntu 20.04 GCC 9 worker; this raw failure remains recorded. A reviewed image-only continuation now uses the pinned Ubuntu 22.04 worker matching the upstream Dockerfile baseline, with the same source, declared prerequisites, archive parity and lint commands. Public fc9590023c remains unchanged pending qualification and contributor review.\n\nThe three assembler/analyzer owners passed seven cases at d2e4ddb554; their original reporter failure is preserved with a bounded same-artifact reconciliation. The archive/lint continuation first failed for a missing declared cross compiler, then a compiler diagnostic probe failed before the reporter started. Hostinet has reviewed recovery that installs the declared worker prerequisites and removes only the unsupported probe; archive parity and canonical lint still must pass. The public fc9590023c head is unchanged, and the substantive sidecar integration still requires contributor review after qualification.\n\nThe rebase now requires a substantive source integration: current upstream adds two Go sidecar entrypoints, three C sidecars and the export README. The independently reviewed amendment is signed and published for review at d2e4ddb554. Its focused assembler, archive parity and lint qualification packet is approved for execution; public #15106 remains at fc9590023c pending validation and contributor review.\n\nCurrent provider readback identifies a real merge conflict at fc9590023c against base3cd71284c. The earlier rebase completion remains historical; root has been notified to assign the current conflict correction.\n\nThe conflict repair is published at fc9590023 and current GitHub mergeability is confirmed. All eight applicable public checks pass, with four conditional skips. Earlier approvals do not establish approval of this rebased head. The requested follow-up to zkoopmans is posted; the native review-request API returned 404, so no successful re-request is claimed. The existing fvoznika request remains.\n\nThe focused hermetic composition at ff4888692 is independently qualified: the assembler and two analyzer owners pass, the actual 2,442-entry archive contains all seven command sources across five directories including both sentry mains, and the existing Linux AMD64 cgo consumer compiles all exported packages from that exact archive. Analyzer findings bind both architectures; no ARM64 native consumer or application-runtime result is claimed. The earlier standalone worker passed helper/analyzer checks but lacked ambient clang for the archive build; that failure remains recorded separately.\n\nEarlier source and review record:\n\nCurrent-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved change was refreshed onto master 254aeb360ee148130c24b62f0655bc832a647fe0 and published at 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Independent review verified exact ordered additions/removals in every changed path and the unchanged commit message, while retaining current upstream Gazelle/importpath/embed context. The delivery owner verified the exact live head and matching tracking ref; lint passed at publication. Current checks and mergeability are shown from the latest snapshot. Earlier runtime evidence remains tied to its original source; this rebase adds no new execution claim.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 8d55f931860145475cae7e872db3784499faf855. Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.\n\nEarlier source and review history:\n\nThe authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e758ff20aee552bab5474f8f36bc50efd5a74c8d",
         "observedAt": "2026-10-22T00:33:19.689675+00:00",
         "disposition": "Substantive amendment after prior maintainer approval; reminder proof reconciled",
-        "nextAction": "Use the existing hourly Pacific-business-hours reminder after fresh head, approval and mergeability checks. Existing source corrections and contributor approvals are complete; do not repeat them.",
+        "nextAction": "Use the existing three-hour Pacific-business-hours reminder after fresh head, approval and mergeability checks. Existing source corrections and contributor approvals are complete; do not repeat them.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15106",
           "https://github.com/tamird/gvisor/commit/56ceeb1a04062a78e72d94737b22fceb513ef3ea",
@@ -4692,13 +4692,13 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-23T03:47:40.867437+00:00",
+      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
       "summary": "The current head fdca42b6803f is published and mergeable, with green public checks. Etienne explicitly invalidated prior approvals after the rebase and requested nybidari re-review on October23. The reviewed diff now preserves landed MTU bounds and adds Kind to the existing NICOptions block; the syscall test body remains byte-identical. This changed patch text requires a fresh review despite equivalent intent.\n\nEarlier internal feedback failure belongs to source ae6e695110f8 and does not describe the current head.",
       "number": 15315,
       "followup": {
         "disposition": "Fresh maintainer review required after explicit approval dismissal",
         "owner": "work_map_current",
-        "nextAction": "Use the existing hourly Pacific-business-hours reminder for the exact amended head and prior nybidari approval. Root reviewed the reported diff discrepancy; no source defect or repeated rebase/test work is indicated.",
+        "nextAction": "Use the existing three-hour Pacific-business-hours reminder for the exact amended head and prior nybidari approval. Root reviewed the reported diff discrepancy; no source defect or repeated rebase/test work is indicated.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
@@ -5467,8 +5467,8 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-23T20:40:45.022930+00:00",
-      "summary": "The current netlink conflict resolution is published at 21b2d0c82f and verified mergeable. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Current-head generate is still running. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
+      "summary": "The separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. The separate profile run timed out decoding the six before-side profiles, so there is no before/after profile comparison.\n\nThe current netlink conflict resolution is published at 21b2d0c82f and verified mergeable. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Current-head generate is still running. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
         "owner": "WorkMap",
         "disposition": "Current conflict resolution, canonical import correction and focused checks delivered; maintainer review pending",
@@ -5487,7 +5487,8 @@
           "https://github.com/google/gvisor/actions/runs/40020387044",
           "https://github.com/google/gvisor/actions/runs/40018629532",
           "https://github.com/tamird/gvisor/commit/21b2d0c82f85271d12755de263971c2e9a52b1a0",
-          "https://app.buildbuddy.io/invocation/2631ab71-593e-4c69-ab95-b463125371ad"
+          "https://app.buildbuddy.io/invocation/2631ab71-593e-4c69-ab95-b463125371ad",
+          "https://app.buildbuddy.io/invocation/340459be-5ffd-445a-9348-306a8ef20470"
         ],
         "reviewDecision": "CHANGES_REQUESTED"
       },
@@ -9787,14 +9788,14 @@
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/15669",
       "status": "open",
-      "updatedAt": "2026-10-23T04:10:38.252194+00:00",
-      "summary": "The requested post-#16046 rebase is published at aa13d6a12af5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nEtienne dismissed the old 60834ef0 approval on 2026-10-21T20:32:24Z and requested re-review of current c8b2b489. The source really changed: the already-delivered amendment distinguishes absent public installers while retaining hashes and ABI support, and runs listing as the temporary-file owner. The author explained those import-driven corrections and requested re-review on October 14. The closed import #15674 belongs to the old source. Maintainer re-review remains the next action; no additional author fix, duplicate reply or automatic rebase is indicated.\n\nPreserved earlier observations:\n\nThe contributor-approved installer-availability and listing corrections are delivered in PR #15669 at c8b2b4896. The source preserves newly upstream driver ABI handlers, and the exact current head has eight applicable public checks passing with four conditional skips. The earlier import belongs to the old source head; it is not current-head validation. The existing reviewer follow-up remains posted; no additional review request succeeded.\n\nEarlier source and qualification record:\n\nThe contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
+      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
+      "summary": "Konstantin’s October 23 request for fewer automatic reminders is implemented and verified in b651a99acf. The minimum interval is now three hours, including across source-head changes; status and conflict discovery still use the ten-minute cadence. All 50 JavaScript and 72 Python checks passed, covering the three-hour boundary, business hours and conflict eligibility. No acknowledgement or test reminder was posted. Maintainer review of the already-published GPU source remains a separate action.\n\nThe requested post-#16046 rebase is published at aa13d6a12af5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nEtienne dismissed the old 60834ef0 approval on 2026-10-21T20:32:24Z and requested re-review of current c8b2b489. The source really changed: the already-delivered amendment distinguishes absent public installers while retaining hashes and ABI support, and runs listing as the temporary-file owner. The author explained those import-driven corrections and requested re-review on October 14. The closed import #15674 belongs to the old source. Maintainer re-review remains the next action; no additional author fix, duplicate reply or automatic rebase is indicated.\n\nPreserved earlier observations:\n\nThe contributor-approved installer-availability and listing corrections are delivered in PR #15669 at c8b2b4896. The source preserves newly upstream driver ABI handlers, and the exact current head has eight applicable public checks passing with four conditional skips. The earlier import belongs to the old source head; it is not current-head validation. The existing reviewer follow-up remains posted; no additional review request succeeded.\n\nEarlier source and qualification record:\n\nThe contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
       "followup": {
-        "disposition": "Substantive amendment after prior maintainer approval; reminder proof reconciled",
+        "disposition": "Requested reminder-frequency change delivered; source maintainer review remains pending",
         "owner": "work_map_current",
         "sourceHead": "aa13d6a12af50e982819d8f8c1a12c836ab3fa1a",
         "reviewedAt": "2026-10-12T12:22:01.641015+00:00",
-        "nextAction": "Use the existing hourly Pacific-business-hours reminder after fresh head, approval and mergeability checks. Existing source corrections and contributor approvals are complete; do not repeat them.",
+        "nextAction": "Use the existing three-hour Pacific-business-hours reminder after fresh head, approval and mergeability checks. Existing source corrections and contributor approvals are complete; do not repeat them.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15669",
@@ -9807,7 +9808,192 @@
           "https://github.com/tamird/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a"
         ],
         "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "reviewDecision": null
+        "reviewDecision": null,
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Requested reminder frequency reduced and verified",
+            "nextAction": "Konstantin’s exact request is implemented: reminders are limited to once every three hours, with existing comments and changed heads included in dedupe. The published change passed all 122 remote tests and live source verification; ten-minute status/conflict discovery is unchanged. No acknowledgement comment is needed. Existing maintainer re-review of this PR remains pending separately.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15669#issuecomment-6376407932",
+              "https://github.com/tamird/gvisor/commit/b651a99acf098675d5a04dd8e427557e71b3db66",
+              "https://github.com/tamird/gvisor/actions/runs/40038130162"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "aa13d6a12af50e982819d8f8c1a12c836ab3fa1a",
+              "approvedAt": "2026-10-23T22:59:25Z",
+              "headCommittedAt": "2026-10-22T00:17:39Z",
+              "headIntroducedAt": "2026-10-22T00:20:40Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABbz38fg",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6161300606",
+                    "body": "@zkoopmans Rebased and corrected the failures exposed by the import: the read-only listing now runs as its temporary-file owner, and the eight registered ARM64 installers absent from the public download endpoint are identified explicitly without dropping their hashes or ABI support. Please take another look at the updated change; your approval predates this revision.\n\nAssisted-by: Codex\n",
+                    "createdAt": "2026-10-14T05:02:51Z",
+                    "updatedAt": "2026-10-14T05:02:51Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABeQ227A",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6325909228",
+                    "body": "[🤖] Invalidating approval due to rebase as a means to notify @zkoopmans to re-review. Current diff looks different from pre-rebase diff.",
+                    "createdAt": "2026-10-21T20:32:29Z",
+                    "updatedAt": "2026-10-21T20:32:29Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe6PjYg",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6369305442",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T16:10:23Z",
+                    "updatedAt": "2026-10-23T16:10:23Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe7iUlQ",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6370661525",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T17:21:11Z",
+                    "updatedAt": "2026-10-23T17:21:11Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe8zhlA",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6371991956",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T18:30:51Z",
+                    "updatedAt": "2026-10-23T18:30:51Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe92o6w",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6373091563",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T19:31:07Z",
+                    "updatedAt": "2026-10-23T19:31:07Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe-4gQQ",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6374170689",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T20:32:53Z",
+                    "updatedAt": "2026-10-23T20:32:53Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABe_9j1Q",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6375302101",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T21:41:21Z",
+                    "updatedAt": "2026-10-23T21:41:21Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABfA9MJA",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6376344612",
+                    "body": "🚨 @zkoopmans please reapprove the amended head [aa13d6a12af5](https://github.com/google/gvisor/commit/aa13d6a12af50e982819d8f8c1a12c836ab3fa1a) before it is imported. Your earlier approval covered [60834ef0c08d](https://github.com/google/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a). Copybara may still import the earlier approved revision and omit this amendment.\n\nThe amended driver flow separates public installer availability from supported ABI and hash metadata, and fixes ownership of the listing output.\n\n[Amendment evidence](https://github.com/tamird/gvisor/compare/60834ef0c08df041dc049c2fecf0038dfe34351a...aa13d6a12af50e982819d8f8c1a12c836ab3fa1a)\n\nPosted by Codex on behalf of @tamird.\n\n<!-- codex-reapproval-reminder:v1 head=aa13d6a12af50e982819d8f8c1a12c836ab3fa1a -->",
+                    "createdAt": "2026-10-23T22:54:13Z",
+                    "updatedAt": "2026-10-23T22:54:13Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABfBBDfA",
+                    "url": "https://github.com/google/gvisor/pull/15669#issuecomment-6376407932",
+                    "body": "@tamird can you make your auto-nagger run less frequently? ",
+                    "createdAt": "2026-10-23T22:59:04Z",
+                    "updatedAt": "2026-10-23T22:59:04Z",
+                    "author": {
+                      "login": "konstantin-s-bogom",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABR4tJLQ",
+                    "url": "https://github.com/google/gvisor/pull/15669#pullrequestreview-5495277869",
+                    "body": "LGTM",
+                    "state": "DISMISSED",
+                    "submittedAt": "2026-10-12T19:42:57Z",
+                    "updatedAt": "2026-10-21T20:32:24Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "zkoopmans",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "60834ef0c08df041dc049c2fecf0038dfe34351a"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT-PRLA",
+                    "url": "https://github.com/google/gvisor/pull/15669#pullrequestreview-5635297580",
+                    "body": "",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-23T22:59:25Z",
+                    "updatedAt": "2026-10-23T22:59:25Z",
+                    "authorAssociation": "MEMBER",
+                    "author": {
+                      "login": "konstantin-s-bogom",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "aa13d6a12af50e982819d8f8c1a12c836ab3fa1a"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "aa13d6a12af50e982819d8f8c1a12c836ab3fa1a"
+            }
+          }
+        ]
       },
       "number": 15669,
       "evidence": [
