@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T22:52:01.435011+00:00",
+    "updatedAt": "2026-10-23T23:05:32.724596+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3692,15 +3692,15 @@
       "title": "Update Benchmark to 1.10.0",
       "url": "https://github.com/google/gvisor/pull/15376",
       "group": "bazel",
-      "status": "draft",
-      "summary": "The conflict repair is published as draft 9f6e30aa901a and verified MERGEABLE on upstream 5ed0fe4d. It uses bazel_dep for Benchmark 1.10.0 without an archive override. BCR #11314 merged at 22:33:26Z, but root still observes HTTP 404 for the versioned registry data. Root owns verifying correct served module/source integrity and current-head gVisor checks before making this ready. No reminder while those gates remain.\n\nPreserved conflict diagnosis:\n\nThe fork branch 2da52bbf9fa6 has a verified MODULE.bazel conflict with upstream master 5ed0fe4dba8d. GitHub still identifies the older PR head 86e93d6a1e10 and reports CONFLICTING against older base 7d17d8564110; independent Git merge checks find that old PR head clean against both bases. Root owns the branch repair and subsequent public-head verification. The prior wait-for-synchronization action did not resolve the fork conflict and is superseded.\n\nPreserved earlier observations:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 2da52bbf9fa6, while GitHub's PR and upstream pull ref still identify 86e93d6a1e10 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 86e93d6a1e10 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
-      "head": "9f6e30aa901aec67b8d1000b6d35c0eb0233f33a",
-      "updatedAt": "2026-10-23T22:52:01.435011+00:00",
+      "status": "open",
+      "summary": "BCR #11314 is merged and root verified the published google_benchmark 1.10.0 registry data. The registry-only change is OPEN, non-draft and MERGEABLE at adf6f31f9c149 on current master 173413b49a. Root verified the same two-file patch is unchanged from 9f6e30aa9; the rebase retriggers checks that previously failed because BCR data were not yet published. The earlier approval applied to the archive-override version, so root owns one rereview request for the registry-only change. Track fresh current-head CI and that review; no duplicate notice or obsolete draft/propagation action.\n\nPreserved conflict diagnosis:\n\nThe fork branch 2da52bbf9fa6 has a verified MODULE.bazel conflict with upstream master 5ed0fe4dba8d. GitHub still identifies the older PR head 86e93d6a1e10 and reports CONFLICTING against older base 7d17d8564110; independent Git merge checks find that old PR head clean against both bases. Root owns the branch repair and subsequent public-head verification. The prior wait-for-synchronization action did not resolve the fork conflict and is superseded.\n\nPreserved earlier observations:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 2da52bbf9fa6, while GitHub's PR and upstream pull ref still identify 86e93d6a1e10 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 86e93d6a1e10 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
+      "head": "adf6f31f9c149113b745ace0f5be2873f3b865c7",
+      "updatedAt": "2026-10-23T23:05:32.724596+00:00",
       "followup": {
-        "disposition": "Conflict-free draft; BCR merged, propagation and checks pending",
+        "disposition": "Registry data served; current-head checks and root-owned rereview",
         "owner": "root",
-        "nextAction": "Root verifies the actually served 1.10.0 module and release integrity after BCR #11314 merged, then requires green current-head gVisor checks before making this draft ready. No reminder or repeated rebase while blocked.",
-        "sourceHead": "9f6e30aa901aec67b8d1000b6d35c0eb0233f33a",
+        "nextAction": "Root owns the single human rereview request for the registry-only diff; existing refresh tracks checks on adf6f31f9c and routes new feedback. Registry propagation and draft holds are complete. Do not duplicate the review notice.",
+        "sourceHead": "adf6f31f9c149113b745ace0f5be2873f3b865c7",
         "reviewedAt": "2026-10-17T11:45:11.369312+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
@@ -3716,10 +3716,11 @@
           "https://github.com/tamird/gvisor/commit/86e93d6a1e10491391c176d6f43f66e4918e4b8b",
           "https://github.com/tamird/gvisor/commit/2da52bbf9fa617cc20244e9db11786b61e899796",
           "https://github.com/bazelbuild/bazel-central-registry/pull/11314",
-          "https://github.com/tamird/gvisor/commit/9f6e30aa901aec67b8d1000b6d35c0eb0233f33a"
+          "https://github.com/tamird/gvisor/commit/9f6e30aa901aec67b8d1000b6d35c0eb0233f33a",
+          "https://github.com/tamird/gvisor/commit/adf6f31f9c149113b745ace0f5be2873f3b865c7"
         ],
-        "observedAt": "2026-10-23T22:52:01.435011+00:00",
-        "providerHead": "9f6e30aa901aec67b8d1000b6d35c0eb0233f33a"
+        "observedAt": "2026-10-23T23:05:32.724596+00:00",
+        "providerHead": "adf6f31f9c149113b745ace0f5be2873f3b865c7"
       },
       "number": 15376,
       "reviewDecision": null,
@@ -19928,14 +19929,14 @@
       "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11314",
       "group": "bazel",
       "status": "merged",
-      "updatedAt": "2026-10-23T22:52:01.435011+00:00",
-      "summary": "BCR #11314 merged at 22:33:26Z on October 23, 2026 (merge f5e16e5e8446). The maintainer supplied the documented URL-policy exception; no user decision or posting action remains. Registry propagation is a separate gate: root still observes HTTP 404 for the versioned release data and owns verifying correct served module/source integrity. The dependent gVisor PR stays draft until those data and current-head checks pass.",
+      "updatedAt": "2026-10-23T23:05:32.724596+00:00",
+      "summary": "BCR #11314 merged at 22:33:26Z on October 23, 2026 (merge f5e16e5e8446). The maintainer supplied the documented URL-policy exception, and root verified the published google_benchmark 1.10.0 module/source data. The registry prerequisite is complete; no further decision, propagation retry or registry post remains. The dependent gVisor PR is now ready at adf6f31f9c, with its current-head checks and registry-only rereview tracked separately.",
       "followup": {
         "owner": "root",
         "sourceHead": "8624f4a5f494ed14a9724caf2e84b7d7d4909762",
-        "observedAt": "2026-10-23T22:52:01.435011+00:00",
-        "disposition": "Merged; registry propagation and dependent checks pending",
-        "nextAction": "Root verifies correct served google_benchmark 1.10.0 module/source data, then current-head gVisor checks. Keep #15376 draft until both gates pass; no reminders or further registry post.",
+        "observedAt": "2026-10-23T23:05:32.724596+00:00",
+        "disposition": "Merged and served; registry prerequisite complete",
+        "nextAction": "No registry action. Track the dependent gVisor PR current-head checks and root-owned rereview separately.",
         "evidence": [
           "https://github.com/bazelbuild/bazel-central-registry/pull/11314",
           "https://bcr.bazel.build/modules/google_benchmark/1.10.0/source.json",
@@ -22285,7 +22286,7 @@
       "from": "pr:bazelbuild/bazel-central-registry:11314",
       "to": "pr:15376",
       "type": "depends_on",
-      "reason": "The direct google_benchmark 1.10.0 module must be correctly served by BCR; registry PR merge alone is insufficient. Current-head gVisor checks must also pass before draft readiness.",
+      "reason": "Satisfied: BCR #11314 merged and root verified the served google_benchmark 1.10.0 module/source data. Current-head gVisor checks and rereview remain separate PR actions.",
       "evidence": "https://github.com/bazelbuild/bazel-central-registry/pull/11314"
     }
   ],
