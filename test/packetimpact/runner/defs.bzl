@@ -300,7 +300,6 @@ ALL_TESTS = [
     ),
     PacketimpactTestInfo(
         name = "tcp_rack",
-        expect_netstack_failure = True,
     ),
     PacketimpactTestInfo(
         name = "tcp_info",
