@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T18:41:57.439922+00:00",
+    "updatedAt": "2026-10-23T18:50:53.058692+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -556,15 +556,15 @@
       "url": "https://github.com/google/gvisor/pull/15111",
       "group": "release",
       "status": "open",
-      "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-23T18:41:57.439922+00:00",
-      "summary": "The contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier source-specific record:\n\nThe patch approved by EtiennePerot on 2026-10-09T19:49:58Z at 095d18339a is independently verified unchanged at 12d1e8b462. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 12d1e8b4626d on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
+      "summary": "EtiennePerot approved the exact published b01f3baf4f head at 18:42:38Z on October 23. Delivery and the fresh-review request are complete; the existing watcher follows checks, imports and any new substantive feedback.\n\nEarlier delivery record:\n\nThe contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier source-specific record:\n\nThe patch approved by EtiennePerot on 2026-10-09T19:49:58Z at 095d18339a is independently verified unchanged at 12d1e8b462. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 12d1e8b4626d on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
       "followup": {
-        "disposition": "Approved amendment delivered; fresh maintainer review requested by comment",
+        "disposition": "Delivered and approved on the current head",
         "owner": "root",
         "sourceHead": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
         "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "Watch actual b01f checks/imports and Etienne’s response to the delivered alert. The formal native request was not saved (HTTP 404); do not send a duplicate notice within the existing hourly window.",
+        "nextAction": "Follow checks, imports and new substantive feedback through the existing watcher; no additional review alert.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15111#pullrequestreview-5474692022",
           "https://github.com/google/gvisor/pull/15111#issuecomment-6088101788",
@@ -575,7 +575,8 @@
           "https://github.com/tamird/gvisor/commit/12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
           "https://github.com/google/gvisor/pull/15111#issuecomment-6274669691",
           "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
-          "https://github.com/google/gvisor/pull/15111#issuecomment-6372189542"
+          "https://github.com/google/gvisor/pull/15111#issuecomment-6372189542",
+          "https://github.com/google/gvisor/pull/15111#pullrequestreview-5632974364"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
@@ -2547,24 +2548,25 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at 3255a52b212e on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe merge conflict is resolved in published head 854bf04d57 on upstream 3f35bca89c. Independent review verified the sole adaptation is an explicit uint64 huge-page-size conversion in the replacement loop, preserving upstream type preparation and the allocator behavior; BUILD and test files are byte-identical to the prior head. GitHub reports MERGEABLE and new-head source checks are running. Historical runtime qualification keeps its recorded source. Existing reviewer requests are preserved; no prior human approval was established.\n\nThe new exact-head conflict is assigned to hostinet_delivery in the released pr14353 checkout. The next step is a minimal rebase preserving the reviewed allocator behavior and tests, followed by independent source review and exact-lease publication. Earlier qualification remains bound to its recorded sources.\n\nGitHub now reports a merge conflict at unchanged head 4006dae11b, verified 2026-10-19T18:05:30.863749+00:00. The last published observation was mergeable at 2026-10-19T17:42:59.616657+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nThe upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
+      "summary": "A separate contributor preview at 9b469b1928628f1124992e8af1746435f6b04a8e addresses the reviewer’s allocator performance finding while preserving fault-contained recycled-page clearing. The upstream PR remains at 3255a52b212edcd2f526d3fb1afaa6d1523f7520. Root owns the contributor decision and substantive reviewer response; the earlier acknowledgement did not complete the repair.\n\nEarlier published source record:\n\nThe requested post-#16046 rebase is published at 3255a52b212e on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe merge conflict is resolved in published head 854bf04d57 on upstream 3f35bca89c. Independent review verified the sole adaptation is an explicit uint64 huge-page-size conversion in the replacement loop, preserving upstream type preparation and the allocator behavior; BUILD and test files are byte-identical to the prior head. GitHub reports MERGEABLE and new-head source checks are running. Historical runtime qualification keeps its recorded source. Existing reviewer requests are preserved; no prior human approval was established.\n\nThe new exact-head conflict is assigned to hostinet_delivery in the released pr14353 checkout. The next step is a minimal rebase preserving the reviewed allocator behavior and tests, followed by independent source review and exact-lease publication. Earlier qualification remains bound to its recorded sources.\n\nGitHub now reports a merge conflict at unchanged head 4006dae11b, verified 2026-10-19T18:05:30.863749+00:00. The last published observation was mergeable at 2026-10-19T17:42:59.616657+00:00. Current source-conflict triage is agent-owned; the previously qualified patch and source-bound evidence remain preserved.\n\nThe upstream conflict is resolved in published head 4006dae11b on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe approved allocator change is mechanically rebased and published at d543737e0 on master 7e906108b. Independent root review verifies the original AllocateAndCommit production edits and complete regression test are preserved. The new base rolls back direct reclaim; its removed implementation/tests remain absent, and the import/dependency resolution drops only now-unused usage while keeping required os/unix. Normal SSH signing failed, then the authorized exact-lease HTTPS push succeeded. Public/local/tracking/PR heads match; title and body are unchanged. The 03:45 UTC snapshot reports MERGEABLE with all visible new-head checks successful. No new runtime, public comment or merge was performed. Earlier qualification remains tied to its recorded source context.\n\nEarlier delivery and evidence:\n\nThe approved allocator change is mechanically refreshed and published at 069085391e6f3c5264f54b4d253356b1efec26be on upstream e1bc74024. The reviewed production patch and both newly landed reclaim tests are preserved; the conflict resolution unions their dependencies and keeps one standard-library os import. Independent source peer and publication receipt e21756c3b62d close the delivery. Public/local/tracking heads agree, and GitHub reports MERGEABLE. All visible new-head CI passes in the 08:30 snapshot. The separate combined save/restore validation at dd891 passes the full allocator suite and four both-CPU Nogo owners (parent af70d136, peer acfe2c41bb39); its test-only integration locks and combined-source provenance are recorded with #15322. No new standalone runtime pass is claimed.\n\nEarlier source-specific evidence and review history: Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. Historical validation sources remain unchanged.",
       "number": 15181,
       "reviewDecision": "",
       "followup": {
         "owner": "root",
-        "disposition": "Human performance feedback answered; measured repair in progress",
+        "disposition": "Measured amendment available for contributor review; upstream unchanged",
         "sourceHead": "3255a52b212edcd2f526d3fb1afaa6d1523f7520",
         "observedAt": "2026-10-23T17:48:10.680201+00:00",
-        "nextAction": "Prioritize the reviewer performance finding: root owns the technical repair and reply, Node owns matched base/reviewed/corrected measurements. Preserve the actual review evidence and report results before routine qualification work.",
+        "nextAction": "Root owns the decision on preview 9b469b1928628f1124992e8af1746435f6b04a8e, followed by approved publication and a substantive response to the performance finding. No duplicate acknowledgement.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/tamird/gvisor/commit/854bf04d57cd4bb5ec7edfb124852a4cd8361eca",
           "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520",
           "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
-          "https://github.com/google/gvisor/pull/15181#discussion_r4362531544"
+          "https://github.com/google/gvisor/pull/15181#discussion_r4362531544",
+          "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
       "head": "3255a52b212edcd2f526d3fb1afaa6d1523f7520",
       "evidence": [
         {
@@ -19498,8 +19500,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
       "group": "release",
       "status": "Delivered as #15111",
-      "updatedAt": "2026-10-23T18:41:57.439922+00:00",
-      "summary": "The contributor approved b01f3baf4f3497692d898b02a2b85db85d142b9d and its amendment is now delivered at b01f3baf4f3497692d898b02a2b85db85d142b9d. The contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier preview record:\n\nThe current-upstream revision preserves central lint failure propagation and adapts the public-entrypoint regression to Bazel goimports, removing the obsolete mock Go SDK and go.mod data. This is a semantic interface adaptation, not a byte-identical rebase. The contributor decision is pending; upstream #15111 remains at its previously approved 12d1e8b46 head. Four regression methods pass through an uncached remote AMD64 Bazel test, and the actual public Make lint passes all five checks on hosted Linux. The original qualification wrapper failed afterward on one trailing space in the Docker event text; independently reviewed retained reconciliation verifies the exact event, clean source/lock and cleanup without rerunning the workload. The public Make goimports build used its ordinary Linux sandbox defaults, not remote execution.",
+      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
+      "summary": "EtiennePerot approved the exact published b01f3baf4f head at 18:42:38Z on October 23. Delivery and the fresh-review request are complete; the existing watcher follows checks, imports and any new substantive feedback.\n\nEarlier delivery record:\n\nThe contributor approved b01f3baf4f3497692d898b02a2b85db85d142b9d and its amendment is now delivered at b01f3baf4f3497692d898b02a2b85db85d142b9d. The contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier preview record:\n\nThe current-upstream revision preserves central lint failure propagation and adapts the public-entrypoint regression to Bazel goimports, removing the obsolete mock Go SDK and go.mod data. This is a semantic interface adaptation, not a byte-identical rebase. The contributor decision is pending; upstream #15111 remains at its previously approved 12d1e8b46 head. Four regression methods pass through an uncached remote AMD64 Bazel test, and the actual public Make lint passes all five checks on hosted Linux. The original qualification wrapper failed afterward on one trailing space in the Docker event text; independently reviewed retained reconciliation verifies the exact event, clean source/lock and cleanup without rerunning the workload. The public Make goimports build used its ordinary Linux sandbox defaults, not remote execution.",
       "refinement": {
         "before": {
           "head": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d"
@@ -19510,13 +19512,76 @@
       },
       "followup": {
         "owner": "root",
-        "disposition": "Completed; approved amendment delivered",
+        "disposition": "Delivered and approved on the current head",
         "sourceHead": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
-        "nextAction": "No contributor decision remains. Follow substantive maintainer feedback on the live PR through the existing watcher.",
+        "nextAction": "Follow checks, imports and new substantive feedback through the existing watcher; no additional review alert.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
           "https://app.buildbuddy.io/invocation/51f98be2-c6c5-4146-a07d-cebd8c058691",
-          "https://github.com/google/gvisor/pull/15111"
+          "https://github.com/google/gvisor/pull/15111",
+          "https://github.com/google/gvisor/pull/15111#pullrequestreview-5632974364"
+        ]
+      }
+    },
+    {
+      "id": "branch:pr15181-protected-allocation",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/pr15181-protected-alloc-20261023",
+      "head": "9b469b1928628f1124992e8af1746435f6b04a8e",
+      "title": "Keep recycled allocation clearing fault-contained without large-page regressions",
+      "url": "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
+      "summary": "The preview commits the requested range before invoking the reader and clears recycled pages inside safecopy’s fault handler, returning ENOMEM when backing fails. On AMD64 CPUs with ERMS, clears of at least 2 KiB use REP STOSQ. Allocator/fault checks and both-CPU unaligned-clear checks passed. A three-arm AMD64 comparison used 51 children: three warmups and sixteen balanced observations of all six cases per arm. The corrected large hot-page regressions are removed; measured 4 KiB hot and cold costs remain 1.72% and 2.92% above the baseline. The original report-URI failure is retained alongside authenticated report recovery; no benchmark rerun was needed. The published PR is unchanged until the contributor decision.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "9b469b1928628f1124992e8af1746435f6b04a8e",
+        "url": "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e"
+      },
+      "refinement": {
+        "before": {
+          "head": "3255a52b212edcd2f526d3fb1afaa6d1523f7520"
+        },
+        "after": {
+          "head": "9b469b1928628f1124992e8af1746435f6b04a8e"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "9b469b1928628f1124992e8af1746435f6b04a8e",
+        "disposition": "Contributor preview published; reviewer response remains owned",
+        "nextAction": "Obtain the contributor decision, then publish the approved amendment and answer the existing performance thread with the measured result.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e",
+          "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
+          "https://app.buildbuddy.io/invocation/24cb849b-5b99-47ca-83db-64403b07fe8b"
+        ]
+      }
+    },
+    {
+      "id": "branch:rules-img-httpd-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-httpd-upstream",
+      "head": "eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+      "title": "Use pinned official Apache images with fixture layers",
+      "url": "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+      "group": "bazel",
+      "status": "Contributor approved; waiting for #16097",
+      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
+      "summary": "The contributor approved this exact revision for delivery after #16097 lands. Basic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The source requires the image_outputs and Make image-context interfaces from #16097; it does not consume shared BusyBox/compiler outputs.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+        "observedAt": "2026-10-23T18:50:53.058692+00:00",
+        "disposition": "Contributor approved; image-context prerequisite remains",
+        "nextAction": "After the existing watcher observes #16097 landing, extract and deliver the exact approved patch with its retained functional and paired evidence. No new contributor question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805"
         ]
       }
     }
@@ -21827,6 +21892,26 @@
       "type": "includes",
       "reason": "The approved preview was delivered on the existing PR. This retains its source and review history, not an outstanding proposed update.",
       "evidence": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
+    },
+    {
+      "from": "branch:pr15181-protected-allocation",
+      "to": "pr:15181",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Unpublished measured amendment to the existing PR; contributor review precedes upstream publication.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/9b469b1928628f1124992e8af1746435f6b04a8e"
+      ]
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-httpd-upstream",
+      "type": "depends_on",
+      "reason": "Requires images:img.bzl image_outputs and tools/images.mk Bazel image-context integration; no shared utility/compiler dependency.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
+        "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d"
+      ]
     }
   ],
   "investigations": [
@@ -29750,7 +29835,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-23T17:07:43.181351+00:00",
+      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
       "summary": "The user requested reassessing image migrations that rebuild substantial upstream software. Prefer pinned maintained upstream images with small Bazel-built layers when they satisfy the existing consumer contract; keep source-built project binaries and qualified shared utilities where needed. Hostinet owns the third-party image reassessment. The approved Nginx revision follows this approach; Apache is being adapted with its image-specific defaults preserved.",
       "findings": [
         {
@@ -29842,7 +29927,7 @@
           ]
         },
         {
-          "text": "The pinned-upstream Apache functional comparison is complete. New7b51 verifies both CPU image assembly, six100x AMD64 benchmark rows, required modules and HTTP identity/gzip behavior; eight positive image/containerd XML entries are separately reused from0999 because the basic image outputs and consumer source match. The original0999 converter failure remains unchanged. Generated404 responses correctly remain uncompressed under the preserved filter contract. Cleanup is verified. The fixed16 paired performance comparison is still required before delivery; no comparative timing or ARM runtime claim is made.",
+          "text": "The contributor approved this exact revision for delivery after #16097 lands. Basic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The source requires the image_outputs and Make image-context interfaces from #16097; it does not consume shared BusyBox/compiler outputs.",
           "evidence": [
             {
               "label": "Apache benchmark completion",
@@ -29851,6 +29936,10 @@
             {
               "label": "Pinned-upstream Apache product",
               "url": "https://github.com/tamird/gvisor/commit/6c1ff5eccbf677075c32736641183028cbb2e996"
+            },
+            {
+              "label": "Approved final Apache revision",
+              "url": "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d"
             }
           ]
         },
@@ -29864,7 +29953,7 @@
           ]
         }
       ],
-      "nextStep": "Deliver approved Nginx after the shared utility/compiler prerequisites; finish Apache’s fixed16 paired benchmark gate after completed functional validation. PHP source paths/modes and canonical 252-record Fetch/Verify are complete; proctor unit/analyzer and outcome-contract regression gates also pass; finish only the actual runtime-owner reporting gate, preserving prior raw PHPT/module/SAPI observations and failures. Reassess remaining third-party image ports for maintained upstream bases without assuming equivalent versions, modules, defaults or performance. Profiling/shared utilities retain their approvals and prerequisites.",
+      "nextStep": "Deliver approved Nginx after the shared utility/compiler prerequisites; deliver approved Apache eab6a14 after #16097 lands; its functional and fixed16 paired gates are complete. PHP source paths/modes and canonical 252-record Fetch/Verify are complete; proctor unit/analyzer and outcome-contract regression gates also pass; finish only the actual runtime-owner reporting gate, preserving prior raw PHPT/module/SAPI observations and failures. Reassess remaining third-party image ports for maintained upstream bases without assuming equivalent versions, modules, defaults or performance. Profiling/shared utilities retain their approvals and prerequisites.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
