@@ -230,6 +230,11 @@ resolution records human triage. Dismissed reviews clear. This does not
 backfill every historical top-level message. An assigned `actionableComment`
 continues to use the existing explicit assignment mechanism.
 
+After each repository completes, the log also emits `reviewerHandoffProvisional`
+with `requiresLiveRecheck`. If later collection or validation fails, recheck
+that exact PR head and complete thread live before acting on the provisional
+finding. The failed run leaves the published snapshot and its timestamp unchanged.
+
 On each refresh or continuation, handle this handoff before qualifications,
 source-CI failures and routine metadata. Read the complete linked discussion,
 alert its owner immediately when the existing refresh completes, and update

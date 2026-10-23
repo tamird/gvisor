@@ -694,6 +694,12 @@ def main() -> None:
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
     for repo, policy in policies.items():
         records, fresh, prior, inventory = collect_repository(repo, policy, previous)
+        # Keep observed human feedback actionable even if a later repository or
+        # snapshot validation fails. This log is not a published observation.
+        for record in reviewer_handoff(records, previous):
+            print(json.dumps({"reviewerHandoffProvisional": [{**record,
+                "requiresLiveRecheck": True,
+                "action": "Recheck this exact PR head and complete human thread live before routing action; snapshot publication is not yet complete."}]}), flush=True)
         prs.extend(records)
         refreshed.update({(repo, number): value for number, value in fresh.items()})
         prior_prs.update({(repo, number): value for number, value in prior.items()})

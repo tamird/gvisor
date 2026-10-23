@@ -230,6 +230,37 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertLess(events.index(handoff[0]), next(i for i, event in enumerate(events) if "checkFailures" in event))
         self.assertEqual(current["reviewerHandoff"], handoff[0]["reviewerHandoff"])
 
+    def test_later_repository_failure_retains_provisional_human_handoff_only(self) -> None:
+        self.registry["meta"]["repositories"] = {
+            "google/gvisor": "copybara", "buildbuddy-io/buildbuddy": "none"}
+        self.registry["nodes"].append({"id": "pr:3", "type": "pr", "repo": "google/gvisor",
+                                       "number": 3, "followup": {"owner": "root"}})
+        comment = {"id": "reviewer-question", "url": self.raw[3]["url"] + "#issuecomment-1",
+                   "body": "Does this preserve the original error?", "createdAt": LATER, "updatedAt": LATER,
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        self.raw[3]["comments"]["nodes"] = [comment]
+        collect_repository = updater.collect_repository
+
+        def fail_later(repo: str, policy: str, previous: dict) -> tuple:
+            if repo == "buildbuddy-io/buildbuddy":
+                raise RuntimeError("Open PR inventory changed during retrieval")
+            return collect_repository(repo, policy, previous)
+
+        with mock.patch.object(updater, "collect_repository", side_effect=fail_later), \
+                mock.patch("builtins.print") as output, \
+                self.assertRaisesRegex(RuntimeError, "inventory changed"):
+            self.collect()
+        events = [json.loads(call.args[0]) for call in output.call_args_list if call.args[0].startswith("{")]
+        provisional, = [event for event in events if "reviewerHandoffProvisional" in event]
+        record, = provisional["reviewerHandoffProvisional"]
+        self.assertEqual((record["id"], record["head"], record["owner"], record["requiresLiveRecheck"]),
+                         (comment["id"], self.raw[3]["headRefOid"], "root", True))
+        self.assertTrue(next(call.kwargs["flush"] for call in output.call_args_list
+                             if "reviewerHandoffProvisional" in call.args[0]))
+        self.assertFalse(any("reviewerHandoff" in event for event in events))
+        self.assertEqual(self.path.read_bytes(), self.original_bytes)
+        self.assertFalse((self.root / ".github-status.json.tmp").exists())
+
     def test_reviewer_handoff_tracks_latest_reply_and_top_level_events(self) -> None:
         pr = retained(raw_pr(5))
         finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
