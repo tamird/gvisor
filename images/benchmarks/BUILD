@@ -14,7 +14,13 @@ _MUSL_PLATFORMS = select({
     "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
 })
 
-_HTTPD_SIZES_KIB = [1, 10, 100, 1024, 10240]
+_HTTPD_SIZES_KIB = [
+    1,
+    10,
+    100,
+    1024,
+    10240,
+]
 
 # Keep the existing benchmark's exact zero-filled payloads and filenames.
 [
@@ -38,6 +44,7 @@ _HTTPD_FILES = {
     "/local/latin%dk.txt" % size: ":httpd_payload_%dk" % size
     for size in _HTTPD_SIZES_KIB
 }
+
 _HTTPD_FILES["/usr/local/apache2/conf/httpd.conf"] = "httpd/httpd.conf"
 
 image_layer(

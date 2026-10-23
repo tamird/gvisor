@@ -34,6 +34,7 @@ _COMMON_ENV = {
 }
 
 _ARM_ENV = _COMMON_ENV | {"HTTPD_TARGET_ARCH": "aarch64"}
+
 _AMD_ENV = _COMMON_ENV | {"HTTPD_TARGET_ARCH": "x86_64"}
 
 _HOST_ENV = {"CC_FOR_BUILD": "$$EXT_BUILD_ROOT$$/$(execpath :hostcc)"}
@@ -139,7 +140,7 @@ cp config.log "$$INSTALLDIR/config.log"
     tool_prefix = _PREFIX,
     deps = [
         ":apr",
-        "@libexpat//:libexpat",
+        "@libexpat",
     ],
 )
 
@@ -194,9 +195,9 @@ cp config.log "$$INSTALLDIR/config.log"
     deps = [
         ":apr",
         ":apr_util",
-        "@libexpat//:libexpat",
-        "@pcre2//:pcre2",
-        "@zlib//:zlib",
+        "@libexpat",
+        "@pcre2",
+        "@zlib",
     ],
 )
 
