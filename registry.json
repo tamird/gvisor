@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T00:00:02.540765+00:00",
+    "updatedAt": "2026-10-23T00:06:36.853785+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6144,7 +6144,8 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/16085",
           "https://github.com/tamird/gvisor/commit/9be200e2e42f243bbbf9d598a788580879f6ff54",
-          "https://github.com/tamird/gvisor/commit/f933b98d789aeaa672c6fa5baa735ecd96c59b61"
+          "https://github.com/tamird/gvisor/commit/f933b98d789aeaa672c6fa5baa735ecd96c59b61",
+          "https://github.com/google/gvisor/pull/16085#issuecomment-6353992754"
         ]
       },
       "evidence": [
@@ -6183,13 +6184,13 @@
       ],
       "number": 16085,
       "reapproval": {
-        "kind": "patch-preserving-rebase",
+        "kind": "content-amendment",
         "method": "reviewed-source-diff",
-        "head": "f933b98d789aeaa672c6fa5baa735ecd96c59b61",
-        "approvedHead": "9be200e2e42f243bbbf9d598a788580879f6ff54",
-        "diffSha256": "9f69003ed17a5ccf0ad58a2ec144c44dcedc0f34c77b414872bb011e4a3d54da",
-        "summary": "Complete changed bytes, whitespace, paths and modes identical; range-diff equals. Retained pre-rebase snapshot records original exact9be approvals before provider reassociation.",
-        "evidence": "https://github.com/google/gvisor/compare/9be200e2e42f243bbbf9d598a788580879f6ff54..f933b98d789aeaa672c6fa5baa735ecd96c59b61"
+        "head": "3b0422473368fc82486da3d4915a7e9c315f1586",
+        "approvedHead": "f933b98d789aeaa672c6fa5baa735ecd96c59b61",
+        "diffSha256": "fdf1ab0732001c544c0f553d475c76f008385a8ebeaec4e03f8a3f4cbf1beb1e",
+        "summary": "Remove the obsolete ast.Package deprecation exemption after #16092 landed. The other topic changes retain their reviewed bytes and modes.",
+        "evidence": "https://github.com/google/gvisor/compare/f933b98d789aeaa672c6fa5baa735ecd96c59b61..3b0422473368fc82486da3d4915a7e9c315f1586"
       }
     },
     {
@@ -12462,23 +12463,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "hostinet-port-range",
-      "head": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
+      "head": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
       "title": "Report the host's ephemeral port range in hostinet",
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-22T22:16:42.343413+00:00",
-      "summary": "Three new inline comments on the published 5c36118 revision require the test setup to tolerate EACCES, limit the host sysctl only for host/native variants, and remove unused headers. Hostinet owns the correction; its source review is complete and remote qualification remains pending. The earlier source rebase is already published. The internal Copybara failure remains separately recorded; passing public import checks do not explain it.",
+      "updatedAt": "2026-10-23T00:06:36.853785+00:00",
+      "summary": "The user-approved feedback correction is published at 29eff9a55b6a. The approved description and grouped replies are verified in review5622345637, and all three addressed threads are resolved. Current-head CI is pending. The native nybidari review-request POST returned404; no alternate write path was attempted.\n\nThree new inline comments on the published 5c36118 revision require the test setup to tolerate EACCES, limit the host sysctl only for host/native variants, and remove unused headers. Hostinet owns the correction; its source review is complete and remote qualification remains pending. The earlier source rebase is already published. The internal Copybara failure remains separately recorded; passing public import checks do not explain it.",
       "followup": {
         "owner": "hostinet_delivery",
-        "disposition": "Review feedback correction in progress",
-        "sourceHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
-        "observedAt": "2026-10-22T22:16:42.343413+00:00",
-        "nextAction": "Qualify the reviewed EACCES-only fallback and host/native runner scope, then prepare the requested correction for the existing delivery process. Preserve the permission-denied skip and distinguish the separate internal-check failure.",
+        "disposition": "Approved correction delivered; CI and maintainer review pending",
+        "sourceHead": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
+        "observedAt": "2026-10-22T23:58:34.111153+00:00",
+        "nextAction": "Follow current-head CI and new substantive feedback in the existing collector. Preserve the native requested-reviewer404 as a failed request, not a successful re-request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15931#discussion_r4353882006",
           "https://github.com/google/gvisor/pull/15931#discussion_r4353885353",
-          "https://github.com/google/gvisor/pull/15931#discussion_r4353893777"
+          "https://github.com/google/gvisor/pull/15931#discussion_r4353893777",
+          "https://github.com/google/gvisor/pull/15931#pullrequestreview-5622345637"
         ]
       },
       "evidence": [
@@ -18594,10 +18596,10 @@
       "url": "https://github.com/google/gvisor/pull/16198",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-22T23:57:03.324583+00:00",
-      "summary": "Root verified consolidated approval 5622342411 on exact 8f26710e, with one nonblocking GOMEMLIMIT clarification. User-requested independent review continues on changed heads or substantive external reviews until merge. The current revision avoids retained page buffers and disables percentage-triggered GC during the deliberately partial codec fixture. No merge action is authorized.",
+      "updatedAt": "2026-10-23T00:06:36.853785+00:00",
+      "summary": "Root verified consolidated approval 5622342411 on exact 8f26710e, with one nonblocking GOMEMLIMIT clarification. Hostinet owns future consolidated review publication with the same Node and WorkMap peers; root is copied. User-requested independent review continues on changed heads or substantive external reviews until merge. The current revision avoids retained page buffers and disables percentage-triggered GC during the deliberately partial codec fixture. No merge action is authorized.",
       "reviewWatch": {
-        "owner": "root",
+        "owner": "hostinet_delivery",
         "reviewers": [
           "hostinet_delivery",
           "node_tls_sni",
@@ -18614,10 +18616,10 @@
         ]
       },
       "followup": {
-        "owner": "root",
+        "owner": "hostinet_delivery",
         "sourceHead": "8f26710e0cbd6ffc4f357b2d44cee4e8a3d4b767",
         "disposition": "Continuing review through merge",
-        "nextAction": "Route each new head or substantive external review/comment, including automated review to the same three agents, deduplicated by the existing snapshot head and feedback IDs. Root publishes one consolidated review. Stop review work when merged; record closure without merging.",
+        "nextAction": "Route each new head or substantive external review/comment, including automated review to the same three agents, deduplicated by the existing snapshot head and feedback IDs. Hostinet publishes one consolidated review under the existing user authorization, copying root. Stop review work when merged; record closure without merging.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16198#pullrequestreview-5621877955",
           "https://github.com/google/gvisor/pull/16198#discussion_r4354369992"
@@ -18633,6 +18635,30 @@
           "url": "https://github.com/google/gvisor/pull/16198#discussion_r4354759913"
         }
       ]
+    },
+    {
+      "id": "pr:15960",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15960,
+      "ref": "fix/nodejs-tls-server-name",
+      "head": "54930a297f2150c18d014c7dac994c4e8668264c",
+      "title": "Send SNI in the Node.js CA certificate test",
+      "url": "https://github.com/google/gvisor/pull/15960",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-10-23T00:06:36.853785+00:00",
+      "summary": "Etienne requested excluding the flaky external-connectivity test instead of maintaining a dedicated patch. Node owns the bounded source assessment and found the test already excluded; root owns clarification of the requested scope. This remains agent attention, with no new contributor proposal.",
+      "followup": {
+        "owner": "node_tls_sni",
+        "sourceHead": "54930a297f2150c18d014c7dac994c4e8668264c",
+        "disposition": "Reconcile requested exclusion with existing test selection",
+        "nextAction": "Resolve the source-contract question with root before changing the existing exclusion. Preserve the mixed-platform collector priority and source-specific evidence.",
+        "observedAt": "2026-10-23T00:01:49.722161+00:00",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15960#pullrequestreview-5622293059"
+        ]
+      }
     }
   ],
   "edges": [
