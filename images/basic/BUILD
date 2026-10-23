@@ -120,6 +120,57 @@ image_outputs(
     image_name = "basic/symlink-resolv",
 )
 
+image_layer(
+    name = "nginx_layer",
+    srcs = {
+        "/etc/group": "nginx/group",
+        "/etc/nginx/mime.types": "@nginx_source//:conf/mime.types",
+        "/etc/nginx/nginx.conf": "nginx/nginx.conf",
+        "/etc/passwd": "nginx/passwd",
+        "/usr/sbin/nginx": "//images/nginx:binary",
+        "/usr/share/licenses/nginx/LICENSE": "@nginx_source//:LICENSE",
+        "/usr/share/nginx/html/index.html": "@nginx_source//:html/index.html",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/sbin/nginx": file_metadata(mode = "0755")},
+    include_runfiles = False,
+    # TestPortForwardStreamMode checks the listening socket before forwarding.
+    symlinks = {"/bin/netstat": "/bin/busybox"},
+)
+
+image_manifest(
+    name = "nginx_manifest",
+    cmd = [
+        "/usr/sbin/nginx",
+        "-g",
+        "daemon off;",
+    ],
+    config_fragment = "nginx/config.json",
+    env = {"PATH": "/usr/sbin:/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":nginx_layer",
+    ],
+    stop_signal = "SIGQUIT",
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
+    name = "nginx",
+    manifests = [":nginx_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "nginx",
+    image = ":nginx",
+    image_name = "basic/nginx",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
@@ -320,4 +371,28 @@ image_outputs(
     name = "pidfd_tests",
     image = ":pidfd_tests",
     image_name = "basic/pidfd-tests",
+)
+
+arch_genrule(
+    name = "qualification_nginx_archives",
+    src = ":nginx_archive",
+    template = "qualification_nginx_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_nginx_contexts",
+    src = ":nginx_context",
+    template = "qualification_nginx_context_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_pidfd_tests_archives",
+    src = ":pidfd_tests_archive",
+    template = "qualification_pidfd_tests_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_pidfd_tests_contexts",
+    src = ":pidfd_tests_context",
+    template = "qualification_pidfd_tests_context_%s.tar",
 )

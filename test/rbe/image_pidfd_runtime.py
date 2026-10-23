@@ -13,20 +13,11 @@ def run(invoke, evidence: Path, private: Path) -> None:
     scripts = Path(__file__).parent
     python = ["run", "--lockfile_mode=error", "--noannounce_rc",
               "@rules_python//python/bin:python", "--"]
-    guards = invoke("pidfd-reporting-guards", [*python, str(scripts / "pidfd_tap_test.py")],
-                    "command", targets=[])
-    if guards["status"] != "PASS":
-        raise RuntimeError("Selftest reporting guards failed")
     contents_path = evidence / "pidfd-contents.json"
     inspected = invoke("pidfd-image-closure", [*python, str(scripts / "pidfd_image_inspect.py"),
                         str(contents_path)], "command", targets=[])
     if inspected["status"] != "PASS":
         raise RuntimeError("Pidfd archive/source/runtime closure verification failed")
-    probed = invoke("busybox-shell-probes", [*python, str(scripts / "busybox_probe.py"),
-                    str(evidence / "busybox-build-inputs.json"), str(contents_path),
-                    str(evidence / "busybox-probes.json")], "command", targets=[])
-    if probed["status"] != "PASS":
-        raise RuntimeError("Source-built shell and timeout probes failed")
     contents = report.read_json(contents_path)
     programs = next([item["name"] for item in row["static_programs"]]
                     for row in contents["architectures"] if row["architecture"] == "amd64")

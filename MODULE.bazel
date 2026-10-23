@@ -145,6 +145,16 @@ http_archive(
 )
 
 http_archive(
+    name = "nginx_source",
+    build_file = "//images/nginx:source.BUILD",
+    patch_strip = 1,
+    patches = ["//images/nginx:configure_runner.patch"],
+    sha256 = "89ea8a3dc171511f7325043b50e4c036248d9fad5feb7ec809c0b82d5df42c65",
+    strip_prefix = "nginx-1.31.7",
+    urls = ["https://nginx.org/download/nginx-1.31.7.tar.gz"],
+)
+
+http_archive(
     name = "linux_pidfd",
     build_file = "//images/basic:linux_pidfd.BUILD",
     patch_strip = 1,

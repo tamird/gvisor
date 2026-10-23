@@ -63,15 +63,18 @@ try:
                                           ("arm64", "aarch64", "AArch64")):
         row = {"architecture": architecture, "status": "INCOMPLETE"}
         records["architectures"].append(row)
-        # Preserve transitioned local owners; source files use explicit repo labels.
-        owners = "|".join(re.escape(label) for label in labels)
-        sources = " ".join("@linux_pidfd//:" + name for name in installed_sources.values())
-        query = run(["bazel", *startup, "cquery", *options, "--config=" + config,
-                     "--output=starlark", "--starlark:expr=" +
-                     "json.encode([str(target.label), target.label.name, [f.path for f in target.files.to_list()]])",
-                     'filter("^(@@)?(' + owners + ')$", deps(//images/basic:pidfd_tests_archive))'
-                     ' union set(' + sources + ') union //images/basic:pidfd_tests_context'])
-        row["configured_inputs"] = [json.loads(line) for line in query.splitlines()]
+        # Consume the exact owners analyzed under the mixed build's roots.
+        graph = json.loads((destination.parent / "image-configured-inputs.json").read_text())
+        if graph["source"] != records["source"] or graph["execution_root"] != str(execution_root):
+            raise ValueError("Mixed image graph identifies a different source/root")
+        cpu = "k8" if architecture == "amd64" else "aarch64"
+        row["configured_inputs"] = [
+            [item["label"], item["name"], item["files"]]
+            for item in graph["rows"]
+            if (item["label"].removeprefix("@@") in labels and item["cpu"] == cpu)
+            or (not item["label"].removeprefix("@@").startswith("//")
+                and item["name"] in installed_sources.values())
+        ]
         paths = configured_inputs(row["configured_inputs"], labels, installed_sources.values())
         outputs = {
             name: (output_base if path.startswith("external/") else execution_root) / path
