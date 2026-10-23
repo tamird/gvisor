@@ -1,4 +1,4 @@
-"""Probe the unchanged GNU baseline on its pinned upstream execution image."""
+"""Compile the standalone RSEQ helper with the public CI GNU toolchains."""
 
 import json
 import os
@@ -60,7 +60,7 @@ def probe(invoke, record_execution, evidence: Path, private: Path, config: dict,
                     raise ValueError("Unexpected GNU compiler identity")
                 (evidence / (architecture + "-gnu-compiler-identity.txt")).write_bytes(data)
             else:
-                expected_type = 3 if label == "//vdso:vdso" else 1
+                expected_type = 2 if label == "//test/syscalls/linux/rseq:rseq_binary" else 1
                 machine = 247 if label.startswith("//runsc/sandbox/bpf:") else {"x86_64": 62, "aarch64": 183}[architecture]
                 if data[:6] != b"\x7fELF\x02\x01" or int.from_bytes(data[16:18], "little") != expected_type or int.from_bytes(data[18:20], "little") != machine:
                     raise ValueError(f"Unexpected ELF type/machine for {label}")
@@ -74,9 +74,15 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     record = {"status": "INCOMPLETE", "source": config["source"],
               "baseline_source": config["baseline_source"], "worker_image": config["worker_image"],
-              "scope": "Uncached remote GNU, cross-GNU and BPF actions; no full release or startup timing.",
+              "scope": "Uncached GNU RSEQ compilation on AMD64 and ARM64; no runtime test claim.",
               "architectures": []}
     try:
+        formatted = invoke("rseq-clang-format", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                           "@rules_python//python/bin:python", "--", "-c",
+                           'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "clang-format"]).returncode)'],
+                           "command", targets=[])
+        if formatted["status"] != "PASS":
+            raise RuntimeError("Canonical clang-format failed")
         for architecture in ("x86_64", "aarch64"):
             current = {"architecture": architecture, "status": "INCOMPLETE"}
             record["architectures"].append(current)
