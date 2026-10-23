@@ -15671,13 +15671,13 @@
       "url": "https://github.com/google/gvisor/pull/16052",
       "group": "runtime",
       "status": "open",
-      "summary": "The matching Copybara import #16229 at 6b34645ab2a6 now reports public Buildkite #51942 and internal #33635 failures. Its source marker is the current fd6376945efa commit. Root owns the exposed diagnostic; this is separate from the completed Gazelle rebase. The recent contributor approval and original runtime evidence remain preserved.\n\nThe current source arms periodic SIGALRM around the six existing RSEQ abort helpers and restores KVM execution. Prior qualification passed the selected native/KVM cases on AMD64 and the recorded ARM route; it does not establish the cause of this new import failure.",
+      "summary": "The matching import fails to compile rseq_binary on AMD64 and ARM64 because asm/signal.h sees size_t before its declaring header. Root prepared the narrow header-order correction at0e079c726ea8; both-CPU GNU compilation and canonical formatting passed with four uncached compile actions. The contributor question to publish and reply is pending. Upstream remains fd6376945efa until approval.\n\nThe latest matching import #16229 at60ccf396d9b5 repeats the source failure in public Buildkite51944/internal33637. The original periodic-signal behavior and prior runtime evidence remain unchanged; this correction does not claim a new runtime test.",
       "followup": {
         "owner": "root",
         "sourceHead": "fd6376945efa93664fec28669cc18e29c89b8648",
-        "observedAt": "2026-10-23T02:22:55.395594+00:00",
-        "disposition": "Matching import has new public and internal check failures",
-        "nextAction": "Diagnose exact matching import16229/6b346, public Buildkite51942 and internal33635. Sourcefd637 has feedback failure for the same import attempt; no source cause or retry is inferred yet.",
+        "observedAt": "2026-10-23T02:54:39.556311+00:00",
+        "disposition": "Qualified header-order correction; contributor review pending",
+        "nextAction": "Await the existing contributor decision on0e079c726ea8, then publish and reply as requested. Do not repeat the diagnosed import investigation or treat the pending correction as upstream HEAD.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424415522/job/118633206126",
           "https://github.com/google/gvisor/pull/16031",
@@ -15685,7 +15685,7 @@
           "https://github.com/tamird/gvisor/commit/fd6376945efa93664fec28669cc18e29c89b8648"
         ]
       },
-      "updatedAt": "2026-10-23T02:22:55.395594+00:00",
+      "updatedAt": "2026-10-23T02:54:39.556311+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -15706,6 +15706,10 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/fd6376945efa93664fec28669cc18e29c89b8648"
+        },
+        {
+          "label": "Qualified header-order correction awaiting contributor review",
+          "url": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90"
         }
       ],
       "ciRecovery": {
@@ -15727,6 +15731,14 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39424415522/job/118633206126"
           }
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "fd6376945efa93664fec28669cc18e29c89b8648"
+        },
+        "after": {
+          "head": "0e079c726ea847f2198aa3a433cd67308f4e3a90"
+        }
       }
     },
     {
@@ -18728,20 +18740,20 @@
       "id": "branch:rules-img-rust",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-rust-protobuf37-framed-current",
-      "head": "90982863f5c4a38c7451f972d889c5108727c9e3",
+      "ref": "rules-img-rust-public-notice-current",
+      "head": "226a73edd2648b611fe801ac7d53cde2b2ed4fe2",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/90982863f5c4a38c7451f972d889c5108727c9e3",
-      "status": "Conditionally accepted; compatibility and image equality retry running",
-      "updatedAt": "2026-10-23T02:22:55.395594+00:00",
-      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. Its focused compatibility run found four gRPC libraries missing the newly separate C++ reflection dependency. The reviewed declaration fix is published, and the native patch framing correction is published. The unchanged compatibility/image-equality retry is running; its prior compile and bootstrap failures remain preserved. No new runtime applicability is claimed before those output comparisons pass.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The notice alias names a Linux x86-64 compiler distribution only as a source of architecture-independent documentation; it does not select the compiler execution host. Prior qualification established static images for both target CPUs, AMD64 runc and systrap TestRust cases, ordinary Make selection, exact native runtime inputs and notices. Darwin coverage is configured compiler dependency analysis only; no Darwin execution or ARM64 runtime is claimed. Those results remain bound to the earlier source until the current output equality gate passes. No upstream PR is open.",
+      "url": "https://github.com/tamird/gvisor/commit/226a73edd2648b611fe801ac7d53cde2b2ed4fe2",
+      "status": "Conditionally accepted; final qualification formatter recovery",
+      "updatedAt": "2026-10-23T02:54:39.556311+00:00",
+      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Its first attempt stopped at one canonical blank-line formatting difference before those gates; the formatting-only recovery is in preparation.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "90982863f5c4a38c7451f972d889c5108727c9e3",
-        "observedAt": "2026-10-23T02:22:55.395594+00:00",
-        "disposition": "Conditionally accepted; compatibility and image equality retry running",
-        "nextAction": "Drain sole dda6a379 compatibility/equality retry. The two standard patch boundaries correct native Bazel framing; four dependency hunks and all validation gates remain unchanged.",
+        "sourceHead": "226a73edd2648b611fe801ac7d53cde2b2ed4fe2",
+        "observedAt": "2026-10-23T02:54:39.556311+00:00",
+        "disposition": "Conditionally accepted; final qualification formatter recovery",
+        "nextAction": "Apply the exact one-blank-line formatter correction, then finish the reviewed 17-phase compatibility, tidy and output-equality gate. Retry3 stopped at canonical formatting before the workload; no new runtime credit.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18791,8 +18803,20 @@
         {
           "label": "Native patch framing correction retry",
           "url": "https://app.buildbuddy.io/invocation/dda6a379-1efb-4b98-b7dd-395efb95c230"
+        },
+        {
+          "label": "Public notice alias and analyzer reporting recovery",
+          "url": "https://app.buildbuddy.io/invocation/2e0a9b24-9a86-4b23-aac9-5a4990491800"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+        },
+        "after": {
+          "head": "226a73edd2648b611fe801ac7d53cde2b2ed4fe2"
+        }
+      }
     },
     {
       "id": "branch:protobuf-37-rust-locks",
@@ -18803,16 +18827,16 @@
       "title": "Use released Protobuf Rust lockfiles",
       "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2",
       "group": "bazel",
-      "status": "Canonical catalog passed; generated-code compatibility retry running",
-      "summary": "The separate Protobuf 37.0-rc1 upgrade supplies the release Rust lockfiles and exact audited catalog records, removing the generated-lock patch and rules_rust override from the image proposal. Four existing gRPC 1.84 libraries now explicitly depend on the public C++ reflection target that Protobuf 37 separated from its C interface. Canonical Fetch/Verify passed; the corrected native patch framing is published and the same generated C++/Go compatibility and image equality gate is running.",
+      "status": "Catalog and both-CPU generated builds passed; analyzer reporting recovery",
+      "summary": "The separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
-        "observedAt": "2026-10-23T02:22:55.395594+00:00",
-        "disposition": "Canonical catalog passed; generated-code compatibility retry running",
-        "nextAction": "Collect dda6a379 after the exact two-line native patch framing correction; keep the original compile/bootstrap failures separate from current evidence."
+        "observedAt": "2026-10-23T02:54:39.556311+00:00",
+        "disposition": "Catalog and both-CPU generated builds passed; analyzer reporting recovery",
+        "nextAction": "Finish the reviewed compatibility/output gate after the Rust alias formatter correction. Both-CPU generated builds already passed; native analyzer reporting remains incomplete."
       },
-      "updatedAt": "2026-10-23T02:22:55.395594+00:00"
+      "updatedAt": "2026-10-23T02:54:39.556311+00:00"
     }
   ],
   "edges": [
