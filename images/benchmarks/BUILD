@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs", "package_layer")
@@ -25,13 +26,10 @@ _HTTPD_SIZES_KIB = [
 
 # Keep the existing benchmark's exact zero-filled payloads and filenames.
 [
-    genrule(
+    write_file(
         name = "httpd_payload_%dk" % size,
-        outs = ["httpd/latin%dk.txt" % size],
-        cmd = '"$(execpath //images:busybox_binary)" dd if=/dev/zero of=$@ bs=1024 count=%d' % size,
-        # tools selects the execution configuration, not the image CPU.
-        exec_compatible_with = ["@platforms//os:linux"],
-        tools = ["//images:busybox_binary"],
+        out = "httpd/latin%dk.txt" % size,
+        content = ["\x00" * (size * 1024)],
     )
     for size in _HTTPD_SIZES_KIB
 ]

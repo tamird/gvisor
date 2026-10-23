@@ -46,7 +46,12 @@ _PCRE_ENV = {
     "PCRE2_LIBS": "-lpcre2",
 }
 
-_TOOLS = ["run_target.sh"] + _EMULATOR.tools
+_TOOLS = [
+    "configure.sh",
+    "run_target.sh",
+] + _EMULATOR.tools
+
+_CONFIGURE_PREFIX = _PREFIX + '"$$EXT_BUILD_ROOT$$/$(execpath configure.sh)" '
 
 # The real configure probes exercise Linux behavior, including under QEMU.
 _EXEC_CONSTRAINTS = ["@platforms//os:linux"]
@@ -69,7 +74,7 @@ configure_make(
         "--disable-shared",
         "--enable-static",
     ] + _TARGET,
-    configure_prefix = _PREFIX,
+    configure_prefix = _CONFIGURE_PREFIX,
     env = select({
         "@platforms//cpu:aarch64": _ARM_ENV | _HOST_ENV,
         "@platforms//cpu:x86_64": _AMD_ENV | _HOST_ENV,
@@ -118,7 +123,7 @@ configure_make(
         "--without-sqlite2",
         "--without-sqlite3",
     ] + _TARGET,
-    configure_prefix = _PREFIX,
+    configure_prefix = _CONFIGURE_PREFIX,
     env = select({
         "@platforms//cpu:aarch64": _ARM_ENV,
         "@platforms//cpu:x86_64": _AMD_ENV,
@@ -166,7 +171,7 @@ configure_make(
         # Use only the declared zlib provider, not a worker installation.
         "--with-z=$$EXT_BUILD_DEPS$$",
     ] + _TARGET,
-    configure_prefix = _PREFIX,
+    configure_prefix = _CONFIGURE_PREFIX,
     data = ["httpd.mk"],
     env = select({
         "@platforms//cpu:aarch64": _ARM_ENV | _PCRE_ENV,

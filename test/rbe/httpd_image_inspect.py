@@ -107,7 +107,6 @@ try:
     source_files["usr/share/licenses/zlib/LICENSE"] = source("zlib", "LICENSE")
     source_files["usr/local/apache2/conf/mime.types"] = source("httpd_source", "docs/conf/mime.types")
     records["source_inputs"] = {name: identity(path) for name, path in source_files.items()}
-    records["execution_busybox"] = static_elf(output("//images:busybox_binary", "k8", True), "Advanced Micro Devices X86-64")
     for architecture, cpu, machine in (("amd64", "k8", "Advanced Micro Devices X86-64"), ("arm64", "aarch64", "AArch64")):
         binaries = {"usr/local/apache2/bin/httpd": output("//images/httpd:binary", cpu),
                     "bin/busybox": output("//images:busybox_binary", cpu)}
@@ -231,14 +230,11 @@ try:
                             case [item] if len(item["files"]) == 1:
                                 path = local_path(item["files"][0])
                             case _:
-                                raise ValueError("Expected one declared DD payload owner")
-                        joined = producer(path)
-                        if joined["output"]["sha256"] != expected_hash:
-                            raise ValueError("Image payload differs from declared DD output")
-                        exec_path = str(output("//images:busybox_binary", "k8", True).relative_to(root))
-                        if not any(exec_path in argument for argument in joined["action"]["commandArgs"]):
-                            raise ValueError("DD producer did not invoke the declared execution BusyBox")
-                        row["payloads"].append({"installed": installed, "owner": item, "producer": joined})
+                                raise ValueError("Expected one declared payload owner")
+                        payload = identity(path)
+                        if (payload["bytes"], payload["sha256"]) != (size * 1024, expected_hash):
+                            raise ValueError("Image payload differs from declared write_file output")
+                        row["payloads"].append({"installed": installed, "owner": item, "output": payload})
                 for installed, target in aliases.items():
                     if resolve(files, installed) != target:
                         raise ValueError("Image command alias differs: " + installed)
