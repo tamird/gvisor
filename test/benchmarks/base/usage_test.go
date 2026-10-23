@@ -29,7 +29,7 @@ import (
 	"gvisor.dev/gvisor/test/metricsviz"
 )
 
-// BenchmarkSizeEmpty creates N alpine containers and reads memory usage using `docker stats`.
+// BenchmarkSizeEmpty creates N idle containers and reads memory usage using `docker stats`.
 func BenchmarkSizeEmpty(b *testing.B) {
 	ctx := context.Background()
 	machine, err := harness.GetMachine()
@@ -45,7 +45,7 @@ func BenchmarkSizeEmpty(b *testing.B) {
 		container := machine.GetContainer(ctx, b)
 		defer container.CleanUp(ctx)
 		if err := container.Spawn(ctx, dockerutil.RunOpts{
-			Image: "benchmarks/alpine",
+			Image: "basic/busybox",
 		}, "sh", "-c", "echo Hello && sleep 1000"); err != nil {
 			b.Fatalf("failed to run container: %v", err)
 		}
