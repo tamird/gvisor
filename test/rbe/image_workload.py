@@ -84,10 +84,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             row.update(status="FAIL", error=str(error))
             raise
 
-    def check_source(revision: str) -> None:
-        if command("source-head", ["git", "rev-parse", "HEAD"]) != revision:
+    def check_source(revision: str, cleanup: bool = False) -> None:
+        if command("source-head", ["git", "rev-parse", "HEAD"], cleanup=cleanup) != revision:
             raise ValueError("Unexpected source revision")
-        if command("source-status", ["git", "status", "--porcelain", "--untracked-files=no"]):
+        if command("source-status", ["git", "status", "--porcelain", "--untracked-files=no"], cleanup=cleanup):
             raise ValueError("Tracked source changed")
         for name, expected in config["matched_inputs"].items():
             path = workspace / name
@@ -266,7 +266,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             except (OSError, subprocess.SubprocessError, TimeoutError) as error:
                 records["cleanup_errors"].append(str(error))
         try:
-            check_source(source)
+            check_source(source, cleanup=True)
             if "containers_before" in records:
                 records["containers_after"] = sorted(command("containers-after", ["docker", "ps", "-aq", "--no-trunc"], cleanup=True).split())
                 if records["containers_after"] != records["containers_before"]:
