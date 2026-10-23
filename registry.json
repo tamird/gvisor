@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T21:39:00.517147+00:00",
+    "updatedAt": "2026-10-23T21:45:47.739245+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3691,13 +3691,13 @@
       "url": "https://github.com/google/gvisor/pull/15376",
       "group": "bazel",
       "status": "open",
-      "summary": "The independently reviewed equivalent rebase is published to the exact fork branch at 2da52bbf9fa6, while GitHub's PR and upstream pull ref still identify 86e93d6a1e10 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 86e93d6a1e10 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
+      "summary": "The fork branch 2da52bbf9fa6 has a verified MODULE.bazel conflict with upstream master 5ed0fe4dba8d. GitHub still identifies the older PR head 86e93d6a1e10 and reports CONFLICTING against older base 7d17d8564110; independent Git merge checks find that old PR head clean against both bases. Root owns the branch repair and subsequent public-head verification. The prior wait-for-synchronization action did not resolve the fork conflict and is superseded.\n\nPreserved earlier observations:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 2da52bbf9fa6, while GitHub's PR and upstream pull ref still identify 86e93d6a1e10 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 86e93d6a1e10 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
       "head": "2da52bbf9fa617cc20244e9db11786b61e899796",
-      "updatedAt": "2026-10-22T17:07:05.995069+00:00",
+      "updatedAt": "2026-10-23T21:45:47.739245+00:00",
       "followup": {
-        "disposition": "Equivalent rebase published; provider PR synchronization pending",
+        "disposition": "Verified fork conflict; root owns source repair and provider-head reconciliation",
         "owner": "root",
-        "nextAction": "Use the existing ordinary watcher to observe the replacement PR head and fresh mergeability/checks. Keep the old provider conflict observable until it catches up; no repush, new watcher or reapproval reminder for the equivalent rebase.",
+        "nextAction": "Repair the verified MODULE.bazel conflict in the fork branch, then verify the actual public PR head and current-base merge result. Do not treat the stale provider head or a waiting disposition as resolution.",
         "sourceHead": "2da52bbf9fa617cc20244e9db11786b61e899796",
         "reviewedAt": "2026-10-17T11:45:11.369312+00:00",
         "reviewDecision": null,
@@ -3714,7 +3714,7 @@
           "https://github.com/tamird/gvisor/commit/86e93d6a1e10491391c176d6f43f66e4918e4b8b",
           "https://github.com/tamird/gvisor/commit/2da52bbf9fa617cc20244e9db11786b61e899796"
         ],
-        "observedAt": "2026-10-22T17:07:05.995069+00:00",
+        "observedAt": "2026-10-23T21:45:47.739245+00:00",
         "providerHead": "86e93d6a1e10491391c176d6f43f66e4918e4b8b"
       },
       "number": 15376,

@@ -617,6 +617,33 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             "mergeabilityIssues": mergeability, "changedMergeability": mergeability_changes}
 
 
+def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
+    """Keep current source blockers actionable even when no observation changed."""
+    records = []
+    for observation in report.get("mergeabilityIssues", []):
+        if observation["scope"] == "older-source-import":
+            continue
+        if observation["sourceBranchMismatch"]:
+            action = ("Reconcile the PR and fork branch heads, and independently check both against the current base. "
+                      "Route a verified source conflict or provider synchronization obstacle to the owner; "
+                      "a published branch or waiting disposition does not resolve this mismatch.")
+        elif observation["mergeable"] == "CONFLICTING":
+            action = ("Verify the current head/base conflict and route the repair to its owner. "
+                      "Keep the blocker active until the exact source or import is confirmed mergeable or closed.")
+        else:
+            action = ("Mergeability remains unknown after the bounded provider check. "
+                      "Establish the actual current head/base result before treating this source as ready.")
+        followup = observation["followup"]
+        identity = f"pr:{observation['source']}" if observation["repo"] == REPO else f"pr:{observation['repo']}:{observation['source']}"
+        conflict = previous.get("workStates", {}).get(identity, {}).get("conflicts", {})
+        records.append({key: observation[key] for key in (
+            "repo", "source", "sourceHead", "number", "url", "scope", "head", "branchHead", "base", "mergeable",
+            "checkedAt", "mergeabilityCheckedAt", "sourceBranchMismatch"
+        )} | {"owner": followup.get("owner"), "action": action, "recordedFollowup": followup,
+              "conflictObservedSince": conflict.get("since") if conflict.get("scope") == observation["head"] else None})
+    return records
+
+
 def fetch_maintainers() -> frozenset[str]:
     """Use project governance, not GitHub repository association, for authority."""
     response = graphql('query { repository(owner:"google",name:"gvisor") { '
@@ -721,9 +748,11 @@ def main() -> None:
                 issue = value["issue"]
                 issues[issue_ids[alias]] = {"githubState": issue["state"].lower(), "updatedAt": issue["updatedAt"]}
     checked_at = datetime.now(timezone.utc).isoformat()
+    report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
                 "reviewerHandoff": reviewer_handoff(prs, previous),
+                "mergeabilityHandoff": mergeability_handoff(report, previous),
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
                            "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,
@@ -742,9 +771,11 @@ def main() -> None:
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
     for record in snapshot["reviewerHandoff"]:
         print(json.dumps({"reviewerHandoff": [record]}))
+    for record in snapshot["mergeabilityHandoff"]:
+        print(json.dumps({"mergeabilityHandoff": [record]}))
     # gh run view scans lines with Go's default 64 KiB token limit. A single
     # aggregate report can hide the rest of this step, including human feedback.
-    for kind, observations in check_report(prs, previous).items():
+    for kind, observations in report.items():
         for observation in observations:
             print(json.dumps({kind: [observation]}))
         if not observations:

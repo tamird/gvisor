@@ -206,7 +206,11 @@ class CollectorHistoryTest(unittest.TestCase):
                        "sourceHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
                        "failedChecks": [{"name": "feedback/copybara", "state": "FAILURE",
                                          "description": "Internal check diagnostic " * 20}]}
-        report = {"checkFailures": [observation] * 100, "changedChecks": []}
+        blocker = {**observation, "url": "https://github.com/google/gvisor/pull/15931", "scope": "source",
+                   "head": observation["sourceHead"], "branchHead": None, "base": "f" * 40,
+                   "mergeable": "CONFLICTING", "checkedAt": OLD, "mergeabilityCheckedAt": OLD,
+                   "sourceBranchMismatch": False, "followup": {"owner": "root"}}
+        report = {"checkFailures": [observation] * 100, "changedChecks": [], "mergeabilityIssues": [blocker]}
         self.assertGreater(len(json.dumps(report).encode()), 64 * 1024)
         comment = {"id": "inline-new", "url": "https://github.com/google/gvisor/pull/3#discussion_r1",
                    "body": "The sysctl write can return EACCES.", "createdAt": LATER, "updatedAt": LATER,
@@ -229,6 +233,10 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(handoff[0]["reviewerHandoff"][0]["id"], comment["id"])
         self.assertLess(events.index(handoff[0]), next(i for i, event in enumerate(events) if "checkFailures" in event))
         self.assertEqual(current["reviewerHandoff"], handoff[0]["reviewerHandoff"])
+        blockers = [event for event in events if "mergeabilityHandoff" in event]
+        self.assertEqual(current["mergeabilityHandoff"], blockers[0]["mergeabilityHandoff"])
+        self.assertLess(events.index(handoff[0]), events.index(blockers[0]))
+        self.assertLess(events.index(blockers[0]), next(i for i, event in enumerate(events) if "checkFailures" in event))
 
     def test_later_repository_failure_retains_provisional_human_handoff_only(self) -> None:
         self.registry["meta"]["repositories"] = {
@@ -507,6 +515,43 @@ class CollectorHistoryTest(unittest.TestCase):
 
 
 class CheckReportTest(unittest.TestCase):
+    def test_unchanged_conflict_and_branch_mismatch_remain_owned(self) -> None:
+        current = retained(raw_pr(15376))
+        current.update(mergeable="CONFLICTING", branchHead="b" * 40)
+        previous = {"prs": [copy.deepcopy(current)], "workStates": {
+            "pr:15376": {"conflicts": {"scope": current["head"], "since": OLD}}}}
+        registry = {"nodes": [{"type": "pr", "repo": "google/gvisor", "number": 15376,
+                              "followup": {"owner": "root", "sourceHead": "b" * 40,
+                                           "nextAction": "Wait for provider synchronization; no repush."}}]}
+        with mock.patch.object(updater, "REGISTRY", registry):
+            for _ in range(2):
+                report = updater.check_report([current], previous)
+                self.assertEqual(report["changedMergeability"], [])
+                handoff = updater.mergeability_handoff(report, previous)
+                self.assertEqual(len(handoff), 1)
+                self.assertEqual(handoff[0]["owner"], "root")
+                self.assertEqual(handoff[0]["conflictObservedSince"], OLD)
+                self.assertIn("independently check both", handoff[0]["action"])
+                self.assertIn("Wait for provider", handoff[0]["recordedFollowup"]["nextAction"])
+                previous["mergeabilityHandoff"] = handoff
+            # Provider MERGEABLE cannot clear a still-divergent fork branch.
+            current["mergeable"] = "MERGEABLE"
+            self.assertEqual(len(updater.mergeability_handoff(updater.check_report([current], previous), previous)), 1)
+            current["head"] = current["branchHead"]
+            self.assertEqual(updater.mergeability_handoff(updater.check_report([current], previous), previous), [])
+            current.update(mergeable="CONFLICTING", status="closed")
+            self.assertEqual(updater.mergeability_handoff(updater.check_report([current], previous), previous), [])
+
+    def test_import_handoff_requires_current_source_identity(self) -> None:
+        current = retained(raw_pr(7), [linked(imported(107, 7), 7)])
+        current["imports"][0]["mergeable"] = "CONFLICTING"
+        handoff = updater.mergeability_handoff(updater.check_report([current], {}), {})
+        self.assertEqual([(row["number"], row["scope"]) for row in handoff], [(107, "current-source-import")])
+        current["imports"][0]["sourceHead"] = "a" * 40
+        report = updater.check_report([current], {})
+        self.assertEqual(len(report["mergeabilityIssues"]), 1)
+        self.assertEqual(updater.mergeability_handoff(report, {}), [])
+
     def test_branch_ref_mismatch_retains_raw_checks_and_conflict(self) -> None:
         raw = raw_pr(15153)
         raw["mergeable"] = "CONFLICTING"

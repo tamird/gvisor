@@ -244,6 +244,20 @@ An author reply only changes who owes the next response. Keep the implementation
 obligation active until a reviewer-ready fix, necessary substantive question,
 justified disagreement or exact disposition resolves it.
 
+After human feedback, drain the same snapshot's `mergeabilityHandoff` before
+starting routine qualification work. It retains current-source conflicts,
+unknown mergeability and PR/fork-head mismatches on every completed refresh,
+even when `changedMergeability` is empty. It also includes current-source
+imports; older imports remain in the ordinary diagnostic report. Route each
+blocker to its recorded owner, or assign one if absent, and keep the concrete
+next action in the active handoff. Do not repeatedly notify an owner already
+working on the same evidence. A free-text "waiting for synchronization"
+disposition is not resolution: verify the actual PR head, fork head and current
+base, and distinguish a source conflict from stale provider metadata. Preserve
+the original conflict observation time; a new refresh does not make it new.
+The existing collector and its ten-minute fallback own this intake; no separate
+poller or automatic public acknowledgement is needed.
+
 An assigned top-level comment can be recorded in the existing PR `followup` as
 `actionableComment: {head, commentId, url}`, with its assigned `owner`. The exact
 head and comment ID/URL must match the complete public feedback snapshot before
