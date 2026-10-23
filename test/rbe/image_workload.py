@@ -17,11 +17,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError("Invalid canonical execution root")
     targets = config["targets"]
-    source_labels = ["@" + repo + "//:" + name for repo in ("apr_source", "apr_util_source", "httpd_source")
-                     for name in ("LICENSE", "NOTICE")]
-    source_labels += ["@httpd_source//:docs/conf/mime.types", "@httpd_source//:docs/docroot/index.html", "@zlib//:LICENSE"]
-    query = ('filter("^(@@)?//images(:|/basic:|/benchmarks:|/httpd:)", deps(set(' +
-             " ".join(targets) + '))) union set(' + " ".join(source_labels) + ')')
+    query = ('filter("^(@@)?//images/(basic|benchmarks):", deps(set(' + " ".join(targets) + ')))')
     queried = invoke("mixed-image-owners", ["cquery", *options, "--output=starlark",
                      "--starlark:file=" + str(scripts / "image_query.bzl"), query], "command", targets=[])
     if queried["status"] != "PASS":
@@ -29,22 +25,17 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     rows = [json.loads(line) for line in (evidence / "invocation-mixed-image-owners/stdout.log").read_text().splitlines()]
     graph = {"source": config["source"], "execution_root": str(execution_root), "output_root": str(output_root), "rows": rows}
     (evidence / "image-configured-inputs.json").write_text(json.dumps(graph, indent=2) + "\n")
-    # Check the selected transitions and every diagnostic group before builds.
+    # Require each archive, context and declared payload before starting builds.
     for cpu in ("k8", "aarch64"):
-        labels = {"//images:busybox_binary": {}, "//images/httpd:binary": {},
-                  "//images:busybox_build": {"Make_logs": 3, "busybox.config": 1},
-                  "//images/httpd:apr": {"Configure_logs": 3, "apr.h": 1, "apr_private.h": 1, "config.log": 1},
-                  "//images/httpd:apr_util": {"Configure_logs": 3, "apu_config.h": 1, "config.log": 1},
-                  "//images/httpd:httpd": {"Configure_logs": 3, "ap_config_auto.h": 1, "ap_config_layout.h": 1, "config.log": 1}}
-        labels.update({"//images/" + package + ":httpd_" + kind: {}
-                       for package in ("basic", "benchmarks") for kind in ("archive", "context")})
-        for label, groups in labels.items():
+        labels = {"//images/" + package + ":httpd_" + kind
+                  for package in ("basic", "benchmarks") for kind in ("archive", "context")}
+        labels |= {"//images/benchmarks:http_payload_" + str(size) for size in (1, 10, 100, 1024, 10240)}
+        for label in sorted(labels):
             selected = [item for item in rows if item["label"].removeprefix("@@") == label
                         and item["cpu"] == cpu and item["is_exec"] is False]
             match selected:
-                case [item] if item["files"]:
-                    if any(len(item["groups"].get(name, [])) != count for name, count in groups.items()):
-                        raise ValueError(f"Unexpected diagnostic group: {label} {cpu}: {item}")
+                case [item] if len(item["files"]) == 1:
+                    pass
                 case _:
                     raise ValueError(f"Unexpected target owner: {label} {cpu}: {selected}")
     for label in targets:
@@ -69,6 +60,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     inspected = invoke("httpd-image-closure", [*python, str(scripts / "httpd_image_inspect.py"), str(evidence)],
                        "command", targets=[])
     if inspected["status"] != "PASS":
-        raise RuntimeError("Apache image/static/configure closure failed")
+        raise RuntimeError("Apache upstream image/fixture closure failed")
     import httpd_image_runtime
     httpd_image_runtime.run(invoke, evidence, private)

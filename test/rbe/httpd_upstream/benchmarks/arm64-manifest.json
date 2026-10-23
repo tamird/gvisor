@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "sha256:92f236ce4728377ea625313cb5e30afe48f99aea75698fe51c27f469b1d4b86f",
+    "size": 7996
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:ddc0c1e36a6793411b6c8d48e1ddad2987405d377da92bcf532ed3181c2e4d62",
+      "size": 30200478
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:062247e6173efe087b24428c3a1aa35439d9ee3c2f1b6d309577ca7a74b67594",
+      "size": 146
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+      "size": 32
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:ab2a72ebc0f10295cdf7ca5226d9e4edad6f1152f54bc88b46e51922410074af",
+      "size": 1981945
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:c3259375fafaf5fa4a0e89ab5478b233a8b43c1725f63516c44eea5f9ec5020b",
+      "size": 13398488
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:c3dbb45884776fed4829298d6697868c1ecb6a7da53bc30d144dd89e78947d7b",
+      "size": 292
+    }
+  ],
+  "annotations": {
+    "com.docker.official-images.bashbrew.arch": "arm64v8",
+    "org.opencontainers.image.base.digest": "sha256:a66b19aa552f595b4ab276c6b4f9b24fa4546632c5ecd88cccdced4a6866323a",
+    "org.opencontainers.image.base.name": "debian:trixie-slim",
+    "org.opencontainers.image.created": "2026-10-21T00:14:21Z",
+    "org.opencontainers.image.revision": "c5248004fec9acf8c96ecd74fb6f5bd7d53237dc",
+    "org.opencontainers.image.source": "https://github.com/docker-library/httpd.git#c5248004fec9acf8c96ecd74fb6f5bd7d53237dc:2.4",
+    "org.opencontainers.image.url": "https://hub.docker.com/_/httpd",
+    "org.opencontainers.image.version": "2.4.69"
+  }
+}

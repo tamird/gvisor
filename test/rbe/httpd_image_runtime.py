@@ -16,7 +16,7 @@ from image_runtime import prepare_benchmark_helpers, prepared_runtime
 
 
 def run(invoke, evidence: Path, private: Path) -> None:
-    records = {"status": "INCOMPLETE", "scope": "AMD64 runtime; ARM64 image/configure inspection only", "commands": [], "consumers": []}
+    records = {"status": "INCOMPLETE", "scope": "AMD64 runtime; ARM64 pinned image/layer inspection only", "commands": [], "consumers": []}
     scripts = Path(__file__).parent
     python = ["run", "--lockfile_mode=error", "--noannounce_rc", "@rules_python//python/bin:python", "--"]
 
@@ -97,11 +97,16 @@ def run(invoke, evidence: Path, private: Path) -> None:
 
     def diagnostics(runtime: str, config_sha: str, package: str, directory: Path) -> None:
         image = "sha256:" + config_sha
-        def httpd(argument: str) -> str:
+        # Match the environment passed by the existing Go benchmark caller.
+        environment = (["--env=" + value for value in (
+            "APACHE_RUN_DIR=/tmp", "APACHE_RUN_USER=nobody", "APACHE_RUN_GROUP=nogroup",
+            "APACHE_LOG_DIR=/tmp", "APACHE_PID_FILE=/tmp/apache.pid")] if package == "benchmarks" else [])
+
+        def httpd(*arguments: str) -> str:
             name = runtime + "-diagnostic-" + uuid.uuid4().hex
             try:
                 return command(["docker", "run", "--rm", "--name=" + name, "--runtime=" + runtime,
-                                "--entrypoint=/usr/local/apache2/bin/httpd", image, argument])
+                                *environment, "--entrypoint=/usr/local/apache2/bin/httpd", image, *arguments])
             finally:
                 result = subprocess.run(["docker", "rm", "--force", name], capture_output=True, text=True, timeout=30)
                 records["commands"].append({"arguments": result.args, "native_exit": result.returncode,
@@ -109,22 +114,31 @@ def run(invoke, evidence: Path, private: Path) -> None:
                 if result.returncode and "No such container" not in result.stderr:
                     raise RuntimeError("Cannot clean up the Apache executable diagnostic container")
         version = httpd("-v")
-        if "Apache/2.4.69" not in version:
-            raise ValueError("Runtime HTTPD version differs from the source producer")
-        modules = httpd("-l")
-        required_modules = {"event.c", "mod_deflate.c", "mod_filter.c", "mod_logio.c", "mod_reqtimeout.c", "mod_mime.c"}
-        if not required_modules <= {line.strip() for line in modules.splitlines()}:
-            raise ValueError("Runtime HTTPD omitted a required static module")
+        expected_version = "2.4.43" if package == "basic" else "2.4.69"
+        if "Apache/" + expected_version not in version:
+            raise ValueError("Runtime HTTPD version differs from the pinned upstream image")
+        modules = httpd("-M")
+        details = httpd("-V")
         httpd("-t")
+        runtime_configuration = httpd("-t", "-D", "DUMP_RUN_CFG")
+        records.setdefault("server_diagnostics", {})[package] = {
+            "image": image, "version": version, "modules": modules, "build_settings": details,
+            "runtime_configuration": runtime_configuration}
         if package != "benchmarks":
             return
+        expected_modules = {"mpm_event_module", "unixd_module", "authz_core_module", "authz_host_module",
+                            "log_config_module", "logio_module", "mime_module", "dir_module", "autoindex_module",
+                            "filter_module", "deflate_module", "reqtimeout_module"}
+        actual_modules = {line.split()[0] for line in modules.splitlines() if line.strip().endswith("(shared)")}
+        if actual_modules != expected_modules:
+            raise ValueError("Runtime HTTPD shared module selection differs: " + str(actual_modules))
         name = runtime + "-response-" + uuid.uuid4().hex
         response_record = {"status": "INCOMPLETE", "container": name, "responses": []}
         records["response_contract"] = response_record
         try:
             # This is the unmodified command from the benchmark's runHttpd.
             command(["docker", "run", "--detach", "--name=" + name, "--runtime=" + runtime,
-                     image, "sh", "-c", "mkdir -p /tmp/html; cp -r /local/* /tmp/html/.; apache2 -X"])
+                     *environment, image, "sh", "-c", "mkdir -p /tmp/html; cp -r /local/* /tmp/html/.; apache2 -X"])
             inspected = json.loads(command(["docker", "inspect", name]))
             match inspected:
                 case [{"NetworkSettings": {"IPAddress": address}}] if address:
