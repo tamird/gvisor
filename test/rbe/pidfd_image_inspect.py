@@ -10,7 +10,7 @@ import tarfile
 import tempfile
 import time
 
-from image_archive import archive, identity, resolve
+from image_archive import archive, configured_inputs, identity, resolve
 
 os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 destination = Path(sys.argv[1])
@@ -35,7 +35,6 @@ installed_sources.update({
     "usr/share/licenses/pidfd-tests/license-rules.rst": "Documentation/process/license-rules.rst",
 })
 labels = ["//images/basic:" + name for name in [*programs, "pidfd_tests_archive", "pidfd_tests_context", "pidfd_test_list"]]
-labels += ["@linux_pidfd//:" + name for name in installed_sources.values()]
 labels += ["//images:timeout_binary", "//images:busybox_binary"]
 records = {"status": "INCOMPLETE", "commands": [], "architectures": []}
 
@@ -64,23 +63,20 @@ try:
                                           ("arm64", "aarch64", "AArch64")):
         row = {"architecture": architecture, "status": "INCOMPLETE"}
         records["architectures"].append(row)
-        # One query per architecture resolves all inputs and outputs together.
-        names = "|".join(re.escape(label.split(":", 1)[1]) for label in labels)
+        # Preserve transitioned local owners; source files use explicit repo labels.
+        owners = "|".join(re.escape(label) for label in labels)
+        sources = " ".join("@linux_pidfd//:" + name for name in installed_sources.values())
         query = run(["bazel", *startup, "cquery", *options, "--config=" + config,
                      "--output=starlark", "--starlark:expr=" +
                      "json.encode([str(target.label), target.label.name, [f.path for f in target.files.to_list()]])",
-                     'filter(":(' + names + ')$", deps(//images/basic:pidfd_tests_archive)) union //images/basic:pidfd_tests_context'])
-        outputs = {}
-        for line in query.splitlines():
-            label, name, paths = json.loads(line)
-            if name in outputs or len(paths) != 1:
-                raise ValueError(f"Unexpected configured output: {label}: {paths}")
-            path = Path(paths[0])
-            if path.is_absolute() or ".." in path.parts or path.parts[:1] not in (("bazel-out",), ("external",)):
-                raise ValueError(f"Unexpected configured output path: {path}")
-            outputs[name] = (output_base if path.parts[0] == "external" else execution_root) / path
-        if set(outputs) != {label.split(":", 1)[1] for label in labels}:
-            raise ValueError("Configured image input/output set differs")
+                     'filter("^(@@)?(' + owners + ')$", deps(//images/basic:pidfd_tests_archive))'
+                     ' union set(' + sources + ') union //images/basic:pidfd_tests_context'])
+        row["configured_inputs"] = [json.loads(line) for line in query.splitlines()]
+        paths = configured_inputs(row["configured_inputs"], labels, installed_sources.values())
+        outputs = {
+            name: (output_base if path.startswith("external/") else execution_root) / path
+            for name, path in paths.items()
+        }
         archive_path = outputs["pidfd_tests_archive"]
         config_data, files, elf_files = archive(archive_path, row)
         inventory = destination.parent / (architecture + "-pidfd-inventory.json")

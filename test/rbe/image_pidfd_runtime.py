@@ -13,6 +13,10 @@ def run(invoke, evidence: Path, private: Path) -> None:
     scripts = Path(__file__).parent
     python = ["run", "--lockfile_mode=error", "--noannounce_rc",
               "@rules_python//python/bin:python", "--"]
+    checked = invoke("image-archive-guards", [*python, str(scripts / "image_archive_test.py")],
+                     "command", targets=[])
+    if checked["status"] != "PASS":
+        raise RuntimeError("Image input ownership guards failed")
     guards = invoke("pidfd-reporting-guards", [*python, str(scripts / "pidfd_tap_test.py")],
                     "command", targets=[])
     if guards["status"] != "PASS":

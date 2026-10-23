@@ -67,7 +67,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")
         records["runtime_files"] = [record_file(runsc), *[
             record_file(path) for path in sorted((runtime_directory / "gvisor-bin").iterdir()) if path.is_file()]]
-        logs = destination.parent / "runsc-logs"
+        logs = destination.parent / (runtime_name + "-logs")
         logs.mkdir()
         run([str(runsc), "install", "--config_file=" + str(config_path),
              "--runtime=" + runtime_name, "--download-sidecars=NEVER", "--require-sidecars=ALWAYS", "--",
