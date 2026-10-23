@@ -39,15 +39,21 @@ image_layer(
     srcs = {"/tmp/foo/file.txt": "tmpfile.txt"},
     create_parent_directories = "enabled",
     default_metadata = file_metadata(mode = "0644"),
-    # Keep the base image's sticky /tmp when adding its child directory.
+    # The fixture must retain /tmp's sticky bit when adding its child directory.
     file_metadata = {"/tmp": file_metadata(mode = "1777")},
+    symlinks = {"/bin/cat": "/bin/busybox"},
 )
 
 image_manifest(
     name = "tmpfile",
-    base = "@test_alpine",
-    layers = [":tmpfile_layer"],
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":tmpfile_layer",
+    ],
     tags = ["manual"],
+    user = "0:0",
 )
 
 image_outputs(

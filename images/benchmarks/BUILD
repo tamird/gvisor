@@ -24,14 +24,20 @@ image_layer(
     name = "syscallbench_layer",
     srcs = {"/usr/bin/syscallbench": ":syscallbench"},
     default_metadata = file_metadata(mode = "0755"),
+    # The benchmark keeps the container alive while executing each mode.
+    symlinks = {"/bin/sleep": "/bin/busybox"},
 )
 
 image_manifest(
     name = "syscallbench_image",
-    # The benchmark starts sleep before executing syscallbench repeatedly.
-    base = "@test_busybox",
-    layers = [":syscallbench_layer"],
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":syscallbench_layer",
+    ],
     tags = ["manual"],
+    user = "0:0",
 )
 
 image_outputs(
