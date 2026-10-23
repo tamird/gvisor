@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T16:48:35.250327+00:00",
+    "updatedAt": "2026-10-23T17:07:43.181351+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10784,25 +10784,40 @@
       "id": "branch:fixes/nft-fib-attribute-policy",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "fixes/nft-fib-attribute-policy",
-      "head": "7f84642711b199ca89be629ddc832804d5039d3c",
+      "ref": "review/nft-fib-attribute-policy-current",
+      "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
       "title": "Validate FIB attributes by netlink ID",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
-      "status": "Prerequisite merged; source refresh and contributor review next",
-      "summary": "The presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
-      "updatedAt": "2026-10-23T16:48:35.250327+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+      "status": "Needs contributor review",
+      "summary": "The FIB attribute-policy proposal is refreshed and independently source-reviewed on current upstream dd6f after prerequisite #15816 merged. The original policy/test patch is unchanged: validate keyed netlink IDs, network-order register bounds before narrowing, and unknown flag bits. The published review commit is 0001544109. Prior failing-before and corrected qualification evidence remains source-specific; no fresh workload was run. Contributor approval is required before an upstream PR.\n\nPreserved earlier record:\n\nThe presence-fixture prerequisite #15816 has merged. WorkMap owns the now-unblocked source refresh against current upstream and the existing reproduced regression, followed by independent source review. Contributor approval is still required before opening a PR.\n\nPreserved source and qualification record:\n\nThe FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
+      "updatedAt": "2026-10-23T17:07:43.181351+00:00",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Prerequisite merged; source refresh assigned",
-        "sourceHead": "7f84642711b199ca89be629ddc832804d5039d3c",
-        "observedAt": "2026-10-23T16:48:35.250327+00:00",
-        "nextAction": "Refresh the exact 7f84642711 policy/test delta against merged #15816 in the assigned images checkout; preserve the regression evidence, obtain independent source review, then present the concrete contributor proposal before any upstream PR.",
+        "owner": "root",
+        "disposition": "Refreshed source proposal ready for contributor review",
+        "sourceHead": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+        "observedAt": "2026-10-23T17:07:43.181351+00:00",
+        "nextAction": "Obtain the contributor decision for published 0001544109 before opening an upstream PR; preserve original 7f846 qualification scope and exact range-diff.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
           "https://app.buildbuddy.io/invocation/3cb3ddab-5b91-4622-b809-afbb3270ac65",
-          "https://github.com/torvalds/linux/blob/ab185e0c4/net/netfilter/nft_fib.c#L21-L26"
+          "https://github.com/torvalds/linux/blob/ab185e0c4/net/netfilter/nft_fib.c#L21-L26",
+          "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea",
+        "url": "https://github.com/tamird/gvisor/commit/00015441096e607fb99bb6d303dfd54a8ac2d3ea"
+      },
+      "refinement": {
+        "before": {
+          "head": "7f84642711b199ca89be629ddc832804d5039d3c"
+        },
+        "after": {
+          "head": "00015441096e607fb99bb6d303dfd54a8ac2d3ea"
+        },
+        "command": "git -C ~/code/gvisor range-diff 7f84642711^! 0001544109^!"
       }
     },
     {
@@ -21589,8 +21604,8 @@
       "id": "investigation:cubic-recovery",
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
-      "owner": "Codex",
-      "updatedAt": "2026-10-23T15:54:42.638334+00:00",
+      "owner": "Hostinet",
+      "updatedAt": "2026-10-23T17:07:43.181351+00:00",
       "summary": "The contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
@@ -22274,9 +22289,22 @@
               "url": "https://github.com/google/gvisor/pull/16258"
             }
           ]
+        },
+        {
+          "text": "Queued Hostinet protocol tcp-changing-rtt-mixed-flow-protocol.json (7,797 bytes, SHA-256 b1800902fb371c085cff580cc575e55d2c895756548e4bbfd35a9e9dd1c70639) reuses the existing sender/netem/iperf topology and actual matched-control route. It keeps 20 Mbps and a 100-packet queue and introduces no configured extra reordering. Exact producer/tool inputs and source/envelope review are required before execution; no result is claimed.",
+          "evidence": [
+            {
+              "label": "Existing matched-control harness",
+              "url": "https://github.com/tamird/gvisor/commit/dceedf4f4c239dd97d1ecc261575e0d506b50c10"
+            },
+            {
+              "label": "Prior actual matched controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37964654144"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow existing PR #16055 for current-head CI, maintainer review and import events. Contributor approval and delivery are complete; do not ask again or open a duplicate PR. Preserve original raw failures/skips and source-bound proof. Separately, the approved packet fixture is delivered as #16256 with all twelve existing cases passing; Node follows its current CI and review. The common-Reno result remains separate evidence and does not establish undo. No new undo bug or deliverable is confirmed. Root owns current-head CI/import/review follow-up for delivered Eifel PR#16258. Its final red/green and retained broader checks are complete; no renewed contributor question or duplicate timestamp proposal is needed.",
+      "nextStep": "After Apache paired completion and current Bun image work, prepare the existing changing-RTT mixed-flow protocol for source/envelope peer: four 120-second controls, then fixed 16 balanced compact-RTT versus Karn-only pairs with CUBIC fixed, one Linux competitor and role reversal. The 10\u2192100\u219210ms profile lasts 480 seconds with a 360-second high phase. Proposed six-hour bounds are not a submitted job. Retain queue-drop and observed-RTT evidence; no original-outage or fairness-cause claim.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -29492,7 +29520,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-23T16:48:35.250327+00:00",
+      "updatedAt": "2026-10-23T17:07:43.181351+00:00",
       "summary": "The user requested reassessing image migrations that rebuild substantial upstream software. Prefer pinned maintained upstream images with small Bazel-built layers when they satisfy the existing consumer contract; keep source-built project binaries and qualified shared utilities where needed. Hostinet owns the third-party image reassessment. The approved Nginx revision follows this approach; Apache is being adapted with its image-specific defaults preserved.",
       "findings": [
         {
@@ -29595,9 +29623,18 @@
               "url": "https://github.com/tamird/gvisor/commit/6c1ff5eccbf677075c32736641183028cbb2e996"
             }
           ]
+        },
+        {
+          "text": "PHP proctor Go checks and the shared final-outcome contract passed at dc09c112: six native phases, two exact unit cases and one analyzer case, plus nine retained native/projection subprocess combinations and invalid-status rejection. Both target CPUs are analyzed by the existing transition; no native ARM runtime is claimed. Canonical 252-record audit remains complete, while the actual filtered PHP runtime-owner reporting completion remains separate. Earlier failures remain recorded.",
+          "evidence": [
+            {
+              "label": "PHP proctor and outcome-contract checks",
+              "url": "https://app.buildbuddy.io/invocation/dc09c112-2a9f-4e11-85f1-85ea0e1b58fd"
+            }
+          ]
         }
       ],
-      "nextStep": "Deliver approved Nginx after the shared utility/compiler prerequisites; finish Apache\u2019s fixed16 paired benchmark gate after completed functional validation. PHP source paths/modes and canonical 252-record Fetch/Verify are complete; finish only the remaining proctor unit/analyzer and actual runtime-owner reporting gates, preserving prior raw PHPT/module/SAPI observations and failures. Reassess remaining third-party image ports for maintained upstream bases without assuming equivalent versions, modules, defaults or performance. Profiling/shared utilities retain their approvals and prerequisites.",
+      "nextStep": "Deliver approved Nginx after the shared utility/compiler prerequisites; finish Apache\u2019s fixed16 paired benchmark gate after completed functional validation. PHP source paths/modes and canonical 252-record Fetch/Verify are complete; proctor unit/analyzer and outcome-contract regression gates also pass; finish only the actual runtime-owner reporting gate, preserving prior raw PHPT/module/SAPI observations and failures. Reassess remaining third-party image ports for maintained upstream bases without assuming equivalent versions, modules, defaults or performance. Profiling/shared utilities retain their approvals and prerequisites.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
