@@ -1,62 +1,65 @@
-"""Build both PHP image architectures and inspect their declared fixtures."""
+"""Check proctor formatting, its existing unit tests, and both-CPU Nogo."""
 import json
 import os
 from pathlib import Path
+import shlex
+
+import qualification_report as report
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    options = ["--compilation_mode=opt", "--config=x86_64", "--lockfile_mode=error",
-               "--remote_download_outputs=all", "--noannounce_rc",
-               "--build_event_json_file_path_conversion=false"]
-    scripts = Path(__file__).parent
-    result = invoke("canonical-execution-root", ["info", *options, "execution_root"], "command", targets=[])
-    if result["status"] != "PASS":
-        raise RuntimeError("Cannot identify canonical execution root")
-    execution_root = Path((evidence / "invocation-canonical-execution-root/stdout.log").read_text().strip())
-    if not execution_root.is_absolute() or not execution_root.is_dir():
-        raise ValueError("Invalid canonical execution root")
-    targets = config["targets"]
-    query = ('filter("^(@@)?//images/runtimes:|^(@@)?//test/runtimes/proctor:proctor_bin$|^@@[^/]*php_test_source//:fixtures$", deps(set('
-             + " ".join(targets) + ')))')
-    result = invoke("mixed-image-owners", ["cquery", *options, "--output=starlark",
-                    "--starlark:file=" + str(scripts / "image_query.bzl"), query], "command", targets=[])
-    if result["status"] != "PASS":
-        raise RuntimeError("Mixed PHP image owner query failed")
-    rows = [json.loads(line) for line in (evidence / "invocation-mixed-image-owners/stdout.log").read_text().splitlines()]
-    graph = {"source": config["source"], "execution_root": str(execution_root),
-             "output_root": str(output_root), "rows": rows}
-    (evidence / "image-configured-inputs.json").write_text(json.dumps(graph, indent=2) + "\n")
-    for cpu in ("k8", "aarch64"):
-        for label in ("//images/runtimes:php_archive", "//images/runtimes:php_context"):
-            selected = [row for row in rows if row["label"].removeprefix("@@") == label and row["cpu"] == cpu]
-            if len(selected) != 1 or len(selected[0]["files"]) != 1:
-                raise ValueError(f"Unexpected configured owner: {label} {cpu}: {selected}")
-        selected = [row for row in rows if row["label"].endswith("php_test_source//:fixtures") and row["cpu"] == cpu]
-        if len(selected) != 1 or len(selected[0]["files"]) != 1:
-            raise ValueError(f"Unexpected PHP fixture owner: {cpu}: {selected}")
-    for label in config["image_targets"]["x86_64"]:
-        selected = [row for row in rows if row["label"].removeprefix("@@") == label]
-        if len(selected) != 1 or len(selected[0]["files"]) != 2:
-            raise ValueError(f"Expected two split outputs: {label}: {selected}")
-    selected = [row for row in rows if row["label"].removeprefix("@@") == "//test/runtimes/proctor:proctor_bin" and row["cpu"] == "k8"]
-    if len(selected) != 1 or len(selected[0]["files"]) != 1:
-        raise ValueError(f"Expected exactly one configured proctor: {selected}")
-    if config.get("graph_only", False):
-        return
-    execution_log = private / "mixed-images-execution.json"
+    unit_owner = "//test/runtimes/proctor/lib:lib_test"
+    nogo_owner = "//test/runtimes/proctor/lib:lib_nogo"
+    if config["targets"] != [unit_owner, nogo_owner]:
+        raise ValueError(f"Unexpected proctor check targets: {config['targets']}")
+    record = {"source": config["source"], "status": "INCOMPLETE", "checks": []}
     try:
-        built = invoke("mixed-images", ["build", *options, "--keep_going",
-                       "--execution_log_json_file=" + str(execution_log), "--noexecution_log_sort", *targets],
-                       "build", targets=targets)
+        # Reuse the canonical check with the declared SDK on PATH. This checks
+        # tracked Go files without rewriting them or installing a host tool.
+        formatter = shlex.join([
+            "bash", "-c",
+            'set -eu; export PATH="$(dirname "$1"):$PATH"; '
+            'cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt',
+            "--",
+        ])
+        formatted = invoke("gofmt", [
+            "run", "--lockfile_mode=error", "--noannounce_rc",
+            "--run_under=" + formatter, "@io_bazel_rules_go//go:go",
+        ], "command", targets=[])
+        record["gofmt"] = formatted["status"]
+        if formatted["status"] != "PASS":
+            record["status"] = "FAIL"
+            raise RuntimeError("Canonical Go formatting failed")
+        options = [
+            "--compilation_mode=opt", "--config=x86_64", "--lockfile_mode=error",
+            "--remote_download_outputs=all", "--noannounce_rc",
+            "--build_event_json_file_path_conversion=false", "--keep_going",
+            "--strategy=TestRunner=local", "--nocache_test_results",
+            "--runs_per_test=1", "--flaky_test_attempts=1", "--test_output=all",
+        ]
+        # lib_test owns TestSearch and TestSearchEmptyDir. The single native
+        # lib_nogo shell checks both arch_transition dependencies; do not run
+        # its ARM64 host binary on this AMD64 worker.
+        for name, owner, count in (
+                ("proctor-unit", unit_owner, 2), ("proctor-nogo", nogo_owner, 1)):
+            result = invoke(name, ["test", *options, owner], "test", targets=[owner])
+            record["checks"].append({
+                "name": name, "owner": owner, "status": result["status"],
+                "case_counts": result["case_counts"], "executed": result["executed"],
+            })
+            expected = {"failed": 0, "passed": count, "skipped": 0}
+            if result["status"] != "PASS" or result["case_counts"] != expected:
+                record["status"] = "FAIL"
+                raise RuntimeError(f"{owner}: got {result['status']} {result['case_counts']}; want PASS {expected}")
+            match result["executed"]:
+                case [attempt]:
+                    if attempt["cached_locally"] or attempt["execution_info"].get("cachedRemotely", False):
+                        record["status"] = "FAIL"
+                        raise RuntimeError(f"Expected an uncached {owner} attempt")
+                case attempts:
+                    record["status"] = "FAIL"
+                    raise RuntimeError(f"Expected one {owner} attempt, got {attempts}")
+        record["status"] = "PASS"
     finally:
-        record_execution(execution_log, "mixed", "images")
-    if built["status"] != "PASS":
-        raise RuntimeError("Mixed PHP image build failed")
-    python = ["run", "--lockfile_mode=error", "--noannounce_rc", "@rules_python//python/bin:python", "--"]
-    result = invoke("php-image-closure", [*python, str(scripts / "php_image_inspect.py"), str(evidence)],
-                    "command", targets=[])
-    if result["status"] != "PASS":
-        raise RuntimeError("Pinned PHP image/fixture closure failed")
-    import php_image_runtime
-    php_image_runtime.run(invoke, evidence, private)
+        report.write_json(evidence / "php-proctor-checks.json", record)
