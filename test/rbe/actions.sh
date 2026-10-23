@@ -305,9 +305,6 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # bounded cache size and CPU-sized preparation limit.
         printf '%s\n' 'build:buildbuddy_remote_executor --experimental_remote_merkle_tree_cache'
       fi
-      if [[ ${lanes[*]} == pgo ]]; then
-        printf '%s\n' 'build:buildbuddy_remote_executor --remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$'
-      fi
       # Report retention must not force successful unit tests to run again.
       if [[ $qualification_retain_reports == true && $qualification_full_unit == false ]]; then
         printf '%s\n' \

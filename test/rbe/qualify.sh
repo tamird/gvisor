@@ -1322,6 +1322,11 @@ PY
         printf 'PGO requires explicit AMD64 owners.\n' >&2
         return 2
       fi
+      # Profile generation reads each test's CPU profile from its output tree.
+      options+=(
+        --nozip_undeclared_test_outputs
+        '--remote_download_regex=.*[/](test[.](log|xml)|test[.]outputs/.*)$'
+      )
       targets=("${test_targets[@]}")
       for target in "${targets[@]}"; do
         if [[ ( $test_execution == local && $target != *_pgo_kvm_owned ) ||
