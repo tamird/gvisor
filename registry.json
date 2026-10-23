@@ -12474,8 +12474,8 @@
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-23T00:06:36.853785+00:00",
-      "summary": "The user-approved feedback correction is published at 29eff9a55b6a. The approved description and grouped replies are verified in review5622345637, and all three addressed threads are resolved. Current-head CI is pending. The native nybidari review-request POST returned404; no alternate write path was attempted.\n\nThree new inline comments on the published 5c36118 revision require the test setup to tolerate EACCES, limit the host sysctl only for host/native variants, and remove unused headers. Hostinet owns the correction; its source review is complete and remote qualification remains pending. The earlier source rebase is already published. The internal Copybara failure remains separately recorded; passing public import checks do not explain it.",
+      "updatedAt": "2026-10-23T03:09:52.429213+00:00",
+      "summary": "The user-approved feedback correction is published at 29eff9a55b6a. The approved description and grouped replies are verified in review5622345637, and all three addressed threads are resolved. Current-head CI is pending. The native nybidari review-request POST returned404; no alternate write path was attempted. The earlier maintainer approval covered 5c36118; it does not approve the substantive correction. Exact reviewed amendment evidence is recorded for the existing hourly reapproval workflow.",
       "followup": {
         "owner": "hostinet_delivery",
         "disposition": "Approved correction delivered; CI and maintainer review pending",
@@ -12492,7 +12492,7 @@
       "evidence": [
         {
           "label": "Published source",
-          "url": "https://github.com/tamird/gvisor/commit/194f76d6969a39915bf9caaddfdaf35642da2644"
+          "url": "https://github.com/tamird/gvisor/commit/29eff9a55b6ae52f47aa0b977276ac67d298264f"
         },
         {
           "label": "Upstream PR",
@@ -12509,13 +12509,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "688cb1e12cc6825a7c40263ccc5dece9d5911aae"
+          "head": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf"
         },
         "after": {
-          "head": "194f76d6969a39915bf9caaddfdaf35642da2644"
+          "head": "29eff9a55b6ae52f47aa0b977276ac67d298264f"
         }
       },
-      "number": 15931
+      "number": 15931,
+      "reapproval": {
+        "head": "29eff9a55b6ae52f47aa0b977276ac67d298264f",
+        "approvedHead": "5c36118d69d861a79bd6f97df9b77e0a64d44ddf",
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "diffSha256": "981b6c7bb0e0a516c20aabf6bbc6d00c503eeec3c2c2784ee57b5b228d53a3a0",
+        "summary": "Allow EACCES when preparing the optional ephemeral-port range, limit that setup to native and host-network tests, and remove unused headers and a dependency.",
+        "evidence": "https://github.com/google/gvisor/compare/5c36118d69d861a79bd6f97df9b77e0a64d44ddf..29eff9a55b6ae52f47aa0b977276ac67d298264f"
+      }
     },
     {
       "id": "pr:15932",
@@ -18741,19 +18750,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-rust-public-notice-current",
-      "head": "226a73edd2648b611fe801ac7d53cde2b2ed4fe2",
+      "head": "a142d280acec0dfb329c680a0b57c715f4528c13",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/226a73edd2648b611fe801ac7d53cde2b2ed4fe2",
-      "status": "Conditionally accepted; final qualification formatter recovery",
-      "updatedAt": "2026-10-23T02:54:39.556311+00:00",
-      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Its first attempt stopped at one canonical blank-line formatting difference before those gates; the formatting-only recovery is in preparation.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "url": "https://github.com/tamird/gvisor/commit/a142d280acec0dfb329c680a0b57c715f4528c13",
+      "status": "Conditionally accepted; whole-module tidy preparation",
+      "updatedAt": "2026-10-23T03:09:52.429213+00:00",
+      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "226a73edd2648b611fe801ac7d53cde2b2ed4fe2",
-        "observedAt": "2026-10-23T02:54:39.556311+00:00",
-        "disposition": "Conditionally accepted; final qualification formatter recovery",
-        "nextAction": "Apply the exact one-blank-line formatter correction, then finish the reviewed 17-phase compatibility, tidy and output-equality gate. Retry3 stopped at canonical formatting before the workload; no new runtime credit.",
+        "sourceHead": "a142d280acec0dfb329c680a0b57c715f4528c13",
+        "observedAt": "2026-10-23T03:09:52.429213+00:00",
+        "disposition": "Conditionally accepted; whole-module tidy preparation",
+        "nextAction": "Finish the reviewed whole-module lock preparation, strict tidy, generated-code/analyzer and five-output comparison. Prior failures remain; no new runtime credit until exact outputs match.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18807,6 +18816,10 @@
         {
           "label": "Public notice alias and analyzer reporting recovery",
           "url": "https://app.buildbuddy.io/invocation/2e0a9b24-9a86-4b23-aac9-5a4990491800"
+        },
+        {
+          "label": "Strict tidy failure after five reporter controls passed",
+          "url": "https://app.buildbuddy.io/invocation/7a4b9579-ae2c-43c3-a743-9587fd1b1a09"
         }
       ],
       "refinement": {
@@ -18814,7 +18827,7 @@
           "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
         },
         "after": {
-          "head": "226a73edd2648b611fe801ac7d53cde2b2ed4fe2"
+          "head": "a142d280acec0dfb329c680a0b57c715f4528c13"
         }
       }
     },
