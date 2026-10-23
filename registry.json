@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T09:51:42.788996+00:00",
+    "updatedAt": "2026-10-23T10:24:09.947344+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18788,15 +18788,15 @@
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/6a38390bf36512b773254ef75cd36180c635b1f2",
-      "status": "Qualified revision; contributor review pending",
-      "updatedAt": "2026-10-23T04:10:38.252194+00:00",
-      "summary": "Build the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "summary": "The contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root",
         "sourceHead": "6a38390bf36512b773254ef75cd36180c635b1f2",
-        "observedAt": "2026-10-23T04:10:38.252194+00:00",
-        "disposition": "Qualified concrete revision awaiting contributor review",
-        "nextAction": "Await the actual contributor decision on this final source. Preserve image foundation, Protobuf/compiler/UAPI/classifier prerequisite edges and earlier grants; no repeated runtime or catalog work.",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Complete the authorized upstream notice-export follow-up, then deliver after the recorded image/compiler/Protobuf/license prerequisites; no repeated approval question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18878,9 +18878,10 @@
         }
       },
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "6a38390bf36512b773254ef75cd36180c635b1f2",
-        "url": "https://github.com/tamird/gvisor/commit/6a38390bf36512b773254ef75cd36180c635b1f2"
+        "url": "https://github.com/tamird/gvisor/commit/6a38390bf36512b773254ef75cd36180c635b1f2",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -18892,20 +18893,21 @@
       "title": "Use released Protobuf Rust lockfiles",
       "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2",
       "group": "bazel",
-      "status": "Qualified revision; contributor review pending",
-      "summary": "Use released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
+      "status": "Contributor approved; upstream compatibility report in progress",
+      "summary": "The contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
-        "observedAt": "2026-10-23T04:10:38.252194+00:00",
-        "disposition": "Qualified concrete revision awaiting contributor review",
-        "nextAction": "Await the actual contributor decision on this final source. Preserve image foundation, Protobuf/compiler/UAPI/classifier prerequisite edges and earlier grants; no repeated runtime or catalog work."
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Contributor approved; upstream compatibility report in progress",
+        "nextAction": "Report the four missing reflection_cc dependencies to grpc/grpc, cite the report in the existing patch, and preserve recorded delivery prerequisites; no repeated approval question."
       },
-      "updatedAt": "2026-10-23T04:10:38.252194+00:00",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
-        "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2"
+        "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       },
       "refinement": {
         "before": {
@@ -18965,31 +18967,42 @@
       }
     },
     {
-      "id": "branch:license-llvm-source",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16249",
+      "type": "pr",
+      "repo": "google/gvisor",
       "group": "bazel",
-      "head": "eb6c08906b44606535842f03a5554638ca42f325",
-      "ref": "license-llvm-source-review",
+      "head": "dd471c93ed0f5b29e9b5e93430e27f0fac3ceaeb",
+      "ref": "license-llvm-source-current",
       "title": "Enumerate the declared LLVM source archive",
-      "url": "https://github.com/tamird/gvisor/commit/eb6c08906b44606535842f03a5554638ca42f325",
-      "status": "Contributor review pending",
-      "summary": "The LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-23T04:36:33.769185+00:00",
+      "url": "https://github.com/google/gvisor/pull/16249",
+      "status": "open",
+      "summary": "The contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
       "followup": {
-        "owner": "root",
-        "sourceHead": "eb6c08906b44606535842f03a5554638ca42f325",
-        "observedAt": "2026-10-23T04:36:33.769185+00:00",
-        "disposition": "Contributor review pending",
-        "nextAction": "Await the contributor decision on the independent enumeration change; no upstream prerequisite or repeated validation is required by this extraction.",
+        "owner": "work_map_current",
+        "sourceHead": "dd471c93ed0f5b29e9b5e93430e27f0fac3ceaeb",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Approved source delivered; public review and CI pending",
+        "nextAction": "Follow current PR checks and maintainer review through the existing tracker; no duplicate approval question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/eb6c08906b44606535842f03a5554638ca42f325"
+          "https://github.com/google/gvisor/pull/16249"
         ]
       },
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "eb6c08906b44606535842f03a5554638ca42f325",
-        "url": "https://github.com/tamird/gvisor/commit/eb6c08906b44606535842f03a5554638ca42f325"
+        "url": "https://github.com/tamird/gvisor/commit/eb6c08906b44606535842f03a5554638ca42f325",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
+      },
+      "number": 16249,
+      "refinement": {
+        "before": {
+          "head": "eb6c08906b44606535842f03a5554638ca42f325"
+        },
+        "after": {
+          "head": "dd471c93ed0f5b29e9b5e93430e27f0fac3ceaeb",
+          "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
+        }
       }
     },
     {
@@ -19001,23 +19014,24 @@
       "ref": "nvidia-parser-resources-review",
       "title": "Package the NVIDIA parser builtin headers",
       "url": "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-      "status": "Contributor review pending",
-      "summary": "The detached parser receives its declared builtin headers and complete Clang notice through an explicit resource directory, with ambient standard-header lookup disabled. Original partial265 and the one-owner completion5c644 jointly pass five outputs, ten reached headers, 300 ZIP members, real 570.195.03 parser/parity cases and all three analyzer owners. The full final source tree equals the qualified product. Its actual API prerequisite is the public @llvm-project repository/header target supplied by compiler830; static and UAPI parents are review-stack ordering, not resource APIs. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-23T04:36:33.769185+00:00",
+      "status": "Contributor approved; waiting for public LLVM supplier",
+      "summary": "The contributor explicitly approved 52feb7b78. Delivery waits on the reconciled compiler public @llvm-project repository/header target; prior completed parser/resource evidence remains accepted.\n\nEarlier source-specific record:\n\nThe detached parser receives its declared builtin headers and complete Clang notice through an explicit resource directory, with ambient standard-header lookup disabled. Original partial265 and the one-owner completion5c644 jointly pass five outputs, ten reached headers, 300 ZIP members, real 570.195.03 parser/parity cases and all three analyzer owners. The full final source tree equals the qualified product. Its actual API prerequisite is the public @llvm-project repository/header target supplied by compiler830; static and UAPI parents are review-stack ordering, not resource APIs. Root has requested contributor review of this new scope.",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "work_map_current",
         "sourceHead": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-        "observedAt": "2026-10-23T04:36:33.769185+00:00",
-        "disposition": "Contributor review pending",
-        "nextAction": "Await the contributor decision, then deliver after the public LLVM source supplier; retain the completed partial-plus-continuation evidence.",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Contributor approved; waiting for public LLVM supplier",
+        "nextAction": "Deliver after the public LLVM supplier lands; do not recreate completed validation or ask for approval again.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c"
         ]
       },
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-        "url": "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c"
+        "url": "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -19029,23 +19043,24 @@
       "ref": "review/source-image-utilities",
       "title": "Prepare shared utilities for scratch images",
       "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-      "status": "Contributor review pending",
-      "summary": "The shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
-      "updatedAt": "2026-10-23T04:36:33.769185+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "summary": "The contributor explicitly approved e12e8a357. Existing child approvals remain valid. Delivery still waits on PIDFD source utilities and their recorded compiler/image/license ancestry.\n\nEarlier source-specific record:\n\nThe shared source-built BusyBox configuration supplies the commands used by the tmpfile, syscallbench, resolver, containerd and fsstress fixtures. It declares the Coreutils gperf generator and binds the image target CPU to musl. Final union qualification passes 25 native phases, 11 reporting controls, 10 image/context outputs, 22 program joins, two uncached tests and four syscallbench modes. Seven PIDFD programs retain the nested unsupported-kcmp skip. Both BusyBox binaries and their producer digests exactly match the separately qualified root-image configuration; union BusyBox actions are cache hits, while those root producers were uncached remote actions. No ARM runtime or ARM64 syscallbench port is claimed. Root has requested this one new shared-utilities review; child grants remain separate.",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-        "observedAt": "2026-10-23T04:36:33.769185+00:00",
-        "disposition": "Contributor review pending",
-        "nextAction": "Await the new shared-utilities decision, then deliver after PIDFD source utilities and the explicitly qualified compiler prerequisite; preserve GNU/basic/license ancestry.",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Deliver after the recorded prerequisites land, preserving existing child grants and source-specific qualification.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
         ]
       },
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
-        "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+        "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       }
     },
     {
@@ -19058,14 +19073,14 @@
       "url": "https://github.com/tamird/gvisor/commit/b2a09233588ff4d63b408879e8445bb587aa4597",
       "group": "bazel",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-23T05:13:28.927269+00:00",
-      "summary": "Build the containerd BusyBox fixture from shared declared source utilities. This is an independent child of utilities e12, separate from the tmpfile/syscallbench and resolver refinements. Existing root/containerd qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives and AMD64 runtime are qualified; no ARM runtime is claimed. The previous basic-image contributor approval is retained; shared utilities have their own pending decision.",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "summary": "Build the containerd BusyBox fixture from shared declared source utilities. This is an independent child of utilities e12, separate from the tmpfile/syscallbench and resolver refinements. Existing root/containerd qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives and AMD64 runtime are qualified; no ARM runtime is claimed. The previous basic-image contributor approval is retained; shared utilities e12 now have explicit contributor approval and retain their landing prerequisites.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "b2a09233588ff4d63b408879e8445bb587aa4597",
         "observedAt": "2026-10-23T05:13:28.927269+00:00",
         "disposition": "Contributor approval retained; waiting for prerequisites",
-        "nextAction": "Deliver after the shared utilities decision and actual compiler/basic/license prerequisite landings; no duplicate child review question.",
+        "nextAction": "Deliver after the shared utilities and actual compiler/basic/license prerequisite landings; no duplicate child review question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b2a09233588ff4d63b408879e8445bb587aa4597",
           "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
@@ -19089,23 +19104,24 @@
       "title": "Build the basic Nginx image from source",
       "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
       "group": "bazel",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-23T07:09:28.826921+00:00",
-      "summary": "Build pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
+      "status": "Revision requested; prefer maintained upstream image",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "summary": "The contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "hostinet_delivery",
         "sourceHead": "7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "observedAt": "2026-10-23T07:09:28.826921+00:00",
-        "disposition": "Contributor review pending",
-        "nextAction": "Await the contributor decision already requested by root; preserve prior grants and completed source-specific evidence.",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Revision requested; prefer maintained upstream image",
+        "nextAction": "Assess the maintained upstream image and minimal layer against actual consumers; prepare the concrete revision under the new direction without continuing the paused source-packaging workaround.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8"
         ]
       },
       "contributorReview": {
-        "status": "pending",
+        "status": "changes_requested",
         "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8"
+        "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       },
       "links": [
         {
@@ -19135,23 +19151,24 @@
       "title": "Stop port-forward readiness polling on timeout",
       "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353",
       "group": "bazel",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-23T07:09:28.826921+00:00",
-      "summary": "Bind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
+      "status": "Contributor approved; delivery in progress",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "summary": "The contributor explicitly approved 728839737. Node owns the equivalent current-master rebase and upstream delivery; no runtime replay or new contributor decision is required.\n\nEarlier source-specific record:\n\nBind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
       "followup": {
-        "owner": "root",
+        "owner": "node_tls_sni",
         "sourceHead": "72883973765180ad8372bd0f3aa75a243d010353",
-        "observedAt": "2026-10-23T07:09:28.826921+00:00",
-        "disposition": "Contributor review pending",
-        "nextAction": "Await the contributor decision already requested by root; preserve prior grants and completed source-specific evidence.",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Contributor approved; delivery in progress",
+        "nextAction": "Finish the approved independent PR delivery and verify published head/body/tracking; no repeated question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353"
         ]
       },
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "72883973765180ad8372bd0f3aa75a243d010353",
-        "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353"
+        "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       },
       "refinement": {
         "before": {
@@ -19171,20 +19188,21 @@
       "title": "Build profiling utilities from source",
       "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
       "group": "bazel",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-23T08:28:04.397811+00:00",
-      "summary": "Build GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "summary": "The contributor explicitly approved 1ef50322e. Both-CPU static outputs and native AMD64 host helper checks remain accepted; delivery retains shared utilities/compiler/image/license prerequisites.\n\nEarlier source-specific record:\n\nBuild GNU mkdir, chmod, rm and timeout with the existing declared Coreutils producer and package the profiling helper in scratch. The image transition selects the target CPU for Go and Coreutils. Both CPU image/static-output gates and native AMD64 host filesystem, helper configuration and stream checks passed. Exact timeout and complete PIDFD archive equality permits retained PIDFD runtime reuse. GNU rm --one-file-system preserves nested-mount protection. No Kubernetes or native ARM execution is claimed. Root has requested contributor review of final1ef503; earlier failed preparations and the one reporting-count correction remain retained.",
       "contributorReview": {
-        "status": "pending",
+        "status": "approved",
         "head": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
-        "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
+        "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00"
       },
       "followup": {
-        "owner": "root",
+        "owner": "node_tls_sni",
         "sourceHead": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
-        "observedAt": "2026-10-23T08:28:04.397811+00:00",
-        "disposition": "Contributor review pending",
-        "nextAction": "Await the existing contributor decision, then deliver after shared utilities and their recorded compiler/image/license prerequisites. Do not repeat completed qualification or the contributor question.",
+        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Deliver after the recorded prerequisites land; retain the no-Kubernetes/no-native-ARM limitations and prior failures.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b"
         ]
@@ -21419,11 +21437,11 @@
       "evidence": "https://github.com/google/gvisor/pull/16234"
     },
     {
-      "from": "branch:license-llvm-source",
+      "from": "pr:16249",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
       "reason": "The canonical compiler source audit requires enumeration of the public LLVM source repository.",
-      "evidence": "https://github.com/tamird/gvisor/commit/eb6c08906b44606535842f03a5554638ca42f325"
+      "evidence": "https://github.com/google/gvisor/pull/16249"
     },
     {
       "from": "pr:16051",
