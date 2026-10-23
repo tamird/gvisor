@@ -78,6 +78,18 @@
   commit: 03d0035246f3e81f36aed592ffb4bebf33a03106
   sha256: 76e9514cfac18e5677aa04f3a89873c981f16a2f2353bb97372a86cd09b1f5a8
   license: MIT
+- dependency: apr_source
+  version: https://archive.apache.org/dist/apr/apr-1.7.6.tar.bz2
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: 49030d92d2575da735791b496dc322f3ce5cff9494779ba8cc28c7f46c5deb32
+  license: LicenseRef-APR-1.7.6-source-notices
+- dependency: apr_util_source
+  version: https://archive.apache.org/dist/apr/apr-util-1.6.5.tar.bz2
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: 96de1dd6f6a0476d2d2e7964926d8c1ddc3bb0e210e1b1812d3ba5a454a392e2
+  license: LicenseRef-APR-util-1.6.5-source-notices
 - dependency: apt/helper_image_packages/amd64/base-files
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/base-files/base-files_12ubuntu4.7_amd64.deb
   retrieved: "2026-10-21"
@@ -1585,6 +1597,12 @@
   commit: 56172d41b117cc2c2f99f65fe0a790c8d7d7ea66
   sha256: d728ff392fc5b6f676a30c36e9d0a5b85f6f2e06b4ebbb121c27d965cbdffa11
   license: MIT
+- dependency: httpd_source
+  version: https://archive.apache.org/dist/httpd/httpd-2.4.69.tar.bz2
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: c5e6ebc66e349b87d7fc6916ae7cc2a808ed348003de134cf9e9d89d3e2cc73d
+  license: LicenseRef-HTTPD-2.4.69-source-notices
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"

@@ -28,6 +28,32 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: apr_source
+    license: LicenseRef-APR-1.7.6-source-notices
+    exception_rationale: >-
+      APR supplies a static library for the Apache test server, not code
+      linked into gVisor release binaries. Its mixed root notices include
+      Apache-2.0, BSD-4-Clause, ISC, Zlib, Caldera, Helios libdl terms and
+      RSA MD5 attribution; they cannot be represented as Apache-2.0 alone.
+      This custom record preserves that notice scope, and both complete
+      LICENSE and NOTICE files are installed in the test images. The
+      manual-entry guard requires re-audit if the declared archive URL or
+      hash changes. This is not an exhaustive per-file license inventory
+      or a claim that every noticed component enters the server.
+  - dependency: apr_util_source
+    license: LicenseRef-APR-util-1.6.5-source-notices
+    exception_rationale: >-
+      APR-util supplies a static library for the Apache test server, not
+      code linked into gVisor release binaries. Its mixed root notices
+      include Apache-2.0, RSA MD4/MD5, Beerware, crypt_blowfish public-domain
+      and fallback grants, install-sh X11, Expat MIT, and OpenLDAP/Michigan
+      references. This custom record preserves those terms without
+      assigning an incomplete standard license set. Both complete LICENSE
+      and NOTICE files are installed in the images. LDAP is disabled;
+      the unversioned OpenLDAP reference is not a complete audited grant.
+      The manual-entry guard requires re-audit if the declared archive URL
+      or hash changes. This is not an exhaustive per-file inventory or
+      linked-component license attribution.
   - dependency: apt/helper_image_packages/amd64/base-files
     license:
       - GPL-2.0-or-later
@@ -483,6 +509,19 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: httpd_source
+    license: LicenseRef-HTTPD-2.4.69-source-notices
+    exception_rationale: >-
+      HTTPD supplies the standalone Apache server in test images. Its
+      mixed root notices include Apache-2.0, historical mime_magic,
+      imagemap/NCSA/Spyglass, CMU/Metamail, BSD-3-Clause, RSA MD4/MD5,
+      Beerware and ZeusBench terms. This custom record preserves those
+      notices without assigning an incomplete standard license set. Both
+      complete LICENSE and NOTICE files are installed in the images,
+      including notices for optional components outside the static module
+      selection. The manual-entry guard requires re-audit if the declared
+      archive URL or hash changes. This is not an exhaustive per-file
+      inventory or a claim that every noticed component enters the server.
   - dependency: kythe_release
     license:
       - Apache-2.0
