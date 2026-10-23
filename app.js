@@ -1376,6 +1376,9 @@ function validateRegistry(candidate) {
   const policies = repositoryPolicies(candidate);
   if (!policies || Array.isArray(policies) || !Object.hasOwn(policies, candidate.meta.repo) ||
       !Object.entries(policies).every(([repo, policy]) => /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) && ["none", "copybara"].includes(policy))) throw new Error("Invalid repository policies");
+  const { registeredOnlyRepositories: registeredOnly = [] } = candidate.meta;
+  if (!Array.isArray(registeredOnly) || new Set(registeredOnly).size !== registeredOnly.length ||
+      !registeredOnly.every(repo => typeof repo === "string" && policies[repo] === "none")) throw new Error("Invalid registered-only repository selection");
   for (const node of candidate.nodes.filter(node => node.type === "pr"))
     if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) || !Number.isInteger(node.number) || node.number <= 0 ||
         Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||

@@ -1156,3 +1156,25 @@ test('BuildBuddy approval gates retain ERROR without claiming executed failure o
   assert.ok(idsFor(node).includes('author-public-checks'));
   assert.ok(idsFor(node).includes('maintainer-review'));
 });
+
+// Existing repo-qualified IDs join registered-only observations without creating duplicates.
+test('registered-only repositories require direct review and retain curated node identity', () => {
+  const context = client(), repo = 'nodejs/node';
+  const external = { ...attentionNode(66874).github, repo,
+    url: `https://github.com/${repo}/pull/66874`, importPolicy: 'none', checkedAt: context.snapshotInput.checkedAt };
+  context.registryInput.meta.repositories = { 'google/gvisor': 'copybara', [repo]: 'none' };
+  context.registryInput.meta.registeredOnlyRepositories = [repo];
+  context.registryInput.nodes = [{ id: `pr:${repo}:66874`, type: 'pr', repo, number: 66874,
+    url: external.url, title: 'Curated Node change', summary: 'Preserved delivery evidence' }];
+  context.registryInput.edges = []; context.registryInput.groups = [];
+  context.snapshotInput.repositories = context.registryInput.meta.repositories;
+  context.snapshotInput.prs = [external]; context.snapshotInput.workStates = {};
+  context.document = { getElementById: () => ({ scrollTop: 0, scrollLeft: 0, querySelectorAll: () => [], scrollTo() {} }) };
+  vm.runInContext('validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput); updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
+  assert.equal(vm.runInContext('model.nodes.length', context), 1);
+  assert.equal(vm.runInContext('model.nodes[0].summary', context), 'Preserved delivery evidence');
+  context.registryInput.meta.registeredOnlyRepositories = ['google/gvisor'];
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /registered-only/);
+  context.registryInput.meta.registeredOnlyRepositories = null;
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /registered-only/);
+});

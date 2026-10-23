@@ -41,6 +41,11 @@ def repository_policies(registry: dict) -> dict[str, str]:
         and policy in ("copybara", "none") for repo, policy in policies.items()
     ):
         raise ValueError("Invalid tracked repository policies")
+    registered_only = registry["meta"].get("registeredOnlyRepositories", [])
+    if (not isinstance(registered_only, list)
+            or not all(isinstance(repo, str) and policies.get(repo) == "none" for repo in registered_only)
+            or len(set(registered_only)) != len(registered_only)):
+        raise ValueError("Invalid registered-only repository selection")
     return policies
 
 

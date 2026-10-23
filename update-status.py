@@ -397,13 +397,20 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
                if node["type"] == "pr" and node["repo"] == repo}
     prior_sources = {pr["number"]: pr for pr in previous.get("prs", []) if pr.get("repo", REPO) == repo}
     prior_imports = {pr["number"]: pr for source in prior_sources.values() for pr in source.get("imports", [])}
-    numbers.update(prior_sources)
-    open_numbers = open_inventory(repo)
-    numbers.update(number for number, author in open_numbers.items() if author == OWNER)
-    originals = fetch_numbers(sorted(number for number in numbers
-                                     if needs_refresh(number, prior_sources, open_numbers)), timeline=True, repo=repo)
+    registered_only = repo in REGISTRY["meta"].get("registeredOnlyRepositories", [])
+    if registered_only:
+        # Refresh even terminal registered PRs: without discovery this is also
+        # how a reopening becomes visible. Never fetch unrelated repository PRs.
+        open_numbers = {}
+        refresh_numbers = numbers
+    else:
+        numbers.update(prior_sources)
+        open_numbers = open_inventory(repo)
+        numbers.update(number for number, author in open_numbers.items() if author == OWNER)
+        refresh_numbers = {number for number in numbers if needs_refresh(number, prior_sources, open_numbers)}
+    originals = fetch_numbers(sorted(refresh_numbers), timeline=True, repo=repo)
     relations = {number: {pr["number"]: pr["sourceHead"]
-                          for pr in prior_sources.get(number, {}).get("imports", [])}
+                          for pr in prior_sources.get(number, {}).get("imports", []) if policy == "copybara"}
                  for number in numbers}
     timeline_relations = {}
     changed_relations = set()
@@ -462,7 +469,9 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
         item["imports"] = imports
         prs.append(item)
     return prs, refreshed, prior_prs, {
-        "openInventoryTotal": len(open_numbers), "retainedSources": len(numbers) - len(originals),
+        "scope": "registered-only" if registered_only else "open-author-discovery",
+        "registeredCount": len(refresh_numbers) if registered_only else None,
+        "openInventoryTotal": None if registered_only else len(open_numbers), "retainedSources": len(numbers) - len(originals),
         "retainedImports": len(import_numbers) - len(imported), "mergeabilityRecheck": mergeability_recheck,
     }
 
@@ -629,7 +638,7 @@ def main() -> None:
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
                            "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,
-                           **{key: sum(item[key] for item in inventories.values())
+                           **{key: sum(item[key] for item in inventories.values() if item[key] is not None)
                               for key in ("openInventoryTotal", "retainedSources", "retainedImports")}}}
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")

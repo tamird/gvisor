@@ -255,6 +255,54 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertIn("maintainer-review", current["workStates"][f"pr:{repo}:5"])
         self.assertEqual(current["repositories"], self.registry["meta"]["repositories"])
 
+    def test_registered_only_refreshes_exact_pairs_without_discovery(self) -> None:
+        repo = "nodejs/node"
+        self.registry["meta"]["repositories"] = {"google/gvisor": "copybara", repo: "none"}
+        self.registry["meta"]["registeredOnlyRepositories"] = [repo]
+        for number in (66835, 66874):
+            self.registry["nodes"].append({"id": f"pr:{repo}:{number}", "type": "pr", "repo": repo, "number": number})
+        raw = {number: raw_pr(number, "MERGED" if number == 66835 else "OPEN", head=number + 1)
+               for number in (66835, 66874)}
+        for number, row in raw.items():
+            row.update(repository={"nameWithOwner": repo}, url=f"https://github.com/{repo}/pull/{number}")
+            prior = retained(row)
+            prior.update(status="closed", head="a" * 40, importPolicy="none")
+            self.previous["prs"].append(prior)
+        unrelated = copy.deepcopy(self.previous["prs"][-1])
+        unrelated.update(number=99999, status="open")
+        self.previous["prs"].append(unrelated)
+        primary_graphql = self.graphql
+        node_requests = []
+
+        def graphql(query: str, variables: dict | None = None) -> dict:
+            self.assertNotEqual((variables or {}).get("owner"), "nodejs", "Registered-only mode must not discover PRs")
+            if 'owner:"nodejs"' in query:
+                numbers = [int(number) for number in re.findall(r"p(\d+):pullRequest", query)]
+                node_requests.extend(numbers)
+                self.assertEqual(numbers, [66835, 66874])
+                return {"repository": {f"p{number}": copy.deepcopy(raw[number]) for number in numbers}}
+            return primary_graphql(query, variables)
+
+        with mock.patch.object(self, "graphql", side_effect=graphql):
+            current = self.collect()
+        self.assertEqual(node_requests, [66835, 66874])
+        records = {row["number"]: row for row in current["prs"] if row["repo"] == repo}
+        self.assertEqual(set(records), {66835, 66874})
+        self.assertEqual(records[66835]["status"], "merged")
+        self.assertEqual(records[66874]["status"], "open")
+        self.assertEqual(records[66874]["head"], raw[66874]["headRefOid"])
+        self.assertEqual(records[66874]["imports"], [])
+        self.assertNotEqual(records[66874]["checkedAt"], OLD)
+        inventory = current["limits"]["repositories"][repo]
+        self.assertEqual((inventory["scope"], inventory["registeredCount"], inventory["openInventoryTotal"]),
+                         ("registered-only", 2, None))
+
+    def test_registered_only_requires_direct_review_policy(self) -> None:
+        self.registry["meta"]["registeredOnlyRepositories"] = ["google/gvisor"]
+        with self.assertRaisesRegex(ValueError, "registered-only"):
+            self.collect()
+        self.assertEqual(self.path.read_bytes(), self.original_bytes)
+
     def test_cross_references_surface_without_creating_relationships(self) -> None:
         repo = "buildbuddy-io/buildbuddy"
         self.registry["meta"]["repositories"] = {"google/gvisor": "copybara", repo: "none"}
