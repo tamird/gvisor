@@ -46,7 +46,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise RuntimeError("Canonical goimports reported a formatting difference")
         options = [
             "--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
-            "--extra_toolchains=@llvm//toolchain:all", "--remote_download_outputs=all",
+            *config["consumer_options"], "--remote_download_outputs=all",
             "--noannounce_rc", "--keep_going", "--strategy=TestRunner=local",
             "--nocache_test_results", "--runs_per_test=1", "--flaky_test_attempts=1",
             "--test_output=all", "--test_sharding_strategy=disabled", "--test_timeout=600",
