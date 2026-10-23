@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T23:22:22.506084+00:00",
+    "updatedAt": "2026-10-23T23:24:38.958974+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1638,18 +1638,18 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
+      "summary": "PR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-22T17:07:05.995069+00:00",
+      "updatedAt": "2026-10-23T23:24:38.958974+00:00",
       "followup": {
-        "disposition": "Equivalent rebase published; provider PR synchronization pending",
+        "disposition": "PR/fork reconciliation complete; current-head CI pending",
         "owner": "root",
-        "nextAction": "Use the existing ordinary watcher to observe the replacement PR head and fresh mergeability/checks. Keep the old provider conflict observable until it catches up; no repush, new watcher or reapproval reminder for the equivalent rebase.",
-        "sourceHead": "596535e6b16e321e4864432daa25f43f518b94ac",
+        "nextAction": "Observe current-head checks through the existing watcher and address any actual failure. No repeated push or reviewer reminder for this reconciliation.",
+        "sourceHead": "154d10c44a781c9bc7cdce0f6729a490386caf06",
         "reviewedAt": "2026-10-16T08:57:33Z",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING",
+        "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15153",
           "https://github.com/tamird/gvisor/commit/2e46e8773c00fc18281a742b610013832861fe2d",
@@ -1660,12 +1660,13 @@
           "https://github.com/tamird/gvisor/commit/1160d751fdddfbca4b41f80db3fe28299316996f",
           "https://github.com/tamird/gvisor/commit/6779464a0fa68c547ad8cc1f6c741c107e0f7eed",
           "https://github.com/tamird/gvisor/commit/007e776dd0bd266a8af950058f34cefaf9bbc10c",
-          "https://github.com/tamird/gvisor/commit/596535e6b16e321e4864432daa25f43f518b94ac"
+          "https://github.com/tamird/gvisor/commit/596535e6b16e321e4864432daa25f43f518b94ac",
+          "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
         ],
-        "observedAt": "2026-10-22T17:07:05.995069+00:00",
-        "providerHead": "007e776dd0bd266a8af950058f34cefaf9bbc10c"
+        "observedAt": "2026-10-23T23:24:38.958974+00:00",
+        "providerHead": "154d10c44a781c9bc7cdce0f6729a490386caf06"
       },
-      "head": "596535e6b16e321e4864432daa25f43f518b94ac",
+      "head": "154d10c44a781c9bc7cdce0f6729a490386caf06",
       "refinement": {
         "before": {
           "head": "c80d6b6aba23932cfb6fb201fc5ff0ece40bd6c2"
@@ -1686,6 +1687,10 @@
         {
           "label": "Published equivalent rebase awaiting provider synchronization",
           "url": "https://github.com/tamird/gvisor/commit/596535e6b16e321e4864432daa25f43f518b94ac"
+        },
+        {
+          "label": "Published and independently verified conflict resolution",
+          "url": "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
         }
       ]
     },
