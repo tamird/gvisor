@@ -47,7 +47,7 @@ def verify(prefix: Path, bundle: ImageBundle, receipt: dict, plan: dict, config:
         attempt = verify_uncached_attempt(bundle, phase, "//test/root:portforward_test")
         assert row["status"] == "PASS" and row["native_attempts"] == [attempt]
         assert row["names"] == ["TestPortForwardLocalMode"]
-        assert row["counts"] == {"failed": 0, "passed": 1, "skipped": 0}
+        assert row["counts"] == {"failed": 0, "passed": 1, "skipped": 0, "failures": [], "skips": []}
         xml = retained_test_xml(bundle, phase, row["xml"])
         assert [node.get("name") for node in xml.iter("testcase")] == row["names"]
     versions = runtime["modes"][0]["versions"]
