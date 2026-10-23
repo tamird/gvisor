@@ -222,7 +222,8 @@ def run(invoke, evidence: Path, private: Path) -> None:
                         required = {"TestCrictlSanity/" + group for group in ("enableGrouping", "disableGrouping")}
                         required |= {"TestMountPaths/" + group for group in ("enableGrouping", "disableGrouping")}
                         required.add("TestCrictlOneShim")
-                        consumer("httpd-containerd", "//test/root:crictl_test", runtime,
+                        # The nested harness registers its staged runtime as runsc.
+                        consumer("httpd-containerd", "//test/root:crictl_test", "runsc",
                                  "^(TestCrictlSanity|TestMountPaths|TestCrictlOneShim)$", required,
                                  ["--test_arg=-harness_test_images=basic/httpd", "--test_arg=-containerd_version=2.2.3"])
                     finally:
