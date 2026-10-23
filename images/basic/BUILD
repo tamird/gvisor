@@ -31,6 +31,18 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+image_manifest(
+    name = "redis",
+    base = "@test_redis",
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "redis",
+    image = ":redis",
+    image_name = "basic/redis",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
