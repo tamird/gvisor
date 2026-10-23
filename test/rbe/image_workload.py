@@ -141,5 +141,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                               "command", targets=[])
             if restored["status"] != "PASS":
                 raise RuntimeError("Root consumer left containers or changed daemon configuration")
+        import image_pidfd_runtime
+        image_pidfd_runtime.run(invoke, evidence, private)
     finally:
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")

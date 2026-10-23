@@ -56,6 +56,7 @@ image_layer(
             "sleep",
             "stat",
             "true",
+            "wget",
         ]
     },
 )

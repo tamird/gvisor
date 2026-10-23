@@ -132,7 +132,7 @@ try:
                 raise ValueError("Scratch image target differs")
             if metadata["config"].get("User") != "0:0" or "PATH=/usr/bin:/bin" not in metadata["config"].get("Env", []):
                 raise ValueError("Scratch image user or command search path differs")
-            applets = {"busybox": ["dd", "df", "grep", "setsid", "sh", "sleep", "stat", "true"],
+            applets = {"busybox": ["dd", "df", "grep", "setsid", "sh", "sleep", "stat", "true", "wget"],
                        "symlink-resolv": ["cat", "readlink", "sleep"], "fsstress": ["rm", "sh"]}[name]
             for applet in applets:
                 if resolve(files, "bin/" + applet) != "bin/busybox":

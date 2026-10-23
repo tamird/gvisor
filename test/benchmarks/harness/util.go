@@ -32,12 +32,12 @@ import (
 // the given container and port.
 func WaitUntilContainerServing(ctx context.Context, machine Machine, container *dockerutil.Container, port int) error {
 	var logger testutil.DefaultLogger = "util"
-	netcat := machine.GetNativeContainer(ctx, logger)
-	defer netcat.CleanUp(ctx)
+	probe := machine.GetNativeContainer(ctx, logger)
+	defer probe.CleanUp(ctx)
 
 	cmd := fmt.Sprintf("while ! wget -q --spider http://%s:%d; do true; done", "server", port)
-	_, err := netcat.Run(ctx, dockerutil.RunOpts{
-		Image: "benchmarks/util",
+	_, err := probe.Run(ctx, dockerutil.RunOpts{
+		Image: "basic/busybox",
 		Links: []string{container.MakeLink("server")},
 	}, "sh", "-c", cmd)
 	return err
