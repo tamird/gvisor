@@ -6,7 +6,6 @@ py_test(
     size = "large",
     timeout = "long",
     srcs = ["run.py"],
-    main = "run.py",
     args = ["$(rootpath :benchstat)"],
     data = [
         "arms/before/_main/pkg/sentry/pgalloc/pgalloc_test",
@@ -15,5 +14,6 @@ py_test(
         "benchstat",
         "inputs.json",
     ],
+    main = "run.py",
     tags = ["manual"],
 )
