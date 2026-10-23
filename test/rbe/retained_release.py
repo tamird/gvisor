@@ -10,23 +10,25 @@ import urllib.request
 import qualification_report as report
 
 
+def fetch(item: dict, destination: Path) -> None:
+    """Fetch a source-build output and verify its declared digest and size."""
+    remaining = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("Artifact retrieval exhausted the work deadline")
+    request = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetFile",
+        data=json.dumps({"uri": item["uri"]}).encode(),
+        headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+    with urllib.request.urlopen(request, timeout=min(180, remaining)) as response:
+        data = response.read(item["bytes"] + 1)
+    if len(data) != item["bytes"] or hashlib.sha256(data).hexdigest() != item["sha256"]:
+        raise ValueError(f"Digest or size mismatch for {destination.name}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(data)
+
+
 def materialize_runtime(supplier: dict, directory: Path, evidence: Path) -> dict:
     """Verify the retained release owner before fetching its seven runtime files."""
     records = {"status": "INCOMPLETE", "supplier": supplier, "files": {}}
-
-    def fetch(item: dict, destination: Path) -> None:
-        remaining = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
-        if remaining <= 0:
-            raise TimeoutError("Retained runtime retrieval exhausted the work deadline")
-        request = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetFile",
-            data=json.dumps({"uri": item["uri"]}).encode(),
-            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
-        with urllib.request.urlopen(request, timeout=min(180, remaining)) as response:
-            data = response.read(item["bytes"] + 1)
-        if len(data) != item["bytes"] or hashlib.sha256(data).hexdigest() != item["sha256"]:
-            raise ValueError("Retained runtime supplier identity mismatch")
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(data)
 
     try:
         archive_path = directory.parent / "runtime-supplier.tar.gz"

@@ -8,7 +8,7 @@ import time
 
 import qualification_report as report
 from image_runtime import prepared_runtime
-from retained_release import materialize_runtime
+from retained_release import fetch, materialize_runtime
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -17,14 +17,19 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     sides = ("before", "after")
     tag = "gvisor.dev/images/benchmarks/nginx:latest"
     fixture = config["fixture"]
-    record = {"source": config["source"], "status": "INCOMPLETE", "arms": {}}
+    record = {"source": config["source"], "status": "INCOMPLETE", "arms": {}, "observations": [],
+              "boot_id": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+              "cpu_affinity": sorted(os.sched_getaffinity(0)), "benchstat": config["benchstat"]}
     deadline = float(os.environ["APPLICABILITY_WORK_DEADLINE"])
 
-    def docker(*args):
+    def remaining() -> float:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
-            raise TimeoutError("Restore pilot work deadline expired")
-        return subprocess.check_output(["docker", *args], text=True, timeout=min(120, remaining)).strip()
+            raise TimeoutError("Restore benchmark work deadline expired")
+        return remaining
+
+    def docker(*args):
+        return subprocess.check_output(["docker", *args], text=True, timeout=min(120, remaining())).strip()
 
     def containers():
         return sorted(docker("ps", "-aq", "--no-trunc").split())
@@ -32,12 +37,15 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
                "--extra_toolchains=@llvm//toolchain:all", "--remote_download_outputs=all", "--noannounce_rc"]
     expected = evidence / "restore-benchmarks.json"
-    report.write_json(expected, {"owners": {target: [{"name": "BenchmarkRestoreNginx", "count": 2,
+    report.write_json(expected, {"owners": {target: [{"name": "BenchmarkRestoreNginx", "count": 1,
         "iterations": 1, "units": ["ns/op", "restore-ns/op"]}]}})
     original = containers()
     original_tag = None
     installed = False
     try:
+        benchstat = private / "benchstat"
+        fetch(config["benchstat"], benchstat)
+        benchstat.chmod(0o755)
         # Compile the common client before changing the Docker configuration.
         built = invoke("client-build", ["build", *options, target], "build", targets=[target])
         if built["status"] != "PASS":
@@ -70,6 +78,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 }))
                 record["arms"][side] = {"source": supplier["source"], "runtime": name,
                                        "runtime_files": prepared["runtime_files"]}
+            arguments = {}
             for side in sides:
                 arm = record["arms"][side]
                 args = [*options, "--nocache_test_results", "--flaky_test_attempts=1",
@@ -77,14 +86,18 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         "--nozip_undeclared_test_outputs", "--test_env=GO_TEST_WRAP_TESTV=0",
                         "--test_arg=-test.v=false", "--test_arg=-test.run=^$", "--test_filter=^$",
                         "--test_arg=-test.bench=^BenchmarkRestoreNginx$", "--test_arg=-test.benchtime=1x",
-                        "--test_arg=-test.count=2", "--test_arg=-test-checkpoint=true",
+                        "--test_arg=-test.count=1", "--test_arg=-test-checkpoint=true",
                         "--test_arg=-runtime=" + arm["runtime"]]
-                if docker("image", "inspect", "--format={{.Id}}", tag) != fixture["id"]:
-                    raise ValueError("Benchmark fixture changed between arms")
                 analysis = invoke(side + "-analysis", ["test", *args, "--nobuild", target], "analysis", targets=[target])
                 if analysis["status"] != "PASS":
                     raise RuntimeError(side + " benchmark analysis failed")
-                tested = invoke(side + "-response", ["test", *args, target], "test",
+                arguments[side] = args
+
+            def measure(side: str, pair: int | None) -> None:
+                if docker("image", "inspect", "--format={{.Id}}", tag) != fixture["id"]:
+                    raise ValueError("Nginx image changed during the comparison")
+                name = f"{side}-warmup" if pair is None else f"pair-{pair:02d}-{side}"
+                tested = invoke(name, ["test", *arguments[side], target], "test",
                     (evidence / ("invocation-" + side + "-analysis/events.jsonl"),),
                     targets=[target], declared_benchmarks=expected)
                 if tested["status"] != "PASS" or tested["native_exit"] != 0:
@@ -94,15 +107,33 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     raise ValueError("Restore benchmark was not executed")
                 [configured] = tested["expected"]
                 [executed_client] = report.advertised_build_outputs(
-                    evidence / ("invocation-" + side + "-response/events.jsonl"),
+                    evidence / ("invocation-" + name + "/events.jsonl"),
                     {(report.Owner(configured["label"], configured["configuration"]), "default")})
                 if any(executed_client[k] != client[k] for k in ("name", "sha256", "bytes")):
                     raise ValueError("Executed restore client differs from common build")
-                arm["benchmarks"] = attempt["benchmarks"]
+                [sample] = attempt["benchmarks"]
+                record["observations"].append({"side": side, "pair": pair, "sample": sample})
                 if containers() != original:
                     raise RuntimeError("Restore benchmark left a container behind")
+
+            for side in sides:
+                measure(side, None)
+            for pair in range(16):
+                # Alternate which version goes first to balance drift on the worker.
+                for side in (sides if pair % 2 == 0 else reversed(sides)):
+                    measure(side, pair)
         if any(json.loads((evidence / side / "runtime.json").read_text())["cleanup"] != "PASS" for side in sides):
             raise RuntimeError("Runtime cleanup incomplete")
+        for side in sides:
+            with (evidence / (side + ".bench")).open("w") as stream:
+                for row in record["observations"]:
+                    if row["side"] == side and row["pair"] is not None:
+                        sample = row["sample"]
+                        metrics = " ".join(f"{value} {unit}" for unit, value in sample["metrics"].items())
+                        print(sample["name"], sample["iterations"], metrics, file=stream)
+        with (evidence / "benchstat.txt").open("w") as stream:
+            subprocess.run([benchstat, "before.bench", "after.bench"], cwd=evidence, stdout=stream,
+                           check=True, timeout=remaining())
         record["status"] = "PASS"
     finally:
         try:
