@@ -226,13 +226,17 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     "--test_arg=-test.run=^$", "--test_arg=-test.bench=^BenchmarkIperfManyConnections$",
                     "--test_arg=-test.benchtime=" + str(iterations) + "x", "--test_arg=-test.count=1",
                     "--test_arg=-runtime=" + runtime]
+                analysis_directory = (evidence / "source-builds/before/pilot-analysis" if side == "before"
+                                      else evidence / "invocation-after-pilot-analysis")
+                test_directory = (evidence / "source-builds/before/pilot" if side == "before"
+                                  else evidence / "invocation-after-pilot")
                 analysis = invoke(side + "-pilot-analysis", ["test", *selected, "--nobuild", BENCHMARK], "analysis",
-                                  targets=[BENCHMARK], source=revision)
+                                  targets=[BENCHMARK], source=revision, directory=analysis_directory)
                 if analysis["status"] != "PASS":
                     raise RuntimeError(side + " pilot analysis failed")
                 tested = invoke(side + "-pilot", ["test", *selected, BENCHMARK], "test",
-                    (evidence / ("invocation-" + side + "-pilot-analysis/events.jsonl"),),
-                    targets=[BENCHMARK], source=revision, declared_benchmarks=manifest)
+                    (analysis_directory / "events.jsonl",),
+                    targets=[BENCHMARK], source=revision, directory=test_directory, declared_benchmarks=manifest)
                 row = {"side": side, "source": revision, "status": "INCOMPLETE", "native": tested}
                 records["samples"].append(row)
                 if tested["status"] != "PASS" or tested["native_exit"] != 0:
@@ -242,10 +246,16 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         pass
                     case _:
                         raise ValueError("Pilot must have one uncached native test attempt")
-                _, reports, errors = report.retained_reports(report.manifest_path(evidence / ("invocation-" + side + "-pilot/events.jsonl")))
+                _, reports, errors = report.retained_reports(report.manifest_path(test_directory / "events.jsonl"))
                 if errors:
                     raise ValueError("Cannot authenticate pilot reports: " + str(errors))
                 [log] = [path for (owner, name), path in reports.items() if owner.owner.label == BENCHMARK and name == "test.log"]
+                [configured] = tested["expected"]
+                [actual_binary] = report.advertised_build_outputs(test_directory / "events.jsonl", {
+                    (report.Owner(configured["label"], configured["configuration"]), "default")})
+                if any(actual_binary[key] != records["builds"][side]["benchmark"][key] for key in ("sha256", "bytes", "name")):
+                    raise ValueError("Timed benchmark differs from its completed premeasurement build")
+                row["benchmark_output"] = actual_binary
                 row["observations"] = observations(log.read_text(), iterations)
                 row["runtime"] = prepared
                 row["status"] = "PASS"
