@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+    "updatedAt": "2026-10-23T10:28:00.997901+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19143,25 +19143,25 @@
       }
     },
     {
-      "id": "branch:portforward-readiness",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16250",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/portforward-readiness-imports",
-      "head": "72883973765180ad8372bd0f3aa75a243d010353",
+      "head": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72",
       "title": "Stop port-forward readiness polling on timeout",
-      "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353",
+      "url": "https://github.com/google/gvisor/pull/16250",
       "group": "bazel",
-      "status": "Contributor approved; delivery in progress",
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
-      "summary": "The contributor explicitly approved 728839737. Node owns the equivalent current-master rebase and upstream delivery; no runtime replay or new contributor decision is required.\n\nEarlier source-specific record:\n\nBind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
+      "status": "open",
+      "updatedAt": "2026-10-23T10:28:00.997901+00:00",
+      "summary": "Approved readiness fix delivered as #16250 at 8e799fd7 on current upstream8938. Full changed-file payload and complete range-diff equal approved728839; no runtime replay. Exact provider/body/tracking verified; Node owns current CI and substantive feedback.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved 728839737. Node owns the equivalent current-master rebase and upstream delivery; no runtime replay or new contributor decision is required.\n\nEarlier source-specific record:\n\nBind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
       "followup": {
         "owner": "node_tls_sni",
-        "sourceHead": "72883973765180ad8372bd0f3aa75a243d010353",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
-        "disposition": "Contributor approved; delivery in progress",
-        "nextAction": "Finish the approved independent PR delivery and verify published head/body/tracking; no repeated question.",
+        "sourceHead": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72",
+        "observedAt": "2026-10-23T10:28:00.997901+00:00",
+        "disposition": "Approved source delivered; public CI and review pending",
+        "nextAction": "Follow existing PR checks and route substantive feedback to Node; no duplicate review question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353"
+          "https://github.com/google/gvisor/pull/16250"
         ]
       },
       "contributorReview": {
@@ -19175,9 +19175,11 @@
           "head": "2d9e001b8829aa5d56ea1c9ae1bb75a12e87f9c6"
         },
         "after": {
-          "head": "72883973765180ad8372bd0f3aa75a243d010353"
+          "head": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72",
+          "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
         }
-      }
+      },
+      "number": 16250
     },
     {
       "id": "branch:source-built-profile-helper",
