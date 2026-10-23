@@ -250,7 +250,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     raise ValueError("Pilot image changed between arms")
                 selected = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
                     "--test_sharding_strategy=disabled", "--nozip_undeclared_test_outputs", "--test_timeout=600",
-                    "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=0", "--test_arg=-test.v=true",
+                    "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=0", "--test_arg=-test.v=false",
                     "--test_arg=-test.run=^$", "--test_arg=-test.bench=^BenchmarkIperfManyConnections$",
                     "--test_arg=-test.benchtime=" + str(iterations) + "x", "--test_arg=-test.count=1",
                     "--test_arg=-runtime=" + runtime]
