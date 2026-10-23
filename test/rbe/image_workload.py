@@ -1,4 +1,4 @@
-"""Run the exact prototype's initialized-byte-array diagnostic."""
+"""Run the exact prototype's initialized-array diagnostics."""
 import json
 import os
 from pathlib import Path
@@ -24,5 +24,5 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                           "--nocache_test_results", "--runs_per_test=1", "--flaky_test_attempts=1",
                           "--test_output=all", "--test_env=GO_TEST_WRAP=1",
                           "--test_env=GO_TEST_WRAP_TESTV=1",
-                          "--test_filter=^TestCodecByteArrayInitialization$", owner],
+                          "--test_filter=^TestCodec(Byte)?ArrayInitialization$", owner],
            "test", targets=[owner])

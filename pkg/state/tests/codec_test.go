@@ -424,3 +424,64 @@ func TestCodecByteArrayInitialization(t *testing.T) {
 		})
 	}
 }
+
+// TestCodecArrayInitialization distinguishes a field loaded into an existing
+// root from arrays in newly allocated objects and separate slice backing.
+func TestCodecArrayInitialization(t *testing.T) {
+	var _ state.Codec = (*initializedArrays)(nil)
+	var _ state.Codec = (*initializedArraySlices)(nil)
+	roundTrip := func(t *testing.T, source, destination any) {
+		t.Helper()
+		var buf bytes.Buffer
+		if _, err := state.Save(context.Background(), &buf, source); err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		if _, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), destination); err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+	}
+	initial := initializedArrays{Bytes: [3]byte{7, 7, 7}, Ints: [3]uint64{7, 7, 7}}
+	for _, mode := range codecModes {
+		t.Run(mode.name, func(t *testing.T) {
+			withCodecs(mode.codecs, func() {
+				for _, tc := range []struct {
+					name   string
+					source initializedArrays
+					want   initializedArrays
+				}{
+					{"zero", initializedArrays{}, initial},
+					{"mixed", initializedArrays{Bytes: [3]byte{0, 9, 0}, Ints: [3]uint64{0, 9, 0}}, initializedArrays{Bytes: [3]byte{0, 9, 0}, Ints: [3]uint64{0, 9, 0}}},
+				} {
+					t.Run(tc.name, func(t *testing.T) {
+						t.Run("initialized_root", func(t *testing.T) {
+							destination := initial
+							roundTrip(t, &tc.source, &destination)
+							t.Logf("saved=%+v initial=%+v loaded=%+v", tc.source, initial, destination)
+							if got, want := destination, tc.want; got != want {
+								t.Errorf("loaded arrays = %+v, want %+v", got, want)
+							}
+						})
+						t.Run("allocated_object", func(t *testing.T) {
+							source := &tc.source
+							var destination *initializedArrays
+							roundTrip(t, &source, &destination)
+							t.Logf("saved=%+v loaded=%+v", tc.source, destination)
+							if got, want := destination, &tc.source; !reflect.DeepEqual(got, want) {
+								t.Errorf("loaded arrays = %+v, want %+v", got, want)
+							}
+						})
+						t.Run("slice_backing", func(t *testing.T) {
+							source := initializedArraySlices{Bytes: append([]byte(nil), tc.source.Bytes[:]...), Ints: append([]uint64(nil), tc.source.Ints[:]...)}
+							destination := initializedArraySlices{Bytes: []byte{7, 7, 7}, Ints: []uint64{7, 7, 7}}
+							roundTrip(t, &source, &destination)
+							t.Logf("saved=%+v loaded=%+v", source, destination)
+							if got, want := destination, source; !reflect.DeepEqual(got, want) {
+								t.Errorf("loaded slices = %+v, want %+v", got, want)
+							}
+						})
+					})
+				}
+			})
+		})
+	}
+}

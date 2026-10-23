@@ -136,3 +136,15 @@ type nestedMaps struct {
 type initializedByteArrayRoot struct {
 	A [1]byte
 }
+
+// +stateify savable
+type initializedArrays struct {
+	Bytes [3]byte
+	Ints  [3]uint64
+}
+
+// +stateify savable
+type initializedArraySlices struct {
+	Bytes []byte
+	Ints  []uint64
+}
