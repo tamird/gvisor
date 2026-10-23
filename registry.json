@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T13:19:33.592807+00:00",
+    "updatedAt": "2026-10-23T13:29:48.932995+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19081,22 +19081,24 @@
       "id": "branch:source-built-nginx-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/rules-img-source-nginx",
-      "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
-      "title": "Build the basic Nginx image from source",
-      "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
+      "ref": "rules-img-nginx-upstream",
+      "head": "e2b318ab2eec75d29ab9b91ef242c43bf9804163",
+      "title": "Layer netstat onto the pinned Nginx image",
+      "url": "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163",
       "group": "bazel",
-      "status": "Revision requested; prefer maintained upstream image",
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
-      "summary": "The contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-23T13:29:48.932995+00:00",
+      "summary": "The contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
-        "disposition": "Revision requested; prefer maintained upstream image",
-        "nextAction": "Assess the maintained upstream image and minimal layer against actual consumers; prepare the concrete revision under the new direction without continuing the paused source-packaging workaround.",
+        "sourceHead": "e2b318ab2eec75d29ab9b91ef242c43bf9804163",
+        "observedAt": "2026-10-23T13:29:48.932995+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Deliver the approved pinned-upstream revision after the shared utility/compiler prerequisites land; no repeat contributor question. Continue the separate review of other third-party image ports under the requested maintained-upstream direction.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8"
+          "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
+          "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163",
+          "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d"
         ]
       },
       "links": [
@@ -19111,17 +19113,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "8f0a165f212d14faf2a94070707708384a51d461"
+          "head": "7c5f96976d1aaf76483834c41dd091700f4141a8"
         },
         "after": {
-          "head": "7c5f96976d1aaf76483834c41dd091700f4141a8"
+          "head": "e2b318ab2eec75d29ab9b91ef242c43bf9804163"
         }
       },
-      "contributorChangesRequested": {
-        "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00"
-      }
+      "evidence": [
+        {
+          "label": "Approved maintained-upstream revision",
+          "url": "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163"
+        },
+        {
+          "label": "Qualified image layers and existing consumers",
+          "url": "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d"
+        }
+      ]
     },
     {
       "id": "pr:16250",
@@ -21506,7 +21513,7 @@
       "from": "branch:source-image-utilities",
       "to": "branch:source-built-nginx-image",
       "type": "depends_on",
-      "reason": "Uses the shared source utility, notice and target-musl foundation; its existing explicit compiler/basic/license ancestry remains required.",
+      "reason": "The added static netstat uses the shared BusyBox utility/compiler inputs and notices. The official Nginx server and its packaging come from the pinned upstream image.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     },
     {
@@ -29296,7 +29303,7 @@
       "status": "active",
       "owner": "root",
       "updatedAt": "2026-10-23T09:37:22.521782+00:00",
-      "summary": "The user approved PIDFD and requested scratch bases wherever possible across all images. The existing helper_base already has no parent image and supplies declared certificates and /tmp metadata; its image users do not need a blanket base rewrite. Remaining BusyBox and Alpine users need an explicit command/loader inventory before replacement. This is agent work under the requested correction, separate from resource-file relocation.",
+      "summary": "The user requested reassessing image migrations that rebuild substantial upstream software. Prefer pinned maintained upstream images with small Bazel-built layers when they satisfy the existing consumer contract; keep source-built project binaries and qualified shared utilities where needed. Hostinet owns the third-party image reassessment. The approved Nginx revision follows this approach; Apache is being adapted with its image-specific defaults preserved.",
       "findings": [
         {
           "text": "Native helpers, integration C, hackbench, hey, iperf, wrk2, ACL, filecap and sudo already use the scratch helper_base. Some explicitly add prebuilt distribution packages; that is declared packaging, not source compilation of those binaries.",
@@ -29378,7 +29385,7 @@
           ]
         }
       ],
-      "nextStep": "Basic Nginx source, port-forward readiness and source-built profile-helper have actual pending contributor questions on their published nodes. Node owns benchmark Nginx/Empty correctness and later paired performance; Hostinet owns Apache linkage recovery and runtime validation, with the canonical 257-record audit already passed. The HTTP readiness proposal has completed shared BusyBox consumer validation, while its actual HTTP positive/negative/cancellation and paired startup checks remain pending with Node. No contributor question is inferred for these active benchmark/HTTP proposals; preserve distribution consumers requiring package installation.",
+      "nextStep": "Deliver approved Nginx after the shared utility/compiler prerequisites; finish the Apache upstream-image functional and paired benchmark gates. Reassess remaining third-party image ports for maintained upstream bases without assuming equivalent versions, modules, defaults or performance. Profiling/shared utilities are approved under their recorded prerequisites; readiness and HTTP cancellation fixes are already delivered. Preserve distribution fixtures whose consumers install packages.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
