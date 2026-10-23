@@ -154,6 +154,88 @@ def changed_references(current: dict, previous: dict) -> list[dict]:
             if prior.get(item["id"]) != item]
 
 
+def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
+    """Put human feedback before routine checks, without treating replies as resolution."""
+    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
+    prior = {(pr.get("repo", REPO), pr["number"]): pr for source in previous.get("prs", [])
+             for pr in (source, *source.get("imports", []))}
+    pending = {(item["repo"], item["number"], item["id"]): item
+               for item in previous.get("reviewerHandoff", [])}
+    records = []
+    discussions = [(source, pr) for source in prs
+                   if source["status"] in {"open", "draft"} and source.get("authorLogin") == OWNER
+                   for pr in (source, *source.get("imports", []))]
+    for source, pr in discussions:
+        if pr["status"] not in {"open", "draft"}:
+            continue
+        key = pr.get("repo", REPO), pr["number"]
+        node = nodes.get((source.get("repo", REPO), source["number"]), {})
+        followup = node.get("followup", {})
+        old = {item["id"]: item for item in prior.get(key, {}).get("feedback", {}).get("items", [])}
+        items = pr.get("feedback", {}).get("items", [])
+        threads = {}
+        for item in items:
+            if item["kind"] == "inline" and (item.get("author") or {}).get("__typename") == "User":
+                threads.setdefault(item["threadId"], []).append(item)
+        latest = {thread: max(comments, key=lambda item: item["createdAt"])
+                  for thread, comments in threads.items()}
+        # Reuse the existing exact feedback disposition. Any new reply, changed
+        # head or review invalidates it; observation time alone does not.
+        binding = {field: pr.get(field) for field in (
+            "reviewDecision", "approvedHead", "approvedAt", "headCommittedAt", "headIntroducedAt",
+            "headHistoryComplete", "threads", "feedback")}
+        binding["sourceHead"] = pr["head"]
+        triaged = (pr.get("reviewsComplete") and pr.get("threads", {}).get("complete")
+                   and pr.get("feedback", {}).get("complete") and node.get("head", pr["head"]) == pr["head"]
+                   and any(record.get("reason") == "author-feedback" and record.get("binding") == binding
+                           for record in followup.get("attentionDispositions", [])))
+        for item in items:
+            author = item.get("author") or {}
+            if author.get("__typename") != "User" or author.get("login") == OWNER or not item.get("body", "").strip():
+                continue
+            changed = any(item.get(field) != old.get(item["id"], {}).get(field)
+                          for field in ("body", "state", "updatedAt"))
+            prior_record = pending.get((*key, item["id"]))
+            awaiting_author = False
+            if item["kind"] == "inline":
+                last = latest[item["threadId"]]
+                if last["id"] == item["id"] and not item["isResolved"]:
+                    awaiting_author = not triaged
+                else:
+                    edited = item["id"] in old and item.get("body") != old[item["id"]].get("body")
+                    if item["isResolved"] and not edited and not (prior_record and not prior_record["awaitingAuthor"]):
+                        continue
+                    answered = ((last.get("author") or {}).get("login") == OWNER
+                                and last["createdAt"] >= item.get("updatedAt", item["createdAt"]))
+                    if answered or not (changed or prior_record and not prior_record["awaitingAuthor"]):
+                        continue
+            elif item["kind"] == "review" and item.get("state") == "DISMISSED":
+                continue
+            assignment = followup.get("actionableComment", {})
+            assigned = (item["kind"] == "comment" and assignment.get("head") == pr["head"]
+                        and assignment.get("commentId") == item["id"] and assignment.get("url") == item["url"])
+            if assigned:
+                awaiting_author = True
+            elif triaged:
+                continue
+            elif prior_record and prior_record.get("assigned") and not changed:
+                continue  # An explicit top-level assignment was removed after owner triage.
+            if not awaiting_author and not changed and not prior_record:
+                continue
+            records.append({"repo": key[0], "number": key[1], "head": pr["head"], "sourceNumber": source["number"],
+                            "owner": followup.get("owner"), "kind": item["kind"], "id": item["id"],
+                            "url": item["url"], "author": author["login"], "updatedAt": item.get("updatedAt"),
+                            "newOrChanged": changed, "awaitingAuthor": awaiting_author, "assigned": assigned,
+                            "feedbackComplete": pr.get("feedback", {}).get("complete", False),
+                            "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."})
+        if not pr.get("feedback", {}).get("complete"):
+            visible = {item["id"] for item in items}
+            records.extend({**record, "head": pr["head"], "owner": followup.get("owner"),
+                            "newOrChanged": False, "feedbackComplete": False}
+                           for identity, record in pending.items() if identity[:2] == key and identity[2] not in visible)
+    return sorted(records, key=lambda item: (not item["awaitingAuthor"], item.get("updatedAt") or "", item["url"]))
+
+
 def review_watch_report(prs: list[dict], previous: dict) -> list[dict]:
     """Route explicit review subscriptions using the existing snapshot cursor."""
     watches = {(node["repo"], node["number"]): node["reviewWatch"]
@@ -635,6 +717,7 @@ def main() -> None:
     checked_at = datetime.now(timezone.utc).isoformat()
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
+                "reviewerHandoff": reviewer_handoff(prs, previous),
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
                            "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,
@@ -651,6 +734,8 @@ def main() -> None:
     temporary.replace(output)
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
+    for record in snapshot["reviewerHandoff"]:
+        print(json.dumps({"reviewerHandoff": [record]}))
     # gh run view scans lines with Go's default 64 KiB token limit. A single
     # aggregate report can hide the rest of this step, including human feedback.
     for kind, observations in check_report(prs, previous).items():

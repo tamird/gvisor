@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T17:32:07.387668+00:00",
+    "updatedAt": "2026-10-23T17:59:03.325594+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2532,15 +2532,17 @@
       "number": 15181,
       "reviewDecision": "",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Mechanical rebase published; current-head checks and maintainer review pending",
+        "owner": "root",
+        "disposition": "Human performance feedback answered; measured repair in progress",
         "sourceHead": "3255a52b212edcd2f526d3fb1afaa6d1523f7520",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow current-head public checks and complete maintainer conversation through the existing sweep. Investigate actual failures; no duplicate reviewer reminder or new runtime pass is claimed.",
+        "observedAt": "2026-10-23T17:48:10.680201+00:00",
+        "nextAction": "Prioritize the reviewer performance finding: root owns the technical repair and reply, Node owns matched base/reviewed/corrected measurements. Preserve the actual review evidence and report results before routine qualification work.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/tamird/gvisor/commit/854bf04d57cd4bb5ec7edfb124852a4cd8361eca",
-          "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520"
+          "https://github.com/tamird/gvisor/commit/3255a52b212edcd2f526d3fb1afaa6d1523f7520",
+          "https://github.com/google/gvisor/pull/15181#discussion_r4362212232",
+          "https://github.com/google/gvisor/pull/15181#discussion_r4362531544"
         ]
       },
       "updatedAt": "2026-10-22T00:33:19.689675+00:00",
@@ -9876,6 +9878,7 @@
                     "state": "COMMENTED",
                     "submittedAt": "2026-10-12T19:33:52Z",
                     "updatedAt": "2026-10-12T19:33:52Z",
+                    "authorAssociation": "CONTRIBUTOR",
                     "author": {
                       "login": "zkoopmans",
                       "__typename": "User"
@@ -9892,6 +9895,7 @@
                     "state": "APPROVED",
                     "submittedAt": "2026-10-12T21:51:07Z",
                     "updatedAt": "2026-10-19T18:36:11Z",
+                    "authorAssociation": "CONTRIBUTOR",
                     "author": {
                       "login": "zkoopmans",
                       "__typename": "User"
@@ -9908,6 +9912,7 @@
                     "state": "APPROVED",
                     "submittedAt": "2026-10-19T18:42:28Z",
                     "updatedAt": "2026-10-19T18:42:28Z",
+                    "authorAssociation": "COLLABORATOR",
                     "author": {
                       "login": "EtiennePerot",
                       "__typename": "User"
@@ -14185,11 +14190,11 @@
       "updatedAt": "2026-10-22T00:33:19.689675+00:00",
       "summary": "The requested post-#16046 rebase is published at 3f860783171d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at db16a02a3d. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nCurrent source-identical qualification at 01354f8a84 now establishes native Linux and gVisor comment parity: Actions 39144545744 passes eight selected cases on each backend, sixteen total without skips. Full package, Nogo and client qualification f2403420 passes eight owners with 877 cases, 88 existing skips and no gaps. The clean standalone proposal is published at 9d31765c323, one commit above verified current upstream/master 9e9495997e29. Independent range-diff confirms the executable patch is unchanged; the message only pins its Linux citation to 830b3c68c. The user approved this exact commit, which is now published as upstream PR #15955. The intended google/gvisor destination, exact head, complete description and OPEN state were verified by readback. The current public check rollup is SUCCESS, with existing skipped workflow checks retained. Reviewers manninglucas and zkoopmans are assigned; maintainer review remains pending.\n\nHistorical evidence: The existing source-reviewed candidate supports nftables compatibility comment matches and is now included unchanged in canonical 01354f8a84. Historical paired qualification used test-only source 8dbcf433a and fixed source 83aef0865: each gVisor owner changed from seven comment failures to all 259 cases passing; the client reported 178 passes and 84 unchanged skips; two unit owners reported 607 XML passes and three Nogo owners passed. The native result remained 226 passes, 26 failures and seven skips, including the seven comment failures, so Linux comment parity was not established. Separate capability observations used a different worker environment and do not erase those failures.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Approved direct-header amendment published",
+        "owner": "root",
+        "disposition": "Human fixture/predicate feedback; repair in progress",
         "sourceHead": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow #15955 current-head checks, maintainer feedback and import status.",
+        "observedAt": "2026-10-23T17:59:03.325471+00:00",
+        "nextAction": "Root owns the fixture-name and optional-value predicate corrections from reviewer comments4362555895 (created17:46:20Z) and4362573836 (created17:48:28Z); both became public with review5632267694 at17:48:42Z. Neither is addressed by acknowledgement. Complete a reviewable correction and substantive response before routine work.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6ac083de1c33f86f6601ac669434648892f511e8",
           "https://github.com/tamird/gvisor/commit/8dbcf433a1157055848789fe0f4e1f157d7ae9e0",
@@ -14200,7 +14205,9 @@
           "https://github.com/tamird/gvisor/actions/runs/39144545744",
           "https://github.com/tamird/gvisor/commit/9d31765c32321651fe1f27632754fe7fa9e7c603",
           "https://github.com/google/gvisor/pull/15955",
-          "https://github.com/tamird/gvisor/commit/3f860783171d7e8fcb39aa6f0b4525dd91bc04f3"
+          "https://github.com/tamird/gvisor/commit/3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
+          "https://github.com/google/gvisor/pull/15955#discussion_r4362555895",
+          "https://github.com/google/gvisor/pull/15955#discussion_r4362573836"
         ]
       },
       "number": 15955,

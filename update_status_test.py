@@ -225,6 +225,119 @@ class CollectorHistoryTest(unittest.TestCase):
         feedback = [item for event in events for item in event.get("feedback", [])]
         self.assertEqual([item["id"] for item in feedback], [comment["id"]])
         self.assertEqual(next(pr for pr in current["prs"] if pr["number"] == 3)["threads"]["unresolved"], 1)
+        handoff = [event for event in events if "reviewerHandoff" in event]
+        self.assertEqual(handoff[0]["reviewerHandoff"][0]["id"], comment["id"])
+        self.assertLess(events.index(handoff[0]), next(i for i, event in enumerate(events) if "checkFailures" in event))
+        self.assertEqual(current["reviewerHandoff"], handoff[0]["reviewerHandoff"])
+
+    def test_reviewer_handoff_tracks_latest_reply_and_top_level_events(self) -> None:
+        pr = retained(raw_pr(5))
+        finding = {"id": "finding", "kind": "inline", "threadId": "thread", "isResolved": False,
+                   "isOutdated": False, "body": "[🤖] Recycled allocation is slower.", "createdAt": OLD,
+                   "updatedAt": OLD, "url": pr["url"] + "#discussion_r1",
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        pr["feedback"]["items"] = [finding]
+        pr["threads"] = {"complete": True, "total": 1, "unresolved": 1}
+        self.registry["nodes"][0]["followup"] = {"owner": "root"}
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            first = updater.reviewer_handoff([pr], {})
+            self.assertEqual((first[0]["owner"], first[0]["newOrChanged"], first[0]["awaitingAuthor"]),
+                             ("root", True, True))
+            previous = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": first}
+            self.assertFalse(updater.reviewer_handoff([pr], previous)[0]["newOrChanged"])
+            bot = {**finding, "id": "bot", "createdAt": LATER,
+                   "author": {"login": "review-bot", "__typename": "Bot"}}
+            pr["feedback"]["items"].append(bot)
+            self.assertTrue(updater.reviewer_handoff([pr], previous)[0]["awaitingAuthor"])
+            binding = {field: pr.get(field) for field in (
+                "reviewDecision", "approvedHead", "approvedAt", "headCommittedAt", "headIntroducedAt",
+                "headHistoryComplete", "threads", "feedback")}
+            binding["sourceHead"] = pr["head"]
+            self.registry["nodes"][0]["followup"]["attentionDispositions"] = [
+                {"reason": "author-feedback", "binding": copy.deepcopy(binding)}]
+            self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+            reply = {**finding, "id": "reply", "createdAt": LATER, "updatedAt": LATER,
+                     "body": "I am measuring the affected path.", "author": {"login": "tamird", "__typename": "User"}}
+            pr["feedback"]["items"].append(reply)
+            self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+            previous = {"prs": [copy.deepcopy(pr)]}
+            followup = {**finding, "id": "followup", "createdAt": "2000-01-03T00:00:00+00:00",
+                        "updatedAt": "2000-01-03T00:00:00+00:00", "body": "Please include cold pages."}
+            pr["feedback"]["items"].append(followup)
+            self.assertEqual([item["id"] for item in updater.reviewer_handoff([pr], previous)], ["followup"])
+            followup["isResolved"] = True
+            self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+            comment = {**followup, "id": "comment", "kind": "comment", "url": pr["url"] + "#issuecomment-1"}
+            pr["feedback"]["items"].append(comment)
+            self.assertEqual([item["id"] for item in updater.reviewer_handoff([pr], previous)], ["comment"])
+            continued = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": updater.reviewer_handoff([pr], previous)}
+            pending = updater.reviewer_handoff([pr], continued)
+            self.assertEqual([item["id"] for item in pending], ["comment"])
+            self.assertFalse(pending[0]["newOrChanged"])
+            incomplete = copy.deepcopy(pr)
+            incomplete["feedback"] = {"complete": False, "items": []}
+            retained_handoff = updater.reviewer_handoff([incomplete], continued)
+            self.assertEqual([item["id"] for item in retained_handoff], ["comment"])
+            self.assertFalse(retained_handoff[0]["feedbackComplete"])
+            self.registry["nodes"][0]["followup"]["actionableComment"] = {
+                "head": pr["head"], "commentId": comment["id"], "url": comment["url"]}
+            assigned = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": updater.reviewer_handoff([pr], continued)}
+            self.assertTrue(assigned["reviewerHandoff"][0]["assigned"])
+            del self.registry["nodes"][0]["followup"]["actionableComment"]
+            self.assertEqual(updater.reviewer_handoff([pr], assigned), [])
+            binding["feedback"] = copy.deepcopy(pr["feedback"])
+            self.registry["nodes"][0]["followup"]["attentionDispositions"][0]["binding"] = copy.deepcopy(binding)
+            self.assertEqual(updater.reviewer_handoff([pr], continued), [])
+            pr["feedback"]["items"].append({**comment, "kind": "review", "state": "COMMENTED",
+                                              "id": "top-review", "body": "Please also measure another case."})
+            outstanding = updater.reviewer_handoff([pr], continued)
+            resumed = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": outstanding}
+            self.assertIn("top-review", [item["id"] for item in updater.reviewer_handoff([pr], resumed)])
+            pr["feedback"]["items"][-1]["state"] = "DISMISSED"
+            self.assertNotIn("top-review", [item["id"] for item in updater.reviewer_handoff([pr], resumed)])
+            pr["feedback"]["items"].pop()
+            comment["author"] = {"login": "bot", "__typename": "Bot"}
+            self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+            comment["author"] = finding["author"]
+            pr["status"] = "merged"
+            self.assertEqual(updater.reviewer_handoff([pr], previous), [])
+
+    def test_import_reviewer_handoff_routes_to_source_owner(self) -> None:
+        source = retained(raw_pr(5))
+        target = linked(imported(105, 5), 5)
+        target["feedback"]["items"] = [{"id": "import-comment", "kind": "comment", "body": "Please fix the export.",
+            "updatedAt": LATER, "url": target["url"] + "#issuecomment-1",
+            "author": {"login": "reviewer", "__typename": "User"}}]
+        source["imports"] = [target]
+        self.registry["nodes"][0]["followup"] = {"owner": "root"}
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            record = updater.reviewer_handoff([source], {})[0]
+            self.assertEqual((record["number"], record["sourceNumber"], record["owner"]), (105, 5, "root"))
+            source["status"] = "merged"
+            self.assertEqual(updater.reviewer_handoff([source], {}), [])
+
+    def test_review_body_and_edited_inline_survive_an_answer_to_another_message(self) -> None:
+        pr = retained(raw_pr(5))
+        finding = {"id": "inline", "kind": "inline", "threadId": "t", "isResolved": False,
+                   "body": "Fix inline Y.", "createdAt": OLD, "updatedAt": OLD,
+                   "url": pr["url"] + "#discussion_r1", "pullRequestReview": {"id": "review"},
+                   "author": {"login": "reviewer", "__typename": "User"}}
+        review = {"id": "review", "kind": "review", "body": "Also fix X.", "state": "COMMENTED",
+                  "updatedAt": OLD, "url": pr["url"] + "#pullrequestreview-1", "author": finding["author"]}
+        pr["feedback"]["items"] = [finding, review]
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            previous = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": updater.reviewer_handoff([pr], {})}
+            pr["feedback"]["items"].append({**finding, "id": "reply", "createdAt": LATER, "updatedAt": LATER,
+                "body": "Fixed Y.", "author": {"login": "tamird", "__typename": "User"}})
+            remaining = updater.reviewer_handoff([pr], previous)
+            self.assertEqual([item["id"] for item in remaining], ["review"])
+            previous = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": remaining}
+            finding.update(body="Y also fails for cold pages.", updatedAt="2000-01-03T00:00:00+00:00")
+            remaining = updater.reviewer_handoff([pr], previous)
+            self.assertEqual({item["id"] for item in remaining}, {"review", "inline"})
+            self.assertFalse(next(item for item in remaining if item["id"] == "inline")["awaitingAuthor"])
+            previous = {"prs": [copy.deepcopy(pr)], "reviewerHandoff": remaining}
+            self.assertEqual({item["id"] for item in updater.reviewer_handoff([pr], previous)}, {"review", "inline"})
 
     def test_same_number_keeps_repository_history_and_direct_review_policy(self) -> None:
         repo = "buildbuddy-io/buildbuddy"

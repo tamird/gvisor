@@ -216,6 +216,29 @@ reported. Review/comment lists retain the latest 100 entries per connection;
 the existing 100-thread bound still applies. These records do not imply that a
 reviewer's concern has been resolved.
 
+Each refresh puts a compact `reviewerHandoff` before routine check output and
+retains it in the snapshot. It routes new human comments, reviews and replies
+on source and linked import PRs to the source's existing `followup.owner`;
+a missing owner requires assignment. An
+unresolved thread remains in this handoff while its latest message is from
+the reviewer; bots do not decide who owes the next reply. An author reply removes that pending-answer signal without
+claiming the thread is resolved; a later reviewer reply raises it again.
+Edits to earlier human messages surface again even after an author reply.
+New top-level comments and review bodies remain in the same snapshot
+across refreshes until an exact feedback disposition or explicit assignment
+resolution records human triage. Dismissed reviews clear. This does not
+backfill every historical top-level message. An assigned `actionableComment`
+continues to use the existing explicit assignment mechanism.
+
+On each refresh or continuation, handle this handoff before qualifications,
+source-CI failures and routine metadata. Read the complete linked discussion,
+alert its owner immediately when the existing refresh completes, and update
+the existing follow-up with the concrete action.
+Do not treat observation as acknowledgement or send automatic replies.
+An author reply only changes who owes the next response. Keep the implementation
+obligation active until a reviewer-ready fix, necessary substantive question,
+justified disagreement or exact disposition resolves it.
+
 An assigned top-level comment can be recorded in the existing PR `followup` as
 `actionableComment: {head, commentId, url}`, with its assigned `owner`. The exact
 head and comment ID/URL must match the complete public feedback snapshot before
