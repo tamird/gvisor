@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import tarfile
@@ -166,11 +167,38 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         query = command("release-genrules", ["bazel", "--bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
             "aquery", *options, "--output=jsonproto", 'mnemonic("Genrule", deps(//:release))'])
         (evidence / "release-genrules.json").write_text(query + "\n")
-        actions = json.loads(query)["actions"]
-        if not actions or any("/usr/bin/x86_64-linux-gnu-gcc" in argument or "/usr/bin/aarch64-linux-gnu-gcc" in argument
-                              for action in actions for argument in action.get("arguments", [])):
-            raise ValueError("Release genrules still select an unavailable legacy host compiler")
-        records["genrule_preflight"] = {"actions": len(actions), "identity": report.file_record(evidence / "release-genrules.json")}
+        graph = json.loads(query)
+        labels = {row["id"]: row["label"] for row in graph["targets"]}
+        [vdso] = [row for row in graph["actions"] if labels[row["targetId"]] == "//vdso:vdso"]
+        fragments = {row["id"]: row for row in graph["pathFragments"]}
+
+        def artifact_path(fragment_id: int) -> str:
+            parts = []
+            while fragment_id:
+                fragment = fragments[fragment_id]
+                parts.append(fragment["label"])
+                fragment_id = fragment.get("parentId", 0)
+            return "/".join(reversed(parts))
+
+        artifacts = {row["id"]: artifact_path(row["pathFragmentId"]) for row in graph["artifacts"]}
+        deps = {row["id"]: row for row in graph["depSetOfFiles"]}
+        pending, visited, inputs = list(vdso["inputDepSetIds"]), set(), set()
+        while pending:
+            key = pending.pop()
+            if key not in visited:
+                visited.add(key)
+                inputs.update(artifacts[item] for item in deps[key].get("directArtifactIds", []))
+                pending.extend(deps[key].get("transitiveDepSetIds", []))
+        arguments = shlex.split(vdso["arguments"][-1])
+        [compiler] = [item for item in arguments if item.startswith("external/") and Path(item).name == "clang++"]
+        [linker] = [item.removeprefix("--ld-path=") for item in arguments if item.startswith("--ld-path=")]
+        if (vdso["mnemonic"] != "Genrule" or compiler not in inputs or linker not in inputs
+                or Path(linker).name != "ld.lld" or "--sysroot=/dev/null" not in arguments
+                or arguments[arguments.index("-target") + 1] != "x86_64-linux-gnu"
+                or [artifacts[item] for item in vdso["outputIds"]] != ["bazel-out/k8-opt/bin/vdso/vdso.so"]):
+            raise ValueError("vDSO does not select the declared target compiler/linker and output")
+        records["genrule_preflight"] = {"owner": "//vdso:vdso", "compiler": compiler, "linker": linker,
+            "action": vdso, "identity": report.file_record(evidence / "release-genrules.json")}
 
         # Build both arms before any timed consumer starts. Source and all
         # common fixture/toolchain inputs are checked again on each switch.
