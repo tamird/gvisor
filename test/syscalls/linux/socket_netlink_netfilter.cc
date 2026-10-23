@@ -5799,7 +5799,7 @@ TEST(NetlinkNetfilterTest, ErrUpdateBindingChain) {
   ASSERT_NO_ERRNO(NetfilterFlushRuleset(fd));
 }
 
-TEST(NetlinkNetfilter, CommentMatchRevision) {
+TEST(NetlinkNetfilterTest, CommentMatchRevision) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCaps()));
   for (uint8_t family : {NFPROTO_IPV4, NFPROTO_IPV6}) {
     for (uint32_t revision : {0, 1}) {
@@ -7048,7 +7048,8 @@ TEST_P(NetlinkNetfilterCompatDumpTest, RuleDump) {
   // alignment bytes in dumps. Use that layout for these round trips.
   auto matches = param.matches;
   for (auto& match_opt : matches) {
-    auto& info = match_opt.info_data.value();
+    ASSERT_TRUE(match_opt.info_data.has_value());
+    auto& info = *match_opt.info_data;
     info.resize(XT_ALIGN(info.size()), 0);
     expr_list.Add(BuildRawCompatMatchExpr(match_opt));
   }
