@@ -23,7 +23,7 @@ import (
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 )
 
-// see Dockerfile '//images/benchmarks/httpd'.
+// See the payloads declared by //images/benchmarks:httpd_payloads.
 var httpdDocs = map[string]string{
 	"notfound": "notfound",
 	"1Kb":      "latin1k.txt",
