@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T19:37:25.097503+00:00",
+    "updatedAt": "2026-10-23T19:46:46.966078+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12427,7 +12427,7 @@
       "group": "tests",
       "status": "open",
       "summary": "The approved profiling restart correction is delivered at a52b53673b after six remote phases passed: 51 normal test records, eight focused race runs with nine records each, and one native Nogo wrapper covering both architecture dependencies. All 124 records passed, with no failures, skips or missing owners. The exact approved explanation was posted in the original reviewer thread at 19:35:22Z; the thread remains open for review. Public and fork heads and the wrapped PR body were verified.\n\nEarlier evidence:\n\nThe contributor approved the profiling restart correction at a52b53673b, conditional on normal, race and Nogo checks. The fork preview is published; the upstream PR remains a5fb610dcc until those checks pass. The writer no longer closes the shared completion channel, and Stop clears the restart gate after receiving the final statistics. This answers the new restart-race finding without adding a stress-test implementation.\n\nEarlier evidence:\n\nMetric selector and ARM tag correction rebased, preserving the landed trace-test inclusion. Exact head a5fb610dcc is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nUpstream a30d5fc67 already fixed the NaN bucketer panic reported in #10045. This change removes the remaining Make exclusion and not_run:arm tag. One mixed-platform invocation at 2785e7bfce passes all 102 AMD64/ARM64 cases, including the reported regression, with no failures, skips or missing results. The production and test sources match upstream; the selection-only diff was source-reviewed, not executed. The contributor-approved change is delivered as #15930. The reviewed context rebase 2677c164 preserves the complete intended two-exclusion change and the intervening tracereplay landing. It is published and currently mergeable; no additional test execution or review request is claimed.",
-      "updatedAt": "2026-10-23T19:37:25.097503+00:00",
+      "updatedAt": "2026-10-23T19:46:46.966078+00:00",
       "followup": {
         "owner": "work_map_current",
         "disposition": "Approved restart correction delivered and reviewer answered",
@@ -12445,6 +12445,105 @@
           "https://github.com/google/gvisor/pull/15930#discussion_r4363178425",
           "https://app.buildbuddy.io/invocation/927d6606-8254-469b-b191-cebac7e2d797",
           "https://github.com/google/gvisor/pull/15930#discussion_r4363512896"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Reviewed restart finding fixed and answered",
+            "nextAction": "The review body repeats the inline restart finding. Approved a52b53673 fixes it and the exact substantive response is posted in the original thread. Leave that thread open for review; only new feedback requires another action.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15930#pullrequestreview-5633096250",
+              "https://github.com/google/gvisor/pull/15930#discussion_r4363512896",
+              "https://app.buildbuddy.io/invocation/927d6606-8254-469b-b191-cebac7e2d797"
+            ],
+            "binding": {
+              "reviewDecision": null,
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-10-23T19:09:54Z",
+              "headIntroducedAt": "2026-10-23T19:35:08Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 1,
+                "total": 1,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT8I6Og",
+                    "url": "https://github.com/google/gvisor/pull/15930#pullrequestreview-5633096250",
+                    "body": "[🤖] 1 issue found:\n\n- **[minor · concurrency]** Re-enabled metric_test flakes under CPU load from profiling restart race (`Makefile:269`, inline)\n",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-23T18:54:24Z",
+                    "updatedAt": "2026-10-23T18:54:25Z",
+                    "authorAssociation": "NONE",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "a5fb610dcc1e89280d06f9676f078c0022f87f8e"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT8jAfQ",
+                    "url": "https://github.com/google/gvisor/pull/15930#pullrequestreview-5633523837",
+                    "body": "",
+                    "state": "COMMENTED",
+                    "submittedAt": "2026-10-23T19:35:23Z",
+                    "updatedAt": "2026-10-23T19:35:23Z",
+                    "authorAssociation": "CONTRIBUTOR",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "a52b53673b4b5d9585685592d9c188197bb7f520"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6vvEpT",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "Makefile",
+                    "line": 269,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBBDRuQ",
+                    "url": "https://github.com/google/gvisor/pull/15930#discussion_r4363178425",
+                    "body": "[🤖] **[minor · concurrency] Re-enabled metric_test flakes under CPU load from profiling restart race**\n\nThis change makes all three `make unit-tests` CI jobs run `//pkg/metric:metric_test`, but `TestMetricProfiling` fails intermittently when the CPU is busy, as it is during `make unit-tests`. `writeProfilingMetrics` (`pkg/metric/profiling_metric.go:645-647`) signals `doneProfilingMetrics` before it clears `profilingMetricsStarted`, so `StopProfilingMetrics` can return while the flag is still set. The next subtest's `StartProfilingMetrics` then fails with \"profiling metrics have already been started\". The race predates this PR and does not depend on the architecture; the exclusion removed here kept it out of CI.\n\n**Suggested fix:** Fix the race before removing the exclusion, or keep `-//pkg/metric:metric_test` until it is fixed. In `writeProfilingMetrics`, capture the channel when the goroutine starts and clear the flag before signaling:\n\n```go\nfunc writeProfilingMetrics[...](...) {\n\tdone := doneProfilingMetrics\n\t...\n\tsink.Close()\n\tprofilingMetricsStarted.Store(false)\n\tdone <- stats\n\tclose(done)\n}\n```\n\nCapturing `done` is required: with a plain reorder, the next `StartProfilingMetrics` reassigns the global while the old writer still uses it. The race detector then reports a race between lines 287 and 647, and runs panic with \"send on closed channel\" (100/100 runs failed). Verified: with the fix, 0 failures in 1,100 loaded runs and 220 race-detector runs.\n\n<details><summary>Details (evidence, reproduction and test code)</summary>\n\n**Evidence:** `StopProfilingMetrics` returns right after it receives from `doneProfilingMetrics` (line 748). `StartProfilingMetrics` needs `profilingMetricsStarted.CompareAndSwap(false, true)` (line 264). If the writer goroutine is descheduled between the send and `Store(false)`, a Start that follows Stop fails.\n\nResults of `bazel test //pkg/metric:metric_test --nocache_test_results --runs_per_test=N` on a 32-core amd64 host (\"paired\" means PR head and head+fix ran at the same time):\n- 32 parallel runs (bazel default): head 4/200 failed.\n- Paired, 32 parallel runs each: head 32/400 and 14/400; fix 0/400 and 0/400.\n- `--config=race`: head 9/40 and 20/80; fix 0/40 and 0/80 (the 80-run pair ran concurrently). No DATA RACE reports.\n\nEvery failure is `metric_test.go:1228: StartProfilingMetrics error: got 'profiling metrics have already been started'`, spread over six subtests. Runs pass when executed one at a time on an idle machine.\n\n`TestProfilingMetricsRestartAfterStop` (attached) restarts profiling 200 times right after `StopProfilingMetrics`. Paired under load, it failed 110/300 runs at head and 0/300 runs (60,000 restarts) with the fix.\n\nThe original #10045 failure is fixed: an ARM64 build of the test under qemu-aarch64 passes at head and fails with \"did not panic\" when the IsNaN check is removed.\n\n**Reproduced with a test** (`pkg/metric/metric_test.go`): `bazel test //pkg/metric:metric_test --nocache_test_results --runs_per_test=300 --test_output=summary   (run concurrently with: <same command>; slot fix = worktree + scratch/max/fix.patch). Earlier runs used --runs_per_test=200/400 (existing TestMetricProfiling only) and --config=race --runs_per_test=40/80.` → Fails intermittently on the PR head under parallel load, always with 'profiling metrics have already been started'. Passes every run with the fix applied under the same concurrent load.\n\n**Test code:**\n\n```diff\ndiff --git a/pkg/metric/metric_test.go b/pkg/metric/metric_test.go\nindex cb33abdd9..9f0a3586a 100644\n--- a/pkg/metric/metric_test.go\n+++ b/pkg/metric/metric_test.go\n@@ -1430,3 +1430,34 @@ func TestMetricProfiling(t *testing.T) {\n \t\t})\n \t}\n }\n+\n+// TestProfilingMetricsRestartAfterStop checks that StartProfilingMetrics\n+// succeeds as soon as StopProfilingMetrics returns.\n+func TestProfilingMetricsRestartAfterStop(t *testing.T) {\n+\tdefer resetTest()\n+\tif _, err := NewUint64Metric(\"/foo\", Uint64Metadata{\n+\t\tCumulative:  true,\n+\t\tSync:        true,\n+\t\tDescription: fooDescription,\n+\t}); err != nil {\n+\t\tt.Fatalf(\"NewUint64Metric: %v\", err)\n+\t}\n+\tif err := Initialize(); err != nil {\n+\t\tt.Fatalf(\"Initialize: %v\", err)\n+\t}\n+\tdir := t.TempDir()\n+\tfor i := 0; i < 200; i++ {\n+\t\tf, err := os.CreateTemp(dir, \"profiling-metrics\")\n+\t\tif err != nil {\n+\t\t\tt.Fatalf(\"CreateTemp: %v\", err)\n+\t\t}\n+\t\tif err := StartProfilingMetrics(ProfilingMetricsOptions[*os.File]{\n+\t\t\tSink:    f,\n+\t\t\tMetrics: \"/foo\",\n+\t\t\tRate:    time.Millisecond,\n+\t\t}); err != nil {\n+\t\t\tt.Fatalf(\"iteration %d: StartProfilingMetrics: %v\", i, err)\n+\t\t}\n+\t\tStopProfilingMetrics()\n+\t}\n+}\n```\n\n</details>\n",
+                    "createdAt": "2026-10-23T18:54:25Z",
+                    "updatedAt": "2026-10-23T18:54:25Z",
+                    "author": {
+                      "login": "aaltinaydev",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "inline",
+                    "threadId": "PRRT_kwDOB9IlXs6vvEpT",
+                    "isResolved": false,
+                    "isOutdated": false,
+                    "path": "Makefile",
+                    "line": 269,
+                    "id": "PRRC_kwDOB9IlXs8AAAABBBXsQA",
+                    "url": "https://github.com/google/gvisor/pull/15930#discussion_r4363512896",
+                    "body": "Stop now clears the started flag after receiving the writer’s final statistics. The send is the writer’s last access to the channel, so an immediate restart can safely replace it. Fixed in a52b53673b4b5d9585685592d9c188197bb7f520.\n\nPosted by Codex on behalf of @tamird.\n",
+                    "createdAt": "2026-10-23T19:35:22Z",
+                    "updatedAt": "2026-10-23T19:35:23Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "a52b53673b4b5d9585685592d9c188197bb7f520"
+            }
+          }
         ]
       },
       "evidence": [
@@ -19731,6 +19830,31 @@
           "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805"
         ]
       }
+    },
+    {
+      "id": "branch:rules-img-bun-spawn",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-bun-spawn",
+      "head": "f3617c9bd90d886d5f1376845a102ea9a42b5066",
+      "title": "Use a pinned upstream Bun benchmark image",
+      "url": "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
+      "group": "bazel",
+      "status": "Contributor approved; waiting for #16097",
+      "updatedAt": "2026-10-23T19:46:46.966078+00:00",
+      "summary": "The contributor approved exact f3617c9bd9 for delivery after PR #16097 lands. The pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. Only the image_outputs/Make context prerequisite remains; no shared BusyBox or compiler source dependency.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "f3617c9bd90d886d5f1376845a102ea9a42b5066",
+        "observedAt": "2026-10-23T19:46:46.966078+00:00",
+        "disposition": "Contributor approved; actual image-context prerequisite remains",
+        "nextAction": "When the existing watcher observes PR #16097 landed, extract and deliver this exact approved change on current upstream. No new contributor question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/355a5a1d-5863-4cba-9ab8-db85452faac5"
+        ]
+      }
     }
   ],
   "edges": [
@@ -22058,6 +22182,16 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d"
+      ]
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-bun-spawn",
+      "type": "depends_on",
+      "reason": "The approved Bun image uses image_outputs and the Make context interface delivered by #16097; this is its only delivery prerequisite.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
+        "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066"
       ]
     }
   ],
