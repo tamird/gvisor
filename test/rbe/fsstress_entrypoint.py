@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 
 os.chdir(os.environ['BUILD_WORKSPACE_DIRECTORY'])
 destination = Path(sys.argv[1])
@@ -35,10 +36,21 @@ try:
         directory.chmod(0o777)
         if any(directory.iterdir()):
             raise RuntimeError('Filesystem smoke directory is not empty')
-        run(['docker', 'run', '--rm', '--runtime=runc',
-             '--mount=type=bind,src=' + str(directory) + ',dst=/test',
-             expected_image, '-d', '/test', '-n', '4', '-p', '2', '-s', '1',
-             '-z', '-f', 'creat=1', '-c', '-X', '-v'])
+        container = 'qualification-fsstress-entrypoint-' + uuid.uuid4().hex
+        try:
+            run(['docker', 'run', '--name=' + container, '--runtime=runc',
+                 '--mount=type=bind,src=' + str(directory) + ',dst=/test',
+                 expected_image, '-d', '/test', '-n', '4', '-p', '2', '-s', '1',
+                 '-z', '-f', 'creat=1', '-c', '-X', '-v'])
+        finally:
+            # Killing a timed-out Docker client does not stop its container.
+            # Remove it before deleting the host directory mounted into it.
+            arguments = ['docker', 'rm', '--force', container]
+            result = subprocess.run(arguments, capture_output=True, text=True, timeout=30)
+            record['commands'].append({'arguments': arguments, 'native_exit': result.returncode,
+                                       'stdout': result.stdout, 'stderr': result.stderr})
+            record['cleanup'] = 'PASS' if result.returncode == 0 else 'FAIL'
+            result.check_returncode()
         record['created_files'] = [
             {'path': str(path.relative_to(directory)), 'bytes': path.stat().st_size,
              'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
