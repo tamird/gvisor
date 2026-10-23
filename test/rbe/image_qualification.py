@@ -252,7 +252,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
         for architecture in CONFIG["image_targets"]:
-            graphs = [("images", CONFIG["image_targets"][architecture], [])]
+            graphs = [("images", CONFIG["image_targets"][architecture], ["--extra_toolchains=@llvm//toolchain:all"])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
                 graphs.append(("runtime", runtime_targets, []))
             for name, preparation_targets, configuration_options in graphs:
