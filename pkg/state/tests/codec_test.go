@@ -16,11 +16,13 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/rand"
 	"reflect"
 	"testing"
 
+	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/tests/foreign"
 )
 
@@ -380,5 +382,45 @@ func TestCodecNestedMaps(t *testing.T) {
 	}
 	if got := loaded.(*nestedMaps); !reflect.DeepEqual(got, root) {
 		t.Errorf("got %v, want %v", got.M, root.M)
+	}
+}
+
+// TestCodecByteArrayInitialization compares the documented zero-value load
+// behavior through both encoders in the same binary. Unlike load(), this uses
+// the existing root directly instead of allocating a fresh destination.
+func TestCodecByteArrayInitialization(t *testing.T) {
+	var _ state.Codec = (*initializedByteArrayRoot)(nil)
+	for _, mode := range []struct {
+		name   string
+		codecs bool
+	}{{"legacy", false}, {"typed", true}} {
+		t.Run(mode.name, func(t *testing.T) {
+			withCodecs(mode.codecs, func() {
+				for _, tc := range []struct {
+					name                 string
+					saved, initial, want byte
+				}{
+					{"zero_into_initialized", 0, 7, 7},
+					{"nonzero_into_initialized", 9, 7, 9},
+					{"zero_into_zero", 0, 0, 0},
+				} {
+					t.Run(tc.name, func(t *testing.T) {
+						source := initializedByteArrayRoot{A: [1]byte{tc.saved}}
+						var buf bytes.Buffer
+						if _, err := state.Save(context.Background(), &buf, &source); err != nil {
+							t.Fatalf("Save: %v", err)
+						}
+						destination := initializedByteArrayRoot{A: [1]byte{tc.initial}}
+						if _, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), &destination); err != nil {
+							t.Fatalf("Load: %v", err)
+						}
+						t.Logf("saved=%d initial=%d loaded=%d", tc.saved, tc.initial, destination.A[0])
+						if got, want := destination.A[0], tc.want; got != want {
+							t.Errorf("loaded byte = %d, want %d", got, want)
+						}
+					})
+				}
+			})
+		})
 	}
 }

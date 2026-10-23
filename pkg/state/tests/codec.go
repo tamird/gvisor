@@ -129,3 +129,10 @@ func (n *graphNode) afterLoad(context.Context) {
 type nestedMaps struct {
 	M map[int]map[int32]struct{}
 }
+
+// initializedByteArrayRoot checks loading into an existing root object.
+//
+// +stateify savable
+type initializedByteArrayRoot struct {
+	A [1]byte
+}
