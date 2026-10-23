@@ -18724,20 +18724,20 @@
       "id": "branch:rules-img-rust",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-rust-protobuf37-final",
-      "head": "1f99cfb62346bd41f74d3ffc845fbf26cfafb8ae",
+      "ref": "rules-img-rust-protobuf37-grpc-current",
+      "head": "3079ebb79e5b2be76f8072d3e447f84afbe05360",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/1f99cfb62346bd41f74d3ffc845fbf26cfafb8ae",
-      "status": "Conditionally accepted; Protobuf/gRPC header compatibility correction in progress",
-      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
-      "summary": "Current Protobuf37 catalog passes without the rules_rust override. The focused generated-code build exposed gRPC1.84 declarations that still use the C reflection target after37 separated C++ headers into reflection_cc. Four owning library dependencies are being corrected in the separate prerequisite; no image/runtime success is inferred from the catalog.\n\nProtobuf37 canonical Fetch/Verify passes without the rules_rust override. The generated-lock backport is removed; the documentation alias explains the Linux x86-64 compiler distribution without selecting the execution host. The separate prerequisite and Rust child now include the exact audited catalog. Existing runtime evidence remains conditional on the live five-output equality gate.\n\nThe revision uses rules_rs defaults and separates execution-host selection from Linux musl image targets. Both Linux architectures produce static images; the combined index, archives and build contexts exactly match the runtime-qualified outputs after the final transitive producer-lock correction and catalog adoption. Existing AMD64 runc and systrap TestRust cases, ordinary Make selection, native runtime input identities, notices and cleanup pass. Full canonical Fetch/Verify passes for 201 entries. Darwin compiler dependencies were checked through configured cquery analysis only; no Darwin execution or ARM64 runtime is claimed. The standalone source preserves GNU defaults and relies on the recorded declared-compiler integration. Earlier failed attempts remain retained. The contributor conditionally accepted 6941, requesting the released Protobuf 37 prerequisite instead of the generated-lock patch and clearer validator/notice archive rationale. Separate prerequisite 9eb44 and child b820 are published for validation without the rules_rust override. Earlier successful runtime/catalog/image evidence remains tied to 6941 until the new graph and exact output applicability pass. No upstream PR is open.",
+      "url": "https://github.com/tamird/gvisor/commit/3079ebb79e5b2be76f8072d3e447f84afbe05360",
+      "status": "Compatibility retry blocked by native patch file-boundary parsing",
+      "updatedAt": "2026-10-23T02:10:00.431575+00:00",
+      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. Its focused compatibility run found four gRPC libraries missing the newly separate C++ reflection dependency. The reviewed declaration fix is published, and the retry stopped in native patch application before qualification began. The patch file boundaries are under review. No new runtime applicability is claimed before those output comparisons pass.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The notice alias names a Linux x86-64 compiler distribution only as a source of architecture-independent documentation; it does not select the compiler execution host. Prior qualification established static images for both target CPUs, AMD64 runc and systrap TestRust cases, ordinary Make selection, exact native runtime inputs and notices. Darwin coverage is configured compiler dependency analysis only; no Darwin execution or ARM64 runtime is claimed. Those results remain bound to the earlier source until the current output equality gate passes. No upstream PR is open.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "1f99cfb62346bd41f74d3ffc845fbf26cfafb8ae",
-        "observedAt": "2026-10-23T02:02:29.481778+00:00",
-        "disposition": "Conditionally accepted; Protobuf/gRPC header compatibility correction in progress",
-        "nextAction": "Peer the narrow gRPC reflection_cc dependency correction, then retry the existing15-phase generated-code/image equality gate. First AMD64 compatibility build failed before ARM/analyzer/images; no runtime evidence transfer yet.",
+        "sourceHead": "3079ebb79e5b2be76f8072d3e447f84afbe05360",
+        "observedAt": "2026-10-23T02:12:10.831672+00:00",
+        "disposition": "Compatibility retry blocked by native patch file-boundary parsing",
+        "nextAction": "Correct only the gRPC patch file boundaries after pinned Bazel parser review, then retry the unchanged compatibility and image equality gates. Retry986168 failed during bootstrap patch application; no new build or runtime credit.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18773,12 +18773,16 @@
       ],
       "links": [
         {
-          "label": "Protobuf37 canonical Fetch/Verify",
+          "label": "Protobuf37 canonical Fetch/Verify passed",
           "url": "https://app.buildbuddy.io/invocation/6b2a247c-93ce-425c-926c-9c4179545ddc"
         },
         {
-          "label": "Generated-code compatibility and image equality",
+          "label": "Original generated-code failure",
           "url": "https://app.buildbuddy.io/invocation/b7f23d2e-f366-4c5c-812e-f20c45efd3e9"
+        },
+        {
+          "label": "gRPC dependency correction and compatibility retry",
+          "url": "https://app.buildbuddy.io/invocation/986168df-ffec-4657-b7ec-3c70c4d377f9"
         }
       ]
     },
@@ -18786,21 +18790,21 @@
       "id": "branch:protobuf-37-rust-locks",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "protobuf-37-catalog-current",
-      "head": "cd14bd2878da75ffc1fecfdd428b8ddacc9dd4ea",
+      "ref": "protobuf-37-grpc-current",
+      "head": "268535cf1e67b03fde8d20a47bdca1af0740d563",
       "title": "Use released Protobuf Rust lockfiles",
-      "url": "https://github.com/tamird/gvisor/commit/cd14bd2878da75ffc1fecfdd428b8ddacc9dd4ea",
+      "url": "https://github.com/tamird/gvisor/commit/268535cf1e67b03fde8d20a47bdca1af0740d563",
       "group": "bazel",
-      "status": "Canonical catalog passed; gRPC declared-header correction in progress",
-      "summary": "Separate Protobuf 37.0-rc1 upgrade replaces the generated-lock backport in the Rust image proposal. Current validation first uses the release without a transitive rules_rust override. Full canonical Fetch/Verify, existing generated C++/Go consumer compatibility and final Rust image applicability remain required.",
+      "status": "Compatibility retry blocked by native patch file-boundary parsing",
+      "summary": "The separate Protobuf 37.0-rc1 upgrade supplies the release Rust lockfiles and exact audited catalog records, removing the generated-lock patch and rules_rust override from the image proposal. Four existing gRPC 1.84 libraries now explicitly depend on the public C++ reflection target that Protobuf 37 separated from its C interface. Canonical Fetch/Verify passed; the compatibility retry stopped in native patch application before compilation. Current generated C++/Go compatibility and Rust image applicability remain unproved.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "cd14bd2878da75ffc1fecfdd428b8ddacc9dd4ea",
-        "observedAt": "2026-10-23T02:02:29.481778+00:00",
-        "disposition": "Canonical catalog passed; gRPC declared-header correction in progress",
-        "nextAction": "Complete the four owning gRPC reflection_cc declarations and rerun focused generated-code validation; preserve canonical PASS and the actual first build failure separately."
+        "sourceHead": "268535cf1e67b03fde8d20a47bdca1af0740d563",
+        "observedAt": "2026-10-23T02:12:10.831672+00:00",
+        "disposition": "Compatibility retry blocked by native patch file-boundary parsing",
+        "nextAction": "Correct only the gRPC patch file boundaries after pinned Bazel parser review, then retry the unchanged compatibility and image equality gates. Retry986168 failed during bootstrap patch application; no new build or runtime credit."
       },
-      "updatedAt": "2026-10-23T01:53:03.128488+00:00"
+      "updatedAt": "2026-10-23T02:10:00.431575+00:00"
     }
   ],
   "edges": [
