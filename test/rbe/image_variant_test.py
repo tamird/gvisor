@@ -106,32 +106,37 @@ class NativeVariantsTest(unittest.TestCase):
         bind_built_outputs(outputs, self.config["expected_outputs"], self.datasets["current"][0][1], variants)
         self.assertEqual(sum(output["variant"].get("race", False) for output in outputs), 10)
 
-    def test_old_build_success_does_not_grant_race_coverage(self) -> None:
+    def test_retained_old_all_forty(self) -> None:
         rows = []
         for group, proof in self.datasets["old"]:
-            # Preserve this old invocation's source labels and full paths.
-            variants = group["declared_variants"]
+            # These phases share paths, but their output bytes and actions differ.
             outputs = copy.deepcopy(group["outputs"])
             expected = {output["identity"]["label"]: output["name"] for output in outputs}
-            if group["name"].endswith("-race"):
-                with self.assertRaisesRegex(ValueError, "Native GoLink variant"):
-                    bind_built_outputs(outputs, expected, proof, variants)
-            else:
-                bind_built_outputs(outputs, expected, proof, variants)
-            for output in group["outputs"]:
-                label = output["identity"]["label"]
-                required_race = variants.get(label) == "race"
-                if required_race:
-                    with self.assertRaisesRegex(ValueError, "Native GoLink variant"):
-                        bind_built_outputs([copy.deepcopy(output)], {label: output["name"]}, proof, variants)
-                else:
-                    bind_built_outputs([copy.deepcopy(output)], {label: output["name"]}, proof, variants)
-                rows.append({"group": group["name"], "target": label, "native_build_status": "PASS",
-                             "required_race": required_race,
-                             "race_coverage": "INVALID" if required_race else "NOT_APPLICABLE"})
+            bind_built_outputs(outputs, expected, proof, group["declared_variants"])
+            rows.extend({"group": group["name"], "target": output["identity"]["label"],
+                         "native_build_status": "PASS", "variant": output["variant"],
+                         "output": {key: output[key] for key in ("name", "sha256", "bytes", "native_action")}}
+                        for output in outputs)
         self.assertEqual(len(rows), 40)
-        self.assertEqual(sum(row["required_race"] for row in rows), 10)
+        self.assertEqual(sum(row["variant"].get("race", False) for row in rows), 10)
         (Path(evidence_directory) / "prior-variant-coverage.json").write_text(json.dumps(rows, indent=2) + "\n")
+
+    def test_normal_producer_cannot_supply_race_coverage(self) -> None:
+        checked = 0
+        for group, proof in self.datasets["old"]:
+            if not group["name"].endswith("-race"):
+                continue
+            normal, _ = next((other, evidence) for other, evidence in self.datasets["old"]
+                             if other["name"] == group["architecture"] + "-normal")
+            for output in normal["outputs"]:
+                label = output["identity"]["label"]
+                if group["declared_variants"].get(label) != "race":
+                    continue
+                with self.subTest(group=group["name"], target=label):
+                    with self.assertRaisesRegex(ValueError, "Native GoLink variant"):
+                        bind_built_outputs([copy.deepcopy(output)], {label: output["name"]}, proof, {label: "race"})
+                checked += 1
+        self.assertEqual(checked, 10)
 
     def test_missing_and_unknown_variant_rejected(self) -> None:
         groups = [group for group, _ in self.datasets["current"]]
