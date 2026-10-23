@@ -189,7 +189,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             size = 0
             # Bound memory by one action, preserving the exact redacted text
             # and existing compact action proof. Publish only a complete audit.
-            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb") as output:
+            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb", compresslevel=1) as output:
                 for text, action in execution_records(stream):
                     redacted = text.replace(credential.decode(), "[REDACTED]")
                     raw = redacted.encode()
