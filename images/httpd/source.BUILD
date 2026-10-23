@@ -1,12 +1,18 @@
 package(default_visibility = ["//visibility:public"])
 
-# The three Apache release archives use the same source/notice boundary.
-exports_files(glob([
+exports_files([
     "LICENSE",
     "NOTICE",
-    "docs/conf/mime.types",
-    "docs/docroot/index.html",
-]))
+])
+
+# This shared overlay also serves APR archives without HTTPD's runtime data.
+exports_files(glob(
+    [
+        "docs/conf/mime.types",
+        "docs/docroot/index.html",
+    ],
+    allow_empty = True,
+))
 
 filegroup(
     name = "source",
