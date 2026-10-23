@@ -9,9 +9,7 @@ import re
 import shlex
 import shutil
 import subprocess
-import tarfile
 import time
-import urllib.request
 import uuid
 
 import qualification_report as report
@@ -96,16 +94,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if hashlib.sha256(data).hexdigest() != expected:
                 raise ValueError("Common fixture/build input changed: " + name)
 
-    def fetch(item: dict, destination: Path) -> None:
-        request = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetFile",
-            data=json.dumps({"uri": item["uri"]}).encode(),
-            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
-        with urllib.request.urlopen(request, timeout=60) as response:
-            data = response.read(item["bytes"] + 1)
-        if len(data) != item["bytes"] or hashlib.sha256(data).hexdigest() != item["sha256"]:
-            raise ValueError("Retained iperf3 supplier identity mismatch")
-        destination.write_bytes(data)
-
     def inspect() -> dict:
         match json.loads(command("image-inspect", ["docker", "image", "inspect", tag])):
             case [item] if item["Architecture"] == "amd64" and item["Os"] == "linux":
@@ -136,25 +124,49 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         if tag in tags:
             original_tag = inspect()["Id"]
         supplier = config["image_supplier"]
-        bundle = evidence / "iperf3-supplier.tar.gz"
-        fetch(supplier["bundle"], bundle)
-        with tarfile.open(bundle) as archive:
-            entries = [entry for entry in archive if entry.isfile()]
-            if len({entry.name for entry in entries}) != len(entries):
-                raise ValueError("Duplicate supplier evidence member")
-            members = {entry.name: archive.extractfile(entry).read() for entry in entries}
-        built = json.loads(members["invocation-images-x86_64/verdict.json"])
-        if built["status"] != "PASS" or built["native_exit"] != 0 or built["source"] != supplier["source"]:
-            raise ValueError("Retained iperf3 build is not source-bound PASS")
-        events = evidence / "iperf3-supplier-events.jsonl"
-        events.write_bytes(members["invocation-images-x86_64/events.jsonl"])
-        [owner] = [report.Owner(row["label"], row["configuration"]) for row in built["expected"]
-                   if row["label"] == "//images/benchmarks:iperf_archive"]
-        [archive_output] = report.advertised_build_outputs(events, {(owner, "default")})
-        if any(archive_output[key] != supplier["archive"][key] for key in ("name", "sha256", "bytes")):
-            raise ValueError("Selected iperf3 archive differs from its configured output")
-        archive_path = private / "iperf3.tar"
-        fetch(supplier["archive"], archive_path)
+        # The old supplier artifacts have expired from CAS. Regenerate only
+        # its archive from the exact qualified source, then require the same
+        # archive bytes and image config before either arm can use it.
+        lock = workspace / "MODULE.bazel.lock"
+        current_lock = lock.read_bytes()
+        records["supplier_build"] = {"source": supplier["source"], "status": "INCOMPLETE",
+                                     "current_lock": report.file_record(lock)}
+        try:
+            command("switch-supplier", ["git", "switch", "--detach", supplier["source"]])
+            lock.unlink()
+            supplier_options = ["--config=x86_64", "--compilation_mode=opt", "--noannounce_rc"]
+            supplier_target = "//images/benchmarks:iperf_archive"
+            preparation_directory = evidence / "source-builds/supplier-preparation"
+            prepared = invoke("supplier-preparation", ["cquery", *supplier_options,
+                "--lockfile_mode=update", "--output=label", supplier_target], "command",
+                targets=[], source=supplier["source"], directory=preparation_directory)
+            if prepared["status"] != "PASS" or prepared["native_exit"] != 0 or not lock.is_file():
+                raise RuntimeError("Recorded iperf3 supplier preparation failed")
+            supplier_directory = evidence / "source-builds/supplier"
+            built = invoke("supplier-archive", ["build", *supplier_options,
+                "--lockfile_mode=error", "--remote_download_outputs=all", supplier_target], "build",
+                targets=[supplier_target], source=supplier["source"], directory=supplier_directory)
+            if built["status"] != "PASS" or built["native_exit"] != 0:
+                raise RuntimeError("Recorded iperf3 supplier archive build failed")
+            [owner] = [report.Owner(row["label"], row["configuration"]) for row in built["expected"]]
+            if owner.label != supplier_target:
+                raise ValueError("Unexpected regenerated iperf3 archive owner")
+            [archive_output] = report.advertised_build_outputs(supplier_directory / "events.jsonl", {(owner, "default")})
+            if any(archive_output[key] != supplier["archive"][key] for key in ("name", "sha256", "bytes")):
+                raise ValueError("Regenerated iperf3 archive differs from the qualified bytes")
+            archive_path = private / "iperf3.tar"
+            shutil.copyfile(materialized(archive_output), archive_path)
+            records["supplier_build"].update(status="PASS", archive=report.file_record(archive_path),
+                                             supplier_lock=report.file_record(lock))
+        finally:
+            try:
+                command("restore-supplier-source", ["git", "switch", "--detach", source], cleanup=True)
+            finally:
+                lock.write_bytes(current_lock)
+                records["supplier_build"]["restored_lock"] = report.file_record(lock)
+            check_source(source)
+            if records["supplier_build"]["restored_lock"] != records["supplier_build"]["current_lock"]:
+                raise ValueError("Supplier regeneration changed the current source lock")
         tag_changed = True
         command("image-load", ["docker", "load", "--input", str(archive_path)])
         command("image-tag", ["docker", "tag", supplier["config_id"], tag])
