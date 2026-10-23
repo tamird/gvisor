@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T18:30:58.931550+00:00",
+    "updatedAt": "2026-10-23T18:35:57.657700+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -560,11 +560,11 @@
       "updatedAt": "2026-10-19T21:36:45.846198+00:00",
       "summary": "The patch approved by EtiennePerot on 2026-10-09T19:49:58Z at 095d18339a is independently verified unchanged at 12d1e8b462. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 12d1e8b4626d on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
       "followup": {
-        "disposition": "Unchanged approved patch; current CI and import progression",
-        "owner": "work_map_current",
+        "disposition": "Current-upstream adaptation awaits contributor decision",
+        "owner": "root",
         "sourceHead": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
         "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "Observe exact-head checks and import progression through the existing sweep. Preserve substantive feedback and explicit holds; no reapproval notice or repeated rebase solely for a changed SHA.",
+        "nextAction": "The separate b01f3baf4f preview adapts the approved failure-propagation patch to current Bazel goimports and has completed focused qualification. Await the contributor decision before publishing or requesting maintainer review; upstream remains 12d1e8b46.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15111#pullrequestreview-5474692022",
           "https://github.com/google/gvisor/pull/15111#issuecomment-6088101788",
@@ -573,7 +573,8 @@
           "https://github.com/google/gvisor/pull/15396",
           "https://github.com/google/gvisor/commit/e1c958717",
           "https://github.com/tamird/gvisor/commit/12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
-          "https://github.com/google/gvisor/pull/15111#issuecomment-6274669691"
+          "https://github.com/google/gvisor/pull/15111#issuecomment-6274669691",
+          "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
@@ -19464,6 +19465,43 @@
           "https://github.com/google/gvisor/pull/15955#discussion_r4362573836"
         ]
       }
+    },
+    {
+      "id": "branch:pr15111-goimports-adaptation",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/pr15111-goimports-20261023",
+      "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
+      "title": "Adapt lint failure coverage to Bazel goimports",
+      "url": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
+      "group": "release",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-23T18:35:57.657700+00:00",
+      "summary": "The current-upstream revision preserves central lint failure propagation and adapts the public-entrypoint regression to Bazel goimports, removing the obsolete mock Go SDK and go.mod data. This is a semantic interface adaptation, not a byte-identical rebase. The contributor decision is pending; upstream #15111 remains at its previously approved 12d1e8b46 head. Four regression methods pass through an uncached remote AMD64 Bazel test, and the actual public Make lint passes all five checks on hosted Linux. The original qualification wrapper failed afterward on one trailing space in the Docker event text; independently reviewed retained reconciliation verifies the exact event, clean source/lock and cleanup without rerunning the workload. The public Make goimports build used its ordinary Linux sandbox defaults, not remote execution.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
+        "url": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
+      },
+      "refinement": {
+        "before": {
+          "head": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d"
+        },
+        "after": {
+          "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d"
+        }
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Qualified semantic adaptation; contributor decision pending",
+        "sourceHead": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
+        "nextAction": "Await the requested contributor decision before updating upstream #15111 or contacting its maintainer. Preserve the old approval and the original wrapper failure as source-specific evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
+          "https://app.buildbuddy.io/invocation/51f98be2-c6c5-4146-a07d-cebd8c058691",
+          "https://github.com/google/gvisor/pull/15111"
+        ]
+      }
     }
   ],
   "edges": [
@@ -21766,6 +21804,14 @@
       "role": "proposed_update",
       "reason": "The tested reviewer amendment is unpublished and awaits the contributor decision; the live PR remains at its existing head.",
       "evidence": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb"
+    },
+    {
+      "from": "branch:pr15111-goimports-adaptation",
+      "to": "pr:15111",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "The qualified goimports adaptation awaits a contributor decision; the approved upstream source remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
     }
   ],
   "investigations": [
