@@ -1564,6 +1564,12 @@
   license:
     - Apache-2.0
     - MIT
+- dependency: gperf
+  version: https://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2
+  license: LicenseRef-Gperf-3.1-source-bundle
 - dependency: grpc
   version: https://github.com/grpc/grpc/archive/refs/tags/v1.84.0.tar.gz
   retrieved: "2026-10-06"
