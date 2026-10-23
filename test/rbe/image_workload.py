@@ -37,7 +37,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             records["architectures"].append(row)
             queries = {
                 "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/basic:pidfd_tests_archive))', []),
-                "config": ('filter("^(@@)?//images:busybox_config$", deps(//images/basic:pidfd_tests_archive))', []),
+                "config": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:pidfd_tests_archive))', ["--output_groups=busybox.config"]),
                 "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:pidfd_tests_archive))', ["--output_groups=Make_logs"]),
                 "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/basic:pidfd_tests_archive))', []),
             }
@@ -52,6 +52,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     failed = True
                     continue
                 paths = (evidence / ("invocation-" + phase) / "stdout.log").read_text().splitlines()
+                if len(paths) != {"binary": 1, "config": 1, "logs": 3, "tools": 2}[name]:
+                    raise ValueError("Unexpected configured BusyBox output count: " + phase)
                 retained = []
                 for index, output in enumerate(paths):
                     path = Path(output)
