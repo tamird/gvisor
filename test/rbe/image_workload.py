@@ -27,7 +27,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     build_targets = ["//:release", benchmark]
     record = {"source": source, "before_source": config["before_source"],
               "status": "INCOMPLETE", "builds": [], "cleanup": "INCOMPLETE"}
-    inputs = {"harnesses": {}, "runtimes": {}, "benchstat": config["benchstat"]}
+    inputs = {"harnesses": {}, "runtimes": {}, "benchstat": config["benchstat"],
+              "oci_bundle_root": config["oci_bundle_root"]}
     runtime_inputs = {}
     tag = "gvisor.dev/images/benchmarks/nginx:latest"
     prior_image = None
@@ -133,18 +134,19 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         selected = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
                     "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
                     "--test_env=GO_TEST_WRAP_TESTV=1"]
-        correctness = config["correctness_targets"]
-        for name, extra in (("normal", []), ("race", ["--config=race"])):
-            result = invoke("correctness-" + name, ["test", *selected, *extra, *correctness],
-                            "test", targets=correctness)
-            if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
-                raise RuntimeError("State correctness checks failed or skipped: " + name)
+        if correctness := config["correctness_targets"]:
+            for name, extra in (("normal", []), ("race", ["--config=race"])):
+                result = invoke("correctness-" + name, ["test", *selected, *extra, *correctness],
+                                "test", targets=correctness)
+                if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
+                    raise RuntimeError("State correctness checks failed or skipped: " + name)
         # Each Nogo owner checks both architectures through its split transition;
         # its filter executable must still run on this AMD64 coordinator.
-        result = invoke("analyzers", ["test", *selected, *config["analyzer_targets"]],
-                        "test", targets=config["analyzer_targets"])
-        if result["status"] != "PASS":
-            raise RuntimeError("State analyzer checks failed")
+        if analyzers := config["analyzer_targets"]:
+            result = invoke("analyzers", ["test", *selected, *analyzers],
+                            "test", targets=analyzers)
+            if result["status"] != "PASS":
+                raise RuntimeError("State analyzer checks failed")
 
         benchstat = config["benchstat"]
         request = urllib.request.Request(
