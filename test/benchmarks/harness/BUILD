@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -20,5 +20,18 @@ go_library(
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "@com_github_docker_docker//api/types/mount:go_default_library",
+    ],
+)
+
+go_test(
+    name = "http_probe_cancellation_test",
+    size = "small",
+    srcs = ["http_probe_cancellation_test.go"],
+    local = True,
+    tags = ["manual"],
+    deps = [
+        ":harness",
+        "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
     ],
 )
