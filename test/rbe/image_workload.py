@@ -35,6 +35,19 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         selected = [row for row in rows if row["label"].removeprefix("@@") == label]
         if len(selected) != 1 or len(selected[0]["files"]) != 2:
             raise ValueError(f"Expected two architecture outputs: {label}: {selected}")
+    if config.get("compiler_preflight", False):
+        queried = invoke("bun-compiler-actions", ["aquery", *options, *config["consumer_options"],
+                         "--output=jsonproto", 'mnemonic("CppCompile", deps(//test/benchmarks/base:bun_spawn_test))'],
+                         "command", targets=[])
+        if queried["status"] != "PASS":
+            raise RuntimeError("Bun consumer compiler action query failed")
+        actions = json.loads((evidence / "invocation-bun-compiler-actions/stdout.log").read_text())["actions"]
+        if not actions or any(row["mnemonic"] != "CppCompile" or not row.get("arguments") for row in actions):
+            raise ValueError("Expected configured Bun compiler actions with arguments")
+        report = {"source": config["source"], "consumer_options": config["consumer_options"],
+                  "actions": [{key: row[key] for key in ("targetId", "configurationId", "arguments")}
+                              for row in actions]}
+        (evidence / "bun-compiler-actions.json").write_text(json.dumps(report, indent=2) + "\n")
     if config.get("graph_only", False):
         return
     execution_log = private / "mixed-images-execution.json"

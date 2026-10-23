@@ -102,7 +102,7 @@ def run(invoke, evidence: Path, private: Path) -> None:
             if set(files) != set(retained) or any(any(files[name][key] != item[key] for key in ("bytes", "sha256")) for name, item in retained.items()):
                 raise ValueError("Installed runtime differs from the retained release")
             target = "//test/benchmarks/base:bun_spawn_test"
-            options = ["--compilation_mode=opt", "--config=x86_64", "--lockfile_mode=error",
+            options = [*config.get("consumer_options", []), "--compilation_mode=opt", "--config=x86_64", "--lockfile_mode=error",
                        "--noannounce_rc", "--remote_download_outputs=all",
                        "--build_event_json_file_path_conversion=false", "--nozip_undeclared_test_outputs",
                        "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
