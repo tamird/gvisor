@@ -200,7 +200,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if analysis["status"] != "PASS":
                 raise RuntimeError("Paired checkpoint benchmark analysis failed")
             result = invoke("paired", ["test", *selected, *target], "test",
-                            (evidence / "invocation-paired-analysis/events.jsonl",), targets=target)
+                            (evidence / "invocation-paired-analysis/events.jsonl",), targets=target, retain_outputs=True)
             if result["status"] != "PASS" or result["native_exit"] != 0:
                 raise RuntimeError("Paired checkpoint benchmark failed")
         record["status"] = "PASS"
