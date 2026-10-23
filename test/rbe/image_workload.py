@@ -1,14 +1,61 @@
 """Measure a real HTTP response after restoring the two qualified runtimes."""
 from contextlib import ExitStack
+import datetime
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import time
 
 import qualification_report as report
 from image_runtime import prepared_runtime
 from retained_release import materialize_runtime
+
+
+def restore_stages(log_dir: Path) -> list[dict]:
+    """Keep timestamps and event types; exclude hook environments and arguments."""
+    stages = []
+    for path in sorted(log_dir.glob("*.restore.txt")):
+        year = int(path.name.split("runsc.log.")[1][:4])
+        events = []
+        pending = None
+        for line in path.read_text().splitlines():
+            match = re.match(r"^[IDW](\d{4} \d\d:\d\d:\d\d\.\d{6})\s+\d+ ([^ :]+):\d+\] (.*)$", line)
+            if match is None:
+                continue
+            timestamp, source, message = match.groups()
+            if message.startswith("Executing hook "):
+                if pending is not None:
+                    raise ValueError("Overlapping OCI hooks in one CLI process")
+                args = message.partition(" Args:[")[2].partition("]")[0].split()
+                pending = "libnetwork-setkey" if "libnetwork-setkey" in args[:2] else "other"
+                name = "hook-start:" + pending
+            elif message.startswith("Execute hook ") and message.endswith(" success!"):
+                if pending is None:
+                    raise ValueError("Hook finished without a start")
+                name, pending = "hook-end:" + pending, None
+            elif message.startswith("Container not found, creating new one,"):
+                name = "create-for-restore"
+            elif message.startswith("FD parking sidecar started,"):
+                name = "sidecar-started"
+            elif message.startswith("Restore: "):
+                name = "restore-command"
+            elif message.startswith("Restore container, cid: "):
+                name = "restore-entry" if source == "restore.go" else "container-restore"
+            elif message == "Exiting with status: 0":
+                name = "exit"
+            else:
+                continue
+            when = datetime.datetime.strptime(str(year) + timestamp, "%Y%m%d %H:%M:%S.%f")
+            events.append({"time": when.isoformat(), "event": name})
+        if pending is not None or [e["event"] for e in events if not e["event"].startswith("hook-")] != [
+                "restore-entry", "create-for-restore", "sidecar-started", "restore-command", "container-restore", "exit"]:
+            raise ValueError("Incomplete or reordered restore CLI events")
+        stages.append({"log": path.name, "events": events})
+    if len(stages) != 2:
+        raise ValueError("Expected two fresh restore CLI traces")
+    return stages
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -63,7 +110,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 files = materialize_runtime(supplier, runtime_dir, arm)
                 name = "runsc-state-response-" + side
                 prepared = stack.enter_context(prepared_runtime(arm / "runtime.json", runtime_dir, {
-                    "runtime_name": name, "runtime_flags": ["--platform=systrap", "--network=sandbox"],
+                    "runtime_name": name, "runtime_flags": ["--platform=systrap", "--network=sandbox",
+                                                           "--debug", "--debug-command=restore"],
                     "image_name": "benchmarks/nginx", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
                     "docker_experimental": True, "docker_version": "24.0.9",
                     "retained_release_files": files, "release_supplier": {"source": supplier["source"]},
@@ -99,6 +147,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 if any(executed_client[k] != client[k] for k in ("name", "sha256", "bytes")):
                     raise ValueError("Executed restore client differs from common build")
                 arm["benchmarks"] = attempt["benchmarks"]
+                arm["restore_stages"] = restore_stages(private / side / "runsc-logs")
                 if containers() != original:
                     raise RuntimeError("Restore benchmark left a container behind")
         if any(json.loads((evidence / side / "runtime.json").read_text())["cleanup"] != "PASS" for side in sides):

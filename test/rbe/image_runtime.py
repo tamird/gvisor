@@ -182,8 +182,10 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")
         records["runtime_files"] = [record_file(runsc), *[
             record_file(path) for path in sorted((runtime_directory / "gvisor-bin").iterdir()) if path.is_file()]]
-        logs = destination.parent / "runsc-logs"
-        logs.mkdir()
+        # OCI hook debug messages include the hook environment. Keep the
+        # original logs in the disposable worker's private directory.
+        logs = runtime_directory / "runsc-logs"
+        logs.mkdir(mode=0o700)
         run([str(runsc), "install", "--config_file=" + str(config_path),
              "--runtime=" + runtime_name, "--download-sidecars=NEVER", "--require-sidecars=ALWAYS", "--",
              *configuration["runtime_flags"], "--debug-log=" + str(logs) + "/", "--TESTONLY-test-name-env=RUNSC_TEST_NAME"])
