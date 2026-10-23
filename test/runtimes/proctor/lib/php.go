@@ -17,7 +17,6 @@ package lib
 import (
 	"os/exec"
 	"regexp"
-	"strings"
 )
 
 var phpTestRegEx = regexp.MustCompile(`^.+\.phpt$`)
@@ -38,6 +37,16 @@ func (phpRunner) ListTests() ([]string, error) {
 
 // TestCmds implements TestRunner.TestCmds.
 func (phpRunner) TestCmds(tests []string) []*exec.Cmd {
-	args := []string{"test", "TESTS=" + strings.Join(tests, " ")}
-	return []*exec.Cmd{exec.Command("make", args...)}
+	// Match the runner settings used by PHP's Makefile, while testing the
+	// installed interpreter instead of rebuilding it with make test.
+	args := []string{
+		"-n",
+		"-d", "open_basedir=",
+		"-d", "output_buffering=0",
+		"-d", "memory_limit=-1",
+		"run-tests.php",
+		"-n",
+		"-p", "/usr/local/bin/php",
+	}
+	return []*exec.Cmd{exec.Command("/usr/local/bin/php", append(args, tests...)...)}
 }
