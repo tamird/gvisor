@@ -37,15 +37,19 @@ func Load(r *Reader) Object {
 func loadPayload(r *Reader, tag Uint) Object {
 	switch tag {
 	case typeBool:
-		return loadBool(r) // Escapes: scalar Object payload.
+		return loadBool(r)
 	case typeInt:
-		return loadInt(r) // Escapes: scalar Object payload.
+		value := loadInt(r)
+		return value // Escapes: boxing the decoded scalar.
 	case typeUint:
-		return loadUint(r) // Escapes: scalar Object payload.
+		value := loadUint(r)
+		return value // Escapes: boxing the decoded scalar.
 	case typeFloat32:
-		return loadFloat32(r) // Escapes: scalar Object payload.
+		value := loadFloat32(r)
+		return value // Escapes: boxing the decoded scalar.
 	case typeFloat64:
-		return loadFloat64(r) // Escapes: scalar Object payload.
+		value := loadFloat64(r)
+		return value // Escapes: boxing the decoded scalar.
 	case typeComplex64:
 		value := loadComplex64(r) // Escapes: owned complex payload.
 		return &value
