@@ -1,0 +1,73 @@
+{
+  "runtime_key": "go1.27.3-linux-amd64",
+  "platform": "systrap",
+  "profiles": [
+    {
+      "file": "ffmpeg.pgo.pprof.pb.gz",
+      "sha256": "96a0e815a25e8bd8cb4b78ddb40d304071962badd56e3f20d05b0f514ed13b33",
+      "bytes": 29078,
+      "source": "9095639aa46302c521d4bdd8ede90575f8adadee",
+      "owner": "//test/benchmarks/media:ffmpeg_test_pgo_systrap_owned",
+      "invocation": "243c467f-a837-47a0-ba6e-e04b45b9d1c5",
+      "bundle_sha256": "0bd4bbeab8a0bf7132fd0667947e563f39c2f2449b681a6938f3dcccedf35da8",
+      "member": "invocation-00b9aA/reports/k8-fastbuild/testlogs/test/benchmarks/media/ffmpeg_test_pgo_systrap_owned/test.outputs/pgo/ffmpeg.pgo.pprof.pb.gz",
+      "cpu_samples": 13090000000
+    },
+    {
+      "file": "iperf.pgo.pprof.pb.gz",
+      "sha256": "35f8a36f075a1ae87ea6e70ba6b76d938f139ef977798c855c9ee671bb4cd073",
+      "bytes": 69869,
+      "source": "9095639aa46302c521d4bdd8ede90575f8adadee",
+      "owner": "//test/benchmarks/network:iperf_test_pgo_systrap_owned",
+      "invocation": "243c467f-a837-47a0-ba6e-e04b45b9d1c5",
+      "bundle_sha256": "0bd4bbeab8a0bf7132fd0667947e563f39c2f2449b681a6938f3dcccedf35da8",
+      "member": "invocation-00b9aA/reports/k8-fastbuild/testlogs/test/benchmarks/network/iperf_test_pgo_systrap_owned/test.outputs/pgo/iperf.pgo.pprof.pb.gz",
+      "cpu_samples": 94210000000
+    },
+    {
+      "file": "nginx.pgo.pprof.pb.gz",
+      "sha256": "32dd4e6f2988eb69a0f5a4509fc41cd49d8fa522e96f10ceb7d1d77a305ec07e",
+      "bytes": 47946,
+      "source": "9095639aa46302c521d4bdd8ede90575f8adadee",
+      "owner": "//test/benchmarks/network:nginx_test_pgo_systrap_owned",
+      "invocation": "243c467f-a837-47a0-ba6e-e04b45b9d1c5",
+      "bundle_sha256": "0bd4bbeab8a0bf7132fd0667947e563f39c2f2449b681a6938f3dcccedf35da8",
+      "member": "invocation-00b9aA/reports/k8-fastbuild/testlogs/test/benchmarks/network/nginx_test_pgo_systrap_owned/test.outputs/pgo/nginx.pgo.pprof.pb.gz",
+      "cpu_samples": 21610000000
+    },
+    {
+      "file": "redis.pgo.pprof.pb.gz",
+      "sha256": "60e95faa029b14e9fdb80c0544341fbbd218e6d86ebde0ccb9813fafb62cb457",
+      "bytes": 87246,
+      "source": "9095639aa46302c521d4bdd8ede90575f8adadee",
+      "owner": "//test/benchmarks/database:redis_test_pgo_systrap_owned",
+      "invocation": "243c467f-a837-47a0-ba6e-e04b45b9d1c5",
+      "bundle_sha256": "0bd4bbeab8a0bf7132fd0667947e563f39c2f2449b681a6938f3dcccedf35da8",
+      "member": "invocation-00b9aA/reports/k8-fastbuild/testlogs/test/benchmarks/database/redis_test_pgo_systrap_owned/test.outputs/pgo/redis.pgo.pprof.pb.gz",
+      "cpu_samples": 75160000000
+    },
+    {
+      "file": "rubydev.pgo.pprof.pb.gz",
+      "sha256": "646fb95c54e7dad439c91a0722ce41b3d698950155a7ac0a85d2f3454124bba6",
+      "bytes": 183890,
+      "source": "82ade3499d55bfd10af155961a72314bdc2611fe",
+      "owner": "//test/benchmarks/fs:rubydev_test_pgo_systrap_owned",
+      "invocation": "4d8542e5-f253-4a78-a185-17e62149e5e5",
+      "bundle_sha256": "75919b7e2443b056afbd956780801edda49aa6916cf0e6ac7497abc475ce6448",
+      "member": "invocation-WA5TzE/reports/k8-fastbuild/testlogs/test/benchmarks/fs/rubydev_test_pgo_systrap_owned/test.outputs/pgo/rubydev.pgo.pprof.pb.gz",
+      "cpu_samples": 397590000000
+    },
+    {
+      "file": "sysbench.pgo.pprof.pb.gz",
+      "sha256": "5ea604473bbbef9064fec4f5fe468f571fdf1b5dd65de7afdc026d1da0659766",
+      "bytes": 19952,
+      "source": "9095639aa46302c521d4bdd8ede90575f8adadee",
+      "owner": "//test/benchmarks/base:sysbench_test_pgo_systrap_owned",
+      "invocation": "243c467f-a837-47a0-ba6e-e04b45b9d1c5",
+      "bundle_sha256": "0bd4bbeab8a0bf7132fd0667947e563f39c2f2449b681a6938f3dcccedf35da8",
+      "member": "invocation-00b9aA/reports/k8-fastbuild/testlogs/test/benchmarks/base/sysbench_test_pgo_systrap_owned/test.outputs/pgo/sysbench.pgo.pprof.pb.gz",
+      "cpu_samples": 4740000000
+    }
+  ],
+  "scope": "Six individually successful profile producers; the original six-owner invocation failed its Ruby owner. That failed invocation remains unchanged. The separately successful Ruby invocation supplies only rubydev."
+}
