@@ -1,4 +1,4 @@
-load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs", "package_layer")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
@@ -12,7 +12,7 @@ cc_binary(
     name = "syscallbench",
     srcs = ["syscallbench.c"],
     copts = ["-O2"],
-    static = True,
+    linkopts = ["-static"],
     # The assembly loop and seccomp filters use the Linux x86-64 ABI.
     target_compatible_with = [
         "@platforms//cpu:x86_64",
@@ -29,7 +29,7 @@ image_layer(
 )
 
 image_manifest(
-    name = "syscallbench_image",
+    name = "syscallbench_manifest",
     env = {"PATH": "/usr/bin:/bin"},
     layers = [
         "//images:busybox_layer",
@@ -38,6 +38,15 @@ image_manifest(
     ],
     tags = ["manual"],
     user = "0:0",
+)
+
+# The existing benchmark assembly supports only the Linux x86-64 target.
+image_index(
+    name = "syscallbench_image",
+    manifests = [":syscallbench_manifest"],
+    platforms = ["@llvm//platforms:linux_x86_64_musl"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
 )
 
 image_outputs(

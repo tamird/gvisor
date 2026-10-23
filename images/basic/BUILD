@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
 
@@ -8,6 +8,12 @@ package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
+
+# Select the image target ABI independently of the execution host.
+_MUSL_PLATFORMS = select({
+    "@platforms//cpu:aarch64": ["@llvm//platforms:linux_aarch64_musl"],
+    "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
+})
 
 image_manifest(
     name = "alpine",
@@ -45,7 +51,7 @@ image_layer(
 )
 
 image_manifest(
-    name = "symlink_resolv",
+    name = "symlink_resolv_manifest",
     env = {"PATH": "/usr/bin:/bin"},
     layers = [
         "//images:helper_filesystem",
@@ -55,6 +61,13 @@ image_manifest(
     ],
     tags = ["manual"],
     user = "0:0",
+)
+
+image_index(
+    name = "symlink_resolv",
+    manifests = [":symlink_resolv_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
 )
 
 image_outputs(
@@ -75,7 +88,7 @@ image_layer(
 )
 
 image_manifest(
-    name = "tmpfile",
+    name = "tmpfile_manifest",
     env = {"PATH": "/usr/bin:/bin"},
     layers = [
         "//images:busybox_layer",
@@ -84,6 +97,13 @@ image_manifest(
     ],
     tags = ["manual"],
     user = "0:0",
+)
+
+image_index(
+    name = "tmpfile",
+    manifests = [":tmpfile_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
 )
 
 image_outputs(
@@ -217,7 +237,7 @@ image_layer(
 )
 
 image_manifest(
-    name = "pidfd_tests",
+    name = "pidfd_tests_manifest",
     cmd = [
         "/bin/sh",
         "-ec",
@@ -243,6 +263,13 @@ fi
     tags = ["manual"],
     user = "0:0",
     working_dir = "/opt/kselftest",
+)
+
+image_index(
+    name = "pidfd_tests",
+    manifests = [":pidfd_tests_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
 )
 
 image_outputs(
