@@ -43,7 +43,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         # its ARM64 host binary on this AMD64 worker.
         for name, owner, count in (
                 ("proctor-unit", unit_owner, 2), ("proctor-nogo", nogo_owner, 1)):
-            result = invoke(name, ["test", *options, owner], "test", targets=[owner])
+            reporting = ["--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=1"] if owner == unit_owner else []
+            result = invoke(name, ["test", *options, *reporting, owner], "test", targets=[owner])
             record["checks"].append({
                 "name": name, "owner": owner, "status": result["status"],
                 "case_counts": result["case_counts"], "executed": result["executed"],
