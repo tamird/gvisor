@@ -102,6 +102,7 @@ benchmark_test(
 benchmark_test(
     name = "bun_spawn_test",
     srcs = ["bun_spawn_test.go"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = False,
     deps = [
         "//pkg/test/dockerutil",
