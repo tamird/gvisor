@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import shlex
 
 import qualification_report as report
 
@@ -14,9 +15,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     record = {"source": config["source"], "readiness": config["readiness"],
               "status": "INCOMPLETE", "architectures": []}
     try:
+        # The public Go runner is a drop-in go binary with the declared SDK.
+        formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt', "--"])
         formatted = invoke("gofmt", ["run", "--lockfile_mode=error", "--noannounce_rc",
-                           "@rules_python//python/bin:python", "--", "-c",
-                           'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "gofmt"]).returncode)'],
+                           "--run_under=" + formatter, "@io_bazel_rules_go//go:go"],
                            "command", targets=[])
         record["gofmt"] = formatted["status"]
         if formatted["status"] != "PASS":
