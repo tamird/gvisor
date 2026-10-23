@@ -1643,6 +1643,12 @@
   license:
     - Apache-2.0 WITH LLVM-exception
     - NCSA
+- dependency: nginx_source
+  version: https://nginx.org/download/nginx-1.31.7.tar.gz
+  retrieved: "2026-10-23"
+  commit: ""
+  sha256: 89ea8a3dc171511f7325043b50e4c036248d9fad5feb7ec809c0b82d5df42c65
+  license: BSD-2-Clause
 - dependency: nlohmann_json
   version: https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip
   retrieved: "2026-09-10"
