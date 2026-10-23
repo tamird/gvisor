@@ -1,8 +1,10 @@
-"""Qualify source-built BusyBox and resolver images with the existing root tests."""
+"""Qualify source-built BusyBox, resolver and fsstress images."""
 import json
 import os
 from pathlib import Path
 import shutil
+
+from image_runtime import prepared_runtime
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -37,7 +39,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             records["architectures"].append(row)
             queries = {
                 "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/basic:busybox_archive))', []),
-                "config": ('filter("^(@@)?//images:busybox_config$", deps(//images/basic:busybox_archive))', []),
+                "config": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:busybox_archive))', ["--output_groups=busybox.config"]),
                 "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:busybox_archive))', ["--output_groups=Make_logs"]),
                 "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/basic:busybox_archive))', []),
             }
@@ -52,6 +54,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     failed = True
                     continue
                 paths = (evidence / ("invocation-" + phase) / "stdout.log").read_text().splitlines()
+                expected = {"binary": 1, "config": 1, "logs": 3, "tools": 2}[name]
+                if len(paths) != expected or len(set(paths)) != expected:
+                    raise ValueError(f"Expected {expected} unique BusyBox {name} outputs, got {paths}")
                 retained = []
                 for index, output in enumerate(paths):
                     path = Path(output)
@@ -103,6 +108,33 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                             (evidence / "invocation-root-consumer-analysis/events.jsonl",), targets=test_targets)
             if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
                 raise RuntimeError("Required root consumers failed or skipped")
+            with prepared_runtime(evidence / "fsstress-runtime.json", private / "fsstress-runtime", {
+                "runtime_name": "qualification-fsstress",
+                "image_name": "basic/fsstress",
+                "runtime_flags": ["--platform=systrap"],
+                "contents": str(evidence / "fsstress-contents.json"),
+            }) as fsstress:
+                test_targets = ["//test/fsstress:fsstress_test"]
+                test_options = [*options, "--config=x86_64", "--runs_per_test=1",
+                                "--flaky_test_attempts=1", "--nocache_test_results",
+                                "--test_env=GO_TEST_WRAP_TESTV=1", "--nozip_undeclared_test_outputs",
+                                "--test_sharding_strategy=disabled", "--strategy=TestRunner=local",
+                                "--local_test_jobs=1", "--test_timeout=900",
+                                "--test_arg=-runtime=qualification-fsstress"]
+                analysis = invoke("fsstress-consumer-analysis", ["test", *test_options, "--nobuild", *test_targets],
+                                  "analysis", targets=test_targets)
+                if analysis["status"] != "PASS":
+                    raise RuntimeError("Existing fsstress consumer analysis failed")
+                result = invoke("fsstress-consumer", ["test", *test_options, *test_targets], "test",
+                                (evidence / "invocation-fsstress-consumer-analysis/events.jsonl",), targets=test_targets)
+                if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
+                    raise RuntimeError("Required fsstress consumers failed or skipped")
+                probe = invoke("fsstress-entrypoint", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                               "@rules_python//python/bin:python", "--",
+                               str(scripts / "fsstress_entrypoint.py"), str(evidence / "fsstress-entrypoint.json"),
+                               fsstress["image"]["id"]], "command", targets=[])
+                if probe["status"] != "PASS":
+                    raise RuntimeError("Fsstress entrypoint did not execute both filesystem workers")
         finally:
             restored = invoke("root-runtime-restoration", ["run", "--lockfile_mode=error", "--noannounce_rc",
                               "@rules_python//python/bin:python", "--", runtime, str(evidence), "check"],

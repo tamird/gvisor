@@ -54,6 +54,7 @@ BAZEL_IMAGE_CONTEXTS := \
   basic_filecap=//images/basic:filecap_context \
   basic_fsstress=//images/basic:fsstress_context \
   basic_pidfd-tests=//images/basic:pidfd_tests_context \
+  basic_symlink-resolv=//images/basic:symlink_resolv_context \
   basic_tmpfile=//images/basic:tmpfile_context \
   benchmarks_profile-helper=//images/benchmarks:profile_helper_context \
   gpu_ollama_client=//images/gpu/ollama:client_context

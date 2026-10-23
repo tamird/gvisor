@@ -42,7 +42,8 @@ try:
                                        ("arm64", "aarch64", "AArch64")):
         selected = [*options, "--config=" + cpu]
         images = [("busybox", "basic/busybox", "//images/basic:busybox"),
-                  ("symlink-resolv", "basic/symlink-resolv", "//images/basic:symlink_resolv")]
+                  ("symlink-resolv", "basic/symlink-resolv", "//images/basic:symlink_resolv"),
+                  ("fsstress", "basic/fsstress", "//images/basic:fsstress")]
         labels = ["//images:busybox_binary"]
         labels += [owner + suffix for _, _, owner in images for suffix in ("_archive", "_context")]
         queried = run(["bazel", *startup, "cquery", *selected, "--output=starlark",
@@ -64,6 +65,40 @@ try:
                     raise ValueError("Unexpected image output row: " + line)
         if set(outputs) != set(labels):
             raise ValueError("Configured scratch output set differs")
+        # Select the binary within the image transition. The explicit source
+        # label binds its owning repository without relying on its generated name.
+        ltp_rows = [json.loads(line) for line in run([
+            "bazel", *startup, "cquery", *selected, "--output=starlark",
+            "--starlark:expr=json.encode([str(target.label), [f.path for f in target.files.to_list()]])",
+            'filter("//:fsstress$", deps(//images/basic:fsstress_archive)) union @ltp//:COPYING',
+        ]).splitlines()]
+        ltp_outputs = {}
+        repositories = set()
+        for label, paths in ltp_rows:
+            repository, separator, name = label.partition("//:")
+            if not separator or not repository.startswith("@@") or name not in ("fsstress", "COPYING") or name in ltp_outputs:
+                raise ValueError("Unexpected configured LTP owner: " + label)
+            match paths:
+                case [str(output)]:
+                    path = Path(output)
+                case _:
+                    raise ValueError("Expected one configured LTP output")
+            if path.is_absolute() or ".." in path.parts:
+                raise ValueError("Unexpected configured LTP path: " + output)
+            if name == "COPYING":
+                if output != "external/" + repository[2:] + "/COPYING":
+                    raise ValueError("LTP notice path does not match its source owner")
+                actual = Path(os.environ["APPLICABILITY_OUTPUT_BASE"]) / path
+            else:
+                if path.parts[:1] != ("bazel-out",):
+                    raise ValueError("LTP executable is not a configured build output")
+                actual = root / path
+            repositories.add(repository)
+            ltp_outputs[name] = actual
+        if set(ltp_outputs) != {"fsstress", "COPYING"} or len(repositories) != 1:
+            raise ValueError("Configured LTP input/output set differs")
+        records.setdefault("ltp_inputs", {})[architecture] = ltp_rows
+        outputs["@ltp//:fsstress"] = ltp_outputs["fsstress"]
         build_inputs = json.loads((evidence / "busybox-build-inputs.json").read_text())
         input_row = next(row for row in build_inputs["architectures"] if row["architecture"] == cpu)
         match input_row["outputs"]["config"]:
@@ -97,7 +132,8 @@ try:
                 raise ValueError("Scratch image target differs")
             if metadata["config"].get("User") != "0:0" or "PATH=/usr/bin:/bin" not in metadata["config"].get("Env", []):
                 raise ValueError("Scratch image user or command search path differs")
-            applets = ["dd", "df", "grep", "setsid", "sh", "sleep", "stat", "true"] if name == "busybox" else ["cat", "readlink", "sleep"]
+            applets = {"busybox": ["dd", "df", "grep", "setsid", "sh", "sleep", "stat", "true"],
+                       "symlink-resolv": ["cat", "readlink", "sleep"], "fsstress": ["sh"]}[name]
             for applet in applets:
                 if resolve(files, "bin/" + applet) != "bin/busybox":
                     raise ValueError("Required applet does not resolve to BusyBox: " + applet)
@@ -112,6 +148,19 @@ try:
                     source = identity(Path("images/basic/busybox") / filename)
                     if (item["type"], item["mode"], item["uid"], item["gid"], item["sha256"]) != ("0", 0o644, 0, 0, source["sha256"]):
                         raise ValueError("BusyBox account file differs: " + filename)
+            elif name == "fsstress":
+                if (metadata["config"].get("Entrypoint") != ["/run.sh"]
+                        or metadata["config"].get("Cmd") not in (None, [])
+                        or metadata["config"].get("WorkingDir") != "/"):
+                    raise ValueError("Fsstress image execution configuration differs")
+                expected["usr/bin/fsstress"] = "@ltp//:fsstress"
+                for installed, source, mode in (
+                    ("run.sh", Path("images/basic/fsstress/run.sh"), 0o755),
+                    ("usr/share/doc/fsstress/COPYING", ltp_outputs["COPYING"], 0o644),
+                ):
+                    item = files[installed]
+                    if (item["type"], item["mode"], item["uid"], item["gid"], item["sha256"]) != ("0", mode, 0, 0, identity(source)["sha256"]):
+                        raise ValueError("Fsstress image source or metadata differs: " + installed)
             else:
                 item = files["etc/resolv.conf"]
                 if (item["type"], item["link"], item["uid"], item["gid"]) != ("2", "../tmp/resolv.conf", 0, 0):

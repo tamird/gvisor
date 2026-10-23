@@ -34,7 +34,7 @@ try:
         records["daemon_config"] = config_path.read_text()
         records["containers_before"] = sorted(run(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
         make = ["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
-                "OPTIONS=--compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
+                "BAZEL_OPTIONS=--config=x86_64 --compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
                 "STARTUP_OPTIONS=--output_base=" + os.environ["APPLICABILITY_OUTPUT_BASE"] + " --bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
                 "REMOTE_IMAGE_PREFIX=qualification.invalid/images"]
         records["images"] = []
