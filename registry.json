@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T01:01:50.311990+00:00",
+    "updatedAt": "2026-10-23T01:31:41.984709+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1901,10 +1901,16 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13523",
       "group": "rbe",
       "status": "open",
-      "summary": "October 15: BuildBuddy incorporated our netfilter configuration fix into #13810 and announced planned Tuesday-afternoon deployment. The proposed Linux 5.15 and 6.1 kernels pass IPv4/IPv6 CT, mark and FIB packet checks in the isolated diagnostic. Updated hosted-worker behavior remains unverified. See https://github.com/buildbuddy-io/buildbuddy/pull/13802#issuecomment-6199198524 and https://github.com/buildbuddy-io/buildbuddy/pull/13810.\n\nEarlier observations and unresolved kernel issues:\n\nThe complete issue and all ten comments were refreshed on October 11. Issue #13523 remains open and unchanged since October 2. The latest provider reply, from September 28, says a kernel-pinning execution property will be investigated; their preceding reply enabled the supported Linux 6.1 guest for the organization. No later comment announces a newer selectable kernel, documented pool or selection property. The three later comments are Tamir\u2019s unanswered requests. This thread does not establish any new deployed kernel or backport state, so it supplies no basis to change current routing or credit a PTY fix.\n\nEarlier diagnostic and request evidence, retained historically:\n\nFork-only PTY diagnostic source d192897ea1d6c4824a53e4b17cbe08485736d606 reproduces a byte-content failure in one of ten actual uncached native executions on root AMD64 Firecracker. Parent a18978ca-2314-4eed-9c22-ff94b34fcab7 remains FAILED after 78.365 seconds; nine executions pass and one fails the original six-byte remainder read after its 4,095-byte prefix succeeds. The failed helper reports ETIMEDOUT with no partial remainder consumed. Canonical FIONREAD is zero; after clearing only ICANON, FIONREAD is six and one verified nonblocking read returns six M bytes (4d4d4d4d4d4d), instead of five M bytes plus newline. Sealed outcome 9c37631c613d and independent peer be3572228fa7 bind all 148 saved files, 24 source blobs plus commit, all ten Action/Command/input-tree/log/XML joins, and the failed worker Linux 6.1.0 September 28 17:40:53 build log. This supports content corruption consistent with Linux b19ab7ee2 lookahead duplication/loss. Recovery can advance delivery; exact corruption timing, deployed backport state and sole causal patch remain unproved. Nine passes are nonreproductions, not a fix or full PTY qualification. At that point a conditional provider draft was prepared; the complete current issue thread contains no posted follow-up from that draft.\n\nEarlier kernel and capacity evidence: Supported worker-kernel selection remains unresolved; issue #13523 is open with no new provider resolution. Source-only review of the retained failed core run finds ten non-FIB netfilter validation failures consistent with older Linux behavior and dual-stack native/hostnet reservation failures matching Linux fix d9ba9934285514f1f95d96326a82398a22dc77f2. The failed execution's kernel build/configuration/backports remain unknown, so these are source/failure-pattern matches, not verified deployed-patch attribution. Nine FIB cases retain an unresolved module/configuration boundary. All original outcomes remain FAILED; no new job, expectation weakening or source fix was introduced. Session-keyring expectations have a separately validated fix; PTY and timestamp failures remain unresolved. A bounded source review also maps nine inet FIB ENOENT results and native mark-revision-1/CT-revision-0 ENOENT failures to options absent from the published Linux 6.1 config: NFT_FIB_IPV6, NFT_FIB_INET, NETFILTER_XT_MARK and NETFILTER_XT_TARGET_CT. Their existing Linux 6.1 implementations and prerequisite settings are verified, but exact deployed configuration and a worker with the requested settings remain unverified. The user authorized the independently reviewed follow-up, and tamird posted it at 2026-10-02 13:44:22 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5953753295. The exact published text was read back. Provider response and deployment remain pending; no worker with the requested settings has been tested. A separate FIN_WAIT2 native IPv4 diagnostic is independently closed FAILED (outcome 94843223bb98, peer 6f65181caa98; actual child https://app.buildbuddy.io/invocation/d308b93f-0031-4f02-9efb-659b8f18e076). Its wildcard bind returns EADDRINUSE while the original specific-address bind succeeds, and the exact FIN_WAIT2 tuple with a positive timer survives all three snapshots, without another owner of the client port. The original case assertion fails in 3 ms. This supports the address-index omission fixed by upstream Linux 936a192f9, while the deployed worker source and backports remain unknown. The user approved the additional follow-up, and tamird posted it at 2026-10-02 16:38:40 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5956862042. The exact posted text was read back; provider response and deployment remain pending. No retry or qualification pass is claimed. The fresh October 2 worker pass at 875ecfbe6 repeats the 29 native failures, with 566 passes and 15 skips. Fourteen actual guests report Linux 6.1.0, September 28 build identity and identical recorded kernel notes; exact source/backports remain unknown. The original IPv4 FIN_WAIT2 case passes in 5,001 ms without tuple snapshots, so the retained lookup differential is unresolved. No provider reply establishes deployment. Kernel coverage distinguishes documented Linux requirements from native syscall expectations. Actual October 2 AMD64 Firecracker workers report Linux 6.1.0 with the September 28 build identity and retained kernel notes; this is an observed worker, not an immutable selected kernel. ARM64 Firecracker has no verified execution capacity or qualified guest kernel. Public master builds 49266 and 49276 on October 2 identify Linux 6.8.0-1069-gcp in both ordinary AMD64/ARM64 pools and Linux 7.3.0-070300rc3-generic in both RC pools. Complete public logs record HOST_KERNEL from the source-owned uname -r producer. AMD64 selects native and gVisor targets; ARM64 selects gVisor ptrace/systrap targets, without native ARM oracle coverage. This dated inventory is not an immutable worker configuration. Corresponding ordinary and moving RC kernels remain unqualified on RBE; observed RBE Linux 6.1 does not establish public-pool kernel parity. A pinned userspace image does not pin the kernel or establish kernel cache identity. Reports must retain actual kernel release/build and available configuration evidence with uncached results for each covered environment. No new 5.16 minimum or additional LTS matrix is inferred from the checksum test.",
+      "summary": "October 23 observed hosted AMD64 Firecracker Linux 6.18.57: the two complete uncached native netfilter owners passed 293 cases with 9 exact existing applicability skips and no failures or missing results. This verifies native CT, mark and selected inet FIB behavior on the observed worker, following the provider's announced rollout. It does not establish pool-wide deployment, selectable kernel versions, PTY/FIN_WAIT2 fixes or ARM64 native execution. KVM and vhost-net devices remain absent. Full result 64a37615 and independent result review are retained; targeted 14-case result f560 remains supporting evidence.\n\nEarlier provider announcement:\n\nOctober 15: BuildBuddy incorporated our netfilter configuration fix into #13810 and announced planned Tuesday-afternoon deployment. The proposed Linux 5.15 and 6.1 kernels pass IPv4/IPv6 CT, mark and FIB packet checks in the isolated diagnostic. Updated hosted-worker behavior remains unverified. See https://github.com/buildbuddy-io/buildbuddy/pull/13802#issuecomment-6199198524 and https://github.com/buildbuddy-io/buildbuddy/pull/13810.\n\nEarlier observations and unresolved kernel issues:\n\nThe complete issue and all ten comments were refreshed on October 11. Issue #13523 remains open and unchanged since October 2. The latest provider reply, from September 28, says a kernel-pinning execution property will be investigated; their preceding reply enabled the supported Linux 6.1 guest for the organization. No later comment announces a newer selectable kernel, documented pool or selection property. The three later comments are Tamir\u2019s unanswered requests. This thread does not establish any new deployed kernel or backport state, so it supplies no basis to change current routing or credit a PTY fix.\n\nEarlier diagnostic and request evidence, retained historically:\n\nFork-only PTY diagnostic source d192897ea1d6c4824a53e4b17cbe08485736d606 reproduces a byte-content failure in one of ten actual uncached native executions on root AMD64 Firecracker. Parent a18978ca-2314-4eed-9c22-ff94b34fcab7 remains FAILED after 78.365 seconds; nine executions pass and one fails the original six-byte remainder read after its 4,095-byte prefix succeeds. The failed helper reports ETIMEDOUT with no partial remainder consumed. Canonical FIONREAD is zero; after clearing only ICANON, FIONREAD is six and one verified nonblocking read returns six M bytes (4d4d4d4d4d4d), instead of five M bytes plus newline. Sealed outcome 9c37631c613d and independent peer be3572228fa7 bind all 148 saved files, 24 source blobs plus commit, all ten Action/Command/input-tree/log/XML joins, and the failed worker Linux 6.1.0 September 28 17:40:53 build log. This supports content corruption consistent with Linux b19ab7ee2 lookahead duplication/loss. Recovery can advance delivery; exact corruption timing, deployed backport state and sole causal patch remain unproved. Nine passes are nonreproductions, not a fix or full PTY qualification. At that point a conditional provider draft was prepared; the complete current issue thread contains no posted follow-up from that draft.\n\nEarlier kernel and capacity evidence: Supported worker-kernel selection remains unresolved; issue #13523 is open with no new provider resolution. Source-only review of the retained failed core run finds ten non-FIB netfilter validation failures consistent with older Linux behavior and dual-stack native/hostnet reservation failures matching Linux fix d9ba9934285514f1f95d96326a82398a22dc77f2. The failed execution's kernel build/configuration/backports remain unknown, so these are source/failure-pattern matches, not verified deployed-patch attribution. Nine FIB cases retain an unresolved module/configuration boundary. All original outcomes remain FAILED; no new job, expectation weakening or source fix was introduced. Session-keyring expectations have a separately validated fix; PTY and timestamp failures remain unresolved. A bounded source review also maps nine inet FIB ENOENT results and native mark-revision-1/CT-revision-0 ENOENT failures to options absent from the published Linux 6.1 config: NFT_FIB_IPV6, NFT_FIB_INET, NETFILTER_XT_MARK and NETFILTER_XT_TARGET_CT. Their existing Linux 6.1 implementations and prerequisite settings are verified, but exact deployed configuration and a worker with the requested settings remain unverified. The user authorized the independently reviewed follow-up, and tamird posted it at 2026-10-02 13:44:22 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5953753295. The exact published text was read back. Provider response and deployment remain pending; no worker with the requested settings has been tested. A separate FIN_WAIT2 native IPv4 diagnostic is independently closed FAILED (outcome 94843223bb98, peer 6f65181caa98; actual child https://app.buildbuddy.io/invocation/d308b93f-0031-4f02-9efb-659b8f18e076). Its wildcard bind returns EADDRINUSE while the original specific-address bind succeeds, and the exact FIN_WAIT2 tuple with a positive timer survives all three snapshots, without another owner of the client port. The original case assertion fails in 3 ms. This supports the address-index omission fixed by upstream Linux 936a192f9, while the deployed worker source and backports remain unknown. The user approved the additional follow-up, and tamird posted it at 2026-10-02 16:38:40 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5956862042. The exact posted text was read back; provider response and deployment remain pending. No retry or qualification pass is claimed. The fresh October 2 worker pass at 875ecfbe6 repeats the 29 native failures, with 566 passes and 15 skips. Fourteen actual guests report Linux 6.1.0, September 28 build identity and identical recorded kernel notes; exact source/backports remain unknown. The original IPv4 FIN_WAIT2 case passes in 5,001 ms without tuple snapshots, so the retained lookup differential is unresolved. No provider reply establishes deployment. Kernel coverage distinguishes documented Linux requirements from native syscall expectations. Actual October 2 AMD64 Firecracker workers report Linux 6.1.0 with the September 28 build identity and retained kernel notes; this is an observed worker, not an immutable selected kernel. ARM64 Firecracker has no verified execution capacity or qualified guest kernel. Public master builds 49266 and 49276 on October 2 identify Linux 6.8.0-1069-gcp in both ordinary AMD64/ARM64 pools and Linux 7.3.0-070300rc3-generic in both RC pools. Complete public logs record HOST_KERNEL from the source-owned uname -r producer. AMD64 selects native and gVisor targets; ARM64 selects gVisor ptrace/systrap targets, without native ARM oracle coverage. This dated inventory is not an immutable worker configuration. Corresponding ordinary and moving RC kernels remain unqualified on RBE; observed RBE Linux 6.1 does not establish public-pool kernel parity. A pinned userspace image does not pin the kernel or establish kernel cache identity. Reports must retain actual kernel release/build and available configuration evidence with uncached results for each covered environment. No new 5.16 minimum or additional LTS matrix is inferred from the checksum test.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13523,
-      "updatedAt": "2026-10-15T20:41:26.641824+00:00"
+      "updatedAt": "2026-10-15T20:41:26.641824+00:00",
+      "evidence": [
+        {
+          "label": "Complete native netfilter qualification",
+          "url": "https://app.buildbuddy.io/invocation/64a37615-e67c-4595-bdba-5e8008220558"
+        }
+      ]
     },
     {
       "id": "external:kvm",
@@ -17902,14 +17908,14 @@
       "id": "branch:rules-img-symlink-resolv",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-symlink-resolv",
-      "head": "06a1ac32a39a557612731961754132d5b07d2d76",
+      "ref": "rules-img-scratch-resolver",
+      "head": "6f22e19051fba6c5126d47661b2d862bb2b55464",
       "title": "Declare the resolver symlink image with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76",
+      "url": "https://github.com/tamird/gvisor/commit/6f22e19051fba6c5126d47661b2d862bb2b55464",
       "group": "bazel",
-      "status": "Contributor approved; waiting for basic-image #16097",
-      "updatedAt": "2026-10-22T10:14:21.290429+00:00",
-      "summary": "Contributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
+      "status": "Agent work; scratch runtime qualification pending",
+      "updatedAt": "2026-10-23T01:13:08.250470+00:00",
+      "summary": "The requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
       "links": [
         {
           "label": "Complete change",
@@ -17918,19 +17924,31 @@
         {
           "label": "Archive, Make and containerd validation",
           "url": "https://app.buildbuddy.io/invocation/e4b77e91-e309-48bf-87df-af9845b2a24a"
+        },
+        {
+          "label": "Requested source-built scratch refinement",
+          "url": "https://github.com/tamird/gvisor/commit/6f22e19051fba6c5126d47661b2d862bb2b55464"
         }
       ],
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "06a1ac32a39a557612731961754132d5b07d2d76",
-        "observedAt": "2026-10-22T10:14:21.290429+00:00",
+        "sourceHead": "6f22e19051fba6c5126d47661b2d862bb2b55464",
+        "observedAt": "2026-10-23T01:13:08.250470+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Contributor approved; basic-image prerequisite landing remains",
-        "nextAction": "Open the prepared PR after #16097 lands, preserving the exact approved patch or an independently verified equivalent rebase. Do not repeat the contributor question.",
+        "disposition": "Scratch source refinement and remote qualification",
+        "nextAction": "Root integrates the accepted native musl selection and portable static-link contract. Resolver qualification remains queued behind the Rust review refinement; retain prior approved 06a and prerequisite holds.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76",
           "https://github.com/google/gvisor/pull/16097"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "06a1ac32a39a557612731961754132d5b07d2d76"
+        },
+        "after": {
+          "head": "6f22e19051fba6c5126d47661b2d862bb2b55464"
+        }
       }
     },
     {
@@ -18688,15 +18706,15 @@
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
-      "status": "Qualified revision ready for contributor review",
-      "updatedAt": "2026-10-23T01:01:50.311990+00:00",
-      "summary": "The revision uses rules_rs defaults and separates execution-host selection from Linux musl image targets. Both Linux architectures produce static images; the combined index, archives and build contexts exactly match the runtime-qualified outputs after the final transitive producer-lock correction and catalog adoption. Existing AMD64 runc and systrap TestRust cases, ordinary Make selection, native runtime input identities, notices and cleanup pass. Full canonical Fetch/Verify passes for 201 entries. Darwin compiler dependencies were checked through configured cquery analysis only; no Darwin execution or ARM64 runtime is claimed. The standalone source preserves GNU defaults and relies on the recorded declared-compiler integration. Earlier failed attempts remain retained. The requested rules_rs/platform revision has not yet received contributor approval; no upstream PR is open.",
+      "status": "Conditionally accepted; Protobuf release refinement in validation",
+      "updatedAt": "2026-10-23T01:30:01.616036+00:00",
+      "summary": "The revision uses rules_rs defaults and separates execution-host selection from Linux musl image targets. Both Linux architectures produce static images; the combined index, archives and build contexts exactly match the runtime-qualified outputs after the final transitive producer-lock correction and catalog adoption. Existing AMD64 runc and systrap TestRust cases, ordinary Make selection, native runtime input identities, notices and cleanup pass. Full canonical Fetch/Verify passes for 201 entries. Darwin compiler dependencies were checked through configured cquery analysis only; no Darwin execution or ARM64 runtime is claimed. The standalone source preserves GNU defaults and relies on the recorded declared-compiler integration. Earlier failed attempts remain retained. The contributor conditionally accepted 6941, requesting the released Protobuf 37 prerequisite instead of the generated-lock patch and clearer validator/notice archive rationale. Separate prerequisite 9eb44 and child b820 are published for validation without the rules_rust override. Earlier successful runtime/catalog/image evidence remains tied to 6941 until the new graph and exact output applicability pass. No upstream PR is open.",
       "followup": {
-        "owner": "root",
+        "owner": "work_map_current",
         "sourceHead": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
-        "observedAt": "2026-10-23T01:01:50.311990+00:00",
-        "disposition": "Qualified revision ready for contributor review",
-        "nextAction": "Present the exact final revision and recorded prerequisites for contributor review; retain the rules_rs and platform evidence without replaying completed work.",
+        "observedAt": "2026-10-23T01:30:01.616036+00:00",
+        "disposition": "Conditionally accepted; Protobuf release refinement in validation",
+        "nextAction": "Validate Protobuf 37 without the override through canonical Fetch/Verify, focused existing generated C++/Go consumers and final both-CPU image equality; finish the requested refinement without a duplicate approval question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18724,8 +18742,31 @@
         {
           "label": "Final five-output equality",
           "url": "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87"
+        },
+        {
+          "label": "Protobuf release refinement under validation",
+          "url": "https://github.com/tamird/gvisor/commit/b820dfec7b84a1080afbffb19f5615dc8df459ee"
         }
       ]
+    },
+    {
+      "id": "branch:protobuf-37-rust-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "protobuf-37-rust-locks",
+      "head": "9eb44f59b5b7191399a30e1d96a2909cba2ae099",
+      "title": "Use released Protobuf Rust lockfiles",
+      "url": "https://github.com/tamird/gvisor/commit/9eb44f59b5b7191399a30e1d96a2909cba2ae099",
+      "group": "bazel",
+      "status": "Agent validation; no contributor review requested",
+      "summary": "Separate Protobuf 37.0-rc1 upgrade replaces the generated-lock backport in the Rust image proposal. Current validation first uses the release without a transitive rules_rust override. Full canonical Fetch/Verify, existing generated C++/Go consumer compatibility and final Rust image applicability remain required.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "9eb44f59b5b7191399a30e1d96a2909cba2ae099",
+        "observedAt": "2026-10-23T01:31:41.984709+00:00",
+        "disposition": "Validate released dependency before contributor review",
+        "nextAction": "Finish canonical graph and focused generated-code gates; retain the older graph failure separately."
+      }
     }
   ],
   "edges": [
@@ -20935,6 +20976,20 @@
       "type": "depends_on",
       "reason": "Canonical dependency classification uses the accepted multi-notice classifier.",
       "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+    },
+    {
+      "from": "branch:rules-img-scratch-leaf-images",
+      "to": "branch:rules-img-symlink-resolv",
+      "type": "depends_on",
+      "reason": "Reuses the shared source-built BusyBox inputs and explicit scratch image assembly.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6f22e19051fba6c5126d47661b2d862bb2b55464"
+    },
+    {
+      "from": "branch:protobuf-37-rust-locks",
+      "to": "branch:rules-img-rust",
+      "type": "depends_on",
+      "reason": "Use the released Protobuf producer lockfiles instead of a local generated-lock patch.",
+      "evidence": "https://github.com/tamird/gvisor/commit/9eb44f59b5b7191399a30e1d96a2909cba2ae099"
     }
   ],
   "investigations": [
