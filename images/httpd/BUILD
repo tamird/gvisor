@@ -152,6 +152,8 @@ cp config.log "$$INSTALLDIR/config.log"
 configure_make(
     name = "httpd",
     args = [
+        # Libtool consumes -static; -all-static also links libc statically.
+        "LT_LDFLAGS=-all-static",
         "-f",
         "Makefile",
         "-f",
