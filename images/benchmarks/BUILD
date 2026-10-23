@@ -29,7 +29,7 @@ _HTTPD_SIZES_KIB = [
     write_file(
         name = "httpd_payload_%dk" % size,
         out = "httpd/latin%dk.txt" % size,
-        content = ["\x00" * (size * 1024)],
+        content = ["\000" * (size * 1024)],
     )
     for size in _HTTPD_SIZES_KIB
 ]
