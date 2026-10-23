@@ -5,6 +5,7 @@ the existing config-script fallback when no flags are supplied.
 Keep configure.in and the pinned release configure input together.
 Upstream detection: https://github.com/apache/httpd/blob/2.4.69/configure.in
 
+diff --git a/configure.in b/configure.in
 --- a/configure.in
 +++ b/configure.in
 @@ -212,6 +212,29 @@
@@ -45,6 +46,7 @@ Upstream detection: https://github.com/apache/httpd/blob/2.4.69/configure.in
  fi
  APACHE_SUBST(PCRE_LIBS)
  
+diff --git a/configure b/configure
 --- a/configure
 +++ b/configure
 @@ -625,7 +625,9 @@
