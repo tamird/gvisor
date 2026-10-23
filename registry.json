@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T14:47:57.273802+00:00",
+    "updatedAt": "2026-10-23T14:58:57.577934+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10722,23 +10722,23 @@
       }
     },
     {
-      "id": "branch:review/tcp-rack-packet-fixture",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "review/tcp-rack-packet-fixture",
-      "head": "4a3722f493797a2e4166e6e40301140256ce36ac",
-      "title": "Check RACK recovery with full TCP segments",
+      "id": "pr:16256",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/tcp-rack-fixture-assumptions",
+      "head": "e7a0da69e0bf3f5a4826ecfe693d0b86518a5a37",
+      "title": "Fix RACK packet-test assumptions",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac",
-      "status": "Agent investigation in progress",
-      "summary": "The contributor challenged the warmup-only fixture correction, and 4a372 remains held as agent work. The authentic retransmission/DSACK diagnostic was followed by a common-Reno control with the receive sequence restored: Linux passed, while Netstack stalled on the third second-flight packet. Both reported post-DSACK cwnd equal to ssthresh (Linux 5, Netstack 2); this does not establish missing undo. Node is qualifying a separate default-congestion-control fixture with eight first-flight segments and four second-flight segments at 15d556abef, retaining the three-SACK assertions and authentic DSACK. The full twelve-case run is active; no success or upstream publication grant is inferred.\n\nSuperseded contributor-review record (historical evidence):\n\nRoot requested contributor review of final 4a3722f493. After DSACK, acknowledged warmup restores capacity for the four-segment RACK flight; the fixture checks cwnd before preserving the original packet/timer assertions. All twelve inner Linux/Netstack cases and five qualification phases pass on tested f17eb; final source removes only a diagnostic log. The native parent remains FAIL because the bootstrap diagnostic stream exceeded its eight MiB cap after the authenticated complete PASS bundle was published. That reporting defect is separately fixed and qualified; no RACK rerun is claimed. Prerequisites #15635/#15926 are merged. Compare git range-diff fbf0f19b1^! 4a3722f493^!.\n\nEarlier source-specific record:\n\nThe Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
-      "updatedAt": "2026-10-23T14:47:57.273802+00:00",
+      "url": "https://github.com/google/gvisor/pull/16256",
+      "status": "open",
+      "summary": "The contributor approved exact e7a0da69 and Node delivered it as PR #16256. The fixture now uses eight first-flight segments, preserves the four-segment/three-SACK second flight, observes the retransmission before DSACK, and restores the cumulative receive position. All twelve existing Linux/Netstack cases pass in two uncached local attempts; final proposal and qualified source have identical complete trees. The common-Reno control established a window-limited Netstack fixture failure, not missing congestion undo. No production congestion-control change is claimed. Compare git range-diff --creation-factor=100 4a3722f493^! e7a0da69e0^!.\n\nEarlier source-specific record:\n\nThe contributor challenged the warmup-only fixture correction, and 4a372 remains held as agent work. The authentic retransmission/DSACK diagnostic was followed by a common-Reno control with the receive sequence restored: Linux passed, while Netstack stalled on the third second-flight packet. Both reported post-DSACK cwnd equal to ssthresh (Linux 5, Netstack 2); this does not establish missing undo. Node is qualifying a separate default-congestion-control fixture with eight first-flight segments and four second-flight segments at 15d556abef, retaining the three-SACK assertions and authentic DSACK. The full twelve-case run is active; no success or upstream publication grant is inferred.\n\nSuperseded contributor-review record (historical evidence):\n\nRoot requested contributor review of final 4a3722f493. After DSACK, acknowledged warmup restores capacity for the four-segment RACK flight; the fixture checks cwnd before preserving the original packet/timer assertions. All twelve inner Linux/Netstack cases and five qualification phases pass on tested f17eb; final source removes only a diagnostic log. The native parent remains FAIL because the bootstrap diagnostic stream exceeded its eight MiB cap after the authenticated complete PASS bundle was published. That reporting defect is separately fixed and qualified; no RACK rerun is claimed. Prerequisites #15635/#15926 are merged. Compare git range-diff fbf0f19b1^! 4a3722f493^!.\n\nEarlier source-specific record:\n\nThe Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
+      "updatedAt": "2026-10-23T14:58:57.577934+00:00",
       "followup": {
         "owner": "node_tls_sni",
-        "disposition": "Qualify recovery-window-aware packet fixture",
-        "sourceHead": "4a3722f493797a2e4166e6e40301140256ce36ac",
-        "observedAt": "2026-10-23T14:47:57.273802+00:00",
-        "nextAction": "Finish the existing twelve-case Linux/Netstack qualification of 15d556abef, reconcile actual packet/timer assertions, and prepare contributor review only after the result is accepted. Preserve failed diagnostics and the held 4a372 proposal; do not infer an undo defect.",
+        "disposition": "Contributor-approved source delivered; public CI and review pending",
+        "sourceHead": "e7a0da69e0bf3f5a4826ecfe693d0b86518a5a37",
+        "observedAt": "2026-10-23T14:58:57.577934+00:00",
+        "nextAction": "Follow PR #16256 current-head checks and substantive maintainer feedback through the existing tracker. Preserve the accepted twelve-case result and earlier failures; no renewed contributor question or investigation.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
           "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4",
@@ -10752,17 +10752,21 @@
           "https://github.com/tamird/gvisor/commit/3d37a66c9fff0f21b23856fbba55793c78e31c19",
           "https://github.com/tamird/gvisor/commit/33180d5328f7cb566f3e6415dec8078d54eb3c81",
           "https://app.buildbuddy.io/invocation/2a50d0e7-7b29-41e0-b3be-def83521dda1",
-          "https://github.com/tamird/gvisor/commit/15d556abef8e67d5e40967d5c3c456af1aaa1195"
+          "https://github.com/tamird/gvisor/commit/15d556abef8e67d5e40967d5c3c456af1aaa1195",
+          "https://github.com/google/gvisor/pull/16256",
+          "https://app.buildbuddy.io/invocation/7ecf5903-8a5e-4173-a573-cc393ff8fac4"
         ]
       },
       "refinement": {
         "before": {
-          "head": "fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97"
+          "head": "4a3722f493797a2e4166e6e40301140256ce36ac"
         },
         "after": {
-          "head": "4a3722f493797a2e4166e6e40301140256ce36ac"
+          "head": "e7a0da69e0bf3f5a4826ecfe693d0b86518a5a37",
+          "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
         }
-      }
+      },
+      "number": 16256
     },
     {
       "id": "branch:fixes/nft-fib-attribute-policy",
@@ -20660,9 +20664,9 @@
     },
     {
       "from": "pr:15926",
-      "to": "branch:review/tcp-rack-packet-fixture",
+      "to": "pr:16256",
       "type": "depends_on",
-      "reason": "The RACK packet fixture requires the Nagle/GSO sender correction delivered in #15926. That prerequisite has landed, so preparation may proceed; contributor review still precedes upstream publication.",
+      "reason": "The RACK packet fixture uses the Nagle/GSO sender correction delivered in #15926. That prerequisite has landed; the contributor-approved fixture is delivered as #16256.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
         "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
@@ -21529,7 +21533,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-23T14:47:57.273802+00:00",
+      "updatedAt": "2026-10-23T14:58:57.577934+00:00",
       "summary": "The contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
@@ -22153,7 +22157,7 @@
           ]
         },
         {
-          "text": "A separate packet-level DSACK diagnostic observed the actual retransmission before acknowledging its duplicated range. Linux default CUBIC moved from recovery cwnd 2 to 7, and Netstack default Reno moved from 5 to 2; after DSACK both reported cwnd equal to ssthresh (7 and 2). Normal recovery exit can explain the Linux increase, so these rows do not establish missing congestion-window undo. Netstack leaveRecovery assigns SndCwnd=Ssthresh; detectSpuriousRecovery records detection and counters. Both complete test cases failed later because the fixture helper rewound its receive sequence when matching the old retransmission; those second-flight failures are not congestion-window evidence. The subsequent common-Reno control restored the receive sequence: Linux passed and Netstack failed at the third second-flight packet. Both read back Reno and exited recovery with cwnd equal to ssthresh (Linux 5, Netstack 2). This supports a window-limited Netstack fixture failure, not missing undo. Node is qualifying the separate default-control eight/four-segment fixture. Keep the four-segment RACK fixture requirement separate from congestion restoration, and retain the held 4a372 proposal as agent work.",
+          "text": "A separate packet-level DSACK diagnostic observed the actual retransmission before acknowledging its duplicated range. Linux default CUBIC moved from recovery cwnd 2 to 7, and Netstack default Reno moved from 5 to 2; after DSACK both reported cwnd equal to ssthresh (7 and 2). Normal recovery exit can explain the Linux increase, so these rows do not establish missing congestion-window undo. Netstack leaveRecovery assigns SndCwnd=Ssthresh; detectSpuriousRecovery records detection and counters. Both complete test cases failed later because the fixture helper rewound its receive sequence when matching the old retransmission; those second-flight failures are not congestion-window evidence. The subsequent common-Reno control restored the receive sequence: Linux passed and Netstack failed at the third second-flight packet. Both read back Reno and exited recovery with cwnd equal to ssthresh (Linux 5, Netstack 2). This supports a window-limited Netstack fixture failure, not missing undo. The separate default-control eight/four-segment fixture passed all twelve existing cases and was contributor-approved and delivered as #16256. Keep the four-segment RACK fixture requirement separate from congestion restoration, and retain the superseded 4a372 proposal and failed diagnostics as historical evidence.",
           "evidence": [
             {
               "label": "Actual diagnostic source",
@@ -22174,11 +22178,19 @@
             {
               "label": "Common-Reno control: Linux PASS, Netstack FAIL",
               "url": "https://app.buildbuddy.io/invocation/2a50d0e7-7b29-41e0-b3be-def83521dda1"
+            },
+            {
+              "label": "Full twelve-case qualification PASS",
+              "url": "https://app.buildbuddy.io/invocation/7ecf5903-8a5e-4173-a573-cc393ff8fac4"
+            },
+            {
+              "label": "Approved packet fixture delivered",
+              "url": "https://github.com/google/gvisor/pull/16256"
             }
           ]
         }
       ],
-      "nextStep": "Follow existing PR #16055 for current-head CI, maintainer review and import events. Contributor approval and delivery are complete; do not ask again or open a duplicate PR. Preserve original raw failures/skips and source-bound proof. Separately, Node owns the default-control eight/four-segment fixture and its full twelve-case qualification. The common-Reno result is accepted; do not treat it as evidence of undo. No new undo bug or deliverable is confirmed.",
+      "nextStep": "Follow existing PR #16055 for current-head CI, maintainer review and import events. Contributor approval and delivery are complete; do not ask again or open a duplicate PR. Preserve original raw failures/skips and source-bound proof. Separately, the approved packet fixture is delivered as #16256 with all twelve existing cases passing; Node follows its current CI and review. The common-Reno result remains separate evidence and does not establish undo. No new undo bug or deliverable is confirmed.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
