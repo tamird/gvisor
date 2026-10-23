@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T04:44:39.627468+00:00",
+    "updatedAt": "2026-10-23T05:13:28.927269+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1651,27 +1651,28 @@
       ]
     },
     {
-      "id": "branch:hermetic-linux-headers",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "linux-uapi-reconciled-review",
+      "id": "pr:16236",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "linux-uapi-default-independent",
       "title": "Select newer Linux headers",
-      "url": "https://github.com/tamird/gvisor/commit/120b7ac668a7aae5df6af0646826ec88d9a910ca",
+      "url": "https://github.com/google/gvisor/pull/16236",
       "group": "bazel",
-      "status": "Contributor approval retained; waiting for compiler",
-      "summary": "The final Linux UAPI selection is published at 120b7ac on compiler830. The source payload and prior conditional approval are retained. Its actual selected Linux 6.18.33 headers and both-CPU full lint evidence remain source-bound; this is a separate delivery scope from the public LLVM source supplier and parser resource packaging.\n\nPreserved earlier source-specific record:\n\nThe Linux UAPI selection is extracted on current compiler 0a766. The full LLVM lint composition used actual Linux 6.18.33 headers on both architectures and passed 741 actions. This does not establish that the compiler or independent lint prerequisites have landed.\n\nEarlier source-specific record:\n\nUses the LLVM migration and 0.8.24 header supplier API, absent upstream. Record the dependency on hermetic-toolchains; isolate the LLVM update/header patch stack and obtain contributor review. Do not open the current 10-commit branch as an independent change. Integrated native/GNU/musl/BPF/static-parent compile and 212-entry audit evidence is retained.",
-      "head": "120b7ac668a7aae5df6af0646826ec88d9a910ca",
-      "updatedAt": "2026-10-23T04:36:33.769185+00:00",
+      "status": "open",
+      "summary": "Approved Linux UAPI selection is delivered independently as #16236 at c9b190 on upstream 40e. Both-CPU qualification passes fourteen uncached BPF output and actual Linux 6.18.33 header/input checks. This PR has no incoming compiler or static-mode dependency. The compiler delivery still needs these newer headers because its qualified C++ integration requires identifiers absent from the older 4.19 default. Public CI and maintainer review now govern this PR.\n\nPreserved earlier source-specific record:\n\nThe final Linux UAPI selection is published at 120b7ac on compiler830. The source payload and prior conditional approval are retained. Its actual selected Linux 6.18.33 headers and both-CPU full lint evidence remain source-bound; this is a separate delivery scope from the public LLVM source supplier and parser resource packaging.\n\nPreserved earlier source-specific record:\n\nThe Linux UAPI selection is extracted on current compiler 0a766. The full LLVM lint composition used actual Linux 6.18.33 headers on both architectures and passed 741 actions. This does not establish that the compiler or independent lint prerequisites have landed.\n\nEarlier source-specific record:\n\nUses the LLVM migration and 0.8.24 header supplier API, absent upstream. Record the dependency on hermetic-toolchains; isolate the LLVM update/header patch stack and obtain contributor review. Do not open the current 10-commit branch as an independent change. Integrated native/GNU/musl/BPF/static-parent compile and 212-entry audit evidence is retained.",
+      "head": "c9b190fa8e9cda378c9c36a42cc6d6edb290caab",
+      "updatedAt": "2026-10-23T05:13:28.927269+00:00",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "120b7ac668a7aae5df6af0646826ec88d9a910ca",
-        "observedAt": "2026-10-23T04:36:33.769185+00:00",
-        "disposition": "Contributor approval retained; waiting for compiler",
-        "nextAction": "Deliver after the compiler prerequisite; preserve the existing approval without another contributor question.",
+        "sourceHead": "c9b190fa8e9cda378c9c36a42cc6d6edb290caab",
+        "observedAt": "2026-10-23T05:13:28.927269+00:00",
+        "disposition": "Approved source delivered; public review and CI pending",
+        "nextAction": "Follow the existing PR checks and maintainer review. Preserve the retained contributor approval; no new review question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/120b7ac668a7aae5df6af0646826ec88d9a910ca"
+          "https://github.com/google/gvisor/pull/16236"
         ]
-      }
+      },
+      "number": 16236
     },
     {
       "id": "branch:builder-without-cross-compilers",
@@ -1974,10 +1975,10 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13604",
       "group": "rbe",
       "status": "unavailable",
-      "summary": "October 15: the proposed Linux 5.15 and 6.1 configurations pass vhost feature discovery and owner/reset/reacquire on the built kernels. BuildBuddy PR #13803 remains open. Virtqueue traffic and hosted deployment are not established by this diagnostic.\n\nThe hosted provider issue remains unresolved and informational. The demonstrated Actions bridge closes the plugin dependency for qualification; no separate hosted-Firecracker execution obligation remains for this slice.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nEarlier Actions failures remain retained. Original Actions 37577490135 reaches InitPluginStack, then fails during StartRoot with EOF and during cleanup with EBUSY. Diagnostic Actions 37579603622 also fails without an identified exact cause. The third diagnostic, Actions 37582034686 at 0c26f5ccc, also fails (BuildBuddy 5f689b0f, 361.879 seconds). Its kernel-log capture succeeds with empty stderr and zero matching records; that does not exclude seccomp or OOM. The sentry\u2019s exact exit status and cause remain unknown. The fourth disposable diagnostic, Actions 37584930281 at 7d50a0bbb, has terminated with an earlier plugin PreInit failure. Its exact Sentry pidfd reports SIGKILL, but the primary timeline includes an explicit cleanup kill for that same sandbox; this does not reproduce or explain the original StartRoot failure. Independent saved-result review is closed (root peer 4e2fc860429f). A kernel audit also records a clone seccomp kill in a runsc process, but its mapping to the namespace processes remains unresolved. The captured Sentry SIGKILL follows explicit cleanup and does not establish the cause of the original StartRoot failure. The diagnostic deliberately extends parking/ring lifetime during its finite HUP observation and provides no maintained plugin-runtime credit. These observations do not establish a BuildBuddy worker deployment or resolve the hosted vhost-net capacity issue.\n\nRetained hosted-worker evidence: root AMD64 Firecracker workers report /dev/vhost-net ENOENT. Plugin build remains qualified. Full-timeout parent fd60587c-a016-4a8d-bf79-91b593c6c701 executes one uncached TestConnectToSelf and fails network initialization with bad file descriptor; its same-action log also records absent vhost-net/KVM devices and Linux 6.1 September 28 identity. Action/Command equality and the original 900-second timeout are verified. Both observations are established, but the exact failing call and sole causation are not traced. No provider deployment reply or hosted Firecracker plugin runtime pass is claimed.",
+      "summary": "October 23: obsolete PR #13803 is closed and its owned refs are retired. Maintainer replacement #13826 remains open and is the source prerequisite for this capability. The latest observed hosted Linux 6.18.57 workers still lack /dev/vhost-net; neither replacement landing nor deployment is claimed.\n\nPreserved earlier capability observations:\n\nOctober 15: the proposed Linux 5.15 and 6.1 configurations pass vhost feature discovery and owner/reset/reacquire on the built kernels. BuildBuddy PR #13803 remains open. Virtqueue traffic and hosted deployment are not established by this diagnostic.\n\nThe hosted provider issue remains unresolved and informational. The demonstrated Actions bridge closes the plugin dependency for qualification; no separate hosted-Firecracker execution obligation remains for this slice.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nEarlier Actions failures remain retained. Original Actions 37577490135 reaches InitPluginStack, then fails during StartRoot with EOF and during cleanup with EBUSY. Diagnostic Actions 37579603622 also fails without an identified exact cause. The third diagnostic, Actions 37582034686 at 0c26f5ccc, also fails (BuildBuddy 5f689b0f, 361.879 seconds). Its kernel-log capture succeeds with empty stderr and zero matching records; that does not exclude seccomp or OOM. The sentry\u2019s exact exit status and cause remain unknown. The fourth disposable diagnostic, Actions 37584930281 at 7d50a0bbb, has terminated with an earlier plugin PreInit failure. Its exact Sentry pidfd reports SIGKILL, but the primary timeline includes an explicit cleanup kill for that same sandbox; this does not reproduce or explain the original StartRoot failure. Independent saved-result review is closed (root peer 4e2fc860429f). A kernel audit also records a clone seccomp kill in a runsc process, but its mapping to the namespace processes remains unresolved. The captured Sentry SIGKILL follows explicit cleanup and does not establish the cause of the original StartRoot failure. The diagnostic deliberately extends parking/ring lifetime during its finite HUP observation and provides no maintained plugin-runtime credit. These observations do not establish a BuildBuddy worker deployment or resolve the hosted vhost-net capacity issue.\n\nRetained hosted-worker evidence: root AMD64 Firecracker workers report /dev/vhost-net ENOENT. Plugin build remains qualified. Full-timeout parent fd60587c-a016-4a8d-bf79-91b593c6c701 executes one uncached TestConnectToSelf and fails network initialization with bad file descriptor; its same-action log also records absent vhost-net/KVM devices and Linux 6.1 September 28 identity. Action/Command equality and the original 900-second timeout are verified. Both observations are established, but the exact failing call and sole causation are not traced. No provider deployment reply or hosted Firecracker plugin runtime pass is claimed.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13604,
-      "updatedAt": "2026-10-15T20:41:26.641824+00:00"
+      "updatedAt": "2026-10-23T05:13:28.927269+00:00"
     },
     {
       "id": "pr:15159",
@@ -14184,93 +14185,19 @@
       "number": 13803,
       "title": "Enable vhost-net in x86 guest kernels",
       "group": "buildbuddy",
-      "status": "open",
+      "status": "closed",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803",
-      "summary": "Maintainer replacement #13826 explicitly supersedes this proposal and has 24 successful checks at the recorded observation. Replacement is still open; retain #13803 and its evidence pending that landing. Its current conflict is superseded work, not an actionable rebase. Hosted deployment remains unverified.\n\nThe proposed 5.15 and 6.1 configurations passed feature discovery and owner/reset/reacquire checks. Maintainer follow-up awaits the kernel upgrade. Virtqueue traffic and hosted deployment remain unverified; source review or merge does not establish deployed worker capability.",
-      "updatedAt": "2026-10-21T02:58:33.061996+00:00",
+      "summary": "Closed as obsolete on October 23 after verifying that maintainer replacement #13826 includes the original vhost settings. The exact owned local, fork and tracking refs were retired with a verified recovery bundle. The previous wait-for-merge hold was an agent disposition and has been superseded under the standing cleanup instruction. Replacement #13826 remains open; hosted vhost capability still requires landing and deployment.\n\nPreserved earlier disposition:\n\nMaintainer replacement #13826 explicitly supersedes this proposal and has 24 successful checks at the recorded observation. Replacement is still open; retain #13803 and its evidence pending that landing. Its current conflict is superseded work, not an actionable rebase. Hosted deployment remains unverified.\n\nThe proposed 5.15 and 6.1 configurations passed feature discovery and owner/reset/reacquire checks. Maintainer follow-up awaits the kernel upgrade. Virtqueue traffic and hosted deployment remain unverified; source review or merge does not establish deployed worker capability.",
+      "updatedAt": "2026-10-23T05:13:28.927269+00:00",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Superseded pending maintainer replacement #13826 landing",
+        "owner": "hostinet_delivery",
         "sourceHead": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-        "observedAt": "2026-10-21T02:54:53.310824+00:00",
-        "nextAction": "Monitor #13826 actual merge, then report to root for retirement under existing obsolete-work authority. Do not rebase this superseded proposal.",
+        "observedAt": "2026-10-23T05:13:28.927269+00:00",
+        "disposition": "Obsolete proposal closed and owned refs retired",
+        "nextAction": "No further source repair or rebase. Follow replacement #13826 for the separate hosted capability.",
         "evidence": [
-          "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
+          "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6357578946",
           "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
-        ],
-        "attentionDispositions": [
-          {
-            "reason": "author-conflicts",
-            "title": "Waiting for the maintainer replacement",
-            "nextAction": "The maintainer\u2019s open replacement explicitly supersedes this proposal. Monitor its actual landing, then reconcile retirement under the existing authorization; do not rebase the superseded proposal.",
-            "evidence": [
-              "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
-              "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
-            ],
-            "replacement": "pr:buildbuddy-io/buildbuddy:13826",
-            "binding": {
-              "sourceHead": "48d964b376a34742bc51ec0ae50ea05dc4d327d7",
-              "reviewDecision": "REVIEW_REQUIRED",
-              "approvedHead": null,
-              "approvedAt": null,
-              "headCommittedAt": "2026-10-15T13:14:19Z",
-              "headIntroducedAt": "2026-10-15T13:14:41Z",
-              "headHistoryComplete": true,
-              "threads": {
-                "unresolved": 0,
-                "total": 0,
-                "complete": true
-              },
-              "feedback": {
-                "complete": true,
-                "items": [
-                  {
-                    "kind": "comment",
-                    "id": "IC_kwDODlcBtc8AAAABcbGapg",
-                    "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6202432166",
-                    "body": "r? @bduffany ",
-                    "createdAt": "2026-10-15T21:15:10Z",
-                    "updatedAt": "2026-10-15T21:15:10Z",
-                    "author": {
-                      "login": "tamird",
-                      "__typename": "User"
-                    }
-                  },
-                  {
-                    "kind": "comment",
-                    "id": "IC_kwDODlcBtc8AAAABcb-4XA",
-                    "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276",
-                    "body": "@tamird I'm working on a PR to upgrade us to 6.18, which conflicts with this one. Once my change is in I'll send a followup with these changes plus the deps.bzl update with the new kernel upload",
-                    "createdAt": "2026-10-15T22:12:59Z",
-                    "updatedAt": "2026-10-15T22:12:59Z",
-                    "author": {
-                      "login": "bduffany",
-                      "__typename": "User"
-                    }
-                  },
-                  {
-                    "kind": "comment",
-                    "id": "IC_kwDODlcBtc8AAAABccDw9w",
-                    "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203437303",
-                    "body": "Sounds great, thanks!",
-                    "createdAt": "2026-10-15T22:18:23Z",
-                    "updatedAt": "2026-10-15T22:18:23Z",
-                    "author": {
-                      "login": "tamird",
-                      "__typename": "User"
-                    }
-                  }
-                ]
-              },
-              "imports": [],
-              "mergeable": "CONFLICTING",
-              "replacement": {
-                "id": "pr:buildbuddy-io/buildbuddy:13826",
-                "head": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
-                "status": "open"
-              }
-            }
-          }
         ]
       },
       "evidence": [
@@ -17875,14 +17802,14 @@
       "id": "branch:rules-img-fsstress",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-fsstress-resource-current",
-      "head": "6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
+      "ref": "review/source-built-fsstress-image",
+      "head": "5ccbde621b4be2951005dd83e9f54d17d73e9949",
       "title": "Build the filesystem stress-test image with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
+      "url": "https://github.com/tamird/gvisor/commit/5ccbde621b4be2951005dd83e9f54d17d73e9949",
       "group": "bazel",
-      "status": "Contributor approved; scratch-base refinement in progress",
-      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
-      "summary": "Requested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-23T05:13:28.927269+00:00",
+      "summary": "The source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
       "links": [
         {
           "label": "Complete change over basic image foundation",
@@ -17914,17 +17841,26 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "sourceHead": "6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
-        "observedAt": "2026-10-23T01:53:03.128488+00:00",
+        "owner": "node_tls_sni",
+        "sourceHead": "5ccbde621b4be2951005dd83e9f54d17d73e9949",
+        "observedAt": "2026-10-23T05:13:28.927269+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Contributor approved; scratch-base refinement in progress",
-        "nextAction": "Root owns rules-img-fsstress-scratch-current from shared BusyBox bfd422b9ef, composing this approved resource-current payload. Preserve the shell parent; validate the changed runtime base before delivery.",
+        "disposition": "Contributor approval retained; waiting for prerequisites",
+        "nextAction": "Deliver after shared utilities and actual prerequisite landings, including the explicit #16097 opening condition; preserve the existing approval without another question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
           "https://github.com/google/gvisor/pull/16097",
-          "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d"
+          "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
+          "https://github.com/tamird/gvisor/commit/5ccbde621b4be2951005dd83e9f54d17d73e9949"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "6bc049050ab0fcce55ffc823e36bfdf55deb2e1d"
+        },
+        "after": {
+          "head": "5ccbde621b4be2951005dd83e9f54d17d73e9949"
+        }
       }
     },
     {
@@ -19050,6 +18986,38 @@
         "head": "e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c",
         "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
       }
+    },
+    {
+      "id": "branch:source-built-containerd-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/source-built-containerd-image",
+      "head": "b2a09233588ff4d63b408879e8445bb587aa4597",
+      "title": "Build the containerd BusyBox image from source",
+      "url": "https://github.com/tamird/gvisor/commit/b2a09233588ff4d63b408879e8445bb587aa4597",
+      "group": "bazel",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-23T05:13:28.927269+00:00",
+      "summary": "Build the containerd BusyBox fixture from shared declared source utilities. This is an independent child of utilities e12, separate from the tmpfile/syscallbench and resolver refinements. Existing root/containerd qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives and AMD64 runtime are qualified; no ARM runtime is claimed. The previous basic-image contributor approval is retained; shared utilities have their own pending decision.",
+      "followup": {
+        "owner": "node_tls_sni",
+        "sourceHead": "b2a09233588ff4d63b408879e8445bb587aa4597",
+        "observedAt": "2026-10-23T05:13:28.927269+00:00",
+        "disposition": "Contributor approval retained; waiting for prerequisites",
+        "nextAction": "Deliver after the shared utilities decision and actual compiler/basic/license prerequisite landings; no duplicate child review question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b2a09233588ff4d63b408879e8445bb587aa4597",
+          "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+        ]
+      },
+      "refinement": {
+        "before": {
+          "head": "bfd422b9efd869f4397852acc7de79c418eca320"
+        },
+        "after": {
+          "head": "b2a09233588ff4d63b408879e8445bb587aa4597"
+        }
+      }
     }
   ],
   "edges": [
@@ -19198,7 +19166,7 @@
       "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
     },
     {
-      "from": "branch:hermetic-linux-headers",
+      "from": "pr:16236",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
@@ -19352,9 +19320,9 @@
       "from": "branch:hermetic-toolchains"
     },
     {
-      "to": "branch:hermetic-linux-headers",
+      "to": "pr:16236",
       "type": "includes",
-      "reason": "Satisfied supplier-version prerequisite: upstream 30ace already declares LLVM 0.8.24. The separate current compiler integration remains required.",
+      "reason": "Satisfied supplier-version prerequisite: upstream 30ace already declares LLVM 0.8.24; the independent UAPI change uses that public API.",
       "evidence": "https://github.com/google/gvisor/blob/30ace3e2a91e0832ab53234c8cf17cc38ee90f72/MODULE.bazel#L14",
       "from": "branch:llvm-0-8-24"
     },
@@ -20659,11 +20627,11 @@
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13781"
     },
     {
-      "from": "pr:buildbuddy-io/buildbuddy:13803",
+      "from": "pr:buildbuddy-io/buildbuddy:13826",
       "to": "external:vhost",
       "type": "depends_on",
-      "reason": "The proposed kernel configuration enables vhost-net; hosted device exposure and runtime qualification still require provider deployment. Merge alone does not resolve capacity.",
-      "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13803"
+      "reason": "The maintainer replacement includes the vhost kernel settings; actual landing and hosted deployment remain required. Merge alone does not establish device exposure.",
+      "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
     },
     {
       "from": "branch:buildbuddy:guest-kernel-execution-property",
@@ -20996,13 +20964,6 @@
       ]
     },
     {
-      "from": "pr:buildbuddy-io/buildbuddy:13826",
-      "to": "pr:buildbuddy-io/buildbuddy:13803",
-      "type": "blocked_by",
-      "reason": "Retirement of the superseded proposal awaits actual landing of the maintainer replacement; source checks do not establish hosted deployment.",
-      "evidence": "https://github.com/buildbuddy-io/buildbuddy/pull/13826"
-    },
-    {
       "from": "pr:16097",
       "to": "branch:rules-img-syscallbench",
       "type": "depends_on",
@@ -21188,14 +21149,7 @@
       "evidence": "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962"
     },
     {
-      "from": "branch:hermetic-compiler-review",
-      "to": "branch:hermetic-linux-headers",
-      "type": "depends_on",
-      "reason": "The extracted UAPI selection is a child of the current compiler migration.",
-      "evidence": "https://github.com/tamird/gvisor/commit/8dcf01a9da2897f468fe310b5e73a49700d766df"
-    },
-    {
-      "from": "branch:hermetic-linux-headers",
+      "from": "pr:16236",
       "to": "branch:bazel-clang-tidy-llvm",
       "type": "depends_on",
       "reason": "The full lint qualification uses the selected target-architecture UAPI headers.",
@@ -21240,7 +21194,7 @@
       "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
     },
     {
-      "from": "branch:hermetic-linux-headers",
+      "from": "pr:16236",
       "to": "branch:rules-img-rust",
       "type": "depends_on",
       "reason": "Qualified together with the declared compiler and current Linux header composition.",
@@ -21314,6 +21268,27 @@
       "to": "branch:rules-img-scratch-leaf-images",
       "type": "depends_on",
       "reason": "Uses the shared configured utility executable and target ABI selection.",
+      "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+    },
+    {
+      "from": "pr:16236",
+      "to": "branch:hermetic-compiler-review",
+      "type": "depends_on",
+      "reason": "Integration/readiness prerequisite: the declared libc/sysroot C++ graph requires netfilter UAPI identifiers absent from the previous 4.19 default. The accepted C++/lint composition uses Linux 6.18.33; this is not a compiler Starlark API dependency.",
+      "evidence": "https://github.com/google/gvisor/pull/16236"
+    },
+    {
+      "from": "branch:source-image-utilities",
+      "to": "branch:source-built-containerd-image",
+      "type": "depends_on",
+      "reason": "Uses the selected shared BusyBox applets, notices and native target-CPU musl binding; compiler/basic/license ancestry remains inherited.",
+      "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+    },
+    {
+      "from": "branch:source-image-utilities",
+      "to": "branch:rules-img-fsstress",
+      "type": "depends_on",
+      "reason": "Uses the selected shared BusyBox applets, notices and native target-CPU musl binding; compiler/basic/license ancestry remains inherited.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     }
   ],
