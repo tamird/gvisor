@@ -10,7 +10,7 @@ import tarfile
 import tempfile
 import time
 
-from image_archive import archive, identity, resolve
+from image_archive import archive, executable_aliases, identity, resolve
 
 os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 evidence = Path(sys.argv[1])
@@ -99,8 +99,7 @@ try:
                     raise ValueError("Tmpfile permissions or contents differ")
             else:
                 expected["usr/bin/syscallbench"] = "//images/benchmarks:syscallbench"
-            if set(elves) != set(expected):
-                raise ValueError("Scratch image contains an unexpected ELF payload")
+            row["executable_aliases"] = executable_aliases(files, elves, expected)
             row["static_programs"] = []
             with tempfile.TemporaryDirectory(prefix="scratch-elf-") as temporary:
                 for installed, target in expected.items():

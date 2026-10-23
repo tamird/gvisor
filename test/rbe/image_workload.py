@@ -74,6 +74,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         records["status"] = "PASS"
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
         scripts = Path(__file__).parent
+        guards = invoke("leaf-archive-guards", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                        "@rules_python//python/bin:python", "--",
+                        str(scripts / "image_archive_test.py")], "command", targets=[])
+        if guards["status"] != "PASS":
+            raise RuntimeError("Scratch archive reporting guards failed")
         inspected = invoke("leaf-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
                            "@rules_python//python/bin:python", "--",
                            str(scripts / "leaf_image_inspect.py"), str(evidence)], "command", targets=[])

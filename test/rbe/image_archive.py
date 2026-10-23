@@ -80,3 +80,18 @@ def resolve(files, path):
             if path not in files:
                 raise RuntimeError('Missing image path: ' + path)
             return path
+
+
+def executable_aliases(files, elf_paths, expected):
+    """Require canonical executables and verify any extra ELF hardlinks."""
+    if set(expected) - set(elf_paths):
+        raise ValueError("Scratch image is missing an expected ELF payload")
+    aliases = {}
+    for installed in sorted(set(elf_paths) - set(expected)):
+        item = files[installed]
+        target = item["link"]
+        if (item["type"] != "1" or target not in expected or
+                (item["bytes"], item["sha256"]) != (files[target]["bytes"], files[target]["sha256"])):
+            raise ValueError("Scratch image contains an unexpected ELF payload: " + installed)
+        aliases[installed] = target
+    return aliases
