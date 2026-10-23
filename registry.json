@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T10:36:42.897796+00:00",
+    "updatedAt": "2026-10-23T13:00:23.434380+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10726,19 +10726,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/tcp-rack-packet-fixture",
-      "head": "0559479b2f36559df015775948aa01fdef201091",
+      "head": "4a3722f493797a2e4166e6e40301140256ce36ac",
       "title": "Check RACK recovery with full TCP segments",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/0559479b2f36559df015775948aa01fdef201091",
-      "status": "Agent validation; prerequisites landed",
-      "summary": "The Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
-      "updatedAt": "2026-10-23T09:37:22.521782+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac",
+      "status": "Contributor review pending",
+      "summary": "Root requested contributor review of final 4a3722f493. After DSACK, acknowledged warmup restores capacity for the four-segment RACK flight; the fixture checks cwnd before preserving the original packet/timer assertions. All twelve inner Linux/Netstack cases and five qualification phases pass on tested f17eb; final source removes only a diagnostic log. The native parent remains FAIL because the bootstrap diagnostic stream exceeded its eight MiB cap after the authenticated complete PASS bundle was published. That reporting defect is separately fixed and qualified; no RACK rerun is claimed. Prerequisites #15635/#15926 are merged. Compare git range-diff fbf0f19b1^! 4a3722f493^!.\n\nEarlier source-specific record:\n\nThe Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
+      "updatedAt": "2026-10-23T13:00:23.434380+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Fresh focused qualification in progress",
-        "sourceHead": "0559479b2f36559df015775948aa01fdef201091",
-        "observedAt": "2026-10-23T09:37:22.521782+00:00",
-        "nextAction": "Reconcile the current Linux and Netstack run, including all six inner cases per owner, then request contributor review of the refreshed proposal before upstream publication. Compare with git -C ~/code/gvisor range-diff fbf0f19b1^! 0559479b2f^!.",
+        "disposition": "Qualified fixture; contributor decision pending",
+        "sourceHead": "4a3722f493797a2e4166e6e40301140256ce36ac",
+        "observedAt": "2026-10-23T13:00:23.434380+00:00",
+        "nextAction": "Await the existing contributor decision before upstream publication. Preserve native parent FAIL and accepted twelve-case qualification separately; no new review request or rerun.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
           "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4",
@@ -10746,7 +10746,9 @@
           "https://github.com/google/gvisor/pull/15635",
           "https://github.com/google/gvisor/pull/15926",
           "https://github.com/tamird/gvisor/commit/0559479b2f36559df015775948aa01fdef201091",
-          "https://app.buildbuddy.io/invocation/51d87f5c-a3e3-4c9d-88fa-c4c5bd5a30e3"
+          "https://app.buildbuddy.io/invocation/51d87f5c-a3e3-4c9d-88fa-c4c5bd5a30e3",
+          "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac",
+          "https://app.buildbuddy.io/invocation/b0b5d4fb-440f-4c4e-896b-3d57069a6f87"
         ]
       },
       "refinement": {
@@ -10754,8 +10756,13 @@
           "head": "fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97"
         },
         "after": {
-          "head": "0559479b2f36559df015775948aa01fdef201091"
+          "head": "4a3722f493797a2e4166e6e40301140256ce36ac"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "4a3722f493797a2e4166e6e40301140256ce36ac",
+        "url": "https://github.com/tamird/gvisor/commit/4a3722f493797a2e4166e6e40301140256ce36ac"
       }
     },
     {
@@ -18784,24 +18791,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-rust-protobuf37-review",
-      "head": "6a38390bf36512b773254ef75cd36180c635b1f2",
+      "head": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/6a38390bf36512b773254ef75cd36180c635b1f2",
+      "url": "https://github.com/tamird/gvisor/commit/c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
-      "summary": "The contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "updatedAt": "2026-10-23T13:00:23.434380+00:00",
+      "summary": "Approved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
         "owner": "root",
-        "sourceHead": "6a38390bf36512b773254ef75cd36180c635b1f2",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
+        "sourceHead": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
+        "observedAt": "2026-10-23T13:00:23.434380+00:00",
         "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Complete the authorized upstream notice-export follow-up, then deliver after the recorded image/compiler/Protobuf/license prerequisites; no repeated approval question.",
+        "nextAction": "Deliver after the recorded image/compiler/Protobuf/license prerequisites; upstream notice issue/reference and formatter explanation are complete. No repeated approval question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
           "https://app.buildbuddy.io/invocation/0d808aae-c2c6-436c-b08d-6385ef7c66ce",
-          "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87"
+          "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87",
+          "https://github.com/tamird/gvisor/commit/c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
+          "https://github.com/hermeticbuild/rules_rs/issues/312"
         ]
       },
       "evidence": [
@@ -18870,11 +18879,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+          "head": "6a38390bf36512b773254ef75cd36180c635b1f2"
         },
         "after": {
-          "head": "6a38390bf36512b773254ef75cd36180c635b1f2",
-          "base": "3987e82eec1bd08624a05637ac079b4dbce48799"
+          "head": "c82e52cb777a7fb520d5ad37573fdf3bbe112f26"
         }
       }
     },
@@ -19184,6 +19192,43 @@
           "url": "https://github.com/tamird/gvisor/commit/fda0e4f7ca952259c8b5eab335e5e12194d0bdea"
         }
       ]
+    },
+    {
+      "id": "branch:fix/http-readiness-cancellation",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/http-readiness-cancellation",
+      "head": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+      "url": "https://github.com/tamird/gvisor/commit/19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+      "title": "Clean up HTTP probes after cancellation",
+      "group": "tests",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-23T13:00:23.434380+00:00",
+      "summary": "Root requested contributor review of the independent cleanup correction at 19a12d5fc. A direct deferred CleanUp(context.WithoutCancel(ctx)) preserves caller values while allowing cleanup after cancellation; the arbitrary thirty-second timeout and closure are removed at the user's request. The real uncached native cancellation case passes: a running probe is absent before fallback cleanup. The same retained source-built BusyBox fixture and unchanged Docker client/caller mechanism were used; the old distro utility image was not replayed. No image-migration prerequisite applies. Original failure and the earlier timeout-version PASS remain retained. Compare git range-diff 2409f500f^! 19a12d5fc^!.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+        "url": "https://github.com/tamird/gvisor/commit/19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45"
+      },
+      "refinement": {
+        "before": {
+          "head": "2409f500fc6515efd1c57524f75de9e5e4cd82cf"
+        },
+        "after": {
+          "head": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45"
+        }
+      },
+      "followup": {
+        "owner": "node_tls_sni",
+        "sourceHead": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+        "observedAt": "2026-10-23T13:00:23.434380+00:00",
+        "disposition": "Contributor question pending after requested simplification",
+        "nextAction": "Await the existing contributor decision, then deliver this independent correction. Do not repeat the review request or impose image-migration dependencies.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+          "https://app.buildbuddy.io/invocation/c10d9305-fd86-4144-b9d8-024998ac0f58"
+        ]
+      }
     }
   ],
   "edges": [
