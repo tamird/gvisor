@@ -11,8 +11,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     expected = config["expected_outputs"]
     record = {"status": "INCOMPLETE", "source": config["source"],
-              "scope": "Exact archive/context equality; no runtime replay or fresh-execution assumption",
-              "query_phases": [], "architectures": []}
+              "scope": "Protobuf consumer compatibility and exact archive/context equality; no runtime replay or fresh-execution assumption",
+              "query_phases": [], "architectures": [], "protobuf_consumers": []}
     options = ["--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
                "--downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"]]
 
@@ -27,6 +27,30 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         execution_root = Path(query("output-execution-root", ["info", *options, "execution_root"]).strip())
         if not execution_root.is_absolute() or not execution_root.is_dir():
             raise ValueError("Invalid canonical execution root")
+        # Exercise the existing C++ and Go generators and their consumers.
+        for architecture in ("x86_64", "aarch64"):
+            targets = config["protobuf_targets"]
+            phase = "protobuf-" + architecture
+            execution = private / (phase + "-execution.json")
+            built = invoke(phase, ["build", "--config=" + architecture, *options,
+                           "--remote_download_outputs=all",
+                           "--build_event_json_file_path_conversion=false",
+                           "--execution_log_json_file=" + str(execution),
+                           "--noexecution_log_sort", *targets], "build", targets=targets)
+            if execution.is_file():
+                record_execution(execution, architecture, phase)
+            record["protobuf_consumers"].append({"phase": phase, "status": built["status"]})
+            if built["status"] != "PASS":
+                raise RuntimeError("Protobuf consumer build failed: " + architecture)
+        # This existing owner splits its Go dependency over AMD64 and ARM64;
+        # run its native filter once on the AMD64 coordinator.
+        targets = ["//pkg/eventchannel:eventchannel_nogo"]
+        checked = invoke("protobuf-nogo", ["test", "--config=x86_64", *options,
+                         "--nocache_test_results", "--test_output=errors", *targets],
+                         "test", targets=targets)
+        record["protobuf_consumers"].append({"phase": "protobuf-nogo", "status": checked["status"]})
+        if checked["status"] != "PASS":
+            raise RuntimeError("Generated Go consumer analyzer failed")
         for group in config["output_groups"]:
             architecture = group["name"]
             targets = group["targets"]

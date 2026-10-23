@@ -23,7 +23,7 @@ bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 
 # gRPC's older minimum imports a removed Google APIs extension repository.
 bazel_dep(name = "envoy_api", version = "0.0.0-20260130-84e8436")
-bazel_dep(name = "protobuf", version = "35.1", repo_name = "com_google_protobuf")
+bazel_dep(name = "protobuf", version = "37.0-rc1", repo_name = "com_google_protobuf")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "abseil-cpp", version = "20260817.0", repo_name = "com_google_absl")
 bazel_dep(name = "googletest", version = "1.18.0", repo_name = "com_google_googletest")
@@ -62,21 +62,6 @@ archive_override(
     integrity = "sha256-rMXHwPvthVxKqi18PDb7grDBXCj04VHj9nnC/AqkBK8=",
     strip_prefix = "benchmark-1.10.0",
     urls = ["https://github.com/google/benchmark/archive/refs/tags/v1.10.0.tar.gz"],
-)
-
-# Protobuf 35.1 omitted the lockfiles required by transitive crate_universe.
-# Backport https://github.com/protocolbuffers/protobuf/commit/e5deac314dac.
-single_version_override(
-    module_name = "protobuf",
-    patch_strip = 1,
-    patches = ["//tools:protobuf_rust_lockfiles.patch"],
-    version = "35.1",
-)
-
-# Consume Protobuf's producer lock without repinning a transitive module.
-single_version_override(
-    module_name = "rules_rust",
-    version = "0.74.0",
 )
 
 # Expose the standard-library notice already downloaded with rustc.
@@ -122,10 +107,14 @@ rust_toolchains.toolchain(
     edition = "2021",
     version = "1.99.1",
 )
+
+# Rust generates the library notice from the release source, independently
+# of the target platform. Read it from the Linux x86-64 compiler distribution;
+# this documentation alias does not select the build host toolchain.
 use_repo(
     rust_toolchains,
     "default_rust_toolchains",
-    "rustc_linux_x86_64_1_99_1",
+    rust_compiler_notices = "rustc_linux_x86_64_1_99_1",
 )
 
 register_toolchains("@default_rust_toolchains//...")
