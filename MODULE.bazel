@@ -11,6 +11,7 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_rs", version = "0.1.3")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0")
@@ -51,6 +52,13 @@ single_version_override(
     patches = ["//tools:libbpf_headers.patch"],
 )
 
+# Expose the standard-library notice already downloaded with rustc.
+single_version_override(
+    module_name = "rules_rs",
+    patch_strip = 1,
+    patches = ["//tools:rules_rs_notices.patch"],
+)
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -80,6 +88,24 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
+
+### Rust
+rust_toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
+rust_toolchains.toolchain(
+    edition = "2021",
+    version = "1.99.1",
+)
+
+# Rust generates the library notice from the release source, independently
+# of the target platform. Read it from the Linux x86-64 compiler distribution;
+# this documentation alias does not select the build host toolchain.
+use_repo(
+    rust_toolchains,
+    "default_rust_toolchains",
+    rust_compiler_notices = "rustc_linux_x86_64_1_99_1",
+)
+
+register_toolchains("@default_rust_toolchains//...")
 
 ### Crosstool
 coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")

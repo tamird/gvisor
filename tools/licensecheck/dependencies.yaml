@@ -686,10 +686,12 @@
   license: BSD-3-Clause
 - dependency: github.com/opencontainers/go-digest
   version: v1.0.0
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: ea51bea511f75cfa3ef6098cc253c5c3609b037a
   sha256: 615efb31ff6cd71035b8aa38c3659d8b4da46f3cd92ac807cb50449adfe37c86
-  license: Apache-2.0
+  license:
+    - Apache-2.0
+    - CC-BY-SA-4.0
 - dependency: github.com/opencontainers/image-spec
   version: v1.1.1
   retrieved: "2026-08-27"
@@ -1095,12 +1097,12 @@
   license: Apache-2.0
 - dependency: kythe_release
   version: https://github.com/kythe/kythe/releases/download/v0.0.74/kythe-v0.0.74.tar.gz
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: a182743b6a2315c3ffdd43ed6f008434948f2adc
   sha256: 52a9c6e8111237043b8d0b6127637f0eb8d2ba3a776e4749b036e911ec3529ce
   license:
     - Apache-2.0
-    - MIT
+    - NCSA
 - dependency: libbpf
   version: https://github.com/libbpf/libbpf/archive/refs/tags/v1.7.0.tar.gz
   retrieved: "2026-09-26"
@@ -1115,12 +1117,12 @@
   license: MIT
 - dependency: llvm-raw
   version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
-  retrieved: "2026-08-27"
+  retrieved: "2026-10-22"
   commit: cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f
   sha256: e8ece380fdb57dc6f8e42df9db872a1ade5056c5379075e3e2f99c89200aea69
   license:
     - Apache-2.0 WITH LLVM-exception
-    - MIT
+    - NCSA
 - dependency: nlohmann_json
   version: https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip
   retrieved: "2026-09-10"
@@ -1192,6 +1194,12 @@
   retrieved: "2026-10-23"
   commit: 54df9b704afe70de2b40f4fc14c2faf8a836c97e
   sha256: 70c519e8f0a5d9244c0d3496a6993bd42edf111c4499b68ce2f155c26fc8d4ee
+  license: Apache-2.0
+- dependency: rules_rs
+  version: https://github.com/hermeticbuild/rules_rs/releases/download/v0.1.3/rules_rs-v0.1.3.tar.gz
+  retrieved: "2026-10-23"
+  commit: 7065a72736844e3f7358431d8b2299ec35674d61
+  sha256: a345fe3fa11fbccec1de3e19c9597fef7e0cebb9af9ef3847d74abf26f222c8b
   license: Apache-2.0
 - dependency: rules_shell
   version: https://github.com/bazel-contrib/rules_shell/releases/download/v0.8.0/rules_shell-v0.8.0.tar.gz
