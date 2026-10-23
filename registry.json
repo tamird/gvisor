@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T23:24:38.958974+00:00",
+    "updatedAt": "2026-10-23T23:33:03.380784+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20140,24 +20140,33 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "rules-img-redis-upstream",
-      "head": "b6c753270a60ef3d626304cc4bae873cb942eaad",
+      "head": "d16b540dc2e98d32f818df666c651e7cecc169b2",
       "title": "Use pinned official Redis images and Redis readiness checks",
-      "url": "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad",
+      "url": "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
       "group": "bazel",
-      "status": "Awaiting contributor review; requires #16097",
-      "updatedAt": "2026-10-23T23:22:22.506084+00:00",
-      "summary": "The proposal uses the official Redis 7.0.12 images without an added utility layer. Port-forward readiness checks use the existing redis-cli and require a successful PONG response. Qualification passed both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs. Independent source and retained-result review are complete. This establishes functional coverage, with no ARM runtime or performance claim. Contributor review and the image_outputs/Make context prerequisite in #16097 remain; no shared BusyBox/compiler source dependency is required.",
+      "status": "Contributor approved; waiting for #16097",
+      "updatedAt": "2026-10-23T23:33:03.380784+00:00",
+      "summary": "The contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "b6c753270a60ef3d626304cc4bae873cb942eaad",
-        "observedAt": "2026-10-23T23:22:22.506084+00:00",
-        "disposition": "Functional qualification and independent review complete; contributor decision pending",
-        "nextAction": "Root is presenting this exact revision for contributor review. Deliver only after approval and #16097 landing; retain the qualified source and result evidence.",
+        "sourceHead": "d16b540dc2e98d32f818df666c651e7cecc169b2",
+        "observedAt": "2026-10-23T23:33:03.380784+00:00",
+        "disposition": "Contributor approved; image-context prerequisite remains",
+        "nextAction": "After the existing watcher observes #16097 landing, deliver the approved patch with the retained functional evidence. No new contributor decision or qualification is needed for the import-separator refinement.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
           "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad",
           "https://github.com/google/gvisor/pull/16097",
           "https://app.buildbuddy.io/invocation/04dda148-db97-42f6-939f-c1516a51ae30"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "b6c753270a60ef3d626304cc4bae873cb942eaad"
+        },
+        "after": {
+          "head": "d16b540dc2e98d32f818df666c651e7cecc169b2"
+        }
       }
     }
   ],
@@ -22512,7 +22521,8 @@
       "reason": "Requires image_outputs and the Make image-context interface from #16097; no shared utility/compiler dependency.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16097",
-        "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad"
+        "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad",
+        "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2"
       ]
     }
   ],
