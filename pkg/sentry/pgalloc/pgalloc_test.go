@@ -53,6 +53,9 @@ func TestAllocateAndCommit(t *testing.T) {
 			name: "recycled fault", fr: memmap.FileRange{0, page}, recycled: true, wantFault: true,
 		},
 		{
+			name: "recycled fault after first page", fr: memmap.FileRange{0, 2 * page}, fileSize: page, recycled: true, wantFault: true,
+		},
+		{
 			name: "fault across hugepage boundary", fr: memmap.FileRange{hugepage - page, hugepage + page}, fileSize: hugepage, wantFault: true,
 		},
 		{
