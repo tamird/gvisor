@@ -86,11 +86,11 @@ benchmark_test(
 
 benchmark_test(
     name = "httpd_test",
-    tags = ["go-benchmark-contract"],
     srcs = [
         "httpd_test.go",
     ],
     embed = [":network"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
