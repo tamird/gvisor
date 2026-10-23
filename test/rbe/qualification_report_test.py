@@ -1618,8 +1618,11 @@ signal.pause()
                 value = report.read_json(runner_temp / "qualification/verdict.json")
                 expected_exit = 0 if phase in ("command-pass", "test-pass") else 23 if phase in ("command-fail", "test-fail") else 124
                 self.assertEqual((value["status"], value["native_exit"]), ("PASS" if expected_exit == 0 else "FAIL", expected_exit), value)
-                self.assertEqual(value["runner_exit"], expected_exit, value)
-                self.assertEqual(result.returncode, expected_exit or int(leak), value)
+                # qualify.sh aggregates a failed lane to 1; the native status
+                # above remains exact even when publication also fails.
+                expected_runner_exit = int(expected_exit != 0)
+                self.assertEqual(value["runner_exit"], expected_runner_exit, value)
+                self.assertEqual(result.returncode, expected_runner_exit or int(leak), value)
                 if phase in ("command-pass", "command-fail"):
                     self.assertEqual([row["bazel_command"] for row in value["commands"]].count("run"), 2)
                     self.assertEqual([row["bazel_command"] for row in value["commands"]].count("query"), 1)
