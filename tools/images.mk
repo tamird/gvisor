@@ -56,6 +56,7 @@ BAZEL_IMAGE_CONTEXTS := \
   basic_nginx=//images/basic:nginx_context \
   basic_pidfd-tests=//images/basic:pidfd_tests_context \
   basic_tmpfile=//images/basic:tmpfile_context \
+  benchmarks_hey=//images/benchmarks:hey_context \
   benchmarks_httpd=//images/benchmarks:httpd_context \
   benchmarks_nginx=//images/benchmarks:nginx_context \
   benchmarks_profile-helper=//images/benchmarks:profile_helper_context \

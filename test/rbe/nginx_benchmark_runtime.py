@@ -11,7 +11,7 @@ import uuid
 import xml.etree.ElementTree as ET
 
 import qualification_report as report
-from image_runtime import prepared_runtime
+from image_runtime import prepare_benchmark_helpers, prepared_runtime
 
 
 def run(invoke, evidence: Path, private: Path) -> None:
@@ -182,14 +182,10 @@ def run(invoke, evidence: Path, private: Path) -> None:
                 if image_name == "benchmarks/nginx":
                     for filesystem in ("tmpfs", "bind"):
                         response_contract(runtime, image, filesystem, directory)
-                    # Existing native client/readiness fixtures remain separate
-                    # from the migrated server image and its source closure.
-                    command(["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
-                             "REMOTE_IMAGE_PREFIX=qualification.invalid/images",
-                             "rebuild-benchmarks_hey", "rebuild-benchmarks_util"])
-                    records["benchmark_client_images"] = [json.loads(command([
-                        "docker", "image", "inspect", "gvisor.dev/images/benchmarks/" + name + ":latest"]))
-                        for name in ("hey", "util")]
+                    configuration = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+                    records["benchmark_helpers"] = prepare_benchmark_helpers(
+                        evidence / "benchmark-helper-images.json", private / "benchmark-helper-images",
+                        configuration["benchmark_utility"])
                     consumer("nginx-benchmark-serving", "//test/benchmarks/network:nginx_test", runtime,
                              r"^BenchmarkNginxDocSize$/^filesize\.(1Kb|1Mb|notfound)$/^concurrency\.1$/^filesystem\.(tmpfs|bind)$",
                              ["BenchmarkNginxDocSize/filesize." + size + "/concurrency.1/filesystem." + filesystem
@@ -208,6 +204,14 @@ def run(invoke, evidence: Path, private: Path) -> None:
                                               ("usage", "average_container_memory_usage.bytes")):
                         consumer("empty-benchmark-" + measurement, "//test/benchmarks/base:" + measurement + "_test",
                                  runtime, r"^BenchmarkSizeEmpty$", ["BenchmarkSizeEmpty"], 1, ["ns/op", unit])
+        records["benchmark_client_images"] = {}
+        for name in ("hey", "util"):
+            helper = records["benchmark_helpers"][name]
+            match json.loads(command(["docker", "image", "inspect", helper["name"]])):
+                case [image] if image["Id"] == helper["image"]["Id"]:
+                    records["benchmark_client_images"][name] = image
+                case other:
+                    raise ValueError(f"Benchmark helper identity changed: {name}: {other}")
         records["containers_after"] = sorted(command(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
         if records["containers_after"] != records["containers_before"]:
             raise RuntimeError("Benchmark consumers left containers behind")

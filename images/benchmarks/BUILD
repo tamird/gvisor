@@ -276,6 +276,34 @@ image_outputs(
     image_name = "benchmarks/profile-helper",
 )
 
+go_binary(
+    name = "hey",
+    embed = ["@com_github_rakyll_hey//:go_default_library"],
+    pure = True,
+    static = True,
+)
+
+image_layer(
+    name = "hey_layer",
+    srcs = {"/usr/bin/hey": ":hey"},
+    default_metadata = file_metadata(mode = "0755"),
+)
+
+image_manifest(
+    name = "hey_image",
+    base = "//images:helper_base",
+    layers = [":hey_layer"],
+    tags = ["manual"],
+    # Match the image metadata to its Linux Go executable, independent of host.
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+image_outputs(
+    name = "hey",
+    image = ":hey_image",
+    image_name = "benchmarks/hey",
+)
+
 arch_genrule(
     name = "qualification_httpd_archives",
     src = ":httpd_archive",
