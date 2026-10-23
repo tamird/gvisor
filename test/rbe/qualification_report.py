@@ -1754,8 +1754,8 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     allowed_commands = ("run", "query", "cquery", "info", "mod") if kind == "command" else ("test", "build")
     if command not in allowed_commands or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
-    if command == "mod" and arguments[arguments.index(command):arguments.index(command) + 2] != ["mod", "deps"]:
-        errors.append("Dependency preparation requires the original Bazel mod deps command")
+    if command == "mod" and arguments[arguments.index(command):arguments.index(command) + 2] not in (["mod", "deps"], ["mod", "tidy"]):
+        errors.append("Dependency commands require the original Bazel mod deps or mod tidy command")
     if kind == "benchmark" and command != "test":
         errors.append("Benchmark evidence requires a Bazel test command")
     if kind == "command" and command == "run" and analysis:
