@@ -25,7 +25,10 @@ image_layer(
     srcs = {"/usr/bin/syscallbench": ":syscallbench"},
     default_metadata = file_metadata(mode = "0755"),
     # The benchmark keeps the container alive while executing each mode.
-    symlinks = {"/bin/sleep": "/bin/busybox"},
+    symlinks = {
+        "/bin/sh": "/bin/busybox",
+        "/bin/sleep": "/bin/busybox",
+    },
 )
 
 image_manifest(
