@@ -1,7 +1,8 @@
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
-load("//tools:defs.bzl", "arch_genrule", "cc_binary", "go_binary")
+load("//tools:arch.bzl", "arch_genrule")
+load("//tools:defs.bzl", "cc_binary", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
