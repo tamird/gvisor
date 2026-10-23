@@ -1,0 +1,7 @@
+BenchmarkHttpd/filesize.notfound/concurrency.1-7         	     100	   3717753 ns/op	         0.0006000 average_latency.s	      1704 requests_per_second.QPS
+BenchmarkHttpd/filesize.notfound/concurrency.25-7        	     100	   3126514 ns/op	         0.006400 average_latency.s	      2946 requests_per_second.QPS
+BenchmarkHttpd/filesize.1Kb/concurrency.1-7              	     100	   4635775 ns/op	         0.001500 average_latency.s	       688.0 requests_per_second.QPS
+BenchmarkHttpd/filesize.1Kb/concurrency.25-7             	     100	   3445840 ns/op	         0.01310 average_latency.s	      1548 requests_per_second.QPS
+BenchmarkHttpd/filesize.1Mb/concurrency.1-7              	     100	  13356648 ns/op	         0.01050 average_latency.s	        95.54 requests_per_second.QPS
+BenchmarkHttpd/filesize.1Mb/concurrency.25-7             	     100	   8273681 ns/op	         0.1061 average_latency.s	       188.0 requests_per_second.QPS
+PASS

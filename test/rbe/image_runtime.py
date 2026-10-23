@@ -113,7 +113,8 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     records["config_before"] = original_config
 
     def remaining():
-        seconds = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
+        seconds = (float(os.environ["APPLICABILITY_WORK_DEADLINE"])
+                   - configuration.get("cleanup_reserve_seconds", 0) - time.monotonic())
         if seconds <= 0:
             raise TimeoutError("Runtime preparation exhausted the existing work deadline")
         return seconds
@@ -146,7 +147,21 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     try:
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
         make = image_make_arguments()
-        run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+        retained = configuration.get("retained_release_files")
+        if retained is None:
+            run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+        else:
+            # The paired caller joins these files to the successful configured
+            # //:release default-BEP outputs before entering this scope.
+            if not configuration.get("lifecycle_only"):
+                raise ValueError("Retained releases require lifecycle-only preparation")
+            for name, expected in retained.items():
+                path = runtime_directory / name
+                path.resolve(strict=True).relative_to(runtime_directory.resolve())
+                actual = record_file(path)
+                if any(actual[key] != expected[key] for key in ("bytes", "sha256")):
+                    raise ValueError("Retained release file changed: " + name)
+            records["release_supplier"] = configuration["release_supplier"]
         runsc = runtime_directory / "runsc"
         if not runsc.is_file() or not (runtime_directory / "gvisor-bin").is_dir():
             raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")
@@ -178,6 +193,10 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             time.sleep(0.1)
         else:
             raise RuntimeError("Docker did not expose the configured runtime")
+        if configuration.get("lifecycle_only"):
+            records["status"] = "PASS"
+            yield records
+            return
         image_name = "gvisor.dev/images/" + image_component + ":latest"
         image_key = image_component.replace("/", "_")
         image_make = make

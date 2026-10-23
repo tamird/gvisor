@@ -94,7 +94,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     def git_record(path: Path, *arguments: str) -> None:
         path.write_bytes(subprocess.check_output(["git", *arguments], timeout=min(30, remaining())))
 
-    def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (), targets: list[str] = TARGETS, declared_benchmarks: Path | None = None) -> dict:
+    def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (), targets: list[str] = TARGETS, declared_benchmarks: Path | None = None, retain_outputs: bool = False) -> dict:
         global runner_exit
         preparing_lock = kind == "command" and "--lockfile_mode=update" in arguments
         directory = evidence / ("invocation-" + name)
@@ -149,7 +149,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                 else:
                     (directory / "lock-after").write_bytes(lock.read_bytes())
                 if kind != "command":
-                    captured = report.capture(raw_events, events, output_root, directory / "reports")
+                    captured = report.capture(raw_events, events, output_root, directory / "reports", retain_outputs=retain_outputs)
                     capture_status = int(bool(captured["errors"]))
             except (OSError, ValueError, subprocess.SubprocessError):
                 traceback.print_exc()

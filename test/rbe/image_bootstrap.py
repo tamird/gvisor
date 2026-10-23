@@ -82,7 +82,7 @@ def main() -> int:
         raise RuntimeError("Unexpected bootstrap source")
     if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]):
         raise RuntimeError("Tracked bootstrap source is dirty")
-    deadline = time.monotonic() + 2100
+    deadline = time.monotonic() + 7200
     os.environ["APPLICABILITY_WORK_DEADLINE"] = str(deadline)
     artifacts = Path(os.environ["BUILDBUDDY_ARTIFACTS_DIRECTORY"])
     artifacts.mkdir(parents=True, exist_ok=True)
