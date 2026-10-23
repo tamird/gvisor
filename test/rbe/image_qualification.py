@@ -243,8 +243,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # Resolve the configured image graph, without evaluating unrelated
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
-        # The existing architecture split on each image aggregate owns both CPUs.
-        for architecture in ("x86_64",):
+        # Prepare the target configurations declared by this qualification.
+        for architecture in CONFIG["image_targets"]:
             graphs = [("images", CONFIG["image_targets"][architecture], [])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
                 graphs.append(("runtime", runtime_targets, []))
