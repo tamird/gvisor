@@ -1,7 +1,12 @@
 """Read Bazel's concatenated SpawnExec JSON without retaining the whole log."""
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+import gzip
+import hashlib
 import json
+from pathlib import Path
+import re
+import time
 from typing import TextIO
 
 
@@ -43,3 +48,47 @@ def execution_records(stream: TextIO, max_record_chars: int = 64 * 1024 * 1024) 
         yield pending[:end], value
         pending = pending[end:]
         read_size = min(65536, max_record_chars + 1)
+
+
+def compress_execution_log(source: Path, destination: Path, credential: bytes,
+                           prefixes: tuple[str, ...], summarize: Callable[[dict], dict],
+                           level: int = 9) -> dict:
+    """Stream the recorder's redaction, selection and audit bytes at one level."""
+    digest = hashlib.sha256()
+    record = {"runner_counts": {}, "image_actions": []}
+    stages = dict.fromkeys(("decode", "redact_hash", "compress_write", "select"), 0.0)
+    size = 0
+    with source.open("r", encoding="utf-8", newline="") as stream, gzip.open(destination, "wb", compresslevel=level) as output:
+        records = execution_records(stream)
+        while True:
+            started = time.monotonic()
+            try:
+                text, action = next(records)
+            except StopIteration:
+                stages["decode"] += time.monotonic() - started
+                break
+            stages["decode"] += time.monotonic() - started
+            started = time.monotonic()
+            redacted = text.replace(credential.decode(), "[REDACTED]")
+            raw = redacted.encode()
+            values = re.findall(rb"x-buildbuddy-api-key=([^\s'\"]*)", raw, re.IGNORECASE)
+            if credential in raw or any(value != b"[REDACTED]" for value in values):
+                raise ValueError("Credential bytes or unrecognized API-key value in qualification evidence")
+            digest.update(raw)
+            size += len(raw)
+            stages["redact_hash"] += time.monotonic() - started
+            started = time.monotonic()
+            output.write(raw)
+            stages["compress_write"] += time.monotonic() - started
+            started = time.monotonic()
+            if action is not None:
+                if redacted != text:
+                    action = json.loads(redacted)
+                runner = action["runner"]
+                record["runner_counts"][runner] = record["runner_counts"].get(runner, 0) + 1
+                if action["targetLabel"].startswith(prefixes):
+                    record["image_actions"].append(summarize(action))
+            stages["select"] += time.monotonic() - started
+        started = time.monotonic()
+    stages["compress_write"] += time.monotonic() - started
+    return {**record, "uncompressed": {"bytes": size, "sha256": digest.hexdigest()}, "stage_seconds": stages}

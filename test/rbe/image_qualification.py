@@ -14,7 +14,7 @@ import time
 import traceback
 import urllib.request
 
-from image_execution import execution_records
+from image_execution import compress_execution_log
 
 if sys.version_info < (3, 11):
     raise RuntimeError("Qualification requires Python 3.11+")
@@ -185,30 +185,10 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # Keep publication on one filesystem even when private storage differs.
         partial = compressed.with_suffix(compressed.suffix + ".partial")
         try:
-            digest = hashlib.sha256()
-            size = 0
-            # Bound memory by one action, preserving the exact redacted text
-            # and existing compact action proof. Publish only a complete audit.
-            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb") as output:
-                for text, action in execution_records(stream):
-                    redacted = text.replace(credential.decode(), "[REDACTED]")
-                    raw = redacted.encode()
-                    reject_credentials(raw)
-                    output.write(raw)
-                    digest.update(raw)
-                    size += len(raw)
-                    if action is None:
-                        continue
-                    if redacted != text:
-                        action = json.loads(redacted)
-                    runner = action["runner"]
-                    record["runner_counts"][runner] = record["runner_counts"].get(runner, 0) + 1
-                    label = action["targetLabel"]
-                    if label.startswith(tuple(CONFIG['action_prefixes'])):
-                        record["image_actions"].append(report.execution_summary(action))
+            streamed = compress_execution_log(path, partial, credential, tuple(CONFIG['action_prefixes']), report.execution_summary)
+            record.update(streamed)
             partial.replace(compressed)
             record["execution_log"] = report.retain_audit(compressed, evidence)
-            record["uncompressed"] = {"bytes": size, "sha256": digest.hexdigest()}
             path.unlink()
             executed = [action for action in record["image_actions"]
                         if action["runner"] == "remote" and not action["cacheHit"]]
