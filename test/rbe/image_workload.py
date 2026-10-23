@@ -27,7 +27,14 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         query("module-command-regressions", ["run", "--lockfile_mode=error", "--noannounce_rc",
               "@rules_python//python/bin:python", "--",
               str(Path(__file__).with_name("mod_tidy_report_test.py"))])
-        query("module-tidy", ["mod", "tidy", "--lockfile_mode=error", "--noannounce_rc"])
+        module = Path("MODULE.bazel")
+        (evidence / "module-tidy-before.bazel").write_bytes(module.read_bytes())
+        try:
+            # Tidy evaluates every extension, including ones outside the image graph.
+            query("module-dependencies", ["mod", "deps", "--lockfile_mode=update", "--noannounce_rc"])
+            query("module-tidy", ["mod", "tidy", "--lockfile_mode=error", "--noannounce_rc"])
+        finally:
+            (evidence / "module-tidy-after.bazel").write_bytes(module.read_bytes())
         execution_root = Path(query("output-execution-root", ["info", *options, "execution_root"]).strip())
         if not execution_root.is_absolute() or not execution_root.is_dir():
             raise ValueError("Invalid canonical execution root")
