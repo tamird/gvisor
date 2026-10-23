@@ -21,6 +21,7 @@ go_library(
 benchmark_test(
     name = "startup_test",
     srcs = ["startup_test.go"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
