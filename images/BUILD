@@ -89,6 +89,7 @@ filegroup(
     name = "busybox_binary",
     srcs = [":busybox_build"],
     output_group = "busybox",
+    visibility = ["//images/benchmarks:__pkg__"],
 )
 
 filegroup(

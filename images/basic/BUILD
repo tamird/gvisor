@@ -3,6 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:defs.bzl", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -88,6 +89,63 @@ image_outputs(
     name = "nginx",
     image = ":nginx",
     image_name = "basic/nginx",
+)
+
+pkg_tar(
+    name = "httpd_directories",
+    empty_dirs = ["usr/local/apache2/logs"],
+    mode = "0755",
+)
+
+image_layer(
+    name = "httpd_fixture_layer",
+    srcs = {
+        "/usr/local/apache2/conf/httpd.conf": "httpd/httpd.conf",
+        "/usr/local/apache2/htdocs/index.html": "@httpd_source//:docs/docroot/index.html",
+        "/usr/local/bin/httpd-foreground": "httpd/httpd-foreground",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/local/bin/httpd-foreground": file_metadata(mode = "0755")},
+    symlinks = {
+        "/bin/rm": "/bin/busybox",
+        "/bin/sh": "/bin/busybox",
+    },
+)
+
+image_manifest(
+    name = "httpd_manifest",
+    cmd = ["httpd-foreground"],
+    config_fragment = "//images/httpd:ports.json",
+    env = {
+        "HTTPD_PREFIX": "/usr/local/apache2",
+        "PATH": "/usr/local/apache2/bin:/usr/local/bin:/usr/bin:/bin",
+    },
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        "//images/httpd:accounts_layer",
+        "//images/httpd:server_layer",
+        ":httpd_directories",
+        ":httpd_fixture_layer",
+    ],
+    stop_signal = "SIGWINCH",
+    tags = ["manual"],
+    user = "0:0",
+    working_dir = "/usr/local/apache2",
+)
+
+image_index(
+    name = "httpd",
+    manifests = [":httpd_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "httpd",
+    image = ":httpd",
+    image_name = "basic/httpd",
 )
 
 # The integration test checks that mounting /tmp preserves image contents.

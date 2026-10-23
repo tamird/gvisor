@@ -1,0 +1,35 @@
+Run the release configure probes with the declared target emulator.
+Keep the upstream tests and their results; a broken runner must fail the build.
+The generated configure script is the pinned release build input, so no
+Autoconf bootstrap or cached feature answers are needed.
+Upstream Autoconf execution contract: https://www.gnu.org/software/autoconf/manual/autoconf.html#Runtime
+
+--- a/configure
++++ b/configure
+@@ -1814,7 +1814,7 @@
+   (eval "$ac_link") 2>&5
+   ac_status=$?
+   printf '%s\n' "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+-  test $ac_status = 0; } && { ac_try='./conftest$ac_exeext'
++  test $ac_status = 0; } && { ac_try='"$HTTPD_RUNNER" ./conftest$ac_exeext'
+   { { case "(($ac_try" in
+   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+   *) ac_try_echo=$ac_try;;
+@@ -4173,7 +4173,7 @@
+   ac_status=$?
+   printf '%s\n' "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }
+-  if { ac_try='./conftest$ac_cv_exeext'
++  if { ac_try='"$HTTPD_RUNNER" ./conftest$ac_cv_exeext'
+   { { case "(($ac_try" in
+   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+   *) ac_try_echo=$ac_try;;
+@@ -4187,7 +4187,7 @@
+     cross_compiling=no
+   else
+     if test "$cross_compiling" = maybe; then
+-	cross_compiling=yes
++        as_fn_error 77 "the declared target runner cannot execute compiled programs" "$LINENO" 5
+     else
+ 	{ { printf '%s\n' "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+ printf '%s\n' "$as_me: error: in '$ac_pwd':" >&2;}
