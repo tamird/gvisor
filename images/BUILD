@@ -119,7 +119,12 @@ image_layer(
 
 # PIDFD needs GNU timeout; Kubernetes profiling needs GNU rm --one-file-system.
 # Build their utilities together and link statically for scratch images.
-_PROFILE_COREUTILS = ["chmod", "mkdir", "rm"]
+_PROFILE_COREUTILS = [
+    "chmod",
+    "mkdir",
+    "rm",
+]
+
 _COREUTILS_PROGRAMS = _PROFILE_COREUTILS + ["timeout"]
 
 configure_make(
