@@ -1381,6 +1381,8 @@ function validateRegistry(candidate) {
         Object.hasOwn(policies, node.repo) && node.id !== prIdentity(node, candidate) ||
         node.url !== `https://github.com/${node.repo}/pull/${node.number}`) throw new Error("Invalid PR repository identity");
   for (const node of candidate.nodes) {
+    if (node.group !== undefined && !candidate.groups.some(group => group.id === node.group))
+      throw new Error("Invalid node group");
     const dispositions = node.followup?.attentionDispositions;
     if (dispositions !== undefined && (!Array.isArray(dispositions)
         || new Set(dispositions.map(item => item?.reason)).size !== dispositions.length

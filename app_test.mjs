@@ -15,6 +15,18 @@ function client() {
   return context;
 }
 
+test('registry rejects workstreams that cannot be selected in the filter', () => {
+  const context = client();
+  const node = { id: 'branch:task', type: 'branch', group: 'runtime' };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [],
+    groups: [{ id: 'runtime', label: 'Runtime & kernel' }] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  for (const group of ['runsc', 'state', 'kernel', 'netstack']) {
+    node.group = group;
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid node group/);
+  }
+});
+
 test('cross-references remain visible evidence without creating graph relationships', () => {
   const context = client(), pr = attentionNode().github;
   context.snapshotInput.checkedAt = pr.checkedAt = '2026-10-21T02:54:53Z';
