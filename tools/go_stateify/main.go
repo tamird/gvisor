@@ -87,84 +87,75 @@ func extractStateTag(tag *ast.BasicLit) string {
 	return reflect.StructTag(tag.Value[1 : len(tag.Value)-1]).Get("state")
 }
 
-// scanFunctions is a set of functions passed to scanFields.
-type scanFunctions struct {
-	zerovalue func(name string)
-	normal    func(name string)
-	wait      func(name string)
-	value     func(name, typName string)
+// fieldKind is the kind of a saved field.
+type fieldKind int
+
+const (
+	fieldNormal fieldKind = iota
+	fieldWait
+	fieldValue
+)
+
+// fieldInfo describes a saved field, in slot order.
+type fieldInfo struct {
+	name string
+	typ  ast.Expr
+	kind fieldKind
+	// valueType is the type of the value for fieldValue.
+	valueType string
 }
 
-// scanFields scans the fields of a struct.
-//
-// Each provided function will be applied to appropriately tagged fields, or
-// skipped if nil.
-//
-// Fields tagged nosave are skipped.
-func scanFields(ss *ast.StructType, fn scanFunctions) {
-	if ss.Fields.List == nil {
-		// No fields.
-		return
-	}
+// structFields separates serialized slots from assertions that consume no slot.
+type structFields struct {
+	saved []fieldInfo
+	zero  []string
+}
 
-	// Scan all fields.
+func collectFields(ss *ast.StructType) structFields {
+	var fields structFields
+	fields.collect(ss)
+	return fields
+}
+
+func (fields *structFields) collect(ss *ast.StructType) {
 	for _, field := range ss.Fields.List {
-		if field.Names == nil {
-			// Anonymous types can't be embedded, so we don't need
-			// to worry about providing a useful name here.
-			name, _ := resolveTypeName(field.Type)
-			scanField(name, field, fn)
-			continue
-		}
-
-		// Iterate over potentially multiple fields defined on the same line.
-		for _, nameI := range field.Names {
-			name := nameI.Name
-			// Skip _ fields.
-			if name == "_" {
-				continue
+		for _, ident := range field.Names {
+			if ident.Name != "_" {
+				fields.add(ident.Name, field)
 			}
-			scanField(name, field, fn)
+		}
+		if field.Names == nil {
+			name, _ := resolveTypeName(field.Type)
+			fields.add(name, field)
 		}
 	}
 }
 
-// scanField scans a single struct field with a resolved name.
-func scanField(name string, field *ast.Field, fn scanFunctions) {
-	// Is this a anonymous struct? If yes, then continue the
-	// recursion with the given prefix. We don't pay attention to
-	// any tags on the top-level struct field.
+func (fields *structFields) add(name string, field *ast.Field) {
 	tag := extractStateTag(field.Tag)
-	if anon, ok := field.Type.(*ast.StructType); ok && tag == "" {
-		scanFields(anon, fn)
+	f := fieldInfo{name: name, typ: field.Type}
+	switch {
+	case tag == "":
+		if anon, ok := field.Type.(*ast.StructType); ok {
+			fields.collect(anon)
+			return
+		}
+	case tag == "wait":
+		f.kind = fieldWait
+	case tag == "zerovalue":
+		fields.zero = append(fields.zero, name)
+		return
+	case strings.HasPrefix(tag, ".(") && strings.HasSuffix(tag, ")"):
+		f.kind, f.valueType = fieldValue, tag[2:len(tag)-1]
+	default:
 		return
 	}
+	fields.saved = append(fields.saved, f)
+}
 
-	switch tag {
-	case "zerovalue":
-		if fn.zerovalue != nil {
-			fn.zerovalue(name)
-		}
-
-	case "":
-		if fn.normal != nil {
-			fn.normal(name)
-		}
-
-	case "wait":
-		if fn.wait != nil {
-			fn.wait(name)
-		}
-
-	case "manual", "nosave", "ignore":
-		// Do nothing.
-
-	default:
-		if strings.HasPrefix(tag, ".(") && strings.HasSuffix(tag, ")") {
-			if fn.value != nil {
-				fn.value(name, tag[2:len(tag)-1])
-			}
-		}
+func (fields *structFields) emitZeroChecks(w io.Writer, sp, recv string) {
+	for _, name := range fields.zero {
+		fmt.Fprintf(w, "\tif !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", sp, recv, name, sp, name, recv, name)
 	}
 }
 
@@ -304,7 +295,6 @@ func main() {
 
 	// Codec methods are emitted at the end. See below.
 	var codecOut bytes.Buffer
-	var zeroCheckOut io.Writer = outputFile
 
 	// Record all type declarations, for codec generation.
 	cg := &codecGen{local: make(localTypes), statePrefix: statePrefix}
@@ -373,39 +363,7 @@ func main() {
 						os.Exit(1)
 					}
 
-					// Record the slot for each field.
-					fieldCount := 0
-					fields := make(map[string]int)
-					emitField := func(name string) {
-						fmt.Fprintf(outputFile, "		\"%s\",\n", name)
-						fields[name] = fieldCount
-						fieldCount++
-					}
-					emitFieldValue := func(name string, _ string) {
-						emitField(name)
-					}
-					emitLoadValue := func(name, typName string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
-					}
-					emitLoad := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
-					}
-					emitLoadWait := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
-					}
-					emitSaveValue := func(name, typName string) {
-						// Keep an explicit typName ascription as a compile-time
-						// check against code generation bugs while avoiding S1021.
-						fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, recv, camelCased(name))
-						fmt.Fprintf(outputFile, "	_ = (%s)(%sValue)\n", typName, name)
-						fmt.Fprintf(outputFile, "	stateSinkObject.SaveValue(%d, %sValue)\n", fields[name], name)
-					}
-					emitSave := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
-					}
-					emitZeroCheck := func(name string) {
-						fmt.Fprintf(zeroCheckOut, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, recv, name, statePrefix, name, recv, name)
-					}
+					fields := collectFields(x)
 
 					// Generate the type name method.
 					fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, ts.Name.Name)
@@ -415,11 +373,9 @@ func main() {
 					// Generate the fields method.
 					fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, ts.Name.Name)
 					fmt.Fprintf(outputFile, "	return []string{\n")
-					scanFields(x, scanFunctions{
-						normal: emitField,
-						wait:   emitField,
-						value:  emitFieldValue,
-					})
+					for _, f := range fields.saved {
+						fmt.Fprintf(outputFile, "\t\t%q,\n", f.name)
+					}
 					fmt.Fprintf(outputFile, "	}\n")
 					fmt.Fprintf(outputFile, "}\n\n")
 
@@ -444,9 +400,19 @@ func main() {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
 						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
 						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
-						scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
-						scanFields(x, scanFunctions{value: emitSaveValue})
-						scanFields(x, scanFunctions{normal: emitSave, wait: emitSave})
+						fields.emitZeroChecks(outputFile, statePrefix, recv)
+						for slot, f := range fields.saved {
+							if f.kind == fieldValue {
+								fmt.Fprintf(outputFile, "\t%sValue := %s.save%s()\n", f.name, recv, camelCased(f.name))
+								fmt.Fprintf(outputFile, "\t_ = (%s)(%sValue)\n", f.valueType, f.name)
+								fmt.Fprintf(outputFile, "\tstateSinkObject.SaveValue(%d, %sValue)\n", slot, f.name)
+							}
+						}
+						for slot, f := range fields.saved {
+							if f.kind != fieldValue {
+								fmt.Fprintf(outputFile, "\tstateSinkObject.Save(%d, &%s.%s)\n", slot, recv, f.name)
+							}
+						}
 						fmt.Fprintf(outputFile, "}\n\n")
 					}
 
@@ -466,8 +432,19 @@ func main() {
 					if generateSaverLoader {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
 						fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
-						scanFields(x, scanFunctions{normal: emitLoad, wait: emitLoadWait})
-						scanFields(x, scanFunctions{value: emitLoadValue})
+						for slot, f := range fields.saved {
+							switch f.kind {
+							case fieldNormal:
+								fmt.Fprintf(outputFile, "\tstateSourceObject.Load(%d, &%s.%s)\n", slot, recv, f.name)
+							case fieldWait:
+								fmt.Fprintf(outputFile, "\tstateSourceObject.LoadWait(%d, &%s.%s)\n", slot, recv, f.name)
+							}
+						}
+						for slot, f := range fields.saved {
+							if f.kind == fieldValue {
+								fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", slot, f.valueType, recv, camelCased(f.name), f.valueType)
+							}
+						}
 						if hasAfterLoad {
 							// The call to afterLoad is made conditionally, because when
 							// AfterLoad is called, the object encodes a dependency on
@@ -478,11 +455,7 @@ func main() {
 						fmt.Fprintf(outputFile, "}\n\n")
 
 						// Generate the typed codec methods.
-						zeroCheckOut = &codecOut
-						cg.emitCodec(&codecOut, recv, ts.Name.Name, x, hasAfterLoad, func() {
-							scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
-						})
-						zeroCheckOut = outputFile
+						cg.emitCodec(&codecOut, recv, ts.Name.Name, fields, hasAfterLoad)
 					}
 
 					// Add to our registration.

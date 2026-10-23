@@ -32,62 +32,6 @@ import (
 // state.EncodeValue and state.DecodeValue, which dispatch on the type's kind
 // at run time (calling the type's own StateEncode/StateDecode for structs).
 
-// fieldKind is the kind of a saved field.
-type fieldKind int
-
-const (
-	fieldNormal fieldKind = iota
-	fieldWait
-	fieldValue
-)
-
-// fieldInfo describes a saved field, in slot order.
-type fieldInfo struct {
-	name string
-	typ  ast.Expr
-	kind fieldKind
-	// valueType is the type of the value for fieldValue.
-	valueType string
-}
-
-// collectFields returns the saved fields of ss in slot order. It mirrors
-// scanFields.
-func collectFields(ss *ast.StructType) []fieldInfo {
-	var fields []fieldInfo
-	if ss.Fields.List == nil {
-		return nil
-	}
-	for _, field := range ss.Fields.List {
-		names := []string{}
-		if field.Names == nil {
-			name, _ := resolveTypeName(field.Type)
-			names = append(names, name)
-		} else {
-			for _, n := range field.Names {
-				if n.Name != "_" {
-					names = append(names, n.Name)
-				}
-			}
-		}
-		for _, name := range names {
-			tag := extractStateTag(field.Tag)
-			if anon, ok := field.Type.(*ast.StructType); ok && tag == "" {
-				fields = append(fields, collectFields(anon)...)
-				continue
-			}
-			switch {
-			case tag == "":
-				fields = append(fields, fieldInfo{name: name, typ: field.Type, kind: fieldNormal})
-			case tag == "wait":
-				fields = append(fields, fieldInfo{name: name, typ: field.Type, kind: fieldWait})
-			case strings.HasPrefix(tag, ".(") && strings.HasSuffix(tag, ")"):
-				fields = append(fields, fieldInfo{name: name, typ: field.Type, kind: fieldValue, valueType: tag[2 : len(tag)-1]})
-			}
-		}
-	}
-	return fields
-}
-
 // add records a type declaration.
 func (g *codecGen) add(ts *ast.TypeSpec) {
 	g.local.add(ts)
@@ -283,9 +227,8 @@ func (g *codecGen) fieldCall(expr string, t ast.Expr, dec bool) string {
 }
 
 // emitCodec emits the Codec methods of struct type name.
-func (g *codecGen) emitCodec(w io.Writer, recv, name string, ss *ast.StructType, hasAfterLoad bool, emitZeroChecks func()) {
+func (g *codecGen) emitCodec(w io.Writer, recv, name string, fields structFields, hasAfterLoad bool) {
 	sp := g.statePrefix
-	fields := collectFields(ss)
 	idx := "stateTypeIndex" + name
 
 	fmt.Fprintf(w, "var %s %sTypeIndex\n\n", idx, sp)
@@ -297,15 +240,15 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, ss *ast.StructType,
 	fmt.Fprintf(w, "// +checklocksignore\n")
 	fmt.Fprintf(w, "func (%s *%s) StateEncode(stateEncoder *%sEncoder) {\n", recv, name, sp)
 	fmt.Fprintf(w, "	%s.beforeSave()\n", recv)
-	emitZeroChecks()
+	fields.emitZeroChecks(w, sp, recv)
 	// Values are saved first, as by StateSave.
-	for _, f := range fields {
+	for _, f := range fields.saved {
 		if f.kind == fieldValue {
 			fmt.Fprintf(w, "	%sValue := %s.save%s()\n", f.name, recv, camelCased(f.name))
 			fmt.Fprintf(w, "	_ = (%s)(%sValue)\n", f.valueType, f.name)
 		}
 	}
-	for _, f := range fields {
+	for _, f := range fields.saved {
 		if f.kind == fieldValue {
 			if vt, err := parser.ParseExpr(f.valueType); err == nil {
 				fmt.Fprintf(w, "	%s\n", g.call("&"+f.name+"Value", vt, false, false))
@@ -322,7 +265,7 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, ss *ast.StructType,
 	fmt.Fprintf(w, "func (%s *%s) StateDecode(ctx context.Context, stateDecoder *%sDecoder) {\n", recv, name, sp)
 	// Values are loaded last, as by StateLoad.
 	parsed := make(map[string]bool)
-	for _, f := range fields {
+	for _, f := range fields.saved {
 		switch f.kind {
 		case fieldValue:
 			if vt, err := parser.ParseExpr(f.valueType); err == nil {
@@ -342,7 +285,7 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, ss *ast.StructType,
 			fmt.Fprintf(w, "	%s\n", g.fieldCall(recv+"."+f.name, f.typ, true))
 		}
 	}
-	for i, f := range fields {
+	for i, f := range fields.saved {
 		if f.kind != fieldValue {
 			continue
 		}
@@ -365,7 +308,7 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, ss *ast.StructType,
 		fmt.Fprintf(w, "// StateLoadValue is called by the state package to load fields saved through values.\n")
 		fmt.Fprintf(w, "func (%s *%s) StateLoadValue(ctx context.Context, stateField int, stateValue any) {\n", recv, name)
 		fmt.Fprintf(w, "	switch stateField {\n")
-		for i, f := range fields {
+		for i, f := range fields.saved {
 			if f.kind == fieldValue && parsed[f.name] {
 				fmt.Fprintf(w, "	case %d:\n", i)
 				// v may be a nil interface value.

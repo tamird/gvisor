@@ -91,7 +91,7 @@ func parseTestSource(t *testing.T) (*ast.File, *codecGen, *ast.StructType) {
 func TestCollectFields(t *testing.T) {
 	_, _, node := parseTestSource(t)
 	var got []string
-	for _, f := range collectFields(node) {
+	for _, f := range collectFields(node).saved {
 		got = append(got, f.name)
 	}
 	want := "a b c n al p op s ns arr pairs m bn fm o f i li v w x"
@@ -103,7 +103,7 @@ func TestCollectFields(t *testing.T) {
 func TestFieldCalls(t *testing.T) {
 	_, g, node := parseTestSource(t)
 	calls := make(map[string][2]string)
-	for _, f := range collectFields(node) {
+	for _, f := range collectFields(node).saved {
 		calls[f.name] = [2]string{g.fieldCall("x."+f.name, f.typ, false), g.fieldCall("x."+f.name, f.typ, true)}
 	}
 	for _, tc := range []struct {
@@ -154,9 +154,7 @@ func TestEmitCodec(t *testing.T) {
 	_, g, node := parseTestSource(t)
 	var buf bytes.Buffer
 	buf.WriteString("package p\n\n")
-	g.emitCodec(&buf, "x", "node", node, true, func() {
-		buf.WriteString("\t// zero value checks\n")
-	})
+	g.emitCodec(&buf, "x", "node", collectFields(node), true)
 	out := buf.String()
 	if _, err := parser.ParseFile(token.NewFileSet(), "out.go", out, 0); err != nil {
 		t.Fatalf("generated code does not parse: %v\n%s", err, out)
@@ -165,7 +163,7 @@ func TestEmitCodec(t *testing.T) {
 		"var stateTypeIndexnode state.TypeIndex",
 		"func (x *node) StateTypeIndex() *state.TypeIndex {",
 		// Values are saved first, as by StateSave, and encoded in slot order.
-		"x.beforeSave()\n\t// zero value checks\n\tvValue := x.saveV()\n\t_ = (int64)(vValue)\n\tstate.EncodeInt(stateEncoder, &x.a)",
+		"x.beforeSave()\n\tif !state.IsZeroValue(&x.z) { state.Failf(\"z is %#v, expected zero\", &x.z) }\n\tvValue := x.saveV()\n\t_ = (int64)(vValue)\n\tstate.EncodeInt(stateEncoder, &x.a)",
 		"state.EncodeInt(stateEncoder, &vValue)\n\tstate.EncodePointer(stateEncoder, &x.w)",
 		// Values are decoded in slot order, and loaded last, as by StateLoad.
 		"var vValue int64\n\tstateDecoder.BeginWait()\n\tstate.DecodeInt(stateDecoder, &vValue)\n\tvRef := stateDecoder.EndValue()\n\tstateDecoder.BeginWait()\n\tstate.DecodePointer(stateDecoder, &x.w)\n\tstateDecoder.EndWait()",
