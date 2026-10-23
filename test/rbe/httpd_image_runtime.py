@@ -16,6 +16,7 @@ from image_runtime import prepare_benchmark_helpers, prepared_runtime
 
 
 def run(invoke, evidence: Path, private: Path) -> None:
+    config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     records = {"status": "INCOMPLETE", "scope": "AMD64 runtime; ARM64 pinned image/layer inspection only", "commands": [], "consumers": [], "diagnostic_errors": []}
     scripts = Path(__file__).parent
     python = ["run", "--lockfile_mode=error", "--noannounce_rc", "@rules_python//python/bin:python", "--"]
@@ -34,13 +35,14 @@ def run(invoke, evidence: Path, private: Path) -> None:
         return result.stdout
 
     def consumer(phase: str, target: str, runtime: str, pattern: str, required: set[str], extra: list[str] | None = None) -> dict:
+        # Benchmarks emit metric rows and a package PASS, not named terminal events.
         options = ["--compilation_mode=opt", "--lockfile_mode=error", "--noannounce_rc",
                    "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
                    "--config=x86_64", "--runs_per_test=1", "--flaky_test_attempts=1",
-                   "--nocache_test_results", "--test_env=GO_TEST_WRAP_TESTV=1",
+                   "--nocache_test_results", "--test_env=GO_TEST_WRAP_TESTV=" + ("1" if required else "0"),
                    "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
                    "--strategy=TestRunner=local", "--local_test_jobs=1", "--test_timeout=900",
-                   "--test_arg=-runtime=" + runtime, "--test_arg=-test.v=test2json",
+                   "--test_arg=-runtime=" + runtime, "--test_arg=-test.v=" + ("test2json" if required else "false"),
                    "--test_filter=" + pattern, "--test_arg=-test.run=" + pattern, *(extra or [])]
         row = {"phase": phase, "target": target, "required_cases": sorted(required), "status": "INCOMPLETE"}
         records["consumers"].append(row)
@@ -215,7 +217,8 @@ def run(invoke, evidence: Path, private: Path) -> None:
 
     try:
         records["containers_before"] = sorted(command(["docker", "ps", "--all", "--quiet", "--no-trunc"]).splitlines())
-        for package in ("basic", "benchmarks"):
+        packages = ("benchmarks",) if config.get("benchmark_only", False) else ("basic", "benchmarks")
+        for package in packages:
             contents_path = evidence / (package + "-httpd-contents.json")
             contents = report.read_json(contents_path)
             amd64 = next(row for row in contents["architectures"] if row["architecture"] == "amd64")
@@ -243,10 +246,9 @@ def run(invoke, evidence: Path, private: Path) -> None:
                         if checked["status"] != "PASS":
                             raise RuntimeError("Containerd consumer cleanup failed")
                 else:
-                    configuration = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
                     records["benchmark_helpers"] = prepare_benchmark_helpers(
                         evidence / "benchmark-helper-images.json", private / "benchmark-helper-images",
-                        configuration["benchmark_utility"])
+                        config["benchmark_utility"])
                     consumer("httpd-benchmark", "//test/benchmarks/network:httpd_test", runtime, "^$", set(),
                              ["--test_arg=-test.bench=^BenchmarkHttpd$/^filesize\\.(1Kb|1Mb|notfound)$/^concurrency\\.(1|25)$",
                               "--test_arg=-test.benchtime=100x", "--test_arg=-test.count=1"])
