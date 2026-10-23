@@ -4,6 +4,8 @@
 # Check completeness with ARGS=--mode=verify.
 # Entries whose license cannot be fetched automatically are maintained by hand and preserved
 # by --mode=fetch, so you can hand-edit the file for these.
+# Entries marked manually_audited or containing LicenseRef identifiers require
+# re-audit when their artifact pin changes.
 - dependency: abseil-cpp
   version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
   retrieved: "2026-10-06"
@@ -1275,12 +1277,6 @@
   commit: 417d98fd7a9836a488ec57467c2eb78c25b30205
   sha256: 58dddbe703a26df30f79a6335ab13f4a4a0c128dc2f9371ec7a4722e12f258cc
   license: Apache-2.0
-- dependency: zlib-ng
-  version: https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.3.3.tar.gz
-  retrieved: "2026-10-02"
-  commit: 12731092979c6d07f42da27da673a9f6c7b13586
-  sha256: f9c65aa9c852eb8255b636fd9f07ce1c406f061ec19a2e7d508b318ca0c907d1
-  license: Zlib
 - dependency: zstd
   version: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
   retrieved: "2026-10-02"
