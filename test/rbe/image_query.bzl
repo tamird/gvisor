@@ -15,6 +15,7 @@ def format(target):
         "Make_logs",
         "Configure_logs",
         "busybox.config",
+        "ngx_auto_config.h",
         "apr.h",
         "apr_private.h",
         "apu_config.h",

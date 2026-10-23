@@ -54,6 +54,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 pass
             case _:
                 raise ValueError(f"Expected two split outputs: {label}: {selected}")
+    if config.get("graph_only", False):
+        return
     execution_log = private / "mixed-images-execution.json"
     try:
         built = invoke("mixed-images", ["build", *options, "--keep_going",
