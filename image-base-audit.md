@@ -85,7 +85,10 @@ reuses the source-built BusyBox binary. Tmpfile installs only cat's applet
 path alongside its payload and sticky /tmp directory. Syscallbench installs
 sleep's path and enables duration suffixes for its existing sleep 24h
 command. Both images start from scratch and include the executable's
-notices. Source review and remote consumer validation are pending.
+notices. Independent source review has passed; remote consumer validation
+is pending. BusyBox, tmpfile and PIDFD cover both target architectures.
+Syscallbench retains its existing AMD64-only syscall assembly and ABI
+constraint, so its build and runtime validation remain AMD64-only.
 
 Retain the existing tests as acceptance checks: TestTmpFile must read the
 fixture, and all four syscallbench modes must run through their long-lived

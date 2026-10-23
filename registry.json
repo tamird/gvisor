@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T00:37:10.846175+00:00",
+    "updatedAt": "2026-10-23T01:01:50.311990+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18668,16 +18668,64 @@
       "title": "Use explicit source-built utilities for tmpfile and syscallbench",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03",
-      "status": "Agent work; source review and remote qualification pending",
-      "updatedAt": "2026-10-23T00:37:10.846175+00:00",
-      "summary": "The scratch extension reuses the qualified PIDFD source-built utilities for tmpfile cat and syscallbench sleep. Root owns source; Node owns independent review and remote image/consumer validation. It depends on the PIDFD utility source and remains within the existing image-runtime-bases investigation. No contributor review or successful new image execution is claimed.",
+      "status": "Agent work; source review passed, remote qualification pending",
+      "updatedAt": "2026-10-23T01:01:50.311990+00:00",
+      "summary": "The scratch extension reuses the qualified PIDFD source-built utilities for tmpfile cat and syscallbench sleep. Root owns source; Node independently accepted its source and owns remote image/consumer validation. BusyBox, tmpfile and PIDFD cover both target CPUs; syscallbench retains its existing AMD64-only syscall assembly and ABI constraint. No architecture port, contributor approval or new successful runtime is claimed.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "6cae99aa007bf7b1f87e5fe0a8f047be228f7e03",
-        "observedAt": "2026-10-23T00:37:10.846175+00:00",
+        "observedAt": "2026-10-23T01:01:50.311990+00:00",
         "disposition": "Source review and remote qualification",
-        "nextAction": "Finish the exact source peer and existing image harness validation; root integrates the results."
+        "nextAction": "Finish the existing image harness validation with both-CPU utility/tmpfile/PIDFD checks and AMD64-only syscallbench; root integrates results."
       }
+    },
+    {
+      "id": "branch:rules-img-rust",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-rust-rs-review",
+      "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
+      "title": "Build the Rust image with rules_img and rules_rs",
+      "group": "bazel",
+      "url": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
+      "status": "Qualified revision ready for contributor review",
+      "updatedAt": "2026-10-23T01:01:50.311990+00:00",
+      "summary": "The revision uses rules_rs defaults and separates execution-host selection from Linux musl image targets. Both Linux architectures produce static images; the combined index, archives and build contexts exactly match the runtime-qualified outputs after the final transitive producer-lock correction and catalog adoption. Existing AMD64 runc and systrap TestRust cases, ordinary Make selection, native runtime input identities, notices and cleanup pass. Full canonical Fetch/Verify passes for 201 entries. Darwin compiler dependencies were checked through configured cquery analysis only; no Darwin execution or ARM64 runtime is claimed. The standalone source preserves GNU defaults and relies on the recorded declared-compiler integration. Earlier failed attempts remain retained. The requested rules_rs/platform revision has not yet received contributor approval; no upstream PR is open.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
+        "observedAt": "2026-10-23T01:01:50.311990+00:00",
+        "disposition": "Qualified revision ready for contributor review",
+        "nextAction": "Present the exact final revision and recorded prerequisites for contributor review; retain the rules_rs and platform evidence without replaying completed work.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
+          "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
+          "https://app.buildbuddy.io/invocation/0d808aae-c2c6-436c-b08d-6385ef7c66ce",
+          "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Final rules_rs revision",
+          "url": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+        },
+        {
+          "label": "Previous proposal refinement",
+          "url": "https://github.com/tamird/gvisor/compare/91631569d80f8affb32f39757de44e2513efab9c...6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+        },
+        {
+          "label": "Runtime and configured host-toolchain checks",
+          "url": "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579"
+        },
+        {
+          "label": "Full canonical catalog",
+          "url": "https://app.buildbuddy.io/invocation/0d808aae-c2c6-436c-b08d-6385ef7c66ce"
+        },
+        {
+          "label": "Final five-output equality",
+          "url": "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87"
+        }
+      ]
     }
   ],
   "edges": [
@@ -20859,6 +20907,34 @@
       "type": "blocked_by",
       "reason": "Reuses the declared source-built BusyBox utility inputs.",
       "evidence": "https://github.com/tamird/gvisor/commit/6cae99aa007bf7b1f87e5fe0a8f047be228f7e03"
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-rust",
+      "type": "depends_on",
+      "reason": "Uses the basic rules_img source and Make integration.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+    },
+    {
+      "from": "branch:hermetic-compiler-review",
+      "to": "branch:rules-img-rust",
+      "type": "depends_on",
+      "reason": "Requires the declared C/C++ toolchain integration used by the hosted rules_rs linker and execution tools.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+    },
+    {
+      "from": "branch:hermetic-linux-headers",
+      "to": "branch:rules-img-rust",
+      "type": "depends_on",
+      "reason": "Qualified together with the declared compiler and current Linux header composition.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+    },
+    {
+      "from": "pr:15146",
+      "to": "branch:rules-img-rust",
+      "type": "depends_on",
+      "reason": "Canonical dependency classification uses the accepted multi-notice classifier.",
+      "evidence": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
     }
   ],
   "investigations": [
