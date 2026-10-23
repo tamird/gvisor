@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
+	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 	"gvisor.dev/gvisor/test/metricsviz"
@@ -156,6 +159,22 @@ func RunWithDifferentFilesystems(ctx context.Context, b *testing.B, machine harn
 				}, "/fusebin/fuse", "--dir="+prefix, "--debug=false")
 				if err != nil {
 					b.Fatalf("starting fuse server failed with: %v", err)
+				}
+				// Wait for the mount before copying: mounting over an in-progress
+				// copy hides the directories that cp has already created.
+				mountCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+				defer cancel()
+				if err := testutil.PollContext(mountCtx, func() error {
+					out, err := container.Exec(mountCtx, dockerutil.ExecOpts{}, "stat", "-f", "-c", "%t", prefix)
+					if err != nil {
+						return fmt.Errorf("statfs %s: %w (%s)", prefix, err, out)
+					}
+					if strings.TrimSpace(out) != fmt.Sprintf("%x", linux.FUSE_SUPER_MAGIC) {
+						return fmt.Errorf("statfs %s: got filesystem type %q, want FUSE", prefix, out)
+					}
+					return nil
+				}); err != nil {
+					b.Fatalf("waiting for FUSE mount: %v", err)
 				}
 			}
 

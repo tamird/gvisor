@@ -15,8 +15,10 @@ go_library(
     data = ["//test/runner/fuse"],
     importpath = "gvisor.dev/gvisor/test/benchmarks/fs/fsbench",
     deps = [
+        "//pkg/abi/linux",
         "//pkg/cleanup",
         "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "//test/metricsviz",
