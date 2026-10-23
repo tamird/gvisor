@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T13:00:23.434380+00:00",
+    "updatedAt": "2026-10-23T13:19:33.592807+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18887,31 +18887,34 @@
       }
     },
     {
-      "id": "branch:protobuf-37-rust-locks",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "protobuf-37-grpc-framed-current",
-      "head": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
+      "id": "pr:16254",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "protobuf-37-current",
+      "head": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
       "title": "Use released Protobuf Rust lockfiles",
-      "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2",
+      "url": "https://github.com/google/gvisor/pull/16254",
       "group": "bazel",
-      "status": "Contributor approved; upstream compatibility report in progress",
-      "summary": "The contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
+      "status": "open",
+      "summary": "Approved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
-        "disposition": "Contributor approved; upstream compatibility report in progress",
-        "nextAction": "Report the four missing reflection_cc dependencies to grpc/grpc, cite the report in the existing patch, and preserve recorded delivery prerequisites; no repeated approval question."
+        "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
+        "observedAt": "2026-10-23T13:19:33.592807+00:00",
+        "disposition": "Approved source delivered; current public CI and review pending",
+        "nextAction": "Follow exact current checks and substantive reviews through the existing tracker; preserve approval and prior validation, with no duplicate question.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16254"
+        ]
       },
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "updatedAt": "2026-10-23T13:19:33.592807+00:00",
       "refinement": {
         "before": {
-          "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+          "head": "1e27ec7e101cd5bd327344b76497b0884fbc594e"
         },
         "after": {
-          "head": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
-          "base": "3987e82eec1bd08624a05637ac079b4dbce48799"
+          "head": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
+          "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
         }
       },
       "evidence": [
@@ -18927,7 +18930,8 @@
           "label": "Protobuf37 full canonical catalog",
           "url": "https://app.buildbuddy.io/invocation/6b2a247c-93ce-425c-926c-9c4179545ddc"
         }
-      ]
+      ],
+      "number": 16254
     },
     {
       "id": "pr:16234",
@@ -19194,22 +19198,17 @@
       ]
     },
     {
-      "id": "branch:fix/http-readiness-cancellation",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16253",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/http-readiness-cancellation",
       "head": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
-      "url": "https://github.com/tamird/gvisor/commit/19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+      "url": "https://github.com/google/gvisor/pull/16253",
       "title": "Clean up HTTP probes after cancellation",
       "group": "tests",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-23T13:00:23.434380+00:00",
-      "summary": "Root requested contributor review of the independent cleanup correction at 19a12d5fc. A direct deferred CleanUp(context.WithoutCancel(ctx)) preserves caller values while allowing cleanup after cancellation; the arbitrary thirty-second timeout and closure are removed at the user's request. The real uncached native cancellation case passes: a running probe is absent before fallback cleanup. The same retained source-built BusyBox fixture and unchanged Docker client/caller mechanism were used; the old distro utility image was not replayed. No image-migration prerequisite applies. Original failure and the earlier timeout-version PASS remain retained. Compare git range-diff 2409f500f^! 19a12d5fc^!.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
-        "url": "https://github.com/tamird/gvisor/commit/19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45"
-      },
+      "status": "open",
+      "updatedAt": "2026-10-23T13:19:33.592807+00:00",
+      "summary": "The contributor approved the direct WithoutCancel cleanup and Node delivered it as #16253 at exact19a12. The published commit and body match the reviewed independent correction. Retained uncached cancellation validation proves the running probe is absent before fallback cleanup. No image-migration dependency or repeated contributor question applies.\n\nEarlier source-specific record:\n\nRoot requested contributor review of the independent cleanup correction at 19a12d5fc. A direct deferred CleanUp(context.WithoutCancel(ctx)) preserves caller values while allowing cleanup after cancellation; the arbitrary thirty-second timeout and closure are removed at the user's request. The real uncached native cancellation case passes: a running probe is absent before fallback cleanup. The same retained source-built BusyBox fixture and unchanged Docker client/caller mechanism were used; the old distro utility image was not replayed. No image-migration prerequisite applies. Original failure and the earlier timeout-version PASS remain retained. Compare git range-diff 2409f500f^! 19a12d5fc^!.",
       "refinement": {
         "before": {
           "head": "2409f500fc6515efd1c57524f75de9e5e4cd82cf"
@@ -19221,14 +19220,14 @@
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
-        "observedAt": "2026-10-23T13:00:23.434380+00:00",
-        "disposition": "Contributor question pending after requested simplification",
-        "nextAction": "Await the existing contributor decision, then deliver this independent correction. Do not repeat the review request or impose image-migration dependencies.",
+        "observedAt": "2026-10-23T13:19:33.592807+00:00",
+        "disposition": "Approved source delivered; current public CI and review pending",
+        "nextAction": "Follow exact current checks and substantive reviews through the existing tracker; preserve approval and prior validation, with no duplicate question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
-          "https://app.buildbuddy.io/invocation/c10d9305-fd86-4144-b9d8-024998ac0f58"
+          "https://github.com/google/gvisor/pull/16253"
         ]
-      }
+      },
+      "number": 16253
     }
   ],
   "edges": [
@@ -21427,11 +21426,11 @@
       "evidence": "https://github.com/tamird/gvisor/commit/ffed1e6bedc48eaba7880b992f0c2d72e2a377dc"
     },
     {
-      "from": "branch:protobuf-37-rust-locks",
+      "from": "pr:16254",
       "to": "branch:rules-img-rust",
       "type": "depends_on",
       "reason": "Use the released Protobuf producer lockfiles instead of a local generated-lock patch.",
-      "evidence": "https://github.com/tamird/gvisor/commit/9eb44f59b5b7191399a30e1d96a2909cba2ae099"
+      "evidence": "https://github.com/google/gvisor/pull/16254"
     },
     {
       "from": "pr:16234",
