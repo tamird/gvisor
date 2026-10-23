@@ -78,7 +78,7 @@ image_layer(
 image_layer(
     name = "rust_notice_layer",
     srcs = {
-        "/usr/share/licenses/rust/COPYRIGHT-library.html": "@rust_compiler_notices//:share/doc/rust/COPYRIGHT-library.html",
+        "/usr/share/licenses/rust/COPYRIGHT-library.html": "@default_rust_toolchains//:library_notice",
         "/usr/share/licenses/rust/NOTICE": "rust/NOTICE",
     },
     create_parent_directories = "enabled",
