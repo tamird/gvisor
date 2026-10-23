@@ -344,7 +344,7 @@ http_file(
 )
 
 ### Docker integration test images
-# Pin both architectures of the existing test distributions. Image assembly
+# Pin both architectures of the Alpine fixture. Image assembly
 # uses declared layers and does not require a Docker daemon.
 img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
 
@@ -359,19 +359,6 @@ img_pull(
     registry = "index.docker.io",
     repository = "library/alpine",
     tag = "3.11.5",
-)
-
-img_pull(
-    name = "test_busybox",
-    digest = "sha256:95cf004f559831017cdf4628aaf1bb30133677be8702a8c5f2994629f637a209",
-    layer_handling = "eager",
-    platforms = [
-        "linux/amd64",
-        "linux/arm64",
-    ],
-    registry = "index.docker.io",
-    repository = "library/busybox",
-    tag = "1.31.1",
 )
 
 ### Toolchains

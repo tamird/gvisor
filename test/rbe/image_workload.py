@@ -1,4 +1,4 @@
-"""Qualify shared scratch utilities through their ordinary image targets."""
+"""Qualify source-built BusyBox and resolver images with the existing root tests."""
 import json
 import os
 from pathlib import Path
@@ -36,10 +36,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             row = {"architecture": architecture, "build_status": built["status"], "outputs": {}}
             records["architectures"].append(row)
             queries = {
-                "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/basic:pidfd_tests_archive))', []),
-                "config": ('filter("^(@@)?//images:busybox_config$", deps(//images/basic:pidfd_tests_archive))', []),
-                "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:pidfd_tests_archive))', ["--output_groups=Make_logs"]),
-                "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/basic:pidfd_tests_archive))', []),
+                "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/basic:busybox_archive))', []),
+                "config": ('filter("^(@@)?//images:busybox_config$", deps(//images/basic:busybox_archive))', []),
+                "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:busybox_archive))', ["--output_groups=Make_logs"]),
+                "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/basic:busybox_archive))', []),
             }
             # Foreign_cc's Make log is an output of the same producing action;
             # its two scripts are action inputs. download_outputs=all retains
@@ -74,14 +74,40 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         records["status"] = "PASS"
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
         scripts = Path(__file__).parent
-        inspected = invoke("leaf-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
+        inspected = invoke("root-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
                            "@rules_python//python/bin:python", "--",
-                           str(scripts / "leaf_image_inspect.py"), str(evidence)], "command", targets=[])
+                           str(scripts / "root_image_inspect.py"), str(evidence)], "command", targets=[])
         if inspected["status"] != "PASS":
-            raise RuntimeError("Scratch leaf image closure verification failed")
-        import image_pidfd_runtime
-        image_pidfd_runtime.run(invoke, evidence, private)
-        import image_leaf_runtime
-        image_leaf_runtime.run(invoke, evidence, private)
+            raise RuntimeError("Root image closure verification failed")
+        runtime = str(scripts / "root_image_runtime.py")
+        prepared = invoke("root-runtime-preparation", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                          "@rules_python//python/bin:python", "--", runtime, str(evidence), "prepare"],
+                          "command", targets=[])
+        if prepared["status"] != "PASS":
+            raise RuntimeError("Root consumer image preparation failed")
+        test_targets = ["//test/root:crictl_test"]
+        selection = "^(TestHomeDir|TestExecWithGrouping|TestCrictlEmptyDirSizeLimit|TestMountOverSymlinks)$"
+        test_options = [*options, "--config=x86_64", "--runs_per_test=1", "--flaky_test_attempts=1",
+                        "--nocache_test_results", "--test_env=GO_TEST_WRAP_TESTV=1",
+                        "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
+                        "--strategy=TestRunner=local", "--local_test_jobs=1", "--test_timeout=900",
+                        "--test_filter=" + selection, "--test_arg=-test.run=" + selection,
+                        "--test_arg=-harness_test_images=basic/busybox,basic/symlink-resolv",
+                        "--test_arg=-containerd_version=2.2.3"]
+        try:
+            analysis = invoke("root-consumer-analysis", ["test", *test_options, "--nobuild", *test_targets],
+                              "analysis", targets=test_targets)
+            if analysis["status"] != "PASS":
+                raise RuntimeError("Existing root consumer analysis failed")
+            result = invoke("root-consumer", ["test", *test_options, *test_targets], "test",
+                            (evidence / "invocation-root-consumer-analysis/events.jsonl",), targets=test_targets)
+            if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
+                raise RuntimeError("Required root consumers failed or skipped")
+        finally:
+            restored = invoke("root-runtime-restoration", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                              "@rules_python//python/bin:python", "--", runtime, str(evidence), "check"],
+                              "command", targets=[])
+            if restored["status"] != "PASS":
+                raise RuntimeError("Root consumer left containers or changed daemon configuration")
     finally:
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
