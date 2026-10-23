@@ -176,7 +176,7 @@ jobs:
         mkdir -p "$out"
         git rev-parse HEAD > "$out/source.txt"
         preparation_status=0
-        bazel --ignore_all_rc_files cquery --lockfile_mode=update \
+        bazel --ignore_all_rc_files cquery --experimental_isolated_extension_usages --lockfile_mode=update \
           'set(//test/rbe:credential_artifacts_test //test/rbe:qualification_report_test)' \
           > "$out/preparation-stdout.txt" 2> "$out/preparation-stderr.txt" || preparation_status=$?
         printf '%s\n' "$preparation_status" > "$out/preparation-exit.txt"
@@ -190,14 +190,14 @@ jobs:
             arguments+=(--test_arg=QualificationReportTest.test_work_deadline_reaches_capture_and_bundle)
           fi
           native_status=0
-          bazel --ignore_all_rc_files test --lockfile_mode=error \
+          bazel --ignore_all_rc_files test --experimental_isolated_extension_usages --lockfile_mode=error \
             --strategy=TestRunner=local --nocache_test_results \
             --test_timeout=180 --test_output=all --test_arg=-v "${arguments[@]}" \
             "//test/rbe:$owner" \
             > "$out/$owner-stdout.txt" 2> "$out/$owner-stderr.txt" || native_status=$?
           printf '%s\n' "$native_status" > "$out/$owner-native-exit.txt"
           if (( native_status != 0 )); then status=$native_status; fi
-          logs=$(bazel --ignore_all_rc_files info bazel-testlogs --lockfile_mode=error)
+          logs=$(bazel --ignore_all_rc_files info bazel-testlogs --experimental_isolated_extension_usages --lockfile_mode=error)
           for file in test.log test.xml; do
             cp "$logs/test/rbe/$owner/$file" "$out/$owner-$file" || status=1
           done
