@@ -267,21 +267,22 @@ func TestRACKWithReorder(t *testing.T) {
 	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
 	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
 
-	// We are not sending ACK for these packets.
-	const numPkts = 4
-	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
+	// Netstack's Reno halves the outstanding flight on loss. Send eight
+	// segments so recovery leaves room for the second flight of four. Its three
+	// SACKed segments exercise RACK's reordering window past the dup-ACK threshold.
+	const firstFlightPackets = 8
+	const secondFlightPackets = 4
+	sendAndReceive(t, dut, conn, firstFlightPackets, acceptFd, payloadSize, false /* sendACK */)
 
 	time.Sleep(simulatedRTT)
 	// SACK in reverse order for the connection to detect reorder.
 	var start seqnum.Value
 	var end seqnum.Value
-	for i := 0; i < numPkts-1; i++ {
+	for i := 0; i < firstFlightPackets-1; i++ {
 		sackBlock := make([]byte, 40)
 		sbOff := 0
-		start = seqNum1.Add(seqnum.Size((numPkts - i - 1) * payloadSize))
+		start = seqNum1.Add(seqnum.Size((firstFlightPackets - i - 1) * payloadSize))
 		end = start.Add(seqnum.Size((i + 1) * payloadSize))
-		sackBlock = make([]byte, 40)
-		sbOff = 0
 		sbOff += header.EncodeNOP(sackBlock[sbOff:])
 		sbOff += header.EncodeNOP(sackBlock[sbOff:])
 		sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
@@ -290,13 +291,21 @@ func TestRACKWithReorder(t *testing.T) {
 		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
 	}
 
-	// Send a DSACK block indicating both original and retransmitted
-	// packets are received, RACK will increase the reordering window on
-	// every DSACK.
+	// A DSACK reports duplicate bytes actually received. Wait for the first
+	// segment to be retransmitted before reporting exactly that segment.
+	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, time.Second); err != nil {
+		t.Fatalf("first-round retransmission was not received: %s", err)
+	}
+	// Require recovery before the DSACK, so the Open poll below cannot succeed
+	// on stale pre-ACK state. Loss would indicate a retransmission timeout.
+	beforeDSACK := dut.GetSockOptTCPInfo(t, acceptFd)
+	if got, want := beforeDSACK.CaState, uint8(linux.TCP_CA_Recovery); got != want {
+		t.Fatalf("congestion state after retransmission = %d, want %d (recovery)", got, want)
+	}
 	dsackBlock := make([]byte, 40)
 	dbOff := 0
 	start = seqNum1
-	end = start.Add(seqnum.Size(2 * payloadSize))
+	end = start.Add(seqnum.Size(payloadSize))
 	dbOff += header.EncodeNOP(dsackBlock[dbOff:])
 	dbOff += header.EncodeNOP(dsackBlock[dbOff:])
 	dbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
@@ -304,28 +313,40 @@ func TestRACKWithReorder(t *testing.T) {
 	}}, dsackBlock[dbOff:])
 	conn.Send(t, testbench.TCP{
 		Flags:   testbench.TCPFlags(header.TCPFlagAck),
-		AckNum:  testbench.Uint32(uint32(seqNum1.Add(seqnum.Size(numPkts * payloadSize)))),
+		AckNum:  testbench.Uint32(uint32(seqNum1.Add(seqnum.Size(firstFlightPackets * payloadSize)))),
 		Options: dsackBlock[:dbOff],
 	})
 
-	seqNum1.UpdateForward(seqnum.Size(numPkts * payloadSize))
-	// Loss recovery can shrink the congestion window below four segments.
-	// Acknowledge more data so the next flight tests RACK rather than
-	// congestion-window limits.
-	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
-	seqNum1.UpdateForward(seqnum.Size(numPktsForRTT * payloadSize))
-	if got, want := dut.GetSockOptTCPInfo(t, acceptFd).SndCwnd, uint32(numPkts); got < want {
-		t.Fatalf("congestion window = %d, want at least %d segments", got, want)
+	// Wait for the DSACK to finish recovery before sending the next flight.
+	deadline := time.Now().Add(time.Second)
+	for {
+		info := dut.GetSockOptTCPInfo(t, acceptFd)
+		if info.CaState == linux.TCP_CA_Open {
+			if got, want := info.SndCwnd, uint32(secondFlightPackets); got < want {
+				t.Fatalf("congestion window = %d, want at least %d segments", got, want)
+			}
+			break
+		}
+		if !time.Now().Before(deadline) {
+			t.Fatal("DSACK did not complete recovery within one second")
+		}
+		time.Sleep(time.Millisecond)
 	}
+
+	seqNum1.UpdateForward(seqnum.Size(firstFlightPackets * payloadSize))
+	// ExpectData tracks the end of the last matched segment, including old
+	// retransmissions. Restore the cumulative receive position before expecting
+	// new data, so queued first-flight retransmissions cannot match this flight.
+	*conn.RemoteSeqNum(t) = seqNum1
 	sendTime := time.Now()
-	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
+	sendAndReceive(t, dut, conn, secondFlightPackets, acceptFd, payloadSize, false /* sendACK */)
 
 	time.Sleep(simulatedRTT)
 	// Send SACK for [2-4] packets.
 	sackBlock := make([]byte, 40)
 	sbOff := 0
 	start = seqNum1.Add(seqnum.Size(payloadSize))
-	end = start.Add(seqnum.Size(3 * payloadSize))
+	end = start.Add(seqnum.Size((secondFlightPackets - 1) * payloadSize))
 	sbOff += header.EncodeNOP(sackBlock[sbOff:])
 	sbOff += header.EncodeNOP(sackBlock[sbOff:])
 	sbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
