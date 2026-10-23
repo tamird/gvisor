@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T09:37:22.521782+00:00",
+    "updatedAt": "2026-10-23T09:51:42.788996+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10792,20 +10792,22 @@
       "title": "Reject ambiguous loss-probe RTT samples",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/a4eadcd7eff9248399315d5997908bb233f24504",
-      "status": "Maintainer approved; import failed",
-      "updatedAt": "2026-10-16T18:39:11.185330+00:00",
-      "summary": "nybidari approved the published a4eadcd7e head and added the ready-to-pull label. Copybara then reported an import error at 18:27 UTC: \u201cAn error happened while migrating the change.\u201d The complete public timeline, status and current import inventory provide no diagnostic log or linked import. This requires maintainer attention; it does not establish a source-check failure. PR #15819 remains open and mergeable, with its public validation checks passing. The contributor-approved compact RACK proposal still waits for this prerequisite to merge.\n\nPublished as #15819 at a4eadcd7e. Tail loss probes bypassed RTT measurement invalidation, so ambiguous ACKs changed SRTT and RTO. Move the existing Karn guard into the shared retransmission path. Packet regressions fail before the fix and pass afterward on both architectures; full ACK/RACK suites and analyzers pass, retaining the existing DSACK skip. Independent source and original-result reviews are complete. ",
+      "status": "Delivered as #15819",
+      "updatedAt": "2026-10-23T09:51:42.788996+00:00",
+      "summary": "Delivered as PR #15819; this historical proposal is not a separate pending delivery. The current source is 4d0adbc37ea91a904c84392d669a49509db5ad7c, independently verified to preserve the approved patch. The 2026-10-23 09:43 UTC snapshot reports the source open and approved, with matching import #15995 and successful public checks. The earlier October 16 import failure is historical. Compact RACK remains held on the actual #15819 merge.\n\nHistorical proposal and validation:\n\nnybidari approved the published a4eadcd7e head and added the ready-to-pull label. Copybara then reported an import error at 18:27 UTC: \u201cAn error happened while migrating the change.\u201d The complete public timeline, status and current import inventory provide no diagnostic log or linked import. This requires maintainer attention; it does not establish a source-check failure. PR #15819 remains open and mergeable, with its public validation checks passing. The contributor-approved compact RACK proposal still waits for this prerequisite to merge.\n\nPublished as #15819 at a4eadcd7e. Tail loss probes bypassed RTT measurement invalidation, so ambiguous ACKs changed SRTT and RTO. Move the existing Karn guard into the shared retransmission path. Packet regressions fail before the fix and pass afterward on both architectures; full ACK/RACK suites and analyzers pass, retaining the existing DSACK skip. Independent source and original-result reviews are complete. ",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Maintainer attention: import failed without a public diagnostic",
+        "owner": "work_map_current",
+        "disposition": "Delivered; follow existing PR #15819",
         "sourceHead": "a4eadcd7eff9248399315d5997908bb233f24504",
-        "observedAt": "2026-10-16T18:39:11.185330+00:00",
-        "nextAction": "Follow maintainer resolution of the Copybara import failure and actual merge; keep dependent compact RACK publication held. No source failure is established by the import status.",
+        "observedAt": "2026-10-23T09:51:42.788996+00:00",
+        "nextAction": "Follow current source #15819 and its matching import through the existing watcher. No duplicate PR or contributor question; preserve compact RACK dependency on the actual #15819 merge.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
           "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5",
           "https://github.com/google/gvisor/pull/15819",
-          "https://github.com/google/gvisor/pull/15819#pullrequestreview-5551987440"
+          "https://github.com/google/gvisor/pull/15819#pullrequestreview-5551987440",
+          "https://github.com/tamird/gvisor/commit/4d0adbc37ea91a904c84392d669a49509db5ad7c",
+          "https://github.com/google/gvisor/pull/15995"
         ]
       }
     },
