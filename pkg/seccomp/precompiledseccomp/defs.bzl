@@ -145,7 +145,7 @@ def precompiled_seccomp_rules(
     ]
     gen_bin_deps = [programs_to_compile_go_library] + base_gen_bin_deps
     go_binary(
-        name = name + "_gen_bin",
+        name = name + "_gen_dynamic_bin",
         srcs = [out + ".gen.go"],
         importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_bin",
         visibility = ["//tools/codeql:__pkg__"],
@@ -156,6 +156,34 @@ def precompiled_seccomp_rules(
         pure = True,
         noasan = True,
         race = "off",
+    )
+
+    # gotsan forces the generator to be dynamically linked.
+    # QEMU cannot load the dynamic loader of the generator,
+    # so it must be static in this configuration.
+    go_binary(
+        name = name + "_gen_static_bin",
+        srcs = [out + ".gen.go"],
+        importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_static_bin",
+        visibility = ["//tools/codeql:__pkg__"],
+        deps = gen_bin_deps,
+        embedsrcs = [
+            ":" + out + ".gen.lib.tmpl",
+        ],
+        pure = True,
+        static = True,
+        noasan = True,
+        race = "off",
+        nogo = False,
+        tags = ["manual"],
+    )
+    native.alias(
+        name = name + "_gen_bin",
+        actual = select({
+            "//tools:gotsan": ":" + name + "_gen_static_bin",
+            "//conditions:default": ":" + name + "_gen_dynamic_bin",
+        }),
+        visibility = ["//tools/codeql:__pkg__"],
     )
     if exclude_in_fastbuild:
         go_binary(
