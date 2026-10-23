@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T18:35:57.657700+00:00",
+    "updatedAt": "2026-10-23T18:41:57.439922+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -556,15 +556,15 @@
       "url": "https://github.com/google/gvisor/pull/15111",
       "group": "release",
       "status": "open",
-      "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-19T21:36:45.846198+00:00",
-      "summary": "The patch approved by EtiennePerot on 2026-10-09T19:49:58Z at 095d18339a is independently verified unchanged at 12d1e8b462. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 12d1e8b4626d on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "updatedAt": "2026-10-23T18:41:57.439922+00:00",
+      "summary": "The contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier source-specific record:\n\nThe patch approved by EtiennePerot on 2026-10-09T19:49:58Z at 095d18339a is independently verified unchanged at 12d1e8b462. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 12d1e8b4626d on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
       "followup": {
-        "disposition": "Current-upstream adaptation awaits contributor decision",
+        "disposition": "Approved amendment delivered; fresh maintainer review requested by comment",
         "owner": "root",
-        "sourceHead": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
+        "sourceHead": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
         "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "The separate b01f3baf4f preview adapts the approved failure-propagation patch to current Bazel goimports and has completed focused qualification. Await the contributor decision before publishing or requesting maintainer review; upstream remains 12d1e8b46.",
+        "nextAction": "Watch actual b01f checks/imports and Etienne’s response to the delivered alert. The formal native request was not saved (HTTP 404); do not send a duplicate notice within the existing hourly window.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15111#pullrequestreview-5474692022",
           "https://github.com/google/gvisor/pull/15111#issuecomment-6088101788",
@@ -574,13 +574,14 @@
           "https://github.com/google/gvisor/commit/e1c958717",
           "https://github.com/tamird/gvisor/commit/12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
           "https://github.com/google/gvisor/pull/15111#issuecomment-6274669691",
-          "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
+          "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
+          "https://github.com/google/gvisor/pull/15111#issuecomment-6372189542"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-19T21:34:57.526725+00:00"
+        "observedAt": "2026-10-23T18:41:57.439922+00:00"
       },
-      "head": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
+      "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
       "evidence": [
         {
           "label": "Published mechanical rebase",
@@ -601,6 +602,23 @@
         "method": "stable-patch-id",
         "oldPatchId": "2db6507c2b8039699c2b9f08940d9123e50c42af",
         "newPatchId": "2db6507c2b8039699c2b9f08940d9123e50c42af"
+      },
+      "refinement": {
+        "before": {
+          "head": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d"
+        },
+        "after": {
+          "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d"
+        }
+      },
+      "reapproval": {
+        "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
+        "approvedHead": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d",
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "diffSha256": "1d3df0aa9d40fdfe6187a254526fe084073e7cc6ed1128876cbfd4f4f77fa240",
+        "summary": "The regression now covers the Bazel goimports entrypoint and drops the obsolete mock Go SDK and go.mod data; central lint failure propagation is retained.",
+        "evidence": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
       }
     },
     {
@@ -14183,19 +14201,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nftables-comment-match",
-      "head": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
+      "head": "a6df5d5df1fa74145beaeefd57646258a317ca5d",
       "title": "Support comment matches in nftables compatibility",
       "url": "https://github.com/google/gvisor/pull/15955",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 3f860783171d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at db16a02a3d. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nCurrent source-identical qualification at 01354f8a84 now establishes native Linux and gVisor comment parity: Actions 39144545744 passes eight selected cases on each backend, sixteen total without skips. Full package, Nogo and client qualification f2403420 passes eight owners with 877 cases, 88 existing skips and no gaps. The clean standalone proposal is published at 9d31765c323, one commit above verified current upstream/master 9e9495997e29. Independent range-diff confirms the executable patch is unchanged; the message only pins its Linux citation to 830b3c68c. The user approved this exact commit, which is now published as upstream PR #15955. The intended google/gvisor destination, exact head, complete description and OPEN state were verified by readback. The current public check rollup is SUCCESS, with existing skipped workflow checks retained. Reviewers manninglucas and zkoopmans are assigned; maintainer review remains pending.\n\nHistorical evidence: The existing source-reviewed candidate supports nftables compatibility comment matches and is now included unchanged in canonical 01354f8a84. Historical paired qualification used test-only source 8dbcf433a and fixed source 83aef0865: each gVisor owner changed from seven comment failures to all 259 cases passing; the client reported 178 passes and 84 unchanged skips; two unit owners reported 607 XML passes and three Nogo owners passed. The native result remained 226 passes, 26 failures and seven skips, including the seven comment failures, so Linux comment parity was not established. Separate capability observations used a different worker environment and do not erase those failures.",
+      "updatedAt": "2026-10-23T18:41:57.439922+00:00",
+      "summary": "The user-approved fixture and optional-value amendment is delivered at a6df5d5df1 and is MERGEABLE. This current-base revision preserves the tested 75ea53522a patch. All fourteen focused Linux/gVisor cases passed. Both reviewer threads received the submitted inline response in review5632923591 at 18:38:34Z; the preview decision is complete.\n\nEarlier source-specific record:\n\nThe requested post-#16046 rebase is published at 3f860783171d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at db16a02a3d. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nCurrent source-identical qualification at 01354f8a84 now establishes native Linux and gVisor comment parity: Actions 39144545744 passes eight selected cases on each backend, sixteen total without skips. Full package, Nogo and client qualification f2403420 passes eight owners with 877 cases, 88 existing skips and no gaps. The clean standalone proposal is published at 9d31765c323, one commit above verified current upstream/master 9e9495997e29. Independent range-diff confirms the executable patch is unchanged; the message only pins its Linux citation to 830b3c68c. The user approved this exact commit, which is now published as upstream PR #15955. The intended google/gvisor destination, exact head, complete description and OPEN state were verified by readback. The current public check rollup is SUCCESS, with existing skipped workflow checks retained. Reviewers manninglucas and zkoopmans are assigned; maintainer review remains pending.\n\nHistorical evidence: The existing source-reviewed candidate supports nftables compatibility comment matches and is now included unchanged in canonical 01354f8a84. Historical paired qualification used test-only source 8dbcf433a and fixed source 83aef0865: each gVisor owner changed from seven comment failures to all 259 cases passing; the client reported 178 passes and 84 unchanged skips; two unit owners reported 607 XML passes and three Nogo owners passed. The native result remained 226 passes, 26 failures and seven skips, including the seven comment failures, so Linux comment parity was not established. Separate capability observations used a different worker environment and do not erase those failures.",
       "followup": {
         "owner": "root",
-        "disposition": "Tested reviewer amendment; contributor decision pending",
-        "sourceHead": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3",
-        "observedAt": "2026-10-23T17:59:03.325471+00:00",
-        "nextAction": "Contributor preview 75ea53522a addresses the fixture and optional-value findings and passes 14/14 selected cases. Await that decision, then root releases equivalent current-base a6df5d5df1 and provides a substantive reviewer response. Upstream remains 3f86078317; neither an acknowledgement nor this preview is delivery.",
+        "disposition": "Approved reviewer amendment delivered and both threads answered",
+        "sourceHead": "a6df5d5df1fa74145beaeefd57646258a317ca5d",
+        "observedAt": "2026-10-23T18:41:57.439922+00:00",
+        "nextAction": "Observe the actual amended source checks and substantive follow-up review. Both requested changes and their responses are delivered; do not repeat the contributor question or post another notification.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6ac083de1c33f86f6601ac669434648892f511e8",
           "https://github.com/tamird/gvisor/commit/8dbcf433a1157055848789fe0f4e1f157d7ae9e0",
@@ -14210,7 +14228,8 @@
           "https://github.com/google/gvisor/pull/15955#discussion_r4362555895",
           "https://github.com/google/gvisor/pull/15955#discussion_r4362573836",
           "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb",
-          "https://app.buildbuddy.io/invocation/6263f4a2-400e-4940-b082-ca7f9518681c"
+          "https://app.buildbuddy.io/invocation/6263f4a2-400e-4940-b082-ca7f9518681c",
+          "https://github.com/google/gvisor/pull/15955#pullrequestreview-5632923591"
         ]
       },
       "number": 15955,
@@ -14219,7 +14238,15 @@
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/3f860783171d7e8fcb39aa6f0b4525dd91bc04f3"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3"
+        },
+        "after": {
+          "head": "a6df5d5df1fa74145beaeefd57646258a317ca5d"
+        }
+      }
     },
     {
       "id": "branch:fix/codeql-production-inputs",
@@ -19437,14 +19464,9 @@
       "title": "Use the netfilter fixture and check optional data",
       "url": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-23T18:30:58.931550+00:00",
-      "summary": "The proposed reviewer correction uses the NetlinkNetfilterTest fixture and checks info_data.has_value() before dereferencing the optional value. Both selected fixture families pass all fourteen Linux/gVisor cases in qualification 6263f4a2. The contributor preview is 75ea53522a; the upstream PR remains at 3f86078317. Current-base a6df5d5df1 preserves the same patch and is reserved for release after the contributor decision.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "75ea53522a4988d2789ef608379c1eb0a4b889bb",
-        "url": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb"
-      },
+      "status": "Delivered as #15955",
+      "updatedAt": "2026-10-23T18:41:57.439922+00:00",
+      "summary": "The contributor approved 75ea53522a4988d2789ef608379c1eb0a4b889bb and its amendment is now delivered at a6df5d5df1fa74145beaeefd57646258a317ca5d. The user-approved fixture and optional-value amendment is delivered at a6df5d5df1 and is MERGEABLE. This current-base revision preserves the tested 75ea53522a patch. All fourteen focused Linux/gVisor cases passed. Both reviewer threads received the submitted inline response in review5632923591 at 18:38:34Z; the preview decision is complete.\n\nEarlier preview record:\n\nThe proposed reviewer correction uses the NetlinkNetfilterTest fixture and checks info_data.has_value() before dereferencing the optional value. Both selected fixture families pass all fourteen Linux/gVisor cases in qualification 6263f4a2. The contributor preview is 75ea53522a; the upstream PR remains at 3f86078317. Current-base a6df5d5df1 preserves the same patch and is reserved for release after the contributor decision.",
       "refinement": {
         "before": {
           "head": "3f860783171d7e8fcb39aa6f0b4525dd91bc04f3"
@@ -19455,9 +19477,9 @@
       },
       "followup": {
         "owner": "root",
-        "disposition": "Tested unpublished reviewer amendment; contributor decision pending",
+        "disposition": "Completed; approved amendment delivered",
         "sourceHead": "75ea53522a4988d2789ef608379c1eb0a4b889bb",
-        "nextAction": "After the contributor decision, publish the equivalent current-base revision a6df5d5df1 and answer both reviewer findings with the actual correction. The upstream PR is unchanged.",
+        "nextAction": "No contributor decision remains. Follow substantive maintainer feedback on the live PR through the existing watcher.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb",
           "https://app.buildbuddy.io/invocation/6263f4a2-400e-4940-b082-ca7f9518681c",
@@ -19475,14 +19497,9 @@
       "title": "Adapt lint failure coverage to Bazel goimports",
       "url": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
       "group": "release",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-23T18:35:57.657700+00:00",
-      "summary": "The current-upstream revision preserves central lint failure propagation and adapts the public-entrypoint regression to Bazel goimports, removing the obsolete mock Go SDK and go.mod data. This is a semantic interface adaptation, not a byte-identical rebase. The contributor decision is pending; upstream #15111 remains at its previously approved 12d1e8b46 head. Four regression methods pass through an uncached remote AMD64 Bazel test, and the actual public Make lint passes all five checks on hosted Linux. The original qualification wrapper failed afterward on one trailing space in the Docker event text; independently reviewed retained reconciliation verifies the exact event, clean source/lock and cleanup without rerunning the workload. The public Make goimports build used its ordinary Linux sandbox defaults, not remote execution.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
-        "url": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
-      },
+      "status": "Delivered as #15111",
+      "updatedAt": "2026-10-23T18:41:57.439922+00:00",
+      "summary": "The contributor approved b01f3baf4f3497692d898b02a2b85db85d142b9d and its amendment is now delivered at b01f3baf4f3497692d898b02a2b85db85d142b9d. The contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier preview record:\n\nThe current-upstream revision preserves central lint failure propagation and adapts the public-entrypoint regression to Bazel goimports, removing the obsolete mock Go SDK and go.mod data. This is a semantic interface adaptation, not a byte-identical rebase. The contributor decision is pending; upstream #15111 remains at its previously approved 12d1e8b46 head. Four regression methods pass through an uncached remote AMD64 Bazel test, and the actual public Make lint passes all five checks on hosted Linux. The original qualification wrapper failed afterward on one trailing space in the Docker event text; independently reviewed retained reconciliation verifies the exact event, clean source/lock and cleanup without rerunning the workload. The public Make goimports build used its ordinary Linux sandbox defaults, not remote execution.",
       "refinement": {
         "before": {
           "head": "12d1e8b4626d494a06928cfa2480eeaddfc5bb9d"
@@ -19493,9 +19510,9 @@
       },
       "followup": {
         "owner": "root",
-        "disposition": "Qualified semantic adaptation; contributor decision pending",
+        "disposition": "Completed; approved amendment delivered",
         "sourceHead": "b01f3baf4f3497692d898b02a2b85db85d142b9d",
-        "nextAction": "Await the requested contributor decision before updating upstream #15111 or contacting its maintainer. Preserve the old approval and the original wrapper failure as source-specific evidence.",
+        "nextAction": "No contributor decision remains. Follow substantive maintainer feedback on the live PR through the existing watcher.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d",
           "https://app.buildbuddy.io/invocation/51f98be2-c6c5-4146-a07d-cebd8c058691",
@@ -21801,16 +21818,14 @@
       "from": "branch:pr15955-review-correction",
       "to": "pr:15955",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "The tested reviewer amendment is unpublished and awaits the contributor decision; the live PR remains at its existing head.",
+      "reason": "The approved preview was delivered on the existing PR. This retains its source and review history, not an outstanding proposed update.",
       "evidence": "https://github.com/tamird/gvisor/commit/75ea53522a4988d2789ef608379c1eb0a4b889bb"
     },
     {
       "from": "branch:pr15111-goimports-adaptation",
       "to": "pr:15111",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "The qualified goimports adaptation awaits a contributor decision; the approved upstream source remains unchanged.",
+      "reason": "The approved preview was delivered on the existing PR. This retains its source and review history, not an outstanding proposed update.",
       "evidence": "https://github.com/tamird/gvisor/commit/b01f3baf4f3497692d898b02a2b85db85d142b9d"
     }
   ],
