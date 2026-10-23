@@ -39,6 +39,30 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+image_manifest(
+    name = "nginx_manifest",
+    base = "@test_nginx",
+    layers = [
+        "//images:busybox_netstat_layer",
+        "//images:musl_notice_layer",
+    ],
+    tags = ["manual"],
+)
+
+image_index(
+    name = "nginx",
+    manifests = [":nginx_manifest"],
+    # Only the added netstat executable is built for the target musl ABI.
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "nginx",
+    image = ":nginx",
+    image_name = "basic/nginx",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",

@@ -368,6 +368,19 @@ img_pull(
     tag = "1.31.1",
 )
 
+img_pull(
+    name = "test_nginx",
+    digest = "sha256:8632b3314d74c61f0e27f59055bab13f7793b988c94c090154d867bc29e0f39b",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/nginx",
+    tag = "1.31.7",
+)
+
 ### Toolchains
 register_toolchains("//:cc_toolchain_k8")
 
