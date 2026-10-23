@@ -559,6 +559,21 @@ exceptions:
       University of Illinois/NCSA grant, which permits redistribution with
       copyright notices, conditions and disclaimers retained and prohibits
       using contributors' names for endorsement without permission.
+  - dependency: pcre2
+    license:
+      - BSD-2-Clause
+      - LicenseRef-PCRE2-10.49-source-notices
+    exception_rationale: >-
+      PCRE2 supplies the regular-expression library for the Apache test
+      server. Its root license is BSD-3-Clause WITH PCRE2-exception; the
+      configured classifier does not recognize that compound identifier.
+      This custom record retains the full root license and its contextual
+      notices, including the binary library-like package exception.
+      SLJIT's separate BSD-2-Clause grant remains explicit. Both complete
+      texts are installed in the test images. The manual-entry guard
+      requires re-audit if the declared archive URL or hash changes.
+      This is not an exhaustive per-file inventory or linked-code license
+      attribution, and does not change the global license allowlist.
   - dependency: qemu_user_amd64
     license: GPL-2.0-only
     exception_rationale: >-
