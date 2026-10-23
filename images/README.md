@@ -34,15 +34,16 @@ single images via individual `load` targets, or pull all images via a single
 ## Go helper images
 
 The Ollama client and benchmark profiling helper are static Go programs built
-with the repository toolchain. Their images share `//images:helper_base`,
-which supplies CA trust and a writable `/tmp`. The selected architecture
-controls the programs and package inputs.
+with the repository toolchain. The Ollama client uses `//images:helper_base`
+for CA trust and a writable `/tmp`.
 
 The profiling helper's Kubernetes caller also invokes `mkdir`, `chmod`, and
-`rm --one-file-system` directly. Its image adds these GNU commands, their
-loader and shared libraries, and their license notices from snapshot-pinned
-Ubuntu packages. The filesystem boundary prevents recursive removal from
-crossing into nested mounts on the host.
+`rm --one-file-system` directly. Its scratch image contains the Go program,
+these GNU commands built from the pinned Coreutils source, their license
+notices, and a writable `/tmp`. Coreutils links statically with musl, so the
+image needs no shared libraries or loader. The selected architecture controls
+both the Go program and the C utilities. GNU rm's filesystem boundary prevents
+recursive removal from crossing into nested mounts on the host.
 
 The grouped packages expose `//images/benchmarks:profile_helper_archive` and
 `//images/gpu/ollama:client_archive`, with corresponding `_context` targets
