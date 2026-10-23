@@ -23,7 +23,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
                "--noannounce_rc"]
-    selected = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
+    selected_options = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
                 "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
                 "--test_timeout=6500", "--test_env=GO_TEST_WRAP_TESTV=0"]
     target = "//test/rbe/image_pair:paired_test"
@@ -71,6 +71,40 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         if len(data) != record["bytes"] or hashlib.sha256(data).hexdigest() != record["sha256"]:
             raise ValueError("Retained supplier identity mismatch: " + str(destination))
         destination.write_bytes(data)
+
+    def retained_image_archive(supplier: dict) -> Path:
+        retained = private / "image-evidence.tar.gz"
+        fetch(supplier["bundle"], retained)
+        with tarfile.open(retained) as archive:
+            entries = [entry for entry in archive if entry.isfile()]
+            if len({entry.name for entry in entries}) != len(entries):
+                raise ValueError("Duplicate supplier evidence member")
+            members = {entry.name: archive.extractfile(entry).read() for entry in entries}
+        built = json.loads(members["invocation-mixed-images/verdict.json"])
+        if built["status"] != "PASS" or built["native_exit"] != 0 or built["source"] != supplier["source"]:
+            raise ValueError("Retained image build is not source-bound PASS")
+        events = evidence / "supplier-image-events.jsonl"
+        events.write_bytes(members["invocation-mixed-images/events.jsonl"])
+        owners = {report.Owner(row["label"], row["configuration"]) for row in built["expected"]}
+        outputs = report.advertised_build_outputs(events, {(owner, "default") for owner in owners})
+        archive_input = supplier["archive"]
+        selected = [row for row in outputs if row["identity"]["label"] == "//images/benchmarks:qualification_httpd_archives"
+                    and row["name"].endswith("qualification_httpd_archive_amd64.tar")]
+        match selected:
+            case [row] if all(row[key] == archive_input[key] for key in ("bytes", "sha256")):
+                pass
+            case _:
+                raise ValueError("After image differs from the retained configured default output")
+        contents = json.loads(members["benchmarks-httpd-contents.json"])
+        amd64 = next(row for row in contents["architectures"] if row["architecture"] == "amd64")
+        if contents["status"] != "PASS" or amd64["runtime_inputs"]["source"] != supplier["source"]:
+            raise ValueError("After image lacks completed source-bound inspection")
+        if amd64["config_sha256"] != supplier["config_sha256"] or any(
+                amd64["archive"][key] != archive_input[key] for key in ("bytes", "sha256")):
+            raise ValueError("After image supplier configuration differs")
+        after_archive = private / "after-image.tar"
+        fetch(archive_input, after_archive)
+        return after_archive
 
     def image(reference: str, name: str) -> dict:
         rows = json.loads(command(name, ["docker", "image", "inspect", reference]))
@@ -141,37 +175,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         # Analysis sees declared files; the populated manifest is written before test.
         report.write_json(package / "inputs.json", {})
         supplier = config["image_supplier"]
-        retained = private / "image-evidence.tar.gz"
-        fetch(supplier["bundle"], retained)
-        with tarfile.open(retained) as archive:
-            entries = [entry for entry in archive if entry.isfile()]
-            if len({entry.name for entry in entries}) != len(entries):
-                raise ValueError("Duplicate supplier evidence member")
-            members = {entry.name: archive.extractfile(entry).read() for entry in entries}
-        built = json.loads(members["invocation-mixed-images/verdict.json"])
-        if built["status"] != "PASS" or built["native_exit"] != 0 or built["source"] != supplier["source"]:
-            raise ValueError("Retained image build is not source-bound PASS")
-        events = evidence / "supplier-image-events.jsonl"
-        events.write_bytes(members["invocation-mixed-images/events.jsonl"])
-        owners = {report.Owner(row["label"], row["configuration"]) for row in built["expected"]}
-        outputs = report.advertised_build_outputs(events, {(owner, "default") for owner in owners})
-        archive_input = supplier["archive"]
-        selected = [row for row in outputs if row["identity"]["label"] == "//images/benchmarks:qualification_httpd_archives"
-                    and row["name"].endswith("qualification_httpd_archive_amd64.tar")]
-        match selected:
-            case [row] if all(row[key] == archive_input[key] for key in ("bytes", "sha256")):
-                pass
-            case _:
-                raise ValueError("After image differs from the retained configured default output")
-        contents = json.loads(members["benchmarks-httpd-contents.json"])
-        amd64 = next(row for row in contents["architectures"] if row["architecture"] == "amd64")
-        if contents["status"] != "PASS" or amd64["runtime_inputs"]["source"] != supplier["source"]:
-            raise ValueError("After image lacks completed source-bound inspection")
-        if amd64["config_sha256"] != supplier["config_sha256"] or any(
-                amd64["archive"][key] != archive_input[key] for key in ("bytes", "sha256")):
-            raise ValueError("After image supplier configuration differs")
-        after_archive = private / "after-image.tar"
-        fetch(archive_input, after_archive)
+        after_archive = retained_image_archive(supplier)
         # Docker load may install the archive's own tag before explicit retagging.
         installed_tag = True
         command("after-image-load", ["docker", "load", "--input", str(after_archive)])
@@ -185,10 +189,17 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         records["images"] = {"before": before, "after": after}
         helpers = prepare_benchmark_helpers(evidence / "benchmark-helper-images.json",
                                             private / "benchmark-helper-images", config["benchmark_utility"])
+        if config.get("preflight_only", False):
+            checked = invoke("paired-preflight", ["cquery", *selected_options, "--output=files", target],
+                             "command", targets=[])
+            if checked["status"] != "PASS" or not (evidence / "invocation-paired-preflight/stdout.log").read_text().strip():
+                raise RuntimeError("Configured paired harness preflight failed")
+            records["status"] = "PASS"
+            return
         build_targets = [target, "//:release"]
         execution = private / "paired-harness-execution.json"
         try:
-            built = invoke("paired-harness", ["build", *selected, "--execution_log_json_file=" + str(execution),
+            built = invoke("paired-harness", ["build", *selected_options, "--execution_log_json_file=" + str(execution),
                            "--noexecution_log_sort", *build_targets], "build", targets=build_targets)
         finally:
             record_execution(execution, "x86_64", "paired-harness")
@@ -219,7 +230,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         records["release_outputs"] = release
         query = 'filter("^(@@)?' + harness_label + '$", labels(data, ' + target + '))'
         for kind in ("jsonproto", "files"):
-            result = invoke("paired-dependency-" + kind, ["cquery", *selected, "--universe_scope=" + target,
+            result = invoke("paired-dependency-" + kind, ["cquery", *selected_options, "--universe_scope=" + target,
                             "--output=" + kind, query], "command", targets=[])
             if result["status"] != "PASS":
                 raise RuntimeError("Actual benchmark data dependency query failed")
@@ -271,10 +282,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "benchmark": config["benchmark"], "child_timeout_seconds": 300}
             report.write_json(package / "inputs.json", inputs)
             report.write_json(evidence / "paired-inputs.json", inputs)
-            analysis = invoke("paired-analysis", ["test", *selected, "--nobuild", target], "analysis", targets=[target])
+            analysis = invoke("paired-analysis", ["test", *selected_options, "--nobuild", target], "analysis", targets=[target])
             if analysis["status"] != "PASS":
                 raise RuntimeError("Paired test analysis failed")
-            tested = invoke("paired-test", ["test", *selected, target], "test",
+            tested = invoke("paired-test", ["test", *selected_options, target], "test",
                             (evidence / "invocation-paired-analysis/events.jsonl",), targets=[target], retain_outputs=True)
             if tested["status"] != "PASS":
                 raise RuntimeError("Fixed16 paired Apache cohort failed")
