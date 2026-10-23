@@ -1195,11 +1195,11 @@
   commit: 6aad8828e82667cda09ff449862a5a8559bee27b
   sha256: 2119ca04726066c53b8f1ff42dffa090ea7f3e42a75679f1cfda937406cf7753
   license: Apache-2.0
-- dependency: rules_rust
-  version: https://github.com/bazelbuild/rules_rust/releases/download/0.74.0/rules_rust-0.74.0.tar.gz
-  retrieved: "2026-10-22"
-  commit: a2df978962d26028897b72380ba2075cc5272b10
-  sha256: d8bcc1e111e98270dc03172e22ef7af9c2f94f3269801618a2b83d20890f8df5
+- dependency: rules_rs
+  version: https://github.com/hermeticbuild/rules_rs/releases/download/v0.1.3/rules_rs-v0.1.3.tar.gz
+  retrieved: "2026-10-23"
+  commit: 7065a72736844e3f7358431d8b2299ec35674d61
+  sha256: a345fe3fa11fbccec1de3e19c9597fef7e0cebb9af9ef3847d74abf26f222c8b
   license: Apache-2.0
 - dependency: rules_shell
   version: https://github.com/bazel-contrib/rules_shell/releases/download/v0.8.0/rules_shell-v0.8.0.tar.gz
