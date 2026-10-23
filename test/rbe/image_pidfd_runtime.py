@@ -1,7 +1,6 @@
 """Run the existing pidfd consumer against its inspected source-built image."""
 from dataclasses import asdict
 import json
-import os
 from pathlib import Path
 
 import qualification_report as report
@@ -34,7 +33,6 @@ def run(invoke, evidence: Path, private: Path) -> None:
     configuration = {
         "runtime_name": "qualification-pidfd-cgroupv2",
         "image_name": "basic/pidfd-tests",
-        "image_platform": json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])["image_platforms"]["x86_64"],
         "runtime_flags": ["--platform=systrap", "--in-sandbox-cgroup=v2"],
         "contents": str(contents_path),
     }

@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load("@rules_img//img:image.bzl", "image_manifest")
+load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
 load("//tools:arch.bzl", "arch_genrule")
@@ -9,6 +9,12 @@ package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
+
+# Select the image target ABI independently of the execution host.
+_MUSL_PLATFORMS = select({
+    "@platforms//cpu:aarch64": ["@llvm//platforms:linux_aarch64_musl"],
+    "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
+})
 
 image_manifest(
     name = "alpine",
@@ -77,20 +83,70 @@ arch_genrule(
     template = "filecap_%s.tar",
 )
 
+# Exercise containerd's resolver mounts through a symlink in the image.
+image_layer(
+    name = "symlink_resolv_layer",
+    symlinks = {
+        "/bin/cat": "/bin/busybox",
+        "/bin/readlink": "/bin/busybox",
+        "/bin/sleep": "/bin/busybox",
+        "/etc/resolv.conf": "../tmp/resolv.conf",
+    },
+)
+
+image_manifest(
+    name = "symlink_resolv_manifest",
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":symlink_resolv_layer",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
+    name = "symlink_resolv",
+    manifests = [":symlink_resolv_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "symlink_resolv",
+    image = ":symlink_resolv",
+    image_name = "basic/symlink-resolv",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
     srcs = {"/tmp/foo/file.txt": "tmpfile.txt"},
     create_parent_directories = "enabled",
     default_metadata = file_metadata(mode = "0644"),
-    # Keep the base image's sticky /tmp when adding its child directory.
+    # The fixture must retain /tmp's sticky bit when adding its child directory.
     file_metadata = {"/tmp": file_metadata(mode = "1777")},
+    symlinks = {"/bin/cat": "/bin/busybox"},
 )
 
 image_manifest(
+    name = "tmpfile_manifest",
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":tmpfile_layer",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
     name = "tmpfile",
-    base = "@test_alpine",
-    layers = [":tmpfile_layer"],
+    manifests = [":tmpfile_manifest"],
+    platforms = _MUSL_PLATFORMS,
     tags = ["manual"],
 )
 
@@ -225,7 +281,7 @@ image_layer(
 )
 
 image_manifest(
-    name = "pidfd_tests",
+    name = "pidfd_tests_manifest",
     cmd = [
         "/bin/sh",
         "-ec",
@@ -251,6 +307,13 @@ fi
     tags = ["manual"],
     user = "0:0",
     working_dir = "/opt/kselftest",
+)
+
+image_index(
+    name = "pidfd_tests",
+    manifests = [":pidfd_tests_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
 )
 
 image_outputs(

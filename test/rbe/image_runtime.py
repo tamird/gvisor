@@ -58,7 +58,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     try:
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
         make = ["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
-                "OPTIONS=--compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
+                "BAZEL_OPTIONS=--config=x86_64 --compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
                 "STARTUP_OPTIONS=--output_base=" + os.environ["APPLICABILITY_OUTPUT_BASE"] + " --bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
                 "REMOTE_IMAGE_PREFIX=qualification.invalid/images"]
         run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
@@ -97,11 +97,6 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         image_key = image_component.replace("/", "_")
         image_make = make
         records["image_platform"] = "--config=x86_64"
-        if image_platform := configuration.get("image_platform"):
-            records["image_platform"] += " --platforms=" + image_platform
-            # Make appends its architecture config after OPTIONS; the libc
-            # selection must follow that config to survive its expansion.
-            image_make = [*make, "_image_context_options=" + records["image_platform"]]
         run([*image_make, "rebuild-" + image_key])
         built = json.loads(run(["docker", "image", "inspect", image_name]))[0]
         records["built_image"] = built

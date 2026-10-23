@@ -1,5 +1,4 @@
-"""Build the scratch PIDFD image and qualify its existing runtime consumer."""
-import hashlib
+"""Qualify shared scratch utilities through their ordinary image targets."""
 import json
 import os
 from pathlib import Path
@@ -8,10 +7,6 @@ import shutil
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    profile_targets = list(dict.fromkeys(row["owner"] for row in config["profile_helper_outputs"]))
-    profile_mode = "--compilation_mode=" + config["profile_helper_compilation_mode"]
-    if set(config["image_targets"]).intersection(profile_targets) or set(config["targets"]) != set(config["image_targets"] + profile_targets):
-        raise ValueError("Image and profile-helper targets must partition the selected build")
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
                "--build_event_json_file_path_conversion=false"]
@@ -26,29 +21,29 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     failed = False
     try:
         for architecture in ("x86_64", "aarch64"):
-            selected = [*options, "--config=" + architecture,
-                        "--platforms=" + config["image_platforms"][architecture]]
-            execution_log = evidence / (architecture + "-busybox-execution.json")
-            built = invoke("busybox-" + architecture,
-                           ["build", *selected, "--keep_going", "--output_groups=+Make_logs",
-                            "--execution_log_json_file=" + str(execution_log),
-                            "--noexecution_log_sort", *config["image_targets"]],
-                           "build", targets=config["image_targets"])
-            # Retain build failures and continue the independent architecture.
+            # Each product image_index owns its musl transition. Ordinary Make
+            # and these builds use the same CPU config, without a libc override.
+            selected = [*options, "--config=" + architecture]
+            targets = config["image_targets"][architecture]
+            execution_log = private / (architecture + "-busybox-execution.json")
+            try:
+                built = invoke("busybox-" + architecture,
+                               ["build", *selected, "--keep_going",
+                                "--execution_log_json_file=" + str(execution_log),
+                                "--noexecution_log_sort", *targets], "build", targets=targets)
+            finally:
+                record_execution(execution_log, architecture, "busybox")
             row = {"architecture": architecture, "build_status": built["status"], "outputs": {}}
             records["architectures"].append(row)
-            if execution_log.is_file():
-                try:
-                    record_execution(execution_log, architecture, "busybox")
-                except (OSError, ValueError, RuntimeError) as error:
-                    # The shared recorder already preserves the overall failure.
-                    row["execution_evidence_error"] = str(error)
             queries = {
-                "binary": ("//images:busybox_binary", []),
-                "config": ("//images:busybox_config", []),
-                "logs": ("//images:busybox_build", ["--output_groups=Make_logs"]),
-                "tools": ('filter("^//images:busybox_(hostcc|nm)$", deps(//images:busybox_build))', []),
+                "binary": ('filter("^(@@)?//images:busybox_binary$", deps(//images/basic:pidfd_tests_archive))', []),
+                "config": ('filter("^(@@)?//images:busybox_config$", deps(//images/basic:pidfd_tests_archive))', []),
+                "logs": ('filter("^(@@)?//images:busybox_build$", deps(//images/basic:pidfd_tests_archive))', ["--output_groups=Make_logs"]),
+                "tools": ('filter("^(@@)?//images:busybox_(hostcc|nm)$", deps(//images/basic:pidfd_tests_archive))', []),
             }
+            # Foreign_cc's Make log is an output of the same producing action;
+            # its two scripts are action inputs. download_outputs=all retains
+            # them without building a differently configured standalone target.
             for name, (query, extra) in queries.items():
                 phase = architecture + "-busybox-" + name
                 queried = invoke(phase, ["cquery", *selected, *extra, "--output=files", query],
@@ -64,7 +59,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         raise ValueError(f"Unexpected configured output: {path}")
                     actual = execution_root / path
                     if not actual.is_file():
-                        # Failed foreign builds may omit outputs; preserve available diagnostics.
                         retained.append({"output": output, "missing": True})
                         continue
                     destination = evidence / (phase + "-" + str(index) + "-" + path.name)
@@ -75,55 +69,19 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     retained.append({"output": str(actual), "retained": str(destination) if name != "binary" else None})
                 row["outputs"][name] = retained
             failed |= built["status"] != "PASS"
-        for architecture in ("x86_64", "aarch64"):
-            execution_log = evidence / (architecture + "-profile-helper-execution.json")
-            built = invoke("profile-helper-" + architecture,
-                           ["build", *options, "--config=" + architecture, profile_mode,
-                            "--keep_going", "--execution_log_json_file=" + str(execution_log),
-                            "--noexecution_log_sort", *profile_targets], "build", targets=profile_targets)
-            profile = {"architecture": architecture, "build_status": built["status"]}
-            records.setdefault("profile_builds", []).append(profile)
-            if execution_log.is_file():
-                try:
-                    record_execution(execution_log, architecture, "profile-helper")
-                except (OSError, ValueError, RuntimeError) as error:
-                    profile["execution_evidence_error"] = str(error)
-            failed |= built["status"] != "PASS"
         if failed:
             raise RuntimeError("An image build or configured output query failed")
-        for architecture in ("x86_64", "aarch64"):
-            expected = [row for row in config["profile_helper_outputs"]
-                        if row["architecture"] == architecture]
-            comparisons = []
-            destination = evidence / (architecture + "-profile-helper-equality.json")
-            try:
-                for index, row in enumerate(expected):
-                    name = f"profile-output-{architecture}-{index}"
-                    result = invoke(name, ["cquery", *options, "--config=" + architecture, profile_mode,
-                                          "--output=files", row["owner"]],
-                                    "command", targets=[])
-                    if result["status"] != "PASS":
-                        raise RuntimeError("Cannot locate profile-helper output")
-                    lines = (evidence / ("invocation-" + name) / "stdout.log").read_text().splitlines()
-                    match lines:
-                        case [output]:
-                            path = Path(output)
-                            if path.is_absolute() or ".." in path.parts or path.parts[:1] != ("bazel-out",):
-                                raise ValueError(f"Unexpected image output path: {path}")
-                            payload = (execution_root / path).read_bytes()
-                        case _:
-                            raise ValueError(f"Expected one output for {row['owner']}: {lines!r}")
-                    actual = {"sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload)}
-                    wanted = {key: row[key] for key in ("sha256", "bytes")}
-                    comparisons.append({"owner": row["owner"], "actual": actual,
-                                        "expected": wanted, "equal": actual == wanted})
-                    if actual != wanted:
-                        raise ValueError(f"Profile-helper output changed: {row['owner']}")
-            finally:
-                destination.write_text(json.dumps(comparisons, indent=2) + "\n")
         records["status"] = "PASS"
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
+        scripts = Path(__file__).parent
+        inspected = invoke("leaf-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                           "@rules_python//python/bin:python", "--",
+                           str(scripts / "leaf_image_inspect.py"), str(evidence)], "command", targets=[])
+        if inspected["status"] != "PASS":
+            raise RuntimeError("Scratch leaf image closure verification failed")
         import image_pidfd_runtime
         image_pidfd_runtime.run(invoke, evidence, private)
+        import image_leaf_runtime
+        image_leaf_runtime.run(invoke, evidence, private)
     finally:
         (evidence / "busybox-build-inputs.json").write_text(json.dumps(records, indent=2) + "\n")
