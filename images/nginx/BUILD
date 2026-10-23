@@ -1,4 +1,5 @@
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//tools:defs.bzl", "select_arch", "target_emulator")
 
 package(
@@ -8,6 +9,7 @@ package(
 
 exports_files([
     "configure_runner.patch",
+    "ports.json",
     "source.BUILD",
 ])
 
@@ -34,8 +36,8 @@ configure_make(
         "--http-scgi-temp-path=/tmp/scgi",
         "--user=nginx",
         "--group=nginx",
-        # The basic fixture serves static HTTP files. It does not exercise
-        # authentication, compression or rewriting and needs no crypt/zlib/PCRE.
+        # These fixtures serve static HTTP files. They do not exercise
+        # authentication, compression or rewriting and need no crypt/zlib/PCRE.
         "--without-http_auth_basic_module",
         "--without-http_gzip_module",
         "--without-http_rewrite_module",
@@ -69,5 +71,22 @@ filegroup(
     name = "binary",
     srcs = [":nginx_build"],
     output_group = "nginx",
-    visibility = ["//images/basic:__pkg__"],
+)
+
+image_layer(
+    name = "server_layer",
+    srcs = {
+        "/etc/group": "group",
+        "/etc/nginx/mime.types": "@nginx_source//:conf/mime.types",
+        "/etc/passwd": "passwd",
+        "/usr/sbin/nginx": ":binary",
+        "/usr/share/licenses/nginx/LICENSE": "@nginx_source//:LICENSE",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {"/usr/sbin/nginx": file_metadata(mode = "0755")},
+    include_runfiles = False,
+    visibility = [
+        "//images/basic:__pkg__",
+        "//images/benchmarks:__pkg__",
+    ],
 )

@@ -1,7 +1,7 @@
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs", "package_layer")
-load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//tools:defs.bzl", "cc_binary", "go_binary", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -14,35 +14,38 @@ _MUSL_PLATFORMS = select({
     "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
 })
 
-_HTTPD_SIZES_KIB = [1, 10, 100, 1024, 10240]
+_HTTP_PAYLOAD_SIZES_KIB = [1, 10, 100, 1024, 10240]
 
-# Keep the existing benchmark's exact zero-filled payloads and filenames.
+# Apache and Nginx serve the same zero-filled payloads in their benchmarks.
 [
     genrule(
-        name = "httpd_payload_%dk" % size,
-        outs = ["httpd/latin%dk.txt" % size],
+        name = "http_payload_%dk" % size,
+        outs = ["http/latin%dk.txt" % size],
         cmd = '"$(execpath //images:busybox_binary)" dd if=/dev/zero of=$@ bs=1024 count=%d' % size,
         # tools selects the execution configuration, not the image CPU.
         exec_compatible_with = ["@platforms//os:linux"],
         tools = ["//images:busybox_binary"],
     )
-    for size in _HTTPD_SIZES_KIB
+    for size in _HTTP_PAYLOAD_SIZES_KIB
 ]
 
 filegroup(
-    name = "httpd_payloads",
-    srcs = [":httpd_payload_%dk" % size for size in _HTTPD_SIZES_KIB],
+    name = "http_payloads",
+    srcs = [":http_payload_%dk" % size for size in _HTTP_PAYLOAD_SIZES_KIB],
 )
 
-_HTTPD_FILES = {
-    "/local/latin%dk.txt" % size: ":httpd_payload_%dk" % size
-    for size in _HTTPD_SIZES_KIB
-}
-_HTTPD_FILES["/usr/local/apache2/conf/httpd.conf"] = "httpd/httpd.conf"
+image_layer(
+    name = "http_payload_layer",
+    srcs = {
+        "/local/latin%dk.txt" % size: ":http_payload_%dk" % size
+        for size in _HTTP_PAYLOAD_SIZES_KIB
+    },
+    default_metadata = file_metadata(mode = "0644"),
+)
 
 image_layer(
     name = "httpd_fixture_layer",
-    srcs = _HTTPD_FILES,
+    srcs = {"/usr/local/apache2/conf/httpd.conf": "httpd/httpd.conf"},
     default_metadata = file_metadata(mode = "0644"),
     symlinks = {
         "/bin/cp": "/bin/busybox",
@@ -68,6 +71,7 @@ image_manifest(
         "//images:musl_notice_layer",
         "//images/httpd:accounts_layer",
         "//images/httpd:server_layer",
+        ":http_payload_layer",
         ":httpd_fixture_layer",
     ],
     tags = ["manual"],
@@ -85,6 +89,63 @@ image_outputs(
     name = "httpd",
     image = ":httpd",
     image_name = "benchmarks/httpd",
+)
+
+pkg_tar(
+    name = "nginx_directories",
+    empty_dirs = ["var/run"],
+    mode = "0755",
+)
+
+image_layer(
+    name = "nginx_fixture_layer",
+    srcs = {
+        "/etc/nginx/nginx.conf": "nginx/nginx.conf",
+        "/etc/nginx/nginx_gofer.conf": "nginx/nginx_gofer.conf",
+        "/local/index.html": "nginx/index.html",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    symlinks = {
+        "/bin/cp": "/bin/busybox",
+        "/bin/grep": "/bin/busybox",
+        "/bin/mkdir": "/bin/busybox",
+        "/bin/sh": "/bin/busybox",
+        "/bin/sleep": "/bin/busybox",
+        "/var/log/nginx/access.log": "/dev/stdout",
+        "/var/log/nginx/error.log": "/dev/stderr",
+    },
+)
+
+image_manifest(
+    name = "nginx_manifest",
+    cmd = ["nginx"],
+    config_fragment = "//images/nginx:ports.json",
+    env = {"PATH": "/usr/sbin:/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        "//images/nginx:server_layer",
+        ":http_payload_layer",
+        ":nginx_directories",
+        ":nginx_fixture_layer",
+    ],
+    stop_signal = "SIGQUIT",
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
+    name = "nginx",
+    manifests = [":nginx_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "nginx",
+    image = ":nginx",
+    image_name = "benchmarks/nginx",
 )
 
 cc_binary(

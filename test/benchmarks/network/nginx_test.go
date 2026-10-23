@@ -23,7 +23,7 @@ import (
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 )
 
-// see Dockerfile '//images/benchmarks/nginx'.
+// Payloads are installed by //images/benchmarks:http_payload_layer.
 var nginxDocs = map[string]string{
 	"notfound": "notfound",
 	"1Kb":      "latin1k.txt",
