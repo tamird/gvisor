@@ -15,8 +15,11 @@
 package startup_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -299,49 +302,89 @@ func runCheckpointServerWorkload(b *testing.B, name string, port int) {
 	}
 }
 
-func runRestoreServerWorkload(b *testing.B, name string, port int) {
+// BenchmarkRestoreNginx measures from the restore request through the complete
+// first HTTP response. Report the Docker restore call separately.
+func BenchmarkRestoreNginx(b *testing.B) {
 	skipUnlessCheckpointSupported(b)
-	client, err := harness.GetMachine()
+	machine, err := harness.GetMachine()
 	if err != nil {
 		b.Fatalf("failed to get machine: %v", err)
 	}
-	defer client.CleanUp()
-	ctx := context.Background()
+	defer machine.CleanUp()
+	ctx := b.Context()
+	// The restored listener must serve a new connection from this worker.
+	client := &http.Client{Transport: &http.Transport{DisableKeepAlives: true}, Timeout: 5 * time.Second}
+	payload := make([]byte, 1024) // /local/latin1k.txt in the benchmark image.
+	var restoreTime time.Duration
 	b.ResetTimer()
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
 		func() {
-			server := spawnServerWorkloadAndWait(ctx, b, client, name, port)
+			server := spawnServerWorkloadAndWait(ctx, b, machine, "nginx", 80)
 			defer server.CleanUp(ctx)
-
-			ckptName := fmt.Sprintf("ckpt-restore-%s-%d", name, i)
+			ip, err := server.FindIP(ctx, false)
+			if err != nil {
+				b.Fatal(err)
+			}
+			baseURL := "http://" + ip.String()
+			// Check the route without reading the file used in the timed request.
+			if err := fetchNginxFile(ctx, client, baseURL+"/index.html", nil); err != nil {
+				b.Fatalf("before checkpoint: %v", err)
+			}
+			ckptName := fmt.Sprintf("ckpt-restore-nginx-%d", i)
 			if err := server.Checkpoint(ctx, ckptName); err != nil {
-				b.Fatalf("failed to checkpoint %s: %v", name, err)
+				b.Fatalf("failed to checkpoint nginx: %v", err)
 			}
 
 			time.Sleep(2 * time.Second)
 			b.StartTimer()
+			start := time.Now()
 			if err := server.Restore(ctx, ckptName); err != nil {
-				b.Fatalf("failed to restore %s: %v", name, err)
+				b.Fatalf("failed to restore nginx: %v", err)
 			}
-			if err := waitUntilHostServing(ctx, server, port); err != nil {
-				b.Fatalf("failed to wait for %s serving after restore: %v", name, err)
+			restoreTime += time.Since(start)
+			if err := fetchNginxFile(ctx, client, baseURL+"/latin1k.txt", payload); err != nil {
+				b.Fatalf("first request after restore: %v", err)
 			}
 			b.StopTimer()
+			restoredIP, err := server.FindIP(ctx, false)
+			if err != nil || !restoredIP.Equal(ip) {
+				b.Fatalf("restore changed the measured endpoint: before=%v after=%v err=%v", ip, restoredIP, err)
+			}
 		}()
 	}
+	b.ReportMetric(float64(restoreTime.Nanoseconds())/float64(b.N), "restore-ns/op")
+}
+
+// fetchNginxFile reads the complete response, including the last byte of the
+// body. An error page or a redirect cannot satisfy this workload.
+func fetchNginxFile(ctx context.Context, client *http.Client, url string, want []byte) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || resp.Request.URL.String() != url {
+		return fmt.Errorf("GET %s returned %s from %s", url, resp.Status, resp.Request.URL)
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, int64(len(want))+1))
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(body, want) {
+		return fmt.Errorf("GET %s returned unexpected data (%d bytes; want %d)", url, len(body), len(want))
+	}
+	return nil
 }
 
 // BenchmarkCheckpointNginx times checkpoint creation for Nginx.
 func BenchmarkCheckpointNginx(b *testing.B) {
 	runCheckpointServerWorkload(b, "nginx", 80)
-}
-
-// BenchmarkRestoreNginx times restoring Nginx until serving HTTP.
-func BenchmarkRestoreNginx(b *testing.B) {
-	runRestoreServerWorkload(b, "nginx", 80)
 }
 
 // TestMain is the main method for package network.
