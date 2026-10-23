@@ -52,6 +52,7 @@ queue_packets=1000     # The default netem queue limit, made explicit.
 seed=                  # Requires a tc/kernel combination that supports netem seed.
 output_dir=
 latency_probe=false
+changing_rtt_profile=false
 second_client=
 second_congestion_control=
 second_start_delay=0
@@ -166,6 +167,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --moderate-recv-buf)
       netstack_opts="${netstack_opts} -moderate_recv_buf"
+      ;;
+    --changing-rtt-profile)
+      changing_rtt_profile=true
       ;;
     --latency-probe)
       latency_probe=true
@@ -286,6 +290,7 @@ while [[ $# -gt 0 ]]; do
       echo " --queue-packets       netem queue limit in each direction (default 1000)"
       echo " --seed                netem random seed (requires kernel and tc support)"
       echo " --output-dir          retain settings, versions, qdisc counters and raw iperf output"
+      echo " --changing-rtt-profile  fixed 10/100/10ms shared-WAN experiment (480s)"
       echo " --latency-probe       retain native ICMP RTT before/during/after the client operation (requires --output-dir)"
       echo " --duration            set the test duration (s)"
       echo " --latency             set the latency (ms)"
@@ -359,6 +364,24 @@ if $latency_probe && $xdp; then
   echo "--latency-probe requires AF_PACKET mode, without --xdp" >&2
   exit 1
 fi
+if $changing_rtt_profile; then
+  if [[ -z $second_client || $second_start_delay != 0 || $duration != 480 ||
+        $latency != 10 || $latency_variation != 0 || $loss != 0 ||
+        $duplicate != 0 || $rate_mbps != 20 || $queue_packets != 100 ||
+        $num_client_threads != 1 || $congestion_control != cubic ||
+        $second_congestion_control != cubic || -n $seed || $mtu != 1500 ||
+        $disable_linux_gso != 1 || $disable_linux_gro != 1 ||
+        $gso != 0 || $swgso != false || $gro != false ||
+        $latency_probe != true || " $netstack_opts " != *" -sack "* ]]; then
+    echo "changing RTT requires simultaneous CUBIC flows and the fixed 480s/20Mbps/100-packet profile" >&2
+    exit 1
+  fi
+  if ! { $client && ! $linux_client && [[ $second_client == linux ]]; } &&
+     ! { $linux_client && ! $client && [[ $second_client == netstack ]]; }; then
+    echo "changing RTT requires one Netstack and one Linux client" >&2
+    exit 1
+  fi
+fi
 if [[ -n $output_dir ]]; then
   mkdir -p "$output_dir"
   output_dir=$(cd "$output_dir" && pwd -P)
@@ -399,6 +422,7 @@ record_settings() {
     "$latency" "$latency_variation" "$loss" "$duplicate" "${rate_mbps:-unlimited}" "$queue_packets" "${seed:-unspecified}"
   printf 'second_client=%s second_congestion_control=%s second_start_delay=%s\n' \
     "${second_client:-none}" "${second_congestion_control:-none}" "$second_start_delay"
+  printf 'changing_rtt_profile=%s\n' "$changing_rtt_profile"
   printf 'latency_probe=%s receiver_json=%s\n' "$latency_probe" "$([[ -n $output_dir ]] && echo true || echo false)"
   if [[ -n $output_dir ]]; then jq --version; fi
   if $latency_probe; then ping -V; fi
@@ -660,10 +684,15 @@ fi
 
 # Collect the baseline before proxies open their forwarding connections.
 # Otherwise the added delay can expire the receiver's control-cookie wait.
+clock_fields() {
+  local before after ignored wall
+  read -r before ignored < /proc/uptime
+  wall=\$(date +%s.%N)
+  read -r after ignored < /proc/uptime
+  printf '%s\t%s\t%s' "\$before" "\$wall" "\$after"
+}
 record_probe_phase() {
-  local uptime ignored
-  read -r uptime ignored < /proc/uptime
-  printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" \
+  printf '%s\t%s\n' "\$1" "\$(clock_fields)" \
     >> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
 }
 if ${latency_probe}; then
@@ -672,7 +701,7 @@ if ${latency_probe}; then
   timeout --signal=TERM --kill-after=2s 10s \
     ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -c 1 -W 2 ${server_addr} \
     > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-preflight.txt" 2>&1
-  printf 'phase\tboottime_seconds\tunix_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
+  printf 'phase\tboottime_seconds\tunix_seconds\tboottime_after_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
   record_probe_phase probe-launch
   ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -D -O -i 0.1 -s 56 -w $((duration + 45)) ${server_addr} \
     > "\$TCP_BENCHMARK_OUTPUT_DIR/ping.txt" \
@@ -685,6 +714,53 @@ record_qdiscs() {
   for device in wan.0 wan.1; do
     printf '%s\n' "\$device"
     tc -s -d qdisc show dev "\$device"
+  done
+}
+
+# Use this namespace owner's existing clock and qdisc commands. The main
+# supervisor drives the two transitions while the owned flow children run.
+run_rtt_profile() {
+  local origin= origin_unix origin_after now ignored remaining offset delay device status failed pair pid flow
+  local readiness_deadline=\$((SECONDS + 30))
+  local directory=\$TCP_BENCHMARK_OUTPUT_DIR
+  printf 'phase\\tdevice\\tboottime_seconds\\tunix_seconds\\tboottime_after_seconds\\texit\\n' > "\$directory/rtt-profile.tsv"
+  while [[ -z \$origin ]]; do
+    origin=\$(awk -F '\\t' '
+      \$1 == "client-operation-begin" { if (\$2 > last) { last=\$2; wall=\$3; after=\$4 }; n++ }
+      END { if (n == 2) print last, wall, after }
+    ' "\$directory/primary/flow-phases.tsv" "\$directory/secondary/flow-phases.tsv" 2>/dev/null || true)
+    if [[ -n \$origin ]]; then read -r origin origin_unix origin_after <<< "\$origin"; break; fi
+    (( SECONDS < readiness_deadline )) || return 1
+    for pid in "\${flow_pids[@]}"; do kill -0 "\$pid"; done
+    sleep 0.05
+  done
+  printf 'origin\\t-\\t%s\\t%s\\t%s\\t0\\n' "\$origin" "\$origin_unix" "\$origin_after" >> "\$directory/rtt-profile.tsv"
+  for pair in '60 50' '420 5'; do
+    read -r offset delay <<< "\$pair"
+    read -r now ignored < /proc/uptime
+    remaining=\$(awk -v origin="\$origin" -v offset="\$offset" -v now="\$now" 'BEGIN { wait=origin+offset-now; if (wait>0) print wait; else print 0 }')
+    sleep "\$remaining"
+    for pid in "\${flow_pids[@]}"; do kill -0 "\$pid"; done
+    for flow in primary secondary; do
+      status=0
+      grep -q '^client-operation-end' "\$directory/\$flow/flow-phases.tsv" || status=\$?
+      if (( status != 1 )); then
+        echo "flow \$flow ended or its phase log could not be read" >&2
+        return 1
+      fi
+    done
+    record_qdiscs > "\$directory/qdisc-before-step-\$offset.txt"
+    failed=0
+    for device in wan.0 wan.1; do
+      printf 'before-%s\\t%s\\t%s\\t-\\n' "\$offset" "\$device" "\$(clock_fields)" >> "\$directory/rtt-profile.tsv"
+      status=0
+      tc qdisc change dev "\$device" root netem limit 100 delay "\${delay}ms" rate 20mbit \\
+        > "\$directory/tc-step-\$offset-\$device.stdout" 2> "\$directory/tc-step-\$offset-\$device.stderr" || status=\$?
+      printf 'after-%s\\t%s\\t%s\\t%s\\n' "\$offset" "\$device" "\$(clock_fields)" "\$status" >> "\$directory/rtt-profile.tsv"
+      if (( status != 0 )); then failed=1; fi
+    done
+    record_qdiscs > "\$directory/qdisc-after-step-\$offset.txt"
+    if (( failed != 0 )); then return 1; fi
   done
 }
 
@@ -726,12 +802,10 @@ run_flow() {
     fi
   fi
   record_flow_phase() {
-    local uptime ignored
-    read -r uptime ignored < /proc/uptime
-    printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" >> "\$TCP_BENCHMARK_OUTPUT_DIR/flow-phases.tsv"
+    printf '%s\t%s\n' "\$1" "\$(clock_fields)" >> "\$TCP_BENCHMARK_OUTPUT_DIR/flow-phases.tsv"
   }
   if [[ -n "${second_client}" ]]; then
-    printf 'phase\tboottime_seconds\tunix_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/flow-phases.tsv"
+    printf 'phase\tboottime_seconds\tunix_seconds\tboottime_after_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/flow-phases.tsv"
     printf 'flow=%s client=%s congestion_control=%s duration=%s streams=%s\n' "\$flow" "\$flow_stack" "\$flow_cc" "\$flow_duration" '${num_client_threads}' > "\$TCP_BENCHMARK_OUTPUT_DIR/flow-settings.txt"
     {
       printf 'client_command: '
@@ -936,6 +1010,7 @@ else
   run_flow primary &
   flow_pids+=(\$!)
 fi
+if ${changing_rtt_profile}; then run_rtt_profile; fi
 for index in "\${!flow_pids[@]}"; do
   capture_status=0
   wait_flow "\$index" || capture_status=\$?
