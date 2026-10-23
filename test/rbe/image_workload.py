@@ -78,7 +78,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         scripts = Path(__file__).parent
         guards = invoke("leaf-archive-guards", ["run", "--lockfile_mode=error", "--noannounce_rc",
                         "@rules_python//python/bin:python", "--",
-                        str(scripts / "image_archive_test.py")], "command", targets=[])
+                        str(scripts / "image_result_test.py"), str(private), str(evidence)], "command", targets=[])
         if guards["status"] != "PASS":
             raise RuntimeError("Scratch archive reporting guards failed")
         inspected = invoke("leaf-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
