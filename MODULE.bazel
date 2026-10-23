@@ -115,7 +115,6 @@ rust_toolchains.toolchain(
     edition = "2021",
     version = "1.99.1",
 )
-
 use_repo(rust_toolchains, "default_rust_toolchains")
 
 register_toolchains("@default_rust_toolchains//...")
