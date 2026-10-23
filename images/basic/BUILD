@@ -3,6 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:defs.bzl", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -27,9 +28,56 @@ image_outputs(
     image_name = "basic/alpine",
 )
 
+pkg_tar(
+    name = "busybox_home",
+    empty_dirs = ["root"],
+    mode = "0700",
+)
+
+# The containerd HOME tests resolve the root account from /etc/passwd.
+# Leave HOME unset so the image cannot supply the value being tested.
+image_layer(
+    name = "busybox_filesystem",
+    srcs = {
+        "/etc/group": "busybox/group",
+        "/etc/passwd": "busybox/passwd",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0644"),
+    symlinks = {
+        "/bin/" + applet: "/bin/busybox"
+        for applet in [
+            "dd",
+            "df",
+            "grep",
+            "setsid",
+            "sh",
+            "sleep",
+            "stat",
+            "true",
+        ]
+    },
+)
+
 image_manifest(
+    name = "busybox_manifest",
+    cmd = ["sh"],
+    env = {"PATH": "/usr/bin:/bin"},
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        ":busybox_home",
+        ":busybox_filesystem",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
     name = "busybox",
-    base = "@test_busybox",
+    manifests = [":busybox_manifest"],
+    platforms = _MUSL_PLATFORMS,
     tags = ["manual"],
 )
 
