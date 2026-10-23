@@ -1,0 +1,218 @@
+{
+  "accepted_analysis_exit": false,
+  "all_skipped_owners": [],
+  "arguments": [
+    "--bazelrc=/tmp/syscall-applicability-auth-4ykr7anw/credentials.bazelrc",
+    "test",
+    "--downloader_config=/tmp/image-qualification-4724h0ya/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+    "--compilation_mode=opt",
+    "--config=x86_64",
+    "--lockfile_mode=error",
+    "--noannounce_rc",
+    "--remote_download_outputs=all",
+    "--build_event_json_file_path_conversion=false",
+    "--nozip_undeclared_test_outputs",
+    "--runs_per_test=1",
+    "--flaky_test_attempts=1",
+    "--nocache_test_results",
+    "--test_sharding_strategy=disabled",
+    "--strategy=TestRunner=local",
+    "--local_test_jobs=1",
+    "--test_timeout=600",
+    "--test_arg=--runtime=qualification-php-44113b0a12cc4dee96e6ced79df75b96",
+    "--test_arg=--batch=1",
+    "--test_arg=--tests=tests/basic/001.phpt,sapi/cli/tests/001.phpt,sapi/cgi/tests/001.phpt,sapi/phpdbg/tests/basic_run.phpt,ext/sodium/tests/crypto_hex.phpt,ext/bcmath/tests/GHSA-x692-q9x7-8c3f.phpt,ext/pdo_pgsql/tests/transations_deprecations.phpt",
+    "--test_arg=-test.v=true",
+    "//test/runtimes:php8.5.11",
+    "--build_event_json_file=/tmp/image-qualification-4724h0ya/php-consumer.events.jsonl"
+  ],
+  "bazel_command": "test",
+  "benchmark_manifest": {},
+  "bep_finish": {
+    "exitCode": {
+      "code": 3,
+      "name": "TESTS_FAILED"
+    },
+    "finishTime": "2026-10-23T16:19:33.188Z",
+    "finishTimeMillis": "1792772373188"
+  },
+  "build_outputs": [],
+  "capture_exit": 0,
+  "case_counts": {
+    "failed": 1,
+    "passed": 0,
+    "skipped": 0
+  },
+  "command_kind": "test",
+  "completed_aspects": [],
+  "declared_benchmark_manifest": {},
+  "errors": [],
+  "executed": [
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "exitCode": 2,
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0.001s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0.007s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.025s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.055s"
+        }
+      },
+      "owner": {
+        "configuration": "8aded46af43b14d6df57fce2576f23955d78d5112c43b235bc71d07d295cc2b6",
+        "label": "//test/runtimes:php8.5.11"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED",
+      "xml": {
+        "failed": 1,
+        "failures": [
+          "test/runtimes/php8.5.11-executer"
+        ],
+        "passed": 0,
+        "skipped": 0,
+        "skips": []
+      }
+    }
+  ],
+  "execution_finished_at": "2026-10-23T16:19:33.811586+00:00",
+  "execution_to_verdict_seconds": 0.011336,
+  "expected": [
+    {
+      "configuration": "8aded46af43b14d6df57fce2576f23955d78d5112c43b235bc71d07d295cc2b6",
+      "label": "//test/runtimes:php8.5.11"
+    }
+  ],
+  "expected_aspects": [],
+  "expected_failures": [],
+  "expected_labels": [
+    "//test/runtimes:php8.5.11"
+  ],
+  "failures": [
+    {
+      "attempt": 1,
+      "cases": [
+        "test/runtimes/php8.5.11-executer"
+      ],
+      "owner": {
+        "configuration": "8aded46af43b14d6df57fce2576f23955d78d5112c43b235bc71d07d295cc2b6",
+        "label": "//test/runtimes:php8.5.11"
+      },
+      "reason": "XML test failures",
+      "run": 1,
+      "shard": 1
+    },
+    {
+      "attempt": 1,
+      "owner": {
+        "configuration": "8aded46af43b14d6df57fce2576f23955d78d5112c43b235bc71d07d295cc2b6",
+        "label": "//test/runtimes:php8.5.11"
+      },
+      "reason": "test result",
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED"
+    },
+    {
+      "configuration": "8aded46af43b14d6df57fce2576f23955d78d5112c43b235bc71d07d295cc2b6",
+      "label": "//test/runtimes:php8.5.11",
+      "reason": "test summary",
+      "status": "FAILED"
+    }
+  ],
+  "missing": [],
+  "native_exit": 3,
+  "non_runtime_owners": [],
+  "reporting_elapsed_seconds": 0.001393069999949148,
+  "schema_version": 1,
+  "skipped_owners": [],
+  "skips": [],
+  "source": "fb51c6f44641e36f566911360b06fa2834b325e4",
+  "source_evidence": {
+    "capture_exit": {
+      "bytes": 2,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/capture-exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "commit_file": {
+      "bytes": 970,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/commit.txt",
+      "sha256": "6da277f9169f8caf7371d38a3a3ab29b66bba28fea32043a5a111d1ad039fb7c"
+    },
+    "executed_arguments": {
+      "bytes": 1014,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/arguments.txt",
+      "sha256": "6d38777d1ef0aa5d993240f65399d48725437d10a5ecc3edd8f7711f408ec763"
+    },
+    "final_head": {
+      "bytes": 41,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/head.txt",
+      "sha256": "52baa5e438d3e7d794b1c2375acf8aa5e1bafa70a212847f86e031c1dc7cfd89"
+    },
+    "lock_after": {
+      "bytes": 122481,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/lock-after",
+      "sha256": "b3eb6d9dd0ac6dabc7bcceecef81d6e1d344e95d1c8bcd7232cd3a5603723b4d"
+    },
+    "lock_before": {
+      "bytes": 122481,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/lock-before",
+      "sha256": "b3eb6d9dd0ac6dabc7bcceecef81d6e1d344e95d1c8bcd7232cd3a5603723b4d"
+    },
+    "native_exit": {
+      "bytes": 2,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/native-exit",
+      "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+    },
+    "source_after": {
+      "bytes": 0,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/after.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "source_before": {
+      "bytes": 0,
+      "path": "/tmp/image-qualification-4724h0ya/qualification-evidence/invocation-php-consumer/before.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "status": "FAIL",
+  "verdict_available_at": "2026-10-23T16:19:33.822922+00:00",
+  "zero_case_owners": []
+}

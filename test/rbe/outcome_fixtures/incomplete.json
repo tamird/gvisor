@@ -1,0 +1,185 @@
+{
+  "accepted_analysis_exit": false,
+  "all_skipped_owners": [],
+  "arguments": [
+    "--bazelrc=/tmp/syscall-applicability-auth-btd5xnnp/credentials.bazelrc",
+    "test",
+    "--downloader_config=/tmp/image-qualification-jkbay6ao/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+    "--compilation_mode=opt",
+    "--config=x86_64",
+    "--lockfile_mode=error",
+    "--remote_download_outputs=all",
+    "--noannounce_rc",
+    "--build_event_json_file_path_conversion=false",
+    "--keep_going",
+    "--strategy=TestRunner=local",
+    "--nocache_test_results",
+    "--runs_per_test=1",
+    "--flaky_test_attempts=1",
+    "--test_output=all",
+    "//test/runtimes/proctor/lib:lib_test",
+    "--build_event_json_file=/tmp/image-qualification-jkbay6ao/proctor-unit.events.jsonl"
+  ],
+  "bazel_command": "test",
+  "benchmark_manifest": {},
+  "bep_finish": {
+    "exitCode": {
+      "name": "SUCCESS"
+    },
+    "finishTime": "2026-10-23T16:20:05.030Z",
+    "finishTimeMillis": "1792772405030",
+    "overallSuccess": true
+  },
+  "build_outputs": [],
+  "capture_exit": 0,
+  "case_counts": {
+    "failed": 0,
+    "passed": 0,
+    "skipped": 0
+  },
+  "command_kind": "test",
+  "completed_aspects": [],
+  "declared_benchmark_manifest": {},
+  "errors": [
+    "Test owner has no executed named cases; zero-case/all-skipped success is not coverage: Owner(label='//test/runtimes/proctor/lib:lib_test', configuration='a50f403b3889ea1b61558714457b4ae100af26b8480a2c2ef120bc0dbcd24205')"
+  ],
+  "executed": [
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0.006s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.021s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.039s"
+        }
+      },
+      "owner": {
+        "configuration": "a50f403b3889ea1b61558714457b4ae100af26b8480a2c2ef120bc0dbcd24205",
+        "label": "//test/runtimes/proctor/lib:lib_test"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 0,
+        "skipped": 0,
+        "skips": []
+      }
+    }
+  ],
+  "execution_finished_at": "2026-10-23T16:20:05.659939+00:00",
+  "execution_to_verdict_seconds": 0.010022,
+  "expected": [
+    {
+      "configuration": "a50f403b3889ea1b61558714457b4ae100af26b8480a2c2ef120bc0dbcd24205",
+      "label": "//test/runtimes/proctor/lib:lib_test"
+    }
+  ],
+  "expected_aspects": [],
+  "expected_failures": [],
+  "expected_labels": [
+    "//test/runtimes/proctor/lib:lib_test"
+  ],
+  "failures": [],
+  "missing": [],
+  "native_exit": 0,
+  "non_runtime_owners": [],
+  "reporting_elapsed_seconds": 0.001316666999997551,
+  "schema_version": 1,
+  "skipped_owners": [],
+  "skips": [],
+  "source": "ff65577b1e0ac0bdc8daad11c839564f1d22f18d",
+  "source_evidence": {
+    "capture_exit": {
+      "bytes": 2,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/capture-exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "commit_file": {
+      "bytes": 712,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/commit.txt",
+      "sha256": "2e3c13eccee975557cadfd95b96653af1b67b3349e04ea2aec931cdf7e4c06a0"
+    },
+    "executed_arguments": {
+      "bytes": 588,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/arguments.txt",
+      "sha256": "2715d651630aeb79b95688dfcdeae4deb731eafb780acec6eb176f565b5a7e61"
+    },
+    "final_head": {
+      "bytes": 41,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/head.txt",
+      "sha256": "0d351362ac2c425f1a47f9e58d3ee750fc6fb26ac34f88f516d95e2e22b4d371"
+    },
+    "lock_after": {
+      "bytes": 122481,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/lock-after",
+      "sha256": "b3eb6d9dd0ac6dabc7bcceecef81d6e1d344e95d1c8bcd7232cd3a5603723b4d"
+    },
+    "lock_before": {
+      "bytes": 122481,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/lock-before",
+      "sha256": "b3eb6d9dd0ac6dabc7bcceecef81d6e1d344e95d1c8bcd7232cd3a5603723b4d"
+    },
+    "native_exit": {
+      "bytes": 2,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/native-exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "source_after": {
+      "bytes": 0,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/after.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "source_before": {
+      "bytes": 0,
+      "path": "/tmp/image-qualification-jkbay6ao/qualification-evidence/invocation-proctor-unit/before.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "status": "INCOMPLETE",
+  "verdict_available_at": "2026-10-23T16:20:05.669961+00:00",
+  "zero_case_owners": [
+    {
+      "configuration": "a50f403b3889ea1b61558714457b4ae100af26b8480a2c2ef120bc0dbcd24205",
+      "label": "//test/runtimes/proctor/lib:lib_test"
+    }
+  ]
+}

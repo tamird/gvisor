@@ -1,0 +1,32 @@
+[
+  {
+    "file": "pass.json",
+    "member": "invocation-php-image-closure/verdict.json",
+    "artifact": {
+      "sha256": "ad8509d5af6e2c0ef11557b8178e5883abe9b5d51f78935d9e65708b0e091a77",
+      "bytes": 6640968
+    },
+    "sha256": "eeef75776d5a72561386ef588044eb6d0fb0aa42623bbaf932f700e203a9226a",
+    "bytes": 3587
+  },
+  {
+    "file": "fail.json",
+    "member": "invocation-php-consumer/verdict.json",
+    "artifact": {
+      "sha256": "ad8509d5af6e2c0ef11557b8178e5883abe9b5d51f78935d9e65708b0e091a77",
+      "bytes": 6640968
+    },
+    "sha256": "0a7bfd9a408fbc0bcad2ab50450bd6e9314205c7513bf9728b85272912501a69",
+    "bytes": 7006
+  },
+  {
+    "file": "incomplete.json",
+    "member": "invocation-proctor-unit/verdict.json",
+    "artifact": {
+      "sha256": "be748f9c358167af8281a66e85636c530167e2bd0ad59abc4eb8aa26012f2ca7",
+      "bytes": 335428
+    },
+    "sha256": "51ff57dc6a9e68ab5c6314948a77ccd3dbdec3ab6db50db18ec0eb07661bbb9d",
+    "bytes": 6061
+  }
+]

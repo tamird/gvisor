@@ -135,3 +135,24 @@ def bind_image_outputs(
     assert receipt["audit_upload_status"] == "PASS" and not receipt["audit_upload_errors"]
     assert used_supplements == set(range(len(supplements))), "Unmatched supplemental producer proof"
     return outputs, native_outputs, audits
+
+
+def write_outcome(
+    path: Path, outcome: dict[str, object], native_status: str, projection_status: str,
+) -> int:
+    """Write one final verdict and return its process status.
+
+    A successful projection of failed native evidence is still a failed
+    qualification. Callers must exit with this return value.
+    """
+    allowed = {"PASS", "FAIL", "INCOMPLETE"}
+    if native_status not in allowed or projection_status not in allowed:
+        raise ValueError(f"Unknown qualification verdicts: {native_status!r}, {projection_status!r}")
+    status = native_status if native_status != "PASS" else projection_status
+    result = {**outcome, "status": status, "native_status": native_status,
+              "projection_status": projection_status}
+    report.write_json(path, result)
+    print(json.dumps({"path": str(path), **report.file_record(path),
+                      "status": status, "native_status": native_status,
+                      "projection_status": projection_status}), flush=True)
+    return int(status != "PASS")

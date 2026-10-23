@@ -15,6 +15,13 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         raise ValueError(f"Unexpected proctor check targets: {config['targets']}")
     record = {"source": config["source"], "status": "INCOMPLETE", "checks": []}
     try:
+        controls = invoke("outcome-contract", [
+            "run", "--lockfile_mode=error", "--noannounce_rc",
+            "@rules_python//python/bin:python", "--",
+            str(Path(__file__).with_name("outcome_test.py")), str(private), str(evidence),
+        ], "command", targets=[])
+        if controls["status"] != "PASS":
+            raise RuntimeError("Final outcome contract checks failed")
         # Reuse the canonical check with the declared SDK on PATH. This checks
         # tracked Go files without rewriting them or installing a host tool.
         formatter = shlex.join([
