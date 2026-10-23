@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T06:43:52.767656+00:00",
+    "updatedAt": "2026-10-23T07:09:28.826921+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19060,6 +19060,88 @@
           "head": "b2a09233588ff4d63b408879e8445bb587aa4597"
         }
       }
+    },
+    {
+      "id": "branch:source-built-nginx-image",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rules-img-source-nginx",
+      "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
+      "title": "Build the basic Nginx image from source",
+      "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
+      "group": "bazel",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-23T07:09:28.826921+00:00",
+      "summary": "Build pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
+      "followup": {
+        "owner": "node_tls_sni",
+        "sourceHead": "7c5f96976d1aaf76483834c41dd091700f4141a8",
+        "observedAt": "2026-10-23T07:09:28.826921+00:00",
+        "disposition": "Contributor review pending",
+        "nextAction": "Await the contributor decision already requested by root; preserve prior grants and completed source-specific evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "7c5f96976d1aaf76483834c41dd091700f4141a8",
+        "url": "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8"
+      },
+      "links": [
+        {
+          "label": "Existing image-version PR and separate grant",
+          "url": "https://github.com/google/gvisor/pull/16058"
+        },
+        {
+          "label": "Shared source utilities prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "8f0a165f212d14faf2a94070707708384a51d461"
+        },
+        "after": {
+          "head": "7c5f96976d1aaf76483834c41dd091700f4141a8"
+        }
+      }
+    },
+    {
+      "id": "branch:portforward-readiness",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/portforward-readiness-imports",
+      "head": "72883973765180ad8372bd0f3aa75a243d010353",
+      "title": "Stop port-forward readiness polling on timeout",
+      "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353",
+      "group": "bazel",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-23T07:09:28.826921+00:00",
+      "summary": "Bind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "72883973765180ad8372bd0f3aa75a243d010353",
+        "observedAt": "2026-10-23T07:09:28.826921+00:00",
+        "disposition": "Contributor review pending",
+        "nextAction": "Await the contributor decision already requested by root; preserve prior grants and completed source-specific evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "72883973765180ad8372bd0f3aa75a243d010353",
+        "url": "https://github.com/tamird/gvisor/commit/72883973765180ad8372bd0f3aa75a243d010353"
+      },
+      "refinement": {
+        "before": {
+          "head": "2d9e001b8829aa5d56ea1c9ae1bb75a12e87f9c6"
+        },
+        "after": {
+          "head": "72883973765180ad8372bd0f3aa75a243d010353"
+        }
+      }
     }
   ],
   "edges": [
@@ -21331,6 +21413,13 @@
       "to": "branch:rules-img-fsstress",
       "type": "depends_on",
       "reason": "Uses the selected shared BusyBox applets, notices and native target-CPU musl binding; compiler/basic/license ancestry remains inherited.",
+      "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
+    },
+    {
+      "from": "branch:source-image-utilities",
+      "to": "branch:source-built-nginx-image",
+      "type": "depends_on",
+      "reason": "Uses the shared source utility, notice and target-musl foundation; its existing explicit compiler/basic/license ancestry remains required.",
       "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
     }
   ],
@@ -29112,7 +29201,7 @@
       "title": "Make test-image runtime inputs explicit",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-23T06:43:52.767656+00:00",
+      "updatedAt": "2026-10-23T07:09:28.826921+00:00",
       "summary": "The user approved PIDFD and requested scratch bases wherever possible across all images. The existing helper_base already has no parent image and supplies declared certificates and /tmp metadata; its image users do not need a blanket base rewrite. Remaining BusyBox and Alpine users need an explicit command/loader inventory before replacement. This is agent work under the requested correction, separate from resource-file relocation.",
       "findings": [
         {
@@ -29161,7 +29250,7 @@
           ]
         }
       ],
-      "nextStep": "Node owns remaining source-built Nginx readiness and final integration after accepted runtime and canonical license results. Hostinet owns Apache qualification for basic/httpd and benchmarks/httpd with their separate runtime and benchmark defaults. Node owns remote qualification of the independently reviewed, source-published profile-helper fda0e4 utility closure. Apache and profile-helper have no contributor review request or runtime result yet. Continue the existing command/loader inventory.",
+      "nextStep": "The basic Nginx source migration and port-forward readiness proposal have actual pending contributor questions on their exact published nodes. Root owns the separate benchmark-Nginx shared-source migration; its source review is in progress and no runtime result is claimed. Hostinet owns Apache qualification for basic/httpd and benchmarks/httpd with their separate runtime and benchmark defaults. Node owns the reviewed profile-helper mixed-build/native-host qualification, with PIDFD runtime reused only after exact output equality. Apache and profile-helper have no contributor question yet. Continue the existing command/loader inventory.",
       "evidence": [
         {
           "label": "Current base and runtime requirement audit",
