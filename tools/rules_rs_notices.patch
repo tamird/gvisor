@@ -1,0 +1,17 @@
+Expose the standard-library notice already present in the pinned Rust
+compiler archive. rules_rs 0.1.3 downloads this file but does not export
+it. Remove this patch when its compiler repository exposes the notice.
+
+https://github.com/hermeticbuild/rules_rs/blob/7065a72736844e3f7358431d8b2299ec35674d61/rs/private/rustc_repository.bzl
+
+--- a/rs/private/rustc_repository.bzl
++++ b/rs/private/rustc_repository.bzl
+@@ -3,6 +3,8 @@
+ load(":rust_repository_utils.bzl", "RUST_REPOSITORY_COMMON_ATTR", "download_and_extract", "includes_rust_analyzer_proc_macro_srv", "rustc_lib_build_file")
+ 
+ _build_file_tmpl = """\
++exports_files(["share/doc/rust/COPYRIGHT-library.html"])
++
+ filegroup(
+     name = "rustc",
+     srcs = ["bin/rustc{binary_ext}"],
