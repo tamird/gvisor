@@ -105,8 +105,14 @@ def run(invoke, evidence: Path, private: Path) -> None:
         def httpd(*arguments: str) -> str:
             name = runtime + "-diagnostic-" + uuid.uuid4().hex
             try:
+                entry = ["--entrypoint=/usr/local/apache2/bin/httpd", image, *arguments]
+                if package == "benchmarks":
+                    # The benchmark caller creates its DocumentRoot before starting Apache.
+                    entry = ["--entrypoint=sh", image, "-c",
+                             'mkdir -p /tmp/html && cp -r /local/* /tmp/html/. && exec /usr/local/apache2/bin/httpd "$@"',
+                             "httpd", *arguments]
                 return command(["docker", "run", "--rm", "--name=" + name, "--runtime=" + runtime,
-                                *environment, "--entrypoint=/usr/local/apache2/bin/httpd", image, *arguments])
+                                *environment, *entry])
             finally:
                 result = subprocess.run(["docker", "rm", "--force", name], capture_output=True, text=True, timeout=30)
                 records["commands"].append({"arguments": result.args, "native_exit": result.returncode,
