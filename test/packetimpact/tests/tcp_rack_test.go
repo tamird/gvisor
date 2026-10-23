@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"strings"
 	"testing"
 	"time"
 
@@ -262,6 +263,11 @@ func TestRACKWithReorder(t *testing.T) {
 	dut, conn, acceptFd, payloadSize := createSACKConnection(t)
 	payload := &testbench.Payload{Bytes: make([]byte, payloadSize)}
 	seqNum1 := *conn.RemoteSeqNum(t)
+	cc := strings.TrimRight(string(dut.GetSockOpt(t, acceptFd, unix.SOL_TCP, unix.TCP_CONGESTION, 16)), "\x00")
+	logTCPInfo := func(stage string, info linux.TCPInfo) {
+		t.Logf("RACK_DIAGNOSTIC stage=%s cc=%q mss=%d cwnd=%d ssthresh=%d ca_state=%d rtt_us=%d", stage, cc, info.SndMss, info.SndCwnd, info.SndSsthresh, info.CaState, info.RTT)
+	}
+	logTCPInfo("initial", dut.GetSockOptTCPInfo(t, acceptFd))
 
 	// Send ACK for data packets to establish RTT.
 	sendAndReceive(t, dut, conn, numPktsForRTT, acceptFd, payloadSize, true /* sendACK */)
@@ -269,6 +275,7 @@ func TestRACKWithReorder(t *testing.T) {
 
 	// We are not sending ACK for these packets.
 	const numPkts = 4
+	logTCPInfo("before_first_flight", dut.GetSockOptTCPInfo(t, acceptFd))
 	sendAndReceive(t, dut, conn, numPkts, acceptFd, payloadSize, false /* sendACK */)
 
 	time.Sleep(simulatedRTT)
@@ -290,13 +297,20 @@ func TestRACKWithReorder(t *testing.T) {
 		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(seqNum1)), Options: sackBlock[:sbOff]})
 	}
 
-	// Send a DSACK block indicating both original and retransmitted
-	// packets are received, RACK will increase the reordering window on
-	// every DSACK.
+	// A DSACK reports duplicate bytes actually received. Wait for the first
+	// segment to be retransmitted before reporting exactly that segment.
+	if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: testbench.Uint32(uint32(seqNum1))}, payload, time.Second); err != nil {
+		t.Fatalf("first-round retransmission was not received: %s", err)
+	}
+	beforeDSACK := dut.GetSockOptTCPInfo(t, acceptFd)
+	logTCPInfo("after_retransmission_before_dsack", beforeDSACK)
+	if beforeDSACK.CaState != linux.TCP_CA_Recovery && beforeDSACK.CaState != linux.TCP_CA_Loss {
+		t.Fatalf("congestion state after retransmission = %d, cannot observe recovery completion", beforeDSACK.CaState)
+	}
 	dsackBlock := make([]byte, 40)
 	dbOff := 0
 	start = seqNum1
-	end = start.Add(seqnum.Size(2 * payloadSize))
+	end = start.Add(seqnum.Size(payloadSize))
 	dbOff += header.EncodeNOP(dsackBlock[dbOff:])
 	dbOff += header.EncodeNOP(dsackBlock[dbOff:])
 	dbOff += header.EncodeSACKBlocks([]header.SACKBlock{{
@@ -307,6 +321,23 @@ func TestRACKWithReorder(t *testing.T) {
 		AckNum:  testbench.Uint32(uint32(seqNum1.Add(seqnum.Size(numPkts * payloadSize)))),
 		Options: dsackBlock[:dbOff],
 	})
+
+	// Observe the ACK's recovery transition before sampling the window.
+	// Netstack does not populate TCP_INFO.Unacked, so zero is not evidence
+	// that this ACK has been processed.
+	deadline := time.Now().Add(time.Second)
+	for {
+		info := dut.GetSockOptTCPInfo(t, acceptFd)
+		if info.CaState == linux.TCP_CA_Open {
+			logTCPInfo("after_dsack_before_second_flight", info)
+			break
+		}
+		if !time.Now().Before(deadline) {
+			logTCPInfo("recovery_transition_timeout", info)
+			t.Fatal("DSACK did not complete recovery within one second")
+		}
+		time.Sleep(time.Millisecond)
+	}
 
 	seqNum1.UpdateForward(seqnum.Size(numPkts * payloadSize))
 	sendTime := time.Now()
