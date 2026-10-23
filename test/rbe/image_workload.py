@@ -9,6 +9,17 @@ from image_runtime import prepared_runtime
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+    if "retained_audits" in config:
+        if config["image_targets"] or config["targets"] or config.get("preparation_targets"):
+            raise ValueError("Audit recovery must not request image or runtime targets")
+        result = invoke("retained-ltp-actions", [
+            "run", "--lockfile_mode=error", "--noannounce_rc",
+            "@rules_python//python/bin:python", "--",
+            str(Path.cwd() / "test/rbe/image_audit_recovery.py"),
+            str(private), str(evidence)], "command", targets=[])
+        if result["status"] != "PASS":
+            raise RuntimeError("Retained LTP action recovery failed")
+        return
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
                "--build_event_json_file_path_conversion=false"]
