@@ -1,7 +1,7 @@
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
-load("//images:img.bzl", "image_outputs", "package_layer")
-load("//tools:defs.bzl", "cc_binary", "go_binary")
+load("//images:img.bzl", "image_outputs")
+load("//tools:defs.bzl", "arch_genrule", "cc_binary", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -68,65 +68,45 @@ image_layer(
     default_metadata = file_metadata(mode = "0755"),
 )
 
-# Kubernetes invokes these commands directly. GNU rm's --one-file-system
-# protects nested mounts under the host directory being removed.
-_COREUTILS_MEMBERS = [
-    "./bin/chmod",
-    "./bin/mkdir",
-    "./bin/rm",
-    "./lib/{triplet}/libc.so.6",
-    "./lib/{triplet}/{loader}",
-    "./{interpreter}",
-    "./lib/{triplet}/libselinux.so.1",
-    "./usr/lib/{triplet}/libpcre2-8.so.0",
-    "./usr/lib/{triplet}/libpcre2-8.so.0.10.4",
-    "./usr/share/doc/coreutils/copyright",
-    "./usr/share/doc/libc6/copyright",
-    "./usr/share/doc/libselinux1/copyright",
-    "./usr/share/doc/libpcre2-8-0/copyright",
-    "./usr/share/doc/base-files/copyright",
-    "./usr/share/common-licenses/GPL-2",
-    "./usr/share/common-licenses/GPL-3",
-    "./usr/share/common-licenses/LGPL-2.1",
-    "./usr/share/common-licenses/GFDL-1.3",
-]
-
-_COREUTILS_PACKAGES = [
-    # Common license texts referenced by the runtime packages' notices.
-    "@helper_image_packages//base-files:data",
-    # mkdir, chmod and rm --one-file-system invoked by the Kubernetes caller.
-    "@helper_image_packages//coreutils:data",
-    # C runtime and dynamic loader for those three commands.
-    "@helper_image_packages//libc6:data",
-    # Shared-library dependency of libselinux.
-    "@helper_image_packages//libpcre2-8-0:data",
-    # Shared-library dependency of the packaged mkdir binary.
-    "@helper_image_packages//libselinux1:data",
-]
-
-package_layer(
-    name = "profile_helper_coreutils_layer",
-    out = "profile-helper-coreutils.tar",
-    members = _COREUTILS_MEMBERS,
-    packages = _COREUTILS_PACKAGES,
-)
-
 image_manifest(
-    name = "profile_helper_image",
-    base = "//images:helper_base",
+    name = "profile_helper_manifest",
     cmd = ["/usr/bin/profilehelper"],
+    env = {"PATH": "/usr/bin:/bin"},
     layers = [
-        ":profile_helper_coreutils_layer",
+        "//images:helper_filesystem",
+        "//images:musl_notice_layer",
+        "//images:profile_coreutils_layer",
         ":profile_helper_layer",
     ],
     tags = ["manual"],
-    # The Go binary follows the target platform and must match the image's OS.
-    # This constrains the target, not the host or execution platform.
-    target_compatible_with = ["@platforms//os:linux"],
+    user = "0:0",
+)
+
+image_index(
+    name = "profile_helper_image",
+    manifests = [":profile_helper_manifest"],
+    # Select the static Linux target ABI independently of the execution host.
+    platforms = select({
+        "@platforms//cpu:aarch64": ["@llvm//platforms:linux_aarch64_musl"],
+        "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
+    }),
+    tags = ["manual"],
 )
 
 image_outputs(
     name = "profile_helper",
     image = ":profile_helper_image",
     image_name = "benchmarks/profile-helper",
+)
+
+arch_genrule(
+    name = "qualification_profile_helper_archives",
+    src = ":profile_helper_archive",
+    template = "qualification_profile_helper_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_profile_helper_contexts",
+    src = ":profile_helper_context",
+    template = "qualification_profile_helper_context_%s.tar",
 )

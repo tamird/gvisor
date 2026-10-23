@@ -16,7 +16,10 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
     runtime_name = configuration["runtime_name"]
     image_component = configuration["image_name"]
-    records = {"runtime": runtime_name, "status": "INCOMPLETE", "commands": []}
+    mode = configuration.get("runtime_mode", "runsc")
+    if mode not in ("runsc", "native"):
+        raise ValueError("Unsupported runtime preparation mode: " + mode)
+    records = {"runtime": runtime_name, "runtime_mode": mode, "status": "INCOMPLETE", "commands": []}
     config_path = Path("/etc/docker/daemon.json")
     original_bytes = config_path.read_bytes()
     original_config = json.loads(original_bytes)
@@ -61,38 +64,46 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
                 "BAZEL_OPTIONS=--config=x86_64 --compilation_mode=opt --lockfile_mode=error --noannounce_rc --downloader_config=" + os.environ["APPLICABILITY_DOWNLOADER_CONFIG"],
                 "STARTUP_OPTIONS=--output_base=" + os.environ["APPLICABILITY_OUTPUT_BASE"] + " --bazelrc=" + os.environ["APPLICABILITY_AUTH_RC"],
                 "REMOTE_IMAGE_PREFIX=qualification.invalid/images"]
-        run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
-        runsc = runtime_directory / "runsc"
-        if not runsc.is_file() or not (runtime_directory / "gvisor-bin").is_dir():
-            raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")
-        records["runtime_files"] = [record_file(runsc), *[
-            record_file(path) for path in sorted((runtime_directory / "gvisor-bin").iterdir()) if path.is_file()]]
-        logs = destination.parent / "runsc-logs"
-        logs.mkdir()
-        run([str(runsc), "install", "--config_file=" + str(config_path),
-             "--runtime=" + runtime_name, "--download-sidecars=NEVER", "--require-sidecars=ALWAYS", "--",
-             *configuration["runtime_flags"], "--debug-log=" + str(logs) + "/", "--TESTONLY-test-name-env=RUNSC_TEST_NAME"])
-        installed = json.loads(config_path.read_text())
-        for key, value in original_config.items():
-            if key != "runtimes" and installed.get(key) != value:
-                raise RuntimeError("Runtime installation changed unrelated daemon configuration")
-        for name, value in original_config.get("runtimes", {}).items():
-            if installed["runtimes"].get(name) != value:
-                raise RuntimeError("Runtime installation changed an existing runtime")
-        records["config_after"] = installed
-        reload_daemon()
-        records["daemon_action"] = "Reload existing daemon runtimes"
-        ready_deadline = min(time.monotonic() + remaining(), time.monotonic() + 30)
-        while time.monotonic() < ready_deadline:
-            result = subprocess.run(["docker", "info", "--format={{json .}}"], capture_output=True, text=True, timeout=min(5, remaining()))
-            if result.returncode == 0:
-                info = json.loads(result.stdout)
-                if runtime_name in info["Runtimes"]:
-                    records["server_info"] = info
-                    break
-            time.sleep(0.1)
+        if mode == "runsc":
+            run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+            runsc = runtime_directory / "runsc"
+            if not runsc.is_file() or not (runtime_directory / "gvisor-bin").is_dir():
+                raise RuntimeError("Canonical Make refresh omitted runsc or sidecars")
+            records["runtime_files"] = [record_file(runsc), *[
+                record_file(path) for path in sorted((runtime_directory / "gvisor-bin").iterdir()) if path.is_file()]]
+            logs = destination.parent / "runsc-logs"
+            logs.mkdir()
+            run([str(runsc), "install", "--config_file=" + str(config_path),
+                 "--runtime=" + runtime_name, "--download-sidecars=NEVER", "--require-sidecars=ALWAYS", "--",
+                 *configuration["runtime_flags"], "--debug-log=" + str(logs) + "/", "--TESTONLY-test-name-env=RUNSC_TEST_NAME"])
+            installed = json.loads(config_path.read_text())
+            for key, value in original_config.items():
+                if key != "runtimes" and installed.get(key) != value:
+                    raise RuntimeError("Runtime installation changed unrelated daemon configuration")
+            for name, value in original_config.get("runtimes", {}).items():
+                if installed["runtimes"].get(name) != value:
+                    raise RuntimeError("Runtime installation changed an existing runtime")
+            records["config_after"] = installed
+            reload_daemon()
+            records["daemon_action"] = "Reload existing daemon runtimes"
+            ready_deadline = min(time.monotonic() + remaining(), time.monotonic() + 30)
+            while time.monotonic() < ready_deadline:
+                result = subprocess.run(["docker", "info", "--format={{json .}}"], capture_output=True, text=True, timeout=min(5, remaining()))
+                if result.returncode == 0:
+                    info = json.loads(result.stdout)
+                    if runtime_name in info["Runtimes"]:
+                        records["server_info"] = info
+                        break
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("Docker did not expose the configured runtime")
         else:
-            raise RuntimeError("Docker did not expose the configured runtime")
+            # Profiling's DaemonSet deliberately uses the native host runtime.
+            records["config_after"] = original_config
+            records["daemon_action"] = "Use existing native runtime without reconfiguration"
+            records["server_info"] = json.loads(run(["docker", "info", "--format={{json .}}"]))
+            if "runc" not in records["server_info"]["Runtimes"]:
+                raise RuntimeError("Docker does not expose the required native runtime")
         image_name = "gvisor.dev/images/" + image_component + ":latest"
         image_key = image_component.replace("/", "_")
         image_make = make
@@ -125,8 +136,11 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         try:
             # This disposable worker has one owner. Restore its original
             # runtime configuration even if installation or the consumer fails.
-            config_path.write_bytes(original_bytes)
-            reload_daemon()
+            if mode == "runsc":
+                config_path.write_bytes(original_bytes)
+                reload_daemon()
+            elif config_path.read_bytes() != original_bytes:
+                raise RuntimeError("Native preparation changed Docker configuration")
             records["cleanup"] = "PASS"
         except (OSError, RuntimeError):
             records["cleanup"] = "FAIL"

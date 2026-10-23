@@ -321,3 +321,15 @@ image_outputs(
     image = ":pidfd_tests",
     image_name = "basic/pidfd-tests",
 )
+
+arch_genrule(
+    name = "qualification_pidfd_tests_archives",
+    src = ":pidfd_tests_archive",
+    template = "qualification_pidfd_tests_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_pidfd_tests_contexts",
+    src = ":pidfd_tests_context",
+    template = "qualification_pidfd_tests_context_%s.tar",
+)
