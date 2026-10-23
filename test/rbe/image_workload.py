@@ -24,35 +24,31 @@ NAMES = {f"BenchmarkIperfManyConnections/operation.{direction}/parallel.{paralle
          for direction in ("Upload", "Download") for parallel in (4, 16, 64)}
 
 
-def observations(log: str, iterations: int) -> list[dict]:
-    rows = [json.loads(line.split("IPERF_RESULT ", 1)[1]) for line in log.splitlines() if "IPERF_RESULT " in line]
-    measured = [row for row in rows if row["Iterations"] == iterations]
-    if Counter(row["Name"] for row in measured) != Counter(NAMES.keys()):
-        raise ValueError("Pilot omitted or duplicated a measured iperf3 case")
+def observations(rows: list[dict], duration: int, omit: int) -> list[dict]:
+    if Counter((row["Name"], row["Iterations"]) for row in rows) != Counter((name, 1) for name in NAMES):
+        raise ValueError("Pilot omitted or duplicated a timed iperf3 observation")
     for row in rows:
         parallel = NAMES[row["Name"]]
-        requested = row["Iterations"] * 1024
         data = row["Output"]
         start, end = data["start"], data["end"]
         settings, summary = start["test_start"], end["sum_sent"]
         connected = [stream["socket"] for stream in start["connected"]]
-        streams = end["streams"]
-        sent = [stream["sender"] for stream in streams]
-        if (row["Iterations"] not in (1, iterations) or row["Parallel"] != parallel or data.get("error")
-                or settings["num_streams"] != parallel or settings["bytes"] != requested
+        sent = [stream["sender"] for stream in end["streams"]]
+        if (row["Parallel"] != parallel or data.get("error")
+                or row["DurationSeconds"] != duration or row["OmitSeconds"] != omit
+                or settings["duration"] != duration or settings["omit"] != omit
+                or settings["num_streams"] != parallel or settings["bytes"] != 0 or settings["blocks"] != 0
                 or settings["blksize"] != 131072 or settings["protocol"] != "TCP"
                 or len(connected) != parallel or len(set(connected)) != parallel
                 or len(sent) != parallel or {item["socket"] for item in sent} != set(connected)):
-            raise ValueError("Actual iperf3 stream/request identity differs")
-        if summary["bytes"] != sum(item["bytes"] for item in sent) or summary["bytes"] < requested:
-            raise ValueError("iperf3 sender summary is not the complete aggregate transfer")
+            raise ValueError("Actual iperf3 stream/time-mode identity differs")
+        if summary["bytes"] != sum(item["bytes"] for item in sent) or summary["bytes"] <= 0:
+            raise ValueError("iperf3 sender summary is not the complete positive aggregate")
         if any(not math.isfinite(summary[key]) or summary[key] <= 0 for key in ("seconds", "bits_per_second")):
             raise ValueError("iperf3 omitted finite positive transfer timing")
-        row["zero_byte_streams"] = [item["socket"] for item in sent if item["bytes"] == 0]
-        # Calibration may finish before every connected stream sends. The
-        # measured many-stream workload must actually use every connection.
-        if row["Iterations"] == iterations and row["zero_byte_streams"]:
-            raise ValueError("Measured pilot did not send data on every requested stream")
+        row["zero_byte_streams"] = [item["socket"] for item in sent if item["bytes"] <= 0]
+        if row["zero_byte_streams"]:
+            raise ValueError("Timed pilot did not send data on every requested stream")
     return rows
 
 
@@ -232,10 +228,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             report.write_json(directory / "copied-outputs.json", outputs)
 
         iterations = config["iterations"]
+        if iterations != 1:
+            raise ValueError("Timed pilot requires exactly one transfer per case")
         manifest = evidence / "iperf-declared-benchmarks.json"
         report.write_json(manifest, {"owners": {BENCHMARK: [
             {"name": name, "count": 1, "iterations": iterations,
-             "units": ["ns/op", "MB/s", "bandwidth.bytes_per_second"]} for name in sorted(NAMES)]}})
+             "units": ["ns/op", "bandwidth.bytes_per_second"]} for name in sorted(NAMES)]}})
         for side, revision in (("before", config["before_source"]), ("after", source)):
             command("switch-" + side, ["git", "switch", "--detach", revision])
             check_source(revision)
@@ -265,7 +263,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     raise RuntimeError(side + " pilot analysis failed")
                 tested = invoke(side + "-pilot", ["test", *selected, BENCHMARK], "test",
                     (analysis_directory / "events.jsonl",),
-                    targets=[BENCHMARK], source=revision, directory=test_directory, declared_benchmarks=manifest)
+                    targets=[BENCHMARK], source=revision, directory=test_directory, declared_benchmarks=manifest, retain_outputs=True)
                 row = {"side": side, "source": revision, "status": "INCOMPLETE", "native": tested}
                 records["samples"].append(row)
                 if tested["status"] != "PASS" or tested["native_exit"] != 0:
@@ -278,14 +276,15 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 _, reports, errors = report.retained_reports(report.manifest_path(test_directory / "events.jsonl"))
                 if errors:
                     raise ValueError("Cannot authenticate pilot reports: " + str(errors))
-                [log] = [path for (owner, name), path in reports.items() if owner.owner.label == BENCHMARK and name == "test.log"]
+                raw = [json.loads(path.read_text()) for (owner, name), path in sorted(reports.items())
+                       if owner.owner.label == BENCHMARK and name.startswith("test.outputs/iperf-") and name.endswith(".json")]
                 [configured] = tested["expected"]
                 [actual_binary] = report.advertised_build_outputs(test_directory / "events.jsonl", {
                     (report.Owner(configured["label"], configured["configuration"]), "default")})
                 if any(actual_binary[key] != records["builds"][side]["benchmark"][key] for key in ("sha256", "bytes", "name")):
                     raise ValueError("Timed benchmark differs from its completed premeasurement build")
                 row["benchmark_output"] = actual_binary
-                row["observations"] = observations(log.read_text(), iterations)
+                row["observations"] = observations(raw, config["duration_seconds"], config["omit_seconds"])
                 row["runtime"] = prepared
                 row["status"] = "PASS"
             if json.loads((directory / "runtime.json").read_text())["cleanup"] != "PASS":

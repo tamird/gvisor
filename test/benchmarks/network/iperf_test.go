@@ -204,8 +204,10 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 			}
 
 			iperf := tools.Iperf{
-				Num:      b.N, // Total KiB for the client to send.
-				Parallel: bm.parallel,
+				Num:             b.N,
+				Parallel:        bm.parallel,
+				DurationSeconds: 10,
+				OmitSeconds:     2,
 			}
 
 			// Run the client.
