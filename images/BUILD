@@ -127,7 +127,10 @@ configure_make(
         "Makefile",
         "-f",
         '"$$EXT_BUILD_ROOT$$/$(execpath coreutils/timeout.mk)"',
+        'GPERF="$$EXT_BUILD_ROOT$$/$(execpath @gperf//:gperf)"',
     ],
+    # Declare the generator used by the upstream iconv header rules.
+    build_data = ["@gperf//:gperf"],
     # timeout needs none of these optional system libraries or message catalogs.
     configure_options = [
         "--disable-acl",
