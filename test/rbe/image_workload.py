@@ -169,7 +169,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 records["runtime_builds"].append(dict(prior, reused=True, supplier=supplier["invocation"]))
             if command(["git", "rev-parse", "HEAD"]) != source:
                 raise ValueError("Current qualifier source changed")
-            inputs = {"harness": {key: harness[key] for key in ("bytes", "sha256")},
+            inputs = {"prior_harness": {key: harness[key] for key in ("bytes", "sha256")},
                       "benchstat": benchstat,
                       "runtimes": runtimes, "image": records["image"]}
             report.write_json(package / "inputs.json", inputs)
@@ -178,6 +178,61 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         "--nozip_undeclared_test_outputs", "--test_sharding_strategy=disabled",
                         "--test_env=GO_TEST_WRAP_TESTV=1"]
             targets = ["//test/rbe/state_array_pair:paired_test"]
+            # Build the owning py_test so its actual transitioned data dependency
+            # supplies the common benchmark, including that dependency's runfiles.
+            execution = private / "startup-harness-execution.json"
+            try:
+                built = invoke("startup-harness", ["build", *selected,
+                               "--execution_log_json_file=" + str(execution), *targets], "build")
+            finally:
+                record_execution(execution, "x86_64", "startup-harness")
+            if built["status"] != "PASS":
+                raise RuntimeError("Declared startup harness build failed")
+            query = 'filter("^(@@)?//test/benchmarks/base:startup_test$", labels(data, //test/rbe/state_array_pair:paired_test))'
+            query_options = [*selected, "--universe_scope=//test/rbe/state_array_pair:paired_test"]
+            for kind in ("jsonproto", "files"):
+                queried = invoke("startup-dependency-" + kind,
+                                 ["cquery", *query_options, "--output=" + kind, query],
+                                 "command", targets=[])
+                if queried["status"] != "PASS":
+                    raise RuntimeError("Declared startup dependency query failed")
+            graph = json.loads((evidence / "invocation-startup-dependency-jsonproto/stdout.log").read_text())
+            match graph["results"]:
+                case [{"target": {"rule": {"name": label}}, "configurationId": configuration_id}]:
+                    if label.removeprefix("@@") != "//test/benchmarks/base:startup_test":
+                        raise ValueError("Unexpected declared startup dependency owner")
+                case _:
+                    raise ValueError("Expected exactly one configured startup data dependency")
+            configurations = [row for row in graph["configurations"] if row["id"] == configuration_id]
+            if len(configurations) != 1 or not configurations[0]["checksum"]:
+                raise ValueError("Missing startup dependency configuration")
+            match (evidence / "invocation-startup-dependency-files/stdout.log").read_text().splitlines():
+                case [path] if path.startswith("bazel-out/"):
+                    binary = workspace / path
+                case _:
+                    raise ValueError("Expected exactly one declared startup executable")
+            actual = report.file_record(binary)
+            proof = json.loads((evidence / "x86_64-startup-harness-image-execution.json").read_text())
+            if proof["status"] != "PASS":
+                raise ValueError("Startup native action evidence is incomplete")
+            producers = [action for action in proof["image_actions"] if any(
+                output["path"] == path and output.get("digest", {}).get("hash") == actual["sha256"] and
+                int(output.get("digest", {}).get("sizeBytes", -1)) == actual["bytes"]
+                for output in action["actualOutputs"])]
+            match producers:
+                case [{"mnemonic": "GoLink", "exitCode": 0, "digest": {"hash": digest}} as action] if (
+                        digest and not action["status"] and action["targetLabel"].removeprefix("@@") == label.removeprefix("@@")):
+                    pass
+                case _:
+                    raise ValueError("Expected one successful GoLink producing the declared startup executable")
+            inputs["harness"] = {"owner": label, "configuration": configurations[0],
+                                 "path": path, "resolved_path": str(binary.resolve(strict=True)),
+                                 "bytes": actual["bytes"], "sha256": actual["sha256"],
+                                 "native_action": {key: action[key] for key in
+                                     ("digest", "targetLabel", "runner", "cacheHit", "full_record_sha256")}}
+            records["harness"] = inputs["harness"]
+            report.write_json(package / "inputs.json", inputs)
+            report.write_json(evidence / "startup-inputs.json", inputs)
             analysis = invoke("startup-analysis", ["test", *selected, "--nobuild", *targets], "analysis")
             if analysis["status"] != "PASS":
                 raise RuntimeError("Startup test selection failed")

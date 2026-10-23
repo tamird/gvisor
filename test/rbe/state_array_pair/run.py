@@ -50,9 +50,13 @@ def main(binary: Path, reporter: Path) -> int:
     output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
     xml = Path(os.environ["XML_OUTPUT_FILE"])
     manifest = json.loads((package / "inputs.json").read_text())
-    if (hashlib.sha256(binary.read_bytes()).hexdigest() != manifest["harness"]["sha256"] or
-            binary.stat().st_size != manifest["harness"]["bytes"]):
-        raise ValueError("The common startup harness differs from its configured output")
+    observed = {"path": str(binary), "sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+                "bytes": binary.stat().st_size}
+    write_json(output / "harness-identity.json", {"expected": manifest["harness"], "actual": observed})
+    if (observed["sha256"] != manifest["harness"]["sha256"] or
+            observed["bytes"] != manifest["harness"]["bytes"] or
+            binary != Path(manifest["harness"]["resolved_path"])):
+        raise ValueError(f"Common startup harness differs: {observed!r} != {manifest['harness']!r}")
     if (reporter.stat().st_size != manifest["benchstat"]["bytes"] or
             hashlib.sha256(reporter.read_bytes()).hexdigest() != manifest["benchstat"]["sha256"]):
         raise ValueError("The benchstat executable differs from its configured output")
@@ -99,6 +103,9 @@ def main(binary: Path, reporter: Path) -> int:
     signal.signal(signal.SIGINT, cancel)
     try:
         for sample in plan:
+            if (binary.stat().st_size != observed["bytes"] or
+                    hashlib.sha256(binary.read_bytes()).hexdigest() != observed["sha256"]):
+                raise ValueError("Common startup harness changed before " + sample.name)
             if cancellation:
                 return cancellation
             if containers() != initial_containers:
