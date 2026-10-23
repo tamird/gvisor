@@ -22,8 +22,7 @@ pkg_tar(
     visibility = ["//images:__subpackages__"],
 )
 
-# Both static Go helpers use this base. Additional runtime commands belong to
-# the image whose caller needs them.
+# The Ollama client needs CA trust for HTTPS and a writable temporary directory.
 image_manifest(
     name = "helper_base",
     env = {
@@ -118,20 +117,24 @@ image_layer(
     visibility = ["//images:__subpackages__"],
 )
 
-# The PIDFD runner uses GNU timeout's exit-status and process-group behavior.
-# Link it statically so scratch images do not need a distribution's loader.
+# PIDFD needs GNU timeout; Kubernetes profiling needs GNU rm --one-file-system.
+# Build their utilities together and link statically for scratch images.
+_PROFILE_COREUTILS = ["chmod", "mkdir", "rm"]
+_COREUTILS_PROGRAMS = _PROFILE_COREUTILS + ["timeout"]
+
 configure_make(
-    name = "timeout_build",
+    name = "coreutils_build",
     args = [
         "-f",
         "Makefile",
         "-f",
-        '"$$EXT_BUILD_ROOT$$/$(execpath coreutils/timeout.mk)"',
+        '"$$EXT_BUILD_ROOT$$/$(execpath coreutils/programs.mk)"',
         'GPERF="$$EXT_BUILD_ROOT$$/$(execpath @gperf//:gperf)"',
+        "bin_PROGRAMS='" + " ".join(["src/" + program for program in _COREUTILS_PROGRAMS]) + "'",
     ],
     # Declare the generator used by the upstream iconv header rules.
     build_data = ["@gperf//:gperf"],
-    # timeout needs none of these optional system libraries or message catalogs.
+    # These commands need no optional system libraries or message catalogs.
     configure_options = [
         "--disable-acl",
         "--disable-libcap",
@@ -145,7 +148,7 @@ configure_make(
         "@platforms//cpu:aarch64": ["--host=aarch64-linux-musl"],
         "@platforms//cpu:x86_64": ["--host=x86_64-linux-musl"],
     }),
-    data = ["coreutils/timeout.mk"],
+    data = ["coreutils/programs.mk"],
     env = {
         # RBE workers run as root; configure's privilege-sensitive probes
         # otherwise refuse to proceed. This does not affect runtime privileges.
@@ -153,7 +156,7 @@ configure_make(
     },
     lib_source = "@coreutils_source//:source",
     linkopts = ["-static"],
-    out_binaries = ["timeout"],
+    out_binaries = _COREUTILS_PROGRAMS,
     out_include_dir = "",
     # configure compiles absolute source paths; keep worker roots out of output.
     set_file_prefix_map = True,
@@ -161,14 +164,17 @@ configure_make(
         "@llvm//constraints/libc:musl",
         "@platforms//os:linux",
     ],
-    targets = ["bazel-timeout"],
+    targets = ["bazel-programs"],
 )
 
-filegroup(
-    name = "timeout_binary",
-    srcs = [":timeout_build"],
-    output_group = "timeout",
-)
+[
+    filegroup(
+        name = program + "_binary",
+        srcs = [":coreutils_build"],
+        output_group = program,
+    )
+    for program in _COREUTILS_PROGRAMS
+]
 
 image_layer(
     name = "timeout_layer",
@@ -181,4 +187,23 @@ image_layer(
     file_metadata = {"/usr/bin/timeout": file_metadata(mode = "0755")},
     include_runfiles = False,
     visibility = ["//images:__subpackages__"],
+)
+
+# Profiling setup invokes these commands directly on a mounted host directory.
+image_layer(
+    name = "profile_coreutils_layer",
+    srcs = {
+        "/bin/" + program: ":" + program + "_binary"
+        for program in _PROFILE_COREUTILS
+    } | {
+        "/usr/share/licenses/coreutils/COPYING": "@coreutils_source//:COPYING",
+        "/usr/share/licenses/coreutils/NOTICE": "coreutils/NOTICE",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+    file_metadata = {
+        "/bin/" + program: file_metadata(mode = "0755")
+        for program in _PROFILE_COREUTILS
+    },
+    include_runfiles = False,
+    visibility = ["//images/benchmarks:__pkg__"],
 )
