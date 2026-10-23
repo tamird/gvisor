@@ -388,6 +388,31 @@ img_pull(
     tag = "1.31.7",
 )
 
+# Keep the interpreter supplied by PHP; only its upstream test fixtures are
+# added locally. The source version and the official image version must match.
+img_pull(
+    name = "runtime_php",
+    digest = "sha256:878bbda19358b8be328c9c037b8812ce256f75be0af6869c8414aa65231a20d4",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registry = "index.docker.io",
+    repository = "library/php",
+    tag = "8.5.11-cli-bookworm",
+)
+
+http_archive(
+    name = "php_test_source",
+    build_file = "//images/runtimes/php8.5.11:source.BUILD",
+    patch_args = ["-p1"],
+    patches = ["//images/runtimes/php8.5.11:extensions.patch"],
+    sha256 = "338630ba9450f0b938bef8d740162c61c33bf64a1b421c6333c01df8a9fdb0ab",
+    strip_prefix = "php-8.5.11",
+    urls = ["https://www.php.net/distributions/php-8.5.11.tar.gz"],
+)
+
 ### Toolchains
 register_toolchains("@llvm//toolchain:all")
 

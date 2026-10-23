@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "digest": "sha256:748748e70e36616df4e0aa8964bfbd7684461aae7585892057cb6925a9b48641",
+    "size": 8798
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:41b2195c355367079ebad200f9591fe3c2cb886c3b1e67abaaf2090dc11c04d9",
+      "size": 28138425
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:f7d5030c6cdcde7c9d6b5801396f33b6d9e4d3e343bcb3bef096cf09ba024d7a",
+      "size": 226
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:a08fe5c07eb544001844716fe40e727004614745c54aad80128d124a1e8afe39",
+      "size": 98004838
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:cc8f31560b0938f414f8e35a281f52862fc50cbad21dfe373d6cda4bdb5fbfb8",
+      "size": 223
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:6464afa41c1ce955f5c7aaea5f1bf6483f36c30416d3ffe6b4493d7e2c8b8749",
+      "size": 14579437
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:e3ede4051dd4efc65d06d13dd8e8a97e73628a2454acb3744809a808a278298e",
+      "size": 489
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:851099d35d09d82b6b30ce41ce0d24703e790e29d7c7b07fbf5e4da737a6c825",
+      "size": 42167741
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:30adbd64e14f070c8b7d72b7d5a994d623e1237452cba9324f81f8e9645a778f",
+      "size": 2453
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:93859410523daa707a5deeeb024e42b2c409c9094de96e1d7f79f1337dc9cbb4",
+      "size": 244
+    }
+  ],
+  "annotations": {
+    "com.docker.official-images.bashbrew.arch": "arm64v8",
+    "org.opencontainers.image.base.digest": "sha256:991827bb788d78bbc130dcb851913beecff43296360f48838aca7cbdfae4375c",
+    "org.opencontainers.image.base.name": "debian:bookworm-slim",
+    "org.opencontainers.image.created": "2026-10-21T00:24:48Z",
+    "org.opencontainers.image.revision": "79320e28b93fdc720d6f07d150709310cf54e757",
+    "org.opencontainers.image.source": "https://github.com/docker-library/php.git#79320e28b93fdc720d6f07d150709310cf54e757:8.5/bookworm/cli",
+    "org.opencontainers.image.url": "https://hub.docker.com/_/php",
+    "org.opencontainers.image.version": "8.5.11-cli-bookworm"
+  }
+}
