@@ -271,7 +271,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         reject_credentials(info.stdout)
         output_root = Path(info.stdout.decode().strip())
         os.environ["APPLICABILITY_OUTPUT_BASE"] = str(output_root)
-        formatted = invoke('00-buildifier', ['run', '--lockfile_mode=error', '--noannounce_rc',
+        formatted = invoke('00-buildifier', ['run', '--config=x86_64', '--compilation_mode=opt',
+                           *CONFIG.get("consumer_options", []), '--lockfile_mode=error', '--noannounce_rc',
                            '@rules_python//python/bin:python', '--', '-c',
                            'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "buildifier"]).returncode)'],
                            'command', targets=[])

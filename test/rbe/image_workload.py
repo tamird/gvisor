@@ -38,7 +38,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     record = {"source": config["source"], "product": config["product"], "status": "INCOMPLETE", "checks": []}
     try:
         formatted = invoke("goimports", [
-            "run", "--lockfile_mode=error", "--noannounce_rc", "--run_in_cwd",
+            "run", "--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
+            "--lockfile_mode=error", "--noannounce_rc", "--run_in_cwd",
             "@org_golang_x_tools//cmd/goimports", "--", "-format-only", "-d",
             "pkg/sentry/socket/netstack/stack.go",
         ], "command", targets=[])
