@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
 PACIFIC = ZoneInfo("America/Los_Angeles")
+REMINDER_INTERVAL = timedelta(hours=3)
 
 
 def maintainer_logins(text: str) -> frozenset[str]:
@@ -55,7 +56,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             oldest = min(datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00")) for item in comments)
         except (KeyError, AttributeError, ValueError):
             return skip("incomplete-reminder-window")
-        if oldest.tzinfo is None or now - oldest < timedelta(hours=1):
+        if oldest.tzinfo is None or now - oldest < REMINDER_INTERVAL:
             return skip("incomplete-reminder-window")
     dismissed = {(event.get("review") or {}).get("id"): event["previousReviewState"]
                  for event in pr["reviewDismissals"]["items"]}
@@ -124,8 +125,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             sent = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))
         except (KeyError, AttributeError, ValueError):
             return skip("unreadable-prior-reminder-time")
-        if sent.tzinfo is None or now - sent < timedelta(hours=1):
-            return skip("reminded-within-one-hour")
+        if sent.tzinfo is None or now - sent < REMINDER_INTERVAL:
+            return skip("reminded-within-three-hours")
     commit_url = "https://github.com/google/gvisor/commit/"
     body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the amended head "
             f"[{head[:12]}]({commit_url}{head}) before it is imported. Your earlier approval covered "

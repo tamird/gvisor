@@ -159,8 +159,9 @@ observed progression.
 ### Reapproval after amendments
 
 The existing refresh workflow can remind prior human maintainer approvers with
-🚨 once per hour, weekdays from 09:00 until 17:00 America/Los_Angeles. It applies
-only to open, non-draft `google/gvisor` source PRs. One fresh current-head human
+🚨 at most once every three hours, weekdays from 09:00 until 17:00 America/Los_Angeles. It applies
+only to open, non-draft `google/gvisor` source PRs. Status, human-feedback and
+conflict discovery retain the existing ten-minute refresh cadence. One fresh current-head human
 maintainer approval stops this alarm even if the aggregate review decision or
 pending review requests still prevent merge readiness. Current-head maintainer
 changes requested require source work first. A dismissed review qualifies as a
@@ -192,7 +193,7 @@ selection and comment text without writing to GitHub. The `post` mode verifies
 the configured owner credential and refreshes each candidate's head, review
 history and comments immediately before posting. The comment links the exact
 old and amended commits and retains delegated attribution. Its hidden marker
-and GitHub creation time enforce a full hour between reminders, including
+and GitHub creation time enforce three full hours between reminders, including
 across head changes; no separate reminder database is kept. Mutations are never
 automatically retried after an ambiguous response. GitHub has no atomic
 expected-head condition for issue comments, so the post-read reports any

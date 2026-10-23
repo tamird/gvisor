@@ -927,18 +927,22 @@ class ReapprovalReminderTest(unittest.TestCase):
         self.raw["reviewDismissals"]["pageInfo"]["hasPreviousPage"] = True
         self.assertEqual(self.plan()["reason"], "incomplete-review-or-comment-history")
 
-    def test_comment_history_deduplicates_a_full_hour_including_head_changes(self) -> None:
+    def test_comment_history_deduplicates_three_hours_including_head_changes(self) -> None:
+        self.now = datetime(2026, 10, 22, 20, 30, tzinfo=timezone.utc)
         comment = {"kind": "comment", "author": {"login": "tamird", "__typename": "User"},
-                   "createdAt": "2026-10-22T15:30:01Z", "body": self.plan()["body"]}
+                   "createdAt": "2026-10-22T17:31:00Z", "body": self.plan()["body"]}
         self.raw["comments"]["nodes"] = [comment]
-        self.assertEqual(self.plan()["reason"], "reminded-within-one-hour")
+        for stamp in ("2026-10-22T17:31:00Z", "2026-10-22T17:30:01Z"):
+            with self.subTest(stamp=stamp):
+                comment["createdAt"] = stamp
+                self.assertEqual(self.plan()["reason"], "reminded-within-three-hours")
         comment["body"] = comment["body"].replace(f"head={8:040x}", "head=" + "e" * 40)
-        self.assertEqual(self.plan()["reason"], "reminded-within-one-hour")
-        comment["createdAt"] = "2026-10-22T15:30:00Z"
+        self.assertEqual(self.plan()["reason"], "reminded-within-three-hours")
+        comment["createdAt"] = "2026-10-22T17:30:00Z"
         self.assertEqual(self.plan()["status"], "due")
         self.raw["comments"]["pageInfo"]["hasPreviousPage"] = True
-        self.assertEqual(self.plan()["status"], "due")  # The retained window covers the full hour.
-        comment["createdAt"] = "2026-10-22T16:29:00Z"
+        self.assertEqual(self.plan()["status"], "due")  # History covers the full three-hour window.
+        comment["createdAt"] = "2026-10-22T17:31:00Z"
         self.assertEqual(self.plan()["reason"], "incomplete-reminder-window")
 
     def test_reminder_query_omits_only_scope_restricted_team_details(self) -> None:
