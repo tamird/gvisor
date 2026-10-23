@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T14:58:57.577934+00:00",
+    "updatedAt": "2026-10-23T15:41:46.116042+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21533,7 +21533,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-23T14:58:57.577934+00:00",
+      "updatedAt": "2026-10-23T15:41:46.116042+00:00",
       "summary": "The contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
@@ -22188,9 +22188,34 @@
               "url": "https://github.com/google/gvisor/pull/16256"
             }
           ]
+        },
+        {
+          "text": "A separate Eifel unit regression reproduced two DSACK-history defects on the unchanged production implementation: the non-RACK SACK path misses history from the same connection, while the RACK path lets another endpoint contaminate a clean connection. The red run failed both intended subcases; its native failure is retained. A candidate that keeps DSACK history per connection is undergoing full owning unit, SACK end-to-end, race and analyzer checks. This is separate from the delivered RACK packet fixture and does not turn the earlier congestion-window observations into proof of missing undo. Existing PR #14458 covers the negotiated-timestamp guard; the unit fixture must negotiate timestamps explicitly rather than create a duplicate proposal.",
+          "evidence": [
+            {
+              "label": "Regression source",
+              "url": "https://github.com/tamird/gvisor/commit/3b983e70bc1917c0136ad36524a92f1ebc4845d2"
+            },
+            {
+              "label": "Expected red: both DSACK-history mismatches",
+              "url": "https://app.buildbuddy.io/invocation/c9f7120d-2912-45d3-9c35-76a83c0f2d8c"
+            },
+            {
+              "label": "Per-connection candidate under qualification",
+              "url": "https://github.com/tamird/gvisor/commit/9bf16aff949b89d7099ae0cc134c8d6e5a926d4c"
+            },
+            {
+              "label": "Owning checks in progress",
+              "url": "https://app.buildbuddy.io/invocation/b0ea6a9b-3bff-417a-80b5-32d8145b428c"
+            },
+            {
+              "label": "Existing negotiated-timestamp guard proposal",
+              "url": "https://github.com/google/gvisor/pull/14458"
+            }
+          ]
         }
       ],
-      "nextStep": "Follow existing PR #16055 for current-head CI, maintainer review and import events. Contributor approval and delivery are complete; do not ask again or open a duplicate PR. Preserve original raw failures/skips and source-bound proof. Separately, the approved packet fixture is delivered as #16256 with all twelve existing cases passing; Node follows its current CI and review. The common-Reno result remains separate evidence and does not establish undo. No new undo bug or deliverable is confirmed.",
+      "nextStep": "Follow existing PR #16055 for current-head CI, maintainer review and import events. Contributor approval and delivery are complete; do not ask again or open a duplicate PR. Preserve original raw failures/skips and source-bound proof. Separately, the approved packet fixture is delivered as #16256 with all twelve existing cases passing; Node follows its current CI and review. The common-Reno result remains separate evidence and does not establish undo. No new undo bug or deliverable is confirmed. Root owns the separate per-connection Eifel/DSACK-history correction; Hostinet owns its current full-check qualification. Reconcile the actual green result and explicit timestamp negotiation before any contributor proposal; no approval or delivery is inferred.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
