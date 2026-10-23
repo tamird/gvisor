@@ -154,6 +154,33 @@ def changed_references(current: dict, previous: dict) -> list[dict]:
             if prior.get(item["id"]) != item]
 
 
+def review_watch_report(prs: list[dict], previous: dict) -> list[dict]:
+    """Route explicit review subscriptions using the existing snapshot cursor."""
+    watches = {(node["repo"], node["number"]): node["reviewWatch"]
+               for node in REGISTRY["nodes"] if node.get("reviewWatch")}
+    prior = {(pr.get("repo", REPO), pr["number"]): pr for pr in previous.get("prs", [])}
+    events = []
+    for pr in prs:
+        key = pr.get("repo", REPO), pr["number"]
+        if not (watch := watches.get(key)):
+            continue
+        old = prior.get(key, {})
+        old_items = {item["id"]: item for item in old.get("feedback", {}).get("items", [])}
+        feedback = [item for item in changed_feedback(pr, old)
+                    if item.get("body", "").strip()
+                    and any(item.get(field) != old_items.get(item["id"], {}).get(field)
+                            for field in ("body", "state", "updatedAt"))]
+        if pr["head"] == old.get("head") and pr["status"] == old.get("status") and not feedback:
+            continue
+        events.append({"repo": key[0], "number": key[1], "url": pr["url"], "head": pr["head"],
+                       "previousHead": old.get("head"), "status": pr["status"],
+                       "owner": watch["owner"], "reviewers": watch["reviewers"],
+                       "feedbackComplete": pr["feedback"]["complete"],
+                       "feedback": [{field: item.get(field) for field in ("id", "kind", "url", "updatedAt")}
+                                    for item in feedback]})
+    return events
+
+
 def current_check_attempts(contexts: list[dict]) -> tuple[list[dict], list[dict]]:
     """Separate older attempts only when the provider identifies the workflow."""
     latest: dict[tuple[str, str, str], tuple[int, int]] = {}
@@ -598,6 +625,8 @@ def main() -> None:
             print(json.dumps({kind: [observation]}))
         if not observations:
             print(json.dumps({kind: []}))
+    for event in review_watch_report(prs, previous):
+        print(json.dumps({"reviewSubscriptions": [event]}))
     for source in prs:
         for pr in (source, *source["imports"]):
             if (pr.get("repo", REPO), pr["number"]) not in refreshed:

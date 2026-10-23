@@ -125,6 +125,42 @@ class CollectorHistoryTest(unittest.TestCase):
             updater.main()
         return json.loads(self.path.read_text())
 
+    def test_explicit_external_review_subscription_and_event_deduplication(self) -> None:
+        watch = {"owner": "root", "reviewers": ["hostinet_delivery", "node_tls_sni", "work_map_current"]}
+        self.registry["nodes"].append({"id": "pr:500", "type": "pr", "repo": "google/gvisor",
+                                       "number": 500, "reviewWatch": watch})
+        self.raw[500] = raw_pr(500, author="EtiennePerot")
+        current = self.collect()
+        self.assertIn(500, self.requested)
+        pr = next(pr for pr in current["prs"] if pr["number"] == 500)
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            events = updater.review_watch_report(current["prs"], self.previous)
+            self.assertEqual([(event["number"], event["head"], event["owner"]) for event in events],
+                             [(500, pr["head"], "root")])
+            self.assertEqual(updater.review_watch_report(current["prs"], current), [])
+            changed = copy.deepcopy(pr)
+            changed["head"] = "a" * 40
+            self.assertEqual(updater.review_watch_report([changed], current)[0]["head"], "a" * 40)
+            review = {"id": "external-review", "kind": "review", "body": "The measured CPU includes GC.",
+                      "updatedAt": LATER, "author": {"login": "review-bot", "__typename": "Bot"}}
+            changed = copy.deepcopy(pr)
+            changed["feedback"]["items"].append(review)
+            event = updater.review_watch_report([changed], current)[0]
+            self.assertEqual([item["id"] for item in event["feedback"]], ["external-review"])
+            seen = {"prs": [copy.deepcopy(changed)]}
+            self.assertEqual(updater.review_watch_report([changed], seen), [])
+            review["body"] = "Updated GC finding."
+            self.assertEqual(len(updater.review_watch_report([changed], seen)), 1)
+            review["author"]["login"] = "tamird"
+            self.assertEqual(updater.review_watch_report([changed], current), [])
+            review["author"]["login"] = "external"
+            review["body"] = ""
+            self.assertEqual(updater.review_watch_report([changed], current), [])
+            changed = copy.deepcopy(pr)
+            changed["status"] = "merged"
+            self.assertEqual(updater.review_watch_report([changed], current)[0]["status"], "merged")
+            self.assertEqual(updater.review_watch_report([changed], {"prs": [changed]}), [])
+
     def test_retention_reopening_closure_and_active_imports(self) -> None:
         current = self.collect()
         self.assertEqual(next(pr for pr in current["prs"] if pr["number"] == 4)["mergeCommit"], "e" * 40)

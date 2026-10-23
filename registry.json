@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-22T22:16:42.343413+00:00",
+    "updatedAt": "2026-10-23T00:00:02.540765+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6128,19 +6128,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-sa1019",
-      "head": "f933b98d789aeaa672c6fa5baa735ecd96c59b61",
+      "head": "3b0422473368fc82486da3d4915a7e9c315f1586",
       "title": "Enable deprecation diagnostics for repository code",
       "url": "https://github.com/google/gvisor/pull/16085",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-22T15:02:27.314002+00:00",
-      "summary": "Current source f933b98d789a has import/copybara ERROR at 00:32:47 UTC, with no public import or error details. Public source checks otherwise pass and GitHub reports it mergeable. This current-head migration failure was missing from the earlier pending-CI disposition; no rebase remedy is established.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at f933b98d789a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe exact Gazelle-emitted two-label correction is published on #16085 at9be200e2e42, preserving the samec45 parent, one commit,24 files and approved body. Root independently reviewed the two :go_default_library label substitutions. The original7df6 Gazelle failure remains evidence; current-head public CI is a separate observation and no fresh workload or public comment was issued.\n\nThe02:35:21 scheduled snapshot reports Gazelle failure on the exact delivered7df6cf2ced head (job119003416906). Node owns the bounded current log/source diagnosis; this head already containsc45/a9, so the older shared Gazelle remedy does not justify a blind rebase. Lint, header and scan checks pass; Go generation was still running at the observation. Delivery remains complete; no new contributor decision is pending. Root subsequently authorized Node to correct the two generated dependency labels identified by the failed job; that source amendment remains in preparation.\n\nThe02:35:21 scheduled snapshot reports Gazelle failure on the exact delivered7df6cf2ced head (job119003416906). Node owns the bounded current log/source diagnosis; this head already containsc45/a9, so the older shared Gazelle remedy does not justify a blind rebase. Lint, header and scan checks pass; Go generation was still running at the observation. Delivery remains complete; no new contributor decision is pending.\n\nThe approved SA1019 policy is delivered as #16085 at7df6cf2ced on merged prerequisitec45f4e075. The refreshed one-commit patch preserves all24 surviving approved file changes and the exact qualified NewReader archive exception; upstream deletion of the obsolete umount caller is retained. Independent staged and committed-source reviews passed, and published head, body and patch were verified. Prior qualification remains bound to its recorded compositions; no fresh current-public-binary execution is claimed. The delivery approval is fulfilled; current public CI and maintainer review are now followed in the existing sweep. Earlier prerequisite holds below are historical.\n\nRoot assigned the newly released SA1019 delivery to Node in gvisor-15049. WorkMap supplied the exact approved858a branch/parent, merged final prerequisite15473, and qualified3e66 archive compatibility amendment. Source refresh and delivery are agent work; the prior approval remains in force.\n\nThe final prerequisite #15473 has merged through import #16082 as c45f4e075076a02b444b69cdb783a0958c2c1c7f at 2026-10-21T02:08:09Z. Prerequisites #15474 and #15475 were already merged. The approved nogo-sa1019 proposal858a74520 is now released for root-owned source refresh and delivery, including the existing precise archive compatibility exception if required by the current toolchain. Prior prerequisite-wait descriptions below are historical; this is not a new contributor question.\n\nThe approved standalone 858a74520 uses Go 1.26.3 and x/tools 0.45. Its remaining prerequisite is open #15473; #15474 and #15475 are merged. Qualified Go 1.27.1/x/tools 0.51 compositions retain the precise gcexportdata.NewReader deprecation exception for archive inputs. Carry that existing four-line exception when rebasing the policy after #15473 lands. This is a held compatibility action, not a newly established defect in the older approved head.\n\nThe current combined netip/policy validation at 3e66fd6a8 passed all 836 selected Nogo owners, with AMD64 and ARM64 findings checked for each owner. This modern x/tools 0.51 composition requires the exact documented gcexportdata.NewReader compatibility exception because the declared compiler inputs remain archives; direct Read is not a replacement for those inputs. Root will carry that exception into the policy\u2019s eventual review head after the closed validation. The public proposal remains 858a74520 and its remaining landing prerequisite is open PR #15473; #15474 and #15475 are merged.\n\nEarlier source-specific record:\n\nThe user-approved policy revision remains public at 858a7452014a44161734069c66b73f66782bad41. Prerequisites #15474 and #15475 have now merged; opening the policy PR waits only for #15473. All three dependency edges retain their actual source relationship.\n\nEarlier source-specific observations:\n\nThe final user-requested defensive panic restoration is published at 858a7452014a44161734069c66b73f66782bad41. The focused 11-owner revision validation passes and its independent saved peer is closed. User approval is complete; opening the policy PR waits only for #15473, #15474 and #15475 to land.\n\nThe user approved opening this proposal after its three prerequisites land, subject to targeted revisions. Those revisions are published at e56219a8cdf12e239fe4ccd77dd42eced4462282: shared title casing and declared dependencies, corrected IPv6 fixture commentary, and wrapped calls. Two independent source reviews are closed. Focused validation of six normal and five both-CPU Nogo owners is active in https://app.buildbuddy.io/invocation/ae9e8de2-9328-45f6-835e-d6ad6a954545 at composition d065b89b6. The user subsequently requested retaining the original defensive panic branches; that exact restoration has passed source review and is awaiting publication. There is no unanswered contributor question or upstream policy PR; the prior full-inventory proof remains bound to its older source.\n\nThe user requested the removal of blanket SA1019 suppression. This independent proposal enables checks for handwritten/generated repository code, updates actual deprecated callers and retains only narrow documented compatibility exceptions. The checker and generator/state reflection mechanisms are independent prerequisites in #15473, #15474 and #15475.\n\nCorrected validation a5aa730d at4b2fa4ed4 passes the complete834-owner Nogo inventory for both CPUs plus12 selected native unit owners/400 XML entries. Independent saved peer d98696c4f37b verifies54 Git records,846 actual compact TestRunners,24 raw Actions, all12 exact native binary producer joins and all retained archive bytes. The first unused-import compile failure remains preserved. This is full analyzer coverage and selected runtime coverage, not a full repository runtime claim.\n\nRoot has now issued the concrete contributor-review question for this exact public commit. Any upstream PR must wait for the three prerequisites to land; no answer or PR is claimed.",
+      "updatedAt": "2026-10-23T00:00:02.540765+00:00",
+      "summary": "The post-#16092 update is delivered at 3b0422473368fc82486da3d4915a7e9c315f1586 on dd81: the obsolete two-line AST deprecation exemption is removed. Root verified the public head and description. Current-head CI and maintainer reapproval remain pending; the authorized reapproval comment was posted. A separate native reviewer-request POST returned 404 and is retained as a failed request.\n\nCurrent source f933b98d789a has import/copybara ERROR at 00:32:47 UTC, with no public import or error details. Public source checks otherwise pass and GitHub reports it mergeable. This current-head migration failure was missing from the earlier pending-CI disposition; no rebase remedy is established.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at f933b98d789a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe exact Gazelle-emitted two-label correction is published on #16085 at9be200e2e42, preserving the samec45 parent, one commit,24 files and approved body. Root independently reviewed the two :go_default_library label substitutions. The original7df6 Gazelle failure remains evidence; current-head public CI is a separate observation and no fresh workload or public comment was issued.\n\nThe02:35:21 scheduled snapshot reports Gazelle failure on the exact delivered7df6cf2ced head (job119003416906). Node owns the bounded current log/source diagnosis; this head already containsc45/a9, so the older shared Gazelle remedy does not justify a blind rebase. Lint, header and scan checks pass; Go generation was still running at the observation. Delivery remains complete; no new contributor decision is pending. Root subsequently authorized Node to correct the two generated dependency labels identified by the failed job; that source amendment remains in preparation.\n\nThe02:35:21 scheduled snapshot reports Gazelle failure on the exact delivered7df6cf2ced head (job119003416906). Node owns the bounded current log/source diagnosis; this head already containsc45/a9, so the older shared Gazelle remedy does not justify a blind rebase. Lint, header and scan checks pass; Go generation was still running at the observation. Delivery remains complete; no new contributor decision is pending.\n\nThe approved SA1019 policy is delivered as #16085 at7df6cf2ced on merged prerequisitec45f4e075. The refreshed one-commit patch preserves all24 surviving approved file changes and the exact qualified NewReader archive exception; upstream deletion of the obsolete umount caller is retained. Independent staged and committed-source reviews passed, and published head, body and patch were verified. Prior qualification remains bound to its recorded compositions; no fresh current-public-binary execution is claimed. The delivery approval is fulfilled; current public CI and maintainer review are now followed in the existing sweep. Earlier prerequisite holds below are historical.\n\nRoot assigned the newly released SA1019 delivery to Node in gvisor-15049. WorkMap supplied the exact approved858a branch/parent, merged final prerequisite15473, and qualified3e66 archive compatibility amendment. Source refresh and delivery are agent work; the prior approval remains in force.\n\nThe final prerequisite #15473 has merged through import #16082 as c45f4e075076a02b444b69cdb783a0958c2c1c7f at 2026-10-21T02:08:09Z. Prerequisites #15474 and #15475 were already merged. The approved nogo-sa1019 proposal858a74520 is now released for root-owned source refresh and delivery, including the existing precise archive compatibility exception if required by the current toolchain. Prior prerequisite-wait descriptions below are historical; this is not a new contributor question.\n\nThe approved standalone 858a74520 uses Go 1.26.3 and x/tools 0.45. Its remaining prerequisite is open #15473; #15474 and #15475 are merged. Qualified Go 1.27.1/x/tools 0.51 compositions retain the precise gcexportdata.NewReader deprecation exception for archive inputs. Carry that existing four-line exception when rebasing the policy after #15473 lands. This is a held compatibility action, not a newly established defect in the older approved head.\n\nThe current combined netip/policy validation at 3e66fd6a8 passed all 836 selected Nogo owners, with AMD64 and ARM64 findings checked for each owner. This modern x/tools 0.51 composition requires the exact documented gcexportdata.NewReader compatibility exception because the declared compiler inputs remain archives; direct Read is not a replacement for those inputs. Root will carry that exception into the policy\u2019s eventual review head after the closed validation. The public proposal remains 858a74520 and its remaining landing prerequisite is open PR #15473; #15474 and #15475 are merged.\n\nEarlier source-specific record:\n\nThe user-approved policy revision remains public at 858a7452014a44161734069c66b73f66782bad41. Prerequisites #15474 and #15475 have now merged; opening the policy PR waits only for #15473. All three dependency edges retain their actual source relationship.\n\nEarlier source-specific observations:\n\nThe final user-requested defensive panic restoration is published at 858a7452014a44161734069c66b73f66782bad41. The focused 11-owner revision validation passes and its independent saved peer is closed. User approval is complete; opening the policy PR waits only for #15473, #15474 and #15475 to land.\n\nThe user approved opening this proposal after its three prerequisites land, subject to targeted revisions. Those revisions are published at e56219a8cdf12e239fe4ccd77dd42eced4462282: shared title casing and declared dependencies, corrected IPv6 fixture commentary, and wrapped calls. Two independent source reviews are closed. Focused validation of six normal and five both-CPU Nogo owners is active in https://app.buildbuddy.io/invocation/ae9e8de2-9328-45f6-835e-d6ad6a954545 at composition d065b89b6. The user subsequently requested retaining the original defensive panic branches; that exact restoration has passed source review and is awaiting publication. There is no unanswered contributor question or upstream policy PR; the prior full-inventory proof remains bound to its older source.\n\nThe user requested the removal of blanket SA1019 suppression. This independent proposal enables checks for handwritten/generated repository code, updates actual deprecated callers and retains only narrow documented compatibility exceptions. The checker and generator/state reflection mechanisms are independent prerequisites in #15473, #15474 and #15475.\n\nCorrected validation a5aa730d at4b2fa4ed4 passes the complete834-owner Nogo inventory for both CPUs plus12 selected native unit owners/400 XML entries. Independent saved peer d98696c4f37b verifies54 Git records,846 actual compact TestRunners,24 raw Actions, all12 exact native binary producer joins and all retained archive bytes. The first unused-import compile failure remains preserved. This is full analyzer coverage and selected runtime coverage, not a full repository runtime claim.\n\nRoot has now issued the concrete contributor-review question for this exact public commit. Any upstream PR must wait for the three prerequisites to land; no answer or PR is claimed.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "f933b98d789aeaa672c6fa5baa735ecd96c59b61",
-        "observedAt": "2026-10-22T15:02:27.314002+00:00",
-        "disposition": "Current Copybara migration error; maintainer diagnostic needed",
-        "nextAction": "Track the exact current-head migration error and await an authorized maintainer diagnostic. Do not treat the earlier Gazelle fix or another blind rebase as a remedy; no public request has been sent.",
+        "owner": "root",
+        "sourceHead": "3b0422473368fc82486da3d4915a7e9c315f1586",
+        "observedAt": "2026-10-23T00:00:02.540765+00:00",
+        "disposition": "Delivered; current-head CI and reapproval pending",
+        "nextAction": "Follow actual current-head CI and maintainer review through the existing collector. Preserve the failed native review-request POST separately; no duplicate source amendment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16085",
           "https://github.com/tamird/gvisor/commit/9be200e2e42f243bbbf9d598a788580879f6ff54",
@@ -16847,14 +16847,14 @@
       "title": "Merge Go template declarations directly",
       "url": "https://github.com/google/gvisor/pull/16092",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-10-22T15:02:27.314002+00:00",
-      "summary": "Current source 473a5d133d00 reports feedback/copybara FAILURE at 01:36:58 UTC after an earlier internal PASS. No public import or internal log is exposed, and source checks otherwise pass. This later internal-check failure is separate from the prior migration error and completed rebase.\n\nPreserved earlier record:\n\nThe user-requested rebase for the exact current-head Copybara migration error is published at 473a5d133d00 on master 7d17d8564110. Independent review verified patch equivalence. The recorded migration error belongs to earlier 83e32857808e; current-head checks and import progress remain separate and pending.\n\nPreserved earlier source record:\n\nzkoopmans approved the exact current head 83e3285780 on 2026-10-21T19:58:56Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe contributor-approved replacement is delivered at 83e32857808. Direct collection of filename-sorted declarations replaces deprecated ast.Package/MergePackageFiles without discarding legal init functions or generic receiver methods. Exact source review and focused remote validation passed: 15 uncached owners, 53 positive records, maintained generated template consumers and both analyzer architectures. Public head and description readback match the approved source. No merge or broader execution claim is made.",
+      "status": "merged",
+      "updatedAt": "2026-10-22T23:57:03.324583+00:00",
+      "summary": "Merged on 2026-10-22 at 23:07:38 UTC through import #16193, commit be5315ead3c87c1aa398c027123f030f7c551623. The AST replacement is now available to the deprecation-policy update in #16085, owned by root. Earlier failed statuses below are historical.\n\nCurrent source 473a5d133d00 reports feedback/copybara FAILURE at 01:36:58 UTC after an earlier internal PASS. No public import or internal log is exposed, and source checks otherwise pass. This later internal-check failure is separate from the prior migration error and completed rebase.\n\nPreserved earlier record:\n\nThe user-requested rebase for the exact current-head Copybara migration error is published at 473a5d133d00 on master 7d17d8564110. Independent review verified patch equivalence. The recorded migration error belongs to earlier 83e32857808e; current-head checks and import progress remain separate and pending.\n\nPreserved earlier source record:\n\nzkoopmans approved the exact current head 83e3285780 on 2026-10-21T19:58:56Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe contributor-approved replacement is delivered at 83e32857808. Direct collection of filename-sorted declarations replaces deprecated ast.Package/MergePackageFiles without discarding legal init functions or generic receiver methods. Exact source review and focused remote validation passed: 15 uncached owners, 53 positive records, maintained generated template consumers and both analyzer architectures. Public head and description readback match the approved source. No merge or broader execution claim is made.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "473a5d133d00677815f5ad3914e8bd942f528c4c",
-        "disposition": "Current internal checks failed; maintainer diagnostic needed",
-        "nextAction": "Track the current internal failure with its exact source head. An internal diagnostic is needed before identifying a source remedy; no public request has been sent.",
+        "disposition": "Merged; deprecation-policy update assigned",
+        "nextAction": "Root updates #16085 using the landed AST replacement; no further #16092 repair or reminder.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16092",
           "https://app.buildbuddy.io/invocation/f2570450-6bdb-4f78-acd0-b6b500b07f1d",
@@ -16862,7 +16862,7 @@
           "https://github.com/tamird/gvisor/commit/473a5d133d00677815f5ad3914e8bd942f528c4c"
         ],
         "reviewedAt": "2026-10-21T19:58:56Z",
-        "observedAt": "2026-10-22T15:02:27.314002+00:00",
+        "observedAt": "2026-10-22T23:22:58.836631+00:00",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
       },
@@ -18580,6 +18580,57 @@
         {
           "label": "Fixed production comparison",
           "url": "https://app.buildbuddy.io/invocation/cc62fddf-578f-4e93-80f9-5604341db0a3"
+        }
+      ]
+    },
+    {
+      "id": "pr:16198",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16198,
+      "ref": "pkg-state-bench",
+      "head": "8f26710e0cbd6ffc4f357b2d44cee4e8a3d4b767",
+      "title": "Review the checkpoint serialization benchmark",
+      "url": "https://github.com/google/gvisor/pull/16198",
+      "group": "tests",
+      "status": "open",
+      "updatedAt": "2026-10-22T23:57:03.324583+00:00",
+      "summary": "Root verified consolidated approval 5622342411 on exact 8f26710e, with one nonblocking GOMEMLIMIT clarification. User-requested independent review continues on changed heads or substantive external reviews until merge. The current revision avoids retained page buffers and disables percentage-triggered GC during the deliberately partial codec fixture. No merge action is authorized.",
+      "reviewWatch": {
+        "owner": "root",
+        "reviewers": [
+          "hostinet_delivery",
+          "node_tls_sni",
+          "work_map_current"
+        ],
+        "reviewedHead": "8f26710e0cbd6ffc4f357b2d44cee4e8a3d4b767",
+        "reviewedReviewIds": [
+          "PRR_kwDOB9IlXs8AAAABTxcMww",
+          "5622342411"
+        ],
+        "reviewedCommentIds": [
+          "PRRC_kwDOB9IlXs8AAAABA4ppyA",
+          "4354759913"
+        ]
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "8f26710e0cbd6ffc4f357b2d44cee4e8a3d4b767",
+        "disposition": "Continuing review through merge",
+        "nextAction": "Route each new head or substantive external review/comment, including automated review to the same three agents, deduplicated by the existing snapshot head and feedback IDs. Root publishes one consolidated review. Stop review work when merged; record closure without merging.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16198#pullrequestreview-5621877955",
+          "https://github.com/google/gvisor/pull/16198#discussion_r4354369992"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Current-head consolidated approval",
+          "url": "https://github.com/google/gvisor/pull/16198#pullrequestreview-5622342411"
+        },
+        {
+          "label": "Nonblocking memory-limit clarification",
+          "url": "https://github.com/google/gvisor/pull/16198#discussion_r4354759913"
         }
       ]
     }
@@ -20751,6 +20802,16 @@
       "type": "depends_on",
       "reason": "The full lint run requires the Benchmark umbrella export annotations, after #15376.",
       "evidence": "https://github.com/tamird/gvisor/commit/e312033b85f31626dacbece4fb65db81adaca947"
+    },
+    {
+      "from": "pr:16092",
+      "to": "pr:16085",
+      "type": "depends_on",
+      "reason": "The landed direct AST declaration merge replaces the deprecated API used by the deprecation-policy update. This prerequisite is satisfied.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16092",
+        "https://github.com/google/gvisor/commit/be5315ead3c87c1aa398c027123f030f7c551623"
+      ]
     }
   ],
   "investigations": [
@@ -28415,9 +28476,9 @@
       "title": "Replace deprecated Go AST package merging",
       "status": "concluded",
       "owner": "node_tls_sni",
-      "updatedAt": "2026-10-21T13:08:10.972055+00:00",
+      "updatedAt": "2026-10-22T23:57:03.324583+00:00",
       "summary": "The user-approved AST merge replacement is delivered as #16092 at 83e32857808. It collects filename-sorted declarations directly, retaining imports, declaration comments, combined build constraints, legal init functions and generic receiver methods. Independent source and result review accepted the 15-owner, 53-positive focused qualification on that exact source. Contributor approval and upstream delivery are complete; public CI and maintainer review remain with the PR.",
-      "nextStep": "Follow #16092 through the existing current-head CI and maintainer-review workflow.",
+      "nextStep": "Merged as #16092; root owns the existing #16085 deprecation-policy update.",
       "evidence": [
         {
           "label": "Published AST merge replacement",
