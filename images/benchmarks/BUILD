@@ -29,7 +29,7 @@ _HTTP_PAYLOAD_SIZES_KIB = [
     write_file(
         name = "http_payload_%dk" % size,
         out = "http/latin%dk.txt" % size,
-        content = ["\x00" * (size * 1024)],
+        content = ["\000" * (size * 1024)],
     )
     for size in _HTTP_PAYLOAD_SIZES_KIB
 ]
