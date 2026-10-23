@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T19:03:48.138984+00:00",
+    "updatedAt": "2026-10-23T19:17:06.658908+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12426,21 +12426,24 @@
       "url": "https://github.com/google/gvisor/pull/15930",
       "group": "tests",
       "status": "open",
-      "summary": "Metric selector and ARM tag correction rebased, preserving the landed trace-test inclusion. Exact head a5fb610dcc is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nUpstream a30d5fc67 already fixed the NaN bucketer panic reported in #10045. This change removes the remaining Make exclusion and not_run:arm tag. One mixed-platform invocation at 2785e7bfce passes all 102 AMD64/ARM64 cases, including the reported regression, with no failures, skips or missing results. The production and test sources match upstream; the selection-only diff was source-reviewed, not executed. The contributor-approved change is delivered as #15930. The reviewed context rebase 2677c164 preserves the complete intended two-exclusion change and the intervening tracereplay landing. It is published and currently mergeable; no additional test execution or review request is claimed.",
-      "updatedAt": "2026-10-23T06:16:01.869757+00:00",
+      "summary": "The contributor approved the profiling restart correction at a52b53673b, conditional on normal, race and Nogo checks. The fork preview is published; the upstream PR remains a5fb610dcc until those checks pass. The writer no longer closes the shared completion channel, and Stop clears the restart gate after receiving the final statistics. This answers the new restart-race finding without adding a stress-test implementation.\n\nEarlier evidence:\n\nMetric selector and ARM tag correction rebased, preserving the landed trace-test inclusion. Exact head a5fb610dcc is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nUpstream a30d5fc67 already fixed the NaN bucketer panic reported in #10045. This change removes the remaining Make exclusion and not_run:arm tag. One mixed-platform invocation at 2785e7bfce passes all 102 AMD64/ARM64 cases, including the reported regression, with no failures, skips or missing results. The production and test sources match upstream; the selection-only diff was source-reviewed, not executed. The contributor-approved change is delivered as #15930. The reviewed context rebase 2677c164 preserves the complete intended two-exclusion change and the intervening tracereplay landing. It is published and currently mergeable; no additional test execution or review request is claimed.",
+      "updatedAt": "2026-10-23T19:17:06.658908+00:00",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Reviewed conflict rebase published; follow current CI and maintainer feedback",
+        "disposition": "Approved restart correction; remote checks in progress",
         "sourceHead": "a5fb610dcc1e89280d06f9676f078c0022f87f8e",
-        "observedAt": "2026-10-23T06:16:01.869757+00:00",
-        "nextAction": "Use the existing watcher for current-head checks, substantive review and import progression. Preserve prior approval and validation provenance; do not repeat this completed rebase.",
+        "observedAt": "2026-10-23T19:17:06.658908+00:00",
+        "nextAction": "WorkMap will publish the approved amendment and reply in the original thread after actual normal/race/Nogo PASS; leave the review thread open.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a1461b691bc87b2d1314c3d9696d4e1e2c12ffae",
           "https://github.com/google/gvisor/pull/15930",
           "https://github.com/tamird/gvisor/actions/runs/39063585855",
           "https://github.com/google/gvisor/commit/a30d5fc67",
           "https://github.com/tamird/gvisor/commit/2677c1640fce2a75ab17acbcdafd7a4c51e125f2",
-          "https://github.com/tamird/gvisor/commit/a5fb610dcc1e89280d06f9676f078c0022f87f8e"
+          "https://github.com/tamird/gvisor/commit/a5fb610dcc1e89280d06f9676f078c0022f87f8e",
+          "https://github.com/tamird/gvisor/commit/a52b53673b4b5d9585685592d9c188197bb7f520",
+          "https://github.com/google/gvisor/pull/15930#discussion_r4363178425",
+          "https://app.buildbuddy.io/invocation/927d6606-8254-469b-b191-cebac7e2d797"
         ]
       },
       "evidence": [
@@ -19581,6 +19584,38 @@
           "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805"
         ]
       }
+    },
+    {
+      "id": "branch:pr15930-profiling-restart",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/pr15930-profiling-restart-20261023",
+      "head": "a52b53673b4b5d9585685592d9c188197bb7f520",
+      "title": "Finish profiling shutdown before allowing restart",
+      "url": "https://github.com/tamird/gvisor/commit/a52b53673b4b5d9585685592d9c188197bb7f520",
+      "group": "tests",
+      "status": "Approved; remote checks pending",
+      "updatedAt": "2026-10-23T19:17:06.658908+00:00",
+      "summary": "Approved correction for the profiling restart race exposed by restoring metric tests to routine CI. The existing full metric owner, eight focused race attempts and both-CPU Nogo are running on the exact amendment. Upstream publication and the substantive reviewer reply follow verified PASS.",
+      "refinement": {
+        "before": {
+          "head": "a5fb610dcc1e89280d06f9676f078c0022f87f8e"
+        },
+        "after": {
+          "head": "a52b53673b4b5d9585685592d9c188197bb7f520"
+        }
+      },
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "a52b53673b4b5d9585685592d9c188197bb7f520",
+        "disposition": "Contributor approved after checks pass",
+        "nextAction": "Complete invocation 927d6606, then exact-lease publication and the approved original-thread reply.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a52b53673b4b5d9585685592d9c188197bb7f520",
+          "https://github.com/google/gvisor/pull/15930#discussion_r4363178425",
+          "https://app.buildbuddy.io/invocation/927d6606-8254-469b-b191-cebac7e2d797"
+        ]
+      }
     }
   ],
   "edges": [
@@ -21909,6 +21944,14 @@
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d"
       ]
+    },
+    {
+      "from": "branch:pr15930-profiling-restart",
+      "to": "pr:15930",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Approved profiling restart correction awaits its actual normal/race/Nogo results before publication.",
+      "evidence": "https://github.com/tamird/gvisor/commit/a52b53673b4b5d9585685592d9c188197bb7f520"
     }
   ],
   "investigations": [
