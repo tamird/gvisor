@@ -36,7 +36,7 @@ commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
 } } } }
 """
 FIELDS = """
-number title url state isDraft headRefName headRefOid baseRefOid updatedAt createdAt mergedAt closedAt mergeCommit { oid }
+number title url state isDraft headRefName headRefOid headRef { name target { oid } } baseRefOid updatedAt createdAt mergedAt closedAt mergeCommit { oid }
 headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
@@ -206,6 +206,10 @@ def normalize(pr: dict) -> dict:
     commits = pr["commits"]["nodes"]
     if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
         raise RuntimeError(f"PR #{pr['number']} head changed during retrieval")
+    branch = pr.get("headRef")
+    if branch and (branch["name"] != pr["headRefName"]
+                   or not re.fullmatch(r"[a-f0-9]{40}", branch["target"]["oid"])):
+        raise RuntimeError(f"PR #{pr['number']} has an invalid source branch identity")
     rollup = commits[0]["commit"]["statusCheckRollup"]
     checks = None
     if rollup is not None:
@@ -241,6 +245,7 @@ def normalize(pr: dict) -> dict:
         "number": pr["number"], "repo": pr["repository"]["nameWithOwner"], "title": pr["title"], "url": pr["url"],
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
         "ref": pr["headRefName"], "head": pr["headRefOid"], "base": pr["baseRefOid"],
+        "branchHead": branch["target"]["oid"] if branch else None,
         "headCommittedAt": commits[0]["commit"]["committedDate"],
         "headHistoryComplete": "headHistory" in pr,
         "headIntroducedAt": max((event["createdAt"] for event in pr.get("headHistory", {}).get("nodes", [])
@@ -362,7 +367,7 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
     if requests >= REQUEST_LIMIT:
         return {"status": "budget-exhausted", "numbers": sorted(unknown)}
     owner, name = repo.split("/")
-    fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid baseRefOid state mergeable mergeStateStatus}}"
+    fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid headRef{{name target{{oid}}}} baseRefOid state mergeable mergeStateStatus}}"
                       for number in unknown)
     try:
         response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
@@ -382,6 +387,7 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
         if result["mergeable"] not in {"MERGEABLE", "CONFLICTING", "UNKNOWN"}:
             raise RuntimeError(f"Unexpected mergeability for PR #{number}; previous snapshot is unchanged")
         pr.update(baseRefOid=result["baseRefOid"], mergeable=result["mergeable"],
+                  headRef=result.get("headRef"),
                   mergeStateStatus=result["mergeStateStatus"], _mergeabilityRetrievedAt=retrieved_at)
     return {"status": "completed", "numbers": sorted(unknown)}
 
@@ -485,6 +491,8 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 "repo": repo, "source": source["number"], "sourceHead": source["head"],
                 "sourceStatus": source["status"], "number": pr["number"], "url": pr["url"],
                 "head": pr["head"], "status": pr["status"], "checkedAt": pr.get("checkedAt"),
+                "branchHead": pr.get("branchHead"),
+                "sourceBranchMismatch": bool(pr.get("branchHead") and pr["branchHead"] != pr["head"]),
                 "base": pr.get("base"), "mergeable": pr.get("mergeable"), "mergeState": pr.get("mergeState"),
                 "mergeabilityCheckedAt": pr.get("mergeabilityCheckedAt"),
                 "scope": ("source" if is_source else "current-source-import"
@@ -498,11 +506,12 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                     imports.append(observation)
             if active and (failed or check_states(pr) & FAILURES):
                 failures.append({**observation, "followup": assignment})
-            unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
+            unresolved = pr.get("mergeable") in {"CONFLICTING", "UNKNOWN"} or observation["sourceBranchMismatch"]
             if active and unresolved:
                 mergeability.append({**observation, "followup": assignment})
-            if (unresolved or old.get("mergeable") in {"CONFLICTING", "UNKNOWN"}) and any(
-                pr.get(key) != old.get(key) for key in ("head", "base", "status", "mergeable", "mergeState")
+            if (unresolved or old.get("mergeable") in {"CONFLICTING", "UNKNOWN"}
+                    or old.get("branchHead") and old["branchHead"] != old.get("head")) and any(
+                pr.get(key) != old.get(key) for key in ("head", "branchHead", "base", "status", "mergeable", "mergeState")
             ):
                 mergeability_changes.append({**observation, "followup": assignment})
             # Include resolution and closure, and re-report failures after a head

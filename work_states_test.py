@@ -23,6 +23,14 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_branch_mismatch_cannot_inherit_pr_readiness(self):
+        pr = original(reviewDecision="APPROVED", mergeable="MERGEABLE")
+        self.assertIn("awaiting-import", pr_states(pr))
+        pr["branchHead"] = "b" * 40
+        self.assertNotIn("awaiting-import", pr_states(pr))
+        pr["branchHead"] = pr["head"]
+        self.assertIn("awaiting-import", pr_states(pr))
+
     def test_optional_transport_failure_preserves_primary_observations(self):
         # Use the normal module finder for the collector's CLI filename.
         collector = import_module("update-status")

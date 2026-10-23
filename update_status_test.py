@@ -315,6 +315,31 @@ class CollectorHistoryTest(unittest.TestCase):
 
 
 class CheckReportTest(unittest.TestCase):
+    def test_branch_ref_mismatch_retains_raw_checks_and_conflict(self) -> None:
+        raw = raw_pr(15153)
+        raw["mergeable"] = "CONFLICTING"
+        raw["headRef"] = {"name": raw["headRefName"], "target": {"oid": "b" * 40}}
+        current = retained(raw)
+        self.assertEqual(current["head"], raw["headRefOid"])
+        self.assertEqual(current["branchHead"], "b" * 40)
+        row = updater.check_report([current], {})["mergeabilityIssues"][0]
+        self.assertTrue(row["sourceBranchMismatch"])
+        self.assertEqual(row["mergeable"], "CONFLICTING")
+        previous = {"prs": [copy.deepcopy(current)]}
+        current["branchHead"] = current["head"]
+        self.assertFalse(updater.check_report([current], previous)["changedMergeability"][0]["sourceBranchMismatch"])
+        current.update(mergeable="MERGEABLE", branchHead="b" * 40)
+        previous = {"prs": [copy.deepcopy(current)]}
+        current["head"] = current["branchHead"]
+        report = updater.check_report([current], previous)
+        self.assertEqual(report["mergeabilityIssues"], [])
+        self.assertFalse(report["changedMergeability"][0]["sourceBranchMismatch"])
+        raw["headRef"] = None
+        self.assertIsNone(retained(raw)["branchHead"])
+        raw["headRef"] = {"name": "wrong-branch", "target": {"oid": "b" * 40}}
+        with self.assertRaisesRegex(RuntimeError, "invalid source branch identity"):
+            retained(raw)
+
     def test_conflicts_unknown_and_resolution_remain_visible_without_failed_checks(self) -> None:
         source = retained(raw_pr(3))
         old_import = linked(imported(103, 3), 3)
@@ -576,6 +601,10 @@ class ReapprovalReminderTest(unittest.TestCase):
                               (None, "mergeability-unknown")]:
             with self.subTest(mergeable=value), mock.patch.dict(self.raw, {"mergeable": value}):
                 self.assertEqual((self.plan()["status"], self.plan()["reason"]), ("deferred", reason))
+        self.raw["headRef"] = {"name": self.raw["headRefName"], "target": {"oid": "b" * 40}}
+        self.assertEqual(self.plan()["reason"], "source-branch-differs-from-pr")
+        self.raw["headRef"]["target"]["oid"] = self.raw["headRefOid"]
+        self.assertEqual(self.plan()["status"], "due")
 
     def test_one_exact_current_approval_clears_alarm_despite_review_requests(self) -> None:
         # This alarm concerns stale approved bytes, not aggregate merge readiness.

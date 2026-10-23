@@ -276,7 +276,8 @@ def pr_states(pr: dict, patch: dict | None = None) -> dict[str, StateEvidence]:
         states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
     if pr["status"] == "open" and any(is_approval_gate(pr, item) for item in (pr.get("checks") or {}).get("contexts", [])):
         states["maintainer-review"] = {"scope": head, "qualifier": "BuildBuddy requires approving review before these checks run"}
-    eligible = pr["status"] == "open" and (decision == "APPROVED" or accepted_patch)
+    eligible = (pr["status"] == "open" and (decision == "APPROVED" or accepted_patch)
+                and pr.get("branchHead", head) in {None, head})
     if pr.get("importPolicy", "copybara") == "none":
         if eligible and pr.get("mergeable") == "MERGEABLE" and checks_passed(pr):
             states["waiting-merge"] = {"scope": head}

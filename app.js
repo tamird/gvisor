@@ -340,6 +340,10 @@ function attentionReasons(node, owner) {
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   const pr = node.github;
   if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return reasons;
+  if (pr.branchHead && pr.branchHead !== pr.head) {
+    add("agent-refresh", `The source branch is ${pr.branchHead.slice(0, 9)}, but GitHub's PR still reports ${pr.head.slice(0, 9)}. Displayed reviews, checks and mergeability cover the older PR head; the branch's current mergeability is unknown.`);
+    return reasons;
+  }
   if (pr.head && conflictRecord(pr)) add("author-conflicts", mergeDescription(pr));
   if (pr.revisionChanged || !pr.head) {
     add("agent-refresh", "Current source revision or its review/check evidence needs a public snapshot refresh.");
@@ -515,7 +519,9 @@ function mergeDescription(pr) {
   const previous = pr.mergeabilityObservation;
   const current = pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "GitHub is recomputing mergeability";
   const observed = previous ? ` Last observed ${previous.state === "CONFLICTING" ? "conflict" : "no conflict"} at ${date(previous.checkedAt)}, head ${previous.head.slice(0, 9)}, base ${previous.base?.slice(0, 9) || "not recorded"}.${previous.head !== pr.head ? " That observation belongs to an older head." : ""}` : " No previous concrete result is recorded.";
-  return current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
+  const branch = pr.branchHead && pr.branchHead !== pr.head
+    ? `Source branch ${pr.branchHead.slice(0, 9)} differs from the PR head; its mergeability is unknown. PR head: ` : "";
+  return branch + current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
 }
 function withConflictResult(pr) {
   const result = conflictResults.get(prIdentity(pr));
@@ -528,6 +534,7 @@ function withConflictResult(pr) {
   }
   const changed = result.head !== pr.head;
   const current = { ...pr, head: result.head, headRepo: result.headRepo ?? null, ref: result.ref, base: result.base, status: result.status,
+    branchHead: null, // REST does not observe the branch ref; do not mix snapshots.
     mergeable: result.state, conflictCheckedAt: result.checkedAt, revisionChanged: changed, statusChanged: result.status !== pr.status };
   if (changed) Object.assign(current, { reviewDecision: null, approvedHead: null, githubReviewDecision: null,
     reviewsComplete: false, reviewRequestsComplete: false, checks: null, labels: [], labelsComplete: false,
@@ -1310,6 +1317,9 @@ function stateRecords(snapshot, node) {
       since: records.conflicts?.scope === conflict.scope ? records.conflicts.since : conflict.since };
     else delete records.conflicts;
     if (node.github.mergeable !== "MERGEABLE" || actionableComment(node)) delete records["waiting-merge"];
+    if (node.github.branchHead && node.github.branchHead !== node.github.head) {
+      delete records["waiting-merge"]; delete records["awaiting-import"];
+    }
     if (["merged", "closed"].includes(node.github.status) && node.github.conflictCheckedAt) {
       for (const key of Object.keys(records)) delete records[key];
       records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, observedAt: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
@@ -1530,6 +1540,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         (policy === "none" && (pr.importPolicy !== "none" || pr.imports.length))) throw new Error("Invalid PR inventory");
     numbers.add(identity);
     for (const item of [pr, ...pr.imports]) {
+      if (item.branchHead != null && !/^[a-f0-9]{40}$/.test(item.branchHead)) throw new Error("Invalid source branch head");
       if (prRepo(item, nextRegistry) !== repo || item.url !== `https://github.com/${repo}/pull/${item.number}`) throw new Error("Invalid PR URL identity");
       const observation = item.mergeabilityObservation;
       if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation time");

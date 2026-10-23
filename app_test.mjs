@@ -925,6 +925,24 @@ test('a fresh mergeable head overrides old conflict metadata', () => {
   assert.ok(!idsFor(node).includes('author-conflicts'));
 });
 
+test('provider branch mismatch routes refresh without rewriting PR evidence', () => {
+  const node = attentionNode(), context = client();
+  node.github.mergeable = 'CONFLICTING'; node.github.branchHead = 'd'.repeat(40);
+  const raw = structuredClone(node.github);
+  context.nodeInput = node;
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+  assert.deepEqual(node.github, raw);
+  assert.match(vm.runInContext('mergeDescription(nodeInput.github)', context), /its mergeability is unknown/);
+  assert.ok(vm.runInContext('conflictRecord(nodeInput.github)', context));
+  const snapshot = { ...context.snapshotInput, workStates: { [node.id]: { 'waiting-merge': { scope: node.github.head } } } };
+  context.snapshotInput = snapshot;
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["waiting-merge"]', context), undefined);
+  for (const branchHead of [undefined, null, node.github.head]) {
+    node.github.branchHead = branchHead;
+    assert.ok(idsFor(node).includes('author-conflicts'));
+  }
+});
+
 test('a directly observed new-head conflict remains actionable while old checks are invalidated', () => {
   const context = client(), node = attentionNode(); node.github.checkedAt = '2026-10-13T09:00:00Z'; context.nodeInput = node;
   context.observationInput = { head: 'd'.repeat(40), base: 'e'.repeat(40), status: 'open', state: 'CONFLICTING', checkedAt: '2026-10-13T10:00:00Z' };
@@ -936,6 +954,7 @@ test('a directly observed new-head conflict remains actionable while old checks 
 test('direct REST refresh replaces the repository and branch identity even on the same head', async () => {
   const context = client(), original = attentionNode().github;
   original.headRepo = 'tamird/gvisor'; original.ref = 'old-name'; original.checkedAt = '2026-10-13T09:00:00Z';
+  original.branchHead = 'd'.repeat(40);
   context.originalInput = original;
   context.document = { querySelector: () => null };
   context.AbortSignal = { timeout: () => undefined };
@@ -948,6 +967,7 @@ test('direct REST refresh replaces the repository and branch identity even on th
     const current = JSON.parse(vm.runInContext('JSON.stringify(withConflictResult(originalInput))', context));
     assert.equal(current.headRepo, repo?.full_name ?? null);
     assert.equal(current.ref, 'new-name');
+    assert.equal(current.branchHead, null);
     assert.equal(current.revisionChanged, false);
     assert.equal(current.head, original.head);
   }

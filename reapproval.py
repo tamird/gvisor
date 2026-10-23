@@ -21,6 +21,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str) -> dict:
     if (pr.get("repo") != "google/gvisor" or pr.get("importPolicy") != "copybara"
             or pr.get("authorLogin") != owner or pr.get("status") != "open"):
         return skip("not-an-open-owned-copybara-source")
+    if pr.get("branchHead") and pr["branchHead"] != pr["head"]:
+        return {**result, "status": "deferred", "reason": "source-branch-differs-from-pr"}
     if pr.get("mergeable") != "MERGEABLE":
         return {**result, "status": "deferred", "mergeable": pr.get("mergeable"),
                 "reason": "source-conflicted" if pr.get("mergeable") == "CONFLICTING" else "mergeability-unknown"}

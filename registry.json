@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-23T00:06:36.853785+00:00",
+    "updatedAt": "2026-10-23T00:16:49.319978+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11475,25 +11475,18 @@
       "title": "Supply the server name in the Node TLS fixture",
       "url": "https://github.com/google/gvisor/pull/15960",
       "group": "tests",
-      "status": "Delivered as #15960; upstream Node #66835 open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 54930a297f21 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nCurrent delivery: gVisor#15960 is open at signed adfbecdf3a6251cffecc63d338d0bbe30791a0ff and cites upstream Node#66835 atca903891360eebd29c9264c606a3a2c47af85796. The historical source-backed gVisor Node22.2 run at b968 retains21 owners/161 passing Go/Bazel wrapper records with fresh archive loading. Its7,898 inner names were wrapper-selected/claimed, not independently proven completed: passing batch outputs were not universally retained, and the pinned Node runner can swallow IOError. Original profile exclusions remain; this does not establish an unfiltered upstream Node suite result. Contributor review and publication are complete.\n\nHistorical source-specific evidence:\n\nThe Node.js CA fixture connects to www.nodejs.org without SNI, causing the public endpoint to present a certificate for a different hostname. This standalone correction supplies the server name while retaining certificate verification and the existing CA assertions. In the pinned Node22.2.0 image, directfs and goferfs each reproduce the original hostname failure and pass with this patch. The full source-image build and all twenty selected Node owners now pass at 375eb2bf4: 160 fresh shard results and 160 passing XML entries, with no skips, failures, missing results or capture errors. The resource-only continuation supplies 32 GB to the source-image build while preserving selections, shards and owner deadlines. Its original 8 GB build failure reports ResourceExhausted/cannot allocate memory before any owner executed and remains retained, alongside the earlier execution-stream failure. The selected Go/Bazel wrappers completed successfully; complete inner-case accounting remains unproven. The equivalent upstream Node correction is published in nodejs/node#66835 as commit ca903891360eebd29c9264c606a3a2c47af85796 on test-tls-add-ca-sni, against Node source 947b9a3ab. An independent source/message review passes. With official pinned Node 26.12.0, the remote standalone reproduction exits zero, the original four-scenario test exits one with ERR_TLS_CERT_ALTNAME_INVALID, and the corrected test exits zero. The amended commit message includes a two-line OpenSSL reproduction and the upstream nightly CI link; the source patch and qualified before/after behavior are unchanged. The published gVisor patch cites nodejs/node#66835, and user-authorized gVisor PR#15960 is open. Exact remote heads and final descriptions were verified. No contributor code-review decision is pending.",
+      "status": "closed",
+      "updatedAt": "2026-10-23T00:16:49.319978+00:00",
+      "summary": "Closed as obsolete: the declared Node profile already excludes the external-connectivity test, and the standalone PR only carried its patch/application. The exact owned branch was retired. Upstream Node #66835 merged; Node owns removal of the redundant copy from the independently approved Node26 upgrade. Earlier source-specific test evidence remains historical.",
       "followup": {
-        "owner": "root",
-        "disposition": "Authorized gVisor and Node upstream PRs are open",
+        "owner": "node_tls_sni",
         "sourceHead": "54930a297f2150c18d014c7dac994c4e8668264c",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow source/import CI and incoming reviews on gVisor#15960 and Node#66835 through the existing bounded sweep. No contributor submission decision is pending; upstream full-suite evidence remains distinct from the passing declared gVisor profile.",
+        "disposition": "Closed obsolete standalone correction; owned branch retired",
+        "nextAction": "Keep this PR closed. Remove only the redundant Node26 copy under the existing approval; preserve procfs and licensing prerequisites.",
+        "observedAt": "2026-10-23T00:13:30.100400+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/572bc01df566512c5c19de100615b05c211bb6ca",
-          "https://app.buildbuddy.io/invocation/b62ea990-30d3-40f3-ac69-3e8b6ffb01fd",
-          "https://github.com/tamird/gvisor/actions/runs/38996541148",
-          "https://github.com/tamird/gvisor/actions/runs/39003749809",
-          "https://github.com/nodejs/node/blob/269cab632/doc/contributing/ai-guidelines.md",
-          "https://github.com/google/gvisor/pull/15960",
-          "https://github.com/nodejs/node/pull/66835",
-          "https://app.buildbuddy.io/invocation/64a98f74-143c-4687-ae10-478686296c55",
-          "https://github.com/tamird/gvisor/commit/54930a297f2150c18d014c7dac994c4e8668264c"
+          "https://github.com/google/gvisor/pull/15960#issuecomment-6354195862",
+          "https://github.com/nodejs/node/pull/66835"
         ]
       },
       "evidence": [
@@ -13708,9 +13701,9 @@
       "title": "Node.js: send SNI in CA certificate test",
       "url": "https://github.com/nodejs/node/pull/66835",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-18T18:55:35.342932+00:00",
-      "summary": "The user-owned upstream Node correction is open and mergeable at the exact reviewed ca903891360 source. The PR includes the standalone OpenSSL reproduction and original nightly CI failure link. Commit-message, contributor-status and labeling checks pass; other reported checks are skipped. No upstream full source-suite result is established. The gVisor source-image profile passes separately with its existing exclusions.",
+      "status": "merged",
+      "updatedAt": "2026-10-23T00:16:49.319978+00:00",
+      "summary": "The upstream SNI correction merged. The gVisor standalone patch PR15960 is closed as obsolete because its test is already excluded; the independent Node26 upgrade remains approved with other prerequisites.",
       "evidence": [
         {
           "label": "Node upstream PR",
@@ -13723,10 +13716,10 @@
       ],
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Upstream review pending; metadata checks passed",
+        "disposition": "Merged; upstream delivery complete",
         "sourceHead": "ca903891360eebd29c9264c606a3a2c47af85796",
-        "observedAt": "2026-10-18T18:53:06.296608+00:00",
-        "nextAction": "Follow this existing PR in the same bounded provider batch. Do not infer upstream test coverage from metadata checks or duplicate the submission.",
+        "observedAt": "2026-10-23T00:16:49.319978+00:00",
+        "nextAction": "Keep this delivery complete. Preserve separate Node26 dependency and validation evidence.",
         "evidence": [
           "https://github.com/nodejs/node/pull/66835"
         ]
@@ -18646,17 +18639,18 @@
       "title": "Send SNI in the Node.js CA certificate test",
       "url": "https://github.com/google/gvisor/pull/15960",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-23T00:06:36.853785+00:00",
-      "summary": "Etienne requested excluding the flaky external-connectivity test instead of maintaining a dedicated patch. Node owns the bounded source assessment and found the test already excluded; root owns clarification of the requested scope. This remains agent attention, with no new contributor proposal.",
+      "status": "closed",
+      "updatedAt": "2026-10-23T00:16:49.319978+00:00",
+      "summary": "Closed as obsolete: the declared Node profile already excludes the external-connectivity test, and the standalone PR only carried its patch/application. The exact owned branch was retired. Upstream Node #66835 merged; Node owns removal of the redundant copy from the independently approved Node26 upgrade. Earlier source-specific test evidence remains historical.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "54930a297f2150c18d014c7dac994c4e8668264c",
-        "disposition": "Reconcile requested exclusion with existing test selection",
-        "nextAction": "Resolve the source-contract question with root before changing the existing exclusion. Preserve the mixed-platform collector priority and source-specific evidence.",
-        "observedAt": "2026-10-23T00:01:49.722161+00:00",
+        "disposition": "Closed obsolete standalone correction; owned branch retired",
+        "nextAction": "Keep this PR closed. Remove only the redundant Node26 copy under the existing approval; preserve procfs and licensing prerequisites.",
+        "observedAt": "2026-10-23T00:13:30.100400+00:00",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15960#pullrequestreview-5622293059"
+          "https://github.com/google/gvisor/pull/15960#issuecomment-6354195862",
+          "https://github.com/nodejs/node/pull/66835"
         ]
       }
     }
@@ -20318,11 +20312,6 @@
       "role": "proposed_update",
       "reason": "Source-qualified proposal is pending contributor authorization; public source remains unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/0b4492065f9ec3a6f82ca7d89f06ee5b82e741dc"
-    },
-    {
-      "from": "branch:fix/nodejs-tls-server-name",
-      "to": "branch:upgrade/nodejs-26.12.0",
-      "type": "depends_on"
     },
     {
       "from": "branch:fix/license-manual-artifacts",
