@@ -17811,14 +17811,14 @@
       "id": "branch:rules-img-fsstress",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-fsstress",
-      "head": "8e45c79086ef50a61ed70379f89a5b684ea75db9",
+      "ref": "rules-img-fsstress-resource-current",
+      "head": "6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
       "title": "Build the filesystem stress-test image with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
+      "url": "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
       "group": "bazel",
-      "status": "Contributor approved; waiting for basic-image #16097",
-      "updatedAt": "2026-10-22T10:14:21.290429+00:00",
-      "summary": "Contributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
+      "status": "Contributor approved; scratch-base refinement in progress",
+      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
+      "summary": "Requested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
       "links": [
         {
           "label": "Complete change over basic image foundation",
@@ -17843,18 +17843,23 @@
         {
           "label": "Exact both-architecture resource output pairs",
           "url": "https://app.buildbuddy.io/invocation/34f80260-51dd-4382-b3b0-fc289b6393e1"
+        },
+        {
+          "label": "Published resource-layout refinement",
+          "url": "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d"
         }
       ],
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "8e45c79086ef50a61ed70379f89a5b684ea75db9",
-        "observedAt": "2026-10-22T10:14:21.290429+00:00",
+        "owner": "root",
+        "sourceHead": "6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
+        "observedAt": "2026-10-23T01:53:03.128488+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Contributor approved; basic-image prerequisite landing remains",
-        "nextAction": "Open the prepared PR after #16097 lands, preserving the exact approved patch or an independently verified equivalent rebase. Do not repeat the contributor question.",
+        "disposition": "Contributor approved; scratch-base refinement in progress",
+        "nextAction": "Root owns rules-img-fsstress-scratch-current from shared BusyBox bfd422b9ef, composing this approved resource-current payload. Preserve the shell parent; validate the changed runtime base before delivery.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
-          "https://github.com/google/gvisor/pull/16097"
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d"
         ]
       }
     },
@@ -17955,14 +17960,14 @@
       "id": "branch:rules-img-tcpdump",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-tcpdump",
-      "head": "1393d4449850b660d77e4b1ebb2906e322d7c855",
+      "ref": "rules-img-tcpdump-resource-current",
+      "head": "e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "title": "Build tcpdump and its test sender with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
+      "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-22T10:26:32.101647+00:00",
-      "summary": "Contributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor review is pending, conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
+      "status": "Contributor approved; resource layout complete; awaiting prerequisites",
+      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
+      "summary": "Requested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -17979,16 +17984,21 @@
         {
           "label": "Canonical Verify of complete retained catalog",
           "url": "https://app.buildbuddy.io/invocation/a6b08264-0204-41db-ac52-8705cfb73827"
+        },
+        {
+          "label": "Published resource-layout refinement",
+          "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
         }
       ],
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "1393d4449850b660d77e4b1ebb2906e322d7c855",
-        "observedAt": "2026-10-22T10:26:32.101647+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
+        "sourceHead": "e7fc3626fce8184c2dd35debe8d413dd989b05ee",
+        "observedAt": "2026-10-23T01:53:03.128488+00:00",
+        "disposition": "Contributor approved; resource layout complete; awaiting prerequisites",
         "nextAction": "Wait for #16097 and #16051; preserve the approved patch and do not ask again.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855"
+          "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
+          "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
         ]
       }
     },
@@ -18074,14 +18084,14 @@
       "id": "branch:rules-img-libacl",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-libacl-on-gnu",
-      "head": "b92aa4385085f350c3488b68ca3c6a1848e2a14c",
+      "ref": "rules-img-libacl-resource-current",
+      "head": "48d5e28f1403617d5f277b0b70fef9f3c72b7e8b",
       "title": "Assemble the ACL test image from pinned packages",
-      "url": "https://github.com/tamird/gvisor/commit/b92aa4385085f350c3488b68ca3c6a1848e2a14c",
+      "url": "https://github.com/tamird/gvisor/commit/48d5e28f1403617d5f277b0b70fef9f3c72b7e8b",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-22T14:12:37.334326+00:00",
-      "summary": "The requested resource-directory move now passes strict archive and Make-context byte equality on both architectures. A same-public-label source build isolates the eleven sudo/ACL resource references and matches all eight retained after-layout outputs. Earlier alias comparisons failed only because raw-layer history included the alias names; those failed results remain explicit. Independent terminal acceptance confirms all eight outputs; equivalent descendant publication follows the delivered basic foundation; contributor approval and existing runtime/license evidence remain valid.\n\nApproved source and prior validation:\n\nContributor approved opening after the shared GNU and existing image/license prerequisites. Exact b92 is an equivalent image commit on the clarified GNU parent; only the inherited three-line TODO differs from approved 2fb. Both architecture image outputs, configurations, inventories and twelve executable hashes retain exact qualification identity; Make and native-runc/gVisor consumers pass. The full 291-entry catalog, including 92 APT records, Fetch and Verify pass. Original timeout, classification and schema failures remain preserved. No new contributor question or runtime replay is needed.",
+      "status": "Contributor approved; resource layout complete; awaiting prerequisites",
+      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
+      "summary": "Requested resource relocation and equivalent base refresh are complete at 48d5e28f14. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nThe requested resource-directory move now passes strict archive and Make-context byte equality on both architectures. A same-public-label source build isolates the eleven sudo/ACL resource references and matches all eight retained after-layout outputs. Earlier alias comparisons failed only because raw-layer history included the alias names; those failed results remain explicit. Independent terminal acceptance confirms all eight outputs; equivalent descendant publication follows the delivered basic foundation; contributor approval and existing runtime/license evidence remain valid.\n\nApproved source and prior validation:\n\nContributor approved opening after the shared GNU and existing image/license prerequisites. Exact b92 is an equivalent image commit on the clarified GNU parent; only the inherited three-line TODO differs from approved 2fb. Both architecture image outputs, configurations, inventories and twelve executable hashes retain exact qualification identity; Make and native-runc/gVisor consumers pass. The full 291-entry catalog, including 92 APT records, Fetch and Verify pass. Original timeout, classification and schema failures remain preserved. No new contributor question or runtime replay is needed.",
       "links": [
         {
           "label": "Ordinary GNU entry passes",
@@ -18126,16 +18136,21 @@
         {
           "label": "Same-public-label resource output comparison",
           "url": "https://app.buildbuddy.io/invocation/55db4533-9592-4e97-8d6b-c0c9396e3cd3"
+        },
+        {
+          "label": "Published resource-layout refinement",
+          "url": "https://github.com/tamird/gvisor/commit/48d5e28f1403617d5f277b0b70fef9f3c72b7e8b"
         }
       ],
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "b92aa4385085f350c3488b68ca3c6a1848e2a14c",
-        "observedAt": "2026-10-22T14:12:37.334326+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
+        "sourceHead": "48d5e28f1403617d5f277b0b70fef9f3c72b7e8b",
+        "observedAt": "2026-10-23T01:53:03.128488+00:00",
+        "disposition": "Contributor approved; resource layout complete; awaiting prerequisites",
         "nextAction": "Finish independent result acceptance and publish the narrow resource move above equivalent prerequisites, then open only after those prerequisites actually land.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/b92aa4385085f350c3488b68ca3c6a1848e2a14c"
+          "https://github.com/tamird/gvisor/commit/b92aa4385085f350c3488b68ca3c6a1848e2a14c",
+          "https://github.com/tamird/gvisor/commit/48d5e28f1403617d5f277b0b70fef9f3c72b7e8b"
         ]
       },
       "refinement": {
@@ -18346,14 +18361,14 @@
       "id": "branch:rules-img-sudo",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-sudo-final",
-      "head": "5b957f3600186aa5eb9606c3ede4ee96a2726a11",
+      "ref": "rules-img-sudo-resource-current",
+      "head": "18bc62e2b65a531265d3505c2e6b45805e09ece4",
       "title": "Assemble the sudo test image from pinned packages",
-      "url": "https://github.com/tamird/gvisor/commit/5b957f3600186aa5eb9606c3ede4ee96a2726a11",
+      "url": "https://github.com/tamird/gvisor/commit/18bc62e2b65a531265d3505c2e6b45805e09ece4",
       "group": "bazel",
-      "status": "Contributor approved; resource layout correction in progress",
-      "updatedAt": "2026-10-22T14:12:37.334326+00:00",
-      "summary": "The requested resource-directory move now passes strict archive and Make-context byte equality on both architectures. A same-public-label source build isolates the eleven sudo/ACL resource references and matches all eight retained after-layout outputs. Earlier alias comparisons failed only because raw-layer history included the alias names; those failed results remain explicit. Independent terminal acceptance confirms all eight outputs; equivalent descendant publication follows the delivered basic foundation; contributor approval and existing runtime/license evidence remain valid.\n\nApproved source and prior validation:\n\nThe contributor approved exact 5b957 subject to grouping baked-in resources under an image-specific directory. The same requested convention covers the active ACL, tcpdump, fsstress and tmpfile resources. All fifteen moves preserve source bytes, modes, installed names and BUILD contracts; a controlled two-architecture comparison is submitted against independently reviewed source 5eee before publication. The earlier historical tmpfile archive hash comparison failed because the gzip stream differs, while the exact image config and complete uncompressed layers match. This original failure is preserved. No new contributor question is pending.\n\nThe shared GNU and existing image prerequisites still govern opening. The image uses declared pinned Ubuntu packages with explicit PAM/accounts/setuid metadata. Both architecture archive/loader/notice checks and Make pass. All four native and four systrap privilege cases passed; that run retains its teardown failure. A separate lifecycle-only run passed exact original daemon restoration after retrying the observed missing PID file. The full 358-entry catalog, including 159 APT records, Fetch/Verify pass. The final image preserves the audited payload; its new parent contributes only the approved GNU TODO. No ARM runtime or fresh cached-assembly execution claim.",
+      "status": "Contributor approved; resource layout complete; awaiting prerequisites",
+      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
+      "summary": "Requested resource relocation and equivalent base refresh are complete at 18bc62e2b6. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nThe requested resource-directory move now passes strict archive and Make-context byte equality on both architectures. A same-public-label source build isolates the eleven sudo/ACL resource references and matches all eight retained after-layout outputs. Earlier alias comparisons failed only because raw-layer history included the alias names; those failed results remain explicit. Independent terminal acceptance confirms all eight outputs; equivalent descendant publication follows the delivered basic foundation; contributor approval and existing runtime/license evidence remain valid.\n\nApproved source and prior validation:\n\nThe contributor approved exact 5b957 subject to grouping baked-in resources under an image-specific directory. The same requested convention covers the active ACL, tcpdump, fsstress and tmpfile resources. All fifteen moves preserve source bytes, modes, installed names and BUILD contracts; a controlled two-architecture comparison is submitted against independently reviewed source 5eee before publication. The earlier historical tmpfile archive hash comparison failed because the gzip stream differs, while the exact image config and complete uncompressed layers match. This original failure is preserved. No new contributor question is pending.\n\nThe shared GNU and existing image prerequisites still govern opening. The image uses declared pinned Ubuntu packages with explicit PAM/accounts/setuid metadata. Both architecture archive/loader/notice checks and Make pass. All four native and four systrap privilege cases passed; that run retains its teardown failure. A separate lifecycle-only run passed exact original daemon restoration after retrying the observed missing PID file. The full 358-entry catalog, including 159 APT records, Fetch/Verify pass. The final image preserves the audited payload; its new parent contributes only the approved GNU TODO. No ARM runtime or fresh cached-assembly execution claim.",
       "links": [
         {
           "label": "Reviewed declared image",
@@ -18410,6 +18425,10 @@
         {
           "label": "Same-public-label resource output comparison",
           "url": "https://app.buildbuddy.io/invocation/55db4533-9592-4e97-8d6b-c0c9396e3cd3"
+        },
+        {
+          "label": "Published resource-layout refinement",
+          "url": "https://github.com/tamird/gvisor/commit/18bc62e2b65a531265d3505c2e6b45805e09ece4"
         }
       ],
       "refinement": {
@@ -18422,12 +18441,13 @@
       },
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "5b957f3600186aa5eb9606c3ede4ee96a2726a11",
-        "observedAt": "2026-10-22T14:12:37.334326+00:00",
-        "disposition": "Contributor approved; resource layout correction in progress",
+        "sourceHead": "18bc62e2b65a531265d3505c2e6b45805e09ece4",
+        "observedAt": "2026-10-23T01:53:03.128488+00:00",
+        "disposition": "Contributor approved; resource layout complete; awaiting prerequisites",
         "nextAction": "Finish independent result acceptance and publish the narrow resource move above equivalent prerequisites, then open only after those prerequisites actually land.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/5b957f3600186aa5eb9606c3ede4ee96a2726a11"
+          "https://github.com/tamird/gvisor/commit/5b957f3600186aa5eb9606c3ede4ee96a2726a11",
+          "https://github.com/tamird/gvisor/commit/18bc62e2b65a531265d3505c2e6b45805e09ece4"
         ]
       }
     },
@@ -18701,20 +18721,20 @@
       "id": "branch:rules-img-rust",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-rust-rs-review",
-      "head": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
+      "ref": "rules-img-rust-protobuf37-final",
+      "head": "1f99cfb62346bd41f74d3ffc845fbf26cfafb8ae",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
-      "status": "Conditionally accepted; Protobuf release refinement in validation",
-      "updatedAt": "2026-10-23T01:30:01.616036+00:00",
-      "summary": "The revision uses rules_rs defaults and separates execution-host selection from Linux musl image targets. Both Linux architectures produce static images; the combined index, archives and build contexts exactly match the runtime-qualified outputs after the final transitive producer-lock correction and catalog adoption. Existing AMD64 runc and systrap TestRust cases, ordinary Make selection, native runtime input identities, notices and cleanup pass. Full canonical Fetch/Verify passes for 201 entries. Darwin compiler dependencies were checked through configured cquery analysis only; no Darwin execution or ARM64 runtime is claimed. The standalone source preserves GNU defaults and relies on the recorded declared-compiler integration. Earlier failed attempts remain retained. The contributor conditionally accepted 6941, requesting the released Protobuf 37 prerequisite instead of the generated-lock patch and clearer validator/notice archive rationale. Separate prerequisite 9eb44 and child b820 are published for validation without the rules_rust override. Earlier successful runtime/catalog/image evidence remains tied to 6941 until the new graph and exact output applicability pass. No upstream PR is open.",
+      "url": "https://github.com/tamird/gvisor/commit/1f99cfb62346bd41f74d3ffc845fbf26cfafb8ae",
+      "status": "Conditionally accepted; generated-code and image equality validation running",
+      "updatedAt": "2026-10-23T01:53:03.128488+00:00",
+      "summary": "Protobuf37 canonical Fetch/Verify passes without the rules_rust override. The generated-lock backport is removed; the documentation alias explains the Linux x86-64 compiler distribution without selecting the execution host. The separate prerequisite and Rust child now include the exact audited catalog. Existing runtime evidence remains conditional on the live five-output equality gate.\n\nThe revision uses rules_rs defaults and separates execution-host selection from Linux musl image targets. Both Linux architectures produce static images; the combined index, archives and build contexts exactly match the runtime-qualified outputs after the final transitive producer-lock correction and catalog adoption. Existing AMD64 runc and systrap TestRust cases, ordinary Make selection, native runtime input identities, notices and cleanup pass. Full canonical Fetch/Verify passes for 201 entries. Darwin compiler dependencies were checked through configured cquery analysis only; no Darwin execution or ARM64 runtime is claimed. The standalone source preserves GNU defaults and relies on the recorded declared-compiler integration. Earlier failed attempts remain retained. The contributor conditionally accepted 6941, requesting the released Protobuf 37 prerequisite instead of the generated-lock patch and clearer validator/notice archive rationale. Separate prerequisite 9eb44 and child b820 are published for validation without the rules_rust override. Earlier successful runtime/catalog/image evidence remains tied to 6941 until the new graph and exact output applicability pass. No upstream PR is open.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
-        "observedAt": "2026-10-23T01:30:01.616036+00:00",
-        "disposition": "Conditionally accepted; Protobuf release refinement in validation",
-        "nextAction": "Validate Protobuf 37 without the override through canonical Fetch/Verify, focused existing generated C++/Go consumers and final both-CPU image equality; finish the requested refinement without a duplicate approval question.",
+        "sourceHead": "1f99cfb62346bd41f74d3ffc845fbf26cfafb8ae",
+        "observedAt": "2026-10-23T01:53:03.128488+00:00",
+        "disposition": "Conditionally accepted; generated-code and image equality validation running",
+        "nextAction": "Finish the existing both-CPU generated C++/Go consumers, owning analyzer and exact five image-output comparisons. Preserve the conditional user grant; no duplicate review question for these requested refinements.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18747,26 +18767,37 @@
           "label": "Protobuf release refinement under validation",
           "url": "https://github.com/tamird/gvisor/commit/b820dfec7b84a1080afbffb19f5615dc8df459ee"
         }
+      ],
+      "links": [
+        {
+          "label": "Protobuf37 canonical Fetch/Verify",
+          "url": "https://app.buildbuddy.io/invocation/6b2a247c-93ce-425c-926c-9c4179545ddc"
+        },
+        {
+          "label": "Generated-code compatibility and image equality",
+          "url": "https://app.buildbuddy.io/invocation/b7f23d2e-f366-4c5c-812e-f20c45efd3e9"
+        }
       ]
     },
     {
       "id": "branch:protobuf-37-rust-locks",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "protobuf-37-rust-locks",
-      "head": "9eb44f59b5b7191399a30e1d96a2909cba2ae099",
+      "ref": "protobuf-37-catalog-current",
+      "head": "cd14bd2878da75ffc1fecfdd428b8ddacc9dd4ea",
       "title": "Use released Protobuf Rust lockfiles",
-      "url": "https://github.com/tamird/gvisor/commit/9eb44f59b5b7191399a30e1d96a2909cba2ae099",
+      "url": "https://github.com/tamird/gvisor/commit/cd14bd2878da75ffc1fecfdd428b8ddacc9dd4ea",
       "group": "bazel",
-      "status": "Agent validation; no contributor review requested",
+      "status": "Canonical catalog passed; generated-code compatibility running",
       "summary": "Separate Protobuf 37.0-rc1 upgrade replaces the generated-lock backport in the Rust image proposal. Current validation first uses the release without a transitive rules_rust override. Full canonical Fetch/Verify, existing generated C++/Go consumer compatibility and final Rust image applicability remain required.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "9eb44f59b5b7191399a30e1d96a2909cba2ae099",
-        "observedAt": "2026-10-23T01:31:41.984709+00:00",
-        "disposition": "Validate released dependency before contributor review",
-        "nextAction": "Finish canonical graph and focused generated-code gates; retain the older graph failure separately."
-      }
+        "sourceHead": "cd14bd2878da75ffc1fecfdd428b8ddacc9dd4ea",
+        "observedAt": "2026-10-23T01:53:03.128488+00:00",
+        "disposition": "Canonical catalog passed; generated-code compatibility running",
+        "nextAction": "Finish focused generated-code validation before presenting the separate prerequisite; no rules_rust override is needed for the successful current catalog graph."
+      },
+      "updatedAt": "2026-10-23T01:53:03.128488+00:00"
     }
   ],
   "edges": [
