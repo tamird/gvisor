@@ -77,7 +77,6 @@ configure_make(
     lib_name = "apr",
     lib_source = "@apr_source//:source",
     linkopts = ["-static"],
-    make_prefix = _PREFIX,
     out_data_files = [
         "apr.h",
         "apr_private.h",
@@ -90,6 +89,7 @@ cp config.log "$$INSTALLDIR/config.log"
 """,
     set_file_prefix_map = True,
     target_compatible_with = _TARGET_CONSTRAINTS,
+    tool_prefix = _PREFIX,
 )
 
 configure_make(
@@ -126,7 +126,6 @@ configure_make(
     lib_name = "apr_util",
     lib_source = "@apr_util_source//:source",
     linkopts = ["-static"],
-    make_prefix = _PREFIX,
     out_data_files = [
         "apu_config.h",
         "config.log",
@@ -137,6 +136,7 @@ cp config.log "$$INSTALLDIR/config.log"
 """,
     set_file_prefix_map = True,
     target_compatible_with = _TARGET_CONSTRAINTS,
+    tool_prefix = _PREFIX,
     deps = [
         ":apr",
         "@libexpat//:libexpat",
@@ -174,7 +174,6 @@ configure_make(
     exec_compatible_with = _EXEC_CONSTRAINTS,
     lib_source = "@httpd_source//:source",
     linkopts = ["-static"],
-    make_prefix = _PREFIX,
     out_binaries = ["httpd"],
     out_data_files = [
         "ap_config_auto.h",
@@ -191,6 +190,7 @@ cp config.log "$$INSTALLDIR/config.log"
     set_file_prefix_map = True,
     target_compatible_with = _TARGET_CONSTRAINTS,
     targets = ["bazel-httpd"],
+    tool_prefix = _PREFIX,
     deps = [
         ":apr",
         ":apr_util",
