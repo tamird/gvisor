@@ -4627,13 +4627,13 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-22T15:02:27.314002+00:00",
-      "summary": "Current source ae6e695110f8 reports feedback/copybara FAILURE (latest status 03:55:18 UTC), while matching public import #15942 passes its public checks. The earlier rebase did not resolve this later internal-check failure. No public diagnostic is available, and the source is mergeable; no source defect or need for another rebase is established.\n\nPreserved earlier record:\n\nThe user-requested rebase for the exact current-head Copybara migration error is published at ae6e695110f8 on master 7d17d8564110. Independent review verified patch equivalence. The recorded migration error belongs to earlier 10e4c37aaf37; current-head checks and import progress remain separate and pending.\n\nPreserved earlier source record:\n\nnybidari approved the exact current head 10e4c37aaf on 2026-10-21T19:49:28Z. The requested re-review is complete. Current import and merge progress remain separate; no source change, automatic rebase or duplicate reviewer message is needed.\n\nPreserved history:\n\nThe October21 maintainer notice asks the named reviewer to re-review this unchanged current head. Comparison with the actual previously approved head confirms the already-disclosed amendments: Direct linux/if_link.h include plus canonical assertion line wrapping; runtime patch unchanged. Existing October18 author comments explain both amendments and request review. The earlier approval does not approve this head; no new source correction or duplicate reply is pending.\n\nPreserved history:\n\nThe contributor-approved direct-header amendment is published at 10e4c37aa, and the prepared explanation is posted. It adds linux/if_link.h for IFLA_NET_NS_FD; exact-source ClangTidy passes, and runtime code is unchanged. Fresh maintainer approval and current public checks remain outstanding.\n\nEarlier observations:\n\nRebased onto current upstream after Nayana\u2019s October 16 approval superseded the earlier restoration hold. Root and the implementation owner verified the source-preserving rebase; the final amendment applies the public CI formatter output. Current head 3c90764766 is published and the existing reviewer comment requests fresh approval. GitHub reassociated older approval commit IDs, but their October 16 submission times predate this head and do not establish approval. All applicable public checks have finished: eight pass and four workflow-change scans are skipped. Fresh maintainer approval is still required.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
+      "updatedAt": "2026-10-23T02:22:55.395594+00:00",
+      "summary": "The equivalent conflict rebase is published at fdca42b6803f. Independent review verified the approved syscall body, preservation of current MTU bounds and removal of stale includes. The provider reports this exact head as MERGEABLE. Existing validation remains tied to its original source; new checks and Copybara progress are followed normally.\n\nThe earlier source ae6e695110f8 had an internal feedback failure despite green matching public import #15942. That observation remains historical and does not describe the rebased head. The October21 maintainer approval covered 10e4c37aaf37; the rebase is not a new maintainer review. No duplicate approval reminder is warranted for this equivalent rebase.",
       "number": 15315,
       "followup": {
-        "disposition": "Current internal checks failed; maintainer diagnostic needed",
+        "disposition": "Equivalent conflict rebase delivered; current checks and import pending",
         "owner": "work_map_current",
-        "nextAction": "Track the current internal failure separately from green public import #15942. Obtain the internal diagnostic through an authorized maintainer response before choosing a source correction; no public request has been sent.",
+        "nextAction": "Follow current-head checks and import progression; preserve the earlier failure and approval identities. Do not repeat the completed rebase or send an amendment reminder for unchanged topic content.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539",
@@ -4652,12 +4652,12 @@
           "https://github.com/tamird/gvisor/commit/ae6e695110f8fffeb9f45dd153fadeb4fdd9694e"
         ],
         "reviewedAt": "2026-10-21T19:49:28Z",
-        "sourceHead": "ae6e695110f8fffeb9f45dd153fadeb4fdd9694e",
+        "sourceHead": "fdca42b6803f6582ddff03b58138f01f7a32aec8",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-22T15:02:27.314002+00:00"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-23T02:22:55.395594+00:00"
       },
-      "head": "ae6e695110f8fffeb9f45dd153fadeb4fdd9694e",
+      "head": "fdca42b6803f6582ddff03b58138f01f7a32aec8",
       "refinement": {
         "before": {
           "head": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185"
@@ -4670,6 +4670,10 @@
         {
           "label": "Published requested migration-error rebase",
           "url": "https://github.com/tamird/gvisor/commit/ae6e695110f8fffeb9f45dd153fadeb4fdd9694e"
+        },
+        {
+          "label": "Equivalent current-master conflict rebase",
+          "url": "https://github.com/tamird/gvisor/commit/fdca42b6803f6582ddff03b58138f01f7a32aec8"
         }
       ]
     },
@@ -15667,13 +15671,13 @@
       "url": "https://github.com/google/gvisor/pull/16052",
       "group": "runtime",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at fd6376945efa on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 897ab48337. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 897ab483372766b94cfc7fe8ced21185d3789d10 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633206126 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16052 at d2207b3bca016647a0edb9cecac0a90bcd08df6b. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe portable four-file fixture arms a periodic SIGALRM around the six existing RSEQ abort helpers and restores their KVM execution. The original descriptors and success/SIGSEGV assertions remain unchanged. Exact qualified source82b895 passed54 named runtime cases across AMD64 native/KVM and ARM64 native/KVM, plus lint, with no skips or gaps. ARM execution is the existing7.3rc3 EL2/TCG route, not physical ARM hardware. Independent extraction review confirms the complete patch and eleven owning/supporting source blobs match the qualified fixture. Upstream owning BUILD/toolchain plumbing differs, so this is fixture/ABI/runtime evidence reuse, not an identical standalone build or binary claim. The contributor question has been sent; no PR is open.",
+      "summary": "The matching Copybara import #16229 at 6b34645ab2a6 now reports public Buildkite #51942 and internal #33635 failures. Its source marker is the current fd6376945efa commit. Root owns the exposed diagnostic; this is separate from the completed Gazelle rebase. The recent contributor approval and original runtime evidence remain preserved.\n\nThe current source arms periodic SIGALRM around the six existing RSEQ abort helpers and restores KVM execution. Prior qualification passed the selected native/KVM cases on AMD64 and the recorded ARM route; it does not establish the cause of this new import failure.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root",
         "sourceHead": "fd6376945efa93664fec28669cc18e29c89b8648",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase.",
+        "observedAt": "2026-10-23T02:22:55.395594+00:00",
+        "disposition": "Matching import has new public and internal check failures",
+        "nextAction": "Diagnose exact matching import16229/6b346, public Buildkite51942 and internal33635. Sourcefd637 has feedback failure for the same import attempt; no source cause or retry is inferred yet.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424415522/job/118633206126",
           "https://github.com/google/gvisor/pull/16031",
@@ -15681,7 +15685,7 @@
           "https://github.com/tamird/gvisor/commit/fd6376945efa93664fec28669cc18e29c89b8648"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-23T02:22:55.395594+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -18724,20 +18728,20 @@
       "id": "branch:rules-img-rust",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-rust-protobuf37-grpc-current",
-      "head": "3079ebb79e5b2be76f8072d3e447f84afbe05360",
+      "ref": "rules-img-rust-protobuf37-framed-current",
+      "head": "90982863f5c4a38c7451f972d889c5108727c9e3",
       "title": "Build the Rust image with rules_img and rules_rs",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/3079ebb79e5b2be76f8072d3e447f84afbe05360",
-      "status": "Compatibility retry blocked by native patch file-boundary parsing",
-      "updatedAt": "2026-10-23T02:10:00.431575+00:00",
-      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. Its focused compatibility run found four gRPC libraries missing the newly separate C++ reflection dependency. The reviewed declaration fix is published, and the retry stopped in native patch application before qualification began. The patch file boundaries are under review. No new runtime applicability is claimed before those output comparisons pass.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The notice alias names a Linux x86-64 compiler distribution only as a source of architecture-independent documentation; it does not select the compiler execution host. Prior qualification established static images for both target CPUs, AMD64 runc and systrap TestRust cases, ordinary Make selection, exact native runtime inputs and notices. Darwin coverage is configured compiler dependency analysis only; no Darwin execution or ARM64 runtime is claimed. Those results remain bound to the earlier source until the current output equality gate passes. No upstream PR is open.",
+      "url": "https://github.com/tamird/gvisor/commit/90982863f5c4a38c7451f972d889c5108727c9e3",
+      "status": "Conditionally accepted; compatibility and image equality retry running",
+      "updatedAt": "2026-10-23T02:22:55.395594+00:00",
+      "summary": "The requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. Its focused compatibility run found four gRPC libraries missing the newly separate C++ reflection dependency. The reviewed declaration fix is published, and the native patch framing correction is published. The unchanged compatibility/image-equality retry is running; its prior compile and bootstrap failures remain preserved. No new runtime applicability is claimed before those output comparisons pass.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The notice alias names a Linux x86-64 compiler distribution only as a source of architecture-independent documentation; it does not select the compiler execution host. Prior qualification established static images for both target CPUs, AMD64 runc and systrap TestRust cases, ordinary Make selection, exact native runtime inputs and notices. Darwin coverage is configured compiler dependency analysis only; no Darwin execution or ARM64 runtime is claimed. Those results remain bound to the earlier source until the current output equality gate passes. No upstream PR is open.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "3079ebb79e5b2be76f8072d3e447f84afbe05360",
-        "observedAt": "2026-10-23T02:12:10.831672+00:00",
-        "disposition": "Compatibility retry blocked by native patch file-boundary parsing",
-        "nextAction": "Correct only the gRPC patch file boundaries after pinned Bazel parser review, then retry the unchanged compatibility and image equality gates. Retry986168 failed during bootstrap patch application; no new build or runtime credit.",
+        "sourceHead": "90982863f5c4a38c7451f972d889c5108727c9e3",
+        "observedAt": "2026-10-23T02:22:55.395594+00:00",
+        "disposition": "Conditionally accepted; compatibility and image equality retry running",
+        "nextAction": "Drain sole dda6a379 compatibility/equality retry. The two standard patch boundaries correct native Bazel framing; four dependency hunks and all validation gates remain unchanged.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
@@ -18783,6 +18787,10 @@
         {
           "label": "gRPC dependency correction and compatibility retry",
           "url": "https://app.buildbuddy.io/invocation/986168df-ffec-4657-b7ec-3c70c4d377f9"
+        },
+        {
+          "label": "Native patch framing correction retry",
+          "url": "https://app.buildbuddy.io/invocation/dda6a379-1efb-4b98-b7dd-395efb95c230"
         }
       ]
     },
@@ -18790,21 +18798,21 @@
       "id": "branch:protobuf-37-rust-locks",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "protobuf-37-grpc-current",
-      "head": "268535cf1e67b03fde8d20a47bdca1af0740d563",
+      "ref": "protobuf-37-grpc-framed-current",
+      "head": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
       "title": "Use released Protobuf Rust lockfiles",
-      "url": "https://github.com/tamird/gvisor/commit/268535cf1e67b03fde8d20a47bdca1af0740d563",
+      "url": "https://github.com/tamird/gvisor/commit/e8c022855cbb78641a36e0a33955a908ff4f00a2",
       "group": "bazel",
-      "status": "Compatibility retry blocked by native patch file-boundary parsing",
-      "summary": "The separate Protobuf 37.0-rc1 upgrade supplies the release Rust lockfiles and exact audited catalog records, removing the generated-lock patch and rules_rust override from the image proposal. Four existing gRPC 1.84 libraries now explicitly depend on the public C++ reflection target that Protobuf 37 separated from its C interface. Canonical Fetch/Verify passed; the compatibility retry stopped in native patch application before compilation. Current generated C++/Go compatibility and Rust image applicability remain unproved.",
+      "status": "Canonical catalog passed; generated-code compatibility retry running",
+      "summary": "The separate Protobuf 37.0-rc1 upgrade supplies the release Rust lockfiles and exact audited catalog records, removing the generated-lock patch and rules_rust override from the image proposal. Four existing gRPC 1.84 libraries now explicitly depend on the public C++ reflection target that Protobuf 37 separated from its C interface. Canonical Fetch/Verify passed; the corrected native patch framing is published and the same generated C++/Go compatibility and image equality gate is running.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "268535cf1e67b03fde8d20a47bdca1af0740d563",
-        "observedAt": "2026-10-23T02:12:10.831672+00:00",
-        "disposition": "Compatibility retry blocked by native patch file-boundary parsing",
-        "nextAction": "Correct only the gRPC patch file boundaries after pinned Bazel parser review, then retry the unchanged compatibility and image equality gates. Retry986168 failed during bootstrap patch application; no new build or runtime credit."
+        "sourceHead": "e8c022855cbb78641a36e0a33955a908ff4f00a2",
+        "observedAt": "2026-10-23T02:22:55.395594+00:00",
+        "disposition": "Canonical catalog passed; generated-code compatibility retry running",
+        "nextAction": "Collect dda6a379 after the exact two-line native patch framing correction; keep the original compile/bootstrap failures separate from current evidence."
       },
-      "updatedAt": "2026-10-23T02:10:00.431575+00:00"
+      "updatedAt": "2026-10-23T02:22:55.395594+00:00"
     }
   ],
   "edges": [
