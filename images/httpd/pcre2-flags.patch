@@ -1,0 +1,134 @@
+Accept explicit PCRE2 flags from Bazel native-library dependencies.
+The upstream native PCRE2 target has no pcre2-config script and names its
+archive libpcre2.a. Check the real 8-bit header/link interface, while retaining
+the existing config-script fallback when no flags are supplied.
+Keep configure.in and the pinned release configure input together.
+Upstream detection: https://github.com/apache/httpd/blob/2.4.69/configure.in
+
+--- a/configure.in
++++ b/configure.in
+@@ -212,6 +212,29 @@
+   export CC; export CPP
+ fi
+ 
++AC_ARG_VAR([PCRE2_CFLAGS], [C compiler flags for the PCRE2 8-bit library])
++AC_ARG_VAR([PCRE2_LIBS], [linker flags for the PCRE2 8-bit library])
++if test "${PCRE2_CFLAGS+set}" = set || test "${PCRE2_LIBS+set}" = set; then
++  if test "${PCRE2_CFLAGS+set}:${PCRE2_LIBS+set}" != set:set; then
++    AC_MSG_ERROR([PCRE2_CFLAGS and PCRE2_LIBS must be supplied together])
++  fi
++  pcre_save_CPPFLAGS=$CPPFLAGS
++  pcre_save_LIBS=$LIBS
++  CPPFLAGS="$CPPFLAGS $PCRE2_CFLAGS"
++  LIBS="$PCRE2_LIBS $LIBS"
++  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define PCRE2_CODE_UNIT_WIDTH 8
++#include <pcre2.h>]], [[int error;
++PCRE2_SIZE offset;
++pcre2_code *code = pcre2_compile((PCRE2_SPTR) "", 0, 0,
++                                 &error, &offset, NULL);
++pcre2_code_free(code);]])], [],
++    [AC_MSG_ERROR([PCRE2_CFLAGS and PCRE2_LIBS cannot link the PCRE2 8-bit API])])
++  CPPFLAGS=$pcre_save_CPPFLAGS
++  LIBS=$pcre_save_LIBS
++  PCRE_INCLUDES=$PCRE2_CFLAGS
++  PCRE_LIBS=$PCRE2_LIBS
++  AC_DEFINE(HAVE_PCRE2, 1, [Detected PCRE2])
++else
+ AC_ARG_WITH(pcre,
+ APACHE_HELP_STRING(--with-pcre=PATH,Use external PCRE library))
+ if test "x$with_pcre" = "x" || test "$with_pcre" = "yes"; then
+@@ -241,6 +264,7 @@
+   APR_ADDTO(PCRE_LIBS, [`$PCRE_CONFIG --libs8 2>/dev/null || $PCRE_CONFIG --libs`])
+ else
+   AC_MSG_ERROR([pcre(2)-config for libpcre not found. PCRE is required and available from http://pcre.org/])
++fi
+ fi
+ APACHE_SUBST(PCRE_LIBS)
+ 
+--- a/configure
++++ b/configure
+@@ -625,7 +625,9 @@
+ #endif"
+ 
+ ac_header_c_list=
+-ac_subst_vars='LTLIBOBJS
++ac_subst_vars='PCRE2_LIBS
++PCRE2_CFLAGS
++LTLIBOBJS
+ LIBOBJS
+ ap_make_delimiter
+ ap_make_include
+@@ -1168,7 +1170,9 @@
+ enable_suexec_capabilities
+ enable_v4_mapped
+ '
+-      ac_precious_vars='build_alias
++      ac_precious_vars='PCRE2_CFLAGS
++PCRE2_LIBS
++build_alias
+ host_alias
+ target_alias
+ CC
+@@ -2082,6 +2086,9 @@
+   --with-suexec-umask     umask for suexec'd process
+ 
+ Some influential environment variables:
++  PCRE2_CFLAGS
++              C compiler flags for the PCRE2 8-bit library
++  PCRE2_LIBS  linker flags for the PCRE2 8-bit library
+   CC          C compiler command
+   CFLAGS      C compiler flags
+   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+@@ -6688,6 +6695,44 @@
+ fi
+ 
+ 
++if test "${PCRE2_CFLAGS+set}" = set || test "${PCRE2_LIBS+set}" = set; then
++  if test "${PCRE2_CFLAGS+set}:${PCRE2_LIBS+set}" != set:set; then
++    as_fn_error $? "PCRE2_CFLAGS and PCRE2_LIBS must be supplied together" "$LINENO" 5
++  fi
++  pcre_save_CPPFLAGS=$CPPFLAGS
++  pcre_save_LIBS=$LIBS
++  CPPFLAGS="$CPPFLAGS $PCRE2_CFLAGS"
++  LIBS="$PCRE2_LIBS $LIBS"
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++#define PCRE2_CODE_UNIT_WIDTH 8
++#include <pcre2.h>
++int
++main (void)
++{
++int error;
++PCRE2_SIZE offset;
++pcre2_code *code = pcre2_compile((PCRE2_SPTR) "", 0, 0,
++                                 &error, &offset, NULL);
++pcre2_code_free(code);
++  ;
++  return 0;
++}
++_ACEOF
++if ac_fn_c_try_link "$LINENO"
++then :
++  :
++else
++  as_fn_error $? "PCRE2_CFLAGS and PCRE2_LIBS cannot link the PCRE2 8-bit API" "$LINENO" 5
++fi
++rm -f core conftest.err conftest.$ac_objext conftest.beam \
++    conftest$ac_exeext conftest.$ac_ext
++  CPPFLAGS=$pcre_save_CPPFLAGS
++  LIBS=$pcre_save_LIBS
++  PCRE_INCLUDES=$PCRE2_CFLAGS
++  PCRE_LIBS=$PCRE2_LIBS
++  printf "%s\n" "#define HAVE_PCRE2 1" >>confdefs.h
++else
+ # Check whether --with-pcre was given.
+ if test ${with_pcre+y}
+ then :
+@@ -6867,6 +6912,7 @@
+ 
+ else
+   as_fn_error $? "pcre(2)-config for libpcre not found. PCRE is required and available from http://pcre.org/" "$LINENO" 5
++fi
+ fi
+ 
+   APACHE_VAR_SUBST="$APACHE_VAR_SUBST PCRE_LIBS"

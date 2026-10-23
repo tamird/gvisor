@@ -1,11 +1,91 @@
 load("@rules_img//img:image.bzl", "image_index", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs", "package_layer")
+load("//tools:arch.bzl", "arch_genrule")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+# Select the image target ABI independently of the execution host.
+_MUSL_PLATFORMS = select({
+    "@platforms//cpu:aarch64": ["@llvm//platforms:linux_aarch64_musl"],
+    "@platforms//cpu:x86_64": ["@llvm//platforms:linux_x86_64_musl"],
+})
+
+_HTTPD_SIZES_KIB = [1, 10, 100, 1024, 10240]
+
+# Keep the existing benchmark's exact zero-filled payloads and filenames.
+[
+    genrule(
+        name = "httpd_payload_%dk" % size,
+        outs = ["httpd/latin%dk.txt" % size],
+        cmd = '"$(execpath //images:busybox_binary)" dd if=/dev/zero of=$@ bs=1024 count=%d' % size,
+        # tools selects the execution configuration, not the image CPU.
+        exec_compatible_with = ["@platforms//os:linux"],
+        tools = ["//images:busybox_binary"],
+    )
+    for size in _HTTPD_SIZES_KIB
+]
+
+filegroup(
+    name = "httpd_payloads",
+    srcs = [":httpd_payload_%dk" % size for size in _HTTPD_SIZES_KIB],
+)
+
+_HTTPD_FILES = {
+    "/local/latin%dk.txt" % size: ":httpd_payload_%dk" % size
+    for size in _HTTPD_SIZES_KIB
+}
+_HTTPD_FILES["/usr/local/apache2/conf/httpd.conf"] = "httpd/httpd.conf"
+
+image_layer(
+    name = "httpd_fixture_layer",
+    srcs = _HTTPD_FILES,
+    default_metadata = file_metadata(mode = "0644"),
+    symlinks = {
+        "/bin/cp": "/bin/busybox",
+        "/bin/mkdir": "/bin/busybox",
+        "/bin/sh": "/bin/busybox",
+        "/usr/sbin/apache2": "/usr/local/apache2/bin/httpd",
+    },
+)
+
+image_manifest(
+    name = "httpd_manifest",
+    env = {
+        "APACHE_LOG_DIR": "/tmp",
+        "APACHE_PID_FILE": "/tmp/apache.pid",
+        "APACHE_RUN_DIR": "/tmp",
+        "APACHE_RUN_GROUP": "nogroup",
+        "APACHE_RUN_USER": "nobody",
+        "PATH": "/usr/sbin:/usr/bin:/bin",
+    },
+    layers = [
+        "//images:helper_filesystem",
+        "//images:busybox_layer",
+        "//images:musl_notice_layer",
+        "//images/httpd:accounts_layer",
+        "//images/httpd:server_layer",
+        ":httpd_fixture_layer",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_index(
+    name = "httpd",
+    manifests = [":httpd_manifest"],
+    platforms = _MUSL_PLATFORMS,
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "httpd",
+    image = ":httpd",
+    image_name = "benchmarks/httpd",
 )
 
 cc_binary(
@@ -129,4 +209,16 @@ image_outputs(
     name = "profile_helper",
     image = ":profile_helper_image",
     image_name = "benchmarks/profile-helper",
+)
+
+arch_genrule(
+    name = "qualification_httpd_archives",
+    src = ":httpd_archive",
+    template = "qualification_httpd_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_httpd_contexts",
+    src = ":httpd_context",
+    template = "qualification_httpd_context_%s.tar",
 )

@@ -94,7 +94,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     def git_record(path: Path, *arguments: str) -> None:
         path.write_bytes(subprocess.check_output(["git", *arguments], timeout=min(30, remaining())))
 
-    def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (), targets: list[str] = TARGETS) -> dict:
+    def invoke(name: str, arguments: list[str], kind: str, expected_analysis: tuple[Path, ...] = (), targets: list[str] = TARGETS, declared_benchmarks: Path | None = None) -> dict:
         global runner_exit
         preparing_lock = kind == "command" and "--lockfile_mode=update" in arguments
         directory = evidence / ("invocation-" + name)
@@ -169,7 +169,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
                 result = report.command_verdict(directory / "context.json")
             else:
                 result = report.verdict(events, report.manifest_path(events), directory / "context.json",
-                                        directory / "expected-targets.txt", expected_analysis)
+                                        directory / "expected-targets.txt", expected_analysis,
+                                        declared_benchmarks=declared_benchmarks)
             report.write_json(directory / "verdict.json", result)
         return result
 
@@ -189,7 +190,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             size = 0
             # Bound memory by one action, preserving the exact redacted text
             # and existing compact action proof. Publish only a complete audit.
-            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb") as output:
+            with path.open("r", encoding="utf-8", newline="") as stream, gzip.open(partial, "wb", compresslevel=1) as output:
                 for text, action in execution_records(stream):
                     redacted = text.replace(credential.decode(), "[REDACTED]")
                     raw = redacted.encode()
@@ -243,7 +244,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # Resolve the configured image graph, without evaluating unrelated
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
-        for architecture in ("x86_64", "aarch64"):
+        # The existing architecture split on each image aggregate owns both CPUs.
+        for architecture in ("x86_64",):
             graphs = [("images", CONFIG["image_targets"][architecture], [])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
                 graphs.append(("runtime", runtime_targets, []))

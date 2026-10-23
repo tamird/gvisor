@@ -86,6 +86,7 @@ benchmark_test(
 
 benchmark_test(
     name = "httpd_test",
+    tags = ["go-benchmark-contract"],
     srcs = [
         "httpd_test.go",
     ],
