@@ -674,7 +674,7 @@ func testUDS(ctx context.Context, t *testing.T, tester Tester, root lisafs.Clien
 	if err := socket.Listen(ctx, 1); err != nil {
 		t.Fatalf("listen failed: %v", err)
 	}
-	connected, err := file.Connect(ctx, unix.SOCK_STREAM, lisafs.NoUID, lisafs.NoGID)
+	connected, err := file.Connect(ctx, unix.SOCK_STREAM, lisafs.NoUID, lisafs.NoGID, nil)
 	if err != nil {
 		t.Fatalf("connect failed: %v", err)
 	}
