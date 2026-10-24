@@ -75,6 +75,7 @@ benchmark_test(
         "nginx_test.go",
     ],
     embed = [":network"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = True,
     visibility = ["//:sandbox"],
     deps = [

@@ -1,13 +1,12 @@
 """Prepare the exact two-platform Nginx fixture graph before runtime work."""
 import json
 import os
+import shlex
 from pathlib import Path
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    if not config.get("graph_only"):
-        raise ValueError("This prepared source is restricted to graph qualification")
     options = ["--compilation_mode=opt", "--config=x86_64", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc"]
     scripts = Path(__file__).parent
@@ -44,3 +43,26 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 pass
             case _:
                 raise ValueError(f"Expected two architecture outputs: {label}: {selected}")
+    if config.get("graph_only", False):
+        return
+    formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt', "--"])
+    formatted = invoke("gofmt", ["run", *options, "--run_under=" + formatter,
+                       "@io_bazel_rules_go//go:go"], "command", targets=[])
+    if formatted["status"] != "PASS":
+        raise RuntimeError("Canonical Go formatting failed")
+    execution_log = private / "mixed-images-execution.json"
+    try:
+        built = invoke("mixed-images", ["build", *options, "--keep_going",
+                       "--execution_log_json_file=" + str(execution_log), "--noexecution_log_sort", *targets],
+                       "build", targets=targets)
+    finally:
+        record_execution(execution_log, "mixed", "images")
+    if built["status"] != "PASS":
+        raise RuntimeError("Both-platform Nginx image build failed")
+    inspected = invoke("nginx-image-closure", ["run", "--lockfile_mode=error", "--noannounce_rc",
+                       "@rules_python//python/bin:python", "--", str(scripts / "nginx_image_inspect.py"), str(evidence)],
+                       "command", targets=[])
+    if inspected["status"] != "PASS":
+        raise RuntimeError("Pinned Nginx base/fixture layer inspection failed")
+    import nginx_benchmark_runtime
+    nginx_benchmark_runtime.run(invoke, evidence, private)
