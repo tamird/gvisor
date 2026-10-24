@@ -66,10 +66,11 @@ class QualificationReportTest(unittest.TestCase):
                               invocation, invocation / "reports", retain_outputs)
 
     def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None,
-                declared_benchmarks: Path | None = None) -> dict[str, object]:
+                declared_benchmarks: Path | None = None, case_manifest: Path | None = None) -> dict[str, object]:
         events = invocation / "captured.jsonl"
         value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
-                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks, declared_benchmarks)
+                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks,
+                               declared_benchmarks, case_manifest)
         report.write_json(invocation / "verdict.json", value)
         return value
 
@@ -108,6 +109,23 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": 4})
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
+
+    def test_required_cases_must_pass_for_their_own_target(self) -> None:
+        invocation = self.mixed_fixture('<testsuite tests="1"><testcase name="Only"/></testsuite>')
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        first, second = (invocation / "expected.txt").read_text().splitlines()
+        manifest = invocation / "required.json"
+        report.write_json(manifest, {first: ["ElfTest/Execute"], second: ["Only"]})
+        self.assertEqual(self.verdict(invocation, case_manifest=manifest)["status"], "PASS")
+
+        # The first case is skipped. The second passes, but on the wrong target.
+        report.write_json(manifest, {first: ["ElfTest/PIEOutOfOrderSegments"], second: ["ElfTest/Execute"]})
+        value = self.verdict(invocation, case_manifest=manifest)
+        self.assertEqual(value["status"], "INCOMPLETE")
+        self.assertEqual({(item["label"], item["name"]) for item in value["missing"]},
+                         {(first, "ElfTest/PIEOutOfOrderSegments"), (second, "ElfTest/Execute")})
+        (invocation / "native-exit").write_text("3\n")
+        self.assertEqual(self.verdict(invocation, case_manifest=manifest)["status"], "FAIL")
 
     def source_image_fixture(self) -> Path:
         invocation = self.evidence / "source-images"

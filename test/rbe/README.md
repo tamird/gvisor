@@ -174,6 +174,13 @@ their hashes, and sanitized build events. Test failures remain failures when
 report collection or cleanup also fails; missing results cannot produce a
 passing verdict.
 
+To require a particular regression to run, set `QUALIFICATION_REQUIRED_CASES`
+to a JSON file in the explicit `test` lane. Map each target label to its
+required XML case names, such as `{"//pkg:tests": ["Suite/Case"]}` (omit
+`Suite/` if the XML has no classname). Each case must pass on its own
+target in every run. It may run on any shard. Skips and unrelated passes
+do not satisfy the requirement; other cases retain their usual results.
+
 Build targets can tag small report groups with
 `qualification-output-group=<group>`. The coordinator asks Bazel to materialize
 those outputs, retains their configured owner and output-group identities, and

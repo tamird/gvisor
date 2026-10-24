@@ -203,6 +203,11 @@ qualification_declared_benchmarks=$qualification_artifacts/declared-benchmarks.j
 cp test/benchmarks/lifecycle.json "$qualification_declared_benchmarks"
 sha256sum "$qualification_declared_benchmarks" > "$qualification_artifacts/declared-benchmarks.sha256"
 export qualification_benchmark_manifest qualification_benchmark_arguments qualification_retain_outputs qualification_declared_benchmarks
+if [[ -v QUALIFICATION_REQUIRED_CASES ]]; then
+  [[ ${lanes[*]} == test && ${#selected_targets[@]} -gt 0 && -z $qualification_benchmark_manifest ]]
+  cp -- "$QUALIFICATION_REQUIRED_CASES" "$qualification_artifacts/required-cases.json"
+  sha256sum "$qualification_artifacts/required-cases.json" > "$qualification_artifacts/required-cases.sha256"
+fi
 
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) qualification_bazel_binary=$(type -P bazel) ;;
@@ -424,6 +429,7 @@ bazel() {
   local argument command_kind="" result=0 capture_status=0 verdict_status=0 preflight_status=0 analysis_only=false
   local directory raw_events expected_events="" index command_only=false arguments_file=arguments.txt
   local -a capture_prefix=() capture_options=() verdict_options=() command_args=("$@") target_args=() selection_options=()
+  local -a case_options=()
   if [[ $qualification_retain_outputs == true ]]; then capture_options=(--retain-outputs); fi
   for argument in "$@"; do
     case "$argument" in
@@ -432,6 +438,9 @@ bazel() {
       *) if [[ -z $command_kind ]]; then command_kind=$argument; fi ;;
     esac
   done
+  if [[ $command_kind == test && -v QUALIFICATION_REQUIRED_CASES ]]; then
+    case_options=(--required-cases "$qualification_artifacts/required-cases.json")
+  fi
   if [[ $command_kind == run || $command_kind == query ]]; then
     command_only=true
     arguments_file=arguments.json
@@ -498,6 +507,7 @@ bazel() {
     capture_options+=(--expected-analysis "$directory/expected.jsonl" --expected-kind "$command_kind")
     if (( capture_status == 0 )); then
       if python3 "$qualification_workspace/test/rbe/qualification_report.py" preflight \
+        "${case_options[@]}" \
         --events "$directory/expected.jsonl" --native-exit "$result" --kind "$command_kind" \
         --output "$directory/selection.json" --output-options "$directory/output-options.txt"; then
         result=0
@@ -549,6 +559,9 @@ bazel() {
   if [[ -n $qualification_benchmark_manifest ]]; then
     sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" >&2 || capture_status=1
   fi
+  if (( ${#case_options[@]} )); then
+    sha256sum --check "$qualification_artifacts/required-cases.sha256" >&2 || capture_status=1
+  fi
   sha256sum --check "$qualification_artifacts/declared-benchmarks.sha256" >&2 || capture_status=1
   printf '%s\n' "$capture_status" > "$directory/capture-exit.txt" || capture_status=1
   if [[ $command_only == true ]]; then
@@ -559,7 +572,7 @@ bazel() {
     command_kind=benchmark
     verdict_options+=(--expected-benchmarks "$qualification_benchmark_manifest")
   elif [[ $command_kind == test ]]; then
-    verdict_options+=(--declared-benchmarks "$qualification_declared_benchmarks")
+    verdict_options+=(--declared-benchmarks "$qualification_declared_benchmarks" "${case_options[@]}")
   fi
   python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" "$arguments_file" <<'CONTEXT' || capture_status=$?
 import json
