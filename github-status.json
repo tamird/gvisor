@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T00:47:38.710359+00:00",
-  "registryDate": "2026-10-24T00:41:46.011059+00:00",
+  "registryDate": "2026-10-24T00:50:28.564076+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -157991,25 +157991,7 @@
       "updatedAt": "2026-10-15T19:20:15Z"
     }
   },
-  "reviewerHandoff": [
-    {
-      "repo": "google/gvisor",
-      "number": 16303,
-      "head": "d8c746bbfea4cc4076e6903a48d2091c5cd760a9",
-      "sourceNumber": 16303,
-      "owner": "root",
-      "kind": "review",
-      "id": "PRR_kwDOB9IlXs8AAAABT-zHeA",
-      "url": "https://github.com/google/gvisor/pull/16303#pullrequestreview-5635884920",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-10-24T00:43:32Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    }
-  ],
+  "reviewerHandoff": [],
   "mergeabilityHandoff": [
     {
       "repo": "google/gvisor",
@@ -160973,6 +160955,15 @@
         "basis": "transition",
         "qualifier": null,
         "observedAt": "2026-10-24T00:47:38.250479+00:00"
+      }
+    },
+    "branch:review/pr15730-route-validation-20261024": {
+      "contributor-review": {
+        "scope": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
+        "since": "2026-10-24T00:50:28.564076+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-24T00:50:28.564076+00:00"
       }
     }
   },
