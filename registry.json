@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T15:44:26.071457+00:00",
+    "updatedAt": "2026-10-24T16:04:55.754618+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24770,8 +24770,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-24T14:13:26.105748+00:00",
-      "summary": "A separate first-Write-order control now isolates the initial application batch within fixed connection setup in the deterministic FIFO fixture. In the finite 2–6 second mixed-flow interval, reversing that batch changes CUBIC delivery from 2,952,608 to 2,697,008 bytes while Reno changes from 25,560 to 2,051,712 bytes. Retained traces show that the high CUBIC share primarily reflects Reno sending no new payload during that interval; its 18 payload attempts all retransmit earlier losses. This is an order-sensitive diagnostic, not a recommendation to change the default congestion-control algorithm.\n\nEarlier shared-FIFO finding:\n\nA shared-FIFO feasibility run now establishes repeatable two-sender observations and strong entry-order sensitivity in a short common interval; it does not establish algorithm fairness. The detailed finding separates application delivery, link service and inherited warmup-loss recovery.\n\nA finite aged-path comparison now shows the candidate avoids one redundant retransmission and one SACK recovery for both Reno and CUBIC, with unchanged first-full-ACK timing and identical original-flight delivery. The original outer callback failure and its separate retained-only correction remain explicit.\n\nThe fixed sustained-demand Reno/CUBIC burst experiment has matching normal and race observations. A separate integration check on existing PR #15634 now keeps sampled selective-ACK credit nonnegative, with unchanged packet digests, eight loss repairs and virtual completion times. Six finite Reno/CUBIC cases now repeat exactly across five normal processes and one race process. Both middle-loss cases show SACK recovery without an RTO; prefix recovery remains unclassified. The earlier cookie-path/RTO fixture is separate. All three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
+      "updatedAt": "2026-10-24T16:04:55.754618+00:00",
+      "summary": "The RACK pipe-accounting correction removes the observed Reno stall in the two finite mixed-flow FIFO cases. With CUBIC writing first, Reno delivers 25,560 → 2,451,348 bytes in the 2–6 second interval while CUBIC delivers 2,952,608 → 2,371,828 bytes; FIFO utilization rises from 61.50064% to 100%. The reverse first-write control also completes with both senders backlogged. This is a deterministic virtual-link result, not a general fairness, native throughput or default-algorithm conclusion.\n\nEarlier first-Write-order control:\n\nA separate first-Write-order control now isolates the initial application batch within fixed connection setup in the deterministic FIFO fixture. In the finite 2–6 second mixed-flow interval, reversing that batch changes CUBIC delivery from 2,952,608 to 2,697,008 bytes while Reno changes from 25,560 to 2,051,712 bytes. Retained traces show that the high CUBIC share primarily reflects Reno sending no new payload during that interval; its 18 payload attempts all retransmit earlier losses. This is an order-sensitive diagnostic, not a recommendation to change the default congestion-control algorithm.\n\nEarlier shared-FIFO finding:\n\nA shared-FIFO feasibility run now establishes repeatable two-sender observations and strong entry-order sensitivity in a short common interval; it does not establish algorithm fairness. The detailed finding separates application delivery, link service and inherited warmup-loss recovery.\n\nA finite aged-path comparison now shows the candidate avoids one redundant retransmission and one SACK recovery for both Reno and CUBIC, with unchanged first-full-ACK timing and identical original-flight delivery. The original outer callback failure and its separate retained-only correction remain explicit.\n\nThe fixed sustained-demand Reno/CUBIC burst experiment has matching normal and race observations. A separate integration check on existing PR #15634 now keeps sampled selective-ACK credit nonnegative, with unchanged packet digests, eight loss repairs and virtual completion times. Six finite Reno/CUBIC cases now repeat exactly across five normal processes and one race process. Both middle-loss cases show SACK recovery without an RTO; prefix recovery remains unclassified. The earlier cookie-path/RTO fixture is separate. All three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
           "text": "The finite aged-path comparison used two real stacks, a 10→100 ms RTT change, 310 seconds of virtual idle, and exactly three MSS with the first segment delayed 10 ms. Each arm ran two normal processes and one race process with identical per-case traces, plus its analyzer on both architectures: all 13 native phases and 44 XML records passed. The original outer job remains FAIL because the callback incorrectly required a cumulative ACK larger than one MSS; a reviewed retained-only correction binds an exact full-MSS original, cumulative ACK and post-ACK probe without rerunning traffic. For both Reno and CUBIC, reordered cases changed from one redundant retransmission and one SACK recovery to zero. The three original packets and their delivery schedule are identical across arms; the first full payload ACK is 110.6096 ms in both. The baseline adds 96.792 ms of redundant packet/ACK drain, not payload latency. Ordered controls remain 101.7872 ms with zero recovery. The inherited negative selective-ACK credit is tracked by existing #15634; this is not another fix. These are deterministic virtual-link recovery observations, not native throughput, fairness or a general performance claim.",
@@ -25635,9 +25635,26 @@
               "url": "https://github.com/tamird/gvisor/commit/9dabdb0bdfe3f11e5c1b0d6552bbc457b7070daa"
             }
           ]
+        },
+        {
+          "text": "The exact RACK production correction from readable proposal 3327ae was applied to the unchanged diagnostic fixture at df13a976. Seven native phases, four uncached hosted attempts and ten positive XML records pass; two normal processes and one race process have identical complete observations. The authenticated f16a baseline was reused without rerunning it. Recorded pre-gate state, application Writes and first payload admissions match their respective baseline cases. In the CUBIC-first 2–6 second interval, Reno new-sequence progress rises from 0 to 2,380,348 bytes, endpoint timeout count falls from 9 to 0, and retransmissions fall from 18 to 1. CUBIC delivery decreases, while Reno consumes previously idle link service. The first-write-order difference in CUBIC delivery share narrows from 42.3473 to 1.94965 percentage points. All finite flows drain, but total accepted work differs because demand ends at the same virtual time; drain duration is not a fixed-work timing comparison. Native finish to automatic verification was 11.972167 seconds. This scoped evidence does not establish CPU cost, native throughput, general fairness or a recommendation to change the default algorithm.",
+          "evidence": [
+            {
+              "label": "Corrected FIFO native result and full observations",
+              "url": "https://app.buildbuddy.io/invocation/047d7fc1-30ca-42e2-a2c8-9a6617a91d16"
+            },
+            {
+              "label": "Retained matched baseline",
+              "url": "https://app.buildbuddy.io/invocation/f16a8efb-3c63-4053-8d93-dd40d983133a"
+            },
+            {
+              "label": "Readable RACK proposal 3327ae",
+              "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773"
+            }
+          ]
         }
       ],
-      "nextStep": "The isolated first-Write-order qualification is complete; keep the finite-window interpretation and completed retained loss analysis separate from a default-algorithm decision. Hostinet owns the bounded sender/recovery mechanism diagnosis, starting from retained traces; no new experiment is implied. Follow existing #15634 review/import progress; its new sustained-burst integration check is complete. Follow BuildBuddy #13938 upstream review, checks and merge before maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, fairness or outage-cause conclusion is established.",
+      "nextStep": "The focused RACK regression and corrected FIFO comparison are complete. Await the existing contributor decision on readable proposal 3327ae; #15634 is its only upstream prerequisite. Hostinet is preparing the missing single-flow, same-path Reno/CUBIC recovery comparison on corrected source using the existing harness; no new run is claimed. Preserve the finite-window byte/service result separately from any default-algorithm decision. Follow BuildBuddy #13938 upstream review, checks and merge before maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, general fairness or outage-cause conclusion is established.",
       "evidence": [
         {
           "label": "Burst integration on the existing repair",
@@ -25745,6 +25762,67 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "RACK correction · finite FIFO delivery before and after",
+          "description": "Same two mixed CUBIC/Reno setup01 cases and 2–6 second virtual interval; exact retained baseline versus corrected source. Values are per-flow delivered bytes.",
+          "columns": [
+            "First writer",
+            "Source",
+            "CUBIC bytes",
+            "Reno bytes",
+            "FIFO busy",
+            "Reno timeouts"
+          ],
+          "rows": [
+            [
+              "CUBIC",
+              "Before",
+              "2,952,608",
+              "25,560",
+              "61.50064%",
+              "9"
+            ],
+            [
+              "CUBIC",
+              "Corrected",
+              "2,371,828",
+              "2,451,348",
+              "100%",
+              "0"
+            ],
+            [
+              "Reno",
+              "Before",
+              "2,697,008",
+              "2,051,712",
+              "98.44648%",
+              "0"
+            ],
+            [
+              "Reno",
+              "Corrected",
+              "2,465,548",
+              "2,357,012",
+              "100%",
+              "0"
+            ]
+          ],
+          "note": "Reno timeout deltas use its endpoint counters carried forward to the fenced interval boundaries. They are distinct from aggregate lifetime counters. Repeated normal/race observations match, but these two finite cases do not establish general fairness or wall-clock performance. CUBIC does not speed up in either case.",
+          "evidence": [
+            {
+              "label": "Corrected FIFO native result and full observations",
+              "url": "https://app.buildbuddy.io/invocation/047d7fc1-30ca-42e2-a2c8-9a6617a91d16"
+            },
+            {
+              "label": "Retained matched baseline",
+              "url": "https://app.buildbuddy.io/invocation/f16a8efb-3c63-4053-8d93-dd40d983133a"
+            },
+            {
+              "label": "Readable RACK proposal 3327ae",
+              "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773"
+            }
+          ]
+        },
         {
           "title": "Single-flow throughput · prior high-BDP study",
           "description": "100 Mbps, 100 ms RTT, configured 0.01% random loss, queue setting 1,000 packets, 120-second flows; six job blocks. The ratio compares receiver goodput within each block.",
