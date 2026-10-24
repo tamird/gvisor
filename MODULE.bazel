@@ -8,6 +8,7 @@ bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "bazel_lib", version = "3.2.2")
+bazel_dep(name = "with_cfg.bzl", version = "1.0.0")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_cc", version = "0.2.25")
@@ -251,6 +252,15 @@ go_sdk.from_file(
     go_mod = "//:go.mod",
     patch_strip = 1,
     patches = ["//tools:go_types_memoize.patch"],
+)
+use_repo(go_sdk, "go_host_compatible_sdk_label")
+
+module_proxy = use_repo_rule("//tools/go_export:repositories.bzl", "module_proxy")
+
+module_proxy(
+    name = "exported_go_modules",
+    go_mod = "//:go.mod",
+    go_sum = "//:go.sum",
 )
 
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")

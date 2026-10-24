@@ -52,6 +52,19 @@ platform(
     visibility = ["//visibility:public"],
 )
 
+# The repository C toolchain invokes the worker's Linux GNU compiler.
+platform(
+    name = "rbe_linux_amd64",
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3",
+        "workload-isolation-type": "oci",
+    },
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
+    visibility = ["//visibility:public"],
+)
+
 platform(
     name = "linux_arm64",
     constraint_values = [
