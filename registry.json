@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T11:58:00.815583+00:00",
+    "updatedAt": "2026-10-24T12:17:34.480373+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21611,16 +21611,43 @@
       "title": "Validate proxy ports before network setup",
       "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "The unapproved proposal has been simplified at 3dfece3307. netip replaces handwritten netstack parsing while mapped IPv4 bytes and default native DNS/service lookup are preserved. The 70-line parser CLI matrix and its test BUILD target are removed. Root owns this revised product and Node is qualifying it; no contributor decision or publication approval is claimed. The previous f0e518 proposal remains historical and unapproved.",
-      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "The revised proposal validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. Mapped IPv4 bytes are preserved by source review. The redundant 70-line parser CLI matrix and test BUILD target are removed. Root has asked for a contributor decision on exact 3dfece3307; no publication approval is inferred.\n\nThe original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
+      "updatedAt": "2026-10-24T12:17:34.480373+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "node_tls_sni",
         "sourceHead": "3dfece3307b19a214a41f31b7f21280715a05629",
-        "observedAt": "2026-10-24T11:49:51.178662+00:00",
-        "disposition": "Revised unapproved proposal in qualification; Agent work",
-        "nextAction": "Finish Node-owned qualification of exact 3dfece3307, then route any actual contributor request on that exact source. No publication approval is implied."
-      }
+        "observedAt": "2026-10-24T12:17:34.480373+00:00",
+        "disposition": "Revised exact-head contributor decision requested",
+        "nextAction": "Await the existing contributor decision on exact 3dfece3307. Keep the original aggregate failure and successful CLI recovery distinct; do not publish upstream without approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
+          "https://app.buildbuddy.io/invocation/fcfd72ad-7fb3-4b55-bc00-0a8dcb777a66",
+          "https://app.buildbuddy.io/invocation/36ca4b44-f67b-4443-8f91-10ffa341bd68"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "3dfece3307b19a214a41f31b7f21280715a05629",
+        "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
+        "title": "Review the revised TCP proxy proposal",
+        "summary": "Validate ports before netstack setup while retaining native host/service lookup and hexadecimal listen ports; no permanent parser-test matrix.",
+        "body": "The revised [TCP proxy fix](https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629) is ready for your review. It checks 16-bit listen ports while preserving hexadecimal input, parses netstack forwarding targets before setup/retry, and keeps native host/service lookup through net.Dial. No permanent parser tests are added.\n\nThe [CLI recovery](https://app.buildbuddy.io/invocation/fcfd72ad-7fb3-4b55-bc00-0a8dcb777a66) passed overflow rejection, valid-target setup admission and byte-exact native forwarding. The [original run](https://app.buildbuddy.io/invocation/36ca4b44-f67b-4443-8f91-10ffa341bd68) passed both architecture builds and analyzers; its reporting failure remains recorded. This does not claim a live netstack forwarding connection.\n\nMay I submit this exact commit upstream? [gVisor’s policy](https://github.com/google/gvisor/blob/d15d5319c3c758a6f18ccb59c607dc75300bce90/CONTRIBUTING.md#ai-tool-use) requires the contributor to review AI-generated work before submission.\n\n[Canonical decision](https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Atcp-proxy-port-bounds)\n\ngit range-diff f0e518e6b^! 3dfece330^!"
+      },
+      "evidence": [
+        {
+          "label": "Exact revised proxy proposal",
+          "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629"
+        },
+        {
+          "label": "Configured-binary CLI recovery PASS",
+          "url": "https://app.buildbuddy.io/invocation/fcfd72ad-7fb3-4b55-bc00-0a8dcb777a66"
+        },
+        {
+          "label": "Original aggregate FAIL with positive build, analyzer and CLI evidence",
+          "url": "https://app.buildbuddy.io/invocation/36ca4b44-f67b-4443-8f91-10ffa341bd68"
+        }
+      ]
     },
     {
       "id": "branch:metricsviz-time-offset-bounds",

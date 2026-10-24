@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T12:11:34.065895+00:00",
-  "registryDate": "2026-10-24T11:58:00.815583+00:00",
+  "registryDate": "2026-10-24T12:17:34.480373+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -174659,7 +174659,16 @@
         "since": "2026-10-24T11:49:51.178662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:58:00.815583+00:00"
+        "observedAt": "2026-10-24T12:17:34.480373+00:00"
+      }
+    },
+    "branch:tcp-proxy-port-bounds": {
+      "contributor-review": {
+        "scope": "3dfece3307b19a214a41f31b7f21280715a05629",
+        "since": "2026-10-24T12:17:34.480373+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-24T12:17:34.480373+00:00"
       }
     },
     "branch:fix/tpu-timeout-range": {
@@ -174668,7 +174677,7 @@
         "since": "2026-10-24T11:49:51.178662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:58:00.815583+00:00"
+        "observedAt": "2026-10-24T12:17:34.480373+00:00"
       }
     }
   },
