@@ -1,6 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:arch.bzl", "arch_genrule")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -76,4 +77,16 @@ image_outputs(
     name = "tmpfile",
     image = ":tmpfile",
     image_name = "basic/tmpfile",
+)
+
+arch_genrule(
+    name = "qualification_python_archives",
+    src = ":python_archive",
+    template = "qualification_python_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_python_contexts",
+    src = ":python_context",
+    template = "qualification_python_context_%s.tar",
 )
