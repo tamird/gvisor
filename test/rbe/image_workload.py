@@ -10,18 +10,16 @@ import qualification_report as report
 
 
 UNIT = "//test/benchmarks/tcp:tcp_proxy_cli_qualification"
-BINARIES = ["//test/benchmarks/tcp:tcp_proxy"]
-ANALYZERS = [BINARIES[0] + "_nogo"]
 UNIT_CASES = {"test_listen_overflow_before_setup", "test_forward_overflow_before_setup", "test_valid_forward_reaches_setup", "test_native_forwarding_hex_listen"}
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    if config["targets"] != [UNIT, *ANALYZERS]:
-        raise ValueError(f"Unexpected correction owner selection: {config['targets']}")
+    if config["targets"] != [UNIT]:
+        raise ValueError(f"Unexpected proxy owner selection: {config['targets']}")
     record = {"source": config["source"], "product": config["product"],
               "status": "INCOMPLETE", "checks": [], "errors": [],
-              "architecture_scope": "AMD64 actual proxy CLI/forwarding; both-CPU builds and Nogo"}
+              "architecture_scope": "AMD64 actual CLI recovery; prior unchanged both-CPU builds/Nogo retained separately"}
     try:
         for path, expected in config["matched_inputs"].items():
             actual = subprocess.check_output(["git", "show", config["source"] + ":" + path])
@@ -29,22 +27,13 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 raise ValueError(f"Frozen source input differs: {path}")
         options = ["--compilation_mode=opt", "--lockfile_mode=error", *config["consumer_options"],
                    "--remote_download_outputs=all", "--noannounce_rc", "--keep_going"]
-        formatted = invoke("goimports", ["run", "--config=x86_64", *options, "--run_in_cwd",
-                           "@org_golang_x_tools//cmd/goimports", "--", "-format-only", "-d",
-                           "test/benchmarks/tcp/tcp_proxy.go"],
-                           "command", targets=[])
-        record["checks"].append({"name": "goimports", "result": formatted})
-        for architecture in ("x86_64", "aarch64"):
-            result = invoke("build-" + architecture, ["build", "--config=" + architecture, *options, *BINARIES], "build", targets=BINARIES)
-            record["checks"].append({"name": "build-" + architecture, "result": result})
         queried = invoke("binary-path", ["cquery", "--config=x86_64", *options,
-                          "--output=files", BINARIES[0]], "command", targets=[])
+                          "--output=files", "labels(data, " + UNIT + ")"], "command", targets=[])
         record["checks"].append({"name": "binary-path", "result": queried})
         testing = ["--config=x86_64", *options, "--strategy=TestRunner=local", "--nocache_test_results",
                    "--runs_per_test=1", "--flaky_test_attempts=1", "--test_output=all",
                    "--test_sharding_strategy=disabled", "--test_timeout=600", "--test_tag_filters="]
-        phases = [("proxy-cli", [UNIT], []),
-                  ("proxy-nogo", ANALYZERS, [])]
+        phases = [("proxy-cli", [UNIT], [])]
         # Finish every native test phase before interpreting reports, so a
         # reporting error does not erase independent architecture/test evidence.
         for name, owners, extra in phases:
@@ -54,8 +43,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             result = check["result"]
             if result["status"] != "PASS":
                 record["errors"].append(f"{check['name']}: native verdict {result['status']}")
-        if (evidence / "invocation-goimports/stdout.log").read_bytes():
-            record["errors"].append("Canonical Go import formatting differs")
         seen_paths: set[Path] = set()
         for name, owners, _ in phases:
             check = next(row for row in record["checks"] if row["name"] == name)
@@ -123,9 +110,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                                     raise ValueError(f"Native hex-port forwarding failed: {row}")
                         details["observations"] = observed
                         details["declared_binary"] = {"path": str(binary), **report.file_record(binary)}
-                    elif name == "proxy-nogo":
-                        if len(cases) != 1 or any(marker not in log for marker in ("amd64...PASS", "arm64...PASS")):
-                            raise ValueError("Missing one positive Nogo wrapper or both architecture markers")
                     check["reports"].append(details)
             except (KeyError, OSError, ValueError, TypeError, ET.ParseError) as error:
                 record["errors"].append(f"{name}: {error}")
