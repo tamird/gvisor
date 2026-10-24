@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/test/packetimpact/testbench"
@@ -28,6 +29,58 @@ import (
 
 func init() {
 	testbench.Initialize(flag.CommandLine)
+}
+
+func TestWindowWithUnreadFIN(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		inside seqnum.Size
+	}{
+		{"AtEdge", 0},
+		{"OverlapsEdge", 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listenFD, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listenFD)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			conn.Connect(t)
+			fd, _ := dut.Accept(t, listenFD)
+			defer dut.Close(t, fd)
+
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagFin | header.TCPFlagAck)})
+			ack := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)}
+			reply, err := conn.Expect(t, ack, time.Second)
+			if err != nil {
+				t.Fatalf("no ACK for FIN: %v", err)
+			}
+			if got, want := uint32(dut.GetSockOptTCPInfo(t, fd).State), uint32(linux.TCP_CLOSE_WAIT); got != want {
+				t.Fatalf("TCP state after FIN = %d, want %d", got, want)
+			}
+			window := seqnum.Size(*reply.WindowSize)
+			if window == 0 {
+				t.Fatal("peer advertised a zero window")
+			}
+			t.Logf("DUT %s window %d", dut.Uname.KernelRelease, window)
+
+			// Leave the FIN unread and inject two bytes across the advertised
+			// edge without advancing either side of the test connection.
+			seq := conn.LocalSeqNum(t).Add(window - tc.inside)
+			conn.SendFrameStateless(t, conn.CreateFrame(t, testbench.Layers{
+				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq)), Flags: ack.Flags},
+			}, &testbench.Payload{Bytes: []byte("xy")}))
+			if _, err := conn.Expect(t, ack, time.Second); err != nil {
+				t.Errorf("no ACK for the unchanged receive sequence: %v", err)
+			}
+			if got := dut.Recv(t, fd, 1, unix.MSG_DONTWAIT); len(got) != 0 {
+				t.Errorf("received %q after FIN, want EOF", got)
+			}
+			if got, want := uint32(dut.GetSockOptTCPInfo(t, fd).State), uint32(linux.TCP_CLOSE_WAIT); got != want {
+				t.Errorf("TCP state after probe = %d, want %d", got, want)
+			}
+		})
+	}
 }
 
 // TestTCPOutsideTheWindows tests the behavior of the DUT when packets arrive

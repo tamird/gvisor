@@ -126,6 +126,7 @@ packetimpact_testbench(
     name = "tcp_outside_the_window",
     srcs = ["tcp_outside_the_window_test.go"],
     deps = [
+        "//pkg/abi/linux",
         "//pkg/tcpip/header",
         "//pkg/tcpip/seqnum",
         "//test/packetimpact/testbench",
