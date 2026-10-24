@@ -7,16 +7,21 @@ package(
 
 benchmark_test(
     name = "bazel_test",
-    srcs = ["bazel_test.go"],
+    srcs = [
+        "bazel_test.go",
+        "warm_checkpoint_test.go",
+    ],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/cleanup",
+        "//pkg/sentry/state/checkpointfiles",
         "//pkg/test/dockerutil",
         "//test/benchmarks/fs/fsbench",
         "//test/benchmarks/harness",
         "//test/benchmarks/tools",
         "@com_github_docker_docker//api/types/mount:go_default_library",
+        "@com_github_docker_docker//client:go_default_library",
     ],
 )
 
