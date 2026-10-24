@@ -401,6 +401,19 @@ img_pull(
     tag = "2.4.69-trixie",
 )
 
+img_pull(
+    name = "benchmark_nginx",
+    digest = "sha256:67f9a4f10d147a6e04629340e6493c9703300ca23a2f7f3aa56fe615d75d31ca",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registry = "index.docker.io",
+    repository = "library/nginx",
+    tag = "1.25.1",
+)
+
 ### Toolchains
 register_toolchains("@llvm//toolchain:all")
 

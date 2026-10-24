@@ -57,6 +57,7 @@ BAZEL_IMAGE_CONTEXTS := \
   basic_tmpfile=//images/basic:tmpfile_context \
   benchmarks_hey=//images/benchmarks:hey_context \
   benchmarks_httpd=//images/benchmarks:httpd_context \
+  benchmarks_nginx=//images/benchmarks:nginx_context \
   benchmarks_profile-helper=//images/benchmarks:profile_helper_context \
   gpu_ollama_client=//images/gpu/ollama:client_context
 ifeq ($(ARCH),x86_64)

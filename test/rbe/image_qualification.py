@@ -248,7 +248,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         for architecture in ("x86_64",):
             graphs = [("images", CONFIG["image_targets"][architecture], [])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
-                graphs.append(("runtime", runtime_targets, []))
+                graphs.append(("runtime", runtime_targets, CONFIG.get("consumer_options", [])))
             for name, preparation_targets, configuration_options in graphs:
                 prepared = invoke("dependency-preparation-" + architecture + "-" + name,
                                   ["cquery", "--config=" + architecture,
