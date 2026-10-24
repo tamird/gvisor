@@ -74,5 +74,30 @@
         }
       }
     }
+  },
+  "apt_snapshot": {
+    "timestamp": "20240201T000000Z",
+    "sources": [
+      "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20240201T000000Z bullseye main",
+      "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20240201T000000Z bullseye-updates main",
+      "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20240201T000000Z bullseye-security main"
+    ],
+    "inrelease": [
+      {
+        "url": "https://snapshot.debian.org/archive/debian/20240201T000000Z/dists/bullseye/InRelease",
+        "bytes": 115948,
+        "sha256": "872cd2241688f9d823d1c17ce0e2cab4e8891cb4bb66026835cbe701504abf63"
+      },
+      {
+        "url": "https://snapshot.debian.org/archive/debian/20240201T000000Z/dists/bullseye-updates/InRelease",
+        "bytes": 44069,
+        "sha256": "7433740a1ebd90cbe600e384d16f509f6c2879722d9d7a8df07c933028e782cc"
+      },
+      {
+        "url": "https://snapshot.debian.org/archive/debian-security/20240201T000000Z/dists/bullseye-security/InRelease",
+        "bytes": 48377,
+        "sha256": "9939e43e16b160907fcb8056b145e08a1d893e1743a30c6e0e7efd880c462261"
+      }
+    ]
   }
 }

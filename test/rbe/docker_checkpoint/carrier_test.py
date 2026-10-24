@@ -99,6 +99,11 @@ class DockerCarrierTest(unittest.TestCase):
                 dockerfile = (tree / "Dockerfile").read_bytes()
                 self.assertTrue(dockerfile.startswith(b"# syntax=docker/dockerfile:1\n"))
                 dockerfile = dockerfile.replace(b"# syntax=docker/dockerfile:1\n", b"", 1)
+                sources = source["apt_snapshot"]["sources"]
+                (tree / "checkpoint-apt.sources.list").write_text("\n".join(sources) + "\n")
+                marker = b"COPY --from=xx / /\n"
+                self.assertEqual(dockerfile.count(marker), 1)
+                dockerfile = dockerfile.replace(marker, marker + b"COPY checkpoint-apt.sources.list /etc/apt/sources.list\n", 1)
                 (tree / "Dockerfile").write_bytes(dockerfile + (PACKAGE / "Dockerfile.qualification").read_bytes())
                 def image(name):
                     return "docker.io/" + name + "@" + source["images"][name]["amd64"]["digest"]
@@ -117,6 +122,12 @@ class DockerCarrierTest(unittest.TestCase):
                 result["dockerd"] = identity(destination / "dockerd")
                 result["content_probe"] = identity(destination / "qualification/checkpoint-content-probe")
                 result["dockerd_version"] = command([destination / "dockerd", "--version"])
+                metadata = sorted((destination / "qualification/apt-metadata").iterdir())
+                result["apt_inrelease"] = [identity(path) for path in metadata]
+                expected_metadata = [{key: row[key] for key in ("bytes", "sha256")}
+                                     for row in source["apt_snapshot"]["inrelease"]]
+                self.assertEqual(sorted(result["apt_inrelease"], key=lambda row: row["sha256"]),
+                                 sorted(expected_metadata, key=lambda row: row["sha256"]))
                 result["modes"] = {}
                 for mode in ("red", "normal", "race"):
                     directory = destination / "qualification"

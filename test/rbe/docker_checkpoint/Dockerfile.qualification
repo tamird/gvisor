@@ -9,6 +9,8 @@ RUN --mount=type=bind,target=.,rw \
   mkdir -p /qualification
   go version > /qualification/go-version.txt
   dpkg-query -W > /qualification/packages.txt
+  mkdir /qualification/apt-metadata
+  cp /var/lib/apt/lists/*InRelease /qualification/apt-metadata/
   test -z "$(gofmt -l libcontainerd/remote/client.go libcontainerd/remote/client_linux_test.go checkpoint-content-probe/main.go)"
   CGO_ENABLED=0 hack/with-go-mod.sh go build -mod=vendor -modfile=vendor.mod -tags 'netgo osusergo' -ldflags '-s -w' -o /qualification/checkpoint-content-probe ./checkpoint-content-probe
   cp libcontainerd/remote/client.go /tmp/checkpoint-client-patched.go
