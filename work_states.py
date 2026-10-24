@@ -327,13 +327,16 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
                 if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}
     closed = {pr_identity(pr, registry["meta"]["repo"]) for pr in prs if pr["status"] in {"closed", "merged"}}
     for node in registry["nodes"]:
-        if node["type"] != "branch" or node["id"] in closed or (node.get("repo"), node.get("ref")) in promoted:
-            continue
         # Only the task owner records actual pending contributor decisions.
-        # An unpublished amendment is its own branch, not the live PR's state.
+        # Amendments keep their own branches. Outgoing replies and reviews are
+        # decisions on the owning discussion, separate from GitHub approval.
         decision = node.get("contributorReview")
+        outgoing = node["type"] in {"pr", "issue"} and decision and decision.get("kind") in {"reply", "review"}
+        if not outgoing and (node["type"] != "branch" or node["id"] in closed
+                             or (node.get("repo"), node.get("ref")) in promoted):
+            continue
         if decision and decision["status"] == "pending":
-            states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision["head"]}
+            states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision.get("head", decision.get("url"))}
         changes = node.get("contributorChangesRequested")
         if changes and node.get("head") == changes["head"]:
             states.setdefault(node["id"], {})["changes-requested"] = {
@@ -357,7 +360,9 @@ def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: s
     for identity, states in current.items():
         result[identity] = {}
         for state, evidence in states.items():
-            if pr := current_prs.get(identity):
+            if state == "contributor-review":
+                observed_at = registry.get("meta", {}).get("updatedAt", checked_at)
+            elif pr := current_prs.get(identity):
                 observed_at = pr.get("checkedAt", checked_at)
                 node = next((node for node in registry["nodes"] if node["id"] == identity), {})
                 if state in {"awaiting-import", "waiting-merge"} and approved_patch(pr, node.get("approvedPatch")):

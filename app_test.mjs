@@ -186,6 +186,40 @@ test('contributor decisions bind the registered branch repository and exact prop
   }
 });
 
+test('outgoing review decisions remain visible on external PRs and across public head changes', () => {
+  const context = client(), node = attentionNode();
+  node.github.headOwner = 'EtiennePerot';
+  node.contributorReview = { status: 'pending', kind: 'review', head: node.github.head,
+    title: 'Authorize the outgoing review', summary: 'Code findings addressed; measurements requested.',
+    body: 'Code LGTM. Please include the measurement command.', url: node.url };
+  const record = { scope: node.github.head, basis: 'observed', since: context.registryInput.meta.updatedAt,
+    observedAt: context.registryInput.meta.updatedAt };
+  context.registryInput = { ...context.registryInput, nodes: [{ ...node, repo: 'google/gvisor' }], edges: [], groups: [] };
+  context.snapshotInput.prs = [node.github]; context.snapshotInput.workStates[node.id] = { 'contributor-review': record };
+  context.nodeInput = node;
+  vm.runInContext('validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput)', context);
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
+  node.github.revisionChanged = true; node.github.head = 'd'.repeat(40);
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), record.scope);
+  delete node.contributorReview;
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
+});
+
+test('outgoing decisions require reviewable text and the owning discussion', () => {
+  const context = client();
+  const node = { id: 'issue:2', type: 'issue', url: 'https://github.com/google/gvisor/issues/2',
+    contributorReview: { status: 'pending', kind: 'reply', title: 'Authorize reply',
+      summary: 'Reply about the experiment.', body: 'The measured result is attached.', url: 'https://github.com/google/gvisor/issues/2' } };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  for (const change of [{ body: '' }, { url: 'https://github.com/google/gvisor/issues/3' }, { kind: 'proposal' }]) {
+    const original = { ...node.contributorReview }; Object.assign(node.contributorReview, change);
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
+    node.contributorReview = original;
+  }
+});
+
 test('direct terminal status refresh does not refresh other PR states', () => {
   const context = client();
   context.snapshotInput.prs = [{ number: 1, url: 'https://github.com/google/gvisor/pull/1', imports: [], head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: context.snapshotInput.checkedAt,

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T10:44:20.508976+00:00",
+    "updatedAt": "2026-10-24T10:58:57.442050+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1612,7 +1612,7 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-24T08:33:03.659687+00:00",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
       "summary": "Etienne’s request for inlining evidence now has a bounded, independently reviewed compiler result for the unchanged public proposal 9e17fdee. With pinned Go 1.27.2, selected old/new Load, Store and Swap probes have identical emitted bytes, relocations and stack frames on AMD64 and ARM64. The real KVM go:nosplit Load consumer has no AtomicPtr wrapper call on either CPU; deliberate noinline controls retain their calls. ARM64 linking and both AMD64 correctness tests passed. The original codegen job remains FAIL because two qualifier analyzer owners rejected a missing package comment. A separate comment-only follow-up passes both analyzer owners on both CPUs, without repeating codegen. These results do not establish a timing gain, full-runsc stack budget or future universal inlining guarantee. Root has the measured reply for authorization; no source amendment or public reply is claimed, and the human thread remains open.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nStanding follow-up: Native atomic.Pointer/stateify design discussion remains unanswered after the author requested guidance. Source checks pass; no current source revision is assigned.\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
       "followup": {
         "disposition": "Measured inlining response ready; public reply authorization pending",
@@ -1648,7 +1648,16 @@
           "label": "Comment-only analyzer follow-up on both CPUs",
           "url": "https://app.buildbuddy.io/invocation/b3d77d2c-ad0b-4aa9-8370-799a359f077e"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "title": "Authorize the measured AtomicPtr reply",
+        "url": "https://github.com/google/gvisor/pull/12483#discussion_r4366348323",
+        "summary": "Authorize the prepared response to the inlining question. Code-generation and correctness evidence is complete; the original aggregate failure and separate analyzer recovery remain distinct. No public reply has been sent.",
+        "body": "Go has no force-inline directive. We can guard the hot call sites in CI:\ncompile them with `-m=2` on amd64 and arm64 and require an `inlining call\nto` diagnostic at each site. Checking `can inline` alone would miss a\ncaller where the compiler decided not to inline. The [Go compiler's\ninlining test](https://github.com/golang/go/blob/022c8636110ebac86a9b88724cda168ed713c21f/src/cmd/compile/internal/test/inl_test.go#L339-L359)\ndistinguishes the two.\n\nI checked the generated code with Go 1.27.2. On both architectures,\n`Load`, `Store` and `Swap` produced identical instruction bytes,\nrelocations and stack-frame sizes before and after the change. The real\n`//go:nosplit` `seccompMmapHandler` inlines `Load`; a deliberately\nnon-inlined control leaves a call that the check detects. I'd cover that\nhandler and representative `Store` and `Swap` callers. Are there other\nstack-sensitive call sites you'd want covered?\n\n[Compiler output and checks](https://app.buildbuddy.io/invocation/0d07a278-4454-4de6-940d-1369a36da3b6).\nBoth code-generation builds per architecture, the arm64 link, and the\ncorrectness tests passed. The job is red because the qualification-only\nprobe was missing a package comment.\n\nPosted by Codex on behalf of @tamird.",
+        "head": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48"
+      }
     },
     {
       "id": "pr:12470",
@@ -1767,9 +1776,9 @@
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "c9b190fa8e9cda378c9c36a42cc6d6edb290caab",
-        "observedAt": "2026-10-24T09:31:40.774298+00:00",
-        "disposition": "Human upstream request assigned to Hostinet",
-        "nextAction": "Complete the root-assigned upstream action and prepare the direct evidence-backed response. Keep the public question open until the substantive action and authorized reply are complete.",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Supplier PR and reply prepared; existing contributor decision outstanding",
+        "nextAction": "Await the existing decision for supplier912eeef and gVisor reply. Then upstream release → registered llvm BCR version → gVisor pin update and temporary-patch removal. No separate BCR proposal is ready.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16236",
           "https://github.com/google/gvisor/pull/16236#issuecomment-6382396542"
@@ -17679,7 +17688,7 @@
           "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577"
         ]
       },
-      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+      "updatedAt": "2026-10-24T10:56:30.150898+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -17701,7 +17710,16 @@
           "label": "Maintainer request to wait for an official dind image",
           "url": "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "bc40a65c7d06164a2a6f941fbe86dd409699258d",
+        "url": "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577",
+        "title": "Decide whether to wait for released dind and authorize the reply",
+        "summary": "The current official image still lacks the Compose fix. The pending proposal is to hold this workaround until a fixed official image is released, then validate that image.",
+        "body": "Agreed; I propose holding this workaround for an official dind image that includes the Compose fix. The current `docker:29-dind` image is Docker 29.9.2 with Compose 5.6.1 on both AMD64 and ARM64. That Compose release still omits the `network.host` grant, so updating to today's image would not resolve these two cases.\n\nThe remaining dependency is a Compose release containing [docker/compose#14325](https://github.com/docker/compose/pull/14325), followed by its inclusion in the official Docker image. Once that image is available, this source-build stage can be dropped and the existing two host-network cases checked against the stock plugin."
+      }
     },
     {
       "id": "pr:16077",
@@ -18092,19 +18110,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-basic-images",
-      "head": "c27866684d5b3f68b0120741e3e96be724a5b07a",
+      "head": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
       "title": "Build basic test images with rules_img",
       "url": "https://github.com/google/gvisor/pull/16097",
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved the qualified amendment 781d64d844. Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second. Do not repeat the completed contributor question. The live source head remains c27866684d until publication.\n\nPrior source and validation record:\n\nThe contributor has been asked to review the qualified conflict resolution 781d64d844. It unifies generic and CUDA Make context staging and preserves all 40 tracked basic source files across the new Bazel package boundary. Eight native phases pass: eight archive outputs across AMD64/ARM64, ten actual Make tags, and three AMD64 Docker rebuild/reload/execute checks. The archive/tag gates use optimized builds; the unchanged Docker smoke uses default build mode, so its tmpfile tag is separately recorded. Independent retained review passed, with 10.382462 seconds from native completion to authenticated receipt. The two earlier coordinator setup failures remain retained. Publication, the revised description and rereview of the changed Make rule await this existing contributor decision; the live source c2786668 and import #16307 are unchanged.\n\nPrevious conflict diagnosis:\n\nAfter #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil’s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
+      "summary": "Approved amendment781d64d844 is published and mergeable. The original approver has already been asked to review the changed Make rule; no new contributor approval is needed.\n\nHistorical record:\n\nThe contributor approved the qualified amendment 781d64d844. Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second. Do not repeat the completed contributor question. The live source head remains c27866684d until publication.\n\nPrior source and validation record:\n\nThe contributor has been asked to review the qualified conflict resolution 781d64d844. It unifies generic and CUDA Make context staging and preserves all 40 tracked basic source files across the new Bazel package boundary. Eight native phases pass: eight archive outputs across AMD64/ARM64, ten actual Make tags, and three AMD64 Docker rebuild/reload/execute checks. The archive/tag gates use optimized builds; the unchanged Docker smoke uses default build mode, so its tmpfile tag is separately recorded. Independent retained review passed, with 10.382462 seconds from native completion to authenticated receipt. The two earlier coordinator setup failures remain retained. Publication, the revised description and rereview of the changed Make rule await this existing contributor decision; the live source c2786668 and import #16307 are unchanged.\n\nPrevious conflict diagnosis:\n\nAfter #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil’s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
       "followup": {
         "owner": "root",
-        "sourceHead": "c27866684d5b3f68b0120741e3e96be724a5b07a",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Contributor approved the qualified amendment; root owns delivery",
-        "nextAction": "Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second. Do not repeat the completed contributor question.",
+        "sourceHead": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Approved amendment published; original approver rereview requested",
+        "nextAction": "Follow exact-head checks and the existing maintainer reapproval request. Preserve the Make overlap with Ollama and reconcile whichever lands second. No contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/google/gvisor/pull/16097#pullrequestreview-5621263069",
@@ -18113,7 +18131,8 @@
           "https://github.com/google/gvisor/pull/15670",
           "https://github.com/google/gvisor/pull/16333",
           "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
-          "https://app.buildbuddy.io/invocation/c7dad030-2bcb-4d1c-9297-2c2f0770c527"
+          "https://app.buildbuddy.io/invocation/c7dad030-2bcb-4d1c-9297-2c2f0770c527",
+          "https://github.com/google/gvisor/pull/16097#issuecomment-6383269376"
         ]
       },
       "evidence": [
@@ -18574,7 +18593,7 @@
       "url": "https://github.com/google/gvisor/pull/15814",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T09:56:06.787633+00:00",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
       "summary": "Etienne updated the head to f4722438 and explicitly re-requested Tamir’s review at 09:35:39Z on October 24 (timeline event 34121373897). Root completed the re-review of the two prior findings and revised registration behavior and sent the contributor authorization question for the concrete follow-up review. The independent source read found no blocker: ordinary metadata is validated on save/restore, binary registration remains eager, and the test no longer depends on a cross-test counter. The requested command and before/after measurements behind the stated 0.3ms remain absent. The prior changes-requested review remains on 34490698; no current-head public decision has been sent. This remains an unmerged prerequisite for dependent state work.",
       "followup": {
         "owner": "root",
@@ -18593,6 +18612,15 @@
         "reviewers": [
           "tamird"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "title": "Authorize the outgoing #15814 review",
+        "url": "https://github.com/google/gvisor/pull/15814",
+        "summary": "Approve the prepared follow-up review on Etienne’s PR. The two code findings are addressed; the requested startup measurement command and evidence remain missing. No current-head public review has been sent.",
+        "body": "The registration test now measures only the calls made by `Register`,\nand `registerName` is the sole writer to the name-to-type map. That\naddresses both inline comments. Code LGTM.\n\nCould you add the command and before/after measurements behind the\n0.3 ms figure to the description? That would give us a startup baseline\nwe can rerun.\n\nPosted by Codex on behalf of @tamird.",
+        "head": "f47224383f4b2cc6f8ec173a250660493e2e719d"
       }
     },
     {
@@ -19925,18 +19953,84 @@
       "url": "https://github.com/google/gvisor/pull/16254",
       "group": "bazel",
       "status": "open",
-      "summary": "The contributor has been asked to authorize the direct reply to Etienne and a clearer description; the public source remains 5eb5b76e. The concrete follow-up is the Bazel-built Rust smoke-test image. Its hello-world executable does not use Protobuf, but the repository-wide license audit evaluates the full module graph and failed in Protobuf’s transitive Rust resolver without producer-owned lockfiles. Stable 36.2 still lacks those files; 37.0-rc1 supplies them. A qualified 35.1 lockfile backport plus rules_rust override also works, so the RC trades roughly 40 KB of generated backport for the small gRPC reflection-header dependency patch. Waiting for stable 37 is a reasonable alternative offered in the proposed reply. The human question remains open; no public reply, description edit or source amendment has been made.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
+      "summary": "Tamir answered the RC/patch question at 09:51, and the authorized description update is now published at unchanged5eb5b76. No separate reply or contributor decision remains. The description distinguishes the Rust hello-world runtime from the repository-wide license audit and explains the producer lockfile and gRPC compatibility tradeoff.\n\nHistorical record:\n\nThe contributor has been asked to authorize the direct reply to Etienne and a clearer description; the public source remains 5eb5b76e. The concrete follow-up is the Bazel-built Rust smoke-test image. Its hello-world executable does not use Protobuf, but the repository-wide license audit evaluates the full module graph and failed in Protobuf’s transitive Rust resolver without producer-owned lockfiles. Stable 36.2 still lacks those files; 37.0-rc1 supplies them. A qualified 35.1 lockfile backport plus rules_rust override also works, so the RC trades roughly 40 KB of generated backport for the small gRPC reflection-header dependency patch. Waiting for stable 37 is a reasonable alternative offered in the proposed reply. The human question remains open; no public reply, description edit or source amendment has been made.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
       "followup": {
         "owner": "root",
         "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
-        "observedAt": "2026-10-24T09:11:20.611674+00:00",
-        "disposition": "Reply and description prepared; contributor authorization outstanding",
-        "nextAction": "Await the existing contributor decision for the direct reply and description, then respond in the original discussion under that authorization. Keep the public source unchanged and do not repeat the contributor question.",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Contributor reply and description update completed",
+        "nextAction": "Follow new substantive reviewer feedback through the existing watcher. Do not repeat the fulfilled reply or decision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
           "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3",
           "https://github.com/protocolbuffers/protobuf/blob/v36.2/MODULE.bazel#L217",
           "https://github.com/protocolbuffers/protobuf/blob/v37.0-rc1/MODULE.bazel#L216-L219"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Reply and description update completed",
+            "nextAction": "Await new maintainer feedback; the existing response decision is fulfilled.",
+            "binding": {
+              "reviewDecision": null,
+              "approvedHead": null,
+              "approvedAt": null,
+              "headCommittedAt": "2026-10-23T13:10:12Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABfGkmqA",
+                    "url": "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
+                    "body": "Need to better understand the value here before taking on a RC release dep (as opposed to a proper point release) and a patch file on top.\r\n\r\nWhat will this enable? \"This allows module graph evaluation without maintaining a generated-lock backport.\" → Can you say more, and why is that important?",
+                    "createdAt": "2026-10-24T08:54:31Z",
+                    "updatedAt": "2026-10-24T08:54:31Z",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABfHEwHw",
+                    "url": "https://github.com/google/gvisor/pull/16254#issuecomment-6382759967",
+                    "body": "Yeah this description is a bit slop - I'll fix it - but upstream didn't check in their lock files, and those are needed to build with rules_rs. They fixed that in a commit that isn't included in the 35.1 release.\r\n\r\nSo this is needed to build rust with bazel.",
+                    "createdAt": "2026-10-24T09:51:44Z",
+                    "updatedAt": "2026-10-24T09:51:44Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABfHkUHw",
+                    "url": "https://github.com/google/gvisor/pull/16254#issuecomment-6383277087",
+                    "body": "Description is fixed!",
+                    "createdAt": "2026-10-24T10:47:07Z",
+                    "updatedAt": "2026-10-24T10:47:07Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be"
+            },
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16254#issuecomment-6382759967",
+              "https://github.com/google/gvisor/pull/16254#issuecomment-6383277087"
+            ]
+          }
         ]
       },
       "updatedAt": "2026-10-24T09:11:20.611674+00:00",
@@ -20963,7 +21057,9 @@
       "contributorReview": {
         "status": "pending",
         "head": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
-        "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89"
+        "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89",
+        "title": "Review the window-scaling proposal",
+        "summary": "Decide whether to publish the validated window-scaling child after the SACK prerequisite #16336. The separate SACK approval does not approve this child."
       }
     },
     {
@@ -21097,7 +21193,7 @@
       "title": "Reconcile basic and CUDA image context staging",
       "url": "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
       "group": "bazel",
-      "status": "Contributor approved; ready for delivery",
+      "status": "Delivered to #16097",
       "updatedAt": "2026-10-24T10:40:26.158094+00:00",
       "summary": "The contributor approved exact 781d64d844 for delivery. Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second.\n\nValidation and prior decision record:\n\nProposed amendment to #16097 after the CUDA context interface landed. The unified Make recipe preserves both image paths; a seven-line package-boundary fix restores all 40 basic sources to the shared archive. Eight native phases, eight context outputs, ten Make tags and three AMD64 rebuild/reload/execute checks passed independent retained review. Optimized tag construction and default-mode smoke are separate. Root sent the exact proposal at 08:46 UTC; publication and original-approver rereview await that decision.",
       "followup": {
@@ -21105,7 +21201,7 @@
         "sourceHead": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
         "observedAt": "2026-10-24T10:40:26.158094+00:00",
         "disposition": "Contributor approved; ready for delivery",
-        "nextAction": "Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second. Do not repeat the completed contributor question."
+        "nextAction": "Follow the existing maintainer reapproval request and public checks on #16097; the contributor decision and publication are complete."
       },
       "evidence": [
         {
@@ -21287,6 +21383,270 @@
           "https://app.buildbuddy.io/invocation/098f63cd-c41f-498e-9d44-abf1fd9967de",
           "https://app.buildbuddy.io/invocation/c0561e06-802a-4321-8f69-4c96c3adb96c"
         ]
+      }
+    },
+    {
+      "id": "branch:review/kernel-14345-contracts",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/kernel-14345-contracts",
+      "head": "2a057f2bba3e94fc57ac86911b275febd284a176",
+      "title": "the annotation-only #14345 amendment",
+      "url": "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176",
+      "group": "analysis",
+      "status": "Awaiting contributor review",
+      "summary": "Replace the broad public revision with checks for existing task and signal locking contracts. Executable Go is unchanged; the deferred process-group annotation is excluded. Corrected independent and combined analyzer checks passed.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "2a057f2bba3e94fc57ac86911b275febd284a176",
+        "url": "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176",
+        "title": "Approve the annotation-only #14345 amendment",
+        "summary": "Replace the broad public revision with checks for existing task and signal locking contracts. Executable Go is unchanged; the deferred process-group annotation is excluded. Corrected independent and combined analyzer checks passed."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "2a057f2bba3e94fc57ac86911b275febd284a176",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Existing contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; no duplicate request or public action."
+      }
+    },
+    {
+      "id": "branch:review/kernel-14345-parent-death",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/kernel-14345-parent-death",
+      "head": "cad33143162681a715856dd08e0b7190972da39c",
+      "title": "the parent-death signal locking fix",
+      "url": "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c",
+      "group": "analysis",
+      "status": "Awaiting contributor review",
+      "summary": "Clear the parent-death signal under the task mutex. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "cad33143162681a715856dd08e0b7190972da39c",
+        "url": "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c",
+        "title": "Approve the parent-death signal locking fix",
+        "summary": "Clear the parent-death signal under the task mutex. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "cad33143162681a715856dd08e0b7190972da39c",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Existing contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; no duplicate request or public action."
+      }
+    },
+    {
+      "id": "branch:review/kernel-14345-signal-delivery",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/kernel-14345-signal-delivery",
+      "head": "fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+      "title": "the signal-delivery deadlock fix",
+      "url": "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+      "group": "analysis",
+      "status": "Awaiting contributor review",
+      "summary": "Avoid relocking the signal mutex on a platform error. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+        "url": "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+        "title": "Approve the signal-delivery deadlock fix",
+        "summary": "Avoid relocking the signal mutex on a platform error. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Existing contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; no duplicate request or public action."
+      }
+    },
+    {
+      "id": "branch:review/kernel-14345-exit-notify",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/kernel-14345-exit-notify",
+      "head": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+      "title": "the exit-status locking fix",
+      "url": "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+      "group": "analysis",
+      "status": "Awaiting contributor review",
+      "summary": "Read the group exit status under the signal mutex. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+        "url": "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+        "title": "Approve the exit-status locking fix",
+        "summary": "Read the group exit status under the signal mutex. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Existing contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; no duplicate request or public action."
+      }
+    },
+    {
+      "id": "branch:linux-header-default",
+      "type": "branch",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "linux-header-default",
+      "head": "912eeefaced4f0800d5be8d88e6f012cae526071",
+      "title": "the LLVM supplier PR and gVisor reply",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/912eeefaced4f0800d5be8d88e6f012cae526071",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "summary": "One existing decision covers publishing the qualified hermetic-llvm root-default Linux-header API and replying on #16236. After upstream accepts and releases the feature, use its existing llvm BCR automation and registered version, then update gVisor and remove the temporary patch. llvm0.8.25 lacks the feature; no BCR version or entry is invented.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "912eeefaced4f0800d5be8d88e6f012cae526071",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/912eeefaced4f0800d5be8d88e6f012cae526071",
+        "title": "Approve the LLVM supplier PR and gVisor reply",
+        "summary": "One existing decision covers publishing the qualified hermetic-llvm root-default Linux-header API and replying on #16236. After upstream accepts and releases the feature, use its existing llvm BCR automation and registered version, then update gVisor and remove the temporary patch. llvm0.8.25 lacks the feature; no BCR version or entry is invented.",
+        "body": "I prepared the upstream change to let a root module choose the default\nLinux header release while preserving explicit kernel constraints and\nthe existing libc defaults. Both module configurations and the invalid\nconfiguration cases pass the supplier tests.\n\nPublication note: add the actual upstream PR link after root authorizes\nopening it; do not send this draft as a public reply before then."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "912eeefaced4f0800d5be8d88e6f012cae526071",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Existing contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; no duplicate request or public action."
+      }
+    },
+    {
+      "id": "branch:review/rseq-signal-header-order",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rseq-signal-header-order",
+      "head": "0e079c726ea847f2198aa3a433cd67308f4e3a90",
+      "title": "the #16052 header-order correction",
+      "url": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "summary": "The prepared correction is published on the fork and has not been applied to public PR #16052, which remains fd637694. Both GNU architecture builds and formatting passed. The existing decision covers publishing this correction and the prepared reapproval reply.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "0e079c726ea847f2198aa3a433cd67308f4e3a90",
+        "url": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90",
+        "title": "Approve the #16052 header-order correction",
+        "summary": "The prepared correction is published on the fork and has not been applied to public PR #16052, which remains fd637694. Both GNU architecture builds and formatting passed. The existing decision covers publishing this correction and the prepared reapproval reply.",
+        "body": "The standalone helper now includes its size definitions before\n`asm/signal.h`. The public GNU builders need that ordering because the\nkernel header uses `size_t`. Both AMD64 and ARM64 GNU builds and the\ncanonical formatting check pass.\n\n@zkoopmans @trantoji, please re-approve the updated head so Copybara\nimports the correction."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "0e079c726ea847f2198aa3a433cd67308f4e3a90",
+        "observedAt": "2026-10-24T10:53:05.058293+00:00",
+        "disposition": "Existing contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; no duplicate request or public action."
+      }
+    },
+    {
+      "id": "issue:16216",
+      "type": "issue",
+      "repo": "google/gvisor",
+      "number": 16216,
+      "title": "Reply to the state-codec prototype investigation",
+      "url": "https://github.com/google/gvisor/issues/16216",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "summary": "The prepared issue reply reports the initialized zero-array bug and the measured out-of-line varint code-size reduction. This is a publication decision, separate from adopting the prototype or later experiments.",
+      "updatedAt": "2026-10-24T10:53:05.058293+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "title": "Authorize the #16216 findings reply",
+        "url": "https://github.com/google/gvisor/issues/16216",
+        "summary": "Authorize the existing prepared issue reply below. No reply has been posted and no prototype adoption is implied.",
+        "body": "We’ve been testing the prototype. Two results look useful for the next\nrevision.\n\nThe typed decoder overwrites an initialized byte array when the saved\narray is all zero. With a struct containing one `[1]byte` field, save\n`{0}`, then load it into `{7}`: the reflective decoder leaves `{7}`; the\ntyped decoder produces `{0}`. The typed decoder promises to preserve the\ndestination in this case, but its byte-array path calls `ReadFull`\nunconditionally. The [regression](https://github.com/tamird/gvisor/blob/3c1bb34a60062e5e3661c06f7715743ab23fa651/pkg/state/tests/codec_test.go#L388)\nuses the prototype’s unchanged production code. [Only the typed,\ninitialized case failed.](https://app.buildbuddy.io/invocation/4aa25c17-4f50-4724-bae9-54342d0ae387)\n\nFor code size, [keeping the varint loop out of line](https://github.com/tamird/gvisor/commit/9befc77d4f6f3f96e3e759db79dcbb77823c74e2)\nputs a single copy in the wire package. In a [matched AMD64 sentry\nbuild](https://app.buildbuddy.io/invocation/9dee51b4-0920-40dc-b6be-8b6f154dd343),\n`.text` shrank by 165,920 bytes; 142,573 of those bytes came from\n1,240 generated `StateEncode` methods. [Sixteen paired comparisons\non four-worker Nginx checkpoints](https://app.buildbuddy.io/invocation/2a0f36be-1df7-49fd-9733-dd9dc6e9152c)\nshowed no detectable change in encode or decode time. The patch is\nthree lines directly on the prototype; the measurements used matched\nqualification builds with the same change.\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:sample-tcp-port-bounds",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "sample-tcp-port-bounds",
+      "head": "b3c3c094c7368985996ac94b000f4998cfdef92c",
+      "title": "Reject out-of-range ports in TCP samples",
+      "url": "https://github.com/tamird/gvisor/commit/b3c3c094c7368985996ac94b000f4998cfdef92c",
+      "group": "analysis",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "This independently qualified CodeQL follow-up is an existing standalone proposal. Contributor approval was requested and remains pending. No upstream PR has been opened; the four proposals are independently reviewable.",
+      "updatedAt": "2026-10-24T10:56:30.150898+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "b3c3c094c7368985996ac94b000f4998cfdef92c",
+        "url": "https://github.com/tamird/gvisor/commit/b3c3c094c7368985996ac94b000f4998cfdef92c",
+        "title": "Review the standalone proposal",
+        "summary": "Reject out-of-range ports in TCP samples. Decide whether to publish this qualified standalone change."
+      }
+    },
+    {
+      "id": "branch:tcp-proxy-port-bounds",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-proxy-port-bounds",
+      "head": "f0e518e6bea266980e008cc90043568818b2afe3",
+      "title": "Validate proxy ports before network setup",
+      "url": "https://github.com/tamird/gvisor/commit/f0e518e6bea266980e008cc90043568818b2afe3",
+      "group": "analysis",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "This independently qualified CodeQL follow-up is an existing standalone proposal. Contributor approval was requested and remains pending. No upstream PR has been opened; the four proposals are independently reviewable.",
+      "updatedAt": "2026-10-24T10:56:30.150898+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "f0e518e6bea266980e008cc90043568818b2afe3",
+        "url": "https://github.com/tamird/gvisor/commit/f0e518e6bea266980e008cc90043568818b2afe3",
+        "title": "Review the standalone proposal",
+        "summary": "Validate proxy ports before network setup. Decide whether to publish this qualified standalone change."
+      }
+    },
+    {
+      "id": "branch:metricsviz-time-offset-bounds",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "metricsviz-time-offset-bounds",
+      "head": "d2518f62a7c20497ebe4fceda1e673420d672392",
+      "title": "Reject metric timestamp offsets that overflow time.Duration",
+      "url": "https://github.com/tamird/gvisor/commit/d2518f62a7c20497ebe4fceda1e673420d672392",
+      "group": "analysis",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "This independently qualified CodeQL follow-up is an existing standalone proposal. Contributor approval was requested and remains pending. No upstream PR has been opened; the four proposals are independently reviewable.",
+      "updatedAt": "2026-10-24T10:56:30.150898+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "d2518f62a7c20497ebe4fceda1e673420d672392",
+        "url": "https://github.com/tamird/gvisor/commit/d2518f62a7c20497ebe4fceda1e673420d672392",
+        "title": "Review the standalone proposal",
+        "summary": "Reject metric timestamp offsets that overflow time.Duration. Decide whether to publish this qualified standalone change."
+      }
+    },
+    {
+      "id": "branch:fix/tpu-timeout-range",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/tpu-timeout-range",
+      "head": "5265adcc0dd0c777762e8bd92169feb01016c952",
+      "title": "Reject unrepresentable TPU operation timeouts",
+      "url": "https://github.com/tamird/gvisor/commit/5265adcc0dd0c777762e8bd92169feb01016c952",
+      "group": "analysis",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "This independently qualified CodeQL follow-up is an existing standalone proposal. Contributor approval was requested and remains pending. No upstream PR has been opened; the four proposals are independently reviewable.",
+      "updatedAt": "2026-10-24T10:56:30.150898+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "5265adcc0dd0c777762e8bd92169feb01016c952",
+        "url": "https://github.com/tamird/gvisor/commit/5265adcc0dd0c777762e8bd92169feb01016c952",
+        "title": "Review the standalone proposal",
+        "summary": "Reject unrepresentable TPU operation timeouts. Decide whether to publish this qualified standalone change."
       }
     }
   ],
@@ -23768,6 +24128,53 @@
       "type": "includes",
       "reason": "The exact contributor-approved SACK proposal is delivered by this PR; the branch record preserves its validation history.",
       "evidence": "https://github.com/google/gvisor/pull/16336"
+    },
+    {
+      "from": "branch:review/kernel-14345-contracts",
+      "to": "pr:14345",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
+      "evidence": "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176"
+    },
+    {
+      "from": "branch:review/kernel-14345-parent-death",
+      "to": "pr:14345",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
+      "evidence": "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c"
+    },
+    {
+      "from": "branch:review/kernel-14345-signal-delivery",
+      "to": "pr:14345",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
+      "evidence": "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3"
+    },
+    {
+      "from": "branch:review/kernel-14345-exit-notify",
+      "to": "pr:14345",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
+      "evidence": "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf"
+    },
+    {
+      "from": "branch:linux-header-default",
+      "to": "pr:16236",
+      "type": "blocked_by",
+      "reason": "The downstream cleanup requires an actual upstream release containing the API and its registered llvm BCR version. Supplier publication alone does not unblock it.",
+      "evidence": "https://github.com/tamird/hermetic-llvm/commit/912eeefaced4f0800d5be8d88e6f012cae526071"
+    },
+    {
+      "from": "branch:review/rseq-signal-header-order",
+      "to": "pr:16052",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
+      "evidence": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90"
     }
   ],
   "investigations": [

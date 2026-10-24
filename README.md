@@ -426,9 +426,16 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
 
 - **Contributor review:** an actual pending decision recorded by the task owner
   in the registry's `contributorReview` object (`status: pending`, exact candidate
-  `head` and commit `url`) on an unpublished branch node. A proposed amendment
-  has its own node; it never changes the live PR's review state. Reconcile its
-  scope after newer imports or upstream changes before retaining a decision.
+  `head` and commit `url`) on an unpublished branch node. Independently reviewable
+  amendments or fixes each have their own branch row, with no inferred dependency
+  between them. Outgoing comments and reviews use the owning PR or issue row with
+  `kind: reply` or `kind: review`, a specific `title`, `summary`, original discussion
+  `url`, and the complete reviewable `body`. PR actions retain the reviewed `head`;
+  issue replies do not invent a commit. These explicit decisions use the registry
+  observation clock and remain separate from GitHub's incoming review, source
+  head, CI and import states. A changed public head prompts reconciliation rather
+  than silently deleting the outstanding question. Text and links appear in the
+  existing Table/details path and the **Contributor decisions** attention filter.
   Remove the object when the decision is answered; GitHub review and prose do
   not infer a contributor hold.
 - **Maintainer review:** an open, nondraft PR without approval or changes

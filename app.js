@@ -172,7 +172,7 @@ const ATTENTION_REASONS = [
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
-  { id: "author-proposal", owner: "user", title: "Unpublished proposal decision" },
+  { id: "author-proposal", owner: "user", title: "Contributor decisions" },
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
@@ -337,7 +337,7 @@ function attentionReasons(node, owner) {
     } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
   if (states(node)["contributor-review"])
-    add("author-proposal", "A decision is pending on a separate proposed revision; this does not change the published head's review status.");
+    add("author-proposal", contributorDecision(node)?.summary || "A contributor decision is pending; this does not change the published head's review status.");
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
       && /^[a-f0-9]{40}$/.test(node.head) && node.followup?.sourceHead === node.head
@@ -715,7 +715,13 @@ function contributorChanges(node) {
   const decision = node.contributorChangesRequested;
   return node.type === "branch" && decision?.head === node.head ? decision : null;
 }
+function contributorDecision(node) {
+  const decision = node.contributorReview;
+  return decision?.status === "pending" && (node.type === "branch"
+    || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
+}
 function stateLabel(node, state) {
+  if (state === "contributor-review") return contributorDecision(node)?.title || STATE_LABELS[state];
   if (state === "changes-requested" && contributorChanges(node)) return "Contributor changes requested";
   if (state === "failing") return failureSources(node).map(item => item.failureLabel).join("; ") || STATE_LABELS[state];
   return STATE_LABELS[state];
@@ -1108,6 +1114,9 @@ function drawTable(nodes) {
     identity.append(link(label(node), node.url));
     const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
     title.append(choose);
+    const decision = contributorDecision(node);
+    if (decision && states(node)["contributor-review"])
+      title.append(link(decision.title || "Review proposal ↗", decision.url, "decision-source"));
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
     state.append(element("span", "base-status", status(node))); appendStates(state, node);
     for (const reason of entry.reasons) { const item = element("span", `attention-reason ${reason.owner}`, reason.title); item.title = `${ATTENTION_OWNERS[reason.owner]}. ${reason.detail}`; state.append(item); }
@@ -1170,6 +1179,20 @@ function drawDetails() {
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
+  const decision = contributorDecision(node);
+  if (decision && states(node)["contributor-review"]) {
+    const section = element("section", "detail-section contributor-decision");
+    section.append(element("h3", "", decision.title || "Contributor decision requested"));
+    if (decision.summary) section.append(element("p", "", decision.summary));
+    if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
+    if (node.github?.head && decision.head && decision.head !== node.github.head)
+      section.append(element("p", "", "The published head has changed. Reconcile this recorded decision with the new source before acting."));
+    if (decision.body) {
+      section.append(element("div", "decision-body", decision.body));
+    }
+    section.append(link(decision.kind === "review" ? "Open PR to review ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
+    details.append(section);
+  }
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
@@ -1192,7 +1215,7 @@ function drawDetails() {
     } else details.append(element("p", "detail-description", node.summary));
   }
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
-  if (node.type === "issue") details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
+  if (node.type === "issue" && !decision) details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
   const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
   const relations = [
     ["Proposed updates", model.edges.filter((edge) => edge.to === node.id && edge.role === "proposed_update"), "from"],
@@ -1271,10 +1294,11 @@ function setFreshness(text, warning = false, live = false) {
 }
 function stateRecords(snapshot, node) {
   const records = { ...(snapshot.workStates?.[node.id] || {}) };
-  // Older snapshots attached unpublished amendment decisions to live PRs.
-  if (node.type === "pr") delete records["contributor-review"];
+  const decision = contributorDecision(node);
+  // Only explicit decisions survive; legacy amendment prose on a live PR is
+  // not a decision. Outgoing replies/reviews are independent of GitHub review.
+  if (!decision) delete records["contributor-review"];
   if (node.type === "branch") {
-    if (!node.contributorReview) delete records["contributor-review"];
     const changes = contributorChanges(node);
     if (!changes || records["changes-requested"]?.scope !== changes.head) delete records["changes-requested"];
   }
@@ -1331,6 +1355,8 @@ function stateRecords(snapshot, node) {
       records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, observedAt: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
     }
   }
+  if (decision && snapshot.workStates?.[node.id]?.["contributor-review"])
+    records["contributor-review"] = snapshot.workStates[node.id]["contributor-review"];
   return records;
 }
 function applyLive(snapshot, nextRegistry = registry) {
@@ -1420,8 +1446,20 @@ function validateRegistry(candidate) {
     const proposalRepo = node.type === "branch" && typeof node.repo === "string"
       && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) && node.repo.split("/")[0] === candidate.meta.owner ? node.repo : null;
     const decision = node.contributorReview;
-    if (decision !== undefined && (!decision || decision.status !== "pending" || !/^[a-f0-9]{40}$/.test(decision.head) ||
-        !proposalRepo || decision.url !== `https://github.com/${proposalRepo}/commit/${decision.head}`)) throw new Error("Invalid contributor decision");
+    if (decision !== undefined) {
+      const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)
+        && decision.url === `https://github.com/${proposalRepo}/commit/${decision.head}`;
+      const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision?.kind)
+        && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
+        && (decision.url === node.url || decision.url?.startsWith(node.url + "#"))
+        && typeof decision.title === "string" && decision.title.trim()
+        && typeof decision.summary === "string" && decision.summary.trim()
+        && typeof decision.body === "string" && decision.body.trim();
+      if (!decision || decision.status !== "pending" || !proposal && !outgoing
+          || decision.body !== undefined && typeof decision.body !== "string"
+          || decision.summary !== undefined && typeof decision.summary !== "string"
+          || decision.title !== undefined && typeof decision.title !== "string") throw new Error("Invalid contributor decision");
+    }
     const changes = node.contributorChangesRequested;
     if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
         !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || changes.url !== `https://github.com/${proposalRepo}/commit/${changes.head}`))
@@ -1526,7 +1564,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
         const pr = snapshot.prs.find(item => prIdentity(item, nextRegistry) === identity);
         const patch = pr && ["awaiting-import", "waiting-merge"].includes(state)
           ? approvedPatch({ ...nextRegistry.nodes?.find(node => node.id === identity), github: pr }) : null;
-        const sourceTime = pr ? Math.max(Date.parse(pr.checkedAt || snapshot.checkedAt),
+        const sourceTime = pr && state !== "contributor-review" ? Math.max(Date.parse(pr.checkedAt || snapshot.checkedAt),
           ["merged", "closed"].includes(state) && pr.statusObservation ? Date.parse(pr.statusObservation.checkedAt) : 0,
           patch ? Date.parse(patch.verifiedAt) : 0)
           : Date.parse(nextRegistry.meta.updatedAt);
