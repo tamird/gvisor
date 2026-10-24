@@ -1,6 +1,6 @@
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools:defs.bzl", "go_library")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":defs.bzl", "compatibility_test")
 
 package(
@@ -135,7 +135,10 @@ docker_command_test(
     ],
     data = [":mariadb_native"],
     docker_config = ":qualification_mariadb_native_config",
-    exec_properties = docker_test_exec_properties(free_disk = "30GB", memory = "8GB"),
+    exec_properties = docker_test_exec_properties(
+        free_disk = "30GB",
+        memory = "8GB",
+    ),
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
 )
@@ -160,7 +163,10 @@ docker_command_test(
     ],
     data = [":mariadb_runsc"],
     docker_config = ":qualification_mariadb_runsc_config",
-    exec_properties = docker_test_exec_properties(free_disk = "30GB", memory = "8GB"),
+    exec_properties = docker_test_exec_properties(
+        free_disk = "30GB",
+        memory = "8GB",
+    ),
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
 )

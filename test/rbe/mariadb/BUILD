@@ -24,5 +24,6 @@ py_test(
         "//images/compatibility:qualification_mariadb_archives",
         "//images/compatibility:qualification_mariadb_contexts",
     ],
+    imports = ["."],
     tags = ["manual"],
 )
