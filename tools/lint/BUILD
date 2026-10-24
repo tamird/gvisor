@@ -2,7 +2,7 @@ load("@lint_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary")
 load("@rules_python//python/entry_points:py_console_script_binary.bzl", "py_console_script_binary")
 load("//tools:defs.bzl", "bzl_library")
-load(":defs.bzl", "gofmt_tools", "source_lint")
+load(":defs.bzl", "source_lint")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -17,13 +17,10 @@ bzl_library(
     srcs = ["defs.bzl"],
     deps = [
         "//tools/bazeldefs:cgroup_test_bzl",
-        "@platforms//host:constraints_lib",
         "@rules_python//python:defs_bzl",
         "@with_cfg.bzl//:with_cfg",
     ],
 )
-
-gofmt_tools(name = "gofmt")
 
 py_console_script_binary(
     name = "codespell",
@@ -37,16 +34,16 @@ py_binary(
 )
 
 source_lint(
-    name = "gofmt",
-    fix_tool = ":gofmt_fix_tool",
+    name = "goimports",
+    fixable = True,
     groups = ["go"],
-    tool = ":gofmt_check_tool",
+    tool = "@org_golang_x_tools//cmd/goimports",
 )
 
 source_lint(
     name = "clang-format",
     configs = ["clang_configs"],
-    fix_tool = "@llvm//tools:clang-format",
+    fixable = True,
     groups = ["cc"],
     tool = "@llvm//tools:clang-format",
 )
@@ -60,7 +57,7 @@ source_lint(
 
 source_lint(
     name = "buildifier",
-    fix_tool = "@com_github_bazelbuild_buildtools//buildifier",
+    fixable = True,
     groups = ["bazel"],
     tool = "@com_github_bazelbuild_buildtools//buildifier",
 )
@@ -82,7 +79,7 @@ test_suite(
         ":buildifier",
         ":clang-format",
         ":cpplint",
-        ":gofmt",
+        ":goimports",
         ":spelling",
     ],
 )

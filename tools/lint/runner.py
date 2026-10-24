@@ -52,12 +52,16 @@ def formatted_diff(name: str, formatted: str) -> None:
 
 def check(name: str, tool: str, files: list[str], fix: bool) -> int:
   flags = {
-      "gofmt": ["-w", "-l"] if fix else ["-l"],
+      "goimports": ["-format-only"] + (["-w", "-l"] if fix else ["-d"]),
       "clang-format": ["-i"] if fix else ["--dry-run", "-Werror"],
       "buildifier": ["--mode=fix", "--lint=fix"] if fix else ["--mode=check", "--lint=warn"],
       "cpplint": ["--quiet", "--filter=-,+build/include_order,+build/c++11"],
       "spelling": ["--config", "tools/.codespellrc"],
   }[name]
+  if name == "goimports":
+    # Keep the separate import declarations in this golden file: go_generics
+    # tests the positions of their attached comments.
+    files = [f for f in files if f != "tools/go_generics/tests/simple/output.go"]
   if name == "buildifier":
     flags.append("--warnings=" + BUILDIFIER_WARNINGS)
   if name == "clang-format" and not pathlib.Path(".clang-format").is_file():
@@ -78,11 +82,8 @@ def check(name: str, tool: str, files: list[str], fix: bool) -> int:
     failed |= result.returncode != 0
     if fix:
       continue
-    if name == "gofmt" and output:
+    if name == "goimports" and output:
       failed = True
-      # Ask gofmt for its own diff without splitting filenames from -l output.
-      diff = subprocess.run([tool, "-d", *batch], check=False)
-      failed |= diff.returncode != 0
     elif name == "buildifier" and output:
       # --lint=warn may report warnings while returning success.
       failed = True
@@ -105,7 +106,7 @@ def check(name: str, tool: str, files: list[str], fix: bool) -> int:
           print(formatted.stderr, file=sys.stderr, end="")
         else:
           formatted_diff(file, formatted.stdout)
-  if failed and name in ("gofmt", "clang-format", "buildifier") and not fix:
+  if failed and name in ("goimports", "clang-format", "buildifier") and not fix:
     print("Run `make lint-fix` to reformat these files.", file=sys.stderr)
   return int(failed)
 
@@ -113,7 +114,7 @@ def check(name: str, tool: str, files: list[str], fix: bool) -> int:
 def main() -> int:
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument("--check", required=True, choices=(
-      "gofmt", "clang-format", "buildifier", "cpplint", "spelling"))
+      "goimports", "clang-format", "buildifier", "cpplint", "spelling"))
   parser.add_argument("--tool", required=True)
   parser.add_argument("--sources", action="append", required=True)
   parser.add_argument("--configs", action="append", default=[])

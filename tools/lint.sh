@@ -25,14 +25,14 @@ for arg in "$@"; do
   if [[ $arg == --fix ]]; then fix=true; else checks+=("$arg"); fi
 done
 if (( ${#checks[@]} == 0 )); then
-  checks=(gofmt clang-format cpplint buildifier spelling)
+  checks=(goimports clang-format cpplint buildifier spelling)
 fi
 
 targets=()
 optional=()
 for check in "${checks[@]}"; do
   case "$check" in
-    gofmt|clang-format|buildifier)
+    goimports|clang-format|buildifier)
       targets+=("//tools/lint:$check") ;;
     cpplint|spelling)
       if ! "$fix"; then targets+=("//tools/lint:$check"); fi ;;
@@ -42,7 +42,7 @@ for check in "${checks[@]}"; do
   esac
 done
 if "$fix" && (( ${#targets[@]} == 0 )); then
-  echo 'lint: --fix applies only to gofmt clang-format buildifier' >&2
+  echo 'lint: --fix applies only to goimports clang-format buildifier' >&2
   exit 1
 fi
 
