@@ -259,9 +259,9 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, fields structFields
 
 	shared := g.sharedLeaf(fields)
 	if shared {
-		fmt.Fprintf(w, "// +checklocksignore\nfunc (%s *%s) stateVisitFields(v %sFieldVisitor) {\n", recv, name, sp)
+		fmt.Fprintf(w, "// +checklocksignore\nfunc (obj *%s) stateVisitFields(visitor %sFieldVisitor) {\n", name, sp)
 		for slot, f := range fields.saved {
-			fmt.Fprintf(w, "\t%sVisitField(v, %d, &%s.%s, %s, %s)\n", sp, slot, recv, f.name, g.elemFunc(f.typ, false), g.elemFunc(f.typ, true))
+			fmt.Fprintf(w, "\t%sVisitField(visitor, %d, &obj.%s, %s, %s)\n", sp, slot, f.name, g.elemFunc(f.typ, false), g.elemFunc(f.typ, true))
 		}
 		fmt.Fprint(w, "}\n\n")
 	}
