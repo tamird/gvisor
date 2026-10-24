@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import struct
 import subprocess
 import tarfile
 import time
@@ -20,8 +21,59 @@ from image_runtime import prepared_runtime
 
 BENCHMARK = "//test/benchmarks/network:iperf_test"
 RELEASE = "//:release"
+READER = "@com_github_google_pprof//:pprof"
 NAMES = {f"BenchmarkIperfManyConnections/operation.{direction}/parallel.{parallel}": parallel
          for direction in ("Upload", "Download") for parallel in (4, 16, 64)}
+
+
+def build_ids(path: Path) -> dict:
+    """Read the actual ELF notes; Go profiles may omit a GNU build ID."""
+    data = path.read_bytes()
+    if data[:6] != b"\x7fELF\x02\x01":
+        raise ValueError("Expected a little-endian ELF64 sentry")
+    header = struct.unpack_from("<16sHHIQQQIHHHHHH", data)
+    notes = {"gnu": set(), "go": set()}
+    for index in range(header[10]):
+        segment = struct.unpack_from("<IIQQQQQQ", data, header[5] + index * header[9])
+        if segment[0] != 4:  # PT_NOTE
+            continue
+        offset, end = segment[2], segment[2] + segment[5]
+        while offset < end:
+            namesz, descsz, kind = struct.unpack_from("<III", data, offset)
+            offset += 12
+            name = data[offset:offset + namesz].rstrip(b"\0")
+            offset += (namesz + 3) & ~3
+            description = data[offset:offset + descsz]
+            offset += (descsz + 3) & ~3
+            if offset > end or len(description) != descsz:
+                raise ValueError("Truncated ELF note")
+            if (name, kind) == (b"GNU", 3):
+                notes["gnu"].add(description.hex())
+            elif (name, kind) == (b"Go", 4):
+                notes["go"].add(description.decode("ascii"))
+    if any(len(values) > 1 for values in notes.values()) or not any(notes.values()):
+        raise ValueError("Missing or ambiguous sentry build IDs")
+    return {name: next(iter(values), None) for name, values in notes.items()}
+
+
+def profile_summary(text: str, binary: Path, identifiers: dict) -> dict:
+    samples = text.split("Samples:", 1)[1].split("Locations", 1)[0]
+    values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples, re.MULTILINE)]
+    if ("samples/count cpu/nanoseconds" not in " ".join(samples.split()) or not values or
+            sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0):
+        raise ValueError("CPU profile omitted positive native samples")
+    mappings = text.split("\nMappings\n", 1)[1].splitlines()
+    sentry, = [line for line in mappings if "/gvisor_sentry " in line]
+    # The runtime records GNU IDs, not Go IDs. An absent GNU ID is explicitly
+    # retained; the installed-file digest and source/output joins still apply.
+    suffix = sentry.split("/gvisor_sentry ", 1)[1].strip()
+    profile_id = suffix.split()[0] if suffix and not suffix.startswith("[") else None
+    if profile_id is not None and profile_id != identifiers["gnu"]:
+        raise ValueError("Profile GNU build ID differs from its actual sentry")
+    return {"sample_count": sum(value[0] for value in values),
+            "cpu_nanoseconds": sum(value[1] for value in values),
+            "profile_mapping": sentry, "profile_gnu_build_id": profile_id,
+            "binary": {"path": str(binary), **report.file_record(binary), "build_ids": identifiers}}
 
 
 def observations(rows: list[dict], duration: int, omit: int) -> list[dict]:
@@ -59,7 +111,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     tag = "gvisor.dev/images/benchmarks/iperf:latest"
     options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
                "--extra_toolchains=@llvm//toolchain:all", "--remote_download_outputs=all", "--noannounce_rc"]
-    records = {"source": source, "status": "INCOMPLETE", "builds": {}, "samples": [],
+    records = {"source": source, "status": "INCOMPLETE", "builds": {}, "samples": [], "decodes": [],
                "commands": [], "cleanup": "INCOMPLETE", "cleanup_errors": []}
     original_tag = None
     tag_changed = False
@@ -202,7 +254,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         for side, revision in (("before", config["before_source"]), ("after", source)):
             command("switch-" + side, ["git", "switch", "--detach", revision])
             check_source(revision)
-            directory = evidence / "source-builds" / side
+            directory = evidence / ("invocation-" + side + "-build")
             result = invoke(side + "-build", ["build", *options, BENCHMARK, RELEASE], "build",
                             targets=[BENCHMARK, RELEASE], source=revision, directory=directory)
             if result["status"] != "PASS" or result["native_exit"] != 0:
@@ -225,6 +277,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 destination.chmod(0o755)
                 retained[name] = report.file_record(destination)
             records["builds"][side] = {"source": revision, "outputs": outputs, "runtime_files": retained, "benchmark": binary}
+            records["builds"][side]["sentry_build_ids"] = build_ids(private / side / "gvisor-bin/gvisor_sentry")
             report.write_json(directory / "copied-outputs.json", outputs)
 
         iterations = config["iterations"]
@@ -256,10 +309,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     "--test_arg=-test.benchtime=" + str(iterations) + "x", "--test_arg=-test.count=1",
                     "--test_arg=-runtime=" + runtime, "--test_arg=-pprof-cpu=true",
                     "--test_arg=-pprof-dir=" + str(profiles)]
-                analysis_directory = (evidence / "source-builds/before/pilot-analysis" if side == "before"
-                                      else evidence / "invocation-after-pilot-analysis")
-                test_directory = (evidence / "source-builds/before/pilot" if side == "before"
-                                  else evidence / "invocation-after-pilot")
+                analysis_directory = evidence / ("invocation-" + side + "-pilot-analysis")
+                test_directory = evidence / ("invocation-" + side + "-pilot")
                 analysis = invoke(side + "-pilot-analysis", ["test", *selected, "--nobuild", BENCHMARK], "analysis",
                                   targets=[BENCHMARK], source=revision, directory=analysis_directory)
                 if analysis["status"] != "PASS":
@@ -296,38 +347,86 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     path.resolve(strict=True).relative_to(profiles.resolve())
                     if not path.is_file() or path.stat().st_size == 0:
                         raise ValueError("Missing or empty CPU profile: " + str(path))
-                # Read profiles with the declared SDK. Keep this inspection out
-                # of the separately executed timed cohort.
-                decode = shlex.join(["bash", "-c",
-                    'set -eu; go="$1"; shift; '
-                    'for profile in "$@"; do '
-                    '"$go" tool pprof -raw "$profile" > "$profile.raw"; '
-                    '"$go" tool pprof -top -nodecount=40 "$profile" > "$profile.top"; done', "--"])
-                decoded = invoke(side + "-cpu-profiles", ["run", *options, "--run_under=" + decode,
-                    "@io_bazel_rules_go//go:go", "--", *[str(path) for path in sorted(expected_profiles)]],
-                    "command", source=revision, directory=evidence / "source-builds" / side / "cpu-profiles", targets=[])
-                if decoded["status"] != "PASS" or decoded["native_exit"] != 0:
-                    raise RuntimeError("Declared SDK could not decode actual CPU profiles")
-                row["profiles"] = []
-                for path in sorted(expected_profiles):
-                    raw_path = Path(str(path) + ".raw")
-                    text = raw_path.read_text()
-                    samples_text = text.split("Samples:", 1)[1].split("Locations", 1)[0]
-                    if "samples/count cpu/nanoseconds" not in " ".join(samples_text.split()):
-                        raise ValueError("Unexpected CPU profile sample types")
-                    values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples_text, re.MULTILINE)]
-                    if not values or sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0:
-                        raise ValueError("CPU profile has no positive native samples")
-                    row["profiles"].append({"name": str(path.relative_to(profiles / runtime).parent.parent.parent),
-                        "path": str(path.relative_to(evidence)), **report.file_record(path),
-                        "sample_count": sum(value[0] for value in values),
-                        "cpu_nanoseconds": sum(value[1] for value in values),
-                        "raw": report.file_record(raw_path), "top": report.file_record(Path(str(path) + ".top"))})
+                row["profiles"] = [{"name": str(path.relative_to(profiles / runtime).parent.parent.parent),
+                    "path": str(path.relative_to(evidence)), **report.file_record(path)} for path in sorted(expected_profiles)]
                 row["status"] = "PASS"
             if json.loads((directory / "runtime.json").read_text())["cleanup"] != "PASS":
                 raise ValueError("Runtime configuration cleanup failed")
             if sorted(command("containers-after-" + side, ["docker", "ps", "-aq", "--no-trunc"]).split()) != records["containers_before"]:
                 raise ValueError("Pilot left containers after " + side)
+        # Both actual workloads and runtime cleanups finish before any decode.
+        # A report failure cannot prevent the second arm from being captured.
+        command("switch-reader", ["git", "switch", "--detach", source])
+        check_source(source)
+        built = invoke("profile-reader-build", ["build", *options, "--nostamp", READER], "build", targets=[READER])
+        if built["status"] != "PASS" or built["native_exit"] != 0:
+            raise RuntimeError("Declared standalone profile reader build failed")
+        owner, = [report.Owner(item["label"], item["configuration"]) for item in built["expected"]]
+        reader, = report.advertised_build_outputs(evidence / "invocation-profile-reader-build/events.jsonl", {(owner, "default")})
+        executable = materialized(reader)
+        records["reader"] = reader
+
+        batches = [(row["side"], row["profiles"], private / row["side"] / "gvisor-bin/gvisor_sentry",
+                    records["builds"][row["side"]]["sentry_build_ids"]) for row in records["samples"]]
+        historical = config["historical_profiles"]
+        old_bundle = evidence / "historical-profile-supplier.tar.gz"
+        fetch(historical["artifact"], old_bundle)
+        members = report.bundle_members(old_bundle, set(historical["members"]), verify=historical["members"], deadline=deadline)
+        old_build = json.loads(members["source-builds/before/verdict.json"])
+        old_test = json.loads(members["source-builds/before/pilot/verdict.json"])
+        if any(item["source"] != historical["source"] or item["native_exit"] != 0 or item["status"] != "PASS"
+               for item in (old_build, old_test)):
+            raise ValueError("Historical before build/capture was not source-bound native PASS")
+        old_events = evidence / "historical-build-events.jsonl"
+        old_events.write_bytes(members["source-builds/before/events.jsonl"])
+        old_owner, = [report.Owner(item["label"], item["configuration"]) for item in old_build["expected"] if item["label"] == RELEASE]
+        old_outputs = report.advertised_build_outputs(old_events, {(old_owner, "default")})
+        old_sentry, = [item for item in old_outputs if item["name"].endswith("/gvisor-bin/gvisor_sentry")]
+        if any(old_sentry[key] != historical["sentry"][key] for key in ("name", "bytes", "sha256")):
+            raise ValueError("Historical sentry differs from its configured output")
+        old_binary = private / "historical/gvisor_sentry"
+        old_binary.parent.mkdir()
+        fetch(historical["sentry"], old_binary)
+        old_ids = build_ids(old_binary)
+        old_profiles = []
+        for name, member in sorted(historical["profiles"].items()):
+            path = evidence / "historical-profiles" / name / "cpu.pprof"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(members[member])
+            old_profiles.append({"name": name, "path": str(path.relative_to(evidence)), **report.file_record(path)})
+        if {item["name"] for item in old_profiles} != set(NAMES):
+            raise ValueError("Historical profile census differs")
+        records["historical"] = {"supplier": historical, "profiles": old_profiles,
+                                 "sentry_output": old_sentry, "sentry_build_ids": old_ids,
+                                 "scope": "Before-only attribution; excluded from the new matched pair"}
+        batches.append(("historical-before", old_profiles, old_binary, old_ids))
+        wrapper = shlex.join(["timeout", "--signal=TERM", "--kill-after=5s", "45s", "bash", "-c",
+            'set -eu; reader="$1"; binary="$2"; profile="$3"; expected="$4"; '
+            'test "$(sha256sum "$reader" | cut -d " " -f1)" = "$expected"; '
+            'timeout --signal=TERM --kill-after=5s 20s "$reader" -symbolize=none -raw "$binary" "$profile" > "$profile.raw"; '
+            'timeout --signal=TERM --kill-after=5s 20s "$reader" -symbolize=none -top -nodecount=80 "$binary" "$profile" > "$profile.top"', "--"])
+        errors = []
+        for side, profiles, binary, identifiers in batches:
+            for index, item in enumerate(profiles):
+                path = evidence / item["path"]
+                phase = f"{side}-profile-{index}"
+                decoded = invoke(phase, ["run", *options, "--nostamp", "--run_under=" + wrapper, READER, "--",
+                    str(binary), str(path), reader["sha256"]], "command", targets=[])
+                row = {"side": side, "profile": item, "phase": phase, "native": decoded, "status": "FAIL"}
+                records["decodes"].append(row)
+                if decoded["status"] != "PASS" or decoded["native_exit"] != 0:
+                    errors.append(phase + ": native reader failed")
+                    continue
+                try:
+                    row.update(profile_summary(Path(str(path) + ".raw").read_text(), binary, identifiers))
+                    row["reports"] = {suffix: report.file_record(Path(str(path) + suffix)) for suffix in (".raw", ".top")}
+                    row["status"] = "PASS"
+                except (OSError, ValueError) as error:
+                    row["error"] = str(error)
+                    errors.append(phase + ": " + str(error))
+        records["decode_errors"] = errors
+        if errors:
+            raise RuntimeError("Profile reports incomplete: " + "; ".join(errors))
         records["status"] = "PASS"
     finally:
         completed = records["status"]
