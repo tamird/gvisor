@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T00:24:38.153954+00:00",
-  "registryDate": "2026-10-24T00:12:02.187557+00:00",
+  "registryDate": "2026-10-24T00:29:32.595874+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -157711,25 +157711,7 @@
       "updatedAt": "2026-10-15T19:20:15Z"
     }
   },
-  "reviewerHandoff": [
-    {
-      "repo": "google/gvisor",
-      "number": 16085,
-      "head": "53203cabe45f79d8a33d169fb5d669a643982779",
-      "sourceNumber": 16085,
-      "owner": "root",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABfCBPTQ",
-      "url": "https://github.com/google/gvisor/pull/16085#issuecomment-6377459533",
-      "author": "EtiennePerot",
-      "updatedAt": "2026-10-24T00:22:42Z",
-      "newOrChanged": true,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    }
-  ],
+  "reviewerHandoff": [],
   "mergeabilityHandoff": [
     {
       "repo": "google/gvisor",
