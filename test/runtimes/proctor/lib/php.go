@@ -38,6 +38,9 @@ func (phpRunner) ListTests() ([]string, error) {
 
 // TestCmds implements TestRunner.TestCmds.
 func (phpRunner) TestCmds(tests []string) []*exec.Cmd {
-	args := []string{"test", "TESTS=--show-diff " + strings.Join(tests, " ")}
-	return []*exec.Cmd{exec.Command("make", args...)}
+	// PHP's stream_isatty cases need three terminal descriptors so they can
+	// distinguish the streams run-tests.php redirects from the ones it inherits.
+	cmd := exec.Command("script", "--quiet", "--return", "--command", `exec make test "TESTS=$TESTS"`, "/dev/null")
+	cmd.Env = append(cmd.Environ(), "TESTS=-q --show-diff "+strings.Join(tests, " "))
+	return []*exec.Cmd{cmd}
 }
