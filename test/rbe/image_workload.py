@@ -19,7 +19,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     paired = "//test/rbe/state_array_pair:paired_test"
     if config["targets"] != [paired]:
         raise ValueError("Unexpected paired state owner")
-    options = ["--config=x86_64", "--compilation_mode=opt", "--lockfile_mode=error",
+    options = ["--config=x86_64", "--compilation_mode=opt", "--nostamp", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc"]
     workspace = Path.cwd()
     package = workspace / "test/rbe/state_array_pair"
@@ -28,7 +28,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     lock = workspace / "MODULE.bazel.lock"
     lock_identity = report.file_record(lock)
     records = {"status": "INCOMPLETE", "source": source, "before_source": config["before_source"],
-               "builds": [], "inputs": {}, "lock": lock_identity}
+               "builds": [], "inputs": {}, "arm_inputs": config["arm_inputs"], "lock": lock_identity}
 
     def remaining() -> float:
         value = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
@@ -43,23 +43,22 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         if report.file_record(lock) != lock_identity:
             raise ValueError("Matched build lock changed")
         inputs = {}
-        for name, digest in config["matched_inputs"].items():
+        specific = config["arm_inputs"][expected]
+        if set(specific).intersection(config["matched_inputs"]):
+            raise ValueError("A revision-specific input cannot also be shared")
+        for name, digest in (config["matched_inputs"] | specific).items():
             path = workspace / name
             data = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
             if hashlib.sha256(data).hexdigest() != digest:
                 raise ValueError("Matched source input changed: " + name)
             inputs[name] = {"bytes": len(data), "sha256": digest}
-        for name, digest in config["variant_sha256"][expected].items():
-            if report.file_record(workspace / name)["sha256"] != digest:
-                raise ValueError("Codec input differs from selected arm: " + name)
         return inputs
 
     try:
-        records["matched_inputs"] = check_source(source)
+        records["after_inputs"] = check_source(source)
         delta = subprocess.check_output(["git", "diff", "--name-only", config["before_source"], source], text=True, timeout=30).splitlines()
-        expected_delta = sorted(config["variant_sha256"][source])
-        if sorted(config["variant_sha256"][config["before_source"]]) != expected_delta or delta != expected_delta:
-            raise ValueError("Paired sources differ outside the codec experiment: " + repr(delta))
+        if not delta or any(delta != sorted(config["arm_inputs"][rev]) for rev in (config["before_source"], source)):
+            raise ValueError("Paired source delta differs from the declared inputs: " + repr(delta))
         # Reuse the already-qualified benchstat executable, authenticating the
         # entire file on this worker before any measured child can start.
         supplier = config["benchstat"]
@@ -116,6 +115,17 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "output": item})
         subprocess.run(["git", "switch", "--detach", source], check=True, timeout=min(30, remaining()))
         check_source(source)
+        if len({item["sha256"] for item in records["inputs"].values()}) != 2:
+            raise ValueError("The two measured arms resolve to the same executable")
+        checks = [*options, "--runs_per_test=1", "--flaky_test_attempts=1", "--nocache_test_results",
+                  "--test_sharding_strategy=disabled", "--test_env=GO_TEST_WRAP_TESTV=1"]
+        for name, extra, targets in (
+                ("correctness-normal", [], config["correctness_targets"]),
+                ("correctness-race", ["--config=race"], config["correctness_targets"]),
+                ("analyzers", [], config["analyzer_targets"])):
+            result = invoke(name, ["test", *checks, *extra, *targets], "test", targets=targets)
+            if result["status"] != "PASS" or result["case_counts"].get("skipped", 0):
+                raise RuntimeError("State checks failed or skipped: " + name)
         if any((package / name).exists() for name in ("arms", "benchstat", "inputs.json")):
             raise ValueError("Paired package already has staged inputs")
         shutil.copytree(staged / "arms", package / "arms")
@@ -124,7 +134,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         report.write_json(evidence / "paired-inputs.json", records)
         selected = [*options, "--strategy=TestRunner=local", "--nocache_test_results",
                     "--runs_per_test=1", "--flaky_test_attempts=1", "--test_sharding_strategy=disabled",
-                    "--test_output=all", "--nozip_undeclared_test_outputs", "--test_timeout=1200"]
+                    "--test_output=all", "--nozip_undeclared_test_outputs", "--test_timeout=900"]
         analysis = invoke("paired-analysis", ["test", *selected, "--nobuild", paired], "analysis", targets=[paired])
         if analysis["status"] != "PASS":
             raise RuntimeError("Paired benchmark analysis failed")

@@ -31,7 +31,6 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Literal
 import xml.etree.ElementTree as ET
 
 
@@ -44,14 +43,12 @@ class Workload:
 
 
 STATE = 'pkg/state/tests'
-OBJECTS = ('fields', 'bytes', 'arrays', 'arrays_zero', 'floats', 'floats_zero',
-           'nested', 'nested_zero', 'array_maps', 'array_maps_zero')
-COMPATIBILITY_TEST = 'TestCodecStreamCompatibility'
+OBJECTS = ('ptr', 'map', 'slice', 'fields')
+MODES = ('state', 'state-reflect')
 WORKLOADS = {
-    'codec': Workload(STATE, 'tests_test',
-        '^Benchmark(Encoding|Decoding)$/^(' + '|'.join(OBJECTS) + ')$/^state$',
-        tuple(f'Benchmark{operation}/{name}/state'
-              for operation in ('Encoding', 'Decoding') for name in OBJECTS)),
+    'encode': Workload(STATE, 'tests_test',
+        '^BenchmarkEncoding$/^(' + '|'.join(OBJECTS) + ')$/^(' + '|'.join(MODES) + ')$',
+        tuple(f'BenchmarkEncoding/{obj}/{mode}' for obj in OBJECTS for mode in MODES)),
 }
 
 
@@ -62,13 +59,6 @@ class Sample:
     workload: str
     benchtime: str
     measured: bool
-    mode: Literal['benchmark', 'self', 'reject'] = 'benchmark'
-
-
-def compatibility() -> list[Sample]:
-    # Both self streams must exist before either opposite-version read.
-    return [Sample(f'compatibility-{mode}-{side}', side, 'codec', '', False, mode)
-            for mode in ('self', 'reject') for side in ('before', 'after')]
 
 
 def cohort() -> list[Sample]:
@@ -92,6 +82,44 @@ def native_status(code: int) -> int:
     return code if code >= 0 else 128 - code
 
 
+def check_exchange(package: Path, output: Path, manifest: dict, completed: list) -> None:
+    """Restore a checkpoint written by the other arm, including shared and interior pointers."""
+    for writer, reader in (('before', 'after'), ('after', 'before')):
+        wire = output / f'graph-{writer}.wire'
+        for side, mode in ((writer, 'write'), (reader, 'read')):
+            name = f'graph-{writer}-to-{reader}-{mode}'
+            directory = output / name
+            directory.mkdir()
+            arm = package / 'arms' / side
+            binary = arm / '_main' / STATE / 'tests_test'
+            identity = manifest[str(binary.relative_to(package))]
+            xml = directory / 'test.xml'
+            env = dict(os.environ, TEST_SRCDIR=str(arm), TEST_WORKSPACE='_main', RUNFILES_DIR=str(arm),
+                       TEST_BINARY=str(binary), TEST_TMPDIR=str(directory), XML_OUTPUT_FILE=str(xml),
+                       TEST_UNDECLARED_OUTPUTS_DIR=str(directory), GO_TEST_WRAP='1', GO_TEST_WRAP_TESTV='1',
+                       GO_TEST_RUN_FROM_BAZEL='1')
+            env.pop('STATE_GRAPH_INPUT', None)
+            env.pop('STATE_GRAPH_OUTPUT', None)
+            env['STATE_GRAPH_OUTPUT' if mode == 'write' else 'STATE_GRAPH_INPUT'] = str(wire)
+            if mode == 'write' and wire.exists():
+                raise ValueError(f'{wire} already exists before the writer ran')
+            with (directory / 'test.log').open('wb') as log:
+                subprocess.run([str(binary), '-test.run=^TestCodecStandalone$', '-test.count=1', '-test.v'],
+                               env=env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=45)
+            document = ET.parse(xml)
+            cases = document.findall('.//testcase')
+            if [case.get('name') for case in cases] != ['TestCodecStandalone'] or any(
+                    document.findall('.//' + tag) for tag in ('failure', 'error', 'skipped')):
+                raise ValueError(f'{name}: expected one successful TestCodecStandalone')
+            data = wire.read_bytes()
+            digest = hashlib.sha256(data).hexdigest()
+            if not data or (mode == 'read' and completed[-1]['wire_sha256'] != digest):
+                raise ValueError(f'{name}: missing or changed checkpoint')
+            completed.append(dict(name=name, binary_sha256=identity['sha256'], source=identity['source'],
+                                  wire_sha256=digest, wire_bytes=len(data)))
+            write_json(output / 'wire-exchange.json', completed)
+
+
 def child(cpu: int, output: Path, argv: list[str]) -> int:
     # A fresh wrapper makes RUSAGE_CHILDREN refer to this one Go process.
     os.sched_setaffinity(0, {cpu})
@@ -105,7 +133,6 @@ def child(cpu: int, output: Path, argv: list[str]) -> int:
             'inheritedAffinity': sorted(os.sched_getaffinity(0)),
             'testSrcDir': os.environ['TEST_SRCDIR'],
             'testWorkspace': os.environ['TEST_WORKSPACE'],
-            'codecStreamInput': os.environ.get('STATE_CODEC_STREAM_INPUT'),
             'goEnvironment': {key: os.environ.get(key) for key in ('GOMAXPROCS', 'GODEBUG', 'GOGC', 'GOMEMLIMIT', 'GO_TEST_WRAP_TESTV')},
         })
         status = native_status(process.wait())
@@ -137,10 +164,8 @@ def main(package: Path, reporter: Path) -> int:
     cpu = min(os.sched_getaffinity(0))
     assert platform.machine() == 'x86_64', platform.machine()
     plan = cohort()
-    compatibility_plan = compatibility()
     outer_xml = Path(os.environ['XML_OUTPUT_FILE']).resolve()
     write_json(output / 'selection.json', [asdict(row) for row in plan])
-    write_json(output / 'compatibility-selection.json', [asdict(row) for row in compatibility_plan])
     write_json(output / 'host.json', {
         'uname': list(os.uname()), 'cpuinfo': Path('/proc/cpuinfo').read_text(),
         'allowedCpus': sorted(os.sched_getaffinity(0)), 'selectedCpu': cpu,
@@ -160,7 +185,7 @@ def main(package: Path, reporter: Path) -> int:
         assert hashlib.sha256(path.read_bytes()).hexdigest() == identity['sha256'], relative
         assert os.access(path, os.X_OK), relative
     write_json(output / 'inputs.json', inputs)
-    for name in ('selection.json', 'compatibility-selection.json', 'host.json', 'inputs.json'):
+    for name in ('selection.json', 'host.json', 'inputs.json'):
         print(f'PAIR_INPUT {name} ' + (output / name).read_text(), flush=True)
     cancellation = 0
     process: subprocess.Popen[bytes] | None = None
@@ -181,10 +206,11 @@ def main(package: Path, reporter: Path) -> int:
     signal.signal(signal.SIGINT, cancel)
     benchfiles: dict[str, list[str]] = {'before': [], 'after': []}
     completed = []
-    compatible = []
+    exchange = []
     status = 1
     try:
-        for sample in [*compatibility_plan, *plan]:
+        check_exchange(package, output, manifest, exchange)
+        for sample in plan:
             if cancellation:
                 return cancellation
             spec = WORKLOADS[sample.workload]
@@ -194,39 +220,15 @@ def main(package: Path, reporter: Path) -> int:
             binary = arm / '_main' / spec.package / spec.executable
             relative = str(binary.relative_to(package))
             assert relative in manifest, relative
-            timed = sample.mode == 'benchmark'
-            if timed:
-                argv = [str(binary), '-test.run=^$', '-test.bench=' + spec.selector,
-                        '-test.benchtime=' + sample.benchtime, '-test.benchmem',
-                        '-test.count=1', '-test.cpu=1', '-test.v=false']
-            else:
-                argv = [str(binary), '-test.run=^' + COMPATIBILITY_TEST + '$',
-                        '-test.count=1', '-test.cpu=1']
-            test_verbose = '0' if timed else '1'
-            environment = dict(os.environ, GOMAXPROCS='1', GODEBUG='', GO_TEST_WRAP_TESTV=test_verbose,
+            argv = [str(binary), '-test.run=^$', '-test.bench=' + spec.selector,
+                    '-test.benchtime=' + sample.benchtime, '-test.benchmem',
+                    '-test.count=1', '-test.cpu=1', '-test.v=false']
+            environment = dict(os.environ, GOMAXPROCS='1', GODEBUG='', GO_TEST_WRAP_TESTV='0',
                 TEST_SRCDIR=str(arm), TEST_WORKSPACE='_main', RUNFILES_DIR=str(arm),
                 TEST_UNDECLARED_OUTPUTS_DIR=str(directory), XML_OUTPUT_FILE=str(directory / 'test.xml'),
                 TEST_TMPDIR=str(directory / 'tmp'), TEST_BINARY=str(binary), GO_TEST_RUN_FROM_BAZEL='1', GO_TEST_WRAP='1')
             environment.pop('GOGC', None)
             environment.pop('GOMEMLIMIT', None)
-            environment.pop('STATE_CODEC_STREAM_INPUT', None)
-            peer_stream = None
-            if sample.mode == 'reject':
-                peer_side = 'after' if sample.side == 'before' else 'before'
-                peer_file = output / f'compatibility-self-{peer_side}' / 'codec-stream.bin'
-                peer_data = peer_file.read_bytes()
-                match [row for row in compatible if row['mode'] == 'self' and row['side'] == peer_side]:
-                    case [peer_record]:
-                        assert (len(peer_data), hashlib.sha256(peer_data).hexdigest()) == (
-                            peer_record['stream']['bytes'], peer_record['stream']['sha256']), peer_record
-                    case records:
-                        raise ValueError(f'{sample.name}: expected one verified peer stream, got {records!r}')
-                peer_stream = {
-                    'side': peer_side, 'path': str(peer_file), 'bytes': len(peer_data),
-                    'sha256': hashlib.sha256(peer_data).hexdigest(),
-                    'source': manifest[f'arms/{peer_side}/_main/{spec.package}/{spec.executable}']['source'],
-                }
-                environment['STATE_CODEC_STREAM_INPUT'] = str(peer_file)
             (directory / 'tmp').mkdir()
             started = time.monotonic()
             timed_out = False
@@ -267,7 +269,7 @@ def main(package: Path, reporter: Path) -> int:
                 raise
             print(f'PAIR_RAW_BEGIN {sample.name}', flush=True)
             print((directory / 'test.log').read_text(), end='', flush=True)
-            for name in ('status.json', 'child.json', 'usage.json', 'test.xml', 'codec-stream.json'):
+            for name in ('status.json', 'child.json', 'usage.json', 'test.xml'):
                 path = directory / name
                 if path.exists():
                     print(f'PAIR_FILE {sample.name} {name} ' + path.read_text(), flush=True)
@@ -287,7 +289,6 @@ def main(package: Path, reporter: Path) -> int:
                     raise ValueError(f'{sample.name}: invalid RSS report {rss!r}')
             bootstrap = json.loads((directory / 'child.json').read_text())
             assert bootstrap['argv'] == argv and bootstrap['inheritedAffinity'] == [cpu], bootstrap
-            assert bootstrap['codecStreamInput'] == environment.get('STATE_CODEC_STREAM_INPUT'), bootstrap
             usage = json.loads((directory / 'usage.json').read_text())
             assert usage['status'] == record['status'] == 0 and usage['maxRssKiB'] == record['maxRssKiB'], usage
             assert 0 < usage['startedMonotonicNs'] < usage['endedMonotonicNs'], usage
@@ -299,32 +300,8 @@ def main(package: Path, reporter: Path) -> int:
             assert not any(document.findall('.//' + tag) for tag in ('failure', 'error', 'skipped')), sample.name
             assert all(int(node.get(key, '0')) == 0 for node in document.iter() for key in ('failures', 'errors', 'skipped')), sample.name
             assert bootstrap['goEnvironment'] == {
-                'GOMAXPROCS': '1', 'GODEBUG': '', 'GOGC': None, 'GOMEMLIMIT': None, 'GO_TEST_WRAP_TESTV': test_verbose,
+                'GOMAXPROCS': '1', 'GODEBUG': '', 'GOGC': None, 'GOMEMLIMIT': None, 'GO_TEST_WRAP_TESTV': '0',
             }, bootstrap
-            if not timed:
-                names = [node.get('name') for node in document.findall('.//testcase')]
-                assert names == [COMPATIBILITY_TEST], (sample.name, names)
-                assert re.search(r'^--- PASS: ' + COMPATIBILITY_TEST + r' \(', text, re.M), sample.name
-                observed = json.loads((directory / 'codec-stream.json').read_text())
-                stream = (directory / 'codec-stream.bin').read_bytes()
-                assert len(stream) > 0 and (observed['bytes'], observed['sha256']) == (
-                    len(stream), hashlib.sha256(stream).hexdigest()), (sample.name, observed)
-                assert observed['mode'] == sample.mode, (sample.name, observed)
-                assert set(observed['sizes']) == set(OBJECTS), (sample.name, observed)
-                assert all(type(value) is int and value > 0 for value in observed['sizes'].values()), observed
-                if sample.mode == 'self':
-                    assert not observed.get('error'), (sample.name, observed)
-                else:
-                    assert 'incompatible version' in observed['error'], (sample.name, observed)
-                    assert peer_stream is not None
-                    peer_data = Path(peer_stream['path']).read_bytes()
-                    assert (len(peer_data), hashlib.sha256(peer_data).hexdigest()) == (
-                        peer_stream['bytes'], peer_stream['sha256']), peer_stream
-                record.update(stream=observed, peerStream=peer_stream)
-                compatible.append(record)
-                write_json(output / 'compatibility-results.json', compatible)
-                print('PAIR_COMPATIBILITY ' + json.dumps(record), flush=True)
-                continue
             lines = [line for line in text.splitlines() if re.match(r'^Benchmark\S+\s+\d+\s+', line)]
             names = [re.sub(r'-1$', '', line.split()[0]) for line in lines]
             # Go's benchmark fixture iterates maps; preserve its actual order.
@@ -332,11 +309,11 @@ def main(package: Path, reporter: Path) -> int:
             metrics_by_name = {}
             for name, line in zip(names, lines, strict=True):
                 parts = line.split()
-                assert len(parts) == 8 and int(parts[1]) > 0, (sample.name, line)
+                assert len(parts) >= 8 and len(parts) % 2 == 0 and int(parts[1]) > 0, (sample.name, line)
                 units = parts[3::2]
                 assert len(set(units)) == len(units), (sample.name, line)
                 metrics = {parts[i + 1]: float(parts[i]) for i in range(2, len(parts), 2)}
-                assert {'ns/op', 'B/op', 'allocs/op'} == metrics.keys(), (sample.name, metrics)
+                assert {'ns/op', 'B/op', 'allocs/op'} <= metrics.keys(), (sample.name, metrics)
                 assert all(math.isfinite(value) and value >= 0 for value in metrics.values()), (sample.name, metrics)
                 assert metrics['ns/op'] > 0, (sample.name, metrics)
                 metrics_by_name[name] = metrics
@@ -361,12 +338,15 @@ def main(package: Path, reporter: Path) -> int:
         if process is not None:
             signal_group(signal.SIGKILL)
             process.wait()
-        failed = bool(cancellation or status or len(completed) != len(plan)
-                      or len(compatible) != len(compatibility_plan))
+        failed = bool(cancellation or status or len(completed) != len(plan))
         document = ET.Element('testsuites')
+        exchange_suite = ET.SubElement(document, 'testsuite', name='state-checkpoint-exchange',
+                                      tests=str(len(exchange)), failures='0', errors='0')
+        for row in exchange:
+            ET.SubElement(exchange_suite, 'testcase', name=row['name'])
         suite = ET.SubElement(document, 'testsuite', name='state-benchmark-processes',
-            tests=str(len(compatible) + len(completed) + int(failed)), failures=str(int(failed)), errors='0')
-        for row in [*compatible, *completed]:
+            tests=str(len(completed) + int(failed)), failures=str(int(failed)), errors='0')
+        for row in completed:
             ET.SubElement(suite, 'testcase', name=row['name'], time=str(row['elapsedSeconds']))
         if failed:
             case = ET.SubElement(suite, 'testcase', name='incomplete-cohort')
