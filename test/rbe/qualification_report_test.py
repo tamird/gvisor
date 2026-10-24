@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import datetime
+import errno
 import hashlib
 from http.client import RemoteDisconnected
 import io
@@ -3996,12 +3997,13 @@ signal.pause()
                 with mock.patch.object(report.time, "sleep"):
                     value = self.native_collect(metadata, [self.metadata_response(pending),
                                                            TimeoutError("timed out"),
+                                                           OSError(errno.EADDRNOTAVAIL, "no local address"),
                                                            ConnectionResetError("connection reset"),
                                                            RemoteDisconnected("connection closed"),
                                                            self.metadata_response(metadata),
                                                            self.native_response(artifact.read_bytes())])
                 self.assertEqual([retry["error"] for retry in value["observation_retries"]],
-                                 ["TimeoutError", "ConnectionResetError", "RemoteDisconnected"])
+                                 ["TimeoutError", "EADDRNOTAVAIL", "ConnectionResetError", "RemoteDisconnected"])
                 self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
                                  (status, status, "COMPLETE"))
                 for field in ("case_counts", "failures", "missing", "skips", "zero_case_owners",
