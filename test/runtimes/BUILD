@@ -42,6 +42,7 @@ _RUNTIMES = {
     ),
     "php8.5.11": dict(
         lang = "php",
+        native_reference = True,
         partitions = 2,
         shard_count = more_shards,
         source_archive = "//test/docker:php_source_amd64",
