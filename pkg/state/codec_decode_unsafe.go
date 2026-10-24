@@ -57,6 +57,11 @@ type Decoder struct {
 	// by waitObject, or zero.
 	lastRef objectID
 
+	// fullValue distinguishes array and map elements from struct fields.
+	// A zero array field is elided by encodeDefault, but an array encoded
+	// with encodeAsValue must replace its scalar elements, including -0.
+	fullValue bool
+
 	// dots and names are scratch space for target.
 	dots  []dot
 	names []byte
@@ -289,7 +294,10 @@ func (d *Decoder) structValue(p unsafe.Pointer, typ reflect.Type, c Codec) {
 		ds.stats.start(typeID(index))
 		defer ds.stats.done()
 	}
+	fullValue := d.fullValue
+	d.fullValue = false
 	c.StateDecode(ds.ctx, d)
+	d.fullValue = fullValue
 	d.lastRef = 0
 }
 
@@ -476,7 +484,7 @@ type sliceDecoder[T any] struct {
 
 // decode implements typedDecoder.decode.
 func (s sliceDecoder[T]) decode(d *Decoder, ods *objectDecodeState) {
-	DecodeArray(d, unsafe.Slice((*T)(ods.ptr), ods.obj.Len()), s.elem)
+	decodeArray(d, unsafe.Slice((*T)(ods.ptr), ods.obj.Len()), s.elem, false)
 }
 
 // alloc implements arrayDecoder.alloc.
@@ -526,10 +534,26 @@ func (d *Decoder) slice(elemTyp reflect.Type, dec arrayDecoder) (unsafe.Pointer,
 	return ods.ptr, int(length), int(capacity), true
 }
 
-// byteArray decodes an array of n elements of kind uint8 at p.
-func (d *Decoder) byteArray(p unsafe.Pointer, n int) {
-	if n > 0 {
-		wire.ReadFull(d.r, unsafe.Slice((*byte)(p), n))
+// byteArray decodes an array of n elements of kind uint8 at p. In field
+// context, an entirely zero array leaves the destination unchanged.
+func (d *Decoder) byteArray(p unsafe.Pointer, n int, preserveZero bool) {
+	if n == 0 {
+		return
+	}
+	destination := unsafe.Slice((*byte)(p), n)
+	if !preserveZero || bytes.Count(destination, []byte{0}) == n {
+		wire.ReadFull(d.r, destination)
+		return
+	}
+	for offset := 0; offset < n; {
+		value := d.fixed(min(n-offset, 16))
+		if bytes.Count(value, []byte{0}) != len(value) {
+			clear(destination[:offset])
+			offset += copy(destination[offset:], value)
+			wire.ReadFull(d.r, destination[offset:])
+			return
+		}
+		offset += len(value)
 	}
 }
 
@@ -538,7 +562,7 @@ type byteSliceDecoder struct{}
 
 // decode implements typedDecoder.decode.
 func (byteSliceDecoder) decode(d *Decoder, ods *objectDecodeState) {
-	d.byteArray(ods.ptr, ods.obj.Len())
+	d.byteArray(ods.ptr, ods.obj.Len(), false)
 }
 
 // alloc implements arrayDecoder.alloc.
@@ -556,15 +580,54 @@ func (d *Decoder) byteSlice(p unsafe.Pointer, typ reflect.Type) {
 // DecodeArray decodes an array (passed as a slice of the whole array) whose
 // elements are decoded by elem.
 func DecodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T)) {
+	decodeArray(d, a, elem, !d.fullValue)
+}
+
+// scalarArrayKind reports the scalar leaf kind whose array elements must
+// overwrite zero values. Pointer-like values retain their existing nil
+// behavior, and structs must load their fields and hooks normally.
+func scalarArrayKind(typ reflect.Type) reflect.Kind {
+	for typ.Kind() == reflect.Array {
+		typ = typ.Elem()
+	}
+	switch typ.Kind() {
+	case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.String:
+		return typ.Kind()
+	default:
+		return reflect.Invalid
+	}
+}
+
+// decodeArray uses the same element decoders for fields and fresh slice
+// backing arrays. encodeDefault elides a whole zero array, but encodeArray
+// preserves zero elements within a mixed array. Decoding initialized scalar
+// fields into zeroed storage distinguishes these cases without changing the
+// stream or individual scalar decoders. Floating-point arrays also need this
+// distinction in fresh fields because their negative zero is semantically zero
+// but must retain its sign when part of a mixed array.
+func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero bool) {
 	if len(a) == 0 {
 		return
 	}
 	if typeOf[T]().Kind() == reflect.Uint8 {
-		d.byteArray(unsafe.Pointer(&a[0]), len(a))
+		d.byteArray(unsafe.Pointer(&a[0]), len(a), preserveZero)
 		d.lastRef = 0
 		return
 	}
+	var destination []T
+	if kind := scalarArrayKind(typeOf[T]()); preserveZero && kind != reflect.Invalid {
+		signedZero := kind == reflect.Float32 || kind == reflect.Float64 || kind == reflect.Complex64 || kind == reflect.Complex128
+		memory := unsafe.Slice((*byte)(unsafe.Pointer(&a[0])), uintptr(len(a))*unsafe.Sizeof(a[0]))
+		if signedZero || bytes.Count(memory, []byte{0}) != len(memory) {
+			destination = a
+			a = make([]T, len(a))
+		}
+	}
 	ds, ods := d.ds, d.ods
+	fullValue := d.fullValue
+	d.fullValue = true
 	for i := range a {
 		d.lastRef = 0
 		elem(d, &a[i])
@@ -572,7 +635,16 @@ func DecodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T)) {
 			ds.wait(ods, d.lastRef, nil)
 		}
 	}
+	d.fullValue = fullValue
 	d.lastRef = 0
+	if destination != nil {
+		for i := range a {
+			if !reflect.ValueOf(&a[i]).Elem().IsZero() {
+				copy(destination, a)
+				break
+			}
+		}
+	}
 }
 
 // mapDecoder decodes maps, with key; the value decoder is in decArg.
@@ -608,6 +680,8 @@ func (md mapDecoder[M, K, V]) decode(d *Decoder, ods *objectDecodeState) {
 	} else {
 		k, v = new(K), new(V)
 	}
+	fullValue := d.fullValue
+	d.fullValue = true
 	for i := uint64(0); i < n; i++ {
 		if i > 0 {
 			if reuseKey {
@@ -635,6 +709,7 @@ func (md mapDecoder[M, K, V]) decode(d *Decoder, ods *objectDecodeState) {
 		}
 		m[*k] = *v
 	}
+	d.fullValue = fullValue
 	d.lastRef = 0
 }
 
@@ -788,7 +863,7 @@ func (d *Decoder) value(up unsafe.Pointer, typ reflect.Type, pi any) (v any, set
 			d.legacy(reflect.NewAt(typ, up).Elem())
 			break
 		}
-		d.byteArray(up, typ.Len())
+		d.byteArray(up, typ.Len(), !d.fullValue)
 		d.lastRef = 0
 	case reflect.Struct:
 		if typ.NumField() != 0 {
