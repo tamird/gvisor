@@ -138,6 +138,7 @@ type virtualScenario struct {
 	dropOffset    int
 	burstSegments int
 	streaming     bool
+	measureWindow bool
 }
 
 type senderObservation struct {
@@ -174,9 +175,35 @@ type streamRound struct {
 	Probe senderObservation
 }
 
+// recoveryWindow retains exact common-time samples and the packet records
+// needed to distinguish application delivery, wire service, and ACK policy.
+type recoveryWindow struct {
+	Start streamRound
+	End   streamRound
+	// Direction, capture, service start/end, arrival, wire/payload bytes,
+	// retransmission, drop, TCP flags, and ACK number.
+	Packets [][11]int64
+}
+
+const (
+	recoveryWindowStart = 3 * time.Second
+	recoveryWindowEnd   = 5 * time.Second
+)
+
+// TestVirtualTCPRecoveryWindow compares clean and burst-loss recovery on the
+// same path using fixed 3 s and 5 s observations, while each independent sender has demand.
+func TestVirtualTCPRecoveryWindow(t *testing.T) {
+	testVirtualTCPBurstRecovery(t, true)
+}
+
 // TestVirtualTCPBurstRecovery keeps the scenario fixed across algorithms and
 // controls. It measures one finite recovery interval, not the private outage.
 func TestVirtualTCPBurstRecovery(t *testing.T) {
+	testVirtualTCPBurstRecovery(t, false)
+}
+
+func testVirtualTCPBurstRecovery(t *testing.T, measureWindow bool) {
+	t.Helper()
 	if got, want := runtime.GOMAXPROCS(0), 1; got != want {
 		t.Fatalf("GOMAXPROCS = %d, want %d", got, want)
 	}
@@ -193,6 +220,7 @@ func TestVirtualTCPBurstRecovery(t *testing.T) {
 						delay: 50 * time.Millisecond, rate: 12500000,
 						maxTime: 30 * time.Second, bytes: 64 << 20,
 						dropOffset: loss.offset, burstSegments: 8, streaming: true,
+						measureWindow: measureWindow,
 					})
 				})
 			}
@@ -352,6 +380,10 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	repaired := make(map[uint32]bool)
 	var rounds []streamRound
 	var preBurst *streamRound
+	var window *recoveryWindow
+	if scenario.measureWindow {
+		window = &recoveryWindow{}
+	}
 	var demandEndedNS, holesAcknowledgedNS int64
 	var demandEndedDeliveredBytes, holesAcknowledgedDeliveredBytes int
 	var maxOutstandingBeforeBurst uint32
@@ -413,6 +445,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			DemandEndedDeliveredBytes       int
 			HolesAcknowledgedDeliveredBytes int
 			MaxOutstandingBeforeBurst       uint32
+			Window                          *recoveryWindow `json:",omitempty"`
 		}{
 			Case:      t.Name(),
 			Algorithm: string(senderAlgorithm), DropOffset: dropOffset, LostSequence: lostSequence, LostEnd: lostEnd, RecoveryTrace: progress,
@@ -431,7 +464,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			PreBurst: preBurst, Rounds: rounds, Holes: holes,
 			HolesAcknowledgedNS: holesAcknowledgedNS, DemandEndedNS: demandEndedNS,
 			DemandEndedDeliveredBytes: demandEndedDeliveredBytes, HolesAcknowledgedDeliveredBytes: holesAcknowledgedDeliveredBytes,
-			MaxOutstandingBeforeBurst: maxOutstandingBeforeBurst,
+			MaxOutstandingBeforeBurst: maxOutstandingBeforeBurst, Window: window,
 		}
 		encoded, err := json.Marshal(result)
 		if err != nil {
@@ -521,8 +554,28 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 					}
 
 					// Dropped packets still consume their serialization time.
-					nextTX[side] = max(nextTX[side], now()) + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
+					serviceStart := max(nextTX[side], now())
+					nextTX[side] = serviceStart + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
 					at := nextTX[side] + delay
+					if window != nil && ((now() >= recoveryWindowStart && now() <= recoveryWindowEnd) ||
+						(serviceStart < recoveryWindowEnd && nextTX[side] > recoveryWindowStart) ||
+						(at >= recoveryWindowStart && at <= recoveryWindowEnd)) {
+						if got, limit := len(window.Packets), 60000; got >= limit {
+							view.Release()
+							packet.DecRef()
+							t.Fatalf("window packet count = %d, limit %d", got, limit)
+						}
+						var retransmission, drop int64
+						if retransmitted {
+							retransmission = 1
+						}
+						if isLoss {
+							drop = 1
+						}
+						window.Packets = append(window.Packets, [11]int64{int64(side), int64(now()),
+							int64(serviceStart), int64(nextTX[side]), int64(at), int64(packet.Size()),
+							int64(len(payload)), retransmission, drop, int64(segment.Flags()), int64(segment.AckNumber())})
+					}
 					row := packetObservation{
 						AtNS: int64(at), CapturedAtNS: int64(now()), From: side,
 						Sequence: segment.SequenceNumber(), EndSequence: segment.SequenceNumber() + uint32(len(payload)),
@@ -560,6 +613,13 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("transfer exceeded %v virtual time; queued=%d", maxTime, len(pending))
 		}
 		next := now() + quantum
+		if window != nil {
+			for _, boundary := range [...]time.Duration{recoveryWindowStart, recoveryWindowEnd} {
+				if now() < boundary && boundary < next {
+					next = boundary
+				}
+			}
+		}
 		index := -1
 		for i, packet := range pending {
 			if packet.at < next || (packet.at == next && index == -1) {
@@ -752,6 +812,24 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			rounds = append(rounds, sample())
 			nextRound += 100 * time.Millisecond
 		}
+		if window != nil && (now() == recoveryWindowStart || now() == recoveryWindowEnd) {
+			// Drain all equal-time deliveries before taking the boundary snapshot.
+			pendingNow := false
+			for _, packet := range pending {
+				pendingNow = pendingNow || packet.at <= now()
+			}
+			if !pendingNow {
+				row := sample()
+				if row.AppRemainingBytes <= 0 || row.AcceptedBytes <= int(row.CumulativelyAcknowledgedBytes) {
+					t.Fatalf("sender is not backlogged at %v: %+v", now(), row)
+				}
+				if now() == recoveryWindowStart {
+					window.Start = row
+				} else {
+					window.End = row
+				}
+			}
+		}
 		// FIN-WAIT-2 requires the real peer's cumulative ACK of our data and
 		// FIN to have been processed, not merely emitted onto the fake link.
 		if eof && tcp.EndpointState(client.State()) == tcp.StateFinWait2 && len(pending) == 0 {
@@ -762,6 +840,14 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		t.Fatalf("received %d bytes with SHA256 %x, want %d bytes with SHA256 %x", received.Len(), sha256.Sum256(received.Bytes()), len(data), sha256.Sum256(data))
 	}
 	checkAlgorithm()
+	if window != nil {
+		if got, want := window.Start.AtNS, int64(recoveryWindowStart); got != want {
+			t.Fatalf("window start = %d, want %d", got, want)
+		}
+		if got, want := window.End.AtNS, int64(recoveryWindowEnd); got != want {
+			t.Fatalf("window end = %d, want %d", got, want)
+		}
+	}
 	if scenario.streaming {
 		rounds = append(rounds, sample())
 		if dropOffset >= 0 {
