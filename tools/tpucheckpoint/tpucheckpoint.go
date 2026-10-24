@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -90,7 +91,7 @@ func main() {
 		pids       []int
 		action     string
 		getState   bool
-		timeoutSec = 180
+		timeoutSec int32 = 180
 	)
 
 	for i := 0; i < len(args); i++ {
@@ -124,11 +125,11 @@ func main() {
 			if i >= len(args) {
 				fatal("--timeout requires a value")
 			}
-			var err error
-			timeoutSec, err = strconv.Atoi(args[i])
-			if err != nil || timeoutSec <= 0 {
-				fatal("invalid timeout: %s", args[i])
+			secs, err := strconv.ParseUint(args[i], 10, 31)
+			if err != nil || secs == 0 {
+				fatal("invalid timeout %q: must be an integer in [1, %d]", args[i], math.MaxInt32)
 			}
+			timeoutSec = int32(secs)
 		default:
 			fatal("unknown option: %s\nrun 'tpucheckpoint --help' for usage", args[i])
 		}
