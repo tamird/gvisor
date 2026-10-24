@@ -1,22 +1,8 @@
 #!/usr/bin/env python3
-# Copyright 2026 The gVisor Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+"""Run the checkpoint benchmark with matching per-side binaries and runtimes.
 
-"""Run a fixed paired Go benchmark cohort in one Bazel test action.
-
-The two input executables are built from the two source revisions before this
-TestRunner starts. Each observation still starts a new executable process.
+The benchmark owns its GC and timing boundaries. Each fresh process checkpoints
+one common image using the runtime built from the same source as its executable.
 """
 from dataclasses import asdict, dataclass
 import hashlib
@@ -24,219 +10,208 @@ import json
 import math
 import os
 from pathlib import Path
-import platform
 import re
-import resource
 import signal
 import subprocess
 import sys
 import time
-from typing import Literal
+from typing import TypedDict
 import xml.etree.ElementTree as ET
 
 
-@dataclass(frozen=True)
-class Workload:
-    package: str
-    executable: str
-    selector: str
-    benchmarks: tuple[str, ...]
+class FileIdentity(TypedDict):
+    bytes: int
+    sha256: str
 
 
-STATE = 'pkg/state/tests'
-OBJECTS = ('fields', 'bytes', 'arrays', 'arrays_zero', 'floats', 'floats_zero',
-           'nested', 'nested_zero', 'array_maps', 'array_maps_zero')
-COMPATIBILITY_TEST = 'TestCodecStreamCompatibility'
-WORKLOADS = {
-    'codec': Workload(STATE, 'tests_test',
-        '^Benchmark(Encoding|Decoding)$/^(' + '|'.join(OBJECTS) + ')$/^state$',
-        tuple(f'Benchmark{operation}/{name}/state'
-              for operation in ('Encoding', 'Decoding') for name in OBJECTS)),
-}
+class Runfile(FileIdentity):
+    path: str
+
+
+class Harness(TypedDict):
+    source: str
+    owner: dict[str, str]
+    benchmark_source_sha256: str
+    binary: str
+    runfiles_root: str
+    files: dict[str, FileIdentity]
+
+
+class Runtime(TypedDict):
+    name: str
+    source: str
+    configuration: dict[str, object]
+    files: list[Runfile]
+
+
+class Image(TypedDict):
+    tag: str
+    id: str
 
 
 @dataclass(frozen=True)
 class Sample:
     name: str
     side: str
-    workload: str
     benchtime: str
     measured: bool
-    mode: Literal['benchmark', 'self', 'reject'] = 'benchmark'
-
-
-def compatibility() -> list[Sample]:
-    # Both self streams must exist before either opposite-version read.
-    return [Sample(f'compatibility-{mode}-{side}', side, 'codec', '', False, mode)
-            for mode in ('self', 'reject') for side in ('before', 'after')]
 
 
 def cohort() -> list[Sample]:
-    rows = []
-    timed = list(WORKLOADS)
-    for side in ('before', 'after'):
-        for name in timed:
-            rows.append(Sample(f'warmup-{side}-{name}', side, name, '100ms', False))
+    rows = [Sample("warmup-" + side, side, "100ms", False)
+            for side in ("before", "after")]
     for block in range(16):
-        for name in timed:
-            for side in (('before', 'after') if block % 2 == 0 else ('after', 'before')):
-                rows.append(Sample(f'sample-{block:02d}-{side}-{name}', side, name, '1s', True))
+        for side in (("before", "after") if block % 2 == 0 else ("after", "before")):
+            rows.append(Sample(f"sample-{block:02d}-{side}", side, "1s", True))
     return rows
 
 
 def write_json(path: Path, value: object) -> None:
-    path.write_text(json.dumps(value, indent=2) + '\n')
+    path.write_text(json.dumps(value, indent=2) + "\n")
 
 
-def native_status(code: int) -> int:
-    return code if code >= 0 else 128 - code
+def containers() -> set[str]:
+    return set(subprocess.check_output(
+        ["docker", "ps", "--all", "--quiet", "--no-trunc"], text=True, timeout=10).split())
 
 
-def child(cpu: int, output: Path, argv: list[str]) -> int:
-    # A fresh wrapper makes RUSAGE_CHILDREN refer to this one Go process.
-    os.sched_setaffinity(0, {cpu})
-    print('BENCH_GOMAXPROCS=' + os.environ['GOMAXPROCS'], flush=True)
-    print(f'Cpus_allowed_list:\t{cpu}', flush=True)
-    started_monotonic_ns = time.monotonic_ns()
-    started_unix_ns = time.time_ns()
-    with subprocess.Popen(argv) as process:
-        write_json(output / 'child.json', {
-            'pid': process.pid, 'argv': argv,
-            'inheritedAffinity': sorted(os.sched_getaffinity(0)),
-            'testSrcDir': os.environ['TEST_SRCDIR'],
-            'testWorkspace': os.environ['TEST_WORKSPACE'],
-            'codecStreamInput': os.environ.get('STATE_CODEC_STREAM_INPUT'),
-            'goEnvironment': {key: os.environ.get(key) for key in ('GOMAXPROCS', 'GODEBUG', 'GOGC', 'GOMEMLIMIT', 'GO_TEST_WRAP_TESTV')},
-        })
-        status = native_status(process.wait())
-    ended_monotonic_ns = time.monotonic_ns()
-    ended_unix_ns = time.time_ns()
-    try:
-        # This fresh wrapper has reaped only the one Go process tree. CPU time
-        # includes its initialization, calibration and measured iterations.
-        usage = resource.getrusage(resource.RUSAGE_CHILDREN)
-        write_json(output / 'usage.json', {
-            'startedMonotonicNs': started_monotonic_ns,
-            'endedMonotonicNs': ended_monotonic_ns,
-            'startedUnixNs': started_unix_ns,
-            'endedUnixNs': ended_unix_ns,
-            'userSeconds': usage.ru_utime, 'systemSeconds': usage.ru_stime,
-            'maxRssKiB': usage.ru_maxrss, 'status': status,
-        })
-        print(f'BENCH_MAXRSS_KIB={usage.ru_maxrss}', flush=True)
-    except OSError:
-        if status:
-            return status
-        raise
-    return status
+def checked_file(path: Path, identity: FileIdentity) -> None:
+    if (path.stat().st_size != identity["bytes"] or
+            hashlib.sha256(path.read_bytes()).hexdigest() != identity["sha256"]):
+        raise ValueError("File identity changed: " + str(path))
 
 
-def main(package: Path, reporter: Path) -> int:
-    package = package.resolve(strict=True)
-    output = Path(os.environ['TEST_UNDECLARED_OUTPUTS_DIR']).resolve(strict=True)
-    cpu = min(os.sched_getaffinity(0))
-    assert platform.machine() == 'x86_64', platform.machine()
+def check_harness(package: Path, harness: Harness) -> tuple[Path, Path]:
+    root = (package / harness["runfiles_root"]).resolve(strict=True)
+    root.relative_to(package)
+    binary = (package / harness["binary"]).resolve(strict=True)
+    binary.relative_to(package)
+    expected = harness["files"]
+    if not expected or harness["binary"] not in expected:
+        raise ValueError("Benchmark is absent from its file inventory")
+    actual = {str(path.relative_to(package)) for path in root.rglob("*") if path.is_file()}
+    actual.add(harness["binary"])
+    if actual != expected.keys():
+        raise ValueError("Benchmark runfiles inventory changed")
+    for relative, identity in expected.items():
+        path = (package / relative).resolve(strict=True)
+        path.relative_to(package)
+        checked_file(path, identity)
+    if not os.access(binary, os.X_OK):
+        raise ValueError("Benchmark is not executable")
+    if not (root / "_main/test/benchmarks/checkpointfile").is_dir():
+        raise ValueError("Benchmark package runfiles directory is absent")
+    return binary, root
+
+
+def check_runtime(runtime: Runtime) -> None:
+    configuration = json.loads(Path("/etc/docker/daemon.json").read_text())
+    if configuration["runtimes"][runtime["name"]] != runtime["configuration"]:
+        raise ValueError("Runtime registration changed")
+    for row in runtime["files"]:
+        checked_file(Path(row["path"]), row)
+
+
+def check_image(image: Image) -> None:
+    actual = subprocess.check_output(
+        ["docker", "image", "inspect", image["tag"], "--format={{.Id}}"],
+        text=True, timeout=10).strip()
+    if actual != image["id"]:
+        raise ValueError("Checkpoint fixture image changed")
+
+
+def main(reporter: Path) -> int:
+    package = Path(__file__).resolve().parent
+    output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
+    xml = Path(os.environ["XML_OUTPUT_FILE"])
+    manifest = json.loads((package / "inputs.json").read_text())
+    if os.uname().machine != "x86_64" or os.geteuid() != 0:
+        raise ValueError("Checkpoint benchmark requires a root AMD64 worker")
+    if set(manifest["harnesses"]) != {"before", "after"} or set(manifest["runtimes"]) != {"before", "after"}:
+        raise ValueError("Expected exactly two source-matched arms")
+    observed = {}
+    for side in ("before", "after"):
+        harness = manifest["harnesses"][side]
+        runtime = manifest["runtimes"][side]
+        if (not re.fullmatch(r"[0-9a-f]{40}", harness["source"]) or harness["source"] != runtime["source"] or
+                harness["owner"]["label"] != "//test/benchmarks/checkpointfile:checkpointfile_test" or
+                not harness["owner"]["configuration"] or
+                harness["runfiles_root"] != "arms/" + side + "/benchmark.runfiles" or
+                harness["binary"] != "arms/" + side + "/benchmark" or
+                not re.fullmatch(r"[0-9a-f]{64}", harness["benchmark_source_sha256"])):
+            raise ValueError("Benchmark/runtime source or configured owner differs: " + side)
+        binary, runfiles = check_harness(package, harness)
+        observed[side] = {"path": str(binary), "runfiles_root": str(runfiles),
+                          **harness["files"][harness["binary"]],
+                          "source": harness["source"], "owner": harness["owner"]}
+        check_runtime(runtime)
+    if manifest["harnesses"]["before"]["benchmark_source_sha256"] != manifest["harnesses"]["after"]["benchmark_source_sha256"]:
+        raise ValueError("Benchmark source must be identical across arms")
+    write_json(output / "harness-identity.json", observed)
+    checked_file(reporter, manifest["benchstat"])
+    check_image(manifest["image"])
+    initial_containers = containers()
     plan = cohort()
-    compatibility_plan = compatibility()
-    outer_xml = Path(os.environ['XML_OUTPUT_FILE']).resolve()
-    write_json(output / 'selection.json', [asdict(row) for row in plan])
-    write_json(output / 'compatibility-selection.json', [asdict(row) for row in compatibility_plan])
-    write_json(output / 'host.json', {
-        'uname': list(os.uname()), 'cpuinfo': Path('/proc/cpuinfo').read_text(),
-        'allowedCpus': sorted(os.sched_getaffinity(0)), 'selectedCpu': cpu,
-        'bootID': Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+    write_json(output / "selection.json", [asdict(row) for row in plan])
+    write_json(output / "inputs.json", manifest)
+    write_json(output / "host.json", {
+        "uname": list(os.uname()), "cpuinfo": Path("/proc/cpuinfo").read_text(),
+        "allowedCpus": sorted(os.sched_getaffinity(0)),
+        "bootID": Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+        "initialContainers": sorted(initial_containers),
     })
-    inputs = json.loads((package / 'inputs.json').read_text())
-    manifest = inputs['binaries']
-    assert reporter.samefile(package / 'benchstat'), reporter
-    assert reporter.stat().st_size == inputs['benchstat']['bytes']
-    assert hashlib.sha256(reporter.read_bytes()).hexdigest() == inputs['benchstat']['sha256']
-    assert os.access(reporter, os.X_OK)
-    required = {f'arms/{row.side}/_main/{WORKLOADS[row.workload].package}/{WORKLOADS[row.workload].executable}' for row in plan}
-    assert set(manifest) == required, (set(manifest), required)
-    for relative, identity in manifest.items():
-        path = package / relative
-        assert path.stat().st_size == identity['size'], relative
-        assert hashlib.sha256(path.read_bytes()).hexdigest() == identity['sha256'], relative
-        assert os.access(path, os.X_OK), relative
-    write_json(output / 'inputs.json', inputs)
-    for name in ('selection.json', 'compatibility-selection.json', 'host.json', 'inputs.json'):
-        print(f'PAIR_INPUT {name} ' + (output / name).read_text(), flush=True)
+    for name in ("selection.json", "inputs.json", "harness-identity.json", "host.json"):
+        print(f"PAIR_INPUT {name} " + (output / name).read_text(), flush=True)
     cancellation = 0
-    process: subprocess.Popen[bytes] | None = None
+    process = None
+    completed = []
+    benchfiles = {"before": [], "after": []}
+    status = 1
 
-    def signal_group(signum: int) -> None:
-        if process is not None:
-            try:
-                os.killpg(process.pid, signum)
-            except ProcessLookupError:
-                pass  # The process group already exited.
-
-    def cancel(signum: int, _frame: object) -> None:
+    def cancel(signum, _frame):
         nonlocal cancellation
         cancellation = 128 + signum
-        signal_group(signal.SIGTERM)
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
 
     signal.signal(signal.SIGTERM, cancel)
     signal.signal(signal.SIGINT, cancel)
-    benchfiles: dict[str, list[str]] = {'before': [], 'after': []}
-    completed = []
-    compatible = []
-    status = 1
     try:
-        for sample in [*compatibility_plan, *plan]:
+        for sample in plan:
+            harness = manifest["harnesses"][sample.side]
+            runtime = manifest["runtimes"][sample.side]
+            binary, runfiles = check_harness(package, harness)
+            check_runtime(runtime)
+            check_image(manifest["image"])
             if cancellation:
                 return cancellation
-            spec = WORKLOADS[sample.workload]
+            if containers() != initial_containers:
+                raise RuntimeError("Container inventory changed before " + sample.name)
             directory = output / sample.name
             directory.mkdir()
-            arm = package / 'arms' / sample.side
-            binary = arm / '_main' / spec.package / spec.executable
-            relative = str(binary.relative_to(package))
-            assert relative in manifest, relative
-            timed = sample.mode == 'benchmark'
-            if timed:
-                argv = [str(binary), '-test.run=^$', '-test.bench=' + spec.selector,
-                        '-test.benchtime=' + sample.benchtime, '-test.benchmem',
-                        '-test.count=1', '-test.cpu=1', '-test.v=false']
-            else:
-                argv = [str(binary), '-test.run=^' + COMPATIBILITY_TEST + '$',
-                        '-test.count=1', '-test.cpu=1']
-            test_verbose = '0' if timed else '1'
-            environment = dict(os.environ, GOMAXPROCS='1', GODEBUG='', GO_TEST_WRAP_TESTV=test_verbose,
-                TEST_SRCDIR=str(arm), TEST_WORKSPACE='_main', RUNFILES_DIR=str(arm),
-                TEST_UNDECLARED_OUTPUTS_DIR=str(directory), XML_OUTPUT_FILE=str(directory / 'test.xml'),
-                TEST_TMPDIR=str(directory / 'tmp'), TEST_BINARY=str(binary), GO_TEST_RUN_FROM_BAZEL='1', GO_TEST_WRAP='1')
-            environment.pop('GOGC', None)
-            environment.pop('GOMEMLIMIT', None)
-            environment.pop('STATE_CODEC_STREAM_INPUT', None)
-            peer_stream = None
-            if sample.mode == 'reject':
-                peer_side = 'after' if sample.side == 'before' else 'before'
-                peer_file = output / f'compatibility-self-{peer_side}' / 'codec-stream.bin'
-                peer_data = peer_file.read_bytes()
-                match [row for row in compatible if row['mode'] == 'self' and row['side'] == peer_side]:
-                    case [peer_record]:
-                        assert (len(peer_data), hashlib.sha256(peer_data).hexdigest()) == (
-                            peer_record['stream']['bytes'], peer_record['stream']['sha256']), peer_record
-                    case records:
-                        raise ValueError(f'{sample.name}: expected one verified peer stream, got {records!r}')
-                peer_stream = {
-                    'side': peer_side, 'path': str(peer_file), 'bytes': len(peer_data),
-                    'sha256': hashlib.sha256(peer_data).hexdigest(),
-                    'source': manifest[f'arms/{peer_side}/_main/{spec.package}/{spec.executable}']['source'],
-                }
-                environment['STATE_CODEC_STREAM_INPUT'] = str(peer_file)
-            (directory / 'tmp').mkdir()
+            (directory / "tmp").mkdir()
+            argv = [str(binary), "-test.run=^$", "-test.bench=^BenchmarkCheckpointFile$",
+                    "-test.benchtime=" + sample.benchtime, "-test.benchmem", "-test.count=1",
+                    "-test.cpu=1", "-test.v=false", "-runtime=" + manifest["runtimes"][sample.side]["name"],
+                    "-config_path=/etc/docker/daemon.json", "-test-checkpoint=true",
+                    "-oci-bundle-root=" + manifest["oci_bundle_root"]]
+            environment = dict(os.environ, GOMAXPROCS="1", GO_TEST_WRAP="1",
+                GO_TEST_RUN_FROM_BAZEL="1", TEST_BINARY=str(binary),
+                TEST_TMPDIR=str(directory / "tmp"), XML_OUTPUT_FILE=str(directory / "test.xml"),
+                TEST_UNDECLARED_OUTPUTS_DIR=str(directory), TEST_SRCDIR=str(runfiles),
+                RUNFILES_DIR=str(runfiles), TEST_WORKSPACE="_main")
+            environment.pop("RUNFILES_MANIFEST_FILE", None)
             started = time.monotonic()
             timed_out = False
-            with (directory / 'test.log').open('wb') as log:
-                process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--child',
-                    str(cpu), str(directory), *argv], env=environment, stdout=log,
-                    stderr=subprocess.STDOUT, start_new_session=True)
+            with (directory / "test.log").open("wb") as log:
+                process = subprocess.Popen(argv, env=environment, stdout=log,
+                                           stderr=subprocess.STDOUT, start_new_session=True)
                 try:
                     while process.poll() is None and not cancellation:
-                        remaining = 60 - (time.monotonic() - started)
+                        remaining = 180 - (time.monotonic() - started)
                         if remaining <= 0:
                             timed_out = True
                             break
@@ -246,144 +221,115 @@ def main(package: Path, reporter: Path) -> int:
                             pass
                 finally:
                     if process.poll() is None:
-                        signal_group(signal.SIGTERM)
+                        os.killpg(process.pid, signal.SIGTERM)
                         try:
                             process.wait(timeout=5)
                         except subprocess.TimeoutExpired:
-                            signal_group(signal.SIGKILL)
-                            process.wait()
-                status = cancellation or (124 if timed_out else native_status(process.returncode))
+                            os.killpg(process.pid, signal.SIGKILL)
+                            process.wait(timeout=5)
+                status = cancellation or (124 if timed_out else process.returncode if process.returncode >= 0 else 128 - process.returncode)
                 if cancellation or timed_out:
-                    # The wrapper can exit before its Go descendant; retain the
-                    # process-group identity until descendants are terminated.
-                    signal_group(signal.SIGKILL)
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
                 process = None
-            record = dict(asdict(sample), status=status, elapsedSeconds=time.monotonic() - started)
-            try:
-                write_json(directory / 'status.json', record)
-            except OSError:
-                if status:
-                    return status
-                raise
-            print(f'PAIR_RAW_BEGIN {sample.name}', flush=True)
-            print((directory / 'test.log').read_text(), end='', flush=True)
-            for name in ('status.json', 'child.json', 'usage.json', 'test.xml', 'codec-stream.json'):
+            row = dict(asdict(sample), status=status, argv=argv,
+                       elapsedSeconds=time.monotonic() - started)
+            write_json(directory / "status.json", row)
+            text = (directory / "test.log").read_text().replace("\x16", "")
+            print(f"PAIR_RAW_BEGIN {sample.name}\n{text}", flush=True)
+            for name in ("status.json", "test.xml"):
                 path = directory / name
                 if path.exists():
-                    print(f'PAIR_FILE {sample.name} {name} ' + path.read_text(), flush=True)
-            print(f'PAIR_RAW_END {sample.name}', flush=True)
+                    print(f"PAIR_FILE {sample.name} {name} " + path.read_text(), flush=True)
+            print(f"PAIR_RAW_END {sample.name}", flush=True)
             if status:
                 return status
-            status = 1  # Evidence failures must not turn a successful child into a successful cohort.
-            text = (directory / 'test.log').read_text().replace('\x16', '')
-            assert re.search(r'^PASS$', text, re.M) and not re.search(r'^FAIL(?:\s|$)', text, re.M), sample.name
-            assert 'BENCH_GOMAXPROCS=1' in text, sample.name
-            assert re.search(r'^Cpus_allowed_list:\s*' + str(cpu) + r'\s*$', text, re.M), sample.name
-            rss = re.findall(r'^BENCH_MAXRSS_KIB=(\d+)$', text, re.M)
-            match rss:
-                case [value] if int(value) > 0:
-                    record['maxRssKiB'] = int(value)
-                case _:
-                    raise ValueError(f'{sample.name}: invalid RSS report {rss!r}')
-            bootstrap = json.loads((directory / 'child.json').read_text())
-            assert bootstrap['argv'] == argv and bootstrap['inheritedAffinity'] == [cpu], bootstrap
-            assert bootstrap['codecStreamInput'] == environment.get('STATE_CODEC_STREAM_INPUT'), bootstrap
-            usage = json.loads((directory / 'usage.json').read_text())
-            assert usage['status'] == record['status'] == 0 and usage['maxRssKiB'] == record['maxRssKiB'], usage
-            assert 0 < usage['startedMonotonicNs'] < usage['endedMonotonicNs'], usage
-            assert usage['startedUnixNs'] > 0 and usage['endedUnixNs'] > 0, usage
-            assert all(math.isfinite(usage[key]) and usage[key] >= 0
-                       for key in ('userSeconds', 'systemSeconds')), usage
-            record['processUsage'] = usage
-            document = ET.parse(directory / 'test.xml')
-            assert not any(document.findall('.//' + tag) for tag in ('failure', 'error', 'skipped')), sample.name
-            assert all(int(node.get(key, '0')) == 0 for node in document.iter() for key in ('failures', 'errors', 'skipped')), sample.name
-            assert bootstrap['goEnvironment'] == {
-                'GOMAXPROCS': '1', 'GODEBUG': '', 'GOGC': None, 'GOMEMLIMIT': None, 'GO_TEST_WRAP_TESTV': test_verbose,
-            }, bootstrap
-            if not timed:
-                names = [node.get('name') for node in document.findall('.//testcase')]
-                assert names == [COMPATIBILITY_TEST], (sample.name, names)
-                assert re.search(r'^--- PASS: ' + COMPATIBILITY_TEST + r' \(', text, re.M), sample.name
-                observed = json.loads((directory / 'codec-stream.json').read_text())
-                stream = (directory / 'codec-stream.bin').read_bytes()
-                assert len(stream) > 0 and (observed['bytes'], observed['sha256']) == (
-                    len(stream), hashlib.sha256(stream).hexdigest()), (sample.name, observed)
-                assert observed['mode'] == sample.mode, (sample.name, observed)
-                assert set(observed['sizes']) == set(OBJECTS), (sample.name, observed)
-                assert all(type(value) is int and value > 0 for value in observed['sizes'].values()), observed
-                if sample.mode == 'self':
-                    assert not observed.get('error'), (sample.name, observed)
-                else:
-                    assert 'incompatible version' in observed['error'], (sample.name, observed)
-                    assert peer_stream is not None
-                    peer_data = Path(peer_stream['path']).read_bytes()
-                    assert (len(peer_data), hashlib.sha256(peer_data).hexdigest()) == (
-                        peer_stream['bytes'], peer_stream['sha256']), peer_stream
-                record.update(stream=observed, peerStream=peer_stream)
-                compatible.append(record)
-                write_json(output / 'compatibility-results.json', compatible)
-                print('PAIR_COMPATIBILITY ' + json.dumps(record), flush=True)
-                continue
-            lines = [line for line in text.splitlines() if re.match(r'^Benchmark\S+\s+\d+\s+', line)]
-            names = [re.sub(r'-1$', '', line.split()[0]) for line in lines]
-            # Go's benchmark fixture iterates maps; preserve its actual order.
-            assert len(names) == len(spec.benchmarks) and set(names) == set(spec.benchmarks), (sample.name, names)
-            metrics_by_name = {}
-            for name, line in zip(names, lines, strict=True):
+            status = 1
+            check_harness(package, harness)
+            check_runtime(runtime)
+            check_image(manifest["image"])
+            if containers() != initial_containers:
+                raise RuntimeError("Benchmark cleanup left containers after " + sample.name)
+            if not re.search(r"^PASS$", text, re.M) or re.search(r"^FAIL(?:\s|$)", text, re.M):
+                raise ValueError("Benchmark did not report PASS")
+            document = ET.parse(directory / "test.xml")
+            if (any(document.findall(".//" + tag) for tag in ("failure", "error", "skipped")) or
+                    any(int(node.get(key, "0")) for node in document.iter() for key in ("failures", "errors", "skipped"))):
+                raise ValueError("Benchmark XML reports a failure or skip")
+            lines = [line for line in text.splitlines() if re.match(r"^Benchmark\S+\s+\d+\s+", line)]
+            expected = {
+                "BenchmarkCheckpointFile/Decode": {"ns/op", "B/op", "allocs/op", "cpu-ns",
+                    "state-file-B", "pages-file-B", "pages-metadata-B", "checkpoint-total-B"},
+                "BenchmarkCheckpointFile/Encode": {"ns/op", "B/op", "allocs/op", "cpu-ns", "encoded-kernel-B"},
+            }
+            measured = {}
+            for line in lines:
                 parts = line.split()
-                assert len(parts) == 8 and int(parts[1]) > 0, (sample.name, line)
-                units = parts[3::2]
-                assert len(set(units)) == len(units), (sample.name, line)
+                name = re.sub(r"-1$", "", parts[0])
+                if name not in expected or name in measured or len(parts) % 2:
+                    raise ValueError("Unexpected or duplicate checkpoint benchmark row")
                 metrics = {parts[i + 1]: float(parts[i]) for i in range(2, len(parts), 2)}
-                assert {'ns/op', 'B/op', 'allocs/op'} == metrics.keys(), (sample.name, metrics)
-                assert all(math.isfinite(value) and value >= 0 for value in metrics.values()), (sample.name, metrics)
-                assert metrics['ns/op'] > 0, (sample.name, metrics)
-                metrics_by_name[name] = metrics
-            record.update(metrics=metrics_by_name, rows=lines)
-            completed.append(record)
+                if (len(metrics) != (len(parts) - 2) // 2 or set(metrics) != expected[name] or
+                        int(parts[1]) <= 0 or
+                        not all(math.isfinite(value) and value >= 0 for value in metrics.values()) or
+                        metrics["ns/op"] <= 0 or metrics["cpu-ns"] <= 0):
+                    raise ValueError("Invalid checkpoint benchmark measurements")
+                measured[name] = {"iterations": int(parts[1]), "metrics": metrics, "row": line}
+            if measured.keys() != expected.keys():
+                raise ValueError("Expected both Decode and Encode benchmark results")
+            row.update(benchmarks=measured, source=harness["source"], harness=observed[sample.side],
+                       runtime=runtime["name"])
+            completed.append(row)
             if sample.measured:
-                benchfiles[sample.side].extend(['pkg: gvisor.dev/gvisor/' + spec.package, *lines])
-        write_json(output / 'process-results.json', completed)
+                benchfiles[sample.side].extend(lines)
+        write_json(output / "process-results.json", completed)
+        print("PAIR_RESULTS " + json.dumps(completed), flush=True)
         for side, lines in benchfiles.items():
-            (output / f'{side}.bench').write_text('goos: linux\ngoarch: amd64\n' + '\n'.join(lines) + '\n')
-        print('PAIR_RESULTS ' + json.dumps(completed), flush=True)
-        print('PAIR_BENCHSTAT_BEGIN', flush=True)
-        subprocess.run([str(reporter), str(output / 'before.bench'),
-                        str(output / 'after.bench')], check=True, timeout=60)
-        print('PAIR_BENCHSTAT_END', flush=True)
-        if cancellation:
-            return cancellation
-        print('PASS', flush=True)
+            (output / (side + ".bench")).write_text(
+                "goos: linux\ngoarch: amd64\npkg: gvisor.dev/gvisor/test/benchmarks/checkpointfile\n" + "\n".join(lines) + "\n")
+        result = subprocess.run([str(reporter), str(output / "before.bench"), str(output / "after.bench")],
+                                check=True, text=True, capture_output=True, timeout=60)
+        (output / "benchstat.txt").write_text(result.stdout)
+        print(result.stdout, flush=True)
         status = 0
         return cancellation or status
     finally:
         if process is not None:
-            signal_group(signal.SIGKILL)
-            process.wait()
-        failed = bool(cancellation or status or len(completed) != len(plan)
-                      or len(compatible) != len(compatibility_plan))
-        document = ET.Element('testsuites')
-        suite = ET.SubElement(document, 'testsuite', name='state-benchmark-processes',
-            tests=str(len(compatible) + len(completed) + int(failed)), failures=str(int(failed)), errors='0')
-        for row in [*compatible, *completed]:
-            ET.SubElement(suite, 'testcase', name=row['name'], time=str(row['elapsedSeconds']))
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                status = status or 1
+                write_json(output / "process-cleanup.json", {
+                    "pid": process.pid, "status": "FAIL",
+                    "error": "Benchmark process did not exit within five seconds after SIGKILL",
+                })
+        final_containers = containers()
+        if final_containers != initial_containers:
+            status = status or 1
+            write_json(output / "container-cleanup.json", {
+                "status": "FAIL", "initial": sorted(initial_containers),
+                "final": sorted(final_containers),
+                "error": "Container inventory changed; unknown containers were not removed.",
+            })
+        failed = bool(cancellation or status or len(completed) != len(plan) or final_containers != initial_containers)
+        document = ET.Element("testsuites")
+        suite = ET.SubElement(document, "testsuite", name="checkpoint-benchmark-processes",
+                              tests=str(len(completed) + int(failed)), failures=str(int(failed)), errors="0")
+        for row in completed:
+            ET.SubElement(suite, "testcase", name=row["name"], time=str(row["elapsedSeconds"]))
         if failed:
-            case = ET.SubElement(suite, 'testcase', name='incomplete-cohort')
-            ET.SubElement(case, 'failure').text = 'A native child or required evidence failed; inspect retained outputs.'
-        try:
-            ET.ElementTree(document).write(outer_xml, encoding='utf-8', xml_declaration=True)
-        except OSError:
+            case = ET.SubElement(suite, "testcase", name="incomplete-cohort")
+            ET.SubElement(case, "failure").text = "Native execution, evidence, or cleanup failed."
+        ET.ElementTree(document).write(xml, encoding="utf-8", xml_declaration=True)
+        if failed:
             return cancellation or status or 1
-        if cancellation:
-            return cancellation
 
 
-if __name__ == '__main__':
-    match sys.argv[1:]:
-        case ['--child', cpu, output, *argv] if argv:
-            raise SystemExit(child(int(cpu), Path(output), argv))
-        case [reporter]:
-            raise SystemExit(main(Path(__file__).absolute().parent, Path(reporter).resolve(strict=True)))
-        case _:
-            raise SystemExit('Expected BENCHSTAT, or --child CPU OUTPUT EXECUTABLE ARGS')
+if __name__ == "__main__":
+    raise SystemExit(main(Path(sys.argv[1]).resolve(strict=True)))

@@ -1,21 +1,17 @@
 load("@rules_python//python:py_test.bzl", "py_test")
 
-# Diagnostic-only input files are staged from the two source-bound builds.
+# The callback stages each source's executable and complete runfiles together.
 py_test(
     name = "paired_test",
     size = "large",
     timeout = "long",
     srcs = ["run.py"],
-    args = ["$(rootpath :benchstat)"],
+    args = ["$(rootpath benchstat)"],
     data = [
-        "arms/after/_main/pkg/state/tests/tests_test",
-        "arms/before/_main/pkg/state/tests/tests_test",
         "benchstat",
         "inputs.json",
-    ],
+    ] + glob(["arms/**"]),
+    local = True,
     main = "run.py",
-    tags = [
-        "manual",
-        "qualification-output",
-    ],
+    tags = ["manual"],
 )
