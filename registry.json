@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T06:03:23.633308+00:00",
+    "updatedAt": "2026-10-24T06:19:32.054223+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3697,14 +3697,14 @@
       "title": "Update Benchmark to 1.10.0",
       "url": "https://github.com/google/gvisor/pull/15376",
       "group": "bazel",
-      "status": "open",
-      "summary": "The published adf6f31f9c has Etienne’s approval, but matching public import #16302 failed Include Cleaner after the Benchmark header split. The combined correction at 27d637b14c now passes the focused public Make lint and all 28 explicit native Clang checks. Root has requested a contributor decision on that amendment; the live source and its maintainer approval remain unchanged. BCR publication and the former registry propagation hold are complete.\n\nEarlier source-specific record:\n\nBCR #11314 is merged and root verified the published google_benchmark 1.10.0 registry data. The registry-only change is OPEN, non-draft and MERGEABLE at adf6f31f9c149 on current master 173413b49a. Root verified the same two-file patch is unchanged from 9f6e30aa9; the rebase retriggers checks that previously failed because BCR data were not yet published. The earlier approval applied to the archive-override version, so root owns one rereview request for the registry-only change. Track fresh current-head CI and that review; no duplicate notice or obsolete draft/propagation action.\n\nPreserved conflict diagnosis:\n\nThe fork branch 2da52bbf9fa6 has a verified MODULE.bazel conflict with upstream master 5ed0fe4dba8d. GitHub still identifies the older PR head 86e93d6a1e10 and reports CONFLICTING against older base 7d17d8564110; independent Git merge checks find that old PR head clean against both bases. Root owns the branch repair and subsequent public-head verification. The prior wait-for-synchronization action did not resolve the fork conflict and is superseded.\n\nPreserved earlier observations:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 2da52bbf9fa6, while GitHub's PR and upstream pull ref still identify 86e93d6a1e10 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 86e93d6a1e10 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
+      "status": "merged",
+      "summary": "Merged on 2026-10-24 at 06:03:57 UTC at source adf6f31f9c; matching import #16306 landed bd4908a0 at 06:03:54 UTC and the older import #16302 closed. The Benchmark 1.10.0/BCR prerequisite is satisfied. The separately reviewed umbrella-header annotations were not part of this source head and are now tracked in standalone PR #16313; no action is requested on the merged PR.\n\nPreserved pre-merge history:\n\nThe published adf6f31f9c has Etienne’s approval, but matching public import #16302 failed Include Cleaner after the Benchmark header split. The combined correction at 27d637b14c now passes the focused public Make lint and all 28 explicit native Clang checks. Root has requested a contributor decision on that amendment; the live source and its maintainer approval remain unchanged. BCR publication and the former registry propagation hold are complete.\n\nEarlier source-specific record:\n\nBCR #11314 is merged and root verified the published google_benchmark 1.10.0 registry data. The registry-only change is OPEN, non-draft and MERGEABLE at adf6f31f9c149 on current master 173413b49a. Root verified the same two-file patch is unchanged from 9f6e30aa9; the rebase retriggers checks that previously failed because BCR data were not yet published. The earlier approval applied to the archive-override version, so root owns one rereview request for the registry-only change. Track fresh current-head CI and that review; no duplicate notice or obsolete draft/propagation action.\n\nPreserved conflict diagnosis:\n\nThe fork branch 2da52bbf9fa6 has a verified MODULE.bazel conflict with upstream master 5ed0fe4dba8d. GitHub still identifies the older PR head 86e93d6a1e10 and reports CONFLICTING against older base 7d17d8564110; independent Git merge checks find that old PR head clean against both bases. Root owns the branch repair and subsequent public-head verification. The prior wait-for-synchronization action did not resolve the fork conflict and is superseded.\n\nPreserved earlier observations:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 2da52bbf9fa6, while GitHub's PR and upstream pull ref still identify 86e93d6a1e10 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 86e93d6a1e10 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved update to Benchmark 1.10.0 is published at 639c23a171. It removes the local thread-safety backport and updates the generated license catalog. Canonical Fetch and Verify pass. The reviewed Clang/libc++ composition builds both Benchmark libraries with 20 fresh remote Clang 23 compile actions under thread-safety warnings as errors. This is build and license evidence, with no benchmark-performance claim. The approved title, description and maintainer reply are delivered; current-head checks and maintainer review remain observable below. The October 14 release comment was captured but left without an updated action; that handling miss is retained, and the existing event reducer now carries untriaged human comments until an explicit URL-bound disposition records their handling. The retained replacement comparison is git range-diff --creation-factor=999 b27a28828^! 639c23a17^!.",
       "head": "adf6f31f9c149113b745ace0f5be2873f3b865c7",
-      "updatedAt": "2026-10-24T02:33:20.986068+00:00",
+      "updatedAt": "2026-10-24T06:17:17.958399+00:00",
       "followup": {
-        "disposition": "Public import lint correction qualified; combined amendment awaiting contributor decision",
+        "disposition": "Merged; version prerequisite satisfied",
         "owner": "root",
-        "nextAction": "Follow the exact 27d637 amendment proposal. The current adf6 source remains approved; public import52067 remains failed until an approved correction is published.",
+        "nextAction": "No action on the merged PR. Track standalone #16313 for the umbrella annotations and retain the dependent compiler/lint work’s other prerequisites.",
         "sourceHead": "adf6f31f9c149113b745ace0f5be2873f3b865c7",
         "reviewedAt": "2026-10-17T11:45:11.369312+00:00",
         "reviewDecision": null,
@@ -3722,9 +3722,10 @@
           "https://github.com/tamird/gvisor/commit/2da52bbf9fa617cc20244e9db11786b61e899796",
           "https://github.com/bazelbuild/bazel-central-registry/pull/11314",
           "https://github.com/tamird/gvisor/commit/9f6e30aa901aec67b8d1000b6d35c0eb0233f33a",
-          "https://github.com/tamird/gvisor/commit/adf6f31f9c149113b745ace0f5be2873f3b865c7"
+          "https://github.com/tamird/gvisor/commit/adf6f31f9c149113b745ace0f5be2873f3b865c7",
+          "https://github.com/google/gvisor/pull/16306"
         ],
-        "observedAt": "2026-10-23T23:05:32.724596+00:00",
+        "observedAt": "2026-10-24T06:17:17.958399+00:00",
         "providerHead": "adf6f31f9c149113b745ace0f5be2873f3b865c7"
       },
       "number": 15376,
@@ -19341,18 +19342,19 @@
       "title": "Declare the Benchmark umbrella header exports",
       "url": "https://github.com/tamird/gvisor/commit/9717248581c97159f008910efdb1f7297792394c",
       "group": "release",
-      "status": "Superseded by proposed #15376 amendment",
-      "updatedAt": "2026-10-24T02:33:20.986068+00:00",
-      "summary": "The exact approved annotations are now folded into the proposed #15376 amendment at 27d637b14c. Actual public import failure established that the exports are needed by the version update itself, so a separate post-landing PR would be too late. The combined amendment awaits its specific contributor decision; do not open a second umbrella fix.\n\nPreserved original approval and validation:\n\nThe contributor approved the two IWYU export directives and pinned Benchmark archive patch. They preserve the public umbrella-header contract under clang-tidy. Both-architecture full lint passes in the composed qualification.\n\nOpen after #15376 actually lands, preserving the approved patch; no new contributor question is needed.",
+      "status": "Superseded by standalone PR #16313",
+      "updatedAt": "2026-10-24T06:19:32.054223+00:00",
+      "summary": "The standalone umbrella annotation change is now open as #16313 at c08f137603d7, after #15376 merged. This archived proposal needs no contributor action or publication; the retained review/qualification remains provenance for the existing delivered change.\n\nPreserved proposal history:\n\nThe exact approved annotations are now folded into the proposed #15376 amendment at 27d637b14c. Actual public import failure established that the exports are needed by the version update itself, so a separate post-landing PR would be too late. The combined amendment awaits its specific contributor decision; do not open a second umbrella fix.\n\nPreserved original approval and validation:\n\nThe contributor approved the two IWYU export directives and pinned Benchmark archive patch. They preserve the public umbrella-header contract under clang-tidy. Both-architecture full lint passes in the composed qualification.\n\nOpen after #15376 actually lands, preserving the approved patch; no new contributor question is needed.",
       "followup": {
         "owner": "root",
         "sourceHead": "9717248581c97159f008910efdb1f7297792394c",
-        "observedAt": "2026-10-24T02:33:20.986068+00:00",
-        "disposition": "Approved annotations folded into proposed #15376 amendment",
-        "nextAction": "Follow the combined #15376 amendment; do not open a duplicate post-landing fix.",
+        "observedAt": "2026-10-24T06:19:32.054223+00:00",
+        "disposition": "Superseded; standalone PR published",
+        "nextAction": "Follow #16313 through the existing watcher; no duplicate proposal, amendment to merged #15376, or contributor request.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9717248581c97159f008910efdb1f7297792394c",
-          "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67"
+          "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67",
+          "https://github.com/google/gvisor/pull/16313"
         ]
       }
     },
@@ -20414,14 +20416,9 @@
       "title": "Fold Benchmark umbrella exports into #15376",
       "url": "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67",
       "group": "release",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-24T02:33:20.986068+00:00",
-      "summary": "The actual #15376 import failed Include Cleaner on 28 sources after Benchmark 1.10 split its umbrella header. This amendment folds the previously approved two IWYU export directives into the registry version through a patch-only override. Current-source qualification passed the public Make lint census of 47 sources and explicit native Clang checks of all 28 affected sources; the patched registry header, source identity and cleanup were independently verified. The disposable qualification container explicitly selects declared LLVM and materializes its two header-directory targets; this is not a bare-default or whole-tree lint claim. Earlier qualification failures remain retained. Root has requested a contributor decision on this exact combined amendment; the published PR remains unchanged.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "27d637b14c54865d12bbe3c921d426f48bbeaa67",
-        "url": "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67"
-      },
+      "status": "Superseded by standalone PR #16313",
+      "updatedAt": "2026-10-24T06:19:32.054223+00:00",
+      "summary": "The standalone umbrella annotation change is now open as #16313 at c08f137603d7, after #15376 merged. This archived proposal needs no contributor action or publication; the retained review/qualification remains provenance for the existing delivered change.\n\nPreserved proposal history:\n\nThe actual #15376 import failed Include Cleaner on 28 sources after Benchmark 1.10 split its umbrella header. This amendment folds the previously approved two IWYU export directives into the registry version through a patch-only override. Current-source qualification passed the public Make lint census of 47 sources and explicit native Clang checks of all 28 affected sources; the patched registry header, source identity and cleanup were independently verified. The disposable qualification container explicitly selects declared LLVM and materializes its two header-directory targets; this is not a bare-default or whole-tree lint claim. Earlier qualification failures remain retained. Root has requested a contributor decision on this exact combined amendment; the published PR remains unchanged.",
       "refinement": {
         "before": {
           "head": "adf6f31f9c149113b745ace0f5be2873f3b865c7"
@@ -20433,13 +20430,14 @@
       "followup": {
         "owner": "root",
         "sourceHead": "27d637b14c54865d12bbe3c921d426f48bbeaa67",
-        "observedAt": "2026-10-24T02:33:20.986068+00:00",
-        "disposition": "Contributor decision requested on exact combined amendment",
-        "nextAction": "Await the requested decision before updating #15376. Preserve its current maintainer approval separately; no duplicate question or public notice.",
+        "observedAt": "2026-10-24T06:19:32.054223+00:00",
+        "disposition": "Superseded; standalone PR published",
+        "nextAction": "Follow #16313 through the existing watcher; no duplicate proposal, amendment to merged #15376, or contributor request.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67",
           "https://github.com/google/gvisor/pull/15376",
-          "https://app.buildbuddy.io/invocation/d353d7ac-6973-43f3-997f-91bb8a5e818a"
+          "https://app.buildbuddy.io/invocation/d353d7ac-6973-43f3-997f-91bb8a5e818a",
+          "https://github.com/google/gvisor/pull/16313"
         ]
       },
       "evidence": [
@@ -20570,34 +20568,69 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcp-cookie-window-scale",
-      "head": "bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0",
+      "head": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
       "title": "Preserve window scaling on SYN-cookie connections",
-      "url": "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0",
+      "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-24T05:55:52.808445+00:00",
-      "summary": "Separate fork-only window-scaling change on the SACK proposal 8757001b. Current bc6dbee5 differs from 0d37a944 only by the formatting correction. Corrected before-only controls 5fe782b1 verify both Linux cases (16 bytes without timestamps, 128 with timestamps) and netstack without timestamps (16 bytes); netstack with timestamps alone fails, advertising no window scale and delivering 16 rather than 128 bytes. Three leaves pass and one fails; the six XML records include two parents. Native FAIL is preserved and independent retained peer 55e7f87e confirms the evidence. Producer verdict was available after 0.298466 seconds and the authenticated consumer after 9.934822 seconds. The original fixture failure remains retained. Initial fixed-product run fbfb71cb stopped before tests on formatting; the same eight owners now run on qualification source 985ed45d in 1a7c8ddb. No fixed-product success, contributor decision, or upstream PR is claimed.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T06:19:32.054223+00:00",
+      "summary": "Current 888d2415 corrects the existing timestamp-enabled window expectations; production behavior is unchanged from bc6dbee5. The prior 1a7c8ddb run passed both packet owners but exposed two stale SACK expectations of no window scale. Independent source review 934442b7 confirms the fixed fixture uses a 1 MiB receive buffer with auto-tuning disabled: scale 5 and post-handshake advertised window 0x4000. No-timestamp controls remain unchanged. The current 3b233bd0 qualification selects all four existing forced-cookie e2e suites and their analyzers, the TCP package unit/analyzer, and both packet backends: 12 owners, unfiltered. Qualification 3b233bd0 passed all 12 uncached local owners: 567 positive XML records, no failures or skips, and both CPU reports for each of five analyzers. Linux and netstack both deliver 16 bytes without timestamps and 128 with timestamps. The timestamp-enabled cases recover peer scale 3 and advertise scale 7; no-timestamp controls do not negotiate scaling. Independent retained peer 2aeaa38e verifies native/report/source joins; producer availability was 0.415668 seconds and authenticated consumer availability 7.131561 seconds after native completion. Root has now sent the one contributor review request for exact 888d2415. This remains a fork-only proposal dependent on the SACK change; no upstream PR or delivery approval is claimed.\n\nPreserved before-controls and earlier run:\n\nSeparate fork-only window-scaling change on the SACK proposal 8757001b. Current bc6dbee5 differs from 0d37a944 only by the formatting correction. Corrected before-only controls 5fe782b1 verify both Linux cases (16 bytes without timestamps, 128 with timestamps) and netstack without timestamps (16 bytes); netstack with timestamps alone fails, advertising no window scale and delivering 16 rather than 128 bytes. Three leaves pass and one fails; the six XML records include two parents. Native FAIL is preserved and independent retained peer 55e7f87e confirms the evidence. Producer verdict was available after 0.298466 seconds and the authenticated consumer after 9.934822 seconds. The original fixture failure remains retained. Initial fixed-product run fbfb71cb stopped before tests on formatting; the same eight owners now run on qualification source 985ed45d in 1a7c8ddb. No fixed-product success, contributor decision, or upstream PR is claimed.",
       "followup": {
         "owner": "root",
-        "sourceHead": "bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0",
-        "observedAt": "2026-10-24T05:55:52.808445+00:00",
-        "disposition": "Agent implementation and wire validation",
-        "nextAction": "Finish the existing eight-owner qualification on integration 985ed45d for product bc6dbee5 before any contributor decision. Keep the corrected before controls and original formatting/fixture failures distinct."
+        "sourceHead": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
+        "observedAt": "2026-10-24T06:19:32.054223+00:00",
+        "disposition": "Exact proposal qualified; contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision for 888d2415 and the SACK prerequisite. Do not repeat the request or open an upstream PR before authorization."
       },
       "evidence": [
         {
           "label": "Agent-owned window-scaling product",
-          "url": "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0"
+          "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89"
         },
         {
           "label": "Corrected before-only Linux/netstack controls; native FAIL",
           "url": "https://app.buildbuddy.io/invocation/5fe782b1-1861-4c64-8ad8-4f84a40325d5"
         },
         {
-          "label": "Current eight-owner fixed-product qualification; result pending",
+          "label": "Earlier eight-owner qualification; packet owners passed, stale SACK expectations failed",
           "url": "https://app.buildbuddy.io/invocation/1a7c8ddb-9d3d-4375-ad30-9feb614f654b"
+        },
+        {
+          "label": "Qualified 12-owner fixed-product result; 567 positive records",
+          "url": "https://app.buildbuddy.io/invocation/3b233bd0-e273-45a7-a79a-fa625e9fa53c"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "888d2415fee5f8e197e78c7365cbc09da8a2fc89",
+        "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89"
+      }
+    },
+    {
+      "id": "pr:16313",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16313,
+      "ref": "benchmark-umbrella-exports-bcr",
+      "head": "c08f137603d71b90615172f34ca2adfdf53d1260",
+      "title": "Declare the Benchmark umbrella header exports",
+      "url": "https://github.com/google/gvisor/pull/16313",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-24T06:19:32.054223+00:00",
+      "summary": "Standalone umbrella-header annotation PR opened after #15376 landed. Root verified the published head, master base and fork branch. It carries the previously reviewed IWYU export correction for Benchmark 1.10.0; the post-merge source composition is independently reviewed. The earlier combined amendment proposal is obsolete, with no second contributor decision required. Follow current public checks, maintainer review and import separately from retained annotation qualification.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "c08f137603d71b90615172f34ca2adfdf53d1260",
+        "observedAt": "2026-10-24T06:19:32.054223+00:00",
+        "disposition": "Standalone PR published; current checks and maintainer review",
+        "nextAction": "Follow current-head public checks, substantive feedback and import through the existing watcher. Deliver dependent compiler/lint work only after its remaining prerequisites land. No duplicate contributor request.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16313",
+          "https://github.com/tamird/gvisor/commit/c08f137603d71b90615172f34ca2adfdf53d1260",
+          "https://app.buildbuddy.io/invocation/d353d7ac-6973-43f3-997f-91bb8a5e818a"
+        ]
+      }
     }
   ],
   "edges": [
@@ -21461,7 +21494,7 @@
       "from": "pr:15376",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "The refreshed composition retains the independent Benchmark annotation backport and its reviewed source citation.",
+      "reason": "Satisfied version prerequisite: #15376 merged through #16306. Independent umbrella annotations and the child’s other source prerequisites remain separate.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/f18737bed47bbdc3da9ea51dda485c0c94cb43e5",
         "https://github.com/tamird/gvisor/commit/dc22a991fd2d4676951c34a0f83e72fc352e23e1"
@@ -22740,7 +22773,7 @@
       "from": "pr:15376",
       "to": "branch:bazel-clang-tidy-llvm",
       "type": "depends_on",
-      "reason": "The full lint run requires the umbrella annotations now proposed within #15376.",
+      "reason": "Satisfied version prerequisite: #15376 merged through #16306. Independent umbrella annotations and the child’s other source prerequisites remain separate.",
       "evidence": "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67"
     },
     {
@@ -22957,14 +22990,6 @@
       "evidence": "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
     },
     {
-      "from": "branch:review/pr15376-umbrella-exports-20261024",
-      "to": "pr:15376",
-      "type": "includes",
-      "role": "proposed_update",
-      "reason": "The reviewed umbrella correction is proposed as one amendment; the live PR and its approval remain unchanged.",
-      "evidence": "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67"
-    },
-    {
       "from": "branch:rules-img-redis-upstream",
       "to": "branch:rules-img-redis-benchmark-upstream",
       "type": "depends_on",
@@ -22993,6 +23018,20 @@
         "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
         "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0"
       ]
+    },
+    {
+      "from": "pr:16313",
+      "to": "branch:hermetic-compiler-review",
+      "type": "depends_on",
+      "reason": "The independently reviewed umbrella-header exports are now tracked in standalone #16313 after the Benchmark version update landed.",
+      "evidence": "https://github.com/google/gvisor/pull/16313"
+    },
+    {
+      "from": "pr:16313",
+      "to": "branch:bazel-clang-tidy-llvm",
+      "type": "depends_on",
+      "reason": "The independently reviewed umbrella-header exports are now tracked in standalone #16313 after the Benchmark version update landed.",
+      "evidence": "https://github.com/google/gvisor/pull/16313"
     }
   ],
   "investigations": [
