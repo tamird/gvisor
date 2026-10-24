@@ -559,6 +559,7 @@ def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], 
     expected_failures: dict[str, str] = {}
     redirects: dict[str, list[str]] = {}
     completed: set[str] = set()
+    counter_only: dict[str, str] = {}
     referenced: list[str] = []
     states = {"PASSED", "SKIPPED", "XFAILED", "XLEAKED", "FAILED", "WARNED", "LEAKED", "BORKED"}
 
@@ -647,9 +648,8 @@ def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], 
                 if root.tag != "testsuites" or any(suite.tag != "testsuite" for suite in suites):
                     raise ValueError("Invalid PHP native JUnit root")
                 cases = [case for suite in suites for case in suite]
-                if (any(case.tag != "testcase" for case in cases) or int(root.get("tests", "-1")) != len(cases)
-                        or any(int(suite.get("tests", "-1")) != len(suite) for suite in suites)):
-                    raise ValueError("PHP JUnit testcase count differs from native counters")
+                if any(case.tag != "testcase" for case in cases):
+                    raise ValueError("Invalid PHP native JUnit testcase")
                 observed: set[str] = set()
                 for case in cases:
                     matches = [name for name in xml_names if case.get("name", "").startswith(name + " (")
@@ -671,12 +671,57 @@ def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], 
                         skipped[key] = case[0].text or ""
                     elif state in ("PASSED", "XFAILED", "XLEAKED", "REDIR") and tags:
                         raise ValueError("PHP positive state disagrees with JUnit")
-                if observed != set(xml_names.values()):
-                    raise ValueError("PHP native JUnit is missing results")
+                # PHP registers XML files only in startTimer. An early skip
+                # or a redirect without SKIPIF can increment native counters
+                # without registering a testcase. Bind every such named state
+                # to its exact per-suite deficit; all other missing rows fail.
+                suite_names = [suite.get("name", "") for suite in suites]
+                if len(suite_names) != len(set(suite_names)):
+                    raise ValueError("Duplicate PHP native JUnit suite")
+                extra_tests = {suite.get("name", ""): int(suite.get("tests", "-1")) - len(suite) for suite in suites}
+                extra_skips = {suite.get("name", ""): int(suite.get("skip", "-1"))
+                               - sum(case.find("skipped") is not None for case in suite) for suite in suites}
+                missing_rows: list[tuple[str, str, tuple[str, ...]]] = []
+                for identity in set(xml_names.values()) - observed:
+                    state = native.get(identity, "REDIR")
+                    if state != "SKIPPED" and not (redirected and identity == names[0]):
+                        raise ValueError("PHP native JUnit is missing results")
+                    original = identity.partition(": ")[2] if identity.startswith("# ") else identity
+                    paths = [original]
+                    if identity.startswith("# "):
+                        # Some early skips precede redirect remapping; missing
+                        # EXTENSIONS/ENV skips follow it but still have no timer.
+                        paths.append(str(PurePosixPath(names[0]).parent / PurePosixPath(original).name))
+                    candidates = tuple(dict.fromkeys(
+                        "php" + "".join("." + re.sub(r"[^a-z0-9]+", ".", part, flags=re.I)
+                                         for part in PurePosixPath(path).parent.parts) for path in paths))
+                    missing_rows.append((identity, state, candidates))
+                # Every two-suite choice shares this isolated redirect's parent
+                # suite. Consume fixed rows first, then original child deficits
+                # before the shared parent deficit; no identity is discarded.
+                for identity, state, candidates in sorted(missing_rows, key=lambda row: len(row[2])):
+                    suite = next((name for name in candidates if extra_tests.get(name, 0) > 0
+                                  and (state != "SKIPPED" or extra_skips.get(name, 0) > 0)), None)
+                    if suite is None:
+                        raise ValueError("PHP counter-only state has no matching source-suite counters")
+                    extra_tests[suite] -= 1
+                    key = group + "/" + identity
+                    counter_only[key] = state
+                    if state == "SKIPPED":
+                        extra_skips[suite] -= 1
+                        # -W records the state, but an unregistered JUnit row
+                        # cannot supply the native skip reason.
+                        skipped[key] = ""
+                if (any(extra_tests.values()) or any(extra_skips.values())
+                        or int(root.get("tests", "-1")) != len(cases) + len(missing_rows)):
+                    raise ValueError("PHP JUnit testcase count differs from native counters")
                 for container in [root, *suites]:
                     descendants = list(container.iter("testcase"))
                     for attribute, tag in (("failures", "failure"), ("errors", "error"), ("skip", "skipped")):
-                        if int(container.get(attribute, "-1")) != sum(case.find(tag) is not None for case in descendants):
+                        if attribute == "skip" and container is not root:
+                            continue  # Exact per-suite deficits were consumed above.
+                        extra = sum(state == "SKIPPED" for _, state, _ in missing_rows) if attribute == "skip" else 0
+                        if int(container.get(attribute, "-1")) != extra + sum(case.find(tag) is not None for case in descendants):
                             raise ValueError("PHP JUnit result counters disagree with testcases")
                 if redirected:
                     redirects[group + "/" + names[0]] = redirected
@@ -689,7 +734,7 @@ def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], 
             errors.append("PHP command groups do not cover their original batch equally")
     if len(referenced) != len(set(referenced)) or set(referenced) != groups.keys():
         errors.append("PHP execution markers differ from retained native report groups")
-    return {"expected": expected, "results": results, "redirects": redirects,
+    return {"expected": expected, "results": results, "redirects": redirects, "counter_only": counter_only,
             "errors": errors, "passed": sum(state == "PASSED" for group in results.values() for state in group.values()),
             "expected_failures": expected_failures, "skipped": skipped, "failures": sorted(failures),
             "missing": sorted(set(expected) - completed)}

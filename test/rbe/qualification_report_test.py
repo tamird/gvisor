@@ -863,8 +863,8 @@ class QualificationReportTest(unittest.TestCase):
                          for state, name in rows)
         return {"selection.txt": "".join(name + "\n" for name in names), "root.txt": "/php\n",
                 "redirect.txt": "true\n" if redirect else "false\n", "results.tsv": native,
-                "junit.xml": f"<testsuites {attributes}><testsuite {attributes}>" + "".join(cases) +
-                             "</testsuite></testsuites>"}
+                "junit.xml": f'<testsuites name="php" {attributes}><testsuite name="php.ext.pdo.sqlite.tests" {attributes}>' +
+                             "".join(cases) + "</testsuite></testsuites>"}
 
     def php_fixture(self, groups: dict[str, dict[str, str]], *, zipped: bool = True,
                     names: str = "first.phpt,second.phpt", markers: list[str] | None = None) -> Path:
@@ -939,29 +939,42 @@ class QualificationReportTest(unittest.TestCase):
 
     def test_php_redirect_completion_keeps_context(self) -> None:
         parent, child = "ext/pdo_sqlite/tests/common.phpt", "ext/pdo/tests/first.phpt"
-        files = self.php_native_files([parent], [("PASSED", "# " + parent + ": " + child)], redirect=True)
-        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
-        self.assertEqual(self.capture(invocation)["errors"], [])
-        value = self.verdict(invocation, analysis=self.analysis(invocation))
-        self.assertEqual(value["status"], "PASS", value)
-        self.assertEqual(value["executed"][0]["php"]["redirects"],
-                         {"php-results.redirect/" + parent: ["# " + parent + ": " + child]})
-        shutil.rmtree(invocation)
+        for timed_parent in (False, True):
+            with self.subTest(timed_parent=timed_parent):
+                files = self.php_native_files([parent], [("PASSED", "# " + parent + ": " + child)], redirect=True)
+                if not timed_parent:
+                    # No SKIPIF timer means the completed parent increments
+                    # counters but has no entry in PHP's XML file registry.
+                    files["junit.xml"] = files["junit.xml"].replace(
+                        f'<testcase name="{parent} (redirect parent)"/>', "")
+                invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["executed"][0]["php"]["redirects"],
+                                 {"php-results.redirect/" + parent: ["# " + parent + ": " + child]})
+                shutil.rmtree(invocation)
         # A parent result alone cannot prove that its expansion completed.
         files["results.tsv"] = ""
         invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
         self.assertEqual(self.capture(invocation)["errors"], [])
         self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "INCOMPLETE")
 
-    def test_php_redirect_rejects_missing_parent_and_colliding_children(self) -> None:
+    def test_php_redirect_rejects_incomplete_completion_and_colliding_children(self) -> None:
         parent = "ext/pdo_sqlite/tests/common.phpt"
         rows = [("PASSED", "# " + parent + ": ext/pdo/tests/first.phpt")]
-        for missing_parent in (False, True):
-            with self.subTest(missing_parent=missing_parent):
+        for mutation in ("missing completion", "missing child", "wrong suite", "colliding children"):
+            with self.subTest(mutation=mutation):
                 files = self.php_native_files([parent], rows, redirect=True)
-                if missing_parent:
+                files["junit.xml"] = files["junit.xml"].replace(
+                    f'<testcase name="{parent} (redirect parent)"/>', "")
+                if mutation == "missing completion":
+                    files["junit.xml"] = files["junit.xml"].replace('tests="2"', 'tests="1"')
+                elif mutation == "missing child":
                     files["junit.xml"] = files["junit.xml"].replace(
-                        f'<testcase name="{parent} (redirect parent)"/>', "").replace('tests="2"', 'tests="1"')
+                        '<testcase name="ext/pdo_sqlite/tests/first.phpt (description)"></testcase>', "")
+                elif mutation == "wrong suite":
+                    files["junit.xml"] = files["junit.xml"].replace('name="php.ext.pdo.sqlite.tests"', 'name="php.other"')
                 else:
                     files["results.tsv"] += "PASSED\t# /php/" + parent + ": /php/other/first.phpt\n"
                 invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
@@ -979,6 +992,47 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["status"], "PASS", value)
         self.assertEqual(value["executed"][0]["php"]["skipped"],
                          {"php-results.redirect/# " + parent + ": " + child: "native reason"})
+
+        shutil.rmtree(invocation)
+        # Missing EXTENSIONS can skip after redirect remapping but before its
+        # timer. Both the child SKIP and parent completion then use counters.
+        files = self.php_native_files([parent], [("SKIPPED", "# " + parent + ": " + child)], redirect=True)
+        files["junit.xml"] = files["junit.xml"].replace(
+            '<testcase name="ext/pdo_sqlite/tests/first.phpt (description)"><skipped>native reason</skipped></testcase>', "").replace(
+            f'<testcase name="{parent} (redirect parent)"/>', "")
+        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=self.analysis(invocation))
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["executed"][0]["php"]["counter_only"], {
+            "php-results.redirect/" + parent: "REDIR",
+            "php-results.redirect/# " + parent + ": " + child: "SKIPPED",
+        })
+
+    def test_php_counter_only_early_skip(self) -> None:
+        name = "ext/ffi/tests/001.phpt"
+        for mutation, status in ((None, "PASS"), ("wrong suite", "INCOMPLETE"),
+                                 ("missing skip count", "INCOMPLETE"), ("missing pass", "INCOMPLETE")):
+            with self.subTest(mutation=mutation):
+                files = self.php_native_files([name], [("SKIPPED", name)])
+                files["junit.xml"] = files["junit.xml"].replace(
+                    'name="php.ext.pdo.sqlite.tests"', 'name="php.ext.ffi.tests"').replace(
+                    f'<testcase name="{name} (description)"><skipped>native reason</skipped></testcase>', "")
+                if mutation == "wrong suite":
+                    files["junit.xml"] = files["junit.xml"].replace('name="php.ext.ffi.tests"', 'name="php.other"')
+                elif mutation == "missing skip count":
+                    files["junit.xml"] = files["junit.xml"].replace('skip="1"', 'skip="0"')
+                elif mutation == "missing pass":
+                    files["results.tsv"] = files["results.tsv"].replace("SKIPPED", "PASSED")
+                invocation = self.php_fixture({"php-results.early": files}, names=name)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], status, value)
+                if status == "PASS":
+                    native = value["executed"][0]["php"]
+                    self.assertEqual(native["counter_only"], {"php-results.early/" + name: "SKIPPED"})
+                    self.assertEqual(native["skipped"], {"php-results.early/" + name: ""})
+                shutil.rmtree(invocation)
 
     def test_php_unique_execution_groups_and_repetition(self) -> None:
         groups = {f"php-results.{number}": self.php_native_files([name], [("PASSED", name)])
