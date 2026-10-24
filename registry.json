@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T06:36:31.842005+00:00",
+    "updatedAt": "2026-10-24T07:24:49.949626+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1426,24 +1426,30 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-23T06:16:01.869757+00:00",
-      "summary": "Reviewed equivalent rebase published; current source CI and review remain separate. Exact head 6b694a6b05 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at d582fa067123 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved kernel-locking change is rebased and published at db1650842. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. Existing reviewer requests are preserved, and no approval was invalidated.\n\nThe current source passed the selected kernel, race and analyzer qualification. The rebase preserves upstream signal handling and the proposal’s TaskSet, signal and atomic ownership checks, parent-death-signal locking, signal-error lock reacquisition and exit-status read. No full-repository or ARM runtime result is claimed.",
+      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+      "summary": "Etienne requested separating annotation-only contracts from changes that acquire locks. Four independent fork proposals are available on the same master 291de749 base: contracts 1eb4c14a, parent-death signal locking cad33143, signal-delivery error deadlock fbe4e871, and exit-notification status locking 9e9228f6. None depends on another proposal. Independent source review confirms identical executable Go in all nine contracts files and checks the three behavioral fixes separately. Per-source analyzers and the combined kernel normal/race checks are running in one qualification. The original public head 6b694a6b and unresolved human request remain unchanged; contributor review will follow the applicable analyzer results.\n\nPreserved earlier record:\n\nReviewed equivalent rebase published; current source CI and review remain separate. Exact head 6b694a6b05 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at d582fa067123 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved kernel-locking change is rebased and published at db1650842. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. Existing reviewer requests are preserved, and no approval was invalidated.\n\nThe current source passed the selected kernel, race and analyzer qualification. The rebase preserves upstream signal handling and the proposal’s TaskSet, signal and atomic ownership checks, parent-death-signal locking, signal-error lock reacquisition and exit-status read. No full-repository or ARM runtime result is claimed.",
       "followup": {
-        "disposition": "Reviewed conflict rebase published; follow current CI and maintainer feedback",
+        "disposition": "Maintainer split request owned; four independent proposals under validation",
         "owner": "root",
-        "nextAction": "Use the existing watcher for current-head checks, substantive review and import progression. Preserve prior approval and validation provenance; do not repeat this completed rebase.",
+        "nextAction": "Finish each proposal's analyzer checks, then request the corresponding contributor decisions. Preserve the unresolved maintainer request and original public head; do not request another maintainer review yet.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
           "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55",
           "https://github.com/tamird/gvisor/commit/db1650842d9b3e403f4b4cd9f16a79fb39e7363a",
           "https://github.com/tamird/gvisor/commit/d582fa0671235b611ab31d8c2bf5974f5c7a4a5d",
-          "https://github.com/tamird/gvisor/commit/6b694a6b05952e47e4d359981ec39514017131fd"
+          "https://github.com/tamird/gvisor/commit/6b694a6b05952e47e4d359981ec39514017131fd",
+          "https://github.com/google/gvisor/pull/14345#discussion_r4366296329",
+          "https://github.com/tamird/gvisor/commit/1eb4c14aabc2a0b6c26b006e1b72781e017794da",
+          "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c",
+          "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+          "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+          "https://app.buildbuddy.io/invocation/07f41d88-2c5b-45aa-b356-5acafd15223b"
         ],
         "reviewedAt": "2026-10-15T22:59:23.496825+00:00",
         "sourceHead": "6b694a6b05952e47e4d359981ec39514017131fd",
-        "reviewDecision": null,
+        "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-23T06:16:01.869757+00:00"
+        "observedAt": "2026-10-24T07:24:49.949626+00:00"
       },
       "head": "6b694a6b05952e47e4d359981ec39514017131fd",
       "evidence": [
@@ -1454,6 +1460,30 @@
         {
           "label": "Current reviewed conflict rebase",
           "url": "https://github.com/tamird/gvisor/commit/6b694a6b05952e47e4d359981ec39514017131fd"
+        },
+        {
+          "label": "Maintainer request: separate annotations from lock changes",
+          "url": "https://github.com/google/gvisor/pull/14345#discussion_r4366296329"
+        },
+        {
+          "label": "Independent contract annotations",
+          "url": "https://github.com/tamird/gvisor/commit/1eb4c14aabc2a0b6c26b006e1b72781e017794da"
+        },
+        {
+          "label": "Independent parent-death signal locking",
+          "url": "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c"
+        },
+        {
+          "label": "Independent signal-delivery deadlock fix",
+          "url": "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3"
+        },
+        {
+          "label": "Independent exit-notification status locking",
+          "url": "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf"
+        },
+        {
+          "label": "Current per-source analyzer and combined kernel qualification",
+          "url": "https://app.buildbuddy.io/invocation/07f41d88-2c5b-45aa-b356-5acafd15223b"
         }
       ],
       "refinement": {
@@ -1567,28 +1597,33 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nStanding follow-up: Native atomic.Pointer/stateify design discussion remains unanswered after the author requested guidance. Source checks pass; no current source revision is assigned.\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
+      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+      "summary": "Etienne requests evidence that the atomic.Pointer wrapper continues to inline in hot and go:nosplit paths, where stack budget matters. The complete current-head thread is routed to the source owner. This is an open source/performance assessment, not a demonstrated inlining regression; the older stateify design discussion remains separate.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nStanding follow-up: Native atomic.Pointer/stateify design discussion remains unanswered after the author requested guidance. Source checks pass; no current source revision is assigned.\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
       "followup": {
-        "disposition": "maintainer guidance pending",
-        "owner": "root / maintainer ayushr2",
-        "nextAction": "Native atomic.Pointer/stateify design discussion remains unanswered after the author requested guidance. Source checks pass; no current source revision is assigned.",
+        "disposition": "Current-head inlining and stack-budget review request owned",
+        "owner": "root",
+        "nextAction": "Assess the actual generated wrapper and compiler inlining behavior for the current proposal, then prepare the smallest supported enforcement or response. Keep the human thread unresolved until addressed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
-          "https://github.com/tamird/gvisor/commit/9e17fdee10b5d7cde68732dbe86e823fdb34fe48"
+          "https://github.com/tamird/gvisor/commit/9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
+          "https://github.com/google/gvisor/pull/12483#discussion_r4366348323"
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
-        "reviewDecision": null,
+        "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00"
+        "observedAt": "2026-10-24T07:24:49.949626+00:00"
       },
       "head": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
       "evidence": [
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/9e17fdee10b5d7cde68732dbe86e823fdb34fe48"
+        },
+        {
+          "label": "Current inlining and go:nosplit review request",
+          "url": "https://github.com/google/gvisor/pull/12483#discussion_r4366348323"
         }
       ]
     },
@@ -5473,14 +5508,14 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T01:17:42.152751+00:00",
-      "summary": "The contributor-approved route conflict repair is published at c8ac4368c9. GitHub verified it mergeable against master 97dad50c33. It preserves landed family/type/gateway validation and destination padding, and checks the netip address conversion result. Independent review confirms the other 165 changed-line streams are unchanged and the final guard preserves reachable behavior. Eight qualification phases, eleven uncached owners and 660 positive XML records passed, including nineteen exact route/multicast cases in each Linux/directfs/shared mode. Current-head public checks are running. Both historical review threads remain resolved, and the existing maintainer review requests are pending; no prior approval was invalidated, no reminder was eligible and no public comment was added.\n\nThe separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. The separate profile run timed out decoding the six before-side profiles, so there is no before/after profile comparison.\n\nEarlier delivered head 21b2d0c82f was verified mergeable before the new route-validation change landed. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Generate status follows the current provider snapshot. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+      "summary": "The current public c8ac4368 head conflicts with actual master 291de749 after the IPv6 forwarded-checksum fix landed as #16095. Independent Git merge testing distinguishes that pair from the older provider base 97dad50c, which still merges cleanly. The owner has composed dfeae7ce locally: all 166 topic paths remain, 164 changed-line streams are identical, and the two test streams adapt only the landed checksum cases to netip while retaining the required tcpip import. Owning remote checks and publication are pending; no new public amendment or reviewer notification is claimed.\n\nPreserved earlier record:\n\nThe contributor-approved route conflict repair is published at c8ac4368c9. GitHub verified it mergeable against master 97dad50c33. It preserves landed family/type/gateway validation and destination padding, and checks the netip address conversion result. Independent review confirms the other 165 changed-line streams are unchanged and the final guard preserves reachable behavior. Eight qualification phases, eleven uncached owners and 660 positive XML records passed, including nineteen exact route/multicast cases in each Linux/directfs/shared mode. Current-head public checks are running. Both historical review threads remain resolved, and the existing maintainer review requests are pending; no prior approval was invalidated, no reminder was eligible and no public comment was added.\n\nThe separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. The separate profile run timed out decoding the six before-side profiles, so there is no before/after profile comparison.\n\nEarlier delivered head 21b2d0c82f was verified mergeable before the new route-validation change landed. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Generate status follows the current provider snapshot. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
-        "owner": "maintainer",
-        "disposition": "Contributor-approved conflict repair delivered; maintainer review pending",
+        "owner": "root",
+        "disposition": "Confirmed current-master conflict; source composition reviewed, validation pending",
         "sourceHead": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
-        "observedAt": "2026-10-24T01:17:42.152751+00:00",
-        "nextAction": "Follow exact-head public CI, maintainer review and import state through the existing refresh. The historical CHANGES_REQUESTED review is on c10df898; both inline findings are resolved. No new contributor decision or reminder is pending.",
+        "observedAt": "2026-10-24T07:24:49.949626+00:00",
+        "nextAction": "Validate the owning stack/integration regressions and current export compilation, then handle authorized publication against the live head. Preserve prior evidence for untouched code; no maintainer reminder while conflicted.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#issuecomment-6255243662",
           "https://github.com/google/gvisor/pull/15730#discussion_r4269557939",
@@ -5497,9 +5532,11 @@
           "https://app.buildbuddy.io/invocation/340459be-5ffd-445a-9348-306a8ef20470",
           "https://github.com/tamird/gvisor/commit/fff01b41babf0990f4deebe3c2befaa89ff6bc16",
           "https://app.buildbuddy.io/invocation/5599e79c-8d5b-422d-ad5c-d8d5e7bf65bc",
-          "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
+          "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
+          "https://github.com/google/gvisor/pull/16095"
         ],
-        "reviewDecision": "CHANGES_REQUESTED"
+        "reviewDecision": "CHANGES_REQUESTED",
+        "mergeable": "CONFLICTING"
       },
       "evidence": [
         {
@@ -5569,6 +5606,10 @@
         {
           "label": "Final checked-conversion fork repair",
           "url": "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
+        },
+        {
+          "label": "Landed IPv6 forwarded-checksum fix",
+          "url": "https://github.com/google/gvisor/pull/16095"
         }
       ],
       "number": 15730,
@@ -10938,19 +10979,79 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15769",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 30e04099a439 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The approved patch and commit message are preserved in independent PR #15769 at b6f522fdd. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+      "summary": "Etienne approved exact head 30e04099 on 2026-10-24 without requesting changes or a reply. Public export #16330 is now open on head 961d0d40 with checks pending. Continue its ordinary import checks; the approval does not itself establish that those checks passed.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 30e04099a439 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The approved patch and commit message are preserved in independent PR #15769 at b6f522fdd. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Delivered; following CI and review",
+        "owner": "work_map_current",
+        "disposition": "Exact head approved; public export checks pending",
         "sourceHead": "30e04099a439e6b2feb598698172275972ca5ab5",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow PR #15769 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "observedAt": "2026-10-24T07:24:49.949626+00:00",
+        "nextAction": "Follow the exact-source public export #16330 through the existing watcher. No source amendment, acknowledgement or repeat reviewer request is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
           "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb",
           "https://github.com/google/gvisor/pull/15769",
-          "https://github.com/tamird/gvisor/commit/30e04099a439e6b2feb598698172275972ca5ab5"
+          "https://github.com/tamird/gvisor/commit/30e04099a439e6b2feb598698172275972ca5ab5",
+          "https://github.com/google/gvisor/pull/15769#pullrequestreview-5637275890",
+          "https://github.com/google/gvisor/pull/16330"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Exact-head approval triaged",
+            "nextAction": "Etienne approved this exact head without requesting source changes. Follow the current public export; no reply requested.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15769#pullrequestreview-5637275890"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "30e04099a439e6b2feb598698172275972ca5ab5",
+              "approvedAt": "2026-10-24T07:05:37Z",
+              "headCommittedAt": "2026-10-22T00:19:30Z",
+              "headIntroducedAt": "2026-10-22T00:28:16Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "comment",
+                    "id": "IC_kwDOB9IlXs8AAAABeLMCNw",
+                    "url": "https://github.com/google/gvisor/pull/15769#issuecomment-6319964727",
+                    "body": "r? @kerumeto ",
+                    "createdAt": "2026-10-21T15:39:10Z",
+                    "updatedAt": "2026-10-21T15:39:10Z",
+                    "author": {
+                      "login": "tamird",
+                      "__typename": "User"
+                    }
+                  },
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUAIA8g",
+                    "url": "https://github.com/google/gvisor/pull/15769#pullrequestreview-5637275890",
+                    "body": "Nice",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-24T07:05:37Z",
+                    "updatedAt": "2026-10-24T07:05:37Z",
+                    "authorAssociation": "COLLABORATOR",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "30e04099a439e6b2feb598698172275972ca5ab5"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "30e04099a439e6b2feb598698172275972ca5ab5"
+            }
+          }
         ]
       },
       "number": 15769,
@@ -10958,6 +11059,14 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/30e04099a439e6b2feb598698172275972ca5ab5"
+        },
+        {
+          "label": "Exact-head approval without requested changes",
+          "url": "https://github.com/google/gvisor/pull/15769#pullrequestreview-5637275890"
+        },
+        {
+          "label": "Current public export",
+          "url": "https://github.com/google/gvisor/pull/16330"
         }
       ]
     },
@@ -17492,19 +17601,20 @@
       "url": "https://github.com/google/gvisor/pull/16076",
       "group": "rbe",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at bc40a65c7d06 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved Compose host-network correction is delivered as #16076 at exact 99593b0def. The one-file signed change builds the static plugin from the pinned fixing commit 1e1c577ea and preserves Bake. Controlled stock 5.6.0 reproduces both entitlement failures; the corrected image passes both leaves on AMD64 and native ARM64 with actual source/archive/load provenance. Final comment and commit/body citations satisfy the contributor conditions. Original full-suite failures and historical unknown plugin version remain preserved. Current public CI and maintainer review are separate; no contributor question remains.",
+      "summary": "Etienne asks to wait for a new official dind image instead of building a patched Compose plugin. The owner checked the current official dind image: its Compose 5.6.1 still lacks the host-network entitlement fix. Holding the source-built workaround until a fixed official release is proposed; the response and disposition remain with root. No replacement version or public reply has been agreed. Existing source and prior runtime evidence remain unchanged.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at bc40a65c7d06 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved Compose host-network correction is delivered as #16076 at exact 99593b0def. The one-file signed change builds the static plugin from the pinned fixing commit 1e1c577ea and preserves Bake. Controlled stock 5.6.0 reproduces both entitlement failures; the corrected image passes both leaves on AMD64 and native ARM64 with actual source/archive/load provenance. Final comment and commit/body citations satisfy the contributor conditions. Original full-suite failures and historical unknown plugin version remain preserved. Current public CI and maintainer review are separate; no contributor question remains.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root / hostinet_delivery",
         "sourceHead": "bc40a65c7d06164a2a6f941fbe86dd409699258d",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Delivered; following current-head CI and maintainer review",
-        "nextAction": "Follow #16076 in the existing bounded provider sweep. Preserve prior runtime failures; no merge or duplicate review request.",
+        "observedAt": "2026-10-24T07:24:49.949626+00:00",
+        "disposition": "Maintainer dind request assessed; response and release disposition pending",
+        "nextAction": "Decide the response and official dind/Compose release prerequisite using the completed source appraisal. No duplicate public acknowledgement or new workaround is authorized by the review alone.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16076",
-          "https://github.com/tamird/gvisor/commit/bc40a65c7d06164a2a6f941fbe86dd409699258d"
+          "https://github.com/tamird/gvisor/commit/bc40a65c7d06164a2a6f941fbe86dd409699258d",
+          "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -17521,6 +17631,10 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/bc40a65c7d06164a2a6f941fbe86dd409699258d"
+        },
+        {
+          "label": "Maintainer request to wait for an official dind image",
+          "url": "https://github.com/google/gvisor/pull/16076#pullrequestreview-5637257577"
         }
       ]
     },
