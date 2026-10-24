@@ -89,7 +89,6 @@ dpkg-query -W > "$out/host-packages.txt"
   ping -V
   sysctl net.ipv4.tcp_available_congestion_control net.ipv4.tcp_congestion_control net.ipv4.tcp_sack net.ipv4.tcp_recovery
 } > "$out/host-tools.txt" 2>&1
-sudo -n modprobe sch_netem
 status=0
 sudo -n timeout --signal=TERM --kill-after=5s 30s unshare -nmpf --mount-proc /bin/bash > "$out/host-netem.txt" 2>&1 <<'PROBE' || status=$?
 set -euxo pipefail
