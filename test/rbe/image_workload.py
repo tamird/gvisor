@@ -362,15 +362,23 @@ def check_diagnostic(value: dict) -> dict:
     diagnostic = value["Diagnostic"]
     if set(diagnostic) != {"Probes", "State", "Wire"}:
         raise ValueError(f"{name}: diagnostic shape differs")
+    expected_wire = [row[0] for row in value["Events"]
+                     if row[3] == 1 and 600000000 <= row[1] <= 6000000000]
+    if [row["Event"] for row in diagnostic["Wire"]] != expected_wire:
+        raise ValueError(f"{name}: diagnostic wire coverage differs")
     for kind, rows in diagnostic.items():
         if not rows or len(rows) > 10000:
             raise ValueError(f"{name}: missing or excessive {kind}")
         previous = -1
         for row in rows:
             if kind == "Wire":
-                event = value["Events"][row["Event"]]
+                ordinal = row["Event"]
+                if type(ordinal) is not int or not 0 <= ordinal < len(value["Events"]):
+                    raise ValueError(f"{name}: invalid wire ordinal")
+                event = value["Events"][ordinal]
                 at = event[1]
-                if event[3] != 1 or not 0 <= row["Flags"] < 256 or not 0 <= row["Window"] < 65536:
+                if (event[0] != ordinal or event[3] != 1 or not 0 <= row["Flags"] < 256
+                        or not 0 <= row["Window"] < 65536):
                     raise ValueError(f"{name}: wrong wire identity")
             else:
                 at = row["AtNS"]
