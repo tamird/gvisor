@@ -13,6 +13,7 @@ go_test(
     tags = ["manual"],
     deps = [
         "//pkg/atomicbitops",
+        "//pkg/sync",
         "//pkg/tcpip",
         "//pkg/tcpip/faketime",
         "//pkg/tcpip/header",
