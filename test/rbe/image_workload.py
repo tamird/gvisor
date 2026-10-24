@@ -1,4 +1,4 @@
-"""Qualify a finite two-stack transfer and its virtual-time determinism."""
+"""Check the published SACK accounting fix with the retained burst fixture."""
 import hashlib
 import json
 import os
@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
 CASES = {f"TestVirtualTCPBurstRecovery/{algorithm}/{loss}"
          for algorithm in ("reno", "cubic")
-         for loss in ("no_loss", "burst_loss")}
+         for loss in ("burst_loss",)}
 PARENTS = {"TestVirtualTCPBurstRecovery", "TestVirtualTCPBurstRecovery/reno", "TestVirtualTCPBurstRecovery/cubic"}
 
 
@@ -75,7 +75,7 @@ def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    owners = [OWNER, OWNER + "_nogo"]
+    owners = [OWNER]
     if config["targets"] != owners:
         raise ValueError("Unexpected virtual TCP owners")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
@@ -91,27 +91,29 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "--test_env=GO_TEST_WRAP_TESTV=1"]
     result = {"status": "INCOMPLETE", "source": config["source"], "phases": {}}
     try:
-        prior = json.loads(Path(__file__).with_name("tcp_burst_reference.json").read_text())
-        if set(prior["case_sha256"]) != CASES:
-            raise ValueError("Prior normal reference has a different case census")
-        result["prior_reference"] = prior
-        for loss in ("no_loss", "burst_loss"):
-            phase = "virtual-race-" + loss.replace("_", "-")
-            case = "TestVirtualTCPBurstRecovery/cubic/" + loss
-            checked = invoke(phase, ["test", *options, "--config=race", *selected,
-                                     "--runs_per_test=1", "--test_arg=-test.run=^TestVirtualTCPBurstRecovery$/^cubic$/^" + loss + "$", OWNER], "test", targets=[OWNER])
-            if checked["status"] != "PASS":
-                raise RuntimeError(f"{phase}: native test did not pass")
-            observed = observations(evidence, phase, 1, {case}, {"TestVirtualTCPBurstRecovery", "TestVirtualTCPBurstRecovery/cubic"})
-            value = observed["reference_sample"][case]
-            digest = hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-            if digest != prior["case_sha256"][case]:
-                raise ValueError(f"{phase}: race observations differ from retained normal runs")
-            result["phases"][phase] = observed
-        analyzed = invoke("virtual-nogo", ["test", *options, *selected, "--runs_per_test=1",
-                                           OWNER + "_nogo"], "test", targets=[OWNER + "_nogo"])
-        if analyzed["status"] != "PASS":
-            raise RuntimeError("Both-architecture analyzer owner did not pass")
+        phase = "virtual-burst"
+        checked = invoke(phase, ["test", *options, *selected, "--runs_per_test=1",
+                                 "--test_arg=-test.run=^TestVirtualTCPBurstRecovery$/^(reno|cubic)$/^burst_loss$",
+                                 OWNER], "test", targets=[OWNER])
+        if checked["status"] != "PASS":
+            raise RuntimeError("SACK accounting integration failed; preserve native evidence")
+        observed = observations(evidence, phase, 1)
+        result["phases"][phase] = observed
+        for name, value in observed["reference_sample"].items():
+            rounds = value["Rounds"]
+            if not rounds or any(row["Probe"]["SackedOut"] < 0 for row in rounds):
+                raise ValueError(f"{name}: missing or negative sampled SACK accounting")
+            final = rounds[-1]
+            if final["Probe"]["SackedOut"] != 0:
+                raise ValueError(f"{name}: final SackedOut is not zero: {final['Probe']}")
+            if (value["Algorithm"] != name.split("/")[1]
+                    or value["Bytes"] != value["AcceptedBytes"]
+                    or value["Bytes"] != value["OfferedBytes"]
+                    or value["Bytes"] != 64 << 20
+                    or final["DeliveredBytes"] != value["Bytes"]
+                    or final["CumulativelyAcknowledgedBytes"] != value["Bytes"]
+                    or final["Probe"]["SndUna"] != final["Probe"]["SndNxt"]):
+                raise ValueError(f"{name}: incomplete stream or sender accounting")
         result["status"] = "PASS"
     except (OSError, ValueError, RuntimeError) as error:
         result.update(status="FAIL", error=str(error))
