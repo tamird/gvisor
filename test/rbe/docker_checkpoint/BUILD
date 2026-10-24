@@ -13,5 +13,8 @@ py_test(
         "source.tar.gz",
     ],
     local = True,
-    tags = ["manual", "qualification-output"],
+    tags = [
+        "manual",
+        "qualification-output",
+    ],
 )
