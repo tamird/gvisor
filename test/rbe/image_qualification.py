@@ -258,7 +258,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             for name, preparation_targets, configuration_options in graphs:
                 prepared = invoke("dependency-preparation-" + architecture + "-" + name,
                                   ["cquery", "--config=" + architecture,
-                                   "--compilation_mode=opt", *configuration_options, "--lockfile_mode=update",
+                                   "--compilation_mode=opt", *configuration_options, "--lockfile_mode=" + CONFIG.get("preparation_lock_mode", "update"),
                                    "--noannounce_rc", "--output=label",
                                    "set(" + " ".join(preparation_targets) + ")"],
                                   "command", targets=[])
