@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T09:31:40.774298+00:00",
+    "updatedAt": "2026-10-24T09:45:30.631816+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18569,24 +18569,31 @@
       "type": "pr",
       "repo": "google/gvisor",
       "number": 15814,
-      "head": "344906981e5d3bdb70d4e6366e5d261adcf6c510",
-      "title": "Verify registered state types in race builds only",
+      "head": "f47224383f4b2cc6f8ec173a250660493e2e719d",
+      "title": "`pkg/state`: Defer type verification from init until actual use.",
       "url": "https://github.com/google/gvisor/pull/15814",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-21T17:32:58.496516+00:00",
-      "summary": "Existing external prerequisite for the state codec proposal. The direct provider read confirms Etienne Perot’s PR remains open; no merge is recorded. Its source is maintained by the upstream author. The ordinary snapshot tracks actual CI, feedback and landing state so the dependent proposal is not released from a stale prose-only prerequisite.",
+      "updatedAt": "2026-10-24T09:45:30.631816+00:00",
+      "summary": "Etienne updated the head to f4722438 and explicitly re-requested Tamir’s review at 09:35:39Z on October 24 (timeline event 34121373897). Root owns the re-review of the two prior findings and revised registration behavior. The independent source read found no blocker: ordinary metadata is validated on save/restore, binary registration remains eager, and the test no longer depends on a cross-test counter. The requested command and before/after measurements behind the stated 0.3ms remain absent. The prior changes-requested review remains on 34490698; no current-head public decision has been sent. This remains an unmerged prerequisite for dependent state work.",
       "followup": {
-        "owner": "maintainers",
-        "disposition": "External state prerequisite remains open",
-        "sourceHead": "344906981e5d3bdb70d4e6366e5d261adcf6c510",
-        "observedAt": "2026-10-21T17:32:58.496516+00:00",
-        "nextAction": "Await the upstream author and maintainer review or landing; no delegated source amendment, comment or merge action is authorized.",
+        "owner": "root",
+        "sourceHead": "f47224383f4b2cc6f8ec173a250660493e2e719d",
+        "disposition": "Explicit re-review requested; agent review in progress",
+        "observedAt": "2026-10-24T09:43:06.563413+00:00",
+        "nextAction": "Review the revised head against Tamir’s two prior threads and the updated description/evidence, then prepare the substantive decision. Preserve the pending request; no public review has been sent.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15814"
+          "https://github.com/google/gvisor/pull/15814",
+          "https://github.com/google/gvisor/pull/15814#pullrequestreview-5535906159"
         ]
       },
-      "ref": "ckpt-type-reg"
+      "ref": "ckpt-type-reg",
+      "reviewWatch": {
+        "owner": "root",
+        "reviewers": [
+          "tamird"
+        ]
+      }
     },
     {
       "id": "branch:rules-img-hey",
