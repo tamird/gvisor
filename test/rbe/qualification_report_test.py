@@ -1034,6 +1034,26 @@ class QualificationReportTest(unittest.TestCase):
                     self.assertEqual(native["skipped"], {"php-results.early/" + name: ""})
                 shutil.rmtree(invocation)
 
+    def test_php_counter_only_suite_depth(self) -> None:
+        # Pinned PHP normalizes shallow suite names, but its five-ancestor
+        # search falls back to the relative path for deeper directories.
+        for name, suite in (
+                ("ext/pdo_sqlite/tests/common.phpt", "php.ext.pdo.sqlite.tests"),
+                ("ext/standard/tests/file/windows_mb_path/test_long_path_0.phpt",
+                 "php.ext.standard.tests.file.windows_mb_path")):
+            with self.subTest(name=name):
+                files = self.php_native_files([name], [("SKIPPED", name)])
+                files["junit.xml"] = files["junit.xml"].replace(
+                    'name="php.ext.pdo.sqlite.tests"', f'name="{suite}"').replace(
+                    f'<testcase name="{name} (description)"><skipped>native reason</skipped></testcase>', "")
+                invocation = self.php_fixture({"php-results.depth": files}, names=name)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["executed"][0]["php"]["counter_only"],
+                                 {"php-results.depth/" + name: "SKIPPED"})
+                shutil.rmtree(invocation)
+
     def test_php_unique_execution_groups_and_repetition(self) -> None:
         groups = {f"php-results.{number}": self.php_native_files([name], [("PASSED", name)])
                   for number, name in enumerate(["first.phpt", "first.phpt", "second.phpt", "second.phpt"])}

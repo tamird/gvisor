@@ -596,6 +596,16 @@ def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], 
                         raise ValueError(f"Invalid PHP result path: {name}")
                     return name
 
+                def suite_name(name: str) -> str:
+                    directory = PurePosixPath(name).parent
+                    # PHP searches at most five ancestors for its source-root
+                    # header. Deeper paths use its relative-path fallback,
+                    # which preserves underscores and other punctuation.
+                    if len(directory.parts) >= 5:
+                        return "php." + str(directory).replace("/", ".").replace("-", ".")
+                    return "php" + "".join("." + re.sub(r"[^a-z0-9]+", ".", part, flags=re.I)
+                                            for part in directory.parts)
+
                 xml_names: dict[str, str] = {}
                 redirected: list[str] = []
                 text = files["results.tsv"].decode()
@@ -692,9 +702,7 @@ def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], 
                         # Some early skips precede redirect remapping; missing
                         # EXTENSIONS/ENV skips follow it but still have no timer.
                         paths.append(str(PurePosixPath(names[0]).parent / PurePosixPath(original).name))
-                    candidates = tuple(dict.fromkeys(
-                        "php" + "".join("." + re.sub(r"[^a-z0-9]+", ".", part, flags=re.I)
-                                         for part in PurePosixPath(path).parent.parts) for path in paths))
+                    candidates = tuple(dict.fromkeys(suite_name(path) for path in paths))
                     missing_rows.append((identity, state, candidates))
                 # Every two-suite choice shares this isolated redirect's parent
                 # suite. Consume fixed rows first, then original child deficits
