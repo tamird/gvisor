@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T04:45:40.919577+00:00",
+    "updatedAt": "2026-10-24T05:05:28.877890+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20512,6 +20512,50 @@
           "https://app.buildbuddy.io/invocation/35d94ab7-743f-427a-a755-5997c9f26c4b"
         ]
       }
+    },
+    {
+      "id": "branch:tcp-cookie-sack-negotiation",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-cookie-sack-negotiation",
+      "head": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+      "title": "Preserve SACK on connections accepted with SYN cookies",
+      "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T05:05:28.877890+00:00",
+      "summary": "When the SYN queue fills, recover the peer's SACK negotiation from the echoed timestamp after validating the SYN cookie. The sequence-number cookie keeps its authentication bits. The identical packet probe passes on native Linux; uncorrected netstack alone fails because its cookie SYN-ACK echoes the timestamp but omits SACK. After the fix, both backends pass the handshake and the exact SACK-block check for data beyond a hole. The corrected run passes six uncached AMD64 owners and 128 non-skipped records, including the full TCP and SACK suites; both analyzer owners also pass for AMD64 and ARM64. The qualified five-file patch is byte-identical to this standalone proposal. Independent retained review 7fc412a9 verified source, native report identities and the original failure. Contributor review has been requested for this exact head; no upstream PR is open.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+        "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+        "observedAt": "2026-10-24T05:05:28.877890+00:00",
+        "disposition": "Exact qualified proposal awaiting the requested contributor decision",
+        "nextAction": "Await the existing contributor decision. Resolve this branch item to its upstream PR on authorized delivery; do not send another review request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+          "https://app.buildbuddy.io/invocation/ffb738bb-baee-4c3e-a567-6ad2142cf5b3",
+          "https://app.buildbuddy.io/invocation/c8bb1445-a5eb-40be-abce-cdac5e6bac9a"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Standalone cookie SACK proposal",
+          "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb"
+        },
+        {
+          "label": "Native Linux passes; uncorrected netstack fails only the SACK probe",
+          "url": "https://app.buildbuddy.io/invocation/ffb738bb-baee-4c3e-a567-6ad2142cf5b3"
+        },
+        {
+          "label": "Corrected packet controls, TCP/SACK suites and both analyzers",
+          "url": "https://app.buildbuddy.io/invocation/c8bb1445-a5eb-40be-abce-cdac5e6bac9a"
+        }
+      ]
     }
   ],
   "edges": [
@@ -22905,9 +22949,30 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-24T04:20:38.083265+00:00",
-      "summary": "Six finite Reno/CUBIC cases now repeat exactly across five normal processes and one race process. Both middle-loss cases show SACK recovery without an RTO; prefix recovery remains unclassified. The earlier cookie-path/RTO fixture is separate. All three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
+      "updatedAt": "2026-10-24T05:05:28.877890+00:00",
+      "summary": "The fixed sustained-demand Reno/CUBIC burst experiment now has matching normal and race observations. Its negative selective-ACK count points to existing PR #15634; integration on that published repair is the next check. Six finite Reno/CUBIC cases now repeat exactly across five normal processes and one race process. Both middle-loss cases show SACK recovery without an RTO; prefix recovery remains unclassified. The earlier cookie-path/RTO fixture is separate. All three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
+        {
+          "text": "The sustained-demand fixture completed four fixed Reno/CUBIC no-loss and burst-loss cases in three normal processes. The two retained Reno race leaves and two filtered CUBIC race completions match those complete normal observations exactly; the owning analyzer passes for both CPUs. The original all-case race invocation remains TIMEOUT/FAIL, and its successful cases are reused explicitly rather than relabeled. The observed SackedOut value of −3 is linked to the existing selective-ACK credit repair #15634 at 933263e71c; Hostinet owns a new burst integration check on that PR, not a competing patch. Independent retained composition review b3361bb4 covers the three fresh attempts and seven XML records. This fixed virtual 64 MiB, 100 Mbit/s, 100 ms RTT experiment does not establish Linux behavior, fairness or changing-RTT performance.",
+          "evidence": [
+            {
+              "label": "Original normal burst observations and retained race timeout",
+              "url": "https://app.buildbuddy.io/invocation/26259bda-8ae6-4d09-9a94-423916d7cc62"
+            },
+            {
+              "label": "Remaining CUBIC race cases and analyzer completion",
+              "url": "https://app.buildbuddy.io/invocation/d8aa0ba3-a999-4beb-9de5-cf934564640d"
+            },
+            {
+              "label": "Existing selective-ACK credit accounting repair",
+              "url": "https://github.com/google/gvisor/pull/15634"
+            },
+            {
+              "label": "Exact published selective-ACK repair head",
+              "url": "https://github.com/tamird/gvisor/commit/933263e71c97b0ae7bd0cb04489b2399fe4523f1"
+            }
+          ]
+        },
         {
           "text": "A separate finite Reno/CUBIC comparison passed all six no-loss, prefix-loss and middle-loss cases in five normal processes plus one race process. All 36 complete packet observations repeated identically; the native XML census is 55 positive records including parents and the owning analyzer. Every case delivered 128 KiB with wire SACK negotiation and the selected sender algorithm verified. Both middle holes were retransmitted once at 121.416 ms after delivered SACK evidence, with no RTO; complete transfer times were 166.9344 ms for Reno and 150.2896 ms for CUBIC. Reno’s retransmit counter of two includes a repeated payload-free FIN, rather than two retransmissions of the lost data. Prefix recovery had no RTO and remains unclassified. This finite deterministic result does not establish long-flow throughput, fairness or behavior on Linux or a changing-RTT link. The earlier cookie-path/RTO result remains separate.",
           "evidence": [
@@ -23686,7 +23751,7 @@
           ]
         }
       ],
-      "nextStep": "Hostinet is preparing a separate sustained-demand and burst-loss fixture; the finite six-case result does not answer that question. Follow BuildBuddy #13938 checks and maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, fairness or outage-cause conclusion is established.",
+      "nextStep": "Hostinet owns only the new sustained-burst integration check on existing #15634 at 933263e71c. Follow BuildBuddy #13938 checks and maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, fairness or outage-cause conclusion is established.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
