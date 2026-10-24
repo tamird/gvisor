@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T09:11:20.611674+00:00",
+    "updatedAt": "2026-10-24T09:19:58.280493+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19994,16 +19994,20 @@
       "title": "Enumerate the declared LLVM source archive",
       "url": "https://github.com/google/gvisor/pull/16249",
       "status": "open",
-      "summary": "The contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-23T10:24:09.947344+00:00",
+      "summary": "Current import #16329 at c1de6c77 fails Buildkite 52132 for two shared causes, with concrete upstream owners. C++ lint reports the exact 58 Benchmark umbrella-header findings in 28 files already addressed by #16313. GPU checksum validation and the cgroupv1, cgroupv2 and ARM64 unit jobs all fail the ARM64 driver 620.51.03 download with HTTP 404; upstream #16335 marks that installer unavailable while preserving its checksum. The five latest failed steps exit 2. No LLVM enumeration failure was identified in these logs. Follow both existing fixes to landing, notify root, then observe the fresh import; no duplicate patch, comment or premature rebase. Three unit logs were server-truncated but retain their sole-test-failure summaries; full lint and GPU logs were read.\n\nEarlier source-specific record:\n\nThe contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
+      "updatedAt": "2026-10-24T09:19:58.280493+00:00",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "dd471c93ed0f5b29e9b5e93430e27f0fac3ceaeb",
-        "observedAt": "2026-10-23T10:24:09.947344+00:00",
-        "disposition": "Approved source delivered; public review and CI pending",
-        "nextAction": "Follow current PR checks and maintainer review through the existing tracker; no duplicate approval question.",
+        "observedAt": "2026-10-24T09:19:58.280493+00:00",
+        "disposition": "Import failures diagnosed; existing upstream fixes #16313 and #16335",
+        "nextAction": "Follow #16313 and #16335 to landing and notify root, then observe the fresh current-source import. No duplicate source correction, public comment or premature rebase. Keep unrelated import findings separate.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16249"
+          "https://github.com/google/gvisor/pull/16249",
+          "https://github.com/google/gvisor/pull/16329",
+          "https://buildkite.com/gvisor/pipeline/builds/52132",
+          "https://github.com/google/gvisor/pull/16313",
+          "https://github.com/google/gvisor/pull/16335"
         ]
       },
       "number": 16249,
@@ -21209,6 +21213,31 @@
           "url": "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
         }
       ]
+    },
+    {
+      "id": "pr:16335",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16335,
+      "ref": "test/cl1006187014",
+      "head": "d5c40c82dcd94f947fcb3a71fc8aaf10fced24af",
+      "title": "Mark the NVIDIA 620.51.03 ARM64 installer unavailable",
+      "url": "https://github.com/google/gvisor/pull/16335",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-24T09:19:58.280493+00:00",
+      "summary": "Existing upstream Copybara fix for the ARM64 620.51.03 download returning HTTP 404. Exact d5c40c82 adds NoPublicARM64Installer while preserving the ARM64 checksum and the existing no-x86-driver marker. It owns the shared GPU checksum and three unit-job failures observed on #16249 import #16329. This is upstream work being followed, not a new agent proposal or a runtime validation claim.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "d5c40c82dcd94f947fcb3a71fc8aaf10fced24af",
+        "observedAt": "2026-10-24T09:19:58.280493+00:00",
+        "disposition": "Existing upstream owner for shared ARM64 driver availability failure",
+        "nextAction": "Observe landing through the existing watcher, notify root and follow the affected fresh import. Do not submit a duplicate patch or comment.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16335",
+          "https://buildkite.com/gvisor/pipeline/builds/52132"
+        ]
+      }
     }
   ],
   "edges": [
@@ -23662,6 +23691,26 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be"
+      ]
+    },
+    {
+      "from": "pr:16313",
+      "to": "pr:16249",
+      "type": "blocked_by",
+      "reason": "The current import C++ lint fails the exact 58 Benchmark umbrella-header findings already corrected here. This is shared CI recovery, not a new source prerequisite for LLVM enumeration.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16313",
+        "https://buildkite.com/gvisor/pipeline/builds/52132"
+      ]
+    },
+    {
+      "from": "pr:16335",
+      "to": "pr:16249",
+      "type": "blocked_by",
+      "reason": "GPU validation and all three current unit-job variants fail the ARM64 620.51.03 installer download; this existing upstream fix marks it unavailable while retaining the checksum. This is shared CI recovery, not a new source prerequisite for LLVM enumeration.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16335",
+        "https://buildkite.com/gvisor/pipeline/builds/52132"
       ]
     }
   ],
