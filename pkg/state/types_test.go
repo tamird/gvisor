@@ -17,8 +17,27 @@ package state
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 )
+
+func TestInvalidArrayPresence(t *testing.T) {
+	for _, marker := range []byte{2, 255} {
+		t.Run(fmt.Sprint(marker), func(t *testing.T) {
+			defer func() {
+				if got := recover(); got == nil || !strings.Contains(fmt.Sprint(got), "invalid array presence marker") {
+					t.Errorf("DecodeArray panic = %v, want invalid array presence marker", got)
+				}
+			}()
+			var ds decodeState
+			ds.r.Reader = bytes.NewReader([]byte{marker, 9})
+			d := Decoder{r: &ds.r}
+			a := [1]byte{7}
+			DecodeArray(&d, a[:], DecodeUint[byte])
+		})
+	}
+}
 
 func init() {
 	registerBinary((*binaryFailure)(nil))
