@@ -65,8 +65,9 @@ func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale
 	}
 }
 
-// acceptable checks if the segment sequence number range is acceptable
-// according to the table on page 26 of RFC 793.
+// acceptable checks whether the segment overlaps the receive window.
+//
+// +checklocks:r.ep.mu
 func (r *receiver) acceptable(segSeq seqnum.Value, segLen seqnum.Size) bool {
 	// r.rcvWnd could be much larger than the window size we advertised in our
 	// outgoing packets, we should use what we have advertised for acceptability
@@ -77,6 +78,15 @@ func (r *receiver) acceptable(segSeq seqnum.Value, segLen seqnum.Size) bool {
 		scaledWindowSize = math.MaxUint16
 	}
 	advertisedWindowSize := scaledWindowSize << r.RcvWndScale
+	// Linux tolerates data spilling past the advertised window only when
+	// the receive queue is empty. A FIN occupies sequence space, but does
+	// not count toward the payload length checked against the right edge.
+	// https://github.com/torvalds/linux/commit/9ca48d616ed76b284f946667a3cb7961205c8ee3
+	if rightEdge := r.rcvWUP.Add(advertisedWindowSize); segLen != 0 && rightEdge.LessThan(segSeq.Add(segLen)) {
+		if r.ep.pendingFIN || r.ep.rcvQueue.Front() != nil {
+			return false
+		}
+	}
 	return header.Acceptable(segSeq, segLen, r.RcvNxt, r.RcvNxt.Add(advertisedWindowSize))
 }
 
@@ -253,6 +263,9 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 		r.ep.snd.sendAck()
 
 		// Tell any readers that no more data will come.
+		if !r.closed {
+			r.ep.pendingFIN = r.ep.rcvQueue.Front() == nil
+		}
 		r.closed = true
 		r.ep.readyToRead(nil)
 
