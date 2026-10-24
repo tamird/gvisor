@@ -221,9 +221,9 @@ func verifyCodecMode(ctx context.Context, b *testing.B, plat platform.Platform, 
 	if err != nil {
 		b.Fatal(err)
 	}
-	directory := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
-	if directory == "" {
-		b.Fatal("codec evidence requires TEST_UNDECLARED_OUTPUTS_DIR")
+	directory, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if !ok || !filepath.IsAbs(directory) {
+		b.Fatal("codec evidence requires an absolute TEST_UNDECLARED_OUTPUTS_DIR")
 	}
 	if err := os.WriteFile(filepath.Join(directory, "codec-mode.json"), record, 0644); err != nil {
 		b.Fatal(err)
