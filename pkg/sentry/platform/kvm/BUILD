@@ -1,3 +1,4 @@
+load("//pkg/seccomp/precompiledseccomp:defs.bzl", "precompiled_seccomp_rules")
 load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "cc_objcopy", "cc_objdump", "go_library", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
@@ -25,6 +26,14 @@ config_setting(
     values = {
         "compilation_mode": "dbg",
     },
+)
+
+precompiled_seccomp_rules(
+    name = "mmapfilter_precompiled",
+    out = "mmapfilter_precompiled.go",
+    out_package_name = "kvm",
+    programs_to_compile_go_import = "gvisor.dev/gvisor/pkg/sentry/platform/kvm/mmapfilter",
+    programs_to_compile_go_library = "//pkg/sentry/platform/kvm/mmapfilter",
 )
 
 go_library(
@@ -68,6 +77,7 @@ go_library(
         "machine_arm64_unsafe.go",
         "machine_cgo.go",
         "machine_unsafe.go",
+        "mmapfilter_precompiled.go",
         "physical_map.go",
         "physical_map_amd64.go",
         "physical_map_arm64.go",
@@ -99,12 +109,14 @@ go_library(
         "//pkg/ring0",
         "//pkg/ring0/pagetables",
         "//pkg/seccomp",
+        "//pkg/seccomp/precompiledseccomp",
         "//pkg/sentry/arch",
         "//pkg/sentry/arch/fpu",
         "//pkg/sentry/hostmm",
         "//pkg/sentry/memmap",
         "//pkg/sentry/platform",
         "//pkg/sentry/platform/interrupt",
+        "//pkg/sentry/platform/kvm/mmapfilter",
         "//pkg/sentry/time",
         "//pkg/sigframe",
         "//pkg/sighandling",
