@@ -26,7 +26,7 @@ import (
 // Codec is implemented by structs for which go_stateify generated typed
 // encoding and decoding methods. Save and Load use these methods instead of
 // StateSave and StateLoad, which remain the reference implementation: both
-// produce and consume the same wire format.
+// preserve the same object semantics. The typed format is described below.
 //
 // StateEncode must encode each field listed by StateFields, in order, using
 // the Encode* functions of this package. StateDecode must decode them in the
@@ -73,11 +73,11 @@ func (ti *TypeIndex) get() uint32 {
 // The typed format.
 //
 // Save uses the typed format when codecs are enabled. It is not compatible
-// with the format of StateSave, and has no tags or type headers: values are
-// encoded as their static types dictate.
+// with the format of StateSave. Values are encoded as their static types
+// dictate, without per-value type tags.
 //
 //   - The stream header has typedFlag set, and is followed by schemaHash: the
-//     types of the encoder and decoder must match exactly.
+//     encoding version and types of the encoder and decoder must match.
 //   - Objects follow, each preceded by its ID (as a tagged Uint), possibly
 //     preceded by type definitions (as by StateSave), and followed by its
 //     kind: objectTyped, objectLegacy or objectStandalone. Typed objects
@@ -87,13 +87,21 @@ func (ti *TypeIndex) get() uint32 {
 //     length, which the decoder holds until it has their decoder.
 //   - Typed objects are encoded by Encoder: structs as their fields, in
 //     order; integers as varints; floats in little-endian; strings and byte
-//     arrays as is; pointers, slices, maps and interfaces as described by
+//     arrays as is; scalar-array fields have a 0/1 presence byte, with no
+//     contents for a wholly zero field. Nested array and map values have no
+//     presence byte. Floating-point slice backing also has a presence byte
+//     to preserve whole-zero elision, including negative zero. Pointers,
+//     slices, maps and interfaces are encoded as described by
 //     Encoder.pointer, Encoder.slice, EncodeMap and Encoder.iface.
 //   - Values that the typed encoder doesn't handle (about 2% of the objects
 //     of a typical kernel, e.g. maps and slices of types from other packages
 //     whose elements the generated code can't name) are encoded by
 //     encodeObject, as tagged wire.Objects, and decoded by decodeObject.
 const (
+	// typedFormat identifies the encoding rules included in schemaHash. A
+	// reader must reject a different format before consuming object bodies.
+	typedFormat = "gvisor.state.typed/array-presence-v1\x00"
+
 	// typedFlag is set in the stream header for the typed format.
 	typedFlag uint64 = 1 << 62
 
@@ -110,7 +118,7 @@ var (
 	schema     uint64
 )
 
-// schemaHash returns a hash of the names and fields of all registered types.
+// schemaHash returns a hash of the typed format and all registered type fields.
 func schemaHash() uint64 {
 	schemaOnce.Do(func() {
 		names := make([]string, 0, len(globalTypeDatabase))
@@ -119,6 +127,7 @@ func schemaHash() uint64 {
 		}
 		sort.Strings(names)
 		h := fnv.New64a()
+		h.Write([]byte(typedFormat))
 		for _, name := range names {
 			h.Write([]byte(name))
 			h.Write([]byte{0})
@@ -130,6 +139,27 @@ func schemaHash() uint64 {
 		schema = h.Sum64()
 	})
 	return schema
+}
+
+// scalarArrayKind reports the scalar leaf kind whose array elements must
+// overwrite zero values. Pointer-like values retain their existing nil
+// behavior, and structs must load their fields and hooks normally.
+func scalarArrayKind(typ reflect.Type) reflect.Kind {
+	for typ.Kind() == reflect.Array {
+		typ = typ.Elem()
+	}
+	switch typ.Kind() {
+	case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.String:
+		return typ.Kind()
+	default:
+		return reflect.Invalid
+	}
+}
+
+func hasSignedZero(kind reflect.Kind) bool {
+	return kind == reflect.Float32 || kind == reflect.Float64 || kind == reflect.Complex64 || kind == reflect.Complex128
 }
 
 // Unsigned is the set of unsigned integer types.

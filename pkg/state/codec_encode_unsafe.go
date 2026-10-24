@@ -15,6 +15,7 @@
 package state
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"math"
@@ -27,8 +28,8 @@ import (
 // Encoder encodes values in the typed format. It is used by generated
 // StateEncode methods.
 //
-// In the typed format, values are encoded without tags or headers: the
-// decoder knows their types statically. See codec.go.
+// In the typed format, the decoder knows value types statically. Array fields
+// additionally encode their presence. See codec.go.
 type Encoder struct {
 	es *encodeState
 
@@ -41,6 +42,10 @@ type Encoder struct {
 	// top is true for es.enc, which encodes top-level objects and records
 	// the encodings of structs nested in them in es.spans.
 	top bool
+
+	// fullValue distinguishes array and map elements from struct fields.
+	// Only fields can omit a wholly zero scalar array.
+	fullValue bool
 }
 
 // embedded is a value embedded in an encoding, which is only serialized when
@@ -122,6 +127,8 @@ func (e *Encoder) ref(addr unsafe.Pointer, typ reflect.Type, enc typedEncoder, e
 
 // structValue encodes the struct of type typ at addr, implementing Codec c.
 func (e *Encoder) structValue(addr unsafe.Pointer, typ reflect.Type, c Codec) {
+	fullValue := e.fullValue
+	e.fullValue = false
 	es := e.es
 	key := structKey{uintptr(addr), c.StateTypeIndex().get()}
 	if es.checkEncoded {
@@ -134,6 +141,7 @@ func (e *Encoder) structValue(addr unsafe.Pointer, typ reflect.Type, c Codec) {
 				e.objs = append(e.objs, o)
 			}
 			e.recordSpan(key, start, objStart)
+			e.fullValue = fullValue
 			return
 		}
 	}
@@ -144,6 +152,7 @@ func (e *Encoder) structValue(addr unsafe.Pointer, typ reflect.Type, c Codec) {
 		defer es.stats.done()
 	}
 	c.StateEncode(e)
+	e.fullValue = fullValue
 	e.recordSpan(key, start, objStart)
 }
 
@@ -218,6 +227,7 @@ func (es *encodeState) encodeDeferred(oes *objectEncodeState) {
 		es.embedded = make([]embedded, 0, min(max(2*cap(es.embedded), 32), maxArenaSize/64))
 	}
 	e := &es.enc
+	e.fullValue = false
 	e.buf = es.arena[len(es.arena):len(es.arena)]
 	e.objs = es.embedded[len(es.embedded):len(es.embedded)]
 	bufCap, objsCap := cap(e.buf), cap(e.objs)
@@ -379,7 +389,9 @@ type arrayEncoder[T any] struct {
 
 // encode implements typedEncoder.encode.
 func (a arrayEncoder[T]) encode(e *Encoder, oes *objectEncodeState) {
-	EncodeArray(e, unsafe.Slice((*T)(oes.addr), oes.obj.Len()), a.elem)
+	// Fresh backing storage needs elision only where semantic zero differs
+	// from its encoded bits: a wholly zero float array discards -0.
+	encodeArray(e, unsafe.Slice((*T)(oes.addr), oes.obj.Len()), a.elem, hasSignedZero(scalarArrayKind(typeOf[T]())))
 }
 
 // EncodeSlice encodes a slice whose elements are encoded by elem.
@@ -404,8 +416,26 @@ func (e *Encoder) slice(data unsafe.Pointer, length, capacity int, isNil bool, e
 }
 
 // byteArray encodes an array of n elements of kind uint8 at p.
-func (e *Encoder) byteArray(p unsafe.Pointer, n int) {
-	e.buf = append(e.buf, unsafe.Slice((*byte)(p), n)...)
+func (e *Encoder) byteArray(p unsafe.Pointer, n int, elideZero bool) {
+	if n == 0 {
+		return
+	}
+	data := unsafe.Slice((*byte)(p), n)
+	if elideZero && !e.arrayPresence(bytes.Count(data, []byte{0}) == n) {
+		return
+	}
+	e.buf = append(e.buf, data...)
+}
+
+// arrayPresence emits the field-presence marker and reports whether contents
+// follow. Zero array fields leave an initialized destination untouched.
+func (e *Encoder) arrayPresence(zero bool) bool {
+	if zero {
+		e.buf = append(e.buf, 0)
+		return false
+	}
+	e.buf = append(e.buf, 1)
+	return true
 }
 
 // byteArrayEncoder encodes arrays backing slices of elements of kind uint8.
@@ -413,7 +443,7 @@ type byteArrayEncoder struct{}
 
 // encode implements typedEncoder.encode.
 func (byteArrayEncoder) encode(e *Encoder, oes *objectEncodeState) {
-	e.byteArray(oes.addr, oes.obj.Len())
+	e.byteArray(oes.addr, oes.obj.Len(), false)
 }
 
 // byteSlice encodes the slice of elements of kind uint8 at p, of type typ.
@@ -427,16 +457,35 @@ func (e *Encoder) byteSlice(p unsafe.Pointer, typ reflect.Type) {
 // EncodeArray encodes an array (passed as a slice of the whole array) whose
 // elements are encoded by elem. Arrays of bytes are copied.
 func EncodeArray[T any](e *Encoder, a []T, elem func(*Encoder, *T)) {
+	encodeArray(e, a, elem, !e.fullValue)
+}
+
+func encodeArray[T any](e *Encoder, a []T, elem func(*Encoder, *T), elideZero bool) {
 	if len(a) == 0 {
 		return
 	}
 	if typeOf[T]().Kind() == reflect.Uint8 {
-		e.byteArray(unsafe.Pointer(&a[0]), len(a))
+		e.byteArray(unsafe.Pointer(&a[0]), len(a), elideZero)
 		return
 	}
+	if elideZero && scalarArrayKind(typeOf[T]()) != reflect.Invalid {
+		zero := true
+		for i := range a {
+			if !reflect.ValueOf(&a[i]).Elem().IsZero() {
+				zero = false
+				break
+			}
+		}
+		if !e.arrayPresence(zero) {
+			return
+		}
+	}
+	fullValue := e.fullValue
+	e.fullValue = true
 	for i := range a {
 		elem(e, &a[i])
 	}
+	e.fullValue = fullValue
 }
 
 // mapEncoder encodes maps, with key; the value encoder is in encArg.
@@ -460,10 +509,13 @@ func (me mapEncoder[M, K, V]) encode(e *Encoder, oes *objectEncodeState) {
 		}
 		e.es.mapScratch[oes.obj.Type()] = kv
 	}
+	fullValue := e.fullValue
+	e.fullValue = true
 	for kv.k, kv.v = range m {
 		me.key(e, &kv.k)
 		val(e, &kv.v)
 	}
+	e.fullValue = fullValue
 	*kv = mapEntry[K, V]{}
 }
 
@@ -618,7 +670,7 @@ func (e *Encoder) value(up unsafe.Pointer, typ reflect.Type, pi any) {
 			e.legacy(reflect.NewAt(typ, up).Elem())
 			return
 		}
-		e.byteArray(up, typ.Len())
+		e.byteArray(up, typ.Len(), !e.fullValue)
 	case reflect.Struct:
 		if typ.NumField() != 0 {
 			e.legacy(reflect.NewAt(typ, up).Elem())
