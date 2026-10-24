@@ -8,7 +8,10 @@ import xml.etree.ElementTree as ET
 
 
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-CASES = {"TestVirtualTCPTransfer/no_loss", "TestVirtualTCPTransfer/one_loss"}
+CASES = {f"TestVirtualTCPTransfer/{algorithm}/{loss}"
+         for algorithm in ("reno", "cubic")
+         for loss in ("no_loss", "first_data_loss", "middle_loss")}
+PARENTS = {"TestVirtualTCPTransfer", "TestVirtualTCPTransfer/reno", "TestVirtualTCPTransfer/cubic"}
 
 
 def observations(evidence: Path, phase: str, runs: int) -> dict:
@@ -47,14 +50,14 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
         if row["name"] == "test.xml":
             cases = ET.fromstring(body).findall(".//testcase")
             names = [case.attrib["name"] for case in cases]
-            if (set(names) != CASES | {"TestVirtualTCPTransfer"} or len(names) != 3
+            if (set(names) != CASES | PARENTS or len(names) != 9
                     or any(list(case) for case in cases) or run in xml_runs):
                 raise ValueError(f"{phase}: unexpected XML cases {names}")
             xml_runs.add(run)
         elif row["name"] == "test.log":
             values = [json.loads(line.split("VIRTUAL_TCP ", 1)[1])
                       for line in body.decode().splitlines() if "VIRTUAL_TCP " in line]
-            if {value["Case"] for value in values} != CASES or len(values) != 2 or run in samples:
+            if {value["Case"] for value in values} != CASES or len(values) != 6 or run in samples:
                 raise ValueError(f"{phase}: missing or duplicate virtual transfers")
             samples[run] = {value["Case"]: value for value in values}
         else:

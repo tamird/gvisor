@@ -60,12 +60,19 @@ func (zeroReader) Read(b []byte) (int, error) {
 
 type packetObservation struct {
 	AtNS           int64
+	CapturedAtNS   int64
 	From           int
 	Sequence       uint32
+	EndSequence    uint32
 	Acknowledgment uint32
 	Flags          uint8
 	PayloadBytes   int
 	PacketSHA256   string
+	PayloadSHA256  string
+	OptionsHex     string
+	SACKBlocks     []header.SACKBlock
+	SACKPermitted  bool
+	Retransmitted  bool
 	Dropped        bool
 }
 
@@ -76,25 +83,48 @@ type delivery struct {
 	row    packetObservation
 }
 
-// TestVirtualTCPTransfer is a bounded feasibility test, not a congestion model:
-// both TCP endpoints, ACKs, retransmissions and received bytes are real netstack
-// operations. Only the link's delivery schedule and one loss are test inputs.
+type recoveryObservation struct {
+	AtNS           int64
+	RTOs           uint64
+	SACKRecoveries uint64
+	TLPRecoveries  uint64
+	TimerCallbacks uint64
+	FastRetransmit uint64
+	Retransmits    uint64
+}
+
+// TestVirtualTCPTransfer compares finite real Reno and CUBIC transfers. The
+// clock and explicit link schedule are controlled inputs, not a Linux or
+// long-lived congestion model.
 func TestVirtualTCPTransfer(t *testing.T) {
 	if got, want := runtime.GOMAXPROCS(0), 1; got != want {
 		t.Fatalf("GOMAXPROCS = %d, want %d for one TCP processor per stack", got, want)
 	}
-	for _, drop := range []bool{false, true} {
-		name := "no_loss"
-		if drop {
-			name = "one_loss"
-		}
-		t.Run(name, func(t *testing.T) {
-			runVirtualTCP(t, drop)
+	for _, algorithm := range []struct {
+		name     string
+		protocol stack.TransportProtocolFactory
+	}{
+		{"reno", tcp.NewProtocol},
+		{"cubic", tcp.NewProtocolCUBIC},
+	} {
+		t.Run(algorithm.name, func(t *testing.T) {
+			for _, loss := range []struct {
+				name   string
+				offset int
+			}{
+				{"no_loss", -1},
+				{"first_data_loss", 0},
+				{"middle_loss", 64 << 10},
+			} {
+				t.Run(loss.name, func(t *testing.T) {
+					runVirtualTCP(t, algorithm.name, algorithm.protocol, loss.offset)
+				})
+			}
 		})
 	}
 }
 
-func runVirtualTCP(t *testing.T, drop bool) {
+func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProtocolFactory, dropOffset int) {
 	t.Helper()
 	const (
 		quantum = time.Millisecond
@@ -108,6 +138,8 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	var pending []delivery
 	var nextTX [2]time.Duration
 	var trace []packetObservation
+	var progress []recoveryObservation
+	var received bytes.Buffer
 	addresses := [2]tcpip.Address{tcpip.AddrFrom4([4]byte{10, 0, 0, 1}), tcpip.AddrFrom4([4]byte{10, 0, 0, 2})}
 	t.Cleanup(func() {
 		for _, s := range stacks {
@@ -127,12 +159,20 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	for side := range stacks {
 		s := stack.New(stack.Options{
 			NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol},
-			TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocolCUBIC},
+			TransportProtocols: []stack.TransportProtocolFactory{protocol},
 			Clock:              clock,
 			ClockResolution:    quantum,
 			SecureRNG:          zeroReader{},
 		})
 		stacks[side] = s
+		var sack tcpip.TCPSACKEnabled
+		if err := s.TransportProtocolOption(tcp.ProtocolNumber, &sack); err != nil || !sack {
+			t.Fatalf("side %d SACK = %t, error = %v", side, sack, err)
+		}
+		var recovery tcpip.TCPRecovery
+		if err := s.TransportProtocolOption(tcp.ProtocolNumber, &recovery); err != nil || recovery != tcpip.TCPRACKLossDetection {
+			t.Fatalf("side %d recovery = %d, error = %v", side, recovery, err)
+		}
 		links[side] = channel.New(1024, 1500, "")
 		if err := s.CreateNIC(1, links[side]); err != nil {
 			t.Fatalf("CreateNIC(%d): %s", side, err)
@@ -145,9 +185,55 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	}
 	now := func() time.Duration { return clock.NowMonotonic().Sub(tcpip.MonotonicTime{}) }
 	var dropped bool
-	var lostSequence uint32
+	var lostSequence, lostEnd, dataSequence uint32
+	var dataStarted bool
+	var highestSent, acknowledged uint32
 	var lostPayload string
 	var recovered bool
+	classification := "unclassified"
+	var senderAlgorithm tcpip.CongestionControlOption
+
+	defer func() {
+		encodedTrace, err := json.Marshal(trace)
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := struct {
+			Case           string
+			Algorithm      string
+			DropOffset     int
+			LostSequence   uint32
+			LostEnd        uint32
+			RecoveryTrace  []recoveryObservation
+			VirtualNS      int64
+			Bytes          int
+			PayloadSHA256  string
+			Retransmits    uint64
+			RTOs           uint64
+			SACKRecoveries uint64
+			TLPRecoveries  uint64
+			RecoveryClass  string
+			TraceSHA256    string
+			Trace          []packetObservation
+		}{
+			Case:      t.Name(),
+			Algorithm: string(senderAlgorithm), DropOffset: dropOffset, LostSequence: lostSequence, LostEnd: lostEnd, RecoveryTrace: progress,
+			VirtualNS:      int64(now()),
+			Bytes:          received.Len(),
+			PayloadSHA256:  fmt.Sprintf("%x", sha256.Sum256(received.Bytes())),
+			Retransmits:    stacks[0].Stats().TCP.Retransmits.Value(),
+			RTOs:           stacks[0].Stats().TCP.Timeouts.Value(),
+			SACKRecoveries: stacks[0].Stats().TCP.SACKRecovery.Value(),
+			TLPRecoveries:  stacks[0].Stats().TCP.TLPRecovery.Value(), RecoveryClass: classification,
+			TraceSHA256: fmt.Sprintf("%x", sha256.Sum256(encodedTrace)),
+			Trace:       trace,
+		}
+		encoded, err := json.Marshal(result)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("VIRTUAL_TCP %s", encoded)
+	}()
 
 	// Endpoint calls have returned before this fence; no application or link
 	// goroutine can enqueue more work. With one processor per stack, Pause drains
@@ -172,6 +258,23 @@ func runVirtualTCP(t *testing.T, drop bool) {
 				if clock.callbacks.Load() != generation {
 					return false
 				}
+				stats := stacks[0].Stats().TCP
+				observation := recoveryObservation{
+					AtNS: int64(now()), RTOs: stats.Timeouts.Value(),
+					SACKRecoveries: stats.SACKRecovery.Value(),
+					TLPRecoveries:  stats.TLPRecovery.Value(), TimerCallbacks: clock.callbacks.Load(),
+					FastRetransmit: stats.FastRetransmit.Value(),
+					Retransmits:    stats.Retransmits.Value(),
+				}
+				changed := len(progress) == 0
+				if !changed {
+					previous := progress[len(progress)-1]
+					previous.AtNS = observation.AtNS
+					changed = previous != observation
+				}
+				if changed {
+					progress = append(progress, observation)
+				}
 				for side, link := range links {
 					for packet := link.Read(); packet != nil; packet = link.Read() {
 						view := packet.ToView()
@@ -184,16 +287,38 @@ func runVirtualTCP(t *testing.T, drop bool) {
 						segment := header.TCP(ip.Payload())
 						payload := segment.Payload()
 						payloadHash := fmt.Sprintf("%x", sha256.Sum256(payload))
-						isLoss := drop && !dropped && side == 0 && len(payload) != 0
-						if isLoss {
-							dropped, lostSequence, lostPayload = true, segment.SequenceNumber(), payloadHash
-						} else if dropped && side == 0 && len(payload) != 0 && segment.SequenceNumber() == lostSequence && payloadHash == lostPayload {
-							recovered = true
+						var retransmitted, isLoss bool
+						if side == 0 && len(payload) != 0 {
+							if !dataStarted {
+								dataSequence, dataStarted = segment.SequenceNumber(), true
+							}
+							offset := segment.SequenceNumber() - dataSequence
+							retransmitted = offset < highestSent
+							highestSent = max(highestSent, offset+uint32(len(payload)))
+							isLoss = dropOffset >= 0 && !dropped && !retransmitted && int(offset) <= dropOffset && dropOffset < int(offset)+len(payload)
+							if isLoss {
+								dropped, lostSequence, lostPayload = true, segment.SequenceNumber(), payloadHash
+								lostEnd = lostSequence + uint32(len(payload))
+							} else if dropped && segment.SequenceNumber() == lostSequence && segment.SequenceNumber()+uint32(len(payload)) == lostEnd && payloadHash == lostPayload {
+								recovered = true
+							}
 						}
+						var sackPermitted bool
+						if segment.Flags().Contains(header.TCPFlagSyn) {
+							sackPermitted = header.ParseSynOptions(segment.Options(), segment.Flags().Contains(header.TCPFlagAck)).SACKPermitted
+						}
+
 						// Dropped packets still consume their serialization time.
 						nextTX[side] = max(nextTX[side], now()) + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
 						at := nextTX[side] + delay
-						row := packetObservation{AtNS: int64(at), From: side, Sequence: segment.SequenceNumber(), Acknowledgment: segment.AckNumber(), Flags: uint8(segment.Flags()), PayloadBytes: len(payload), PacketSHA256: fmt.Sprintf("%x", sha256.Sum256(view.AsSlice())), Dropped: isLoss}
+						row := packetObservation{
+							AtNS: int64(at), CapturedAtNS: int64(now()), From: side,
+							Sequence: segment.SequenceNumber(), EndSequence: segment.SequenceNumber() + uint32(len(payload)),
+							Acknowledgment: segment.AckNumber(), Flags: uint8(segment.Flags()), PayloadBytes: len(payload),
+							PacketSHA256: fmt.Sprintf("%x", sha256.Sum256(view.AsSlice())), PayloadSHA256: payloadHash,
+							OptionsHex: fmt.Sprintf("%x", segment.Options()), SACKBlocks: header.ParseTCPOptions(segment.Options()).SACKBlocks,
+							SACKPermitted: sackPermitted, Retransmitted: retransmitted, Dropped: isLoss,
+						}
 						pending = append(pending, delivery{at: at, from: side, packet: stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: packet.ToBuffer()}), row: row})
 						view.Release()
 						packet.DecRef()
@@ -243,6 +368,9 @@ func runVirtualTCP(t *testing.T, drop bool) {
 			trace = append(trace, packet.row)
 			if !packet.row.Dropped {
 				links[1-packet.from].InjectInbound(ipv4.ProtocolNumber, packet.packet)
+				if packet.from == 1 && dataStarted && header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagAck) {
+					acknowledged = max(acknowledged, packet.row.Acknowledgment-dataSequence)
+				}
 			}
 			packet.packet.DecRef()
 		}
@@ -263,7 +391,9 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	if err := listener.Bind(serverAddr); err != nil {
 		t.Fatalf("Bind(server): %s", err)
 	}
-	if err := listener.Listen(1); err != nil {
+	// Endpoint.Listen takes the queue capacity directly. Capacity two leaves
+	// room for this SYN without selecting the option-limited SYN-cookie path.
+	if err := listener.Listen(2); err != nil {
 		t.Fatalf("Listen: %s", err)
 	}
 	if err := client.Bind(tcpip.FullAddress{Addr: addresses[0], Port: 40000}); err != nil {
@@ -289,17 +419,51 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	if got, want := tcp.EndpointState(client.State()), tcp.StateEstablished; got != want {
 		t.Fatalf("client state = %s, want %s", got, want)
 	}
+	checkAlgorithm := func() {
+		t.Helper()
+		if err := client.GetSockOpt(&senderAlgorithm); err != nil || string(senderAlgorithm) != algorithm {
+			t.Fatalf("connected sender algorithm = %q, error = %v, want %q", senderAlgorithm, err, algorithm)
+		}
+	}
+	checkAlgorithm()
+	var syns [2]int
+	for _, packet := range trace {
+		if header.TCPFlags(packet.Flags).Contains(header.TCPFlagSyn) {
+			if !packet.SACKPermitted {
+				t.Fatalf("side %d SYN did not negotiate SACK: %+v", packet.From, packet)
+			}
+			syns[packet.From]++
+		}
+	}
+	if syns != [2]int{1, 1} {
+		t.Fatalf("SYN/SYN-ACK census = %v, want [1 1]", syns)
+	}
 	data := make([]byte, 128<<10)
 	for i := range data {
 		data[i] = byte(i*17 + i/251)
 	}
-	if n, err := client.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
-		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+	const prefix = 128
+	if n, err := client.Write(bytes.NewReader(data[:prefix]), tcpip.WriteOptions{}); err != nil || n != prefix {
+		t.Fatalf("prefix Write = (%d, %v), want (%d, nil)", n, err, prefix)
+	}
+	for received.Len() != prefix || acknowledged < prefix {
+		step()
+		if _, err := server.Read(&received, tcpip.ReadOptions{}); err != nil {
+			if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
+				t.Fatalf("prefix Read: %s", err)
+			}
+		}
+		fence()
+		if received.Len() > prefix {
+			t.Fatalf("prefix Read delivered %d bytes, want %d", received.Len(), prefix)
+		}
+	}
+	if n, err := client.Write(bytes.NewReader(data[prefix:]), tcpip.WriteOptions{}); err != nil || n != int64(len(data)-prefix) {
+		t.Fatalf("bulk Write = (%d, %v), want (%d, nil)", n, err, len(data)-prefix)
 	}
 	if err := client.Shutdown(tcpip.ShutdownWrite); err != nil {
 		t.Fatalf("Shutdown(write): %s", err)
 	}
-	var received bytes.Buffer
 	var eof bool
 	for {
 		step()
@@ -321,14 +485,64 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	if !bytes.Equal(received.Bytes(), data) {
 		t.Fatalf("received %d bytes with SHA256 %x, want %d bytes with SHA256 %x", received.Len(), sha256.Sum256(received.Bytes()), len(data), sha256.Sum256(data))
 	}
+	checkAlgorithm()
 	retransmits := stacks[0].Stats().TCP.Retransmits.Value()
-	if drop {
+	if dropOffset >= 0 {
 		if !dropped || !recovered || retransmits == 0 {
 			t.Fatalf("loss recovery: dropped=%t, retransmitted exact payload=%t, retransmits=%d", dropped, recovered, retransmits)
 		}
 	} else if retransmits != 0 {
 		t.Fatalf("no-loss retransmits = %d, want 0", retransmits)
 	}
+	stats := stacks[0].Stats().TCP
+	if dropOffset < 0 {
+		classification = "no_loss"
+	} else {
+		var retransmissionNS int64
+		for _, packet := range trace {
+			if packet.From == 0 && packet.Retransmitted && packet.Sequence == lostSequence && packet.EndSequence == lostEnd {
+				retransmissionNS = packet.CapturedAtNS
+				break
+			}
+		}
+		var higherData, holeSACK bool
+		for _, packet := range trace {
+			if packet.AtNS >= retransmissionNS || packet.Dropped {
+				continue
+			}
+			if packet.From == 0 && packet.PayloadBytes > 0 && packet.Sequence >= lostEnd {
+				higherData = true
+			}
+			if packet.From == 1 && packet.Acknowledgment == lostSequence {
+				for _, block := range packet.SACKBlocks {
+					if uint32(block.Start) >= lostEnd && block.Start.LessThan(block.End) {
+						holeSACK = true
+					}
+				}
+			}
+		}
+		if dropOffset == 0 && higherData {
+			t.Fatal("higher data was delivered before prefix recovery")
+		}
+		if dropOffset > 0 && (!higherData || !holeSACK) {
+			t.Fatalf("middle hole [%d,%d) retransmitted at %d without prior delivered higher data/SACK: %t/%t", lostSequence, lostEnd, retransmissionNS, higherData, holeSACK)
+		}
+		var before recoveryObservation
+		for _, observation := range progress {
+			if observation.AtNS <= retransmissionNS {
+				before = observation
+			}
+		}
+		switch {
+		case before.RTOs > 0:
+			classification = "rto"
+		case stats.TLPRecovery.Value() > 0 && stats.Timeouts.Value() == 0:
+			classification = "tail_loss_probe_recovery"
+		case holeSACK && before.SACKRecoveries > 0 && stats.Timeouts.Value() == 0:
+			classification = "sack_recovery"
+		}
+	}
+
 	for side, s := range stacks {
 		if got, want := s.Stats().TCP.SegmentSendErrors.Value(), uint64(0); got != want {
 			t.Fatalf("side %d segment send errors = %d, want %d", side, got, want)
@@ -337,34 +551,5 @@ func runVirtualTCP(t *testing.T, drop bool) {
 			t.Fatalf("side %d checksum errors = %d, want %d", side, got, want)
 		}
 	}
-	encodedTrace, err := json.Marshal(trace)
-	if err != nil {
-		t.Fatal(err)
-	}
-	result := struct {
-		Case           string
-		VirtualNS      int64
-		Bytes          int
-		PayloadSHA256  string
-		Retransmits    uint64
-		RTOs           uint64
-		SACKRecoveries uint64
-		TraceSHA256    string
-		Trace          []packetObservation
-	}{
-		Case:           t.Name(),
-		VirtualNS:      int64(now()),
-		Bytes:          received.Len(),
-		PayloadSHA256:  fmt.Sprintf("%x", sha256.Sum256(received.Bytes())),
-		Retransmits:    retransmits,
-		RTOs:           stacks[0].Stats().TCP.Timeouts.Value(),
-		SACKRecoveries: stacks[0].Stats().TCP.SACKRecovery.Value(),
-		TraceSHA256:    fmt.Sprintf("%x", sha256.Sum256(encodedTrace)),
-		Trace:          trace,
-	}
-	encoded, err := json.Marshal(result)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("VIRTUAL_TCP %s", encoded)
+
 }
