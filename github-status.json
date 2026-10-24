@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T01:10:02.389974+00:00",
-  "registryDate": "2026-10-24T00:50:28.564076+00:00",
+  "registryDate": "2026-10-24T01:17:42.152751+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -158358,13 +158358,13 @@
       "checkedAt": "2026-10-24T01:09:56.540471+00:00",
       "mergeabilityCheckedAt": "2026-10-24T01:09:28.155797+00:00",
       "sourceBranchMismatch": false,
-      "owner": "WorkMap",
+      "owner": "maintainer",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "WorkMap",
-        "sourceHead": "21b2d0c82f85271d12755de263971c2e9a52b1a0",
-        "disposition": "Conflict repair qualified; final checked-conversion fork prepared",
-        "nextAction": "Root owns the contributor/publication decision for exact c8ac4368c9. Keep the public 21b2 conflict active until an authorized amendment is verified. Source/result peers are complete; no benchmark replay or public comment."
+        "owner": "maintainer",
+        "sourceHead": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
+        "disposition": "Contributor-approved conflict repair delivered; maintainer review pending",
+        "nextAction": "Follow exact-head public CI, maintainer review and import state through the existing refresh. The historical CHANGES_REQUESTED review is on c10df898; both inline findings are resolved. No new contributor decision or reminder is pending."
       },
       "conflictObservedSince": "2026-10-23T23:54:33.041307+00:00"
     }
@@ -161306,15 +161306,6 @@
         "basis": "transition",
         "qualifier": null,
         "observedAt": "2026-10-24T01:10:02.125722+00:00"
-      }
-    },
-    "branch:review/pr15730-route-validation-20261024": {
-      "contributor-review": {
-        "scope": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
-        "since": "2026-10-24T00:50:28.564076+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-24T00:50:28.564076+00:00"
       }
     }
   },
