@@ -1352,10 +1352,9 @@ func (s *sender) isAssignedSequenceNumber(seg *segment) bool {
 	return seg.flags != 0
 }
 
-// SetPipe implements the SetPipe() function described in RFC6675. Netstack
-// maintains the congestion window in number of packets and not bytes, so
-// SetPipe() here measures number of outstanding packets rather than actual
-// outstanding bytes in the network.
+// SetPipe estimates packets still in flight during recovery. RACK uses its
+// per-transmission loss marks; classic SACK uses RFC6675 SetPipe(). Netstack
+// maintains the congestion window in packets rather than bytes.
 //
 // +checklocks:s.ep.mu
 func (s *sender) SetPipe() {
@@ -1385,6 +1384,17 @@ func (s *sender) SetPipe() {
 				break
 			}
 			if s.ep.scoreboard.IsSACKED(sb) {
+				continue
+			}
+
+			if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+				// RACK tracks the latest transmission, including retransmissions,
+				// with seg.lost. A transmission leaves pipe when RACK marks it
+				// lost and returns once when sendSegment retransmits it. The
+				// classic HighRxt term below would count that copy twice.
+				if !s1.lost {
+					pipe++
+				}
 				continue
 			}
 

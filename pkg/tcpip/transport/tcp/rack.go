@@ -477,7 +477,12 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 	snd := rc.snd
 	snd.traceWatch("rack_recovery_scan")
 	if fastRetransmit {
+		// resendSegment updates pipe after the first retransmission.
 		snd.resendSegment()
+	} else {
+		// Loss detection may have marked more transmissions since the ACK
+		// handler last computed pipe, including on the reorder timer path.
+		snd.SetPipe()
 	}
 
 	var dataSent bool
