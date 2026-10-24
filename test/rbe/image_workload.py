@@ -13,6 +13,7 @@ import uuid
 
 import qualification_report as report
 from image_runtime import prepared_runtime
+from docker_checkpoint import materialize_carrier, dedup_preflight
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -73,6 +74,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
 
     try:
         check_source(source)
+        carrier = materialize_carrier(config, private, evidence, time.monotonic() + remaining())
         for side, revision in (("after", source), ("before", config["before_source"])):
             command(["git", "switch", "--detach", revision])
             check_source(revision)
@@ -192,11 +194,23 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 runtime = scopes.enter_context(prepared_runtime(directory / "runtime.json", runtime_directory, {
                     "runtime_name": name, "runtime_flags": ["--platform=systrap"],
                     "image_name": "benchmarks/nginx", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
-                    "docker_experimental": True, "docker_version": "24.0.9",
+                    "docker_experimental": True, "docker_version": "24.0.9", "docker_binary": carrier["dockerd"],
                     "retained_release_files": retained, "release_supplier": {"source": revision},
                 }))
+                if "daemon" in inputs and inputs["daemon"] != runtime["fixture_daemon"]:
+                    raise ValueError("Both runtimes must use the identical qualified Docker process")
+                inputs["daemon"] = runtime["fixture_daemon"]
                 inputs["runtimes"][side] = {"name": name, "source": revision, "files": runtime["runtime_files"],
                                            "configuration": runtime["config_after"]["runtimes"][name]}
+            inputs["docker_carrier"] = config["docker_carrier"]
+            inputs["dedup_preflight"] = {}
+            for side in ("before", "after"):
+                directory = evidence / (side + "-docker-dedup")
+                directory.mkdir()
+                inputs["dedup_preflight"][side] = dedup_preflight(
+                    directory, Path(carrier["content_probe"]["path"]), inputs["runtimes"][side]["name"],
+                    fixture["id"], Path(runtime["server_info"]["DockerRootDir"]),
+                    time.monotonic() + min(180, remaining()))
             report.write_json(package / "inputs.json", inputs)
             report.write_json(evidence / "kernel-benchmark-inputs.json", inputs)
             target = ["//test/rbe/state_array_pair:paired_test"]

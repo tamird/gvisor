@@ -120,6 +120,18 @@ def check_image(image: Image) -> None:
         raise ValueError("Checkpoint fixture image changed")
 
 
+def check_daemon(expected: dict) -> dict:
+    pid = int(Path("/var/run/docker.pid").read_text())
+    process = Path("/proc") / str(pid)
+    executable = (process / "exe").resolve(strict=True)
+    ticks = (process / "stat").read_text().rsplit(")", 1)[1].split()[19]
+    if (pid != expected["pid"] or ticks != expected["start_ticks"] or
+            str(executable) != expected["executable"]["path"]):
+        raise ValueError("Qualified Docker process changed")
+    checked_file(executable, expected["executable"])
+    return {"pid": pid, "start_ticks": ticks, "executable": expected["executable"]}
+
+
 def main(reporter: Path) -> int:
     package = Path(__file__).resolve().parent
     output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
@@ -152,6 +164,7 @@ def main(reporter: Path) -> int:
     write_json(output / "harness-identity.json", observed)
     checked_file(reporter, manifest["benchstat"])
     check_image(manifest["image"])
+    check_daemon(manifest["daemon"])
     initial_containers = containers()
     plan = cohort()
     write_json(output / "selection.json", [asdict(row) for row in plan])
@@ -188,6 +201,7 @@ def main(reporter: Path) -> int:
             binary, runfiles = check_harness(package, harness)
             check_runtime(runtime)
             check_image(manifest["image"])
+            daemon_before = check_daemon(manifest["daemon"])
             if cancellation:
                 return cancellation
             if containers() != initial_containers:
@@ -254,6 +268,8 @@ def main(reporter: Path) -> int:
             check_harness(package, harness)
             check_runtime(runtime)
             check_image(manifest["image"])
+            daemon_after = check_daemon(manifest["daemon"])
+            row["daemon"] = {"before": daemon_before, "after": daemon_after}
             if containers() != initial_containers:
                 raise RuntimeError("Benchmark cleanup left containers after " + sample.name)
             if not re.search(r"^PASS$", text, re.M) or re.search(r"^FAIL(?:\s|$)", text, re.M):

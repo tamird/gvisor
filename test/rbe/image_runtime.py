@@ -32,6 +32,10 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
     daemon_arguments = None
     daemon_environment = None
     daemon_executable = None
+    original_daemon_executable = None
+    replacement = configuration.get("docker_binary")
+    expected_executable = Path(replacement["path"]).resolve(strict=True) if replacement else Path(shutil.which("dockerd")).resolve()
+    entry_executable = (Path("/proc") / Path("/var/run/docker.pid").read_text().strip() / "exe").resolve(strict=True)
     daemon_cwd = None
     daemon_ready = False
     daemon_changed = False
@@ -59,11 +63,11 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         return {"path": str(path), "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
-    def reload_daemon():
+    def reload_daemon(executable: Path):
         pid = int(Path("/var/run/docker.pid").read_text())
         process = Path("/proc") / str(pid)
         arguments = [part.decode() for part in (process / "cmdline").read_bytes().split(b"\0") if part]
-        if (process / "exe").resolve() != Path(shutil.which("dockerd")).resolve() or Path(arguments[0]).name != "dockerd":
+        if (process / "exe").resolve() != executable or Path(arguments[0]).name != "dockerd":
             raise RuntimeError("Docker PID does not identify the worker's dockerd")
         os.kill(pid, signal.SIGHUP)
 
@@ -155,6 +159,12 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         raise RuntimeError("Docker did not expose the exact fixture startup configuration")
 
     try:
+        if replacement:
+            records["entry_docker_executable"] = record_file(entry_executable)
+            actual = record_file(expected_executable)
+            if any(actual[key] != replacement[key] for key in ("bytes", "sha256")):
+                raise ValueError("Qualified Docker executable changed")
+            records["qualified_docker"] = actual
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
         records["server_info_before"] = json.loads(run(["docker", "info", "--format={{json .}}"]))
         make = ["make", "--no-print-directory", "ARCH=x86_64", "DOCKER_BUILD=false",
@@ -200,7 +210,8 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
         experimental_changed = experimental and not records["server_info_before"]["ExperimentalBuild"]
         if (profile_name or experimental) and records["server_before"]["Version"] != configuration["docker_version"]:
             raise RuntimeError("Fixture startup settings do not match the Docker version")
-        if profile_name or experimental_changed:
+        replace_binary = replacement and (Path("/proc") / Path("/var/run/docker.pid").read_text().strip() / "exe").resolve() != expected_executable
+        if profile_name or experimental_changed or replace_binary:
             security = records["server_info_before"]["SecurityOptions"]
             if profile_name and ("name=seccomp,profile=builtin" not in security or "seccomp-profile" in original_config):
                 raise RuntimeError("Fixture requires the pinned built-in Docker seccomp profile")
@@ -208,6 +219,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             process = Path("/proc") / str(daemon_pid)
             daemon_arguments = [part.decode() for part in (process / "cmdline").read_bytes().split(b"\0") if part]
             daemon_executable = (process / "exe").resolve()
+            original_daemon_executable = daemon_executable
             daemon_cwd = (process / "cwd").resolve(strict=True)
             daemon_start_ticks = start_ticks(process)
             changed_flags = ({"--seccomp-profile"} if profile_name else set()) | ({"--experimental"} if experimental_changed else set())
@@ -231,14 +243,31 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             # Docker 24 installs experimental routes and its seccomp profile at startup.
             # Preserve its argv, environment, data directory and configuration.
             stop_daemon()
+            if replacement:
+                daemon_executable = expected_executable
             expected_security = ["name=seccomp,profile=" + profile_name if profile_name and value ==
                                  "name=seccomp,profile=builtin" else value for value in security]
             records["fixture_server_info"] = start_daemon(
                 expected_security, experimental or records["server_info_before"]["ExperimentalBuild"])
             records["daemon_action"] = "Restart sole disposable daemon with declared fixture startup settings"
         else:
-            reload_daemon()
+            reload_daemon(expected_executable)
             records["daemon_action"] = "Reload existing daemon runtimes"
+        if replacement:
+            observed = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
+            engine = [row for row in observed["Components"] if row["Name"] == "Engine"]
+            containerd = [row for row in observed["Components"] if row["Name"] == "containerd"]
+            if (observed["Version"] != "24.0.9" or len(engine) != 1 or
+                    engine[0]["Details"]["GitCommit"] != replacement["git_commit"] or
+                    len(containerd) != 1 or containerd[0]["Version"] != "1.7.22" or
+                    not containerd[0]["Details"]["GitCommit"].startswith("7f7fdf5")):
+                raise ValueError("Docker replacement changed the selected engine or containerd")
+            pid = int(Path("/var/run/docker.pid").read_text())
+            process = Path("/proc") / str(pid)
+            if (process / "exe").resolve() != expected_executable:
+                raise ValueError("Running daemon is not the qualified executable")
+            records["fixture_daemon"] = {"pid": pid, "start_ticks": start_ticks(process),
+                "executable": record_file(expected_executable), "server": observed}
         ready_deadline = min(time.monotonic() + remaining(), time.monotonic() + 30)
         while time.monotonic() < ready_deadline:
             result = subprocess.run(["docker", "info", "--format={{json .}}"], capture_output=True, text=True, timeout=min(5, remaining()))
@@ -290,15 +319,29 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             config_path.write_bytes(original_bytes)
             if daemon_changed:
                 stop_daemon()
+                daemon_executable = original_daemon_executable
                 records["restored_server_info"] = start_daemon(
                     records["server_info_before"]["SecurityOptions"],
                     records["server_info_before"]["ExperimentalBuild"], restoring=True)
                 if records["restored_server_info"]["Runtimes"] != records["server_info_before"]["Runtimes"]:
                     raise RuntimeError("Cleanup did not restore the original Docker runtimes")
             else:
-                reload_daemon()
+                reload_daemon(entry_executable)
             if config_path.read_bytes() != original_bytes:
                 raise RuntimeError("Cleanup did not restore the original Docker config bytes")
+            if replacement:
+                pid = int(Path("/var/run/docker.pid").read_text())
+                process = Path("/proc") / str(pid)
+                if (process / "exe").resolve() != entry_executable:
+                    raise RuntimeError("Cleanup did not restore the entry daemon executable")
+                restored_executable = record_file(entry_executable)
+                if restored_executable != records["entry_docker_executable"]:
+                    raise RuntimeError("Cleanup daemon bytes differ from entry")
+                records["daemon_after_cleanup"] = {"pid": pid, "start_ticks": start_ticks(process),
+                    "executable": restored_executable,
+                    "server": json.loads(run(["docker", "version", "--format={{json .Server}}"]))}
+                if records["daemon_after_cleanup"]["server"] != records["server_before"]:
+                    raise RuntimeError("Cleanup did not restore the entry daemon version")
             records["cleanup"] = "PASS"
         except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             records["cleanup"] = "FAIL"
