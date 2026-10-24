@@ -608,11 +608,10 @@ func hasSignedZero(kind reflect.Kind) bool {
 
 // decodeArray uses the same element decoders for fields and fresh slice
 // backing arrays. encodeDefault elides a whole zero array, but encodeArray
-// preserves zero elements within a mixed array. Decoding initialized scalar
-// fields into zeroed storage distinguishes these cases without changing the
-// stream or individual scalar decoders. Floating-point arrays also need this
-// distinction in fresh fields and backing arrays because negative zero is zero
-// but must retain its sign when part of a mixed array.
+// preserves zero elements within a mixed array. Initialized scalar fields keep
+// their zero prefix until the first nonzero element establishes that the whole
+// array must be replaced. Floating-point arrays instead use temporary storage
+// because negative zero is zero but must retain its sign in a mixed array.
 func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero bool) {
 	if len(a) == 0 {
 		return
@@ -623,17 +622,40 @@ func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero
 		return
 	}
 	var destination []T
+	preservePrefix := false
 	if kind := scalarArrayKind(typeOf[T]()); preserveZero && kind != reflect.Invalid {
-		memory := unsafe.Slice((*byte)(unsafe.Pointer(&a[0])), uintptr(len(a))*unsafe.Sizeof(a[0]))
-		if hasSignedZero(kind) || bytes.Count(memory, []byte{0}) != len(memory) {
+		if hasSignedZero(kind) {
 			destination = a
 			a = make([]T, len(a))
+		} else {
+			memory := unsafe.Slice((*byte)(unsafe.Pointer(&a[0])), uintptr(len(a))*unsafe.Sizeof(a[0]))
+			preservePrefix = bytes.Count(memory, []byte{0}) != len(memory)
 		}
 	}
 	ds, ods := d.ds, d.ods
 	fullValue := d.fullValue
 	d.fullValue = true
-	for i := range a {
+	i := 0
+	if preservePrefix {
+		for ; i < len(a); i++ {
+			original := a[i]
+			var zero T
+			a[i] = zero
+			d.lastRef = 0
+			elem(d, &a[i])
+			if d.lastRef != 0 {
+				ds.wait(ods, d.lastRef, nil)
+			}
+			if !reflect.ValueOf(&a[i]).Elem().IsZero() {
+				clear(a[:i])
+				clear(a[i+1:])
+				i++
+				break
+			}
+			a[i] = original
+		}
+	}
+	for ; i < len(a); i++ {
 		d.lastRef = 0
 		elem(d, &a[i])
 		if d.lastRef != 0 {
