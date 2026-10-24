@@ -76,6 +76,7 @@ function label(node) {
 }
 function status(node) {
   if (node.type === "issue" && node.githubState) {
+    if (humanAction(node)) return `Issue ${node.githubState} · human submission pending`;
     if (node.status === "deployment-pending") return `Issue ${node.githubState} · deployment pending`;
     return `Issue ${node.githubState} · capacity unverified`;
   }
@@ -173,6 +174,7 @@ const ATTENTION_REASONS = [
   { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Contributor decisions" },
+  { id: "human-submission", owner: "user", title: "Human-only submissions" },
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
@@ -190,7 +192,7 @@ const OTHER_ATTENTION_GROUPS = [
   { id: "resolved", owner: "other", title: "Resolved PRs" },
   { id: "other", owner: "other", title: "Other work" },
 ];
-const ATTENTION_OWNERS = { agent: "Agent work", user: "Needs your decision", maintainer: "Needs maintainer attention", other: "Other visible work" };
+const ATTENTION_OWNERS = { agent: "Agent work", user: "Needs your attention", maintainer: "Needs maintainer attention", other: "Other visible work" };
 const LEGACY_HANDOFF_GROUPS = { "import-failed": "maintainer-import-failed", "import-checks": "maintainer-import-checks", "internal-status": "maintainer-unknown", review: "maintainer-review", import: "maintainer-import", merge: "maintainer-merge" };
 let handoffCopyVersion = 0;
 function handoffTimestamp(value) {
@@ -338,6 +340,7 @@ function attentionReasons(node, owner) {
   };
   if (states(node)["contributor-review"])
     add("author-proposal", contributorDecision(node)?.summary || "A contributor decision is pending; this does not change the published head's review status.");
+  if (humanAction(node)) add("human-submission", humanAction(node).summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
   if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
       && /^[a-f0-9]{40}$/.test(node.head) && node.followup?.sourceHead === node.head
@@ -436,7 +439,8 @@ function attentionReasons(node, owner) {
 }
 function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) {
   const entries = nodes.map(node => ({ node, reasons: attentionReasons(node, owner),
-    copyURL: filters.size === 1 && filters.has("author-proposal") && contributorDecision(node) && states(node)["contributor-review"]
+    copyURL: filters.has("human-submission") && humanAction(node)
+      ? contributorDecisionURL(node, "human-submission") : filters.has("author-proposal") && contributorDecision(node) && states(node)["contributor-review"]
       ? contributorDecisionURL(node) : node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null }));
   if (!grouped) return [{ id: "visible", owner: "other", title: "Visible PRs", entries }];
   const groups = [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => ({ ...group, entries: [] }));
@@ -444,13 +448,14 @@ function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) 
     const primary = entry.reasons.find(item => filters.has(item.id)) || entry.reasons.find(item => item.id !== "author-proposal") || entry.reasons[0];
     const id = primary?.id || (resolved(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
     if (id === "author-proposal" && contributorDecision(entry.node)) entry.copyURL = contributorDecisionURL(entry.node);
+    if (id === "human-submission" && humanAction(entry.node)) entry.copyURL = contributorDecisionURL(entry.node, "human-submission");
     groups.find(group => group.id === id).entries.push(entry);
   }
   return groups.filter(group => group.entries.length);
 }
 function attentionText(groups, checkedAt) {
   const shown = groups.filter(group => group.entries.some(entry => entry.copyURL));
-  const intro = shown.length && shown.every(group => group.owner === "user") ? "Contributor decisions awaiting review."
+  const intro = shown.length && shown.every(group => group.owner === "user") ? "Contributor decisions and human actions awaiting attention."
     : shown.length && shown.every(group => group.owner === "maintainer") ? "Could you help with these PRs?" : "PRs grouped by the next action.";
   const sections = shown.map(group => `${group.owner === "other" ? group.title : `${ATTENTION_OWNERS[group.owner]}: ${group.title}`}\n${group.entries.filter(entry => entry.copyURL).map(entry => entry.copyURL).join("\n")}`);
   return [intro, `Public GitHub snapshot: ${handoffTimestamp(checkedAt) || "unavailable"}. Internal status may not be visible.`, ...sections].join("\n\n");
@@ -723,9 +728,13 @@ function contributorDecision(node) {
   return decision?.status === "pending" && (node.type === "branch"
     || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
 }
-function contributorDecisionURL(node) {
+function humanAction(node) {
+  const action = node.humanAction;
+  return action?.status === "pending" && action.kind === "submission" && action.head === node.head ? action : null;
+}
+function contributorDecisionURL(node, reason = "author-proposal") {
   const url = new URL(location.href);
-  url.search = "?view=table&reason=author-proposal";
+  url.search = `?view=table&reason=${reason}`;
   url.hash = encodeURIComponent(node.id);
   return url.href;
 }
@@ -1106,7 +1115,9 @@ function drawTable(nodes) {
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   visibleTableGroups = attentionGroups(nodes, registry.meta.owner, tableGrouping);
   $("handoff-copy-all").disabled = !model.checkedAt || !visibleTableGroups.some(group => group.entries.some(entry => entry.copyURL));
-  $("handoff-snapshot").textContent = `${reasonFilters.size === 1 && reasonFilters.has("author-proposal")
+  $("handoff-snapshot").textContent = `${reasonFilters.size === 1 && reasonFilters.has("human-submission")
+    ? "Copy visible exports every displayed human-only action with its tracker link."
+    : reasonFilters.size === 1 && reasonFilters.has("author-proposal")
     ? "Copy visible exports every displayed contributor decision with its reviewable tracker link."
     : "Copy visible exports the source PRs shown as plain text."} Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
   for (const group of visibleTableGroups) {
@@ -1128,6 +1139,8 @@ function drawTable(nodes) {
     const decision = contributorDecision(node);
     if (decision && states(node)["contributor-review"])
       title.append(link(decision.title || "Review proposal ↗", decision.url, "decision-source"));
+    const action = humanAction(node);
+    if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
     state.append(element("span", "base-status", status(node))); appendStates(state, node);
     for (const reason of entry.reasons) { const item = element("span", `attention-reason ${reason.owner}`, reason.title); item.title = `${ATTENTION_OWNERS[reason.owner]}. ${reason.detail}`; state.append(item); }
@@ -1204,6 +1217,15 @@ function drawDetails() {
     section.append(link(decision.kind === "review" ? "Open PR to review ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
     details.append(section);
   }
+  const action = humanAction(node);
+  if (action) {
+    const section = element("section", "detail-section human-action");
+    section.append(element("h3", "", action.title), element("p", "", action.summary),
+      element("p", "detail-meta", `Prepared local commit ${action.head}; not published upstream`),
+      element("div", "decision-body", action.body), link("Open submission context ↗", action.url),
+      link("Read contribution policy ↗", action.policyURL));
+    details.append(section);
+  }
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
@@ -1226,7 +1248,7 @@ function drawDetails() {
     } else details.append(element("p", "detail-description", node.summary));
   }
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
-  if (node.type === "issue" && !decision) details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
+  if (node.type === "issue" && !decision && !action) details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
   const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
   const relations = [
     ["Proposed updates", model.edges.filter((edge) => edge.to === node.id && edge.role === "proposed_update"), "from"],
@@ -1456,6 +1478,12 @@ function validateRegistry(candidate) {
       throw new Error("Invalid refinement comparison");
     const proposalRepo = node.type === "branch" && typeof node.repo === "string"
       && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) && node.repo.split("/")[0] === candidate.meta.owner ? node.repo : null;
+    const action = node.humanAction;
+    if (action !== undefined && (!action || action.status !== "pending" || action.kind !== "submission"
+        || !/^[a-f0-9]{40}$/.test(action.head) || action.head !== node.head
+        || ![action.title, action.summary, action.body].every(value => typeof value === "string" && value.trim())
+        || !safeURL(action.url) || !safeURL(action.policyURL) || node.contributorReview !== undefined))
+      throw new Error("Invalid human-only action");
     const decision = node.contributorReview;
     if (decision !== undefined) {
       const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)

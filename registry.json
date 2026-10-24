@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T11:06:55.938856+00:00",
+    "updatedAt": "2026-10-24T11:15:06.343238+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21655,6 +21655,39 @@
         "url": "https://github.com/tamird/gvisor/commit/5265adcc0dd0c777762e8bd92169feb01016c952",
         "title": "Review the standalone proposal",
         "summary": "Reject unrepresentable TPU operation timeouts. Decide whether to publish this qualified standalone change."
+      }
+    },
+    {
+      "id": "issue:google/benchmark:1634",
+      "type": "issue",
+      "repo": "google/benchmark",
+      "number": 1634,
+      "group": "release",
+      "title": "Submit Benchmark automatic BCR release publishing",
+      "url": "https://github.com/google/benchmark/issues/1634",
+      "head": "913b8dbc73f654d07426dbce7826c27548e592de",
+      "status": "Human submission required",
+      "summary": "The prepared local Benchmark commit opens a Bazel Central Registry pull request for each stable release. Upstream requires a human to understand and produce the contribution, with AI assistance disclosed. This is an existing manual submission action, not a PR approval request or an automated publication grant. No automation PR has been published.",
+      "humanAction": {
+        "status": "pending",
+        "kind": "submission",
+        "head": "913b8dbc73f654d07426dbce7826c27548e592de",
+        "title": "Review and submit the prepared Benchmark contribution yourself",
+        "summary": "Tamir must review the local commit and personally produce the upstream contribution under Benchmark’s policy. No automated fork, pull request or comment.",
+        "body": "Prepared local commit: 913b8dbc73f654d07426dbce7826c27548e592de in ~/code/benchmark.\n\nReview the four-file change and its explanation, then personally submit the contribution if you choose to proceed. The change attaches a stable source archive to each release and uses Publish to BCR to open the registry pull request, preserving the existing module maintainer and presubmit matrix. Disclose the AI assistance in the contribution as upstream requires.\n\nAll four source files match the validated consumer. The upstream automation issue remains open; this entry does not claim an existing PR or authorize agent publication.",
+        "url": "https://github.com/google/benchmark/issues/1634",
+        "policyURL": "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md"
+      },
+      "followup": {
+        "owner": "tamird",
+        "sourceHead": "913b8dbc73f654d07426dbce7826c27548e592de",
+        "disposition": "Human-only submission; separate from contributor reviews",
+        "nextAction": "Review the prepared local commit, understand the change, and personally produce the upstream submission with AI disclosure if proceeding. Agents must not create its fork, PR or comment.",
+        "evidence": [
+          "https://github.com/google/benchmark/issues/1634",
+          "https://github.com/google/benchmark/blob/1fa8ea1c0d5f580748c2217efcad301729a8285c/AGENTS.md",
+          "https://app.buildbuddy.io/invocation/3fb83843-be08-482c-bd75-d6433d0611c6"
+        ]
       }
     }
   ],

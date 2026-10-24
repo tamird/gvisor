@@ -624,11 +624,11 @@ unchanged patch is displayed separately.
 
 ### Maintainer handoff
 
-The table can group rows by attention needed. Its selectors separate Agent work (conflicts, public source checks, unanswered feedback and public snapshot refreshes), Needs your decision (actual unpublished proposal decisions), and Needs maintainer attention (review or reply follow-up, imports, internal feedback, import checks and unclear internal status). Agent work can be queued; the reason does not imply that it has started. Multiple reasons can apply to a PR. Grouping and explicit reason filters are shareable in the URL; earlier `?view=handoff` links open the grouped table.
+The table can group rows by attention needed. Its selectors separate Agent work (conflicts, public source checks, unanswered feedback and public snapshot refreshes), Needs your attention (explicit contributor decisions and separate human-only submissions), and Needs maintainer attention (review or reply follow-up, imports, internal feedback, import checks and unclear internal status). Agent work can be queued; the reason does not imply that it has started. Multiple reasons can apply to a PR. Grouping and explicit reason filters are shareable in the URL; earlier `?view=handoff` links open the grouped table.
 An unpublished branch with `status: Agent work` routes to the agent when its existing `followup` names an owner, a nonempty next action and the exact current `sourceHead`. Remove an active `contributorReview` badge while implementation or validation remains with the agent, and retain the prior request in the follow-up description; this does not create a second contributor request. Stale-head assignments do not carry forward.
 
 
-Copy visible or Copy group exports plain text with a short introduction, snapshot time, plain headings and one full source PR URL per line. Search, workstream, attention and existing state filters determine the copied scope. Native source/import links and details remain in the table. Clipboard denial exposes the same selected text for manual copying, and a scope or snapshot change invalidates stale fallback text and pending copy confirmations.
+Copy visible or Copy group exports plain text with a short introduction, snapshot time and plain headings. Maintainer attention uses source PR URLs. Contributor decisions and human-only submissions use canonical tracker links that expose the exact proposed commit or text. Search, workstream, attention and existing state filters determine the copied scope. Native source/import links and details remain in the table. Clipboard denial exposes the same selected text for manual copying, and a scope or snapshot change invalidates stale fallback text and pending copy confirmations.
 
 
 BuildBuddy status contexts whose exact provider description says
@@ -636,3 +636,14 @@ BuildBuddy status contexts whose exact provider description says
 `ERROR` status remains visible; these contexts establish neither an executed
 test failure nor passing checks. Unknown descriptions and unrelated failures
 retain their normal classification.
+
+
+A human-only submission uses an explicit `humanAction` on its existing item:
+`status: pending`, `kind: submission`, exact local `head` matching the item's
+head, `title`, `summary`, full actionable `body`, public context `url`, and
+`policyURL`. It appears under **Human-only submissions**, separately from
+**Contributor decisions**, without implying that an agent may submit it.
+This field and `contributorReview` are mutually exclusive. Remove the action
+when settled; changing its head requires explicit reconciliation. The same
+request-to-visible-item invariant applies, without creating another history or
+polling lane.

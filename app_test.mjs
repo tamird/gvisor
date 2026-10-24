@@ -189,6 +189,7 @@ test('contributor decisions bind the registered branch repository and exact prop
 test('outgoing review decisions remain visible on external PRs and across public head changes', () => {
   const context = client(), node = attentionNode();
   node.github.headOwner = 'EtiennePerot';
+  node.github.checkedAt = context.snapshotInput.checkedAt;
   node.contributorReview = { status: 'pending', kind: 'review', head: node.github.head,
     title: 'Authorize the outgoing review', summary: 'Code findings addressed; measurements requested.',
     body: 'Code LGTM. Please include the measurement command.', url: node.url };
@@ -870,7 +871,7 @@ test('agent work, contributor decisions and maintainer blockers have distinct ow
   assert.deepEqual(reasonsFor(branch).map(reason => reason.owner), ['agent']);
   const context = client();
   assert.equal(vm.runInContext('ATTENTION_OWNERS.agent', context), 'Agent work');
-  assert.equal(vm.runInContext('ATTENTION_OWNERS.user', context), 'Needs your decision');
+  assert.equal(vm.runInContext('ATTENTION_OWNERS.user', context), 'Needs your attention');
 });
 
 test('owned branch work routes to the agent without inventing a contributor decision', () => {
@@ -1272,4 +1273,47 @@ test('copying contributor decisions includes proposal and outgoing-review tracke
       'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Areview%2Ffix',
     ]);
   }
+});
+
+
+test('human-only submissions stay separate from review decisions and clear when settled', () => {
+  const context = client();
+  const node = { id: 'issue:google/benchmark:1634', type: 'issue', head: 'a'.repeat(40),
+    humanAction: { status: 'pending', kind: 'submission', head: 'a'.repeat(40), title: 'Submit manually',
+      summary: 'Human contribution required', body: 'Review the local commit and submit it yourself.',
+      url: 'https://github.com/google/benchmark/issues/1634', policyURL: 'https://github.com/google/benchmark/blob/main/AGENTS.md' } };
+  context.nodeInput = node;
+  context.location = { href: 'https://tamird.github.io/gvisor/' };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.deepEqual(idsFor(node), ['human-submission']);
+  assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
+  const text = vm.runInContext('attentionText(attentionGroups([nodeInput], "tamird", false, new Set(["human-submission"])), "2026-10-24T11:02:00Z")', context);
+  assert.ok(text.includes('https://tamird.github.io/gvisor/?view=table&reason=human-submission#issue%3Agoogle%2Fbenchmark%3A1634'));
+  node.head = 'b'.repeat(40);
+  assert.deepEqual(idsFor(node), []);
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid human-only action/);
+  delete node.humanAction;
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.deepEqual(idsFor(node), []);
+});
+
+
+test('ungrouped combined human attention copies both reviews and manual actions', () => {
+  const context = client(), pr = attentionNode(15814);
+  pr.github.headOwner = 'EtiennePerot';
+  pr.contributorReview = { status: 'pending', kind: 'review', head: pr.github.head, url: pr.url };
+  pr.workStates['contributor-review'] = { scope: pr.github.head };
+  const branch = { id: 'branch:fix', type: 'branch', contributorReview: { status: 'pending', head: 'b'.repeat(40) },
+    workStates: { 'contributor-review': { scope: 'b'.repeat(40) } } };
+  const manual = { id: 'issue:google/benchmark:1634', type: 'issue', head: 'c'.repeat(40),
+    humanAction: { status: 'pending', kind: 'submission', head: 'c'.repeat(40), summary: 'Submit manually' } };
+  context.nodesInput = [pr, branch, manual];
+  context.location = { href: 'https://tamird.github.io/gvisor/' };
+  const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird", false, new Set(["author-proposal", "human-submission"])), "2026-10-24T11:02:00Z")', context);
+  assert.deepEqual(text.split('\n').filter(line => line.startsWith('https://')), [
+    'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#pr%3A15814',
+    'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Afix',
+    'https://tamird.github.io/gvisor/?view=table&reason=human-submission#issue%3Agoogle%2Fbenchmark%3A1634',
+  ]);
 });
