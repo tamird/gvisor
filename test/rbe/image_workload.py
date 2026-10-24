@@ -3,7 +3,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shlex
 import xml.etree.ElementTree as ET
 
 
@@ -130,12 +129,15 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         raise ValueError("Unexpected focused owner selection")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
                "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
-    formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; '
-                           'cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt', "--"])
-    formatted = invoke("gofmt", ["run", *options, "--run_under=" + formatter,
-                                "@io_bazel_rules_go//go:go"], "command", targets=[])
-    if formatted["status"] != "PASS":
-        raise RuntimeError("Canonical Go formatting failed")
+    files = ["tools/nogo/check/check.go", "tools/nogo/check/check_test.go",
+             "tools/nogo/cli/cli.go", "tools/nogo/flags/flags.go",
+             *["test/rbe/nogo_source_order/" + name
+               for name in ("first.go", "second.go", "own.go", "own_test.go")]]
+    formatted = invoke("goimports", ["run", *options, "--run_in_cwd",
+                                   "@org_golang_x_tools//cmd/goimports", "--",
+                                   "-format-only", "-d", *files], "command", targets=[])
+    if formatted["status"] != "PASS" or (evidence / "invocation-goimports/stdout.log").read_bytes():
+        raise RuntimeError("Canonical Go import formatting differs")
     execution = private / "focused-execution.json"
     result = {"status": "INCOMPLETE", "source": config["source"]}
     try:
