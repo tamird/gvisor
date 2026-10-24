@@ -328,11 +328,12 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
     closed = {pr_identity(pr, registry["meta"]["repo"]) for pr in prs if pr["status"] in {"closed", "merged"}}
     for node in registry["nodes"]:
         # Only the task owner records actual pending contributor decisions.
-        # Amendments keep their own branches. Outgoing replies and reviews are
-        # decisions on the owning discussion, separate from GitHub approval.
+        # An explicit PR amendment keeps its candidate scope separate from the
+        # published head, as replies and reviews do from GitHub approval.
         decision = node.get("contributorReview")
-        outgoing = node["type"] in {"pr", "issue"} and decision and decision.get("kind") in {"reply", "review"}
-        if not outgoing and (node["type"] != "branch" or node["id"] in closed
+        attached = decision and (node["type"] == "pr" and decision.get("kind") == "amendment"
+                                 or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review"})
+        if not attached and (node["type"] != "branch" or node["id"] in closed
                              or (node.get("repo"), node.get("ref")) in promoted):
             continue
         if decision and decision["status"] == "pending":

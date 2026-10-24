@@ -456,7 +456,7 @@ class WorkStatesTest(unittest.TestCase):
         self.assertNotIn("waiting-merge", pr_states({**pr, "reviewDecision": "CHANGES_REQUESTED"}))
         self.assertNotIn("waiting-merge", pr_states({**pr, "checks": None}))
 
-    def test_contributor_amendment_belongs_to_its_own_branch(self):
+    def test_legacy_amendment_requires_explicit_pr_kind_or_branch(self):
         node = {"id": "pr:1", "type": "pr", "status": "open",
                 "contributorReview": {"status": "pending", "head": "c" * 40}}
         branch = {"id": "branch:amendment", "type": "branch", "ref": "review/amendment",
@@ -490,6 +490,26 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(states["issue:2"]["contributor-review"]["scope"], issue["contributorReview"]["url"])
         del node["contributorReview"]
         self.assertNotIn("contributor-review", record_states([pr], registry, {"workStates": states}, "2026-10-03T00:00:00Z")["pr:1"])
+
+    def test_explicit_pr_amendment_keeps_its_scope_across_public_head_changes(self):
+        pr = original(reviewDecision="CHANGES_REQUESTED")
+        node = {"id": "pr:1", "type": "pr", "contributorReview": {
+            "status": "pending", "kind": "amendment", "head": "c" * 40,
+            "baseHead": pr["head"]}}
+        registry = {"meta": {"repo": "google/gvisor", "updatedAt": "2026-10-03T00:00:00Z"},
+                    "nodes": [node]}
+        states = record_states([pr], registry, {}, "2026-10-02T00:00:00Z")
+        decision = states["pr:1"]["contributor-review"]
+        self.assertEqual(decision["scope"], "c" * 40)
+        self.assertEqual(decision["observedAt"], registry["meta"]["updatedAt"])
+        self.assertIn("changes-requested", states["pr:1"])
+        pr["head"] = "d" * 40
+        changed = record_states([pr], registry, {"workStates": states}, "2026-10-04T00:00:00Z")
+        self.assertEqual(changed["pr:1"]["contributor-review"], decision)
+        self.assertEqual(changed["pr:1"]["changes-requested"]["scope"], pr["head"])
+        del node["contributorReview"]
+        self.assertNotIn("contributor-review", record_states([pr], registry, {"workStates": changed},
+                                                             "2026-10-04T00:00:00Z")["pr:1"])
 
     def test_legacy_review_age_migration_keeps_authorities_separate(self):
         pr = original()

@@ -427,8 +427,13 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
 - **Contributor review:** an actual pending decision recorded by the task owner
   in the registry's `contributorReview` object (`status: pending`, exact candidate
   `head` and commit `url`) on an unpublished branch node. Independently reviewable
-  amendments or fixes each have their own branch row, with no inferred dependency
-  between them. Outgoing comments and reviews use the owning PR or issue row with
+  fixes each have their own branch row, with no inferred dependency between them.
+  An amendment to an existing PR may instead use that same PR row with
+  `kind: amendment`, the exact proposed `head` and fork commit `url`, and
+  `baseHead` identifying the published revision it replaces. Include a specific
+  `title`, `summary` and complete reviewable `body`; a different proposed head is
+  expected, while a change from `baseHead` prompts reconciliation. Outgoing
+  comments and reviews use the owning PR or issue row with
   `kind: reply` or `kind: review`, a specific `title`, `summary`, original discussion
   `url`, and the complete reviewable `body`. PR actions retain the reviewed `head`;
   issue replies do not invent a commit. These explicit decisions use the registry
