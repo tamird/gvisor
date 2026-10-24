@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T02:39:56.767091+00:00",
+    "updatedAt": "2026-10-24T02:52:33.464194+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20452,6 +20452,66 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/52067"
         }
       ]
+    },
+    {
+      "id": "branch:rules-img-redis-benchmark-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-redis-benchmark-upstream",
+      "head": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
+      "title": "Use the pinned official Redis image for benchmarks",
+      "url": "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T02:52:33.464194+00:00",
+      "summary": "The benchmark image uses the existing pinned Redis 7.0.12 declaration and adds both architecture archives and Make contexts. It removes the one-line Dockerfile without changing Go consumers, Redis binaries or runtime configuration. Native validation passed nine phases, both CPU image/context identities and one uncached AMD64 benchmark owner with SET, LPUSH and LRANGE_100 at 10,000 iterations each. All three raw rows carry eight metrics; cleanup passed. The two image configurations match the qualified basic image, with six upstream layers and no appended layer. This is functional benchmark coverage, not a measured migration speedup or ARM runtime result. The benchmark proposal has its own contributor decision; the existing basic Redis approval remains unchanged.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
+        "url": "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
+      },
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
+        "observedAt": "2026-10-24T02:52:33.464194+00:00",
+        "disposition": "Qualified proposal with root for the separate contributor decision",
+        "nextAction": "Await the existing contributor decision, then deliver only after the recorded prerequisite lands. Do not infer approval from the parent grant or post another request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
+          "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
+          "https://app.buildbuddy.io/invocation/e30ef608-ff4c-441f-834a-a8dcf2cfd512"
+        ]
+      }
+    },
+    {
+      "id": "branch:rules-img-nginx-benchmark-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-nginx-benchmark-upstream",
+      "head": "34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+      "title": "Use the pinned official Nginx image for benchmarks",
+      "url": "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T02:52:33.464194+00:00",
+      "summary": "The benchmark image migration preserves Nginx 1.25.1 and depends on the approved Apache shared payload layer. Both CPU image assembly and the four existing AMD64 benchmark groups passed. The independently reviewed fixed comparison completed 136 fresh children and 352 measured rows, with sixteen pairs per case and the same retained runtime/helper images on both arms. The final proposal changes only the commit message from the qualified product tree. Native benchstat comparisons remain workload-specific; no general migration speedup, ARM runtime result or image-size claim is inferred. This benchmark child needs its own contributor decision; Apache approval is unchanged.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+        "url": "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830"
+      },
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+        "observedAt": "2026-10-24T02:52:33.464194+00:00",
+        "disposition": "Qualified proposal with root for the separate contributor decision",
+        "nextAction": "Await the existing contributor decision, then deliver only after the recorded prerequisite lands. Do not infer approval from the parent grant or post another request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+          "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+          "https://app.buildbuddy.io/invocation/35d94ab7-743f-427a-a755-5997c9f26c4b"
+        ]
+      }
     }
   ],
   "edges": [
@@ -22817,6 +22877,26 @@
       "role": "proposed_update",
       "reason": "The reviewed umbrella correction is proposed as one amendment; the live PR and its approval remain unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/27d637b14c54865d12bbe3c921d426f48bbeaa67"
+    },
+    {
+      "from": "branch:rules-img-redis-upstream",
+      "to": "branch:rules-img-redis-benchmark-upstream",
+      "type": "depends_on",
+      "reason": "Reuses the @test_redis declaration owned by the approved basic Redis change, which separately waits for #16097.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
+        "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
+      ]
+    },
+    {
+      "from": "branch:rules-img-httpd-upstream",
+      "to": "branch:rules-img-nginx-benchmark-upstream",
+      "type": "depends_on",
+      "reason": "Reuses Apache eab6 shared payload generation; Apache separately waits for #16097.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+        "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830"
+      ]
     }
   ],
   "investigations": [
