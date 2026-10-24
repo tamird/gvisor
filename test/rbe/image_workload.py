@@ -3,9 +3,11 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
+import sys
 import time
 from urllib.parse import unquote, urlsplit
 
@@ -21,6 +23,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     target = "//test/benchmarks/fs:bazel_test"
     if config["targets"] != [target] or config["workload"] != "warm_absl":
         raise ValueError("Expected the single warm Abseil checkpoint owner")
+    profile_cpu = config.get("profile_cpu", False)
+    if type(profile_cpu) is not bool:
+        raise ValueError("profile_cpu must be a boolean")
     options = ["--config=x86_64", "--compilation_mode=opt", "--nostamp", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
                "--noannounce_rc"]
@@ -122,9 +127,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         runtime_name = "runsc-warm-absl"
         runtime_evidence = evidence / "warm-runtime"
         runtime_evidence.mkdir()
+        runtime_flags = ["--platform=systrap", "--debug=true", "--debug-command=restore,checkpoint,boot"]
+        if profile_cpu:
+            runtime_flags.extend(["--profile=true", "--profile-cpu=" + str(runtime_evidence / "cpu.%TIMESTAMP%.%CID%.pprof")])
         with prepared_runtime(runtime_evidence / "runtime.json", runtime_directory, {
             "runtime_name": runtime_name,
-            "runtime_flags": ["--platform=systrap", "--debug=true", "--debug-command=restore,checkpoint,boot"],
+            "runtime_flags": runtime_flags,
             "image_name": "benchmarks/absl", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
             "docker_experimental": True, "docker_version": "24.0.9", "docker_binary": carrier["dockerd"],
             "retained_release_files": retained, "release_supplier": {"source": source},
@@ -152,6 +160,55 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if observed != runtime["fixture_daemon"]:
                 raise ValueError("Checkpoint used a changed Docker daemon")
             record["daemon_after_test"] = observed
+        if profile_cpu:
+            # Sentry profile FDs use the same start timestamp/CID as boot logs.
+            # Gofer profiles have a separate suffix. The two sentry processes
+            # must finish and flush before inspecting their native output.
+            profiles = []
+            for log in sorted((runtime_evidence / "runsc-logs").glob("*.boot.txt")):
+                text = log.read_text()
+                cid, = re.findall(r"Args: .* ([a-f0-9]{64})\]$", text, re.M)
+                stamp = log.name.removeprefix("runsc.log.").removesuffix(".boot.txt")
+                path = runtime_evidence / f"cpu.{stamp}.{cid}.pprof"
+                if not path.is_file() or path.stat().st_size == 0:
+                    raise ValueError("Missing nonempty sentry profile: " + str(path))
+                if "CPU profiling enabled" not in text or "CPU profiling stopped" not in text:
+                    raise ValueError("Sentry profile lifecycle did not complete")
+                profiles.append({"role": "restore" if "Kernel load took [" in text else "initial",
+                                 "container": cid, "log": str(log.relative_to(evidence)),
+                                 "path": str(path.relative_to(evidence)), **report.file_record(path)})
+            if len(profiles) != 2 or {row["role"] for row in profiles} != {"initial", "restore"} or len({row["container"] for row in profiles}) != 1:
+                raise ValueError("Expected exactly the initial and restored sentry profiles")
+            restored, = [row for row in profiles if row["role"] == "restore"]
+            profile = evidence / restored["path"]
+            # Use the declared SDK's native decoder. Embedded symbols suffice;
+            # prohibit symbolization/network lookup and bound each decode.
+            decoder = shlex.join([sys.executable, "-c", """import pathlib, subprocess, sys
+go, profile, output = sys.argv[1:]
+for name, options in [('raw', ['-raw']), ('top', ['-top', '-nodecount=80']),
+                      ('state-traces', ['-traces', '-focus=gvisor.dev/gvisor/pkg/state.*Load'])]:
+ with pathlib.Path(output, 'restore-cpu.' + name + '.txt').open('w') as stream:
+  subprocess.run([go, 'tool', 'pprof', '-symbolize=none', *options, profile],
+                 stdout=stream, check=True, timeout=60)
+"""])
+            decoded = invoke("profile-decode", ["run", *options, "--run_under=" + decoder,
+                             "@io_bazel_rules_go//go:go", "--", str(profile), str(runtime_evidence)],
+                             "command", targets=[])
+            if decoded["status"] != "PASS" or decoded["native_exit"] != 0:
+                raise RuntimeError("Declared Go CPU profile decoding failed")
+            raw = (runtime_evidence / "restore-cpu.raw.txt").read_text()
+            traces = (runtime_evidence / "restore-cpu.state-traces.txt").read_text()
+            samples = raw.split("Samples:", 1)[1].split("Locations", 1)[0]
+            values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples, re.MULTILINE)]
+            if ("samples/count cpu/nanoseconds" not in " ".join(samples.split()) or not values or
+                    sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0 or
+                    "gvisor.dev/gvisor/pkg/state.Load" not in traces):
+                raise ValueError("Restored profile has no native CPU samples attributed to state.Load")
+            restored["sample_count"] = sum(value[0] for value in values)
+            restored["cpu_nanoseconds"] = sum(value[1] for value in values)
+            record["profiles"] = profiles
+            record["profile_reports"] = {name: report.file_record(runtime_evidence / name) for name in (
+                "restore-cpu.raw.txt", "restore-cpu.top.txt", "restore-cpu.state-traces.txt")}
         record["status"] = "PASS"
     finally:
         cleanup_started = True
