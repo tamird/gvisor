@@ -32,12 +32,21 @@ func init() {
 }
 
 func TestWindowWithUnreadFIN(t *testing.T) {
+	const queuedData = "queued data"
 	for _, tc := range []struct {
-		name   string
-		inside seqnum.Size
+		name    string
+		inside  seqnum.Size
+		packets string
+		read    string
 	}{
-		{"AtEdge", 0},
-		{"OverlapsEdge", 1},
+		{"AtEdge", 0, "FINOnly", "None"},
+		{"OverlapsEdge", 1, "FINOnly", "None"},
+		{"TogetherExact", 0, "Together", "Exact"},
+		{"TogetherOversized", 0, "Together", "Oversized"},
+		{"TogetherPeek", 0, "Together", "Peek"},
+		{"SeparateExact", 0, "Separate", "Exact"},
+		{"SeparateOversized", 0, "Separate", "Oversized"},
+		{"SeparatePeek", 0, "Separate", "Peek"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dut := testbench.NewDUT(t)
@@ -49,8 +58,17 @@ func TestWindowWithUnreadFIN(t *testing.T) {
 			fd, _ := dut.Accept(t, listenFD)
 			defer dut.Close(t, fd)
 
-			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagFin | header.TCPFlagAck)})
 			ack := testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)}
+			var finPayload []testbench.Layer
+			if tc.packets == "Together" {
+				finPayload = []testbench.Layer{&testbench.Payload{Bytes: []byte(queuedData)}}
+			} else if tc.packets == "Separate" {
+				conn.Send(t, ack, &testbench.Payload{Bytes: []byte(queuedData)})
+				if _, err := conn.Expect(t, ack, time.Second); err != nil {
+					t.Fatalf("no ACK for queued data before FIN: %v", err)
+				}
+			}
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagFin | header.TCPFlagAck)}, finPayload...)
 			reply, err := conn.Expect(t, ack, time.Second)
 			if err != nil {
 				t.Fatalf("no ACK for FIN: %v", err)
@@ -58,20 +76,55 @@ func TestWindowWithUnreadFIN(t *testing.T) {
 			if got, want := uint32(dut.GetSockOptTCPInfo(t, fd).State), uint32(linux.TCP_CLOSE_WAIT); got != want {
 				t.Fatalf("TCP state after FIN = %d, want %d", got, want)
 			}
+
+			if tc.read != "None" {
+				readSize := int32(len(queuedData))
+				readFlags := int32(unix.MSG_DONTWAIT)
+				if tc.read == "Oversized" {
+					readSize++
+				} else if tc.read == "Peek" {
+					readFlags |= unix.MSG_PEEK
+				}
+				if got, want := string(dut.Recv(t, fd, readSize, readFlags)), queuedData; got != want {
+					t.Fatalf("queued data read = %q, want %q", got, want)
+				}
+				// Record any read-induced window update before sending the probe.
+				// Separate wire packets may still coalesce in Linux's receive queue.
+				for updates := 0; ; updates++ {
+					update, err := conn.Expect(t, ack, 100*time.Millisecond)
+					if err != nil {
+						break
+					}
+					reply = update
+					t.Logf("read window update: %s", update)
+					if updates >= 3 {
+						t.Fatal("more than four read-induced ACKs")
+					}
+				}
+			}
 			window := seqnum.Size(*reply.WindowSize)
 			if window == 0 {
 				t.Fatal("peer advertised a zero window")
 			}
 			t.Logf("DUT %s window %d", dut.Uname.KernelRelease, window)
 
-			// Leave the FIN unread and inject two bytes across the advertised
-			// edge without advancing either side of the test connection.
+			// Inject two bytes across the advertised edge without advancing
+			// either side of the test connection.
 			seq := conn.LocalSeqNum(t).Add(window - tc.inside)
 			conn.SendFrameStateless(t, conn.CreateFrame(t, testbench.Layers{
 				&testbench.TCP{SeqNum: testbench.Uint32(uint32(seq)), Flags: ack.Flags},
 			}, &testbench.Payload{Bytes: []byte("xy")}))
-			if _, err := conn.Expect(t, ack, time.Second); err != nil {
-				t.Errorf("no ACK for the unchanged receive sequence: %v", err)
+			frames, acknowledged := conn.ListenForFrame(t, testbench.Layers{nil, nil, &ack}, time.Second)
+			t.Logf("READ_BOUNDARY packets=%s read=%s inside=%d ack=%t frames=%v", tc.packets, tc.read, tc.inside, acknowledged, frames)
+			if tc.packets == "FINOnly" && !acknowledged {
+				t.Errorf("no ACK for the unchanged receive sequence")
+			}
+			// The new boundary cases observe ACK polarity rather than assuming
+			// that separate wire packets imply separate queued segments.
+			if tc.read == "Peek" {
+				if got, want := string(dut.Recv(t, fd, int32(len(queuedData)+1), unix.MSG_DONTWAIT)), queuedData; got != want {
+					t.Errorf("queued data after peek/probe = %q, want %q", got, want)
+				}
 			}
 			if got := dut.Recv(t, fd, 1, unix.MSG_DONTWAIT); len(got) != 0 {
 				t.Errorf("received %q after FIN, want EOF", got)
