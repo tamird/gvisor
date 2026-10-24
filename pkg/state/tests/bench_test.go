@@ -21,6 +21,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"math"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
@@ -96,8 +97,55 @@ func buildArrayFieldsObject(n int) any {
 	return a
 }
 
+func initializedArrayFields(n int) any {
+	a := new(benchArrayFields)
+	for i := range a.Values {
+		a.Values[i] = 7
+	}
+	return a
+}
+
+func floatArrayFields(mixed bool, initial bool) any {
+	a := new(benchFloatArrayFields)
+	for i := range a.Values {
+		a.Values[i] = math.Copysign(0, -1)
+		if initial {
+			a.Values[i] = 7
+		} else if mixed && i%4 != 0 {
+			a.Values[i] = float64(i)
+		}
+	}
+	return a
+}
+
+func nestedArrayFields(mixed bool, initial bool) any {
+	a := new(benchNestedArrayFields)
+	for i := range a.Values {
+		a.Values[i] = [2]float64{math.Copysign(0, -1), 0}
+		if initial {
+			a.Values[i] = [2]float64{7, 7}
+		} else if mixed && i%4 != 0 {
+			a.Values[i][1] = float64(i)
+		}
+	}
+	return a
+}
+
+func mapArrayFields(mixed bool) any {
+	a := &benchMapArrayFields{Values: make(map[int][2]float64, 512)}
+	for i := 0; i < 512; i++ {
+		v := [2]float64{math.Copysign(0, -1), 0}
+		if mixed && i%4 != 0 {
+			v[1] = float64(i)
+		}
+		a.Values[i] = v
+	}
+	return a
+}
+
 var allObjects = map[string]struct {
-	New func(int) any
+	New     func(int) any
+	Initial func(int) any
 }{
 	"ptr": {
 		New: buildPtrObject,
@@ -115,7 +163,34 @@ var allObjects = map[string]struct {
 		New: buildByteSliceObject,
 	},
 	"arrays": {
-		New: buildArrayFieldsObject,
+		New:     buildArrayFieldsObject,
+		Initial: initializedArrayFields,
+	},
+	"arrays_zero": {
+		New:     func(int) any { return new(benchArrayFields) },
+		Initial: initializedArrayFields,
+	},
+	"floats": {
+		New:     func(int) any { return floatArrayFields(true, false) },
+		Initial: func(int) any { return floatArrayFields(false, true) },
+	},
+	"floats_zero": {
+		New:     func(int) any { return floatArrayFields(false, false) },
+		Initial: func(int) any { return floatArrayFields(false, true) },
+	},
+	"nested": {
+		New:     func(int) any { return nestedArrayFields(true, false) },
+		Initial: func(int) any { return nestedArrayFields(false, true) },
+	},
+	"nested_zero": {
+		New:     func(int) any { return nestedArrayFields(false, false) },
+		Initial: func(int) any { return nestedArrayFields(false, true) },
+	},
+	"array_maps": {
+		New: func(int) any { return mapArrayFields(true) },
+	},
+	"array_maps_zero": {
+		New: func(int) any { return mapArrayFields(false) },
 	},
 }
 
@@ -188,6 +263,9 @@ func BenchmarkDecoding(b *testing.B) {
 				buf := new(bytes.Buffer)
 				if _, err := algoInfo.Save(context.Background(), buf, v); err != nil {
 					b.Errorf("save failed: %v", err)
+				}
+				if objInfo.Initial != nil {
+					v = objInfo.Initial(1024)
 				}
 				b.ReportAllocs()
 				var r bytes.Reader

@@ -44,3 +44,18 @@ type benchFields struct {
 type benchArrayFields struct {
 	Values [1024]uint64
 }
+
+// +stateify savable
+type benchFloatArrayFields struct {
+	Values [1024]float64
+}
+
+// +stateify savable
+type benchNestedArrayFields struct {
+	Values [512][2]float64
+}
+
+// +stateify savable
+type benchMapArrayFields struct {
+	Values map[int][2]float64
+}

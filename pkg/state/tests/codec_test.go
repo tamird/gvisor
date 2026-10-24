@@ -17,10 +17,15 @@ package tests
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"testing/iotest"
 
@@ -510,6 +515,21 @@ func TestCodecArrayInitializationContexts(t *testing.T) {
 						}
 					}
 				})
+				t.Run("dynamic_bytes", func(t *testing.T) {
+					for _, nonzero := range []bool{false, true} {
+						var source initializedDynamicArrays
+						destination := initializedDynamicArrays{Bytes: foreign.Array{7, 7, 7, 7, 7}}
+						want := destination
+						if nonzero {
+							source.Bytes[1] = 9
+							want = source
+						}
+						roundTripArrays(t, &source, &destination)
+						if got := destination; got != want {
+							t.Errorf("loaded dynamic arrays = %+v, want %+v", got, want)
+						}
+					}
+				})
 				t.Run("byte_chunks", func(t *testing.T) {
 					for _, nonzero := range []bool{false, true} {
 						var source, destination initializedWideBytes
@@ -630,5 +650,78 @@ func TestCodecArrayInitializationContexts(t *testing.T) {
 				})
 			})
 		})
+	}
+}
+
+// TestCodecStreamCompatibility is also the untimed cross-binary gate for the
+// format experiment. The runner first saves each implementation's stream, then
+// asks the other implementation to reject it before modifying the root.
+func TestCodecStreamCompatibility(t *testing.T) {
+	negativeZero := math.Copysign(0, -1)
+	source := initializedNestedFloats{
+		Values: [2][1]float64{{negativeZero}, {9}},
+		Map:    map[int][1]float64{1: {negativeZero}},
+		Slice:  [][1]float64{{negativeZero}, {9}},
+	}
+	var buf bytes.Buffer
+	if _, err := state.Save(context.Background(), &buf, &source); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	observed := struct {
+		Mode   string         `json:"mode"`
+		Bytes  int            `json:"bytes"`
+		SHA256 string         `json:"sha256"`
+		Error  string         `json:"error,omitempty"`
+		Sizes  map[string]int `json:"sizes"`
+	}{Mode: "self", Bytes: buf.Len(), SHA256: fmt.Sprintf("%x", sha256.Sum256(buf.Bytes())), Sizes: make(map[string]int)}
+	for _, name := range []string{"fields", "bytes", "arrays", "arrays_zero", "floats", "floats_zero", "nested", "nested_zero", "array_maps", "array_maps_zero"} {
+		var encoded bytes.Buffer
+		if _, err := state.Save(context.Background(), &encoded, allObjects[name].New(1024)); err != nil {
+			t.Fatalf("Save %s: %v", name, err)
+		}
+		observed.Sizes[name] = encoded.Len()
+	}
+	destination := initializedNestedFloats{Values: [2][1]float64{{7}, {7}}}
+	if filename := os.Getenv("STATE_CODEC_STREAM_INPUT"); filename != "" {
+		data, err := os.ReadFile(filename)
+		if err != nil {
+			t.Fatalf("Read peer stream: %v", err)
+		}
+		initial := destination
+		_, err = state.Load(context.Background(), bytes.NewReader(data), &destination)
+		if err == nil || !strings.Contains(err.Error(), "incompatible version") {
+			t.Fatalf("Load peer stream = %v, want incompatible version", err)
+		}
+		if !reflect.DeepEqual(destination, initial) {
+			t.Fatalf("rejected stream changed root: got %+v, want %+v", destination, initial)
+		}
+		observed.Mode, observed.Error = "reject", err.Error()
+	} else {
+		if _, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), &destination); err != nil {
+			t.Fatalf("Load own stream: %v", err)
+		}
+		if got, want := len(destination.Slice), 2; got != want {
+			t.Fatalf("slice length = %d, want %d", got, want)
+		}
+		for name, value := range map[string]float64{"field": destination.Values[0][0], "map": destination.Map[1][0], "slice": destination.Slice[0][0]} {
+			if got, want := math.Float64bits(value), math.Float64bits(negativeZero); got != want {
+				t.Errorf("%s zero bits = %#x, want %#x", name, got, want)
+			}
+		}
+		if got, want := destination.Values[1][0], float64(9); got != want {
+			t.Errorf("nonzero field = %v, want %v", got, want)
+		}
+	}
+	if output := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); output != "" {
+		if err := os.WriteFile(filepath.Join(output, "codec-stream.bin"), buf.Bytes(), 0600); err != nil {
+			t.Fatalf("Write stream: %v", err)
+		}
+		data, err := json.MarshalIndent(observed, "", "  ")
+		if err != nil {
+			t.Fatalf("Marshal observations: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(output, "codec-stream.json"), data, 0600); err != nil {
+			t.Fatalf("Write observations: %v", err)
+		}
 	}
 }

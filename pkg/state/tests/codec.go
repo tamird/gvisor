@@ -195,3 +195,9 @@ type initializedNestedFloats struct {
 	Map    map[int][1]float64
 	Slice  [][1]float64
 }
+
+// +stateify savable
+type initializedDynamicArrays struct {
+	Empty [0]byte
+	Bytes foreign.Array
+}
