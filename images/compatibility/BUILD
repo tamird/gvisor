@@ -1,4 +1,5 @@
 load("//images:img.bzl", "image_outputs")
+load("//tools:arch.bzl", "arch_genrule")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -25,4 +26,16 @@ image_outputs(
     name = "postgresql",
     image = ":postgresql",
     image_name = "compatibility/postgresql/postgresql",
+)
+
+arch_genrule(
+    name = "qualification_postgresql_archives",
+    src = ":postgresql_archive",
+    template = "qualification_postgresql_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_postgresql_contexts",
+    src = ":postgresql_context",
+    template = "qualification_postgresql_context_%s.tar",
 )
