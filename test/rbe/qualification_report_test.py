@@ -2291,6 +2291,58 @@ class QualificationReportTest(unittest.TestCase):
         combined = report.bundle(self.evidence, 1, 0, self.root / "bundle.tar.gz")
         self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 1))
 
+    def test_loading_failure_reaches_receipt_without_provider_secrets(self) -> None:
+        invocation = self.fixture()
+        analysis = invocation / "expected-analysis.jsonl"
+        description = (
+            'Repository fetch failed: Get "https://user:password@proxy.example/module?token=secret": '
+            "net/http: TLS handshake timeout\nAuthorization: Bearer private-token"
+        )
+        analysis.write_text("".join(json.dumps(event) + "\n" for event in [
+            {"id": {"targetCompleted": {"label": "//example:no_build", "configuration": {"id": "config"}}},
+             "aborted": {"reason": "NO_BUILD"}},
+            {"id": {"targetConfigured": {"label": "//example:dependent"}},
+             "aborted": {"reason": "ANALYSIS_FAILURE"}},
+            {"id": {"unconfiguredLabel": {"label": "@@repository//:package"}},
+             "aborted": {"reason": "LOADING_FAILURE", "description": description}},
+            {"id": {"targetConfigured": {"label": "//example:test"}},
+             "aborted": {"reason": "ANALYSIS_FAILURE"}},
+            {"id": {"buildFinished": {}}, "finished": {"exitCode": {"name": "BUILD_FAILURE", "code": 1}}},
+        ]))
+        self.write_events(invocation, [])
+        (invocation / "native-exit").write_text("1\n")
+        self.capture(invocation)
+        value = self.verdict(invocation, analysis=analysis)
+        self.assertEqual((value["status"], value["native_exit"], value["executed"]), ("FAIL", 1, []))
+        artifact = self.root / "bundle.tar.gz"
+        combined = report.bundle(self.evidence, 1, 0, artifact)
+        receipt = report.receipt(artifact, report.file_record(artifact)["sha256"], combined["sources"][0])
+        self.assertEqual((receipt["status"], receipt["executed_attempt_count"]), ("FAIL", 0))
+        error, = [error for error in receipt["invocations"][0]["errors"] if "Bazel analysis aborted" in error]
+        self.assertIn("LOADING_FAILURE", error)
+        self.assertEqual(error.count("ANALYSIS_FAILURE"), 1)
+        self.assertIn("reported net/http: TLS handshake timeout", error)
+        self.assertIn(hashlib.sha256(description.encode()).hexdigest(), error)
+        for secret in ("password", "proxy.example", "token=secret", "Authorization", "private-token"):
+            self.assertNotIn(secret, json.dumps(receipt))
+
+    def test_analysis_abort_keeps_unknown_description_private(self) -> None:
+        analysis = self.root / "analysis.jsonl"
+        for reason in ("ANALYSIS_FAILURE", "private-provider-reason", ["private-provider-reason"]):
+            with self.subTest(reason=reason):
+                description = "private description with a password"
+                analysis.write_text(json.dumps({
+                    "id": {"unconfiguredLabel": {"label": "private-label"}},
+                    "aborted": {"reason": reason, "description": description},
+                }) + "\n")
+                value = report.preflight(analysis, 1, "test")
+                self.assertEqual(value["status"], "INCOMPLETE")
+                error, = value["errors"]
+                self.assertIn("ANALYSIS_FAILURE" if reason == "ANALYSIS_FAILURE" else "UNKNOWN", error)
+                self.assertIn(hashlib.sha256(description.encode()).hexdigest(), error)
+                for secret in ("private-label", "private description", "private-provider-reason", "password"):
+                    self.assertNotIn(secret, error)
+
     def test_build_uses_independent_expected_configuration(self) -> None:
         invocation = self.fixture()
         events = [event for event in self.events(invocation) if "configured" in event or "finished" in event]
