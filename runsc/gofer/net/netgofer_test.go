@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"strings"
@@ -237,11 +238,11 @@ func newTestClientStack(t *testing.T, clientFD int) *stack.Stack {
 	for _, pa := range []tcpip.ProtocolAddress{
 		{
 			Protocol:          ipv4.ProtocolNumber,
-			AddressWithPrefix: tcpip.AddressWithPrefix{Address: testClientAddr4, PrefixLen: 24},
+			AddressWithPrefix: netip.PrefixFrom(testClientAddr4, 24),
 		},
 		{
 			Protocol:          ipv6.ProtocolNumber,
-			AddressWithPrefix: tcpip.AddressWithPrefix{Address: testClientAddr6, PrefixLen: 64},
+			AddressWithPrefix: netip.PrefixFrom(testClientAddr6, 64),
 		},
 	} {
 		if err := st.AddProtocolAddress(1, pa, stack.AddressProperties{}); err != nil {
