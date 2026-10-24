@@ -165,12 +165,14 @@ def _module_proxy_impl(ctx):
         modules = sorted({path: None for path in paths.splitlines() if path})
         if not modules:
             fail("Package selection contains no Go modules")
-    else:
-        # Populate the complete selected graph, including transitive modules
-        # that package loading may need. Bare download only fetches modules
-        # explicitly required by go.mod when it declares Go 1.17 or newer.
-        # https://pkg.go.dev/cmd/go#hdr-Download_modules_to_local_cache
+    elif ctx.attr.resolved_modules:
         _run_go(ctx, root, environment, ["mod", "download", "all"])
+    else:
+        # Download the modules required by the checked-in go.mod. Asking for
+        # all also fetches modules whose packages the export does not use,
+        # adding their archive checksums to go.sum.
+        # https://pkg.go.dev/cmd/go#hdr-Download_modules_to_local_cache
+        _run_go(ctx, root, environment, ["mod", "download"])
     if bazel_modules:
         selected = _run_go(ctx, root, environment, ["list", "-m", "-f", "{{.Path}}", "all"])
         for path in selected.splitlines():
