@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T08:25:54.763459+00:00",
+    "updatedAt": "2026-10-24T08:33:03.659687+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1612,12 +1612,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
-      "summary": "Etienne requests evidence that the atomic.Pointer wrapper continues to inline in hot and go:nosplit paths, where stack budget matters. The complete current-head thread is routed to the source owner. This is an open source/performance assessment, not a demonstrated inlining regression; the older stateify design discussion remains separate.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nStanding follow-up: Native atomic.Pointer/stateify design discussion remains unanswered after the author requested guidance. Source checks pass; no current source revision is assigned.\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
+      "updatedAt": "2026-10-24T08:33:03.659687+00:00",
+      "summary": "Etienne’s request for inlining evidence now has a bounded, independently reviewed compiler result for the unchanged public proposal 9e17fdee. With pinned Go 1.27.2, selected old/new Load, Store and Swap probes have identical emitted bytes, relocations and stack frames on AMD64 and ARM64. The real KVM go:nosplit Load consumer has no AtomicPtr wrapper call on either CPU; deliberate noinline controls retain their calls. ARM64 linking and both AMD64 correctness tests passed. The original codegen job remains FAIL because two qualifier analyzer owners rejected a missing package comment. A separate comment-only follow-up passes both analyzer owners on both CPUs, without repeating codegen. These results do not establish a timing gain, full-runsc stack budget or future universal inlining guarantee. Root has the measured reply for authorization; no source amendment or public reply is claimed, and the human thread remains open.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 9e17fdee10b5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nStanding follow-up: Native atomic.Pointer/stateify design discussion remains unanswered after the author requested guidance. Source checks pass; no current source revision is assigned.\n\nThe authorized October 2/3 rebase is published at 9f15cc6f33d681c1cd051c2797a3172f0dc89efa on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/12483#issuecomment-5963430016. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 52d51f41b failed fileheader because a new golden output lacked its standard license header. The published correction 9f15cc6f33 adds only that header; the fixture comparator ignores comments and blank lines. The original failed check is retained, and this is not a new runtime validation.",
       "followup": {
-        "disposition": "Current-head inlining and stack-budget review request owned",
+        "disposition": "Measured inlining response ready; public reply authorization pending",
         "owner": "root",
-        "nextAction": "Assess the actual generated wrapper and compiler inlining behavior for the current proposal, then prepare the smallest supported enforcement or response. Keep the human thread unresolved until addressed.",
+        "nextAction": "Obtain the existing response authorization, then address the original human thread with the measured scope and limitations. Do not repeat the qualification or imply a universal inlining guarantee.",
         "evidence": [
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
@@ -1628,7 +1628,7 @@
         "sourceHead": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-24T07:24:49.949626+00:00"
+        "observedAt": "2026-10-24T08:33:03.659687+00:00"
       },
       "head": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48",
       "evidence": [
@@ -1639,6 +1639,14 @@
         {
           "label": "Current inlining and go:nosplit review request",
           "url": "https://github.com/google/gvisor/pull/12483#discussion_r4366348323"
+        },
+        {
+          "label": "Both-CPU actual code generation; original qualifier analyzer failure preserved",
+          "url": "https://app.buildbuddy.io/invocation/0d07a278-4454-4de6-940d-1369a36da3b6"
+        },
+        {
+          "label": "Comment-only analyzer follow-up on both CPUs",
+          "url": "https://app.buildbuddy.io/invocation/b3d77d2c-ad0b-4aa9-8370-799a359f077e"
         }
       ]
     },
