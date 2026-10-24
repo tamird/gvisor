@@ -65,7 +65,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             for package, target in (("atomicptr", ATOMIC), ("kvm", KVM)):
                 name = package + "-codegen-" + architecture
                 verdict = invoke(name, ["build", "--config=" + architecture, *common,
-                                       "--noremote_accept_cached", target], "build", targets=[target])
+                                       "--noremote_accept_cached", "--experimental_ui_max_stdouterr_bytes=16777216", target], "build", targets=[target])
                 entry["phases"][package] = verdict
                 if verdict["status"] != "PASS":
                     raise RuntimeError("Native code-generation build failed: " + name)
@@ -134,7 +134,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         if result["errors"]:
             raise RuntimeError("; ".join(result["errors"]))
         result["status"] = "PASS"
-    except (OSError, ValueError, RuntimeError, ET.ParseError):
+    except (OSError, ValueError, RuntimeError, ET.ParseError) as error:
+        result["errors"].append(str(error))
         result["status"] = "FAIL"
         raise
     finally:
