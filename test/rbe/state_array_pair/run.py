@@ -82,6 +82,44 @@ def native_status(code: int) -> int:
     return code if code >= 0 else 128 - code
 
 
+def check_exchange(package: Path, output: Path, manifest: dict, completed: list) -> None:
+    """Restore a checkpoint written by the other arm, including shared and interior pointers."""
+    for writer, reader in (('before', 'after'), ('after', 'before')):
+        wire = output / f'graph-{writer}.wire'
+        for side, mode in ((writer, 'write'), (reader, 'read')):
+            name = f'graph-{writer}-to-{reader}-{mode}'
+            directory = output / name
+            directory.mkdir()
+            arm = package / 'arms' / side
+            binary = arm / '_main' / STATE / 'tests_test'
+            identity = manifest[str(binary.relative_to(package))]
+            xml = directory / 'test.xml'
+            env = dict(os.environ, TEST_SRCDIR=str(arm), TEST_WORKSPACE='_main', RUNFILES_DIR=str(arm),
+                       TEST_BINARY=str(binary), TEST_TMPDIR=str(directory), XML_OUTPUT_FILE=str(xml),
+                       TEST_UNDECLARED_OUTPUTS_DIR=str(directory), GO_TEST_WRAP='1', GO_TEST_WRAP_TESTV='1',
+                       GO_TEST_RUN_FROM_BAZEL='1')
+            env.pop('STATE_GRAPH_INPUT', None)
+            env.pop('STATE_GRAPH_OUTPUT', None)
+            env['STATE_GRAPH_OUTPUT' if mode == 'write' else 'STATE_GRAPH_INPUT'] = str(wire)
+            if mode == 'write' and wire.exists():
+                raise ValueError(f'{wire} already exists before the writer ran')
+            with (directory / 'test.log').open('wb') as log:
+                subprocess.run([str(binary), '-test.run=^TestCodecStandalone$', '-test.count=1', '-test.v'],
+                               env=env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=45)
+            document = ET.parse(xml)
+            cases = document.findall('.//testcase')
+            if [case.get('name') for case in cases] != ['TestCodecStandalone'] or any(
+                    document.findall('.//' + tag) for tag in ('failure', 'error', 'skipped')):
+                raise ValueError(f'{name}: expected one successful TestCodecStandalone')
+            data = wire.read_bytes()
+            digest = hashlib.sha256(data).hexdigest()
+            if not data or (mode == 'read' and completed[-1]['wire_sha256'] != digest):
+                raise ValueError(f'{name}: missing or changed checkpoint')
+            completed.append(dict(name=name, binary_sha256=identity['sha256'], source=identity['source'],
+                                  wire_sha256=digest, wire_bytes=len(data)))
+            write_json(output / 'wire-exchange.json', completed)
+
+
 def child(cpu: int, output: Path, argv: list[str]) -> int:
     # A fresh wrapper makes RUSAGE_CHILDREN refer to this one Go process.
     os.sched_setaffinity(0, {cpu})
@@ -168,8 +206,10 @@ def main(package: Path, reporter: Path) -> int:
     signal.signal(signal.SIGINT, cancel)
     benchfiles: dict[str, list[str]] = {'before': [], 'after': []}
     completed = []
+    exchange = []
     status = 1
     try:
+        check_exchange(package, output, manifest, exchange)
         for sample in plan:
             if cancellation:
                 return cancellation
@@ -300,6 +340,10 @@ def main(package: Path, reporter: Path) -> int:
             process.wait()
         failed = bool(cancellation or status or len(completed) != len(plan))
         document = ET.Element('testsuites')
+        exchange_suite = ET.SubElement(document, 'testsuite', name='state-checkpoint-exchange',
+                                      tests=str(len(exchange)), failures='0', errors='0')
+        for row in exchange:
+            ET.SubElement(exchange_suite, 'testcase', name=row['name'])
         suite = ET.SubElement(document, 'testsuite', name='state-benchmark-processes',
             tests=str(len(completed) + int(failed)), failures=str(int(failed)), errors='0')
         for row in completed:

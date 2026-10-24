@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"reflect"
 	"testing"
 
@@ -351,16 +352,31 @@ func TestCodecAbsorbedReferrer(t *testing.T) {
 func TestCodecStandalone(t *testing.T) {
 	o := &graphNode{}
 	o.LinkS = []graphLink{{N: o}}
-	root := &graphNode{LinkPtr: &o.LinkS[0]}
-	data, _, err := save(root, true)
+	shared := &graphNode{Val: 37}
+	root := &graphNode{LinkPtr: &o.LinkS[0], Next: shared, Any: shared, M: map[int32]*graphNode{7: shared}}
+	var data []byte
+	var err error
+	if path, ok := os.LookupEnv("STATE_GRAPH_INPUT"); ok {
+		data, err = os.ReadFile(path)
+	} else {
+		data, _, err = save(root, true)
+	}
 	if err != nil {
-		t.Fatalf("save failed: %v", err)
+		t.Fatal(err)
+	}
+	if path, ok := os.LookupEnv("STATE_GRAPH_OUTPUT"); ok {
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	loaded, _, err := load(reflect.TypeOf(root), data, true)
 	if err != nil {
 		t.Fatalf("load failed: %v", err)
 	}
 	got := loaded.(*graphNode)
+	if got.Next == nil || got.Next.Val != shared.Val || got.Any != got.Next || got.M[7] != got.Next {
+		t.Fatal("typed pointer, interface and map did not restore the same node")
+	}
 	if got.LinkPtr == nil || got.LinkPtr.N == nil {
 		t.Fatalf("got LinkPtr %+v, want a link to a node", got.LinkPtr)
 	}
