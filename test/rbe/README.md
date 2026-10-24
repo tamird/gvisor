@@ -181,6 +181,21 @@ required XML case names, such as `{"//pkg:tests": ["Suite/Case"]}` (omit
 target in every run. It may run on any shard. Skips and unrelated passes
 do not satisfy the requirement; other cases retain their usual results.
 
+For Go tests, the XML suite name comes from the last component of the
+configured test's import path. For example, `iptables_test_arm64` emits
+`iptables_test_arm64/TestMasqueradePortRange`, while `ptrace_test_arm64`
+embeds the `ptrace` package and emits `ptrace/TestStubFilterPrecompiled`.
+Give the public target labels and Go test names (including any subtests) to
+`go_required_cases.py`. Run it on the coordinator with the same Bazel options
+as the test. It follows each frontend to its Go test generator and writes the
+exact manifest before execution:
+
+```sh
+python3 test/rbe/go_required_cases.py go-cases.json required-cases.json \
+    --evidence go-case-analysis.json -- --config=rbe-matrix --config=x86_64
+export QUALIFICATION_REQUIRED_CASES="$PWD/required-cases.json"
+```
+
 Build targets can tag small report groups with
 `qualification-output-group=<group>`. The coordinator asks Bazel to materialize
 those outputs, retains their configured owner and output-group identities, and
