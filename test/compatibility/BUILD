@@ -1,3 +1,5 @@
+load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools:defs.bzl", "go_library")
 load(":defs.bzl", "compatibility_test")
 
@@ -111,4 +113,54 @@ compatibility_test(
         "//pkg/test/dockerutil",
         "//test/compatibility",
     ],
+)
+
+docker_daemon_config(
+    name = "qualification_mariadb_native_config",
+    testonly = True,
+    images = ["//images/compatibility:qualification_mariadb_archive"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "qualification_mariadb_native_test",
+    size = "large",
+    command = "//test/rbe/mariadb:consumer",
+    command_args = [
+        "$(rootpath :mariadb_native)",
+        "--runtime=runc",
+        "-test.run=^TestMariaDB$",
+        "-test.v",
+    ],
+    data = [":mariadb_native"],
+    docker_config = ":qualification_mariadb_native_config",
+    exec_properties = docker_test_exec_properties(free_disk = "30GB", memory = "8GB"),
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+)
+
+docker_daemon_config(
+    name = "qualification_mariadb_runsc_config",
+    testonly = True,
+    images = ["//images/compatibility:qualification_mariadb_archive"],
+    runtime = "//:release",
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "qualification_mariadb_runsc_test",
+    size = "large",
+    command = "//test/rbe/mariadb:consumer",
+    command_args = [
+        "$(rootpath :mariadb_runsc)",
+        "--runtime=runsc",
+        "-test.run=^TestMariaDB$",
+        "-test.v",
+    ],
+    data = [":mariadb_runsc"],
+    docker_config = ":qualification_mariadb_runsc_config",
+    exec_properties = docker_test_exec_properties(free_disk = "30GB", memory = "8GB"),
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
 )
