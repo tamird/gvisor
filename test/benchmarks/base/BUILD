@@ -23,7 +23,10 @@ benchmark_test(
     srcs = ["startup_test.go"],
     tags = ["go-benchmark-contract"],
     use_for_pgo = False,
-    visibility = ["//:sandbox"],
+    visibility = [
+        "//:sandbox",
+        "//test/rbe/image_pair:__pkg__",
+    ],
     deps = [
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
@@ -38,7 +41,10 @@ benchmark_test(
     srcs = ["size_test.go"],
     tags = ["go-benchmark-contract"],
     use_for_pgo = False,
-    visibility = ["//:sandbox"],
+    visibility = [
+        "//:sandbox",
+        "//test/rbe/image_pair:__pkg__",
+    ],
     deps = [
         "//pkg/test/dockerutil",
         "//test/benchmarks/base",
@@ -92,6 +98,7 @@ benchmark_test(
     srcs = ["usage_test.go"],
     tags = ["go-benchmark-contract"],
     use_for_pgo = False,
+    visibility = ["//test/rbe/image_pair:__pkg__"],
     deps = [
         ":base",
         "//pkg/test/dockerutil",

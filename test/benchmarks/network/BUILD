@@ -77,7 +77,10 @@ benchmark_test(
     embed = [":network"],
     tags = ["go-benchmark-contract"],
     use_for_pgo = True,
-    visibility = ["//:sandbox"],
+    visibility = [
+        "//:sandbox",
+        "//test/rbe/image_pair:__pkg__",
+    ],
     deps = [
         "//pkg/test/dockerutil",
         "//test/benchmarks/harness",
