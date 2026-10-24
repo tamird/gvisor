@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T12:24:02.324612+00:00",
+    "updatedAt": "2026-10-24T12:53:36.715961+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -15659,17 +15659,22 @@
       "url": "https://github.com/google/gvisor/pull/15981",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
+      "updatedAt": "2026-10-24T12:50:09.068613+00:00",
+      "summary": "Import #16241 at fca4c84e10 failed Buildkite 52156. The AMD64 build, ARM64 build and Nogo logs all report a missing generated protoreflect import; Nogo also reports Docker plugin.pb.go. The import contains only the expected three user-resolution files on d15d5319c3. Root owns this diagnosis. Node is validating the affected validate_go and Docker runtime targets against the compiler-runtime dependency correction in #16098. This is a candidate repair, not a verified resolution of these three steps or all eight failed steps. Public import CI remains agent work; no source amendment or public reply has been made for this diagnosis.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root / node_tls_sni",
         "sourceHead": "b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Approved selected-record amendment delivered; follow public review and checks",
-        "nextAction": "Use the existing sweep for public feedback/checks/imports; do not repeat the delivered amendment or reviewer request.",
+        "observedAt": "2026-10-24T12:50:09.068613+00:00",
+        "disposition": "Agent work: diagnose generated-protobuf imports and validate candidate compiler dependency repair",
+        "nextAction": "Node validates the exact validate_go and Docker runtime owners on both analyzer architectures against the candidate #16098 correction; root owns the import diagnosis and any source delivery. Keep all eight Buildkite 52156 failures visible until their individual dispositions are established. No duplicate public reply or competing patch.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15981#issuecomment-6275554145",
-          "https://github.com/tamird/gvisor/commit/b36bfb53d0c13ce8802b51c18a8257dbc48c836b"
+          "https://github.com/tamird/gvisor/commit/b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
+          "https://buildkite.com/gvisor/pipeline/builds/52156#01a16daa-ec29-468c-ae98-3c9e1dccb496",
+          "https://buildkite.com/gvisor/pipeline/builds/52156#01a16d8a-4469-456c-a2ac-cb1e94a804ed",
+          "https://buildkite.com/gvisor/pipeline/builds/52156#01a16d91-4b11-4bf2-83b6-b1c4a23b7df0",
+          "https://github.com/google/gvisor/pull/16098",
+          "https://github.com/google/gvisor/pull/16241"
         ]
       },
       "evidence": [
@@ -15692,6 +15697,26 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/b36bfb53d0c13ce8802b51c18a8257dbc48c836b"
+        },
+        {
+          "label": "Failed AMD64 package build",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52156#01a16daa-ec29-468c-ae98-3c9e1dccb496"
+        },
+        {
+          "label": "Failed ARM64 package build",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52156#01a16d8a-4469-456c-a2ac-cb1e94a804ed"
+        },
+        {
+          "label": "Failed Nogo import analysis",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52156#01a16d91-4b11-4bf2-83b6-b1c4a23b7df0"
+        },
+        {
+          "label": "Candidate compiler dependency repair; focused validation pending",
+          "url": "https://github.com/google/gvisor/pull/16098"
+        },
+        {
+          "label": "Matching failed import",
+          "url": "https://github.com/google/gvisor/pull/16241"
         }
       ]
     },
@@ -21889,6 +21914,53 @@
       "status": "open",
       "summary": "The approved bounds patch is published as #16341 at f47ebb419c on current master d15d. The standalone run retains its aggregate failure on the unchanged generated-protobuf Nogo dependency, alongside eight passing parser cases and canonical formatting. The separate analyzer-only recovery with the exact #16098 export fix passes both architectures. No old metrics PASS or passing standalone aggregate is inferred.",
       "updatedAt": "2026-10-24T11:49:51.178662+00:00"
+    },
+    {
+      "id": "branch:rules-img-tomcat-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-tomcat-upstream",
+      "head": "728c76fdcd6a7947176e015c8259f386270b7177",
+      "title": "Pin the existing Tomcat fixture images",
+      "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
+      "group": "bazel",
+      "status": "Contributor review pending; waiting for #16097",
+      "updatedAt": "2026-10-24T12:53:36.715961+00:00",
+      "summary": "Pins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests behind #16097. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. Root has requested the separate contributor decision for this exact head. No upstream PR is published; delivery requires #16097 to land.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "728c76fdcd6a7947176e015c8259f386270b7177",
+        "observedAt": "2026-10-24T12:53:36.715961+00:00",
+        "disposition": "Exact-head contributor decision requested; delivery behind #16097",
+        "nextAction": "Await the existing contributor decision for exact 728c76fdcd; if approved, deliver after #16097 lands. Do not repeat the question or infer approval from other image proposals.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
+          "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
+          "https://github.com/google/gvisor/pull/16097"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact original-image pinning proposal",
+          "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177"
+        },
+        {
+          "label": "Both image architectures and native/runsc HTTP consumer",
+          "url": "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d"
+        },
+        {
+          "label": "Exact five-file range on the foundation candidate",
+          "url": "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "728c76fdcd6a7947176e015c8259f386270b7177",
+        "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
+        "title": "Review the pinned Tomcat fixture proposal",
+        "summary": "Pin the existing AMD64 8.0.53 and ARM64 8.0.52 Tomcat fixtures with their original configs and eleven layers. Delivery requires #16097.",
+        "body": "Tomcat: publish 728c76fdcd6a7947176e015c8259f386270b7177 after #16097 lands?\n\nThe five-file proposal pins the existing AMD64 Tomcat 8.0.53 and ARM64\nTomcat 8.0.52 manifests, removes two FROM-only Dockerfiles and exposes\nthe archive/Make context interfaces. Complete configs and all eleven\nlayers per architecture are preserved; this does not upgrade Tomcat or Java.\n\nBoth architecture archives/contexts passed. The existing TestTomcat\npassed once on AMD64 runc and once on the authenticated retained systrap\nruntime, with cleanup. ARM64 runtime and performance were not tested.\n\nhttps://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177\n\nhttps://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177\n\ngit diff 781d64d84443b4bfffaa5cbdcf75e748d4d826d7..728c76fdcd6a7947176e015c8259f386270b7177\n\nQualification: https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d\n\nSole prerequisite: https://github.com/google/gvisor/pull/16097"
+      }
     }
   ],
   "edges": [
@@ -24451,6 +24523,16 @@
       "reason": "The approved independent bounds proposal is delivered in this public PR.",
       "evidence": "https://github.com/google/gvisor/pull/16341",
       "type": "includes"
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-tomcat-upstream",
+      "type": "depends_on",
+      "reason": "Uses the corrected image_outputs and Make context interface from #16097. No dependency on other pending image migrations.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
+        "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177"
+      ]
     }
   ],
   "investigations": [
