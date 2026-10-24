@@ -128,8 +128,9 @@ type Locks struct {
 	// mu protects locks below.
 	mu sync.Mutex `state:"nosave"`
 
-	// locks is the set of region locks currently held on an Inode.
-	locks LockSet
+	// Allocate the tree on the first lock request so that inodes without
+	// advisory locks don't need storage for a B-tree node.
+	locks *LockSet
 
 	// blockedQueue is the queue of waiters that are waiting on a lock.
 	blockedQueue waiter.Queue
@@ -141,6 +142,9 @@ type Locks struct {
 func (l *Locks) LockRegion(ctx context.Context, uid UniqueID, ownerPID int32, t LockType, r LockRange, ofd bool, block bool) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.locks == nil {
+		l.locks = new(LockSet)
+	}
 	for {
 
 		// Blocking locks must run in a loop because we'll be woken up whenever an unlock event
@@ -389,8 +393,7 @@ func (l *LockSet) unlock(uid UniqueID, r LockRange) {
 		panic(fmt.Sprintf("unlock: r.Start %d > r.End %d", r.Start, r.End))
 	}
 
-	// Same as setlock.
-	if r.Length() == 0 {
+	if l == nil || r.Length() == 0 {
 		return
 	}
 
@@ -542,6 +545,9 @@ func (l *Locks) TestRegion(ctx context.Context, uid UniqueID, t LockType, r Lock
 func (l *Locks) testRegion(r LockRange, check func(lock Lock, start, length uint64) bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.locks == nil {
+		return
+	}
 
 	seg := l.locks.LowerBoundSegment(r.Start)
 	for seg.Ok() && seg.Start() < r.End {
