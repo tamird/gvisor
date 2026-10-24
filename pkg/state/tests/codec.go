@@ -201,3 +201,13 @@ type initializedDynamicArrays struct {
 	Empty [0]byte
 	Bytes foreign.Array
 }
+
+// foreignArrayValues distinguishes full values from zero-elided fields.
+//
+// +stateify savable
+type foreignArrayValues struct {
+	Array    [2]foreign.FloatArray
+	Map      map[int]foreign.FloatArray
+	Field    foreign.FloatArray
+	Neighbor int
+}

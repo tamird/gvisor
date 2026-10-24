@@ -725,3 +725,87 @@ func TestCodecStreamCompatibility(t *testing.T) {
 		}
 	}
 }
+
+var _ state.Codec = (*foreignArrayValues)(nil)
+
+// TestCodecForeignArrayValues requires full array/map values to retain signed
+// zeros, while a wholly zero struct field leaves initialized storage intact.
+func TestCodecForeignArrayValues(t *testing.T) {
+	negativeZero := math.Copysign(0, -1)
+	for _, mode := range codecModes {
+		t.Run(mode.name, func(t *testing.T) {
+			for _, test := range []struct {
+				name  string
+				value foreign.FloatArray
+			}{
+				{"positive_zero", foreign.FloatArray{0, 0}},
+				{"negative_zero", foreign.FloatArray{negativeZero, 0}},
+				{"mixed", foreign.FloatArray{negativeZero, 9}},
+			} {
+				t.Run(test.name, func(t *testing.T) {
+					for _, location := range []string{"map", "array", "initialized_array", "field"} {
+						t.Run(location, func(t *testing.T) {
+							root := foreignArrayValues{Neighbor: 42}
+							dst := foreignArrayValues{Neighbor: 7}
+							want := test.value
+							switch location {
+							case "map":
+								root.Map = map[int]foreign.FloatArray{0: test.value, 1: {9, 9}}
+							case "array", "initialized_array":
+								root.Array = [2]foreign.FloatArray{test.value, {9, 9}}
+								if location == "initialized_array" {
+									dst.Array = [2]foreign.FloatArray{{7, 7}, {7, 7}}
+								}
+							case "field":
+								root.Field = test.value
+								dst.Field = foreign.FloatArray{7, 7}
+								if test.value == (foreign.FloatArray{}) {
+									want = dst.Field
+								}
+							}
+							withCodecs(mode.codecs, func() {
+								var stream bytes.Buffer
+								if _, err := state.Save(context.Background(), &stream, &root); err != nil {
+									t.Fatalf("Save: %v", err)
+								}
+								if _, err := state.Load(context.Background(), &stream, &dst); err != nil {
+									t.Fatalf("Load: %v", err)
+								}
+							})
+							if got, want := dst.Neighbor, root.Neighbor; got != want {
+								t.Errorf("Neighbor = %d, want %d", got, want)
+							}
+							var got foreign.FloatArray
+							switch location {
+							case "map":
+								if got, want := len(dst.Map), 2; got != want {
+									t.Fatalf("len(Map) = %d, want %d", got, want)
+								}
+								if got, want := dst.Map[1], (foreign.FloatArray{9, 9}); got != want {
+									t.Fatalf("Map[1] = %v, want %v", got, want)
+								}
+								var ok bool
+								got, ok = dst.Map[0]
+								if !ok {
+									t.Fatal("Map is missing key 0")
+								}
+							case "array", "initialized_array":
+								if got, want := dst.Array[1], (foreign.FloatArray{9, 9}); got != want {
+									t.Fatalf("Array[1] = %v, want %v", got, want)
+								}
+								got = dst.Array[0]
+							case "field":
+								got = dst.Field
+							}
+							for i := range want {
+								if got, want := math.Float64bits(got[i]), math.Float64bits(want[i]); got != want {
+									t.Errorf("element %d bits = %#x, want %#x", i, got, want)
+								}
+							}
+						})
+					}
+				})
+			}
+		})
+	}
+}

@@ -106,9 +106,9 @@ func (e *Encoder) Context() context.Context {
 }
 
 // legacy encodes obj using encodeObject, embedding the result.
-func (e *Encoder) legacy(obj reflect.Value) {
+func (e *Encoder) legacy(obj reflect.Value, how encodeStrategy) {
 	var encoded wire.Object
-	e.es.encodeObject(obj, encodeDefault, &encoded)
+	e.es.encodeObject(obj, how, &encoded)
 	e.objs = append(e.objs, embedded{off: len(e.buf), obj: encoded})
 }
 
@@ -545,25 +545,26 @@ func (e *Encoder) iface(v any, p unsafe.Pointer, typ reflect.Type) {
 		}
 	}
 	e.buf = append(e.buf, ifaceLegacy)
-	e.legacy(reflect.NewAt(typ, p).Elem())
+	e.legacy(reflect.NewAt(typ, p).Elem(), encodeDefault)
 }
 
 // EncodeValue encodes a value of any type. It is used for elements whose kind
 // is not known to go_stateify.
 func EncodeValue[T any](e *Encoder, p *T) {
-	e.value(unsafe.Pointer(p), typeOf[T](), any(p))
+	e.value(unsafe.Pointer(p), typeOf[T](), any(p), encodeAsValue)
 }
 
-// EncodeAny is EncodeValue for p of type *T, without instantiating code for
-// each type T. It is used for fields whose kind is not known to go_stateify.
+// EncodeAny encodes a field of type *T, without instantiating code for each
+// type T. Unlike EncodeValue, it may elide a whole zero value, as StateSave
+// does for struct fields. It is used when the kind is not known to go_stateify.
 func EncodeAny(e *Encoder, p any) {
 	rv := reflect.ValueOf(p)
-	e.value(rv.UnsafePointer(), rv.Type().Elem(), p)
+	e.value(rv.UnsafePointer(), rv.Type().Elem(), p, encodeDefault)
 }
 
 // value implements EncodeValue for the value of type typ at up. pi is a
 // pointer to it.
-func (e *Encoder) value(up unsafe.Pointer, typ reflect.Type, pi any) {
+func (e *Encoder) value(up unsafe.Pointer, typ reflect.Type, pi any, how encodeStrategy) {
 	if c, ok := pi.(Codec); ok && typ.Kind() == reflect.Struct {
 		e.structValue(up, typ, c)
 		return
@@ -609,30 +610,30 @@ func (e *Encoder) value(up unsafe.Pointer, typ reflect.Type, pi any) {
 		e.pointer(*(*unsafe.Pointer)(up), typ.Elem())
 	case reflect.Slice:
 		if typ.Elem().Kind() != reflect.Uint8 {
-			e.legacy(reflect.NewAt(typ, up).Elem())
+			e.legacy(reflect.NewAt(typ, up).Elem(), how)
 			return
 		}
 		e.byteSlice(up, typ)
 	case reflect.Array:
 		if typ.Elem().Kind() != reflect.Uint8 {
-			e.legacy(reflect.NewAt(typ, up).Elem())
+			e.legacy(reflect.NewAt(typ, up).Elem(), how)
 			return
 		}
 		e.byteArray(up, typ.Len())
 	case reflect.Struct:
 		if typ.NumField() != 0 {
-			e.legacy(reflect.NewAt(typ, up).Elem())
+			e.legacy(reflect.NewAt(typ, up).Elem(), how)
 		}
 		// Structs without fields are not encoded.
 	default:
-		e.legacy(reflect.NewAt(typ, up).Elem())
+		e.legacy(reflect.NewAt(typ, up).Elem(), how)
 	}
 }
 
 // EncodeLegacyValue encodes v as Sink.SaveValue does, for fields saved
 // through a value of a type that go_stateify can't parse.
 func EncodeLegacyValue(e *Encoder, v any) {
-	e.legacy(reflect.ValueOf(v))
+	e.legacy(reflect.ValueOf(v), encodeDefault)
 }
 
 // writeRef appends the reference to the object of type typ at addr, which
