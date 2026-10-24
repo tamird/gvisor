@@ -58,11 +58,11 @@ class Sample:
 
 
 def cohort() -> list[Sample]:
-    rows = [Sample("warmup-" + side, side, "100ms", False)
+    rows = [Sample("warmup-" + side, side, "1x", False)
             for side in ("before", "after")]
     for block in range(16):
         for side in (("before", "after") if block % 2 == 0 else ("after", "before")):
-            rows.append(Sample(f"sample-{block:02d}-{side}", side, "1s", True))
+            rows.append(Sample(f"sample-{block:02d}-{side}", side, "1x", True))
     return rows
 
 
@@ -196,7 +196,7 @@ def main(reporter: Path) -> int:
             directory.mkdir()
             (directory / "tmp").mkdir()
             argv = [str(binary), "-test.run=^$", "-test.bench=^BenchmarkCheckpointFile$",
-                    "-test.benchtime=" + sample.benchtime, "-test.benchmem", "-test.count=1",
+                    "-test.benchtime=" + sample.benchtime, "-measure-lifecycle", "-test.count=1",
                     "-test.cpu=1", "-test.v=false", "-runtime=" + manifest["runtimes"][sample.side]["name"],
                     "-config_path=/etc/docker/daemon.json", "-test-checkpoint=true",
                     "-oci-bundle-root=" + manifest["oci_bundle_root"]]
@@ -263,11 +263,8 @@ def main(reporter: Path) -> int:
                     any(int(node.get(key, "0")) for node in document.iter() for key in ("failures", "errors", "skipped"))):
                 raise ValueError("Benchmark XML reports a failure or skip")
             lines = [line for line in text.splitlines() if re.match(r"^Benchmark\S+\s+\d+\s+", line)]
-            expected = {
-                "BenchmarkCheckpointFile/Decode": {"ns/op", "B/op", "allocs/op", "cpu-ns",
-                    "state-file-B", "pages-file-B", "pages-metadata-B", "checkpoint-total-B"},
-                "BenchmarkCheckpointFile/Encode": {"ns/op", "B/op", "allocs/op", "cpu-ns", "encoded-kernel-B"},
-            }
+            expected = {"BenchmarkCheckpointFile/" + name: {"ns/op"}
+                        for name in ("Checkpoint", "Restore", "RestoreHTTP")}
             measured = {}
             for line in lines:
                 parts = line.split()
@@ -276,13 +273,15 @@ def main(reporter: Path) -> int:
                     raise ValueError("Unexpected or duplicate checkpoint benchmark row")
                 metrics = {parts[i + 1]: float(parts[i]) for i in range(2, len(parts), 2)}
                 if (len(metrics) != (len(parts) - 2) // 2 or set(metrics) != expected[name] or
-                        int(parts[1]) <= 0 or
+                        int(parts[1]) != 1 or
                         not all(math.isfinite(value) and value >= 0 for value in metrics.values()) or
-                        metrics["ns/op"] <= 0 or metrics["cpu-ns"] <= 0):
+                        metrics["ns/op"] <= 0):
                     raise ValueError("Invalid checkpoint benchmark measurements")
                 measured[name] = {"iterations": int(parts[1]), "metrics": metrics, "row": line}
             if measured.keys() != expected.keys():
-                raise ValueError("Expected both Decode and Encode benchmark results")
+                raise ValueError("Expected one checkpoint, restore and restored HTTP measurement")
+            if measured["BenchmarkCheckpointFile/RestoreHTTP"]["metrics"]["ns/op"] < measured["BenchmarkCheckpointFile/Restore"]["metrics"]["ns/op"]:
+                raise ValueError("HTTP readiness precedes Docker restore")
             if "codec_modes" in manifest:
                 codec = json.loads((directory / "codec-mode.json").read_text())
                 mode = manifest["codec_modes"][sample.side]

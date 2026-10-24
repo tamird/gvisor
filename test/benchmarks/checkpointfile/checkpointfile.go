@@ -29,6 +29,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -65,6 +67,7 @@ import (
 
 var ociBundleRoot = flag.String("oci-bundle-root", "/run/containerd/io.containerd.runtime.v2.task/moby", "Directory containing each container's OCI bundle")
 var expectedCodec = flag.String("expected-codec", "", "Require typed or legacy checkpoint and benchmark encoding")
+var measureLifecycle = flag.Bool("measure-lifecycle", false, "Measure one Docker checkpoint and restore through an HTTP response")
 
 const (
 	// workers is the number of nginx worker processes.
@@ -98,7 +101,8 @@ func BenchmarkCheckpointFile(b *testing.B) {
 	defer machine.CleanUp()
 	ctx := context.Background()
 
-	stateFile, sizes, names, mounts := checkpointNginx(ctx, b, machine)
+	var latency lifecycleLatency
+	stateFile, sizes, names, mounts := checkpointNginx(ctx, b, machine, &latency)
 	ctx = restoreContext(b, names, mounts)
 	// Tasks create their platform contexts when they are loaded.
 	sys, err := systrap.New(platform.Options{})
@@ -108,6 +112,22 @@ func BenchmarkCheckpointFile(b *testing.B) {
 	plat := stubPlatform{sys}
 	if *expectedCodec != "" {
 		verifyCodecMode(ctx, b, plat, stateFile, names)
+	}
+	if *measureLifecycle {
+		// Each fresh process owns one checkpoint and restores that same
+		// container. Only the Docker operations and readiness request count.
+		for _, sample := range []struct {
+			name string
+			time time.Duration
+		}{{"Checkpoint", latency.checkpoint}, {"Restore", latency.restore}, {"RestoreHTTP", latency.httpReady}} {
+			b.Run(sample.name, func(b *testing.B) {
+				if b.N != 1 || sample.time <= 0 || *expectedCodec == "" {
+					b.Fatal("lifecycle measurements require one verified checkpoint per process")
+				}
+				b.ReportMetric(float64(sample.time.Nanoseconds()), "ns/op")
+			})
+		}
+		return
 	}
 
 	b.Run("Decode", func(b *testing.B) {
@@ -230,9 +250,49 @@ func verifyCodecMode(ctx context.Context, b *testing.B, plat platform.Platform, 
 	}
 }
 
+type lifecycleLatency struct {
+	checkpoint, restore, httpReady time.Duration
+}
+
+// serveFixture verifies the image's /local/latin1k.txt over a fresh TCP
+// connection. A listening socket alone can survive a checkpoint without a
+// worker having served anything after restore.
+func serveFixture(ctx context.Context, c *dockerutil.Container) error {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	ip, err := c.FindIP(ctx, false)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+net.JoinHostPort(ip.String(), "80")+"/latin1k.txt", nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{Transport: &http.Transport{DisableKeepAlives: true}}
+	for {
+		resp, err := client.Do(req)
+		if err == nil {
+			defer resp.Body.Close()
+			data, err := io.ReadAll(io.LimitReader(resp.Body, 1025))
+			if err != nil {
+				return err
+			}
+			if resp.StatusCode != http.StatusOK || !bytes.Equal(data, make([]byte, 1024)) {
+				return fmt.Errorf("unexpected fixture response: HTTP %d, %d bytes", resp.StatusCode, len(data))
+			}
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(time.Millisecond):
+		}
+	}
+}
+
 // checkpointNginx checkpoints an idle nginx container, and returns the
 // contents of the state file and the sizes of the checkpoint files by name.
-func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine) (stateFile []byte, sizes map[string]int64, names, mounts []string) {
+func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine, latency *lifecycleLatency) (stateFile []byte, sizes map[string]int64, names, mounts []string) {
 	b.Helper()
 	container := machine.GetContainer(ctx, b)
 	defer container.CleanUp(ctx)
@@ -244,6 +304,11 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	if err := waitListening(ctx, container, 80); err != nil {
 		b.Fatalf("nginx is not listening: %v", err)
 	}
+	if *measureLifecycle {
+		if err := serveFixture(ctx, container); err != nil {
+			b.Fatalf("HTTP before checkpoint: %v", err)
+		}
+	}
 	if err := waitQuiescent(ctx, container); err != nil {
 		b.Fatalf("nginx did not quiesce: %v", err)
 	}
@@ -253,9 +318,16 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	}
 
 	const name = "checkpointfile"
+	start := time.Now()
 	if err := container.Checkpoint(ctx, name); err != nil {
 		b.Fatalf("failed to checkpoint container: %v", err)
 	}
+	if *measureLifecycle {
+		if err := container.WaitTimeout(ctx, 15*time.Second); err != nil {
+			b.Fatalf("waiting for checkpointed container to stop: %v", err)
+		}
+	}
+	latency.checkpoint = time.Since(start)
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		b.Fatalf("failed to create docker client: %v", err)
@@ -287,6 +359,17 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	stateFile, err = os.ReadFile(filepath.Join(dir, checkpointfiles.StateFileName))
 	if err != nil {
 		b.Fatalf("failed to read state file: %v", err)
+	}
+	if *measureLifecycle {
+		start := time.Now()
+		if err := container.Restore(ctx, name); err != nil {
+			b.Fatalf("Docker restore: %v", err)
+		}
+		latency.restore = time.Since(start)
+		if err := serveFixture(ctx, container); err != nil {
+			b.Fatalf("HTTP after restore: %v", err)
+		}
+		latency.httpReady = time.Since(start)
 	}
 	return stateFile, sizes, names, mounts
 }
