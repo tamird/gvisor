@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T05:24:12.001644+00:00",
+    "updatedAt": "2026-10-24T05:41:44.143070+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20518,29 +20518,29 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcp-cookie-sack-negotiation",
-      "head": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+      "head": "8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
       "title": "Preserve SACK on connections accepted with SYN cookies",
-      "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb",
+      "url": "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-24T05:24:12.001644+00:00",
-      "summary": "When the SYN queue fills, recover the peer's SACK negotiation from the echoed timestamp after validating the SYN cookie. The sequence-number cookie keeps its authentication bits. The identical packet probe passes on native Linux; uncorrected netstack alone fails because its cookie SYN-ACK echoes the timestamp but omits SACK. After the fix, both backends pass the handshake and the exact SACK-block check for data beyond a hole. The corrected run passes six uncached AMD64 owners and 128 non-skipped records, covering the selected package-level TCP and SACK suites; both analyzer owners also pass for AMD64 and ARM64. The qualified five-file patch is byte-identical to this standalone proposal. Independent retained review 7fc412a9 verified source, native report identities and the original failure. The earlier contributor request is retained, but implementation and validation are back with the agent before delivery. The large e2e tcp_test owner was omitted: its existing TestTimestampSynCookies assumes the SYN-ACK timestamp low bit equals the normal endpoint clock, which fails for one timestamp-offset parity when SACK is encoded. Root is correcting that expectation and checking both parities plus the omitted owner. The earlier 128 positive records do not establish this additional coverage. No second contributor request or upstream PR is open.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T05:41:44.143070+00:00",
+      "summary": "When the SYN queue fills, recover the peer's SACK negotiation from the echoed timestamp after validating the SYN cookie; the sequence-number cookie retains its authentication bits. The identical wire probe passes on native Linux and fails only on uncorrected netstack. The corrected packet controls, selected package-level TCP/SACK suites and both analyzer owners passed six uncached owners/128 non-skipped records (retained peer 7fc412a9). The omitted large e2e tcp_test is now covered: its old timestamp assertion passed nine and failed seven of 16 repetitions, every failure exactly one tick high; that original native FAIL remains. The test-only correction accepts the one-tick SACK encoding difference. The complete unfiltered e2e owner passes 405 records with no skips or missing evidence at 8757001b; production bytes are unchanged from 66ecc. Independent peer f6174c8a joins both retained bundles, exact source/native/report identities and timings. Corrected execution finished at 05:36:04.857187Z and authenticated consumer verification followed 4.432637 seconds later. Root updated the existing contributor decision for this exact head; no second request or upstream PR was created. Window scaling is a separate agent-owned child.",
       "followup": {
         "owner": "root",
-        "sourceHead": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
-        "observedAt": "2026-10-24T05:24:12.001644+00:00",
-        "disposition": "Agent repair and omitted e2e validation; existing contributor request suspended, not repeated",
-        "nextAction": "Root owns the timestamp-parity correction and the omitted large e2e tcp_test validation before delivery. Preserve the earlier contributor request; do not request a second review.",
+        "sourceHead": "8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
+        "observedAt": "2026-10-24T05:41:44.143070+00:00",
+        "disposition": "Validation complete; existing contributor decision updated for exact head",
+        "nextAction": "Root owns the existing contributor decision and delivery after approval. No second review request or public acknowledgement.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb",
-          "https://app.buildbuddy.io/invocation/ffb738bb-baee-4c3e-a567-6ad2142cf5b3",
-          "https://app.buildbuddy.io/invocation/c8bb1445-a5eb-40be-abce-cdac5e6bac9a"
+          "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
+          "https://app.buildbuddy.io/invocation/098f63cd-c41f-498e-9d44-abf1fd9967de",
+          "https://app.buildbuddy.io/invocation/c0561e06-802a-4321-8f69-4c96c3adb96c"
         ]
       },
       "evidence": [
         {
-          "label": "Standalone cookie SACK proposal",
-          "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb"
+          "label": "Current SACK proposal with timestamp test correction",
+          "url": "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37"
         },
         {
           "label": "Native Linux passes; uncorrected netstack fails only the SACK probe",
@@ -20549,6 +20549,45 @@
         {
           "label": "Corrected packet controls, selected TCP/SACK owners and both analyzers",
           "url": "https://app.buildbuddy.io/invocation/c8bb1445-a5eb-40be-abce-cdac5e6bac9a"
+        },
+        {
+          "label": "Old timestamp assertion: nine passes, seven +1-tick failures in 16 repetitions",
+          "url": "https://app.buildbuddy.io/invocation/098f63cd-c41f-498e-9d44-abf1fd9967de"
+        },
+        {
+          "label": "Corrected complete e2e TCP owner: 405 positive records",
+          "url": "https://app.buildbuddy.io/invocation/c0561e06-802a-4321-8f69-4c96c3adb96c"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
+        "url": "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37"
+      }
+    },
+    {
+      "id": "branch:tcp-cookie-window-scale",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-cookie-window-scale",
+      "head": "0d37a9443186468a7f987b581c2312236adb47bc",
+      "title": "Preserve window scaling on SYN-cookie connections",
+      "url": "https://github.com/tamird/gvisor/commit/0d37a9443186468a7f987b581c2312236adb47bc",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-24T05:41:44.143070+00:00",
+      "summary": "Separate fork-only window-scaling change on the SACK proposal 8757001b. Root owns the product; Hostinet owns the native Linux/netstack wire controls. The initial before-only fixture reproduced missing window scaling with timestamps in netstack, but its Linux no-timestamp control timed out; the original native failure is retained and does not establish complete control coverage. A fixture-only split-write correction is under validation. No contributor decision or upstream PR has been requested for this child.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "0d37a9443186468a7f987b581c2312236adb47bc",
+        "observedAt": "2026-10-24T05:41:44.143070+00:00",
+        "disposition": "Agent implementation and wire validation",
+        "nextAction": "Finish Hostinet’s corrected two-backend controls and qualify the window-scaling product before any contributor decision. Preserve the separate SACK prerequisite and original failed fixture."
+      },
+      "evidence": [
+        {
+          "label": "Agent-owned window-scaling product",
+          "url": "https://github.com/tamird/gvisor/commit/0d37a9443186468a7f987b581c2312236adb47bc"
         }
       ]
     }
@@ -22935,6 +22974,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
         "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830"
+      ]
+    },
+    {
+      "from": "branch:tcp-cookie-sack-negotiation",
+      "to": "branch:tcp-cookie-window-scale",
+      "type": "depends_on",
+      "reason": "The window-scaling product is built on the exact SACK proposal 8757001b; its implementation and wire validation remain agent work.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
+        "https://github.com/tamird/gvisor/commit/0d37a9443186468a7f987b581c2312236adb47bc"
       ]
     }
   ],
