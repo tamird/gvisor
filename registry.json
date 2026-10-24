@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T05:41:44.143070+00:00",
+    "updatedAt": "2026-10-24T05:55:52.808445+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20570,24 +20570,32 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcp-cookie-window-scale",
-      "head": "0d37a9443186468a7f987b581c2312236adb47bc",
+      "head": "bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0",
       "title": "Preserve window scaling on SYN-cookie connections",
-      "url": "https://github.com/tamird/gvisor/commit/0d37a9443186468a7f987b581c2312236adb47bc",
+      "url": "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-24T05:41:44.143070+00:00",
-      "summary": "Separate fork-only window-scaling change on the SACK proposal 8757001b. Root owns the product; Hostinet owns the native Linux/netstack wire controls. The initial before-only fixture reproduced missing window scaling with timestamps in netstack, but its Linux no-timestamp control timed out; the original native failure is retained and does not establish complete control coverage. A fixture-only split-write correction is under validation. No contributor decision or upstream PR has been requested for this child.",
+      "updatedAt": "2026-10-24T05:55:52.808445+00:00",
+      "summary": "Separate fork-only window-scaling change on the SACK proposal 8757001b. Current bc6dbee5 differs from 0d37a944 only by the formatting correction. Corrected before-only controls 5fe782b1 verify both Linux cases (16 bytes without timestamps, 128 with timestamps) and netstack without timestamps (16 bytes); netstack with timestamps alone fails, advertising no window scale and delivering 16 rather than 128 bytes. Three leaves pass and one fails; the six XML records include two parents. Native FAIL is preserved and independent retained peer 55e7f87e confirms the evidence. Producer verdict was available after 0.298466 seconds and the authenticated consumer after 9.934822 seconds. The original fixture failure remains retained. Initial fixed-product run fbfb71cb stopped before tests on formatting; the same eight owners now run on qualification source 985ed45d in 1a7c8ddb. No fixed-product success, contributor decision, or upstream PR is claimed.",
       "followup": {
         "owner": "root",
-        "sourceHead": "0d37a9443186468a7f987b581c2312236adb47bc",
-        "observedAt": "2026-10-24T05:41:44.143070+00:00",
+        "sourceHead": "bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0",
+        "observedAt": "2026-10-24T05:55:52.808445+00:00",
         "disposition": "Agent implementation and wire validation",
-        "nextAction": "Finish Hostinet’s corrected two-backend controls and qualify the window-scaling product before any contributor decision. Preserve the separate SACK prerequisite and original failed fixture."
+        "nextAction": "Finish the existing eight-owner qualification on integration 985ed45d for product bc6dbee5 before any contributor decision. Keep the corrected before controls and original formatting/fixture failures distinct."
       },
       "evidence": [
         {
           "label": "Agent-owned window-scaling product",
-          "url": "https://github.com/tamird/gvisor/commit/0d37a9443186468a7f987b581c2312236adb47bc"
+          "url": "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0"
+        },
+        {
+          "label": "Corrected before-only Linux/netstack controls; native FAIL",
+          "url": "https://app.buildbuddy.io/invocation/5fe782b1-1861-4c64-8ad8-4f84a40325d5"
+        },
+        {
+          "label": "Current eight-owner fixed-product qualification; result pending",
+          "url": "https://app.buildbuddy.io/invocation/1a7c8ddb-9d3d-4375-ad30-9feb614f654b"
         }
       ]
     }
@@ -22983,7 +22991,7 @@
       "reason": "The window-scaling product is built on the exact SACK proposal 8757001b; its implementation and wire validation remain agent work.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
-        "https://github.com/tamird/gvisor/commit/0d37a9443186468a7f987b581c2312236adb47bc"
+        "https://github.com/tamird/gvisor/commit/bc6dbee52fd89fc57e4c04f129a38a4bfdbd1dc0"
       ]
     }
   ],
