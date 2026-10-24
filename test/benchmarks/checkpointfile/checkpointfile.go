@@ -25,11 +25,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
@@ -58,6 +60,8 @@ import (
 	"gvisor.dev/gvisor/runsc/boot"
 	"gvisor.dev/gvisor/test/benchmarks/harness"
 )
+
+var ociBundleRoot = flag.String("oci-bundle-root", "/run/containerd/io.containerd.runtime.v2.task/moby", "Directory containing each container's OCI bundle")
 
 const (
 	// workers is the number of nginx worker processes.
@@ -91,8 +95,7 @@ func BenchmarkCheckpointFile(b *testing.B) {
 	defer machine.CleanUp()
 	ctx := context.Background()
 
-	files, names, mounts := checkpointNginx(ctx, b, machine)
-	stateFile := files[checkpointfiles.StateFileName]
+	stateFile, sizes, names, mounts := checkpointNginx(ctx, b, machine)
 	ctx = restoreContext(b, names, mounts)
 	// Tasks create their platform contexts when they are loaded.
 	sys, err := systrap.New(platform.Options{})
@@ -117,12 +120,12 @@ func BenchmarkCheckpointFile(b *testing.B) {
 			b.StartTimer()
 		}
 		b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
-		b.ReportMetric(float64(len(stateFile)), "state-file-B")
-		b.ReportMetric(float64(len(files[checkpointfiles.PagesFileName])), "pages-file-B")
-		b.ReportMetric(float64(len(files[checkpointfiles.PagesMetadataFileName])), "pages-metadata-B")
-		total := 0
-		for _, f := range files {
-			total += len(f)
+		b.ReportMetric(float64(sizes[checkpointfiles.StateFileName]), "state-file-B")
+		b.ReportMetric(float64(sizes[checkpointfiles.PagesFileName]), "pages-file-B")
+		b.ReportMetric(float64(sizes[checkpointfiles.PagesMetadataFileName]), "pages-metadata-B")
+		var total int64
+		for _, size := range sizes {
+			total += size
 		}
 		b.ReportMetric(float64(total), "checkpoint-total-B")
 	})
@@ -133,6 +136,8 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			b.StopTimer()
 			ctx, cleanup := withHostFDs(b, ctx, names)
+			// This kernel is only partially restored.
+			// Acceptable for purposes of benchmarking pkg/state alone.
 			k, err := loadKernel(ctx, plat, stateFile)
 			if err != nil {
 				b.Fatal(err)
@@ -153,8 +158,9 @@ func BenchmarkCheckpointFile(b *testing.B) {
 	})
 }
 
-// checkpointNginx checkpoints an idle nginx container.
-func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine) (files map[string][]byte, names, mounts []string) {
+// checkpointNginx checkpoints an idle nginx container, and returns the
+// contents of the state file and the sizes of the checkpoint files by name.
+func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine) (stateFile []byte, sizes map[string]int64, names, mounts []string) {
 	b.Helper()
 	container := machine.GetContainer(ctx, b)
 	defer container.CleanUp(ctx)
@@ -192,21 +198,25 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	if err != nil {
 		b.Fatalf("failed to read checkpoint directory (the benchmark must run as root): %v", err)
 	}
-	files = make(map[string][]byte)
+	sizes = make(map[string]int64)
 	for _, e := range entries {
 		if !checkpointFileNames[e.Name()] {
 			b.Fatalf("unexpected checkpoint file %q in %s", e.Name(), dir)
 		}
-		data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		fi, err := e.Info()
 		if err != nil {
-			b.Fatalf("failed to read checkpoint file: %v", err)
+			b.Fatalf("failed to stat checkpoint file: %v", err)
 		}
-		files[e.Name()] = data
+		sizes[e.Name()] = fi.Size()
 	}
-	if _, ok := files[checkpointfiles.StateFileName]; !ok {
+	if _, ok := sizes[checkpointfiles.StateFileName]; !ok {
 		b.Fatalf("no %s in %s", checkpointfiles.StateFileName, dir)
 	}
-	return files, names, mounts
+	stateFile, err = os.ReadFile(filepath.Join(dir, checkpointfiles.StateFileName))
+	if err != nil {
+		b.Fatalf("failed to read state file: %v", err)
+	}
+	return stateFile, sizes, names, mounts
 }
 
 // checkpointFileNames are the names of the files of a full checkpoint.
@@ -219,7 +229,7 @@ var checkpointFileNames = map[string]bool{
 // containerSpec returns the names that runsc may give the container, and the
 // destinations of its root and mounts, from its spec.
 func containerSpec(id string) (names, mounts []string, err error) {
-	data, err := os.ReadFile(filepath.Join("/run/containerd/io.containerd.runtime.v2.task/moby", id, "config.json"))
+	data, err := os.ReadFile(filepath.Join(*ociBundleRoot, id, "config.json"))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -261,6 +271,7 @@ func restoreContext(b *testing.B, names, mounts []string) context.Context {
 		if err != nil {
 			b.Fatalf("failed to create memory file: %v", err)
 		}
+		b.Cleanup(mf.Destroy)
 		// Allow saving the filesystems that use it again.
 		mf.MarkSavable()
 		return mf
@@ -366,17 +377,23 @@ func loadKernel(ctx context.Context, plat platform.Platform, data []byte) (*kern
 	return k, nil
 }
 
-// cpuTime runs fn and returns the process CPU time it used. It collects
-// garbage first, so that fn is only charged for the collections that its own
-// allocations cause.
+// cpuTime runs fn with automatic garbage collection disabled, and returns the
+// process CPU time it used. It collects garbage first, so that every call
+// starts from the same heap state. Thus, ns/op and cpu-ns exclude garbage
+// collection.
+// B/op and allocs/op show the allocation pressure that causes it.
 func cpuTime(b *testing.B, fn func() error) time.Duration {
 	b.Helper()
 	b.StopTimer()
 	runtime.GC()
+	gcPercent := debug.SetGCPercent(-1)
 	b.StartTimer()
 	cpu0 := processCPU(b)
 	err := fn()
 	cpu1 := processCPU(b)
+	b.StopTimer()
+	debug.SetGCPercent(gcPercent)
+	b.StartTimer()
 	if err != nil {
 		b.Fatal(err)
 	}
