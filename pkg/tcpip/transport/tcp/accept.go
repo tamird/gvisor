@@ -32,8 +32,10 @@ import (
 )
 
 const (
-	// cookieTimestampSACK is echoed by the peer in the final ACK.
+	// The peer echoes these five SYN-ACK timestamp bits. Bit zero carries
+	// SACK; bits 1–4 carry the peer's window shift plus one (zero for no WS).
 	cookieTimestampSACK = 1
+	cookieTimestampMask = 0x1f
 
 	// tsLen is the length, in bits, of the timestamp in the SYN cookie.
 	tsLen = 8
@@ -80,6 +82,11 @@ type listenContext struct {
 	// in the initial SYN-ACK.
 	rcvWnd seqnum.Size
 
+	// cookieRcvWndScale stays fixed while the listener can validate its
+	// cookies. A receive-buffer change between SYN and ACK must not change
+	// the units the peer uses to interpret our window.
+	cookieRcvWndScale int
+
 	// nonce are random bytes that are initialized once when the context
 	// is created and used to seed the hash function when generating
 	// the SYN cookie.
@@ -120,6 +127,9 @@ func newListenContext(stk *stack.Stack, protocol *protocol, listenEP *Endpoint, 
 		v6Only:   v6Only,
 		netProto: netProto,
 		listenEP: listenEP,
+	}
+	if listenEP != nil {
+		l.cookieRcvWndScale = listenEP.rcvWndScaleForHandshake()
 	}
 
 	for i := range l.nonce {
@@ -551,14 +561,6 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 		}
 		defer route.Release()
 
-		// Send SYN without window scaling because we currently
-		// don't encode this information in the cookie.
-		//
-		// Enable Timestamp option if the original syn did have
-		// the timestamp option specified.
-		//
-		// Use the user supplied MSS on the listening socket for
-		// new connections, if available.
 		synOpts := header.TCPSynOptions{
 			WS:    -1,
 			TS:    opts.TS,
@@ -566,15 +568,19 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			MSS:   calculateAdvertisedMSS(e.userMSS, route),
 		}
 		if opts.TS {
-			offset := e.protocol.tsOffset(net.DestinationAddress(), net.SourceAddress())
-			now := e.stack.Clock().NowMonotonic()
-			synOpts.TSVal = offset.TSVal(now)
-			synOpts.SACKPermitted = opts.SACKPermitted && e.protocol.sackPermitted()
-			// Carry the SACK negotiation in the low timestamp bit. Round
-			// down so the first data packet's timestamp cannot go backward.
-			if (synOpts.TSVal&cookieTimestampSACK != 0) != synOpts.SACKPermitted {
-				synOpts.TSVal--
+			bits := uint32(opts.WS+1) << 1
+			if opts.WS >= 0 {
+				synOpts.WS = ctx.cookieRcvWndScale
 			}
+			synOpts.SACKPermitted = opts.SACKPermitted && e.protocol.sackPermitted()
+			if synOpts.SACKPermitted {
+				bits |= cookieTimestampSACK
+			}
+			// Use the most recent timestamp with these option bits so
+			// the timestamp on the first data packet cannot go backward.
+			offset := e.protocol.tsOffset(net.DestinationAddress(), net.SourceAddress())
+			ts := offset.TSVal(e.stack.Clock().NowMonotonic())
+			synOpts.TSVal = ts - ((ts - bits) & cookieTimestampMask)
 		}
 		cookie := ctx.createCookie(s.id, s.sequenceNumber, encodeMSS(opts.MSS))
 		fields := tcpFields{
@@ -652,9 +658,7 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 		// Create newly accepted endpoint and deliver it.
 		rcvdSynOptions := header.TCPSynOptions{
 			MSS: mssTable[data],
-			// Disable Window scaling as original SYN is
-			// lost.
-			WS: -1,
+			WS:  -1,
 		}
 
 		// When syn cookies are in use we enable timestamp only
@@ -666,6 +670,7 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			rcvdSynOptions.TSVal = s.parsedOptions.TSVal
 			rcvdSynOptions.TSEcr = s.parsedOptions.TSEcr
 			rcvdSynOptions.SACKPermitted = s.parsedOptions.TSEcr&cookieTimestampSACK != 0
+			rcvdSynOptions.WS = int((s.parsedOptions.TSEcr&cookieTimestampMask)>>1) - 1
 		}
 
 		n, err := ctx.createConnectingEndpoint(s, rcvdSynOptions, &waiter.Queue{})
@@ -717,12 +722,12 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			iss:                 iss,
 			ackNum:              irs + 1,
 			rcvWnd:              seqnum.Size(n.initialReceiveWindow()),
-			sndWnd:              s.window,
-			rcvWndScale:         e.rcvWndScaleForHandshake(),
+			rcvWndScale:         ctx.cookieRcvWndScale,
 			sndWndScale:         rcvdSynOptions.WS,
 			mss:                 rcvdSynOptions.MSS,
 			sampleRTTWithTSOnly: true,
 		}
+		h.setSendWindow(s)
 		h.transitionToStateEstablishedLocked(s)
 		n.mu.Unlock()
 

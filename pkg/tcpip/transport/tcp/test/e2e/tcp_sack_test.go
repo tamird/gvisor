@@ -133,10 +133,9 @@ func TestSackPermittedAccept(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
 		cookieEnabled bool
-		wndScale      int
 	}{
-		{"ordinary", false, 5},
-		{"cookie", true, -1},
+		{"ordinary", false},
+		{"cookie", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, sackEnabled := range []bool{false, true} {
@@ -153,7 +152,7 @@ func TestSackPermittedAccept(t *testing.T) {
 					e2e.SetStackSACKPermitted(t, c, sackEnabled)
 					e2e.SetStackTCPRecovery(t, c, 0)
 
-					rep := c.AcceptWithOptionsNoDelay(tc.wndScale, header.TCPSynOptions{
+					rep := c.AcceptWithOptionsNoDelay(5, header.TCPSynOptions{
 						MSS: e2e.DefaultIPv4MSS, TS: true, SACKPermitted: true,
 					})
 					data := []byte{1, 2, 3}
@@ -197,8 +196,8 @@ func TestSackDisabledAccept(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		// When cookie is used window scaling is disabled.
-		{true, -1, 0xffff}, // When cookie is used window scaling is disabled.
+		// A SYN cookie cannot preserve the window shift without timestamps.
+		{true, -1, 0xffff},
 		{false, 5, 0x8000}, // 0x8000 * 2^5 = 1<<20 = 1MB window (the default).
 	}
 
