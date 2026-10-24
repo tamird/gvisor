@@ -396,19 +396,27 @@ func main() {
 					// and perform the value loads last. There should be no dependency
 					// on this specific behavior, but the ability to specify slots
 					// allows a manual implementation to be order-dependent.
+					shared := cg.sharedLeaf(fields)
+					inlineFields := fields.saved
+					if shared {
+						inlineFields = nil
+					}
 					if generateSaverLoader {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
 						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
 						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
 						fields.emitZeroChecks(outputFile, statePrefix, recv)
-						for slot, f := range fields.saved {
+						if shared {
+							fmt.Fprintf(outputFile, "\t%s.stateVisitFields(&stateSinkObject)\n", recv)
+						}
+						for slot, f := range inlineFields {
 							if f.kind == fieldValue {
 								fmt.Fprintf(outputFile, "\t%sValue := %s.save%s()\n", f.name, recv, camelCased(f.name))
 								fmt.Fprintf(outputFile, "\t_ = (%s)(%sValue)\n", f.valueType, f.name)
 								fmt.Fprintf(outputFile, "\tstateSinkObject.SaveValue(%d, %sValue)\n", slot, f.name)
 							}
 						}
-						for slot, f := range fields.saved {
+						for slot, f := range inlineFields {
 							if f.kind != fieldValue {
 								fmt.Fprintf(outputFile, "\tstateSinkObject.Save(%d, &%s.%s)\n", slot, recv, f.name)
 							}
@@ -432,7 +440,10 @@ func main() {
 					if generateSaverLoader {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
 						fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
-						for slot, f := range fields.saved {
+						if shared {
+							fmt.Fprintf(outputFile, "\t%s.stateVisitFields(&stateSourceObject)\n", recv)
+						}
+						for slot, f := range inlineFields {
 							switch f.kind {
 							case fieldNormal:
 								fmt.Fprintf(outputFile, "\tstateSourceObject.Load(%d, &%s.%s)\n", slot, recv, f.name)
@@ -440,7 +451,7 @@ func main() {
 								fmt.Fprintf(outputFile, "\tstateSourceObject.LoadWait(%d, &%s.%s)\n", slot, recv, f.name)
 							}
 						}
-						for slot, f := range fields.saved {
+						for slot, f := range inlineFields {
 							if f.kind == fieldValue {
 								fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", slot, f.valueType, recv, camelCased(f.name), f.valueType)
 							}

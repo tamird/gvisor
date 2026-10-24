@@ -226,6 +226,27 @@ func (g *codecGen) fieldCall(expr string, t ast.Expr, dec bool) string {
 	return g.call("&"+expr, t, dec, false)
 }
 
+// sharedLeaf reports whether all saved fields have statically known scalar or
+// byte-array codecs and none requires a deferred load or conversion hook.
+func (g *codecGen) sharedLeaf(fields structFields) bool {
+	for _, f := range fields.saved {
+		if f.kind != fieldNormal {
+			return false
+		}
+		switch k, u := g.kind(f.typ); k {
+		case "Bool", "Int", "Uint", "Float32", "Float64", "Complex64", "Complex128", "String":
+		case "Array":
+			e, ok := g.underlying(u.(*ast.ArrayType).Elt).(*ast.Ident)
+			if !ok || (e.Name != "byte" && e.Name != "uint8") || !printable(f.typ) {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return len(fields.saved) != 0
+}
+
 // emitCodec emits the Codec methods of struct type name.
 func (g *codecGen) emitCodec(w io.Writer, recv, name string, fields structFields, hasAfterLoad bool) {
 	sp := g.statePrefix
@@ -236,11 +257,24 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, fields structFields
 	fmt.Fprintf(w, "	return &%s\n", idx)
 	fmt.Fprintf(w, "}\n\n")
 
+	shared := g.sharedLeaf(fields)
+	if shared {
+		fmt.Fprintf(w, "// +checklocksignore\nfunc (%s *%s) stateVisitFields(v %sFieldVisitor) {\n", recv, name, sp)
+		for slot, f := range fields.saved {
+			fmt.Fprintf(w, "\t%sVisitField(v, %d, &%s.%s, %s, %s)\n", sp, slot, recv, f.name, g.elemFunc(f.typ, false), g.elemFunc(f.typ, true))
+		}
+		fmt.Fprint(w, "}\n\n")
+	}
+
 	// StateEncode: see StateSave for the order of side effects.
 	fmt.Fprintf(w, "// +checklocksignore\n")
 	fmt.Fprintf(w, "func (%s *%s) StateEncode(stateEncoder *%sEncoder) {\n", recv, name, sp)
 	fmt.Fprintf(w, "	%s.beforeSave()\n", recv)
 	fields.emitZeroChecks(w, sp, recv)
+	if shared {
+		fmt.Fprintf(w, "\t%s.stateVisitFields(stateEncoder)\n", recv)
+		fields.saved = nil
+	}
 	// Values are saved first, as by StateSave.
 	for _, f := range fields.saved {
 		if f.kind == fieldValue {
@@ -263,6 +297,9 @@ func (g *codecGen) emitCodec(w io.Writer, recv, name string, fields structFields
 
 	fmt.Fprintf(w, "// +checklocksignore\n")
 	fmt.Fprintf(w, "func (%s *%s) StateDecode(ctx context.Context, stateDecoder *%sDecoder) {\n", recv, name, sp)
+	if shared {
+		fmt.Fprintf(w, "\t%s.stateVisitFields(stateDecoder)\n", recv)
+	}
 	// Values are loaded last, as by StateLoad.
 	parsed := make(map[string]bool)
 	for _, f := range fields.saved {

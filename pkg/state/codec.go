@@ -45,6 +45,32 @@ type Codec interface {
 	StateTypeIndex() *TypeIndex
 }
 
+// FieldVisitor selects the operation for a generated struct field walk.
+type FieldVisitor interface {
+	stateFieldVisitor()
+}
+
+func (*Encoder) stateFieldVisitor() {}
+func (*Decoder) stateFieldVisitor() {}
+func (*Sink) stateFieldVisitor()    {}
+func (*Source) stateFieldVisitor()  {}
+
+// VisitField applies the selected codec to a field at its StateFields slot.
+func VisitField[T any](v FieldVisitor, slot int, p *T, encode func(*Encoder, *T), decode func(*Decoder, *T)) {
+	switch v := v.(type) {
+	case *Encoder:
+		encode(v, p)
+	case *Decoder:
+		decode(v, p)
+	case *Sink:
+		v.Save(slot, p)
+	case *Source:
+		v.Load(slot, p)
+	default:
+		panic("invalid state field visitor")
+	}
+}
+
 // TypeIndex is per-type storage for the state package. go_stateify generates
 // one for each struct type implementing Codec.
 type TypeIndex struct {
