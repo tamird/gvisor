@@ -18,7 +18,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
+	"slices"
 	"testing"
 )
 
@@ -32,6 +32,8 @@ func TestPHPCommandGroups(t *testing.T) {
 		{"capture-one.phpt", "--TEST--\nCapture one stream\n--CAPTURE_STDIO--\nSTDOUT\n"},
 		{"capture-all.phpt", "--TEST--\r\nCapture all streams\r\n--CAPTURE_STDIO--\r\nSTDIN STDOUT STDERR\r\n"},
 		{"ordinary-again.phpt", "--TEST--\nAnother ordinary test\n"},
+		{"redirect.phpt", "--TEST--\nRedirected tests\n--REDIRECTTEST--\n"},
+		{"last.phpt", "--TEST--\nFinal ordinary test\n"},
 	}
 	var tests []string
 	for _, test := range contents {
@@ -45,27 +47,27 @@ func TestPHPCommandGroups(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TestCmds: %s", err)
 	}
-	if got, want := len(cmds), 3; got != want {
+	if got, want := len(cmds), 5; got != want {
 		t.Fatalf("command count = %d, want %d", got, want)
 	}
-	for i, test := range map[int]string{0: tests[0], 2: tests[3]} {
-		args := cmds[i].Args
-		if args[0] != "make" || args[len(args)-1] != "TESTS=--show-diff "+test {
-			t.Errorf("ordinary command %d = %q, want make selecting %q", i, args, test)
+	for i, want := range []struct {
+		tests              []string
+		terminal, redirect string
+	}{
+		{tests[:1], "false", "false"},
+		{tests[1:3], "true", "false"},
+		{tests[3:4], "false", "false"},
+		{tests[4:5], "false", "true"},
+		{tests[5:], "false", "false"},
+	} {
+		cmd := cmds[i]
+		if got := cmd.Args[4:]; !slices.Equal(got, want.tests) {
+			t.Errorf("command %d selection = %q, want %q", i, got, want.tests)
 		}
-	}
-	if got := cmds[1].Args[0]; got != "script" {
-		t.Errorf("terminal launcher = %q, want script", got)
-	}
-	var selections []string
-	for _, value := range cmds[1].Env {
-		if strings.HasPrefix(value, "TESTS=") {
-			selections = append(selections, value)
+		wantEnv := []string{"PHP_TEST_TERMINAL=" + want.terminal, "PHP_TEST_REDIRECT=" + want.redirect}
+		if got := cmd.Env[len(cmd.Env)-2:]; !slices.Equal(got, wantEnv) {
+			t.Errorf("command %d mode = %q, want %q", i, got, wantEnv)
 		}
-	}
-	want := "TESTS=-q --show-diff " + strings.Join(tests[1:3], " ")
-	if len(selections) == 0 || selections[len(selections)-1] != want {
-		t.Errorf("terminal selection = %q, want final value %q", selections, want)
 	}
 	if cmds, err := (phpRunner{}).TestCmds(nil); err != nil || len(cmds) != 0 {
 		t.Errorf("empty selection = %v, %v; want no commands or error", cmds, err)

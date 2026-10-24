@@ -39,7 +39,7 @@ from http.client import HTTPException, HTTPResponse, HTTPSConnection
 import json
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
@@ -60,8 +60,10 @@ MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
 RUNTIME_RESULT_TAGS = {"jtreg-results", "php-results"} | NODE_RESULT_TAGS
+PHP_OUTPUT_NAME = r"php-results\.[A-Za-z0-9]+/(?:selection\.txt|root\.txt|redirect\.txt|results\.tsv|junit\.xml)"
 RESULT_OUTPUT_PATTERNS = {
     **dict.fromkeys(RUNTIME_RESULT_TAGS, RUNTIME_OUTPUT_NAME),
+    "php-results": "(?:" + RUNTIME_OUTPUT_NAME + "|" + PHP_OUTPUT_NAME + ")",
     "source-image-results": (r"source-images/(?:selection\.json|[A-Za-z0-9][A-Za-z0-9_.-]*/"
                              r"(?:request\.json|build-exit-code|inspect\.json|exit-code))"),
 }
@@ -477,6 +479,36 @@ def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, o
             "failures": failures, "skips": skips, **({"required_passed": sorted(matched)} if required else {})}
 
 
+def runtime_outputs(attempt: Attempt, reports: dict[tuple[Attempt, str], Path],
+                    pattern: str) -> Iterator[tuple[str, bytes]]:
+    """Read selected native artifacts from either BEP output representation."""
+    total = 0
+    seen: set[str] = set()
+
+    def check(name: str, size: int) -> None:
+        nonlocal total
+        total += size
+        if name in seen:
+            raise ValueError(f"Duplicate runtime artifact: {name}")
+        seen.add(name)
+        if size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
+            raise ValueError("Runtime output exceeds retention bounds")
+
+    if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
+        with zipfile.ZipFile(archive_path) as archive:
+            for item in archive.infolist():
+                if re.fullmatch(pattern, item.filename):
+                    check(item.filename, item.file_size)
+                    yield item.filename, archive.read(item)
+    else:
+        for (owner, name), path in reports.items():
+            if owner == attempt and name.startswith("test.outputs/"):
+                name = name.removeprefix("test.outputs/")
+                if re.fullmatch(pattern, name):
+                    check(name, path.stat().st_size)
+                    yield name, path.read_bytes()
+
+
 def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]
                     ) -> tuple[list[str], list[tuple[list[str], str]], list[str]]:
     """Bind retained batch output to the runner's original selected names."""
@@ -487,28 +519,12 @@ def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, st
     if not expected or len(expected) != len(set(expected)):
         raise ValueError("Runtime selection is empty or contains duplicate names")
 
-    def outputs() -> Iterator[str]:
-        total = 0
-        if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
-            with zipfile.ZipFile(archive_path) as archive:
-                names = [item for item in archive.infolist() if re.fullmatch(r"batch-\d+\.log", item.filename)]
-                if len(names) != len({item.filename for item in names}):
-                    raise ValueError("Duplicate runtime batch artifacts")
-                for item in names:
-                    total += item.file_size
-                    if item.file_size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
-                        raise ValueError("Runtime batch output exceeds retention bounds")
-                    yield archive.read(item).decode()
-        else:
-            for (owner, name), path in reports.items():
-                if owner == attempt and re.fullmatch(r"test.outputs/batch-\d+\.log", name):
-                    yield path.read_text()
-
     found_batches = []
     retained = []
     errors = []
     try:
-        for output in outputs():
+        for _, raw in runtime_outputs(attempt, reports, r"batch-\d+\.log"):
+            output = raw.decode()
             selection, separator, body = output.partition("\nOutput:\n")
             if not separator or not selection.startswith("Batch:\n"):
                 errors.append("Invalid runtime batch artifact header")
@@ -521,6 +537,215 @@ def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, st
     if Counter(map(tuple, batches)) != Counter(map(tuple, found_batches)):
         errors.append("Retained runtime batches differ from the selected batches")
     return expected, retained, errors
+
+
+def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
+    """Join PHP's native -W states and complete JUnit to each actual command.
+
+    -W retains expected-failure states that JUnit folds into passes, but has no
+    completion footer. JUnit is written after the top-level run returns. A
+    redirect parent has no -W row; its isolated XML parent and contextual child
+    rows establish completion of PHP's enumerated expansion, not discovery of
+    every potentially eligible test in the source archive.
+    """
+    expected, batches, errors = runtime_batches(log, attempt, reports)
+    groups: dict[str, dict[str, bytes]] = {}
+    for name, content in runtime_outputs(attempt, reports, PHP_OUTPUT_NAME):
+        group, name = name.split("/", 1)
+        groups.setdefault(group, {})[name] = content
+    results: dict[str, dict[str, str]] = {}
+    skipped: dict[str, str] = {}
+    failures: set[str] = set()
+    expected_failures: dict[str, str] = {}
+    redirects: dict[str, list[str]] = {}
+    completed: set[str] = set()
+    counter_only: dict[str, str] = {}
+    referenced: list[str] = []
+    states = {"PASSED", "SKIPPED", "XFAILED", "XLEAKED", "FAILED", "WARNED", "LEAKED", "BORKED"}
+
+    for selected, body in batches:
+        markers = re.findall(r"^gvisor-php-report /proctor-artifacts/(php-results\.[A-Za-z0-9]+)\r?$", body, re.M)
+        referenced.extend(markers)
+        selections: Counter[str] = Counter()
+        for group in markers:
+            native: dict[str, str] = {}
+            results[group] = native
+            try:
+                files = groups[group]
+                names = files["selection.txt"].decode().splitlines()
+                if not names or len(names) != len(set(names)) or not set(names) <= set(selected):
+                    raise ValueError("PHP command selection differs from its batch")
+                positions = [selected.index(name) for name in names]
+                if positions != list(range(positions[0], positions[0] + len(names))):
+                    raise ValueError("PHP command selection is not an ordered batch group")
+                selections.update(names)
+                source_root = files["root.txt"].decode().removesuffix("\n")
+                if not source_root.startswith("/") or str(PurePosixPath(source_root)) != source_root:
+                    raise ValueError("Invalid PHP source root")
+                redirect = files["redirect.txt"]
+                if redirect not in (b"true\n", b"false\n") or redirect == b"true\n" and len(names) != 1:
+                    raise ValueError("Invalid PHP redirect group")
+
+                def relative(name: str) -> str:
+                    prefix = source_root + "/"
+                    if not name.startswith(prefix):
+                        raise ValueError(f"PHP result outside source root: {name}")
+                    name = name.removeprefix(prefix)
+                    if (not name.endswith(".phpt") or str(PurePosixPath(name)) != name
+                            or ".." in PurePosixPath(name).parts):
+                        raise ValueError(f"Invalid PHP result path: {name}")
+                    return name
+
+                def suite_name(name: str) -> str:
+                    directory = PurePosixPath(name).parent
+                    # PHP searches at most five ancestors for its source-root
+                    # header. Deeper paths use its relative-path fallback,
+                    # which preserves underscores and other punctuation.
+                    if len(directory.parts) >= 5:
+                        return "php." + str(directory).replace("/", ".").replace("-", ".")
+                    return "php" + "".join("." + re.sub(r"[^a-z0-9]+", ".", part, flags=re.I)
+                                            for part in directory.parts)
+
+                xml_names: dict[str, str] = {}
+                redirected: list[str] = []
+                text = files["results.tsv"].decode()
+                if not text.endswith("\n"):
+                    raise ValueError("PHP state output is empty or truncated")
+                for line in text.splitlines():
+                    match line.split("\t"):
+                        case [state, identity] if state in states:
+                            if identity.startswith("# "):
+                                parent, separator, child = identity[2:].partition(": ")
+                                if not separator or redirect != b"true\n" or relative(parent) != names[0]:
+                                    raise ValueError("Unexpected PHP redirect context")
+                                child = relative(child)
+                                identity = "# " + names[0] + ": " + child
+                                # PHP runs redirected children in the parent's
+                                # directory and keys native JUnit by that path.
+                                xml_name = str(PurePosixPath(names[0]).parent / PurePosixPath(child).name)
+                                redirected.append(identity)
+                            else:
+                                identity = relative(identity)
+                                if identity not in names:
+                                    raise ValueError(f"Unselected PHP result: {identity}")
+                                xml_name = identity
+                            if identity in native or xml_name in xml_names:
+                                raise ValueError(f"Duplicate PHP result identity: {identity}")
+                            native[identity] = state
+                            xml_names[xml_name] = identity
+                            # Early SKIP/BORK paths precede PHP's redirect
+                            # filename remapping. Either native path is valid,
+                            # but exactly one XML case must own this identity.
+                            if identity.startswith("# ") and state in ("SKIPPED", "BORKED") and child != xml_name:
+                                if child in xml_names:
+                                    raise ValueError("Ambiguous PHP redirect XML identity")
+                                xml_names[child] = identity
+                            key = group + "/" + identity
+                            if state in ("FAILED", "WARNED", "LEAKED", "BORKED"):
+                                failures.add(key)
+                            elif state in ("XFAILED", "XLEAKED"):
+                                expected_failures[key] = state
+                        case _:
+                            raise ValueError("Invalid PHP native state row")
+                if redirected:
+                    if names[0] in native or names[0] in xml_names:
+                        raise ValueError("PHP redirect also has a direct result")
+                    xml_names[names[0]] = names[0]
+                elif set(native) != set(names):
+                    raise ValueError("PHP command is missing native results")
+                root = ET.fromstring(files["junit.xml"])
+                suites = list(root)
+                if root.tag != "testsuites" or any(suite.tag != "testsuite" for suite in suites):
+                    raise ValueError("Invalid PHP native JUnit root")
+                cases = [case for suite in suites for case in suite]
+                if any(case.tag != "testcase" for case in cases):
+                    raise ValueError("Invalid PHP native JUnit testcase")
+                observed: set[str] = set()
+                for case in cases:
+                    matches = [name for name in xml_names if case.get("name", "").startswith(name + " (")
+                               and case.get("name", "").endswith(")")]
+                    if len(matches) != 1 or xml_names[matches[0]] in observed:
+                        raise ValueError("Unexpected or duplicate PHP JUnit identity")
+                    identity = xml_names[matches[0]]
+                    observed.add(identity)
+                    state = native.get(identity, "REDIR")
+                    tags = [item.tag for item in case]
+                    key = group + "/" + identity
+                    if any(tag not in ("failure", "error", "skipped", "warning") for tag in tags):
+                        raise ValueError("Unknown PHP JUnit result")
+                    if any(tag in ("failure", "error", "warning") for tag in tags):
+                        failures.add(key)
+                    if state == "SKIPPED":
+                        if tags != ["skipped"]:
+                            raise ValueError("PHP skipped state disagrees with JUnit")
+                        skipped[key] = case[0].text or ""
+                    elif state in ("PASSED", "XFAILED", "XLEAKED", "REDIR") and tags:
+                        raise ValueError("PHP positive state disagrees with JUnit")
+                # PHP registers XML files only in startTimer. An early skip
+                # or a redirect without SKIPIF can increment native counters
+                # without registering a testcase. Bind every such named state
+                # to its exact per-suite deficit; all other missing rows fail.
+                suite_names = [suite.get("name", "") for suite in suites]
+                if len(suite_names) != len(set(suite_names)):
+                    raise ValueError("Duplicate PHP native JUnit suite")
+                extra_tests = {suite.get("name", ""): int(suite.get("tests", "-1")) - len(suite) for suite in suites}
+                extra_skips = {suite.get("name", ""): int(suite.get("skip", "-1"))
+                               - sum(case.find("skipped") is not None for case in suite) for suite in suites}
+                missing_rows: list[tuple[str, str, tuple[str, ...]]] = []
+                for identity in set(xml_names.values()) - observed:
+                    state = native.get(identity, "REDIR")
+                    if state != "SKIPPED" and not (redirected and identity == names[0]):
+                        raise ValueError("PHP native JUnit is missing results")
+                    original = identity.partition(": ")[2] if identity.startswith("# ") else identity
+                    paths = [original]
+                    if identity.startswith("# "):
+                        # Some early skips precede redirect remapping; missing
+                        # EXTENSIONS/ENV skips follow it but still have no timer.
+                        paths.append(str(PurePosixPath(names[0]).parent / PurePosixPath(original).name))
+                    candidates = tuple(dict.fromkeys(suite_name(path) for path in paths))
+                    missing_rows.append((identity, state, candidates))
+                # Every two-suite choice shares this isolated redirect's parent
+                # suite. Consume fixed rows first, then original child deficits
+                # before the shared parent deficit; no identity is discarded.
+                for identity, state, candidates in sorted(missing_rows, key=lambda row: len(row[2])):
+                    suite = next((name for name in candidates if extra_tests.get(name, 0) > 0
+                                  and (state != "SKIPPED" or extra_skips.get(name, 0) > 0)), None)
+                    if suite is None:
+                        raise ValueError("PHP counter-only state has no matching source-suite counters")
+                    extra_tests[suite] -= 1
+                    key = group + "/" + identity
+                    counter_only[key] = state
+                    if state == "SKIPPED":
+                        extra_skips[suite] -= 1
+                        # -W records the state, but an unregistered JUnit row
+                        # cannot supply the native skip reason.
+                        skipped[key] = ""
+                if (any(extra_tests.values()) or any(extra_skips.values())
+                        or int(root.get("tests", "-1")) != len(cases) + len(missing_rows)):
+                    raise ValueError("PHP JUnit testcase count differs from native counters")
+                for container in [root, *suites]:
+                    descendants = list(container.iter("testcase"))
+                    for attribute, tag in (("failures", "failure"), ("errors", "error"), ("skip", "skipped")):
+                        if attribute == "skip" and container is not root:
+                            continue  # Exact per-suite deficits were consumed above.
+                        extra = sum(state == "SKIPPED" for _, state, _ in missing_rows) if attribute == "skip" else 0
+                        if int(container.get(attribute, "-1")) != extra + sum(case.find(tag) is not None for case in descendants):
+                            raise ValueError("PHP JUnit result counters disagree with testcases")
+                if redirected:
+                    redirects[group + "/" + names[0]] = redirected
+                completed.update(names)
+            except (ValueError, KeyError, ET.ParseError) as error:
+                errors.append(f"{group}: {error}")
+        # Each command may run repeatedly. All groups must cover the original
+        # batch equally, and every execution marker must own distinct files.
+        if set(selections) != set(selected) or len(set(selections.values())) != 1:
+            errors.append("PHP command groups do not cover their original batch equally")
+    if len(referenced) != len(set(referenced)) or set(referenced) != groups.keys():
+        errors.append("PHP execution markers differ from retained native report groups")
+    return {"expected": expected, "results": results, "redirects": redirects, "counter_only": counter_only,
+            "errors": errors, "passed": sum(state == "PASSED" for group in results.values() for state in group.values()),
+            "expected_failures": expected_failures, "skipped": skipped, "failures": sorted(failures),
+            "missing": sorted(set(expected) - completed)}
 
 
 def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
@@ -1913,6 +2138,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     finished: dict[str, object] = {}
     skipped_owners: set[Owner] = set()
     jtreg_tests: set[Owner] = set()
+    php_tests: set[Owner] = set()
     nodejs_tests: set[Owner] = set()
     exact_nodejs_tests: set[Owner] = set()
     with events.open() as stream:
@@ -1929,6 +2155,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     if "jtreg-results" in details.get("tag", []):
                         jtreg_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
+                    if "php-results" in details.get("tag", []):
+                        php_tests.update(Owner.parse(child["targetCompleted"]) for child in children
+                                         if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
                     if NODE_RESULT_TAGS.intersection(details.get("tag", [])):
                         nodejs_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
@@ -2105,7 +2334,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                             "cached_locally": result.get("cachedLocally", False),
                                             "execution_info": result.get("executionInfo", {})}
             for contract, owners, parser in (("jtreg", jtreg_tests, jtreg_results),
-                                             ("nodejs", nodejs_tests, nodejs_results)):
+                                             ("nodejs", nodejs_tests, nodejs_results),
+                                             ("php", php_tests, php_results)):
                 if attempt.owner not in owners:
                     continue
                 try:

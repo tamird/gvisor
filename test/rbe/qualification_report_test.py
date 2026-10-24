@@ -836,6 +836,236 @@ class QualificationReportTest(unittest.TestCase):
         self.write_events(invocation, events)
         return invocation
 
+    @staticmethod
+    def php_native_files(names: list[str], rows: list[tuple[str, str]], *, redirect: bool = False) -> dict[str, str]:
+        """A source-shaped -W/JUnit pair, including PHP's redirect remapping."""
+        cases = []
+        counts = {"failures": 0, "errors": 0, "skip": 0}
+        for state, name in rows:
+            if name.startswith("# "):
+                parent, child = name[2:].split(": ")
+                xml_name = str(Path(parent).parent / Path(child).name)
+            else:
+                xml_name = name
+            tag = {"FAILED": "failure", "BORKED": "error", "LEAKED": "error",
+                   "WARNED": "warning", "SKIPPED": "skipped"}.get(state)
+            if tag:
+                attribute = {"failure": "failures", "error": "errors", "skipped": "skip"}.get(tag)
+                if attribute:
+                    counts[attribute] += 1
+            cases.append(f'<testcase name="{xml_name} (description)">' +
+                         (f"<{tag}>native reason</{tag}>" if tag else "") + "</testcase>")
+        if any(name.startswith("# ") for _, name in rows):
+            cases.append(f'<testcase name="{names[0]} (redirect parent)"/>')
+        attributes = f'tests="{len(cases)}" ' + " ".join(f'{key}="{value}"' for key, value in counts.items())
+        native = "".join(state + "\t" + ("# /php/" + name[2:].replace(": ", ": /php/")
+                                         if name.startswith("# ") else "/php/" + name) + "\n"
+                         for state, name in rows)
+        return {"selection.txt": "".join(name + "\n" for name in names), "root.txt": "/php\n",
+                "redirect.txt": "true\n" if redirect else "false\n", "results.tsv": native,
+                "junit.xml": f'<testsuites name="php" {attributes}><testsuite name="php.ext.pdo.sqlite.tests" {attributes}>' +
+                             "".join(cases) + "</testsuite></testsuites>"}
+
+    def php_fixture(self, groups: dict[str, dict[str, str]], *, zipped: bool = True,
+                    names: str = "first.phpt,second.phpt", markers: list[str] | None = None) -> Path:
+        output = "".join("gvisor-php-report /proctor-artifacts/" + group + "\n"
+                         for group in (markers if markers is not None else groups))
+        invocation = self.runtime_fixture(output, zipped=zipped, names=names, tag="php-results")
+        if zipped:
+            with zipfile.ZipFile(invocation / "outputs.zip", "a") as archive:
+                for group, files in groups.items():
+                    for name, content in files.items():
+                        archive.writestr(group + "/" + name, content)
+        else:
+            events = self.events(invocation)
+            result = next(event["testResult"] for event in events if "testResult" in event)
+            for group, files in groups.items():
+                (invocation / group).mkdir()
+                for name, content in files.items():
+                    path = invocation / group / name
+                    path.write_text(content)
+                    result["testActionOutput"].append({"name": "test.outputs/" + group + "/" + name,
+                                                      "uri": path.as_uri()})
+            self.write_events(invocation, events)
+        return invocation
+
+    def test_php_native_states_and_retention(self) -> None:
+        for zipped, state in itertools.product((False, True), ("PASSED", "SKIPPED", "XFAILED", "XLEAKED",
+                                                              "FAILED", "WARNED", "LEAKED", "BORKED")):
+            with self.subTest(zipped=zipped, state=state):
+                files = self.php_native_files(["first.phpt", "second.phpt"],
+                                             [("PASSED", "first.phpt"), (state, "second.phpt")])
+                invocation = self.php_fixture({"php-results.first": files}, zipped=zipped)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "FAIL" if state in ("FAILED", "WARNED", "LEAKED", "BORKED") else "PASS", value)
+                native = value["executed"][0]["php"]
+                self.assertEqual(native["results"]["php-results.first"]["second.phpt"], state)
+                self.assertEqual(native["passed"], 2 if state == "PASSED" else 1)
+                if state == "SKIPPED":
+                    self.assertEqual(native["skipped"], {"php-results.first/second.phpt": "native reason"})
+                if state in ("XFAILED", "XLEAKED"):
+                    self.assertEqual(native["expected_failures"], {"php-results.first/second.phpt": state})
+                shutil.rmtree(invocation)
+
+    def test_php_incomplete_native_reports_cannot_pass(self) -> None:
+        mutations = {
+            "missing XML": lambda files: files.pop("junit.xml"),
+            "partial XML": lambda files: files.update({"junit.xml": files["junit.xml"][:-12]}),
+            "whole-row truncation": lambda files: files.update({"results.tsv": "PASSED\t/php/first.phpt\n"}),
+            "partial-row truncation": lambda files: files.update({"results.tsv": files["results.tsv"].rstrip()}),
+            "duplicate row": lambda files: files.update({"results.tsv": files["results.tsv"] * 2}),
+            "native counter mismatch": lambda files: files.update({"junit.xml": files["junit.xml"].replace('tests="2"', 'tests="3"')}),
+            "foreign result": lambda files: files.update({"results.tsv": files["results.tsv"].replace("second.phpt", "other.phpt")}),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                files = self.php_native_files(["first.phpt", "second.phpt"],
+                                             [("PASSED", "first.phpt"), ("PASSED", "second.phpt")])
+                mutate(files)
+                invocation = self.php_fixture({"php-results.first": files})
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "INCOMPLETE", value)
+                shutil.rmtree(invocation)
+
+    def test_php_failure_survives_later_incomplete_report(self) -> None:
+        files = self.php_native_files(["first.phpt", "second.phpt"],
+                                     [("FAILED", "first.phpt"), ("PASSED", "second.phpt")])
+        files["results.tsv"] += "invalid row\n"
+        invocation = self.php_fixture({"php-results.first": files})
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "FAIL")
+
+    def test_php_redirect_completion_keeps_context(self) -> None:
+        parent, child = "ext/pdo_sqlite/tests/common.phpt", "ext/pdo/tests/first.phpt"
+        for timed_parent in (False, True):
+            with self.subTest(timed_parent=timed_parent):
+                files = self.php_native_files([parent], [("PASSED", "# " + parent + ": " + child)], redirect=True)
+                if not timed_parent:
+                    # No SKIPIF timer means the completed parent increments
+                    # counters but has no entry in PHP's XML file registry.
+                    files["junit.xml"] = files["junit.xml"].replace(
+                        f'<testcase name="{parent} (redirect parent)"/>', "")
+                invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["executed"][0]["php"]["redirects"],
+                                 {"php-results.redirect/" + parent: ["# " + parent + ": " + child]})
+                shutil.rmtree(invocation)
+        # A parent result alone cannot prove that its expansion completed.
+        files["results.tsv"] = ""
+        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "INCOMPLETE")
+
+    def test_php_redirect_rejects_incomplete_completion_and_colliding_children(self) -> None:
+        parent = "ext/pdo_sqlite/tests/common.phpt"
+        rows = [("PASSED", "# " + parent + ": ext/pdo/tests/first.phpt")]
+        for mutation in ("missing completion", "missing child", "wrong suite", "colliding children"):
+            with self.subTest(mutation=mutation):
+                files = self.php_native_files([parent], rows, redirect=True)
+                files["junit.xml"] = files["junit.xml"].replace(
+                    f'<testcase name="{parent} (redirect parent)"/>', "")
+                if mutation == "missing completion":
+                    files["junit.xml"] = files["junit.xml"].replace('tests="2"', 'tests="1"')
+                elif mutation == "missing child":
+                    files["junit.xml"] = files["junit.xml"].replace(
+                        '<testcase name="ext/pdo_sqlite/tests/first.phpt (description)"></testcase>', "")
+                elif mutation == "wrong suite":
+                    files["junit.xml"] = files["junit.xml"].replace('name="php.ext.pdo.sqlite.tests"', 'name="php.other"')
+                else:
+                    files["results.tsv"] += "PASSED\t# /php/" + parent + ": /php/other/first.phpt\n"
+                invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "INCOMPLETE")
+                shutil.rmtree(invocation)
+
+    def test_php_redirect_early_skip_keeps_original_filename(self) -> None:
+        parent, child = "ext/pdo_sqlite/tests/common.phpt", "ext/pdo/tests/first.phpt"
+        files = self.php_native_files([parent], [("SKIPPED", "# " + parent + ": " + child)], redirect=True)
+        files["junit.xml"] = files["junit.xml"].replace("ext/pdo_sqlite/tests/first.phpt", child)
+        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=self.analysis(invocation))
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["executed"][0]["php"]["skipped"],
+                         {"php-results.redirect/# " + parent + ": " + child: "native reason"})
+
+        shutil.rmtree(invocation)
+        # Missing EXTENSIONS can skip after redirect remapping but before its
+        # timer. Both the child SKIP and parent completion then use counters.
+        files = self.php_native_files([parent], [("SKIPPED", "# " + parent + ": " + child)], redirect=True)
+        files["junit.xml"] = files["junit.xml"].replace(
+            '<testcase name="ext/pdo_sqlite/tests/first.phpt (description)"><skipped>native reason</skipped></testcase>', "").replace(
+            f'<testcase name="{parent} (redirect parent)"/>', "")
+        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=self.analysis(invocation))
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["executed"][0]["php"]["counter_only"], {
+            "php-results.redirect/" + parent: "REDIR",
+            "php-results.redirect/# " + parent + ": " + child: "SKIPPED",
+        })
+
+    def test_php_counter_only_early_skip(self) -> None:
+        name = "ext/ffi/tests/001.phpt"
+        for mutation, status in ((None, "PASS"), ("wrong suite", "INCOMPLETE"),
+                                 ("missing skip count", "INCOMPLETE"), ("missing pass", "INCOMPLETE")):
+            with self.subTest(mutation=mutation):
+                files = self.php_native_files([name], [("SKIPPED", name)])
+                files["junit.xml"] = files["junit.xml"].replace(
+                    'name="php.ext.pdo.sqlite.tests"', 'name="php.ext.ffi.tests"').replace(
+                    f'<testcase name="{name} (description)"><skipped>native reason</skipped></testcase>', "")
+                if mutation == "wrong suite":
+                    files["junit.xml"] = files["junit.xml"].replace('name="php.ext.ffi.tests"', 'name="php.other"')
+                elif mutation == "missing skip count":
+                    files["junit.xml"] = files["junit.xml"].replace('skip="1"', 'skip="0"')
+                elif mutation == "missing pass":
+                    files["results.tsv"] = files["results.tsv"].replace("SKIPPED", "PASSED")
+                invocation = self.php_fixture({"php-results.early": files}, names=name)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], status, value)
+                if status == "PASS":
+                    native = value["executed"][0]["php"]
+                    self.assertEqual(native["counter_only"], {"php-results.early/" + name: "SKIPPED"})
+                    self.assertEqual(native["skipped"], {"php-results.early/" + name: ""})
+                shutil.rmtree(invocation)
+
+    def test_php_counter_only_suite_depth(self) -> None:
+        # Pinned PHP normalizes shallow suite names, but its five-ancestor
+        # search falls back to the relative path for deeper directories.
+        for name, suite in (
+                ("ext/pdo_sqlite/tests/common.phpt", "php.ext.pdo.sqlite.tests"),
+                ("ext/standard/tests/file/windows_mb_path/test_long_path_0.phpt",
+                 "php.ext.standard.tests.file.windows_mb_path")):
+            with self.subTest(name=name):
+                files = self.php_native_files([name], [("SKIPPED", name)])
+                files["junit.xml"] = files["junit.xml"].replace(
+                    'name="php.ext.pdo.sqlite.tests"', f'name="{suite}"').replace(
+                    f'<testcase name="{name} (description)"><skipped>native reason</skipped></testcase>', "")
+                invocation = self.php_fixture({"php-results.depth": files}, names=name)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], "PASS", value)
+                self.assertEqual(value["executed"][0]["php"]["counter_only"],
+                                 {"php-results.depth/" + name: "SKIPPED"})
+                shutil.rmtree(invocation)
+
+    def test_php_unique_execution_groups_and_repetition(self) -> None:
+        groups = {f"php-results.{number}": self.php_native_files([name], [("PASSED", name)])
+                  for number, name in enumerate(["first.phpt", "first.phpt", "second.phpt", "second.phpt"])}
+        for markers, expected in ((None, "PASS"), (list(groups)[:-1], "INCOMPLETE"),
+                                  ([*groups, "php-results.0"], "INCOMPLETE")):
+            with self.subTest(markers=markers):
+                invocation = self.php_fixture(groups, markers=markers)
+                self.assertEqual(self.capture(invocation)["errors"], [])
+                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                self.assertEqual(value["status"], expected, value)
+                shutil.rmtree(invocation)
+
     def test_jtreg_results_override_successful_wrapper(self) -> None:
         scenarios = (
             (self.jtreg_output("First.java", "Passed.") + self.jtreg_output("Second.java", "Passed."), "PASS"),
