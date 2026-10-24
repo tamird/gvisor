@@ -104,6 +104,7 @@ bzl_library(
 )
 
 exports_files([
+    "benchmark-umbrella-exports.patch",
     "gazelle-module-metadata.patch",
     "go-packages-provenance.patch",
     "llvm-linux-header-default.patch",
