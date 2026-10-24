@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T00:36:09.860134+00:00",
-  "registryDate": "2026-10-24T00:29:32.595874+00:00",
+  "registryDate": "2026-10-24T00:41:46.011059+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -157923,8 +157923,8 @@
       "recordedFollowup": {
         "owner": "WorkMap",
         "sourceHead": "21b2d0c82f85271d12755de263971c2e9a52b1a0",
-        "disposition": "Current-master route conflict repair prepared; focused qualification running",
-        "nextAction": "Finish the existing source18434f remote route/unit/analyzer qualification. The fork review head fff01b41ba combines master route validation/padding with netip; source peer passed and all other165 changed-line streams are preserved. Keep published21b2 conflict active until an authorized exact amendment is verified. No duplicate benchmark or public comment."
+        "disposition": "Conflict repair qualified; final checked-conversion fork prepared",
+        "nextAction": "Root owns the contributor/publication decision for exact c8ac4368c9. Keep the public 21b2 conflict active until an authorized amendment is verified. Source/result peers are complete; no benchmark replay or public comment."
       },
       "conflictObservedSince": "2026-10-23T23:54:33.041307+00:00"
     }
