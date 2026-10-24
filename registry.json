@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T21:13:07.924597+00:00",
+    "updatedAt": "2026-10-24T21:48:49.659913+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -15853,14 +15853,14 @@
       "url": "https://github.com/google/gvisor/pull/15981",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T20:47:04.114732+00:00",
-      "summary": "Public PR #15981 at 4cbfbc9d210184f78809d741642ece5f4e95b31a now has a fresh matching import #16241 at 0d0152b70b53f3171cc2b5f3669cc4c8f68dd663, observed by the existing provider at 2026-10-24T20:37:04.573097+00:00. Current source checks pass; import Buildkite 52166 and internal checks remain pending. Root verified that the landed-base rebase preserves the source patch. Earlier failed import heads and their diagnostics remain historical evidence below; no current import pass or new review approval is inferred.\n\nEarlier source-specific evidence:\n\nThe prior import #16241 at fca4c84e10 failed all eight Buildkite 52156 jobs. Root inspected all eight logs: both architecture builds, Nogo, cgroupv1 unit tests and ARM64 unit tests report a missing protoreflect archive; Nogo also names Docker plugin.pb.go. GPU smoke and all three unit jobs report HTTP 404 for the ARM64 NVIDIA 620.51.03 installer, tracked by existing #16335. C++ lint includes the Benchmark umbrella-header warnings tracked by #16313. These are observed, overlapping diagnostics, not exclusive causes or verified fixes; some logs are truncated. The import contains only the expected three user-resolution files on d15d5319c3. Root owns the diagnosis and Node owns the shared focused validate_go/Docker runtime contrast against full #16098 and its minimal compiler-dependency extraction. The same contrast covers #15970/import #16188; no duplicate qualification. Those retained pre-landing import failures remain historical; root subsequently published the patch-preserving landed-base rebase.\n\nThe shared three-source contrast is complete at ce548b75, with overall native, comparison and projection FAIL preserved. Public d15d reproduces the missing protoreflect archive for validate_go and Docker runtime on both analyzer CPUs before any wrapper executes. Full #16098 passes both uncached analyzer wrappers, each reporting amd64 and arm64 PASS. The minimal compiler-dependency extraction reaches actual typechecking on both CPUs but both wrappers fail only the generated unsafe-import policy. The full and minimal treatments each have four successful remote, uncached typechecking actions with the generated files and protoreflect/protoimpl imports; this is not a passing minimal repair or a whole-import result. The complete native result was authenticated 17.110956 seconds after the last inner phase. Original formatter-only failure 0ba556 remains separate; no workload was repeated for retained analysis.\n\nUpstream #16335 landed at c341af3e04fb on 2026-10-24. Its NVIDIA availability flag, Benchmark-header ignore and Nogo embedded-source exclusion are now in the public base. The earlier 131c3169 source and its own passing checks remain historical evidence. Root rebased the affected source PRs onto the actual landing; the old failed imports still refer to their old source heads and do not establish current-head CI failure or success. #16098 retains its distinct export/dependency behavior and #16313 its header-annotation policy; no equivalence or automatic supersession is inferred.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
+      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
+      "summary": "Public PR #15981 remains at 4cbfbc9d210184f78809d741642ece5f4e95b31a. Its matching import #16241 refreshed to b47cec66d4de0c87070f8b1b672b0789643e4e0b at 21:42:19Z; current Buildkite checks are pending. The preceding matching import head 0d0152b70b53f3171cc2b5f3669cc4c8f68dd663 passed public Buildkite 52166 and internal Buildkite 33892. Separately, source feedback/copybara changed to FAILURE at 2026-10-24T21:31:43Z: Google internal checks failed for a run created at 20:16:54.775467799Z. The provider exposes no individual internal failure details. Import/copybara remains successful. Keep this in maintainer internal feedback, with the public import statuses distinguished by revision; no source rebase or reminder is requested for this status alone. Earlier failed import heads remain historical evidence.\n\nEarlier source-specific evidence:\n\nThe prior import #16241 at fca4c84e10 failed all eight Buildkite 52156 jobs. Root inspected all eight logs: both architecture builds, Nogo, cgroupv1 unit tests and ARM64 unit tests report a missing protoreflect archive; Nogo also names Docker plugin.pb.go. GPU smoke and all three unit jobs report HTTP 404 for the ARM64 NVIDIA 620.51.03 installer, tracked by existing #16335. C++ lint includes the Benchmark umbrella-header warnings tracked by #16313. These are observed, overlapping diagnostics, not exclusive causes or verified fixes; some logs are truncated. The import contains only the expected three user-resolution files on d15d5319c3. Root owns the diagnosis and Node owns the shared focused validate_go/Docker runtime contrast against full #16098 and its minimal compiler-dependency extraction. The same contrast covers #15970/import #16188; no duplicate qualification. Those retained pre-landing import failures remain historical; root subsequently published the patch-preserving landed-base rebase.\n\nThe shared three-source contrast is complete at ce548b75, with overall native, comparison and projection FAIL preserved. Public d15d reproduces the missing protoreflect archive for validate_go and Docker runtime on both analyzer CPUs before any wrapper executes. Full #16098 passes both uncached analyzer wrappers, each reporting amd64 and arm64 PASS. The minimal compiler-dependency extraction reaches actual typechecking on both CPUs but both wrappers fail only the generated unsafe-import policy. The full and minimal treatments each have four successful remote, uncached typechecking actions with the generated files and protoreflect/protoimpl imports; this is not a passing minimal repair or a whole-import result. The complete native result was authenticated 17.110956 seconds after the last inner phase. Original formatter-only failure 0ba556 remains separate; no workload was repeated for retained analysis.\n\nUpstream #16335 landed at c341af3e04fb on 2026-10-24. Its NVIDIA availability flag, Benchmark-header ignore and Nogo embedded-source exclusion are now in the public base. The earlier 131c3169 source and its own passing checks remain historical evidence. Root rebased the affected source PRs onto the actual landing; the old failed imports still refer to their old source heads and do not establish current-head CI failure or success. #16098 retains its distinct export/dependency behavior and #16313 its header-annotation policy; no equivalence or automatic supersession is inferred.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "4cbfbc9d210184f78809d741642ece5f4e95b31a",
-        "observedAt": "2026-10-24T20:37:04.573097+00:00",
-        "disposition": "Fresh matching landed-base import is pending",
-        "nextAction": "Follow current import checks and substantive human feedback through the existing watcher. Preserve old failed-head diagnostics; do not duplicate qualification or reviewer outreach.",
+        "observedAt": "2026-10-24T21:47:05.202240+00:00",
+        "disposition": "Maintainer internal feedback failure; refreshed matching import checks pending",
+        "nextAction": "Keep the internal Copybara feedback failure, new matching-import checks and preceding-head successful Buildkite results distinct. Follow substantive maintainer feedback and current-head import status through the existing watcher; root owns any internal follow-up. Do not rebase or send a reminder for this status alone.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15981#issuecomment-6275554145",
           "https://github.com/tamird/gvisor/commit/b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
@@ -15876,7 +15876,11 @@
           "https://buildkite.com/gvisor/pipeline/builds/52157",
           "https://app.buildbuddy.io/invocation/ce548b75-0833-4a03-8797-5f1d718d9fb9",
           "https://github.com/google/gvisor/pull/15981/commits/4cbfbc9d210184f78809d741642ece5f4e95b31a",
-          "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab"
+          "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab",
+          "https://buildkite.com/gvisor/pipeline/builds/52166",
+          "https://buildkite.com/gvisor/internal/builds/33892",
+          "https://buildkite.com/gvisor/pipeline/builds/52172",
+          "https://buildkite.com/gvisor/internal/builds/33897"
         ]
       },
       "evidence": [
@@ -15939,6 +15943,22 @@
         {
           "label": "Shared contrast: public build FAIL, full wrappers PASS, minimal policy FAIL",
           "url": "https://app.buildbuddy.io/invocation/ce548b75-0833-4a03-8797-5f1d718d9fb9"
+        },
+        {
+          "label": "Source-bound matching-import check; status and revision distinguished in summary",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52166"
+        },
+        {
+          "label": "Source-bound matching-import check; status and revision distinguished in summary",
+          "url": "https://buildkite.com/gvisor/internal/builds/33892"
+        },
+        {
+          "label": "Source-bound matching-import check; status and revision distinguished in summary",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52172"
+        },
+        {
+          "label": "Source-bound matching-import check; status and revision distinguished in summary",
+          "url": "https://buildkite.com/gvisor/internal/builds/33897"
         }
       ]
     },
@@ -17186,27 +17206,28 @@
       "repo": "google/gvisor",
       "number": 16051,
       "ref": "fix/license-manual-artifacts",
-      "head": "1669fae493856ba8428381b93fabe3dbd7579131",
+      "head": "36d42cd42ed7535e9106267046beb65b38880612",
       "title": "Preserve manually audited artifact licenses",
       "url": "https://github.com/google/gvisor/pull/16051",
       "group": "release",
       "status": "open",
-      "summary": "Etienne approved the exact current head 1669fae493856ba8428381b93fabe3dbd7579131 on October 24 at 09:23 UTC. No source change or reply was requested; ordinary public checks and matching import remain separate.\n\nThe requested post-#16046 rebase is published at 1669fae49385 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 0e6946fc8d. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 0e6946fc8d1821246fced5f960b37860d79e3d99 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent Gazelle job118631958637 fails solely on the inherited unused //pkg/zip dependency in tools/nogo/check/BUILD; existing import16031 carries the shared correction. No duplicate patch, retry or reviewer message is needed.\n\nThe user-approved change is delivered as google/gvisor#16051 at 24cae478d49a084a93cd26aba9a57d528d67b7cc. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nStandalone public-source proposal 24cae478d4 is published and independently qualified: four public checker/Nogo owners, four uncached attempts and 26 XML positives, plus canonical buildifier command exit 0. It preserves explicitly audited standard SPDX or LicenseRef terms only while artifact URL and checksum stay fixed; duplicate and invalid records fail before mutation. This standalone cut does not depend on held #15146, and adds no npm inventory, policy exception or catalog adoption. Root requested contributor review/open-PR once; no upstream PR exists yet. Automatic verification took 4.533 seconds; the later owner seal took 759.573 seconds, retained separately.\n\n",
+      "summary": "The additive conflict after #15970 landed is resolved and published at 36d42cd42ed7535e9106267046beb65b38880612, directly on merged 0912018a096a3cedc6467a311a1cc98f26abf3c6. Both original 1669fae manual-audit postimages are preserved exactly, with only the landed codeload regexp and test added. Independent source review confirms the inverse. GitHub observed the new head as MERGEABLE at 21:37:45Z; current checks were pending. The existing approval and qualification retain their original revision identities; the raw APPROVED rollup is not a newly submitted review of this head. No native workload was repeated. The 21:47:05Z provider snapshot confirms the delivered head is MERGEABLE and reports effective REVIEW_REQUIRED.\n\nEarlier source-specific evidence:\n\nEtienne approved the exact current head 1669fae493856ba8428381b93fabe3dbd7579131 on October 24 at 09:23 UTC. No source change or reply was requested; ordinary public checks and matching import remain separate.\n\nThe requested post-#16046 rebase is published at 1669fae49385 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 0e6946fc8d. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 0e6946fc8d1821246fced5f960b37860d79e3d99 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent Gazelle job118631958637 fails solely on the inherited unused //pkg/zip dependency in tools/nogo/check/BUILD; existing import16031 carries the shared correction. No duplicate patch, retry or reviewer message is needed.\n\nThe user-approved change is delivered as google/gvisor#16051 at 24cae478d49a084a93cd26aba9a57d528d67b7cc. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nStandalone public-source proposal 24cae478d4 is published and independently qualified: four public checker/Nogo owners, four uncached attempts and 26 XML positives, plus canonical buildifier command exit 0. It preserves explicitly audited standard SPDX or LicenseRef terms only while artifact URL and checksum stay fixed; duplicate and invalid records fail before mutation. This standalone cut does not depend on held #15146, and adds no npm inventory, policy exception or catalog adoption. Root requested contributor review/open-PR once; no upstream PR exists yet. Automatic verification took 4.533 seconds; the later owner seal took 759.573 seconds, retained separately.\n\n",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Exact current-head maintainer approval observed",
-        "sourceHead": "1669fae493856ba8428381b93fabe3dbd7579131",
-        "observedAt": "2026-10-24T09:31:40.774298+00:00",
-        "nextAction": "Continue ordinary current-head checks and matching import tracking. No acknowledgement, rebase or second review request is needed for the empty-body approval.",
+        "disposition": "Additive codeload conflict resolution published; follow the new revision",
+        "sourceHead": "36d42cd42ed7535e9106267046beb65b38880612",
+        "observedAt": "2026-10-24T21:37:45.127267+00:00",
+        "nextAction": "Follow the newly published head through current checks, matching Copybara import and actual revision-bound reviews using the existing watcher. Preserve previous-head validation and import history; no automatic reviewer request or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16051",
           "https://github.com/google/gvisor/pull/16048",
           "https://github.com/google/gvisor/actions/runs/39424045404/job/118631958637",
           "https://github.com/tamird/gvisor/commit/1669fae493856ba8428381b93fabe3dbd7579131",
-          "https://github.com/google/gvisor/pull/16051#pullrequestreview-5637717783"
+          "https://github.com/google/gvisor/pull/16051#pullrequestreview-5637717783",
+          "https://github.com/google/gvisor/pull/16051/commits/36d42cd42ed7535e9106267046beb65b38880612"
         ]
       },
-      "updatedAt": "2026-10-24T09:31:40.774298+00:00",
+      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -17223,6 +17244,10 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/1669fae493856ba8428381b93fabe3dbd7579131"
+        },
+        {
+          "label": "Published additive resolution on landed codeload base",
+          "url": "https://github.com/google/gvisor/pull/16051/commits/36d42cd42ed7535e9106267046beb65b38880612"
         }
       ],
       "ciRecovery": {
@@ -20353,19 +20378,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "group": "bazel",
-      "head": "2b1f8d5c9994cca2c039ff3250d44a7b12795ff7",
+      "head": "996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8",
       "ref": "license-llvm-source-current",
       "title": "Enumerate the declared LLVM source archive",
       "url": "https://github.com/google/gvisor/pull/16249",
       "status": "open",
-      "summary": "Public PR #16249 at 2b1f8d5c9994cca2c039ff3250d44a7b12795ff7 now has a fresh matching import #16329 at 65d5538fb703cf2a74942633665827b52d838408, observed by the existing provider at 2026-10-24T20:37:04.573097+00:00. Current source checks pass; import Buildkite 52165 and internal checks remain pending. Root verified that the landed-base rebase preserves the source patch. Earlier failed import heads and their diagnostics remain historical evidence below; no current import pass or new review approval is inferred.\n\nEarlier source-specific evidence:\n\nThe prior import #16329 at c1de6c77 fails Buildkite 52132 for two shared causes, with concrete upstream owners. C++ lint reports the exact 58 Benchmark umbrella-header findings in 28 files already addressed by #16313. GPU checksum validation and the cgroupv1, cgroupv2 and ARM64 unit jobs all fail the ARM64 driver 620.51.03 download with HTTP 404; upstream #16335 marks that installer unavailable while preserving its checksum. The five latest failed steps exit 2. No LLVM enumeration failure was identified in these logs. The #16335 landing and subsequent source rebase are now recorded above; observe a fresh matching import while preserving the distinct #16313 policy work. Three unit logs were server-truncated but retain their sole-test-failure summaries; full lint and GPU logs were read.\n\nEarlier source-specific record:\n\nThe contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-24T20:47:04.114732+00:00",
+      "summary": "The additive conflict after #15970 landed is resolved and published at 996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8, directly on merged 0912018a096a3cedc6467a311a1cc98f26abf3c6. Both original 2b1f8d5 LLVM-source-audit postimages are preserved exactly, with only the landed codeload regexp and test added. Independent source review confirms the inverse. GitHub observed the new head as MERGEABLE at 21:37:46Z; current checks were pending. The earlier matching import #16329 at 65d5538f and its passing 52165/33891 checks belong to the previous source head. The raw APPROVED rollup is not a newly submitted review of this head. No import was edited or native workload repeated. The 21:47:05Z provider snapshot confirms the delivered head is MERGEABLE and reports effective REVIEW_REQUIRED.\n\nEarlier source-specific evidence:\n\nPublic PR #16249 at 2b1f8d5c9994cca2c039ff3250d44a7b12795ff7 now has a fresh matching import #16329 at 65d5538fb703cf2a74942633665827b52d838408, observed by the existing provider at 2026-10-24T20:37:04.573097+00:00. Current source checks pass; import Buildkite 52165 and internal checks remain pending. Root verified that the landed-base rebase preserves the source patch. Earlier failed import heads and their diagnostics remain historical evidence below; no current import pass or new review approval is inferred.\n\nEarlier source-specific evidence:\n\nThe prior import #16329 at c1de6c77 fails Buildkite 52132 for two shared causes, with concrete upstream owners. C++ lint reports the exact 58 Benchmark umbrella-header findings in 28 files already addressed by #16313. GPU checksum validation and the cgroupv1, cgroupv2 and ARM64 unit jobs all fail the ARM64 driver 620.51.03 download with HTTP 404; upstream #16335 marks that installer unavailable while preserving its checksum. The five latest failed steps exit 2. No LLVM enumeration failure was identified in these logs. The #16335 landing and subsequent source rebase are now recorded above; observe a fresh matching import while preserving the distinct #16313 policy work. Three unit logs were server-truncated but retain their sole-test-failure summaries; full lint and GPU logs were read.\n\nEarlier source-specific record:\n\nThe contributor approved eb6c08906, now delivered independently as #16249 at signed dd471c93 on current upstream8938. Complete range-diff is equal; the original approved ref is preserved. Provider head/body/tracking are verified, mergeability is MERGEABLE and public checks are running. No prerequisite or fresh-runtime claim is added.\n\nEarlier source-specific record:\n\nThe LLVM source enumeration change is independently published at eb6c on upstream40e. It has no static, compiler, UAPI, scanner or manual-artifact prerequisite. The exact implementation and test payload matches the accepted composed checker; its 33 owning cases and public extension metadata/source audit are retained. No new execution on the standalone base is claimed. Root has requested contributor review of this new scope.",
+      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "2b1f8d5c9994cca2c039ff3250d44a7b12795ff7",
-        "observedAt": "2026-10-24T20:37:04.573097+00:00",
-        "disposition": "Fresh matching landed-base import is pending",
-        "nextAction": "Follow current import checks and substantive human feedback through the existing watcher. Preserve old failed-head diagnostics; do not duplicate qualification or reviewer outreach.",
+        "sourceHead": "996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8",
+        "observedAt": "2026-10-24T21:37:46.418333+00:00",
+        "disposition": "Additive codeload conflict resolution published; follow the new revision",
+        "nextAction": "Follow the newly published head through current checks, matching Copybara import and actual revision-bound reviews using the existing watcher. Preserve previous-head validation and import history; no automatic reviewer request or merge.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16249",
           "https://github.com/google/gvisor/pull/16329",
@@ -20373,7 +20398,8 @@
           "https://github.com/google/gvisor/pull/16313",
           "https://github.com/google/gvisor/pull/16335",
           "https://github.com/google/gvisor/pull/16249/commits/2b1f8d5c9994cca2c039ff3250d44a7b12795ff7",
-          "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab"
+          "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab",
+          "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
         ]
       },
       "number": 16249,
@@ -20385,7 +20411,13 @@
           "head": "dd471c93ed0f5b29e9b5e93430e27f0fac3ceaeb",
           "base": "8938ebcf1c12a6266bdf5a650088e1360777aa94"
         }
-      }
+      },
+      "evidence": [
+        {
+          "label": "Published additive resolution on landed codeload base",
+          "url": "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
+        }
+      ]
     },
     {
       "id": "branch:nvidia-parser-resources",
@@ -25125,7 +25157,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-24T16:29:25.582101+00:00",
+      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
       "summary": "On the corrected RACK source, CUBIC delivers 17,458,816 bytes versus Reno\u2019s 16,401,720 (+6.445031%) during the same predeclared 5\u201320 second interval on a virtual 10 Mbit/s, nominal 100 ms path with a 31,250-byte FIFO. It keeps the forward link busier, with a larger mean queue and six original-packet losses/retransmissions versus two. Both flows are tested independently and have zero retransmission timeouts. This finite congestion result complements the earlier burst and common-window comparisons; it does not establish a general algorithm ranking.\n\nEarlier common-window result:\n\nOn the corrected RACK source, the single-flow comparison has different answers for repair time and later goodput. The eight lost ranges are cumulatively acknowledged 210.292480 ms earlier in the CUBIC arm, which completes the fixed 64 MiB transfer plus fixture FIN processing 113.998720 ms earlier. In the predeclared 3\u20135 second backlogged interval, it delivers 23,975,196 bytes versus Reno\u2019s 24,116,444 (95.900784 versus 96.465776 Mbit/s); both clean controls deliver the Reno value. This is one deterministic virtual path with an unbounded serializer, not a general algorithm ranking.\n\nEarlier corrected FIFO result:\n\nThe RACK pipe-accounting correction removes the observed Reno stall in the two finite mixed-flow FIFO cases. With CUBIC writing first, Reno delivers 25,560 \u2192 2,451,348 bytes in the 2\u20136 second interval while CUBIC delivers 2,952,608 \u2192 2,371,828 bytes; FIFO utilization rises from 61.50064% to 100%. The reverse first-write control also completes with both senders backlogged. This is a deterministic virtual-link result, not a general fairness, native throughput or default-algorithm conclusion.\n\nEarlier first-Write-order control:\n\nA separate first-Write-order control now isolates the initial application batch within fixed connection setup in the deterministic FIFO fixture. In the finite 2\u20136 second mixed-flow interval, reversing that batch changes CUBIC delivery from 2,952,608 to 2,697,008 bytes while Reno changes from 25,560 to 2,051,712 bytes. Retained traces show that the high CUBIC share primarily reflects Reno sending no new payload during that interval; its 18 payload attempts all retransmit earlier losses. This is an order-sensitive diagnostic, not a recommendation to change the default congestion-control algorithm.\n\nEarlier shared-FIFO finding:\n\nA shared-FIFO feasibility run now establishes repeatable two-sender observations and strong entry-order sensitivity in a short common interval; it does not establish algorithm fairness. The detailed finding separates application delivery, link service and inherited warmup-loss recovery.\n\nA finite aged-path comparison now shows the candidate avoids one redundant retransmission and one SACK recovery for both Reno and CUBIC, with unchanged first-full-ACK timing and identical original-flight delivery. The original outer callback failure and its separate retained-only correction remain explicit.\n\nThe fixed sustained-demand Reno/CUBIC burst experiment has matching normal and race observations. A separate integration check on existing PR #15634 now keeps sampled selective-ACK credit nonnegative, with unchanged packet digests, eight loss repairs and virtual completion times. Six finite Reno/CUBIC cases now repeat exactly across five normal processes and one race process. Both middle-loss cases show SACK recovery without an RTO; prefix recovery remains unclassified. The earlier cookie-path/RTO fixture is separate. All three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
@@ -26033,9 +26065,30 @@
               "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773"
             }
           ]
+        },
+        {
+          "text": "The fork-only read-boundary control on b6b0ffbcb6 ran the same packet probes against native Linux 6.18.57 and unchanged netstack. Within the one-second probe observation, native Linux sends the unchanged ACK for unread FIN-only probes and both peek cases; exact-size and oversized consuming reads suppress that ACK in both combined and separately ACKed wire arrangements. Netstack suppresses all probe ACKs. All six added cases per backend preserve the expected data, EOF and TCP state. The original two netstack failures plus their parent remain: three remote uncached owners produce 16 positive and three failed XML records, so aggregate FAIL is preserved. Separately ACKed wire packets do not prove distinct receive skbs, and these observations establish no general read-budget requirement. Root owns the queued-window compatibility repair. Initial corrected invocation 81663166-f6db-40fe-b73e-736ea9c028b3 uses c6d9e691a8c667f9cca4330b0bb8f1a3dc5d2656; its qualification remains pending an authenticated verdict. This work is separate from the reviewed EOF279e and future-ACK3d17 proposals.",
+          "evidence": [
+            {
+              "label": "Native Linux/netstack read-boundary control; original failures retained",
+              "url": "https://app.buildbuddy.io/invocation/76c5801c-45c4-4bea-bb40-645b467e310c"
+            },
+            {
+              "label": "Exact read-boundary diagnostic source",
+              "url": "https://github.com/tamird/gvisor/commit/b6b0ffbcb6f307e08103c11b6a31c89d0110ea44"
+            },
+            {
+              "label": "Initial corrected queued-window qualification; verdict pending",
+              "url": "https://app.buildbuddy.io/invocation/81663166-f6db-40fe-b73e-736ea9c028b3"
+            },
+            {
+              "label": "Exact initial corrected qualification source",
+              "url": "https://github.com/tamird/gvisor/commit/c6d9e691a8c667f9cca4330b0bb8f1a3dc5d2656"
+            }
+          ]
         }
       ],
-      "nextStep": "The focused RACK regression, corrected FIFO, single-flow common-window and sustained finite-FIFO comparisons are complete. Await the existing contributor decision on readable proposal 3327ae; #15634 is its only upstream prerequisite. Preserve the differing finite-window results separately from any default-algorithm decision. Follow BuildBuddy #13938 upstream review, checks and merge before maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, general fairness or outage-cause conclusion is established.",
+      "nextStep": "Complete the source-bound queued-window correction and directly affected regression checks under root ownership, preserving the native read-control failure and the initial corrected invocation. Keep EOF279e and future-ACK3d17 as separate contributor decisions; the diagnostic creates no new proposal.\n\nThe focused RACK regression, corrected FIFO, single-flow common-window and sustained finite-FIFO comparisons are complete. Await the existing contributor decision on readable proposal 3327ae; #15634 is its only upstream prerequisite. Preserve the differing finite-window results separately from any default-algorithm decision. Follow BuildBuddy #13938 upstream review, checks and merge before maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, general fairness or outage-cause conclusion is established.",
       "evidence": [
         {
           "label": "Burst integration on the existing repair",
@@ -26156,6 +26209,22 @@
         {
           "label": "Exact sustained fixture on corrected RACK",
           "url": "https://github.com/tamird/gvisor/commit/1fe8a09616690e9dfc6a1439183bb68d62dce9e2"
+        },
+        {
+          "label": "Native Linux/netstack read-boundary control; original failures retained",
+          "url": "https://app.buildbuddy.io/invocation/76c5801c-45c4-4bea-bb40-645b467e310c"
+        },
+        {
+          "label": "Exact read-boundary diagnostic source",
+          "url": "https://github.com/tamird/gvisor/commit/b6b0ffbcb6f307e08103c11b6a31c89d0110ea44"
+        },
+        {
+          "label": "Initial corrected queued-window qualification; verdict pending",
+          "url": "https://app.buildbuddy.io/invocation/81663166-f6db-40fe-b73e-736ea9c028b3"
+        },
+        {
+          "label": "Exact initial corrected qualification source",
+          "url": "https://github.com/tamird/gvisor/commit/c6d9e691a8c667f9cca4330b0bb8f1a3dc5d2656"
         }
       ],
       "comparisons": [
