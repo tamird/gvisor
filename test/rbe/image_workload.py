@@ -27,11 +27,19 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
     samples = {}
     xml_runs = set()
     references = []
+    paths = set()
+    executed_keys = {(row["owner"]["label"], row["owner"]["configuration"], row["run"],
+                      row["attempt"], row["shard"]) for row in executed}
     for row in manifest["reports"]:
         identity = row["identity"]
-        if identity["label"] != OWNER or identity["attempt"] != 1 or identity["shard"] != 1:
-            raise ValueError(f"{phase}: unexpected report identity")
+        key = (identity["label"], identity["configuration"]["id"], identity["run"],
+               identity["attempt"], identity["shard"])
+        if key not in executed_keys:
+            raise ValueError(f"{phase}: report does not match an executed attempt")
         path = directory / row["path"]
+        if path in paths:
+            raise ValueError(f"{phase}: attempts share a retained report path")
+        paths.add(path)
         body = path.read_bytes()
         if len(body) != row["bytes"] or hashlib.sha256(body).hexdigest() != row["sha256"]:
             raise ValueError(f"{phase}: report hash mismatch")
