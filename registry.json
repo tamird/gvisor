@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T11:40:46.346482+00:00",
+    "updatedAt": "2026-10-24T11:49:51.178662+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21564,89 +21564,129 @@
       "id": "branch:sample-tcp-port-bounds",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "sample-tcp-port-bounds",
-      "head": "b3c3c094c7368985996ac94b000f4998cfdef92c",
+      "ref": "fix/sample-tcp-port-parseuint",
+      "head": "1395e32f910eff684ecb33e8057f415036fc93c9",
       "title": "Reject out-of-range ports in TCP samples",
-      "url": "https://github.com/tamird/gvisor/commit/b3c3c094c7368985996ac94b000f4998cfdef92c",
+      "url": "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "Contributor requested ParseUint and focused tests; agent work. Use ParseUint with the proper bit size and remove redundant parsing tests; validate the revised source before delivery.\n\nPreserved proposal and evidence:\n\nThis independently qualified CodeQL follow-up is an existing standalone proposal. No upstream PR has been opened; the four proposals are independently reviewable.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed. Root has requested a new contributor decision for this exact revised head; the previous change request is addressed and no publication approval is inferred.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
       "followup": {
         "owner": "node_tls_sni",
-        "sourceHead": "b3c3c094c7368985996ac94b000f4998cfdef92c",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor requested ParseUint and focused tests; agent work",
-        "nextAction": "Use ParseUint with the proper bit size and remove redundant parsing tests; validate the revised source before delivery."
+        "sourceHead": "1395e32f910eff684ecb33e8057f415036fc93c9",
+        "observedAt": "2026-10-24T11:49:51.178662+00:00",
+        "disposition": "Revised exact-head contributor decision requested",
+        "nextAction": "Await the existing contributor decision on this exact revised proposal. Preserve its independent scope; do not publish without approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9",
+          "https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
+        ]
       },
-      "contributorChangesRequested": {
-        "head": "b3c3c094c7368985996ac94b000f4998cfdef92c",
-        "url": "https://github.com/tamird/gvisor/commit/b3c3c094c7368985996ac94b000f4998cfdef92c"
-      }
+      "contributorReview": {
+        "status": "pending",
+        "head": "1395e32f910eff684ecb33e8057f415036fc93c9",
+        "url": "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9",
+        "title": "Review the revised standalone proposal",
+        "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed.",
+        "body": "Sample ports: publish revised 1395e32f910eff684ecb33e8057f415036fc93c9?\n\nThe two sample programs now call ParseUint with bitSize 16 directly.\nPort zero remains valid; signed input is rejected. The separate parser\nhelper and its parser-only test suite are gone. Both binaries build on\nAMD64/ARM64 and their analyzers pass for both architectures.\n\nhttps://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9\n\ngit range-diff b3c3c094c7368985996ac94b000f4998cfdef92c^..b3c3c094c7368985996ac94b000f4998cfdef92c d15d5319c3c758a6f18ccb59c607dc75300bce90..1395e32f910eff684ecb33e8057f415036fc93c9\n\nShared source-bound qualification: https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
+      },
+      "evidence": [
+        {
+          "label": "Qualified revised proposal",
+          "url": "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9"
+        },
+        {
+          "label": "Exact composed native validation",
+          "url": "https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
+        }
+      ]
     },
     {
       "id": "branch:tcp-proxy-port-bounds",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcp-proxy-port-bounds",
-      "head": "f0e518e6bea266980e008cc90043568818b2afe3",
+      "head": "3dfece3307b19a214a41f31b7f21280715a05629",
       "title": "Validate proxy ports before network setup",
-      "url": "https://github.com/tamird/gvisor/commit/f0e518e6bea266980e008cc90043568818b2afe3",
+      "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
       "group": "analysis",
       "status": "Agent work",
-      "summary": "The previous standalone proposal at f0e518 remains unapproved. Its manual parsed-range checks and redundant CLI parsing tests are being simplified under the existing port-bounds work. Root owns the replacement source and validation; no current publication decision is being requested and no upstream PR exists.",
-      "updatedAt": "2026-10-24T11:40:46.346482+00:00",
+      "summary": "The unapproved proposal has been simplified at 3dfece3307. netip replaces handwritten netstack parsing while mapped IPv4 bytes and default native DNS/service lookup are preserved. The 70-line parser CLI matrix and its test BUILD target are removed. Root owns this revised product and Node is qualifying it; no contributor decision or publication approval is claimed. The previous f0e518 proposal remains historical and unapproved.",
+      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "f0e518e6bea266980e008cc90043568818b2afe3",
-        "observedAt": "2026-10-24T11:40:46.346482+00:00",
-        "disposition": "Unapproved proposal under revision; Agent work",
-        "nextAction": "Finish the requested simplification and validation, then link any actual contributor request to the exact replacement head. Do not infer approval from the other port-bounds decisions."
+        "sourceHead": "3dfece3307b19a214a41f31b7f21280715a05629",
+        "observedAt": "2026-10-24T11:49:51.178662+00:00",
+        "disposition": "Revised unapproved proposal in qualification; Agent work",
+        "nextAction": "Finish Node-owned qualification of exact 3dfece3307, then route any actual contributor request on that exact source. No publication approval is implied."
       }
     },
     {
       "id": "branch:metricsviz-time-offset-bounds",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "metricsviz-time-offset-bounds",
-      "head": "d2518f62a7c20497ebe4fceda1e673420d672392",
+      "ref": "delivery/metricsviz-time-offset-bounds",
+      "head": "f47ebb419ccd9a2ef111e26833db45f03252aabe",
       "title": "Reject metric timestamp offsets that overflow time.Duration",
-      "url": "https://github.com/tamird/gvisor/commit/d2518f62a7c20497ebe4fceda1e673420d672392",
+      "url": "https://github.com/google/gvisor/pull/16341",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "The contributor approved the standalone metrics bounds patch d2518f62. Node owns its unchanged replay f47ebb419c on current master d15d and current-base qualification before delivery. No retrievable old metrics PASS is claimed; this remains agent delivery work, not a pending contributor question.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Published as #16341",
+      "summary": "The approved bounds patch is published as #16341 at f47ebb419c on current master d15d. The standalone run retains its aggregate failure on the unchanged generated-protobuf Nogo dependency, alongside eight passing parser cases and canonical formatting. The separate analyzer-only recovery with the exact #16098 export fix passes both architectures. No old metrics PASS or passing standalone aggregate is inferred.",
+      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
       "followup": {
         "owner": "node_tls_sni",
-        "sourceHead": "d2518f62a7c20497ebe4fceda1e673420d672392",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor approved; independent delivery assigned",
-        "nextAction": "Deliver the approved patch after current-base qualification of unchanged replay f47ebb419c. Preserve the exact source and new native result; no additional contributor request."
+        "sourceHead": "f47ebb419ccd9a2ef111e26833db45f03252aabe",
+        "observedAt": "2026-10-24T11:49:51.178662+00:00",
+        "disposition": "Approved patch published as #16341",
+        "nextAction": "Follow current-head checks and maintainer review; no contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16341",
+          "https://app.buildbuddy.io/invocation/c4c42ec5-0c53-4b81-8742-6cefbbffdd46"
+        ]
       }
     },
     {
       "id": "branch:fix/tpu-timeout-range",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "fix/tpu-timeout-range",
-      "head": "5265adcc0dd0c777762e8bd92169feb01016c952",
+      "ref": "fix/tpu-timeout-parseuint",
+      "head": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
       "title": "Reject unrepresentable TPU operation timeouts",
-      "url": "https://github.com/tamird/gvisor/commit/5265adcc0dd0c777762e8bd92169feb01016c952",
+      "url": "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "Contributor requested ParseUint and focused tests; agent work. Use ParseUint with the proper bit size and remove redundant parsing tests; validate the revised source before delivery.\n\nPreserved proposal and evidence:\n\nThis independently qualified CodeQL follow-up is an existing standalone proposal. No upstream PR has been opened; the four proposals are independently reviewable.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Contributor review pending; no upstream PR",
+      "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. Root has requested a new contributor decision for this exact revised head; the previous change request is addressed and no publication approval is inferred.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
       "followup": {
         "owner": "node_tls_sni",
-        "sourceHead": "5265adcc0dd0c777762e8bd92169feb01016c952",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor requested ParseUint and focused tests; agent work",
-        "nextAction": "Use ParseUint with the proper bit size and remove redundant parsing tests; validate the revised source before delivery."
+        "sourceHead": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
+        "observedAt": "2026-10-24T11:49:51.178662+00:00",
+        "disposition": "Revised exact-head contributor decision requested",
+        "nextAction": "Await the existing contributor decision on this exact revised proposal. Preserve its independent scope; do not publish without approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063",
+          "https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
+        ]
       },
-      "contributorChangesRequested": {
-        "head": "5265adcc0dd0c777762e8bd92169feb01016c952",
-        "url": "https://github.com/tamird/gvisor/commit/5265adcc0dd0c777762e8bd92169feb01016c952"
-      }
+      "contributorReview": {
+        "status": "pending",
+        "head": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
+        "url": "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063",
+        "title": "Review the revised standalone proposal",
+        "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed.",
+        "body": "TPU timeout: publish revised 3fb4ca77eee61eb637072b8d5d25a56afa717063?\n\nThe CLI uses ParseUint with bitSize 31 and rejects zero before converting\nto the signed int32 wire type. Library callers retain their distinct\nnonpositive semantics: Checkpoint/Restore substitute 180; GetState forwards\nthe value. Three existing success tests cover maximum wire value, default\nsubstitution, and nonpositive forwarding. The redundant parser-only suite\nand new Cartesian test matrix are removed. Leading '+' is now rejected.\n\nhttps://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063\n\ngit range-diff 5265adcc0dd0c777762e8bd92169feb01016c952^..5265adcc0dd0c777762e8bd92169feb01016c952 d15d5319c3c758a6f18ccb59c607dc75300bce90..3fb4ca77eee61eb637072b8d5d25a56afa717063\n\nShared source-bound qualification: https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
+      },
+      "evidence": [
+        {
+          "label": "Qualified revised proposal",
+          "url": "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063"
+        },
+        {
+          "label": "Exact composed native validation",
+          "url": "https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
+        }
+      ]
     },
     {
       "id": "issue:google/benchmark:1634",
@@ -21798,6 +21838,20 @@
           "https://github.com/google/gvisor/pull/16340"
         ]
       }
+    },
+    {
+      "id": "pr:16341",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16341,
+      "ref": "delivery/metricsviz-time-offset-bounds",
+      "head": "f47ebb419ccd9a2ef111e26833db45f03252aabe",
+      "title": "Reject overflowing metric timestamp offsets",
+      "url": "https://github.com/google/gvisor/pull/16341",
+      "group": "analysis",
+      "status": "open",
+      "summary": "The approved bounds patch is published as #16341 at f47ebb419c on current master d15d. The standalone run retains its aggregate failure on the unchanged generated-protobuf Nogo dependency, alongside eight passing parser cases and canonical formatting. The separate analyzer-only recovery with the exact #16098 export fix passes both architectures. No old metrics PASS or passing standalone aggregate is inferred.",
+      "updatedAt": "2026-10-24T11:49:51.178662+00:00"
     }
   ],
   "edges": [
@@ -24353,6 +24407,13 @@
       "type": "includes",
       "reason": "The independently approved proposal is now published; this is not a dependency between the split fixes.",
       "evidence": "https://github.com/google/gvisor/pull/16340"
+    },
+    {
+      "from": "branch:metricsviz-time-offset-bounds",
+      "to": "pr:16341",
+      "reason": "The approved independent bounds proposal is delivered in this public PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16341",
+      "type": "includes"
     }
   ],
   "investigations": [

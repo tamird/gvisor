@@ -442,7 +442,7 @@ function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) 
     copyURL: filters.has("human-submission") && humanAction(node)
       ? contributorDecisionURL(node, "human-submission") : filters.has("author-proposal") && contributorDecision(node) && states(node)["contributor-review"]
       ? contributorDecisionURL(node) : node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null }));
-  if (!grouped) return [{ id: "visible", owner: "other", title: "Visible PRs", entries }];
+  if (!grouped) return [{ id: "visible", owner: "other", title: "Visible items", entries }];
   const groups = [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => ({ ...group, entries: [] }));
   for (const entry of entries) {
     const primary = entry.reasons.find(item => filters.has(item.id)) || entry.reasons.find(item => item.id !== "author-proposal") || entry.reasons[0];
@@ -1119,6 +1119,8 @@ function drawTable(nodes) {
     ? "Copy visible exports every displayed human-only action with its tracker link."
     : reasonFilters.size === 1 && reasonFilters.has("author-proposal")
     ? "Copy visible exports every displayed contributor decision with its reviewable tracker link."
+    : reasonFilters.has("author-proposal") && reasonFilters.has("human-submission")
+    ? "Copy visible exports the displayed decisions and human-only actions with their tracker links."
     : "Copy visible exports the source PRs shown as plain text."} Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
   for (const group of visibleTableGroups) {
     if (tableGrouping) {
@@ -1731,7 +1733,7 @@ function initialize() {
     const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number", "age"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
   $("refresh").addEventListener("click", () => refresh(true));
-  $("handoff-copy-all").addEventListener("click", event => copyHandoff(attentionText(visibleTableGroups, model.checkedAt), "Visible PRs", event.currentTarget));
+  $("handoff-copy-all").addEventListener("click", event => copyHandoff(attentionText(visibleTableGroups, model.checkedAt), "Visible items", event.currentTarget));
   $("group-by-attention").addEventListener("change", () => { tableGrouping = $("group-by-attention").checked; if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
   $("fit").addEventListener("click", () => resetCamera(true, true)); $("reset-view").addEventListener("click", () => resetCamera(false));
