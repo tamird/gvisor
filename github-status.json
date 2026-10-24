@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T14:52:43.052864+00:00",
-  "registryDate": "2026-10-24T14:50:25.541483+00:00",
+  "registryDate": "2026-10-24T15:01:53.489670+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -174164,13 +174164,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-24T14:52:34.335172+00:00"
-      },
-      "contributor-review": {
-        "scope": "2854c847877a87952a06113f2a92735e52038756",
-        "since": "2026-10-24T14:50:25.541483+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-24T14:50:25.541483+00:00"
       }
     },
     "pr:16101": {
@@ -174666,7 +174659,7 @@
         "since": "2026-10-24T11:49:51.178662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T14:50:25.541483+00:00"
+        "observedAt": "2026-10-24T15:01:53.489670+00:00"
       }
     },
     "branch:tcp-proxy-port-bounds": {
@@ -174675,7 +174668,7 @@
         "since": "2026-10-24T12:17:34.480373+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T14:50:25.541483+00:00"
+        "observedAt": "2026-10-24T15:01:53.489670+00:00"
       }
     },
     "branch:fix/tpu-timeout-range": {
@@ -174684,7 +174677,7 @@
         "since": "2026-10-24T11:49:51.178662+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T14:50:25.541483+00:00"
+        "observedAt": "2026-10-24T15:01:53.489670+00:00"
       }
     },
     "branch:rules-img-tomcat-upstream": {
@@ -174693,7 +174686,7 @@
         "since": "2026-10-24T12:53:36.715961+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T14:50:25.541483+00:00"
+        "observedAt": "2026-10-24T15:01:53.489670+00:00"
       }
     }
   },
