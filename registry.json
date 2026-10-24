@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T09:04:22.392552+00:00",
+    "updatedAt": "2026-10-24T09:11:20.611674+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19911,19 +19911,21 @@
       "url": "https://github.com/google/gvisor/pull/16254",
       "group": "bazel",
       "status": "open",
-      "summary": "Etienne asks what the Protobuf RC and compatibility patch enable, and why avoiding the generated-lock backport matters. The concrete consumer is the pending Bazel-built Rust smoke-test image; the observed failure was full license/module graph evaluation, not Protobuf use by that example. WorkMap owns a direct evidence-backed response and is checking current stable-release alternatives with Node before recommending an amendment. No public reply or source change is authorized yet.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
+      "summary": "The contributor has been asked to authorize the direct reply to Etienne and a clearer description; the public source remains 5eb5b76e. The concrete follow-up is the Bazel-built Rust smoke-test image. Its hello-world executable does not use Protobuf, but the repository-wide license audit evaluates the full module graph and failed in Protobuf’s transitive Rust resolver without producer-owned lockfiles. Stable 36.2 still lacks those files; 37.0-rc1 supplies them. A qualified 35.1 lockfile backport plus rules_rust override also works, so the RC trades roughly 40 KB of generated backport for the small gRPC reflection-header dependency patch. Waiting for stable 37 is a reasonable alternative offered in the proposed reply. The human question remains open; no public reply, description edit or source amendment has been made.\n\nEarlier source-specific record:\n\nApproved Protobuf upgrade delivered independently as #16254 on current upstream8938. Exact source changes match approved1e27, including the clarified gRPC35.1/Protobuf37 rationale and removal TODO. The user withdrew the upstream issue request; no human issue URL gate remains. Only the two approved canonical catalog records change; current unrelated records and the landed libbpf fix are preserved. Existing source-specific qualification is retained, with no new standalone runtime claim. Compare git range-diff 1e27ec7e1^! 5eb5b76e2^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved e8c022855 and requested the gRPC compatibility issue or patch upstream with a reference retained in the local patch. Existing release/catalog/generated-code evidence remains accepted.\n\nEarlier source-specific record:\n\nUse released Protobuf 37.0-rc1 and remove the generated-lock backport. Canonical Fetch/Verify passes without a rules_rust override. Four gRPC libraries now explicitly depend on Protobuf C++ reflection headers; focused existing C++/Go generated consumers pass on both CPUs. The 201-record catalog changes only Protobuf and selected rules_python metadata with unchanged license sets.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe separate Protobuf 37.0-rc1 upgrade supplies release Rust lockfiles and audited catalog records, removing the generated-lock backport and rules_rust override. Four gRPC 1.84 libraries explicitly declare the C++ reflection dependency. Canonical Fetch/Verify and eight configured generated-code build owners passed. The native analyzer passed but its remote XML/log were not captured by the strict reporter; the narrow URI correction and final image equality checks are running. Earlier compile/bootstrap/reporting failures remain preserved.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root",
         "sourceHead": "5eb5b76e2bbaf671ffa52e4a01afee4d7ee3e9be",
-        "observedAt": "2026-10-24T09:04:22.392552+00:00",
-        "disposition": "New maintainer question; concrete benefit and stable-release alternatives under review",
-        "nextAction": "Finish the current release/lockfile appraisal and send root a short direct reply or smallest source amendment for authorization. Keep the human question open; no automatic acknowledgement or repeated contributor request.",
+        "observedAt": "2026-10-24T09:11:20.611674+00:00",
+        "disposition": "Reply and description prepared; contributor authorization outstanding",
+        "nextAction": "Await the existing contributor decision for the direct reply and description, then respond in the original discussion under that authorization. Keep the public source unchanged and do not repeat the contributor question.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16254#issuecomment-6382233256",
-          "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3"
+          "https://app.buildbuddy.io/invocation/b2b6fa55-f597-4060-8af1-39eae50d1ad3",
+          "https://github.com/protocolbuffers/protobuf/blob/v36.2/MODULE.bazel#L217",
+          "https://github.com/protocolbuffers/protobuf/blob/v37.0-rc1/MODULE.bazel#L216-L219"
         ]
       },
-      "updatedAt": "2026-10-24T09:04:22.392552+00:00",
+      "updatedAt": "2026-10-24T09:11:20.611674+00:00",
       "refinement": {
         "before": {
           "head": "1e27ec7e101cd5bd327344b76497b0884fbc594e"
@@ -21165,6 +21167,46 @@
         {
           "label": "Both image configurations and two actual AMD64 lifecycle cases",
           "url": "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-postgresql-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-postgresql-upstream",
+      "head": "e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+      "title": "Use pinned upstream PostgreSQL images",
+      "url": "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T09:11:20.611674+00:00",
+      "summary": "The contributor has been asked to review exact e485bb2b07, based on the corrected #16097 foundation. This proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The separate contributor decision and #16097 landing are required.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+        "url": "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be"
+      },
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+        "observedAt": "2026-10-24T09:11:20.611674+00:00",
+        "disposition": "Qualified PostgreSQL proposal; contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision, then deliver only after #16097 lands. Preserve the separate Python and MySQL decisions; no second question or inherited approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact PostgreSQL proposal awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be"
+        },
+        {
+          "label": "Both image configurations and native/runsc AMD64 SQL consumers",
+          "url": "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
         }
       ]
     }
@@ -23610,6 +23652,16 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00"
+      ]
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-postgresql-upstream",
+      "type": "depends_on",
+      "reason": "Uses image_outputs and the Make context/package-source interface from the corrected #16097 foundation. No Python, MySQL or Redis dependency.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
+        "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be"
       ]
     }
   ],
