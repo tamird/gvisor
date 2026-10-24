@@ -1,65 +1,147 @@
-"""Measure the generated leaf walk in the sentry and the existing checkpoint fixture."""
+"""Stage matched state-test binaries and run the existing paired fixture."""
 import hashlib
 import json
 import os
 from pathlib import Path
-import re
-import shlex
+import shutil
 import subprocess
+import time
+import urllib.request
+from urllib.parse import unquote, urlsplit
+
+import qualification_report as report
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    sentry = "//runsc/cmd/sentry:gvisor_sentry"
-    generator = "//tools/go_stateify:stateify_test"
-    graphs = "//pkg/state/tests:tests_test"
-    package = "//pkg/state/tests:tests_state_autogen"
-    if config["targets"] != [generator, graphs, package, sentry]:
-        raise ValueError("Unexpected state leaf experiment owners")
+    source = config["source"]
+    owner = "//pkg/state/tests:tests_test"
+    paired = "//test/rbe/state_array_pair:paired_test"
+    if config["targets"] != [paired]:
+        raise ValueError("Unexpected paired state owner")
     options = ["--config=x86_64", "--compilation_mode=opt", "--nostamp", "--lockfile_mode=error",
-               "--remote_download_outputs=toplevel", "--noannounce_rc"]
+               "--remote_download_outputs=all", "--noannounce_rc"]
+    workspace = Path.cwd()
+    package = workspace / "test/rbe/state_array_pair"
+    staged = private / "paired-inputs"
+    staged.mkdir()
+    lock = workspace / "MODULE.bazel.lock"
+    lock_identity = report.file_record(lock)
+    records = {"status": "INCOMPLETE", "source": source, "before_source": config["before_source"],
+               "builds": [], "inputs": {}, "lock": lock_identity}
 
-    def check(name, args, kind, targets):
-        verdict = invoke(name, args, kind, targets=targets)
-        if verdict["status"] != "PASS":
-            raise RuntimeError(f"{name} failed")
+    def remaining() -> float:
+        value = float(os.environ["APPLICABILITY_WORK_DEADLINE"]) - time.monotonic()
+        if value <= 0:
+            raise TimeoutError("Paired state work deadline exhausted")
+        return value
 
-    formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; '
-                           'cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt', "--"])
-    check("gofmt", ["run", *options, "--run_under=" + formatter, "@io_bazel_rules_go//go:go"],
-          "command", [])
-    tests = ["test", *options, "--strategy=TestRunner=local", "--nocache_test_results",
-             "--runs_per_test=1", "--flaky_test_attempts=1", "--test_env=GO_TEST_WRAP=1",
-             "--test_env=GO_TEST_WRAP_TESTV=1"]
-    check("generator", [*tests, generator], "test", [generator])
-    check("graph", [*tests, "--test_filter=^TestCodec(RandomGraphs|AbsorbedReferrer|Standalone|NestedMaps)$",
-                    graphs], "test", [graphs])
-    check("generated", ["build", *options, package], "build", [package])
-    generated = (Path("bazel-bin/pkg/state/tests/tests_state_autogen.go")).read_text()
-    shared = bool(re.search(r"func \(\w+ \*benchFields\) stateVisitFields\(", generated))
-    if shared != config["visitor"]:
-        raise ValueError("Existing fields benchmark did not select the expected generation path")
-    check("sentry", ["build", *options, sentry], "build", [sentry])
-    check("sentry-path", ["cquery", *options, "--output=files", sentry], "command", [])
-    files = (evidence / "invocation-sentry-path/stdout.log").read_text().splitlines()
-    if len(files) != 1 or Path(files[0]).name != "gvisor_sentry":
-        raise ValueError(f"Unexpected sentry output: {files}")
-    binary = Path(files[0]); sections = subprocess.check_output(["size", "-A", "-d", binary], text=True)
-    text_size = int(re.search(r"^\.text\s+(\d+)\s+\d+", sections, re.MULTILINE).group(1))
-    with binary.open("rb") as raw:
-        digest = hashlib.file_digest(raw, "sha256").hexdigest()
-    (evidence / "leaf-size.json").write_text(json.dumps({"source": config["source"], "product": config["product"],
-        "binary_bytes": binary.stat().st_size, "text_bytes": text_size, "sha256": digest,
-        "fixture_uses_shared_walk": shared}) + "\n")
+    def check_source(expected: str) -> dict:
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, timeout=30).strip()
+        if head != expected or subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], timeout=30):
+            raise RuntimeError("Expected clean source " + expected)
+        if report.file_record(lock) != lock_identity:
+            raise ValueError("Matched build lock changed")
+        inputs = {}
+        for name, digest in config["matched_inputs"].items():
+            path = workspace / name
+            data = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
+            if hashlib.sha256(data).hexdigest() != digest:
+                raise ValueError("Matched source input changed: " + name)
+            inputs[name] = {"bytes": len(data), "sha256": digest}
+        if report.file_record(workspace / "pkg/state/wire/direct.go")["sha256"] != config["wire_sha256"][expected]:
+            raise ValueError("Wire input differs from selected arm")
+        return inputs
 
-    # The two arms run on separate workers. Compare allocations here; timing
-    # comparisons require running both binaries on one worker.
-    check("fields", ["run", *options, graphs, "--", "-test.run=^$",
-                     "-test.bench=^(BenchmarkEncoding|BenchmarkDecoding)$/^fields$/^(state|state-reflect)$",
-                     "-test.benchmem", "-test.benchtime=250ms", "-test.count=4"], "command", [])
-    rows = re.findall(r"^(Benchmark(?:En|De)coding/fields/(?:state|state-reflect))(?:-\d+)?\s+\d+\s+[\d.]+ ns/op\s+(\d+) B/op\s+(\d+) allocs/op$",
-                      (evidence / "invocation-fields/stdout.log").read_text(), re.MULTILINE)
-    expected = {f"Benchmark{op}/fields/{backend}" for op in ("Encoding", "Decoding") for backend in ("state", "state-reflect")}
-    if any(sum(name == want for name, _, _ in rows) != 4 for want in expected) or len(rows) != 16:
-        raise ValueError(f"Missing checkpoint benchmark observations: {rows}")
-    (evidence / "leaf-allocations.json").write_text(json.dumps(rows) + "\n")
+    try:
+        records["matched_inputs"] = check_source(source)
+        delta = subprocess.check_output(["git", "diff", "--name-only", config["before_source"], source], text=True, timeout=30).splitlines()
+        if delta != ["pkg/state/wire/direct.go"]:
+            raise ValueError("Paired sources differ outside the varint implementation: " + repr(delta))
+        # Reuse the already-qualified benchstat executable, authenticating the
+        # entire file on this worker before any measured child can start.
+        supplier = config["benchstat"]
+        request = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetFile",
+            data=json.dumps({"uri": supplier["uri"]}).encode(),
+            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with urllib.request.urlopen(request, timeout=min(180, remaining())) as response:
+            data = response.read(supplier["bytes"] + 1)
+        if len(data) != supplier["bytes"] or hashlib.sha256(data).hexdigest() != supplier["sha256"]:
+            raise ValueError("Qualified benchstat file identity differs")
+        (staged / "benchstat").write_bytes(data)
+        (staged / "benchstat").chmod(0o755)
+        records["benchstat"] = supplier
+        for side, revision, directory in (
+            ("after", source, evidence / "invocation-after-build"),
+            ("before", config["before_source"], evidence / "source-builds/before"),
+        ):
+            subprocess.run(["git", "switch", "--detach", revision], check=True, timeout=min(30, remaining()))
+            check_source(revision)
+            result = invoke(side + "-build", ["build", *options, owner], "build",
+                            targets=[owner], source=revision, directory=directory)
+            if result["status"] != "PASS" or result["native_exit"] != 0:
+                raise RuntimeError(side + " source build failed")
+            match result["expected"]:
+                case [{"label": label, "configuration": configuration}] if label == owner:
+                    configured_owner = report.Owner(label, configuration)
+                case other:
+                    raise ValueError("Unexpected configured state build owners: " + repr(other))
+            outputs = report.advertised_build_outputs(directory / "events.jsonl", {(configured_owner, "default")})
+            match outputs:
+                case [item] if report.Owner.parse(item["identity"]) == configured_owner:
+                    pass
+                case other:
+                    raise ValueError("Expected one configured default executable: " + repr(other))
+            uri = urlsplit(item["uri"])
+            if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
+                raise ValueError("Expected the explicitly materialized local BEP output")
+            original = Path(unquote(uri.path)).resolve(strict=True)
+            original.relative_to(output_root.resolve(strict=True))
+            identity = {key: item[key] for key in ("sha256", "bytes")}
+            if identity != config["qualified_binaries"][side]:
+                raise ValueError(f"{side} benchmark binary differs from the qualified executable: {identity}")
+            if report.file_record(original) != identity or not os.access(original, os.X_OK):
+                raise ValueError("Materialized binary differs from its default BEP output")
+            relative = f"arms/{side}/_main/pkg/state/tests/tests_test"
+            destination = staged / relative
+            destination.parent.mkdir(parents=True)
+            shutil.copy2(original, destination)
+            if report.file_record(destination) != identity:
+                raise ValueError("Copied benchmark binary changed")
+            records["inputs"][relative] = {"source": revision, "owner": item["identity"],
+                                           "size": identity["bytes"], "sha256": identity["sha256"],
+                                           "bep_name": item["name"]}
+            records["builds"].append({"side": side, "source": revision,
+                "verdict": {"path": str((directory / "verdict.json").relative_to(evidence)), **report.file_record(directory / "verdict.json")},
+                "output": item})
+        subprocess.run(["git", "switch", "--detach", source], check=True, timeout=min(30, remaining()))
+        check_source(source)
+        if any((package / name).exists() for name in ("arms", "benchstat", "inputs.json")):
+            raise ValueError("Paired package already has staged inputs")
+        shutil.copytree(staged / "arms", package / "arms")
+        shutil.copy2(staged / "benchstat", package / "benchstat")
+        report.write_json(package / "inputs.json", {"binaries": records["inputs"], "benchstat": supplier})
+        report.write_json(evidence / "paired-inputs.json", records)
+        selected = [*options, "--strategy=TestRunner=local", "--nocache_test_results",
+                    "--runs_per_test=1", "--flaky_test_attempts=1", "--test_sharding_strategy=disabled",
+                    "--test_output=all", "--nozip_undeclared_test_outputs", "--test_timeout=900"]
+        analysis = invoke("paired-analysis", ["test", *selected, "--nobuild", paired], "analysis", targets=[paired])
+        if analysis["status"] != "PASS":
+            raise RuntimeError("Paired benchmark analysis failed")
+        tested = invoke("paired", ["test", *selected, paired], "test",
+                        expected_analysis=(evidence / "invocation-paired-analysis/events.jsonl",),
+                        targets=[paired], retain_outputs=True)
+        if tested["status"] != "PASS" or tested["native_exit"] != 0:
+            raise RuntimeError("Paired benchmark cohort failed")
+        records["status"] = "PASS"
+    finally:
+        completed_status = records["status"]
+        records["status"] = "FAIL"
+        try:
+            subprocess.run(["git", "switch", "--detach", source], check=True, timeout=30)
+            check_source(source)
+            records["restored_source"] = source
+            records["restored_lock"] = report.file_record(lock)
+            records["status"] = completed_status
+        finally:
+            report.write_json(evidence / "state-array-paired.json", records)
