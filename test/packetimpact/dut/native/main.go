@@ -20,12 +20,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/test/testutil"
@@ -85,6 +87,41 @@ func (n *native) Bootstrap(ctx context.Context) (testbench.DUTInfo, func() error
 	info, err := linux.DUTInfo(n.Ifaces)
 	if err != nil {
 		return testbench.DUTInfo{}, nil, fmt.Errorf("failed to collect information about the DUT: %w", err)
+	}
+	// This fork-only diagnostic runs inside the DUT's network namespace.
+	// Keep observation failures separate from the unchanged packet-test verdict.
+	values := make(map[string]string)
+	errors := make(map[string]string)
+	for _, name := range []string{"tcp_invalid_ratelimit", "tcp_challenge_ack_limit"} {
+		data, err := os.ReadFile("/proc/sys/net/ipv4/" + name)
+		switch {
+		case err == nil:
+			values[name] = strings.TrimSpace(string(data))
+		case os.IsNotExist(err):
+			values[name] = "absent"
+		default:
+			errors[name] = err.Error()
+		}
+	}
+	for _, name := range []string{"net", "user"} {
+		value, err := os.Readlink("/proc/self/ns/" + name)
+		if err != nil {
+			errors[name] = err.Error()
+		} else {
+			values[name] = value
+		}
+	}
+	record := struct {
+		Uname    *testbench.DUTUname
+		Values   map[string]string
+		Errors   map[string]string
+		Complete bool
+	}{info.Uname, values, errors, len(errors) == 0}
+	encoded, err := json.Marshal(record)
+	if err != nil {
+		log.Printf("PACKETIMPACT_NATIVE_DUT_IDENTITY_ERROR: %v", err)
+	} else {
+		log.Printf("PACKETIMPACT_NATIVE_DUT_IDENTITY: %s", encoded)
 	}
 	return info, cmd.Wait, nil
 }
