@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -55,6 +56,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -62,6 +64,7 @@ import (
 )
 
 var ociBundleRoot = flag.String("oci-bundle-root", "/run/containerd/io.containerd.runtime.v2.task/moby", "Directory containing each container's OCI bundle")
+var expectedCodec = flag.String("expected-codec", "", "Require typed or legacy checkpoint and benchmark encoding")
 
 const (
 	// workers is the number of nginx worker processes.
@@ -103,6 +106,9 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		b.Fatalf("failed to create platform: %v", err)
 	}
 	plat := stubPlatform{sys}
+	if *expectedCodec != "" {
+		verifyCodecMode(ctx, b, plat, stateFile, names)
+	}
 
 	b.Run("Decode", func(b *testing.B) {
 		b.ReportAllocs()
@@ -156,6 +162,72 @@ func BenchmarkCheckpointFile(b *testing.B) {
 		b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
 		b.ReportMetric(float64(encodedBytes), "encoded-kernel-B")
 	})
+}
+
+// verifyCodecMode checks both the runtime's checkpoint and this benchmark's
+// re-encoding of its kernel before either timed loop. Loading a legacy stream
+// alone cannot prove that the benchmark's encoder also has codecs disabled.
+func verifyCodecMode(ctx context.Context, b *testing.B, plat platform.Platform, data []byte, names []string) {
+	b.Helper()
+	if *expectedCodec != "typed" && *expectedCodec != "legacy" {
+		b.Fatalf("expected-codec = %q, want typed or legacy", *expectedCodec)
+	}
+	readHeader := func(r io.Reader) uint64 {
+		b.Helper()
+		length, object, err := state.ReadHeader(&wire.Reader{Reader: r})
+		if err != nil {
+			b.Fatalf("reading codec header: %v", err)
+		}
+		if !object {
+			b.Fatal("codec header is not an object graph")
+		}
+		if got, want := state.IsTyped(length), *expectedCodec == "typed"; got != want {
+			b.Fatalf("typed codec header = %t, want %t", got, want)
+		}
+		return length
+	}
+	sr, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(data)), nil)
+	if err != nil {
+		b.Fatalf("opening codec probe checkpoint: %v", err)
+	}
+	defer sr.Close()
+	r := bufio.NewReader(sr)
+	var fs cpuid.FeatureSet
+	if _, err := state.Load(ctx, r, &fs); err != nil {
+		b.Fatalf("loading codec probe CPUID: %v", err)
+	}
+	inputHeader := readHeader(r)
+	ctx, cleanup := withHostFDs(b, ctx, names)
+	defer cleanup()
+	k, err := loadKernel(ctx, plat, data)
+	if err != nil {
+		b.Fatalf("loading codec probe kernel: %v", err)
+	}
+	var output bytes.Buffer
+	if _, err := state.Save(ctx, &output, k); err != nil {
+		b.Fatalf("saving codec probe kernel: %v", err)
+	}
+	outputHeader := readHeader(bytes.NewReader(output.Bytes()))
+	record, err := json.Marshal(map[string]any{
+		"expected":             *expectedCodec,
+		"runtime":              dockerutil.Runtime(),
+		"kernel_input_header":  inputHeader,
+		"kernel_output_header": outputHeader,
+		"input_sha256":         fmt.Sprintf("%x", sha256.Sum256(data)),
+		"output_sha256":        fmt.Sprintf("%x", sha256.Sum256(output.Bytes())),
+		"input_bytes":          len(data),
+		"output_bytes":         output.Len(),
+	})
+	if err != nil {
+		b.Fatal(err)
+	}
+	directory := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if directory == "" {
+		b.Fatal("codec evidence requires TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+	if err := os.WriteFile(filepath.Join(directory, "codec-mode.json"), record, 0644); err != nil {
+		b.Fatal(err)
+	}
 }
 
 // checkpointNginx checkpoints an idle nginx container, and returns the

@@ -129,6 +129,8 @@ def main(reporter: Path) -> int:
         raise ValueError("Checkpoint benchmark requires a root AMD64 worker")
     if set(manifest["harnesses"]) != {"before", "after"} or set(manifest["runtimes"]) != {"before", "after"}:
         raise ValueError("Expected exactly two source-matched arms")
+    if "codec_modes" in manifest and manifest["codec_modes"] != {"before": "legacy", "after": "typed"}:
+        raise ValueError("Expected legacy versus typed codec selection")
     observed = {}
     for side in ("before", "after"):
         harness = manifest["harnesses"][side]
@@ -198,6 +200,8 @@ def main(reporter: Path) -> int:
                     "-test.cpu=1", "-test.v=false", "-runtime=" + manifest["runtimes"][sample.side]["name"],
                     "-config_path=/etc/docker/daemon.json", "-test-checkpoint=true",
                     "-oci-bundle-root=" + manifest["oci_bundle_root"]]
+            if "codec_modes" in manifest:
+                argv.append("-expected-codec=" + manifest["codec_modes"][sample.side])
             environment = dict(os.environ, GOMAXPROCS="1", GO_TEST_WRAP="1",
                 GO_TEST_RUN_FROM_BAZEL="1", TEST_BINARY=str(binary),
                 TEST_TMPDIR=str(directory / "tmp"), XML_OUTPUT_FILE=str(directory / "test.xml"),
@@ -279,6 +283,21 @@ def main(reporter: Path) -> int:
                 measured[name] = {"iterations": int(parts[1]), "metrics": metrics, "row": line}
             if measured.keys() != expected.keys():
                 raise ValueError("Expected both Decode and Encode benchmark results")
+            if "codec_modes" in manifest:
+                codec = json.loads((directory / "codec-mode.json").read_text())
+                mode = manifest["codec_modes"][sample.side]
+                if codec["expected"] != mode or codec["runtime"] != runtime["name"]:
+                    raise ValueError("Codec observation differs from selected arm")
+                for name in ("kernel_input_header", "kernel_output_header"):
+                    header = codec[name]
+                    if (type(header) is not int or header <= 0 or header >= 1 << 63 or
+                            bool(header & (1 << 62)) != (mode == "typed")):
+                        raise ValueError("Kernel stream used the wrong codec")
+                for direction in ("input", "output"):
+                    if (type(codec[direction + "_bytes"]) is not int or codec[direction + "_bytes"] <= 0 or
+                            not re.fullmatch(r"[0-9a-f]{64}", codec[direction + "_sha256"])):
+                        raise ValueError("Missing codec probe stream identity")
+                row["codec"] = codec
             row.update(benchmarks=measured, source=harness["source"], harness=observed[sample.side],
                        runtime=runtime["name"])
             completed.append(row)

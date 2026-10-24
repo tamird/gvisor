@@ -29,6 +29,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
               "status": "INCOMPLETE", "builds": [], "cleanup": "INCOMPLETE"}
     inputs = {"harnesses": {}, "runtimes": {}, "benchstat": config["benchstat"],
               "oci_bundle_root": config["oci_bundle_root"]}
+    if "codec_modes" in config:
+        if config["codec_modes"] != {"before": "legacy", "after": "typed"}:
+            raise ValueError("Expected legacy versus typed codec selection")
+        inputs["codec_modes"] = config["codec_modes"]
     runtime_inputs = {}
     tag = "gvisor.dev/images/benchmarks/nginx:latest"
     prior_image = None
