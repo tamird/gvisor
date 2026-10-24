@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
@@ -980,45 +981,83 @@ func TestRACKWithDuplicateACK(t *testing.T) {
 	}
 }
 
-// TestRACKUpdateSackedOut tests the sacked out field is updated when a SACK
-// is received.
+// TestRACKUpdateSackedOut verifies that selectively acknowledged packets remain
+// counted when entering recovery, until they are cumulatively acknowledged.
 func TestRACKUpdateSackedOut(t *testing.T) {
-	probeDone := make(chan struct{})
-	ackNum := 0
-	probe := func(state *tcp.TCPEndpointState) {
-		// Validate that the endpoint Sender.SackedOut is what we expect.
-		if state.Sender.SackedOut != 2 && ackNum == 0 {
-			t.Fatalf("SackedOut got updated to wrong value got: %v want: 2", state.Sender.SackedOut)
-		}
+	for _, algorithm := range []string{"reno", "cubic"} {
+		t.Run(algorithm, func(t *testing.T) {
+			for _, sacks := range []int{2, 3} {
+				t.Run(fmt.Sprintf("sacks_%d", sacks), func(t *testing.T) {
+					// Keep time fixed with a nonzero uncertainty bound so RACK
+					// does not declare loss from equal transmit/ACK timestamps.
+					clock := faketime.NewManualClock()
+					states := make(chan tcp.TCPSenderState, 8)
+					c := context.NewWithOpts(t, context.Options{
+						EnableV4:        true,
+						MTU:             uint32(mtu),
+						Clock:           clock,
+						ClockResolution: time.Millisecond,
+						Probe: func(state *tcp.TCPEndpointState) {
+							states <- state.Sender
+						},
+					})
+					defer c.Cleanup()
+					cc := tcpip.CongestionControlOption(algorithm)
+					if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &cc); err != nil {
+						t.Fatalf("SetTransportProtocolOption(%s): %s", algorithm, err)
+					}
+					e2e.SetStackSACKPermitted(t, c, true)
+					e2e.CreateConnectedWithSACKAndTS(c)
+					var selected tcpip.CongestionControlOption
+					if err := c.EP.GetSockOpt(&selected); err != nil || selected != cc {
+						t.Fatalf("Congestion control = %q, error %v; want %q", selected, err, cc)
+					}
 
-		if !state.Sender.FastRecovery.Active && state.Sender.SackedOut != 0 && ackNum == 1 {
-			t.Fatalf("SackedOut got updated to wrong value got: %v want: 0", state.Sender.SackedOut)
-		}
+					const packets = 8
+					data := make([]byte, packets*maxPayload)
+					if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+						t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+					}
+					for offset := 0; offset < len(data); offset += maxPayload {
+						c.ReceiveAndCheckPacketWithOptions(data, offset, maxPayload, e2e.TSOptionSize)
+					}
+					for len(states) != 0 {
+						<-states
+					}
+					nextState := func() tcp.TCPSenderState {
+						t.Helper()
+						select {
+						case state := <-states:
+							return state
+						case <-time.After(5 * time.Second):
+							t.Fatal("No post-ACK sender state")
+							return tcp.TCPSenderState{}
+						}
+					}
 
-		if ackNum > 0 {
-			close(probeDone)
-		}
-		ackNum++
+					seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+					// Leave packet zero unacknowledged and expand one SACK block.
+					start := c.IRS.Add(1 + maxPayload)
+					for count := 1; count <= sacks; count++ {
+						end := start.Add(seqnum.Size(count * maxPayload))
+						c.SendAckWithSACK(seq, 0, []header.SACKBlock{{Start: start, End: end}})
+						state := nextState()
+						if state.SackedOut != count {
+							t.Errorf("After SACK %d: SackedOut = %d, want %d", count, state.SackedOut, count)
+						}
+						if want := count == 3; state.FastRecovery.Active != want {
+							t.Errorf("After SACK %d: recovery = %t, want %t", count, state.FastRecovery.Active, want)
+						}
+					}
+					c.SendAck(seq, len(data))
+					state := nextState()
+					if state.SackedOut != 0 || state.FastRecovery.Active || state.SndUna != state.SndNxt {
+						t.Errorf("After cumulative ACK: SackedOut = %d, recovery = %t, UNA = %d, NXT = %d; want zero, false, equal", state.SackedOut, state.FastRecovery.Active, state.SndUna, state.SndNxt)
+					}
+				})
+			}
+		})
 	}
-
-	c := context.NewWithProbe(t, uint32(mtu), probe)
-	defer c.Cleanup()
-
-	e2e.SendAndReceiveWithSACK(t, c, maxPayload, 8 /* numPackets */, true /* enableRACK */)
-
-	// ACK for [3-5] packets.
-	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	start := c.IRS.Add(seqnum.Size(1 + 3*maxPayload))
-	bytesRead := 2 * maxPayload
-	end := start.Add(seqnum.Size(bytesRead))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
-
-	bytesRead += 3 * maxPayload
-	c.SendAck(seq, bytesRead)
-
-	// Wait for the probe function to finish processing the ACK before the
-	// test completes.
-	<-probeDone
 }
 
 // TestRACKWithWindowFull tests that RACK honors the receive window size.
