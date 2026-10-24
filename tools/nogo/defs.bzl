@@ -230,14 +230,20 @@ def _nogo_aspect_impl(target, ctx):
 
     is_binary = ctx.rule.kind in ("go_binary", "go_non_executable_binary")
     is_test = ctx.rule.kind == "go_test"
-    if not is_binary and ctx.rule.kind not in ("go_library", "go_tool_library", "go_test", "go_proto_library", "go_wrap_cc"):
+    analyze_sources = is_binary or ctx.rule.kind in ("go_library", "go_tool_library", "go_test", "go_proto_library", "go_wrap_cc")
+    if not analyze_sources and not go_has_source(target):
         return [NogoInfo()]
 
-    deps = list(ctx.rule.attr.deps)
+    deps = list(ctx.rule.attr.deps) if hasattr(ctx.rule.attr, "deps") else []
     for embed in go_embed_libraries(ctx.rule):
         info = embed[NogoInfo]
         if hasattr(info, "deps"):
             deps.extend(info.deps)
+    if not analyze_sources:
+        # Source-only GoInfo providers contribute their dependencies when
+        # embedded; the consuming package owns compilation and analysis.
+        return [NogoInfo(deps = deps)]
+
     if ctx.rule.kind == "go_proto_library":
         compilers = [ctx.rule.attr.compiler] if ctx.rule.attr.compiler else ctx.rule.attr.compilers
         for compiler in compilers:
