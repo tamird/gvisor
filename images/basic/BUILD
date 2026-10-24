@@ -1,6 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
+load("//tools:arch.bzl", "arch_genrule")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -74,4 +75,16 @@ image_outputs(
     name = "tomcat",
     image = ":tomcat",
     image_name = "basic/tomcat",
+)
+
+arch_genrule(
+    name = "qualification_tomcat_archives",
+    src = ":tomcat_archive",
+    template = "qualification_tomcat_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_tomcat_contexts",
+    src = ":tomcat_context",
+    template = "qualification_tomcat_context_%s.tar",
 )
