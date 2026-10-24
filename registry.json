@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+    "updatedAt": "2026-10-24T08:12:31.195104+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1426,12 +1426,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
-      "summary": "Etienne requested separating annotation-only contracts from changes that acquire locks. Four independent fork proposals are available on the same master 291de749 base: contracts 1eb4c14a, parent-death signal locking cad33143, signal-delivery error deadlock fbe4e871, and exit-notification status locking 9e9228f6. None depends on another proposal. Independent source review confirms identical executable Go in all nine contracts files and checks the three behavioral fixes separately. Per-source analyzers and the combined kernel normal/race checks are running in one qualification. The original public head 6b694a6b and unresolved human request remain unchanged; contributor review will follow the applicable analyzer results.\n\nPreserved earlier record:\n\nReviewed equivalent rebase published; current source CI and review remain separate. Exact head 6b694a6b05 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at d582fa067123 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved kernel-locking change is rebased and published at db1650842. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. Existing reviewer requests are preserved, and no approval was invalidated.\n\nThe current source passed the selected kernel, race and analyzer qualification. The rebase preserves upstream signal handling and the proposal’s TaskSet, signal and atomic ownership checks, parent-death-signal locking, signal-error lock reacquisition and exit-status read. No full-repository or ARM runtime result is claimed.",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "The four independent proposals have completed their applicable checks, and the contributor has received the pending decision. Corrected contracts 2a057f2b drops the iterator annotation that required deferred process-group annotations; executable Go is unchanged. Its standalone analyzer and both combined analyzers pass with explicit AMD64 and ARM64 results. The three behavioral proposals remain unchanged and independent. Their original standalone analyzers passed, and combined kernel normal/race checks each passed 116 XML records. The original contracts analyzer failures and five-source collection error remain recorded. The public head and unresolved maintainer split request are unchanged.\n\nPreserved earlier record:\n\nEtienne requested separating annotation-only contracts from changes that acquire locks. Four independent fork proposals are available on the same master 291de749 base: contracts 1eb4c14a, parent-death signal locking cad33143, signal-delivery error deadlock fbe4e871, and exit-notification status locking 9e9228f6. None depends on another proposal. Independent source review confirms identical executable Go in all nine contracts files and checks the three behavioral fixes separately. Per-source analyzers and the combined kernel normal/race checks are running in one qualification. The original public head 6b694a6b and unresolved human request remain unchanged; contributor review will follow the applicable analyzer results.\n\nPreserved earlier record:\n\nReviewed equivalent rebase published; current source CI and review remain separate. Exact head 6b694a6b05 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at d582fa067123 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved kernel-locking change is rebased and published at db1650842. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. Existing reviewer requests are preserved, and no approval was invalidated.\n\nThe current source passed the selected kernel, race and analyzer qualification. The rebase preserves upstream signal handling and the proposal’s TaskSet, signal and atomic ownership checks, parent-death-signal locking, signal-error lock reacquisition and exit-status read. No full-repository or ARM runtime result is claimed.",
       "followup": {
-        "disposition": "Maintainer split request owned; four independent proposals under validation",
+        "disposition": "Independent proposals validated; contributor decisions pending",
         "owner": "root",
-        "nextAction": "Finish each proposal's analyzer checks, then request the corresponding contributor decisions. Preserve the unresolved maintainer request and original public head; do not request another maintainer review yet.",
+        "nextAction": "Await the existing contributor decisions, then publish the approved independent boundaries and a substantive response to the original split request. Do not modify the public head or request another maintainer review before those decisions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
           "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55",
@@ -1443,13 +1443,16 @@
           "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c",
           "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
           "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
-          "https://app.buildbuddy.io/invocation/07f41d88-2c5b-45aa-b356-5acafd15223b"
+          "https://app.buildbuddy.io/invocation/07f41d88-2c5b-45aa-b356-5acafd15223b",
+          "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176",
+          "https://app.buildbuddy.io/invocation/6c8cf99e-82cb-46b3-9bb5-947ebf1bbc91",
+          "https://app.buildbuddy.io/invocation/ddd408f5-5150-43de-a5d1-4d86ca9fd0dc"
         ],
         "reviewedAt": "2026-10-15T22:59:23.496825+00:00",
         "sourceHead": "6b694a6b05952e47e4d359981ec39514017131fd",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-24T07:24:49.949626+00:00"
+        "observedAt": "2026-10-24T08:04:17.317854+00:00"
       },
       "head": "6b694a6b05952e47e4d359981ec39514017131fd",
       "evidence": [
@@ -1484,6 +1487,18 @@
         {
           "label": "Current per-source analyzer and combined kernel qualification",
           "url": "https://app.buildbuddy.io/invocation/07f41d88-2c5b-45aa-b356-5acafd15223b"
+        },
+        {
+          "label": "Corrected independent contracts",
+          "url": "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176"
+        },
+        {
+          "label": "Corrected contracts analyzer",
+          "url": "https://app.buildbuddy.io/invocation/6c8cf99e-82cb-46b3-9bb5-947ebf1bbc91"
+        },
+        {
+          "label": "Corrected combined analyzers",
+          "url": "https://app.buildbuddy.io/invocation/ddd408f5-5150-43de-a5d1-4d86ca9fd0dc"
         }
       ],
       "refinement": {
@@ -4957,23 +4972,25 @@
       "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
       "status": "open",
-      "head": "4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 4df7e4d4c5e4 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nRoot refreshed this change onto current master. The exact published head is 40c98de22; current CI and mergeability are reported in the snapshot. Earlier validation remains tied to its recorded source; no new runtime pass is inferred from the rebase.",
+      "head": "24a215d72d01102b08ceb27bccd656bd3b258a4a",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "The equivalent source-order rebase is published at 24a215d72d and verified mergeable against current master d15d5319. It preserves landed #15648 canonical source membership/order and all three helpers, while native test forwarding is unchanged. Five uncached remote Go/C++ AMD64/ARM64 and both-CPU analyzer owners passed, totaling 21,873 positive XML records. Independent review verifies all four native OCI architecture joins and exact report identities.\n\nThe original outer run remains FAIL because the callback counted the separate analyzer XML generator as another test process and expected stdout logs among file outputs. Retained-only reconciliation and its independent peer confirm passing product validation without a workload replay. Native completion to automatic receipt took 20.109248 seconds; the later reconciliation is separate. The exact lease replaced 4df7e4d4, and existing title, body and reviewer requests are unchanged. No prior approval, reminder or new race/performance result is claimed.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4df7e4d4c5e4 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nRoot refreshed this change onto current master. The exact published head is 40c98de22; current CI and mergeability are reported in the snapshot. Earlier validation remains tied to its recorded source; no new runtime pass is inferred from the rebase.",
       "followup": {
-        "disposition": "Rebase published; current checks and review tracked",
-        "owner": "external_sweeps",
-        "nextAction": "Observe exact-head checks, reviews and import lineage. Route new actionable failures immediately; do not duplicate the writer or review notice.",
-        "sourceHead": "4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d",
+        "disposition": "Equivalent rebase published; native product validation accepted",
+        "owner": "work_map_current",
+        "nextAction": "Observe current-head public CI, review and import through the existing refresh. Preserve the original outer reporting failure and prior native evidence; no duplicate review notice.",
+        "sourceHead": "24a215d72d01102b08ceb27bccd656bd3b258a4a",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15370",
           "https://github.com/tamird/gvisor/commit/6822132f065661a1b6dff1aabbc388c82233449c",
-          "https://github.com/tamird/gvisor/commit/4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d"
+          "https://github.com/tamird/gvisor/commit/4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d",
+          "https://github.com/tamird/gvisor/commit/24a215d72d01102b08ceb27bccd656bd3b258a4a",
+          "https://app.buildbuddy.io/invocation/651c5783-a7e1-4e69-bed9-7ea3323d2ce2"
         ],
-        "observedAt": "2026-10-22T00:33:19.689675+00:00"
+        "observedAt": "2026-10-24T08:12:31.195104+00:00"
       },
       "number": 15370,
       "reviewDecision": null,
@@ -4981,8 +4998,24 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d"
+        },
+        {
+          "label": "Reviewed equivalent composition",
+          "url": "https://github.com/tamird/gvisor/commit/24a215d72d01102b08ceb27bccd656bd3b258a4a"
+        },
+        {
+          "label": "Actual native architecture validation",
+          "url": "https://app.buildbuddy.io/invocation/651c5783-a7e1-4e69-bed9-7ea3323d2ce2"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d"
+        },
+        "after": {
+          "head": "24a215d72d01102b08ceb27bccd656bd3b258a4a"
+        }
+      }
     },
     {
       "id": "pr:15371",
@@ -5503,19 +5536,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcpip-netip-core",
-      "head": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
+      "head": "dfeae7ce92eac6fad1b1660e029faef8407c9b3a",
       "title": "Use netip types throughout the network stack",
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
-      "summary": "The current public c8ac4368 head conflicts with actual master 291de749 after the IPv6 forwarded-checksum fix landed as #16095. Independent Git merge testing distinguishes that pair from the older provider base 97dad50c, which still merges cleanly. The owner has composed dfeae7ce locally: all 166 topic paths remain, 164 changed-line streams are identical, and the two test streams adapt only the landed checksum cases to netip while retaining the required tcpip import. Owning remote checks and publication are pending; no new public amendment or reviewer notification is claimed.\n\nPreserved earlier record:\n\nThe contributor-approved route conflict repair is published at c8ac4368c9. GitHub verified it mergeable against master 97dad50c33. It preserves landed family/type/gateway validation and destination padding, and checks the netip address conversion result. Independent review confirms the other 165 changed-line streams are unchanged and the final guard preserves reachable behavior. Eight qualification phases, eleven uncached owners and 660 positive XML records passed, including nineteen exact route/multicast cases in each Linux/directfs/shared mode. Current-head public checks are running. Both historical review threads remain resolved, and the existing maintainer review requests are pending; no prior approval was invalidated, no reminder was eligible and no public comment was added.\n\nThe separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. The separate profile run timed out decoding the six before-side profiles, so there is no before/after profile comparison.\n\nEarlier delivered head 21b2d0c82f was verified mergeable before the new route-validation change landed. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Generate status follows the current provider snapshot. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "The reviewed checksum conflict composition is published at dfeae7ce92 and was verified mergeable against GitHub base 3f738cc1a9. All 166 topic paths decompose as the prior netip patch plus landed #16095; the affected tests preserve the tcpip protocol-number import. Five genuinely remote uncached owners passed 1,478 XML records, including fourteen required checksum cases and explicit both-CPU analyzer results. The authenticated result followed native completion by 3.501309 seconds. Existing review requests and prior approval provenance are unchanged.\n\nThe separate current-source export qualification also passes: six uncached remote ExportedGoBuild actions cover Darwin/ARM64, Windows/AMD64, FreeBSD/AMD64, OpenBSD/AMD64, Linux/MIPS and Linux/AMD64 with cgo. Ten AMD64/ARM64 compiler actions and six copied outputs are joined through GoPath to the exact exported archive; all seven final outputs, SDK and proxy witnesses are authenticated. This is cross-compilation evidence, with no target-OS runtime claim. A retained-only parser correction accounts for the shared trailing BEP flag; the original projection failure and two earlier native preparation/compiler failures remain preserved. Native completion to automatic verification took 120.790073 seconds, with no workload replay.\n\nPreserved earlier record:\n\nThe current public c8ac4368 head conflicts with actual master 291de749 after the IPv6 forwarded-checksum fix landed as #16095. Independent Git merge testing distinguishes that pair from the older provider base 97dad50c, which still merges cleanly. The owner has composed dfeae7ce locally: all 166 topic paths remain, 164 changed-line streams are identical, and the two test streams adapt only the landed checksum cases to netip while retaining the required tcpip import. Owning remote checks and publication are pending; no new public amendment or reviewer notification is claimed.\n\nPreserved earlier record:\n\nThe contributor-approved route conflict repair is published at c8ac4368c9. GitHub verified it mergeable against master 97dad50c33. It preserves landed family/type/gateway validation and destination padding, and checks the netip address conversion result. Independent review confirms the other 165 changed-line streams are unchanged and the final guard preserves reachable behavior. Eight qualification phases, eleven uncached owners and 660 positive XML records passed, including nineteen exact route/multicast cases in each Linux/directfs/shared mode. Current-head public checks are running. Both historical review threads remain resolved, and the existing maintainer review requests are pending; no prior approval was invalidated, no reminder was eligible and no public comment was added.\n\nThe separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. The separate profile run timed out decoding the six before-side profiles, so there is no before/after profile comparison.\n\nEarlier delivered head 21b2d0c82f was verified mergeable before the new route-validation change landed. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Generate status follows the current provider snapshot. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
-        "owner": "root",
-        "disposition": "Confirmed current-master conflict; source composition reviewed, validation pending",
-        "sourceHead": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
-        "observedAt": "2026-10-24T07:24:49.949626+00:00",
-        "nextAction": "Validate the owning stack/integration regressions and current export compilation, then handle authorized publication against the live head. Preserve prior evidence for untouched code; no maintainer reminder while conflicted.",
+        "owner": "work_map_current",
+        "disposition": "Published checksum composition; native and export checks passed",
+        "sourceHead": "dfeae7ce92eac6fad1b1660e029faef8407c9b3a",
+        "observedAt": "2026-10-24T08:04:17.317854+00:00",
+        "nextAction": "Observe current-head public CI, maintainer feedback and import through the existing refresh. Keep native runtime and six-platform compile-only evidence distinct; no duplicate reviewer notice.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#issuecomment-6255243662",
           "https://github.com/google/gvisor/pull/15730#discussion_r4269557939",
@@ -5533,7 +5566,10 @@
           "https://github.com/tamird/gvisor/commit/fff01b41babf0990f4deebe3c2befaa89ff6bc16",
           "https://app.buildbuddy.io/invocation/5599e79c-8d5b-422d-ad5c-d8d5e7bf65bc",
           "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2",
-          "https://github.com/google/gvisor/pull/16095"
+          "https://github.com/google/gvisor/pull/16095",
+          "https://github.com/tamird/gvisor/commit/dfeae7ce92eac6fad1b1660e029faef8407c9b3a",
+          "https://app.buildbuddy.io/invocation/48f602fd-82c0-4281-8378-e1edaec22f24",
+          "https://app.buildbuddy.io/invocation/beaa59c7-c23e-43da-a050-1f038d086d3c"
         ],
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "CONFLICTING"
@@ -5610,15 +5646,27 @@
         {
           "label": "Landed IPv6 forwarded-checksum fix",
           "url": "https://github.com/google/gvisor/pull/16095"
+        },
+        {
+          "label": "Published checksum composition",
+          "url": "https://github.com/tamird/gvisor/commit/dfeae7ce92eac6fad1b1660e029faef8407c9b3a"
+        },
+        {
+          "label": "Five remote checksum owners and analyzers",
+          "url": "https://app.buildbuddy.io/invocation/48f602fd-82c0-4281-8378-e1edaec22f24"
+        },
+        {
+          "label": "Six-platform current-source export compilation",
+          "url": "https://app.buildbuddy.io/invocation/beaa59c7-c23e-43da-a050-1f038d086d3c"
         }
       ],
       "number": 15730,
       "refinement": {
         "before": {
-          "head": "21b2d0c82f85271d12755de263971c2e9a52b1a0"
+          "head": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
         },
         "after": {
-          "head": "c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
+          "head": "dfeae7ce92eac6fad1b1660e029faef8407c9b3a"
         }
       }
     },
@@ -10432,22 +10480,24 @@
       "head": "1c78239707ec090d2f02df86814773b3dbf24f7e",
       "title": "Build the Ollama image client with Bazel",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/1c78239707ec090d2f02df86814773b3dbf24f7e",
-      "status": "Approved; waiting for CUDA prerequisite",
-      "updatedAt": "2026-10-12T17:53:37.059429+00:00",
-      "summary": "This five-file extraction builds the Ollama HTTP client with the repository Go SDK, puts its static executable in the shared architecture-selected image context, and stages that context before Make computes cache tags. It depends on the independent CUDA context and Make-staging proposal.\n\nCurrent-source validation 6d974950 at 487930221 is independently verified: two architecture archives each contain three static helpers, both actual Make entrypoints produce the canonical Ollama tag, and the client analyzer consumes source-bound findings for both CPUs. The earlier qualified integration separately exercised the actual AMD64 client image and CPU HTTP behavior; that runtime was not repeated here. No model or GPU execution is claimed.\n\nThe extraction is rebased onto corrected CUDA source eba5e3c83 as public 1c7823970. Its own patch is unchanged; the only inherited tree changes are the two requested CUDA local snapshots. The user approved this exact head. Upstream submission is authorized after CUDA PR #15670 lands; an unchanged patch or a rebase preserving that patch does not require another contributor question. The separate native-image/Make experiment is not included in this approval.",
+      "url": "https://github.com/google/gvisor/pull/16333",
+      "status": "Delivered as PR #16333",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "The approved client extraction is delivered as PR #16333 at 462d71abc8 after CUDA prerequisite #15670 merged. The contributor grant is consumed; no repeated decision or new runtime result is claimed. Current public CI and maintainer review follow the PR. Its Make staging recipe overlaps the separately owned #16097 reconciliation, so whichever lands second must be checked against the landed recipe.\n\nPreserved approved-source record:\n\nThis five-file extraction builds the Ollama HTTP client with the repository Go SDK, puts its static executable in the shared architecture-selected image context, and stages that context before Make computes cache tags. It depends on the independent CUDA context and Make-staging proposal.\n\nCurrent-source validation 6d974950 at 487930221 is independently verified: two architecture archives each contain three static helpers, both actual Make entrypoints produce the canonical Ollama tag, and the client analyzer consumes source-bound findings for both CPUs. The earlier qualified integration separately exercised the actual AMD64 client image and CPU HTTP behavior; that runtime was not repeated here. No model or GPU execution is claimed.\n\nThe extraction is rebased onto corrected CUDA source eba5e3c83 as public 1c7823970. Its own patch is unchanged; the only inherited tree changes are the two requested CUDA local snapshots. The user approved this exact head. Upstream submission is authorized after CUDA PR #15670 lands; an unchanged patch or a rebase preserving that patch does not require another contributor question. The separate native-image/Make experiment is not included in this approval.",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Contributor approved; CUDA prerequisite landing remains",
+        "owner": "work_map_current",
+        "disposition": "Delivered after CUDA prerequisite merged",
         "sourceHead": "1c78239707ec090d2f02df86814773b3dbf24f7e",
         "reviewedAt": "2026-10-12T17:53:37.059429+00:00",
-        "nextAction": "Open the prepared Ollama client PR after #15670 lands, preserving the approved patch, reviewed message and attribution. Do not repeat the contributor question for an unchanged patch or equivalent rebase.",
+        "nextAction": "Follow current-head checks and review on PR #16333. Track the shared Make staging recipe with #16097; no further contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4879302217c39ea7d088cf05346e29517e7c203a",
           "https://app.buildbuddy.io/invocation/6d974950-1626-4b1c-a85d-279b4106c13e",
           "https://github.com/tamird/gvisor/commit/1c78239707ec090d2f02df86814773b3dbf24f7e",
-          "https://github.com/google/gvisor/pull/15670"
-        ]
+          "https://github.com/google/gvisor/pull/15670",
+          "https://github.com/google/gvisor/pull/16333"
+        ],
+        "observedAt": "2026-10-24T08:08:34.593247+00:00"
       }
     },
     {
@@ -17875,14 +17925,14 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 5841fe0ef3c0 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as ready PR #16098 at signed 9709cd33f8. The requested errors.Join cleanup and measured performance context are complete. The final commit changes only the message from the measured source. Six complete serial warm-file-cache action passes include the full standard library and newly analyzed generated/runtime packages: the two measured baseline samples took 83.507 and 85.435 seconds, versus 84.840 and 84.955 seconds for the candidate. This is descriptive analyzer/export pipeline context, not whole-build latency, statistical significance or a memory-regression claim. Accepted normal/race results, focused Join validation and original failed attempts retain their exact source identities. Current-head CI and maintainer review remain; no contributor decision is pending.",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "The public 5841fe0e head conflicts with landed #15648 source helpers/order. Independent source review accepts the narrowed composition fd6ad080: canonical GoInfo source membership, test embed prepend order and source-only dependency guards are preserved; protobuf export implementation is unchanged. The focused qualification has completed native and projection PASS with nine uncached owners, 32 XML records, both-CPU analyzer evidence, exact compiler/analyzer source-order checks and generated protobuf exports. Independent retained-result review is pending. The formatter request was corrected before launch to the current declared goimports route. No public amendment or new performance result is claimed.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 5841fe0ef3c0 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as ready PR #16098 at signed 9709cd33f8. The requested errors.Join cleanup and measured performance context are complete. The final commit changes only the message from the measured source. Six complete serial warm-file-cache action passes include the full standard library and newly analyzed generated/runtime packages: the two measured baseline samples took 83.507 and 85.435 seconds, versus 84.840 and 84.955 seconds for the candidate. This is descriptive analyzer/export pipeline context, not whole-build latency, statistical significance or a memory-regression claim. Accepted normal/race results, focused Join validation and original failed attempts retain their exact source identities. Current-head CI and maintainer review remain; no contributor decision is pending.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Delivered; awaiting maintainer review",
+        "owner": "hostinet_delivery",
+        "disposition": "Source-order composition qualified; independent retained review pending",
         "sourceHead": "5841fe0ef3c0344a39f78130fcbda1502e7195d6",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow PR #16098 through the existing CI/review cadence. The conditional contributor requirements and delivery are complete.",
+        "observedAt": "2026-10-24T08:04:17.317854+00:00",
+        "nextAction": "Finish the retained-result peer, then send the validated composition and range-diff to root for the scope-appropriate delivery decision. Preserve current review/import provenance and earlier performance evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16098",
           "https://github.com/tamird/gvisor/commit/9709cd33f8079332a3ca4ea989ef815520b50c48",
@@ -17891,7 +17941,9 @@
           "https://github.com/tamird/gvisor/commit/802a775bf922f09dbe03927233c81f92aeb7a1a0",
           "https://app.buildbuddy.io/invocation/316ef638-9097-432b-bb44-3b9d3afc45b5",
           "https://app.buildbuddy.io/invocation/0317e7cc-e806-4979-8459-df82dc2cafd8",
-          "https://github.com/tamird/gvisor/commit/5841fe0ef3c0344a39f78130fcbda1502e7195d6"
+          "https://github.com/tamird/gvisor/commit/5841fe0ef3c0344a39f78130fcbda1502e7195d6",
+          "https://github.com/tamird/gvisor/commit/fd6ad08032cefdd0f256317993ff51b216453b89",
+          "https://app.buildbuddy.io/invocation/728d17f2-f810-428b-8d23-d5e2d5821e46"
         ]
       },
       "evidence": [
@@ -17918,6 +17970,14 @@
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/5841fe0ef3c0344a39f78130fcbda1502e7195d6"
+        },
+        {
+          "label": "Reviewed source-order composition",
+          "url": "https://github.com/tamird/gvisor/commit/fd6ad08032cefdd0f256317993ff51b216453b89"
+        },
+        {
+          "label": "Focused current-source validation",
+          "url": "https://app.buildbuddy.io/invocation/728d17f2-f810-428b-8d23-d5e2d5821e46"
         }
       ],
       "refinement": {
@@ -18022,18 +18082,21 @@
       "url": "https://github.com/google/gvisor/pull/16097",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-24T02:33:20.986068+00:00",
-      "summary": "The quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil’s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "After #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil’s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
       "followup": {
-        "owner": "work_map_current",
+        "owner": "root",
         "sourceHead": "c27866684d5b3f68b0120741e3e96be724a5b07a",
-        "observedAt": "2026-10-24T02:26:14Z",
-        "disposition": "Equivalent approved patch rebased; follow current-head checks and public export",
-        "nextAction": "Use the existing watcher for current-head checks/export and human feedback. Preserve the original approval provenance; no new reviewer reminder for this equivalent rebase.",
+        "observedAt": "2026-10-24T08:04:17.317854+00:00",
+        "disposition": "Confirmed images.mk conflict; root owns source reconciliation",
+        "nextAction": "Root owns the single source reconciliation and qualification, preserving both generic and CUDA context staging. Keep existing import #16307 unchanged. Track the shared Make recipe with newly opened Ollama #16333 and reconcile whichever lands second; no duplicate import owner or reviewer reminder while conflicted.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/google/gvisor/pull/16097#pullrequestreview-5621263069",
-          "https://github.com/tamird/gvisor/commit/c27866684d5b3f68b0120741e3e96be724a5b07a"
+          "https://github.com/tamird/gvisor/commit/c27866684d5b3f68b0120741e3e96be724a5b07a",
+          "https://github.com/google/gvisor/pull/16307",
+          "https://github.com/google/gvisor/pull/15670",
+          "https://github.com/google/gvisor/pull/16333"
         ]
       },
       "evidence": [
@@ -18064,6 +18127,14 @@
         {
           "label": "Actual final-head both-architecture output identity",
           "url": "https://app.buildbuddy.io/invocation/85cbd208-acc4-4597-b34a-3a3bf86fcb47"
+        },
+        {
+          "label": "Current public import",
+          "url": "https://github.com/google/gvisor/pull/16307"
+        },
+        {
+          "label": "Landed CUDA image context prerequisite",
+          "url": "https://github.com/google/gvisor/pull/15670"
         }
       ],
       "refinement": {
@@ -20932,6 +21003,32 @@
           "url": "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
         }
       ]
+    },
+    {
+      "id": "pr:16333",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16333,
+      "ref": "ollama-bazel-client",
+      "head": "462d71abc83b38ccd48c40146537f93e3bb3768b",
+      "title": "Build the Ollama image client with Bazel",
+      "url": "https://github.com/google/gvisor/pull/16333",
+      "group": "rbe",
+      "status": "open",
+      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
+      "summary": "The approved Ollama client extraction is published after #15670 merged. Earlier source-built two-architecture archive, Make entrypoint and analyzer evidence remains tied to its original sources; current public CI and maintainer review are separate. This PR and #16097 touch the image context-staging recipe, so the second landing requires source reconciliation. No model or GPU execution is claimed.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "462d71abc83b38ccd48c40146537f93e3bb3768b",
+        "observedAt": "2026-10-24T08:08:34.593247+00:00",
+        "disposition": "Approved child delivered; public checks and review pending",
+        "nextAction": "Follow exact-head public CI, review and import. Coordinate the shared Make recipe with root-owned #16097; no duplicate contributor request.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16333",
+          "https://github.com/google/gvisor/pull/15670",
+          "https://github.com/google/gvisor/pull/16097"
+        ]
+      }
     }
   ],
   "edges": [
@@ -22294,9 +22391,9 @@
     },
     {
       "from": "pr:15670",
-      "to": "branch:ollama-bazel-client",
+      "to": "pr:16333",
       "type": "depends_on",
-      "reason": "The Ollama client uses context creation and Make staging introduced by PR #15670; upstream submission waits for that prerequisite to land.",
+      "reason": "Landed prerequisite: the Ollama client uses the CUDA context creation and Make staging introduced by PR #15670.",
       "evidence": "https://github.com/google/gvisor/pull/15670"
     },
     {
@@ -23343,6 +23440,13 @@
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a"
       ]
+    },
+    {
+      "from": "branch:ollama-bazel-client",
+      "to": "pr:16333",
+      "type": "includes",
+      "reason": "The previously approved Ollama client extraction is delivered by this PR; the branch record preserves its original source evidence.",
+      "evidence": "https://github.com/google/gvisor/pull/16333"
     }
   ],
   "investigations": [
