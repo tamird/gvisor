@@ -18,6 +18,11 @@ from docker_checkpoint import materialize_carrier, dedup_preflight
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+    diagnostic = config.get("lifecycle_debug", False)
+    if type(diagnostic) is not bool:
+        raise ValueError("lifecycle_debug must be a boolean")
+    if diagnostic != ("qualified_outputs" in config):
+        raise ValueError("Debug diagnostics require the prior qualified output identities")
     source = config["source"]
     workspace = Path.cwd()
     package = workspace / "test/rbe/state_array_pair"
@@ -30,6 +35,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
               "status": "INCOMPLETE", "builds": [], "cleanup": "INCOMPLETE"}
     inputs = {"harnesses": {}, "runtimes": {}, "benchstat": config["benchstat"],
               "oci_bundle_root": config["oci_bundle_root"]}
+    if diagnostic:
+        inputs["lifecycle_debug"] = True
     if "codec_modes" in config:
         if config["codec_modes"] != {"before": "legacy", "after": "typed"}:
             raise ValueError("Expected legacy versus typed codec selection")
@@ -87,6 +94,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if len(owners) != 2 or {owner.label for owner in owners} != set(build_targets):
                 raise ValueError("Unexpected configured build owners")
             outputs = report.advertised_build_outputs(directory / "events.jsonl", {(owner, "default") for owner in owners})
+            if diagnostic:
+                actual = {item["name"]: {key: item[key] for key in ("bytes", "sha256")}
+                          for item in outputs}
+                if len(actual) != len(outputs) or actual != config["qualified_outputs"][side]:
+                    raise ValueError("Diagnostic outputs differ from the qualified lifecycle binaries: " + side)
             match [item for item in outputs if item["identity"]["label"] == benchmark]:
                 case [harness]:
                     pass
@@ -191,8 +203,13 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 directory = evidence / (side + "-runtime")
                 directory.mkdir()
                 name = "runsc-state-kernel-" + side
+                runtime_flags = ["--platform=systrap"]
+                if diagnostic:
+                    # Retain hook and RPC markers. Boot debug also enables state
+                    # statistics, so these observations are diagnostic only.
+                    runtime_flags += ["--debug=true", "--debug-command=restore,checkpoint,boot"]
                 runtime = scopes.enter_context(prepared_runtime(directory / "runtime.json", runtime_directory, {
-                    "runtime_name": name, "runtime_flags": ["--platform=systrap"],
+                    "runtime_name": name, "runtime_flags": runtime_flags,
                     "image_name": "benchmarks/nginx", "lifecycle_only": True, "cleanup_reserve_seconds": 90,
                     "docker_experimental": True, "docker_version": "24.0.9", "docker_binary": carrier["dockerd"],
                     "retained_release_files": retained, "release_supplier": {"source": revision},

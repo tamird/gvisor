@@ -137,6 +137,9 @@ def main(reporter: Path) -> int:
     output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
     xml = Path(os.environ["XML_OUTPUT_FILE"])
     manifest = json.loads((package / "inputs.json").read_text())
+    diagnostic = manifest.get("lifecycle_debug", False)
+    if type(diagnostic) is not bool:
+        raise ValueError("lifecycle_debug must be a boolean")
     if os.uname().machine != "x86_64" or os.geteuid() != 0:
         raise ValueError("Checkpoint benchmark requires a root AMD64 worker")
     if set(manifest["harnesses"]) != {"before", "after"} or set(manifest["runtimes"]) != {"before", "after"}:
@@ -167,6 +170,9 @@ def main(reporter: Path) -> int:
     check_daemon(manifest["daemon"])
     initial_containers = containers()
     plan = cohort()
+    if diagnostic:
+        plan = [Sample(f"diagnostic-{index // 2:02d}-{side}", side, "1x", False)
+                for index, side in enumerate(("before", "after", "after", "before"))]
     write_json(output / "selection.json", [asdict(row) for row in plan])
     write_json(output / "inputs.json", manifest)
     write_json(output / "host.json", {
@@ -320,6 +326,9 @@ def main(reporter: Path) -> int:
                 benchfiles[sample.side].extend(lines)
         write_json(output / "process-results.json", completed)
         print("PAIR_RESULTS " + json.dumps(completed), flush=True)
+        if diagnostic:
+            status = 0
+            return cancellation or status
         for side, lines in benchfiles.items():
             (output / (side + ".bench")).write_text(
                 "goos: linux\ngoarch: amd64\npkg: gvisor.dev/gvisor/test/benchmarks/checkpointfile\n" + "\n".join(lines) + "\n")
