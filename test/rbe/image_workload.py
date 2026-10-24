@@ -82,7 +82,20 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         outputs = report.advertised_build_outputs(directory / "events.jsonl", {(owner, "default") for owner in owners})
         release = [item for item in outputs if item["identity"]["label"] == "//:release"]
         actual = {item["name"]: {key: item[key] for key in ("bytes", "sha256")} for item in release}
-        if len(release) != 8 or actual != config["qualified_release_outputs"]:
+        qualified = config["qualified_release_outputs"]
+        if len(release) != 8 or set(actual) != set(qualified):
+            raise ValueError("Release output census differs from the qualified control")
+        if config.get("root_census", False):
+            # The diagnostic changes the sentry. The materialization and install
+            # checks below still bind every binary to this build's BEP digest.
+            sentry = "bazel-out/k8-opt/bin/release/gvisor-bin/gvisor_sentry"
+            if actual[sentry] == qualified[sentry]:
+                raise ValueError("The control sentry was built instead of the instrumented one")
+            for script in ("gvisor-proc-umounter", "gvisor-sentry-prewarmer", "runsc-fd-parking"):
+                name = "bazel-out/k8-opt/bin/release/gvisor-bin/" + script
+                if actual[name] != qualified[name]:
+                    raise ValueError("Unchanged release helper differs from the control: " + name)
+        elif actual != qualified:
             raise ValueError("Runtime differs from the qualified typed lifecycle release")
         match [item for item in outputs if item["identity"]["label"] == target]:
             case [test_binary]:
@@ -152,6 +165,29 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             if observed != runtime["fixture_daemon"]:
                 raise ValueError("Checkpoint used a changed Docker daemon")
             record["daemon_after_test"] = observed
+        if config.get("root_census", False):
+            restored = []
+            for path in (runtime_evidence / "runsc-logs").glob("*.boot.txt"):
+                text = path.read_text()
+                if "Kernel load stats: " in text:
+                    restored.append((path, text))
+            (path, text), = restored
+            _, table = text.split("Kernel load stats: ")
+            table, _ = table.split("Kernel load took [", 1)
+            counts = {}
+            for line in table.splitlines():
+                if not line.startswith("STATE_ROOT\t"):
+                    continue
+                _, site, count, size, package, typ = line.split("\t", 5)
+                count, size = int(count), int(size)
+                key = (site, package, typ)
+                if key in counts or site not in ("interior", "standalone", "pointer") or count <= 0 or size < 0:
+                    raise ValueError("Invalid root allocation row: " + line)
+                counts[key] = {"site": site, "package": package, "type": typ, "count": count, "object_bytes": size}
+            if not counts:
+                raise ValueError("The restored kernel reported no typed root allocations")
+            record["root_census"] = {"log": str(path.relative_to(evidence)), **report.file_record(path),
+                                     "rows": [counts[key] for key in sorted(counts)]}
         record["status"] = "PASS"
     finally:
         cleanup_started = True

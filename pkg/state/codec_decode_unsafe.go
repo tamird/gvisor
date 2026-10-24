@@ -209,6 +209,18 @@ type fieldKey struct {
 	name string
 }
 
+// allocateRoot records the type of the entire allocation, which may differ
+// from the type of an interior pointer into it.
+func (ds *decodeState) allocateRoot(typ reflect.Type, site string) unsafe.Pointer {
+	if ds.stats.enabled {
+		if ds.stats.roots == nil {
+			ds.stats.roots = make(map[restoreRoot]uint64)
+		}
+		ds.stats.roots[restoreRoot{site: site, typ: typ}]++
+	}
+	return reflect.New(typ).UnsafePointer()
+}
+
 // target reads the dots and type of a reference to a part of the object
 // root (see ref), of type typ, and returns its address. Dots are walked by
 // reflection, but without allocating.
@@ -240,7 +252,7 @@ func (d *Decoder) target(root objectID, typ reflect.Type) unsafe.Pointer {
 	ods := ds.objectsByID[root-1]
 	if ods == nil {
 		otyp := ds.findType(spec)
-		ods = ds.newObject(root, reflect.New(otyp).UnsafePointer(), otyp, nil, nil)
+		ods = ds.newObject(root, ds.allocateRoot(otyp, "interior"), otyp, nil, nil)
 	}
 	// Dots are in reverse order; field names are in order in names.
 	obj := ods.obj
@@ -326,7 +338,7 @@ func (ds *decodeState) loadStandalone(id objectID, ods *objectDecodeState) {
 	n := wire.ReadUint(&ds.r)
 	if _, ok := spec.(wire.TypeSpecNil); ods == nil && !ok {
 		typ := ds.findType(spec)
-		ods = ds.newObject(id, reflect.New(typ).UnsafePointer(), typ, nil, nil)
+		ods = ds.newObject(id, ds.allocateRoot(typ, "standalone"), typ, nil, nil)
 	}
 	if ods != nil && (ods.dec != nil || ods.obj.Kind() == reflect.Struct) {
 		ds.decodeTop(&ds.dec, ods)
@@ -474,7 +486,7 @@ func (d *Decoder) pointer(p unsafe.Pointer, typ reflect.Type) {
 		*(*unsafe.Pointer)(p) = ods.ptr
 		return
 	}
-	*(*unsafe.Pointer)(p) = d.ds.newObject(root, reflect.New(typ).UnsafePointer(), typ, nil, nil).ptr
+	*(*unsafe.Pointer)(p) = d.ds.newObject(root, d.ds.allocateRoot(typ, "pointer"), typ, nil, nil).ptr
 }
 
 // sliceDecoder decodes arrays backing []T slices.

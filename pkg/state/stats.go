@@ -17,6 +17,7 @@ package state
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"sort"
 	"time"
 
@@ -45,6 +46,10 @@ type statEntry struct {
 //
 // All exported receivers accept nil.
 type Stats struct {
+	// roots counts allocations made when a typed reference or standalone
+	// record first identifies an object. Fields decoded into it do not count.
+	roots map[restoreRoot]uint64
+
 	// byType contains a breakdown of time spent by type.
 	//
 	// This is indexed *directly* by typeID, including zero.
@@ -127,6 +132,11 @@ type sliceEntry struct {
 	entry *statEntry
 }
 
+type restoreRoot struct {
+	site string
+	typ  reflect.Type
+}
+
 // String returns a table representation of the stats.
 func (s *Stats) String() string {
 	if !s.enabled {
@@ -170,5 +180,8 @@ func (s *Stats) String() string {
 	buf.WriteString("-----------------+----------+------------------+----------------\n")
 	fmt.Fprintf(&buf, "% 16s | % 8d | % 16s | [all]",
 		total, count, total/time.Duration(count))
+	for root, n := range s.roots {
+		fmt.Fprintf(&buf, "\nSTATE_ROOT\t%s\t%d\t%d\t%s\t%s", root.site, n, root.typ.Size(), root.typ.PkgPath(), root.typ.String())
+	}
 	return buf.String()
 }
