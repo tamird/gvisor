@@ -403,7 +403,7 @@ func TestCodecForeignArrayValues(t *testing.T) {
 				{"mixed", foreign.FloatArray{negativeZero, 9}},
 			} {
 				t.Run(test.name, func(t *testing.T) {
-					for _, location := range []string{"map", "array", "field"} {
+					for _, location := range []string{"map", "array", "initialized_array", "field"} {
 						t.Run(location, func(t *testing.T) {
 							root := foreignArrayValues{Neighbor: 42}
 							dst := foreignArrayValues{Neighbor: 7}
@@ -411,8 +411,11 @@ func TestCodecForeignArrayValues(t *testing.T) {
 							switch location {
 							case "map":
 								root.Map = map[int]foreign.FloatArray{0: test.value, 1: {9, 9}}
-							case "array":
+							case "array", "initialized_array":
 								root.Array = [2]foreign.FloatArray{test.value, {9, 9}}
+								if location == "initialized_array" {
+									dst.Array = [2]foreign.FloatArray{{7, 7}, {7, 7}}
+								}
 							case "field":
 								root.Field = test.value
 								dst.Field = foreign.FloatArray{7, 7}
@@ -446,7 +449,7 @@ func TestCodecForeignArrayValues(t *testing.T) {
 								if !ok {
 									t.Fatal("Map is missing key 0")
 								}
-							case "array":
+							case "array", "initialized_array":
 								if got, want := dst.Array[1], (foreign.FloatArray{9, 9}); got != want {
 									t.Fatalf("Array[1] = %v, want %v", got, want)
 								}
