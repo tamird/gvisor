@@ -62,6 +62,9 @@ const (
 )
 
 // AppendUint appends the encoding of a Uint.
+// Keep one copy of the varint loop for generated struct encoders.
+//
+//go:noinline
 func AppendUint(b []byte, u uint64) []byte {
 	for u >= 0x80 {
 		b = append(b, byte(u)|0x80)
