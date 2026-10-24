@@ -10,14 +10,115 @@ import subprocess
 import sys
 import time
 from urllib.parse import unquote, urlsplit
+import urllib.request
 
 import qualification_report as report
 from docker_checkpoint import materialize_carrier
 from image_runtime import prepared_runtime
 
 
+def check_input_files(config: dict) -> None:
+    for name, expected in config["matched_inputs"].items():
+        path = Path(name)
+        data = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError("Qualification source input changed: " + name)
+
+
+def decode_profile(invoke, evidence: Path, profile: Path, output: Path) -> dict:
+    """Decode embedded symbols with the repository's declared pprof dependency."""
+    output.mkdir(exist_ok=True)
+    target = "@com_github_google_pprof//:pprof"
+    options = ["--config=x86_64", "--compilation_mode=opt", "--nostamp", "--lockfile_mode=error",
+               "--remote_download_outputs=all", "--noannounce_rc"]
+    built = invoke("profile-reader-build", ["build", *options, target], "build", targets=[target])
+    if built["status"] != "PASS" or built["native_exit"] != 0:
+        raise RuntimeError("Declared pprof build failed")
+    owners = {report.Owner(row["label"], row["configuration"]) for row in built["expected"]}
+    if len(owners) != 1:
+        raise ValueError("Expected one configured pprof owner")
+    reader, = report.advertised_build_outputs(evidence / "invocation-profile-reader-build" / "events.jsonl",
+                                             {(owner, "default") for owner in owners})
+    uri = urlsplit(reader["uri"])
+    if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
+        raise ValueError("Profile reader output was not materialized")
+    executable = Path(unquote(uri.path)).resolve(strict=True)
+    executable.relative_to(Path(os.environ["APPLICABILITY_OUTPUT_BASE"]).resolve())
+    if (report.file_record(executable) != {key: reader[key] for key in ("bytes", "sha256")} or
+            not os.access(executable, os.X_OK)):
+        raise ValueError("Materialized pprof executable differs from its configured output")
+    reports = {}
+    for name, arguments in (
+        ("raw", ["-raw"]),
+        ("top", ["-top", "-nodecount=80"]),
+        ("state-traces", ["-traces", "-focus=gvisor.dev/gvisor/pkg/state.*Load"]),
+    ):
+        phase = "profile-decode-" + name
+        result = invoke(phase, [
+            "run", *options,
+            "--run_under=timeout --signal=TERM --kill-after=5s 60s",
+            target, "--", "-symbolize=none",
+            *arguments, str(profile),
+        ], "command", targets=[])
+        if result["status"] != "PASS" or result["native_exit"] != 0:
+            raise RuntimeError("Declared pprof report failed: " + name)
+        destination = output / ("restore-cpu." + name + ".txt")
+        shutil.copyfile(evidence / ("invocation-" + phase) / "stdout.log", destination)
+        reports[destination.name] = report.file_record(destination)
+    raw = (output / "restore-cpu.raw.txt").read_text()
+    traces = (output / "restore-cpu.state-traces.txt").read_text()
+    samples = raw.split("Samples:", 1)[1].split("Locations", 1)[0]
+    values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples, re.MULTILINE)]
+    if ("samples/count cpu/nanoseconds" not in " ".join(samples.split()) or not values or
+            sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0 or
+            "gvisor.dev/gvisor/pkg/state.Load" not in traces):
+        raise ValueError("Restored profile has no native CPU samples attributed to state.Load")
+    return {"sample_count": sum(value[0] for value in values),
+            "cpu_nanoseconds": sum(value[1] for value in values), "reports": reports, "reader": reader}
+
+
+def report_retained_profile(invoke, config: dict, evidence: Path, private: Path) -> None:
+    """Complete only native reports; retain the original workload's failure."""
+    supplier = config["profile_supplier"]
+    record = {"status": "FAIL", "supplier": supplier, "source": config["source"]}
+    try:
+        artifact = supplier["artifact"]
+        request = urllib.request.Request(
+            "https://app.buildbuddy.io/api/v1/GetFile", data=json.dumps({"uri": artifact["uri"]}).encode(),
+            headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with urllib.request.urlopen(request, timeout=60) as response:
+            data = response.read(artifact["bytes"] + 1)
+        if {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()} != {key: artifact[key] for key in ("bytes", "sha256")}:
+            raise ValueError("Retained profile bundle identity changed")
+        archive = private / "profile-supplier.tar.gz"
+        archive.write_bytes(data)
+        members = report.bundle_members(archive, set(supplier["members"]), verify=supplier["members"],
+                                        deadline=float(os.environ["APPLICABILITY_WORK_DEADLINE"]))
+        aggregate = json.loads(members["verdict.json"])
+        phase = json.loads(members["invocation-warm-checkpoint/verdict.json"])
+        if (aggregate["status"] != "FAIL" or aggregate["sources"] != [supplier["source"]] or
+                phase["source"] != supplier["source"] or phase["status"] != "PASS" or phase["native_exit"] != 0 or
+                phase["case_counts"] != {"passed": 1, "failed": 0, "skipped": 0}):
+            raise ValueError("Retained workload native status or source differs")
+        output = evidence / "warm-runtime"
+        output.mkdir()
+        profile = output / "restore-cpu.pprof"
+        profile.write_bytes(members[supplier["profile"]])
+        record["profile"] = {"path": str(profile.relative_to(evidence)), **report.file_record(profile)}
+        record["decoded"] = decode_profile(invoke, evidence, profile, output)
+        record["status"] = "PASS"
+    finally:
+        report.write_json(evidence / "warm-absl-profile-reports.json", record)
+
+
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+    if config["workload"] == "warm_absl_profile_reports":
+        if config["targets"] != [] or config["image_targets"] != {"x86_64": ["@com_github_google_pprof//:pprof"]}:
+            raise ValueError("Profile reporting must prepare only the declared pprof reader")
+        check_input_files(config)
+        report_retained_profile(invoke, config, evidence, private)
+        return
     source = config["source"]
     workspace = Path.cwd()
     target = "//test/benchmarks/fs:bazel_test"
@@ -50,11 +151,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise ValueError("Unexpected source revision")
         if command(["git", "status", "--porcelain", "--untracked-files=no"]):
             raise ValueError("Tracked source changed")
-        for name, expected in config["matched_inputs"].items():
-            path = workspace / name
-            data = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
-            if hashlib.sha256(data).hexdigest() != expected:
-                raise ValueError("Qualification source input changed: " + name)
+        check_input_files(config)
 
     def materialized(item: dict) -> Path:
         uri = urlsplit(item["uri"])
@@ -181,34 +278,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 raise ValueError("Expected exactly the initial and restored sentry profiles")
             restored, = [row for row in profiles if row["role"] == "restore"]
             profile = evidence / restored["path"]
-            # Use the declared SDK's native decoder. Embedded symbols suffice;
-            # prohibit symbolization/network lookup and bound each decode.
-            decoder = shlex.join([sys.executable, "-c", """import pathlib, subprocess, sys
-go, profile, output = sys.argv[1:]
-for name, options in [('raw', ['-raw']), ('top', ['-top', '-nodecount=80']),
-                      ('state-traces', ['-traces', '-focus=gvisor.dev/gvisor/pkg/state.*Load'])]:
- with pathlib.Path(output, 'restore-cpu.' + name + '.txt').open('w') as stream:
-  subprocess.run([go, 'tool', 'pprof', '-symbolize=none', *options, profile],
-                 stdout=stream, check=True, timeout=60)
-"""])
-            decoded = invoke("profile-decode", ["run", *options, "--run_under=" + decoder,
-                             "@io_bazel_rules_go//go:go", "--", str(profile), str(runtime_evidence)],
-                             "command", targets=[])
-            if decoded["status"] != "PASS" or decoded["native_exit"] != 0:
-                raise RuntimeError("Declared Go CPU profile decoding failed")
-            raw = (runtime_evidence / "restore-cpu.raw.txt").read_text()
-            traces = (runtime_evidence / "restore-cpu.state-traces.txt").read_text()
-            samples = raw.split("Samples:", 1)[1].split("Locations", 1)[0]
-            values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples, re.MULTILINE)]
-            if ("samples/count cpu/nanoseconds" not in " ".join(samples.split()) or not values or
-                    sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0 or
-                    "gvisor.dev/gvisor/pkg/state.Load" not in traces):
-                raise ValueError("Restored profile has no native CPU samples attributed to state.Load")
-            restored["sample_count"] = sum(value[0] for value in values)
-            restored["cpu_nanoseconds"] = sum(value[1] for value in values)
+            decoded = decode_profile(invoke, evidence, profile, runtime_evidence)
+            restored.update({key: decoded[key] for key in ("sample_count", "cpu_nanoseconds")})
             record["profiles"] = profiles
-            record["profile_reports"] = {name: report.file_record(runtime_evidence / name) for name in (
-                "restore-cpu.raw.txt", "restore-cpu.top.txt", "restore-cpu.state-traces.txt")}
+            record["profile_reports"] = decoded["reports"]
+            record["profile_reader"] = decoded["reader"]
         record["status"] = "PASS"
     finally:
         cleanup_started = True
