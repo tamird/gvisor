@@ -839,6 +839,31 @@ test('agent work, contributor decisions and maintainer blockers have distinct ow
   assert.equal(vm.runInContext('ATTENTION_OWNERS.user', context), 'Needs your decision');
 });
 
+test('owned branch work routes to the agent without inventing a contributor decision', () => {
+  const head = 'c'.repeat(40), node = { id: 'branch:cookie', type: 'branch', repo: 'tamird/gvisor',
+    status: 'Agent work', head, followup: { owner: 'root', sourceHead: head,
+      nextAction: 'Correct timestamp parity and execute the omitted e2e owner.' } };
+  const context = client(); context.nodeInput = node;
+  context.snapshotInput.workStates[node.id] = { 'contributor-review': { scope: head, basis: 'unknown', since: null } };
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(node.workStates['contributor-review'], undefined);
+  const reasons = reasonsFor(node);
+  assert.deepEqual(reasons.map(reason => [reason.id, reason.owner]), [['agent-branch-work', 'agent']]);
+  assert.match(reasons[0].detail, /root: Correct timestamp parity/);
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird")[0].id', context), 'agent-branch-work');
+  for (const mutate of [
+    item => { item.followup.sourceHead = 'd'.repeat(40); },
+    item => { item.head = item.followup.sourceHead = 'unknown'; },
+    item => { item.followup.owner = ''; },
+    item => { item.followup.nextAction = ''; },
+    item => { item.repo = 'someone/gvisor'; },
+    item => { item.status = 'Prepared proposal'; },
+  ]) {
+    const stale = structuredClone(node); mutate(stale);
+    assert.ok(!reasonsFor(stale).some(reason => reason.id === 'agent-branch-work'));
+  }
+});
+
 test('attention uses current approvals and import associations without inventing import failures', () => {
   const node = attentionNode(), imported = attentionImport(node);
   imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed'; node.github.imports = [imported];

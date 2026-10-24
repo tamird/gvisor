@@ -170,6 +170,7 @@ const ATTENTION_REASONS = [
   { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
   { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
+  { id: "agent-branch-work", owner: "agent", title: "Branch implementation and validation" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Unpublished proposal decision" },
   { id: "maintainer-ci-retry", owner: "maintainer", title: "CI configuration or retry" },
@@ -338,6 +339,11 @@ function attentionReasons(node, owner) {
   if (states(node)["contributor-review"])
     add("author-proposal", "A decision is pending on a separate proposed revision; this does not change the published head's review status.");
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
+  if (node.type === "branch" && node.status === "Agent work" && node.repo?.split("/")[0] === owner
+      && /^[a-f0-9]{40}$/.test(node.head) && node.followup?.sourceHead === node.head
+      && typeof node.followup.owner === "string" && node.followup.owner.trim()
+      && typeof node.followup.nextAction === "string" && node.followup.nextAction.trim())
+    add("agent-branch-work", `${node.followup.owner}: ${node.followup.nextAction}`);
   const pr = node.github;
   if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return reasons;
   if (pr.branchHead && pr.branchHead !== pr.head) {

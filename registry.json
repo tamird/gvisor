@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T05:17:58.728640+00:00",
+    "updatedAt": "2026-10-24T05:24:12.001644+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20522,20 +20522,15 @@
       "title": "Preserve SACK on connections accepted with SYN cookies",
       "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb",
       "group": "runtime",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-10-24T05:05:28.877890+00:00",
-      "summary": "When the SYN queue fills, recover the peer's SACK negotiation from the echoed timestamp after validating the SYN cookie. The sequence-number cookie keeps its authentication bits. The identical packet probe passes on native Linux; uncorrected netstack alone fails because its cookie SYN-ACK echoes the timestamp but omits SACK. After the fix, both backends pass the handshake and the exact SACK-block check for data beyond a hole. The corrected run passes six uncached AMD64 owners and 128 non-skipped records, including the full TCP and SACK suites; both analyzer owners also pass for AMD64 and ARM64. The qualified five-file patch is byte-identical to this standalone proposal. Independent retained review 7fc412a9 verified source, native report identities and the original failure. Contributor review has been requested for this exact head; no upstream PR is open.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
-        "url": "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb"
-      },
+      "status": "Agent work",
+      "updatedAt": "2026-10-24T05:24:12.001644+00:00",
+      "summary": "When the SYN queue fills, recover the peer's SACK negotiation from the echoed timestamp after validating the SYN cookie. The sequence-number cookie keeps its authentication bits. The identical packet probe passes on native Linux; uncorrected netstack alone fails because its cookie SYN-ACK echoes the timestamp but omits SACK. After the fix, both backends pass the handshake and the exact SACK-block check for data beyond a hole. The corrected run passes six uncached AMD64 owners and 128 non-skipped records, covering the selected package-level TCP and SACK suites; both analyzer owners also pass for AMD64 and ARM64. The qualified five-file patch is byte-identical to this standalone proposal. Independent retained review 7fc412a9 verified source, native report identities and the original failure. The earlier contributor request is retained, but implementation and validation are back with the agent before delivery. The large e2e tcp_test owner was omitted: its existing TestTimestampSynCookies assumes the SYN-ACK timestamp low bit equals the normal endpoint clock, which fails for one timestamp-offset parity when SACK is encoded. Root is correcting that expectation and checking both parities plus the omitted owner. The earlier 128 positive records do not establish this additional coverage. No second contributor request or upstream PR is open.",
       "followup": {
         "owner": "root",
         "sourceHead": "66eccf3f2ff9f6a0625477e8058385118caa0eeb",
-        "observedAt": "2026-10-24T05:05:28.877890+00:00",
-        "disposition": "Exact qualified proposal awaiting the requested contributor decision",
-        "nextAction": "Await the existing contributor decision. Resolve this branch item to its upstream PR on authorized delivery; do not send another review request.",
+        "observedAt": "2026-10-24T05:24:12.001644+00:00",
+        "disposition": "Agent repair and omitted e2e validation; existing contributor request suspended, not repeated",
+        "nextAction": "Root owns the timestamp-parity correction and the omitted large e2e tcp_test validation before delivery. Preserve the earlier contributor request; do not request a second review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/66eccf3f2ff9f6a0625477e8058385118caa0eeb",
           "https://app.buildbuddy.io/invocation/ffb738bb-baee-4c3e-a567-6ad2142cf5b3",
@@ -20552,7 +20547,7 @@
           "url": "https://app.buildbuddy.io/invocation/ffb738bb-baee-4c3e-a567-6ad2142cf5b3"
         },
         {
-          "label": "Corrected packet controls, TCP/SACK suites and both analyzers",
+          "label": "Corrected packet controls, selected TCP/SACK owners and both analyzers",
           "url": "https://app.buildbuddy.io/invocation/c8bb1445-a5eb-40be-abce-cdac5e6bac9a"
         }
       ]
