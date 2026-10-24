@@ -257,6 +257,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # Resolve the configured image graph, without evaluating unrelated
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
+        tracked_lock = subprocess.check_output(["git", "ls-files", "--", "MODULE.bazel.lock"], timeout=min(30, remaining()))
+        lock_mode = "error" if tracked_lock else "update"
         for architecture in CONFIG["image_targets"]:
             graphs = [("images", CONFIG["image_targets"][architecture], ["--extra_toolchains=@llvm//toolchain:all"])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
@@ -264,7 +266,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             for name, preparation_targets, configuration_options in graphs:
                 prepared = invoke("dependency-preparation-" + architecture + "-" + name,
                                   ["cquery", "--config=" + architecture,
-                                   "--compilation_mode=opt", *configuration_options, "--lockfile_mode=update",
+                                   "--compilation_mode=opt", *configuration_options, "--lockfile_mode=" + lock_mode,
                                    "--noannounce_rc", "--output=label",
                                    "set(" + " ".join(preparation_targets) + ")"],
                                   "command", targets=[])
