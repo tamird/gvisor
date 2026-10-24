@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T15:04:29.874123+00:00",
-  "registryDate": "2026-10-24T15:03:53.029292+00:00",
+  "registryDate": "2026-10-24T15:10:12.677101+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -174658,42 +174658,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-24T15:04:29.506075+00:00"
-      }
-    },
-    "branch:sample-tcp-port-bounds": {
-      "contributor-review": {
-        "scope": "1395e32f910eff684ecb33e8057f415036fc93c9",
-        "since": "2026-10-24T11:49:51.178662+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-24T15:03:53.029292+00:00"
-      }
-    },
-    "branch:tcp-proxy-port-bounds": {
-      "contributor-review": {
-        "scope": "3dfece3307b19a214a41f31b7f21280715a05629",
-        "since": "2026-10-24T12:17:34.480373+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-24T15:03:53.029292+00:00"
-      }
-    },
-    "branch:fix/tpu-timeout-range": {
-      "contributor-review": {
-        "scope": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
-        "since": "2026-10-24T11:49:51.178662+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-24T15:03:53.029292+00:00"
-      }
-    },
-    "branch:rules-img-tomcat-upstream": {
-      "contributor-review": {
-        "scope": "728c76fdcd6a7947176e015c8259f386270b7177",
-        "since": "2026-10-24T12:53:36.715961+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-24T15:03:53.029292+00:00"
       }
     }
   },

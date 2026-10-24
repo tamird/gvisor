@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T15:03:53.029292+00:00",
+    "updatedAt": "2026-10-24T15:10:12.677101+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18110,7 +18110,7 @@
           "url": "https://app.buildbuddy.io/invocation/8f5a7b90-8312-4dae-ae70-a368849ad7ad"
         },
         {
-          "label": "Qualified fork-only source-carrier amendment, not yet published to the PR",
+          "label": "Delivered qualified source-carrier amendment",
           "url": "https://github.com/tamird/gvisor/commit/2854c847877a87952a06113f2a92735e52038756"
         },
         {
@@ -21711,31 +21711,28 @@
       "ref": "fix/sample-tcp-port-parseuint",
       "head": "1395e32f910eff684ecb33e8057f415036fc93c9",
       "title": "Reject out-of-range ports in TCP samples",
-      "url": "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9",
+      "url": "https://github.com/google/gvisor/pull/16343",
       "group": "analysis",
-      "status": "Contributor review pending; no upstream PR",
-      "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed. Root has requested a new contributor decision for this exact revised head; the previous change request is addressed and no publication approval is inferred.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
+      "status": "Published as #16343",
+      "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed. The contributor approved this exact revised head, now published as #16343. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-24T15:10:12.677101+00:00",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "work_map_current",
         "sourceHead": "1395e32f910eff684ecb33e8057f415036fc93c9",
-        "observedAt": "2026-10-24T11:49:51.178662+00:00",
-        "disposition": "Revised exact-head contributor decision requested",
-        "nextAction": "Await the existing contributor decision on this exact revised proposal. Preserve its independent scope; do not publish without approval.",
+        "observedAt": "2026-10-24T15:10:12.677101+00:00",
+        "disposition": "Approved exact revised head published as #16343",
+        "nextAction": "Follow current-head public checks and maintainer review through the existing watcher. No repeat contributor question.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16343",
           "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9",
           "https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "1395e32f910eff684ecb33e8057f415036fc93c9",
-        "url": "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9",
-        "title": "Review the revised standalone proposal",
-        "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed.",
-        "body": "Sample ports: publish revised 1395e32f910eff684ecb33e8057f415036fc93c9?\n\nThe two sample programs now call ParseUint with bitSize 16 directly.\nPort zero remains valid; signed input is rejected. The separate parser\nhelper and its parser-only test suite are gone. Both binaries build on\nAMD64/ARM64 and their analyzers pass for both architectures.\n\nhttps://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9\n\ngit range-diff b3c3c094c7368985996ac94b000f4998cfdef92c^..b3c3c094c7368985996ac94b000f4998cfdef92c d15d5319c3c758a6f18ccb59c607dc75300bce90..1395e32f910eff684ecb33e8057f415036fc93c9\n\nShared source-bound qualification: https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
-      },
       "evidence": [
+        {
+          "label": "Delivered public PR",
+          "url": "https://github.com/google/gvisor/pull/16343"
+        },
         {
           "label": "Qualified revised proposal",
           "url": "https://github.com/tamird/gvisor/commit/1395e32f910eff684ecb33e8057f415036fc93c9"
@@ -21755,28 +21752,20 @@
       "title": "Validate proxy ports before network setup",
       "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
       "group": "analysis",
-      "status": "Contributor review pending; no upstream PR",
-      "summary": "The revised proposal validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. Mapped IPv4 bytes are preserved by source review. The redundant 70-line parser CLI matrix and test BUILD target are removed. Root has asked for a contributor decision on exact 3dfece3307; no publication approval is inferred.\n\nThe original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
-      "updatedAt": "2026-10-24T12:17:34.480373+00:00",
+      "status": "Agent work",
+      "summary": "The revised proposal validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. Mapped IPv4 bytes are preserved by source review. The redundant 70-line parser CLI matrix and test BUILD target are removed. The contributor conditionally approved the proposal with a pointer-receiver correction. Root owns that correction and delivery. This remains agent work until the corrected source is sent; no contributor decision remains pending.\n\nThe original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
+      "updatedAt": "2026-10-24T15:08:56.536047+00:00",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "root",
         "sourceHead": "3dfece3307b19a214a41f31b7f21280715a05629",
-        "observedAt": "2026-10-24T12:17:34.480373+00:00",
-        "disposition": "Revised exact-head contributor decision requested",
-        "nextAction": "Await the existing contributor decision on exact 3dfece3307. Keep the original aggregate failure and successful CLI recovery distinct; do not publish upstream without approval.",
+        "observedAt": "2026-10-24T15:08:56.536047+00:00",
+        "disposition": "Conditional approval; pointer-receiver correction is agent work",
+        "nextAction": "Root will apply the requested pointer-receiver correction and complete delivery under the conditional approval. Record the corrected source and verified publication when supplied; retain the original source-bound qualification separately.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
           "https://app.buildbuddy.io/invocation/fcfd72ad-7fb3-4b55-bc00-0a8dcb777a66",
           "https://app.buildbuddy.io/invocation/36ca4b44-f67b-4443-8f91-10ffa341bd68"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "3dfece3307b19a214a41f31b7f21280715a05629",
-        "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
-        "title": "Review the revised TCP proxy proposal",
-        "summary": "Validate ports before netstack setup while retaining native host/service lookup and hexadecimal listen ports; no permanent parser-test matrix.",
-        "body": "The revised [TCP proxy fix](https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629) is ready for your review. It checks 16-bit listen ports while preserving hexadecimal input, parses netstack forwarding targets before setup/retry, and keeps native host/service lookup through net.Dial. No permanent parser tests are added.\n\nThe [CLI recovery](https://app.buildbuddy.io/invocation/fcfd72ad-7fb3-4b55-bc00-0a8dcb777a66) passed overflow rejection, valid-target setup admission and byte-exact native forwarding. The [original run](https://app.buildbuddy.io/invocation/36ca4b44-f67b-4443-8f91-10ffa341bd68) passed both architecture builds and analyzers; its reporting failure remains recorded. This does not claim a live netstack forwarding connection.\n\nMay I submit this exact commit upstream? [gVisor’s policy](https://github.com/google/gvisor/blob/d15d5319c3c758a6f18ccb59c607dc75300bce90/CONTRIBUTING.md#ai-tool-use) requires the contributor to review AI-generated work before submission.\n\n[Canonical decision](https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Atcp-proxy-port-bounds)\n\ngit range-diff f0e518e6b^! 3dfece330^!"
       },
       "evidence": [
         {
@@ -21824,31 +21813,28 @@
       "ref": "fix/tpu-timeout-parseuint",
       "head": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
       "title": "Reject unrepresentable TPU operation timeouts",
-      "url": "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063",
+      "url": "https://github.com/google/gvisor/pull/16344",
       "group": "analysis",
-      "status": "Contributor review pending; no upstream PR",
-      "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. Root has requested a new contributor decision for this exact revised head; the previous change request is addressed and no publication approval is inferred.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-24T11:49:51.178662+00:00",
+      "status": "Published as #16344",
+      "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-24T15:10:12.677101+00:00",
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "work_map_current",
         "sourceHead": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
-        "observedAt": "2026-10-24T11:49:51.178662+00:00",
-        "disposition": "Revised exact-head contributor decision requested",
-        "nextAction": "Await the existing contributor decision on this exact revised proposal. Preserve its independent scope; do not publish without approval.",
+        "observedAt": "2026-10-24T15:10:12.677101+00:00",
+        "disposition": "Approved exact revised head published as #16344",
+        "nextAction": "Follow current-head public checks and maintainer review through the existing watcher. No repeat contributor question.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16344",
           "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063",
           "https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
-        "url": "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063",
-        "title": "Review the revised standalone proposal",
-        "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed.",
-        "body": "TPU timeout: publish revised 3fb4ca77eee61eb637072b8d5d25a56afa717063?\n\nThe CLI uses ParseUint with bitSize 31 and rejects zero before converting\nto the signed int32 wire type. Library callers retain their distinct\nnonpositive semantics: Checkpoint/Restore substitute 180; GetState forwards\nthe value. Three existing success tests cover maximum wire value, default\nsubstitution, and nonpositive forwarding. The redundant parser-only suite\nand new Cartesian test matrix are removed. Leading '+' is now rejected.\n\nhttps://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063\n\ngit range-diff 5265adcc0dd0c777762e8bd92169feb01016c952^..5265adcc0dd0c777762e8bd92169feb01016c952 d15d5319c3c758a6f18ccb59c607dc75300bce90..3fb4ca77eee61eb637072b8d5d25a56afa717063\n\nShared source-bound qualification: https://app.buildbuddy.io/invocation/86092e9d-99aa-4a33-92dc-ab3777260341"
-      },
       "evidence": [
+        {
+          "label": "Delivered public PR",
+          "url": "https://github.com/google/gvisor/pull/16344"
+        },
         {
           "label": "Qualified revised proposal",
           "url": "https://github.com/tamird/gvisor/commit/3fb4ca77eee61eb637072b8d5d25a56afa717063"
@@ -22033,15 +22019,15 @@
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
       "group": "bazel",
-      "status": "Contributor review pending; waiting for #16097",
-      "updatedAt": "2026-10-24T12:53:36.715961+00:00",
-      "summary": "Pins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests behind #16097. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. Root has requested the separate contributor decision for this exact head. No upstream PR is published; delivery requires #16097 to land.",
+      "status": "Contributor approved; waiting for #16097",
+      "updatedAt": "2026-10-24T15:08:56.536047+00:00",
+      "summary": "Pins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests behind #16097. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head for delivery after #16097 lands. No contributor decision remains pending. No upstream PR is published; delivery requires #16097 to land.",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "728c76fdcd6a7947176e015c8259f386270b7177",
-        "observedAt": "2026-10-24T12:53:36.715961+00:00",
-        "disposition": "Exact-head contributor decision requested; delivery behind #16097",
-        "nextAction": "Await the existing contributor decision for exact 728c76fdcd; if approved, deliver after #16097 lands. Do not repeat the question or infer approval from other image proposals.",
+        "observedAt": "2026-10-24T15:08:56.536047+00:00",
+        "disposition": "Contributor approved exact head; delivery waits for #16097",
+        "nextAction": "After #16097 lands, deliver the approved 728c76fdcd patch with its retained validation. Preserve that sole prerequisite and do not repeat the completed contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
           "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
@@ -22061,15 +22047,35 @@
           "label": "Exact five-file range on the foundation candidate",
           "url": "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "728c76fdcd6a7947176e015c8259f386270b7177",
-        "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
-        "title": "Review the pinned Tomcat fixture proposal",
-        "summary": "Pin the existing AMD64 8.0.53 and ARM64 8.0.52 Tomcat fixtures with their original configs and eleven layers. Delivery requires #16097.",
-        "body": "Tomcat: publish 728c76fdcd6a7947176e015c8259f386270b7177 after #16097 lands?\n\nThe five-file proposal pins the existing AMD64 Tomcat 8.0.53 and ARM64\nTomcat 8.0.52 manifests, removes two FROM-only Dockerfiles and exposes\nthe archive/Make context interfaces. Complete configs and all eleven\nlayers per architecture are preserved; this does not upgrade Tomcat or Java.\n\nBoth architecture archives/contexts passed. The existing TestTomcat\npassed once on AMD64 runc and once on the authenticated retained systrap\nruntime, with cleanup. ARM64 runtime and performance were not tested.\n\nhttps://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177\n\nhttps://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177\n\ngit diff 781d64d84443b4bfffaa5cbdcf75e748d4d826d7..728c76fdcd6a7947176e015c8259f386270b7177\n\nQualification: https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d\n\nSole prerequisite: https://github.com/google/gvisor/pull/16097"
-      }
+      ]
+    },
+    {
+      "id": "pr:16343",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16343,
+      "ref": "fix/sample-tcp-port-parseuint",
+      "head": "1395e32f910eff684ecb33e8057f415036fc93c9",
+      "title": "Reject out-of-range ports in TCP samples",
+      "url": "https://github.com/google/gvisor/pull/16343",
+      "group": "analysis",
+      "status": "open",
+      "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed. The contributor approved this exact revised head, now published as #16343. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-24T15:10:12.677101+00:00"
+    },
+    {
+      "id": "pr:16344",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16344,
+      "ref": "fix/tpu-timeout-parseuint",
+      "head": "3fb4ca77eee61eb637072b8d5d25a56afa717063",
+      "title": "Reject unrepresentable TPU operation timeouts",
+      "url": "https://github.com/google/gvisor/pull/16344",
+      "group": "analysis",
+      "status": "open",
+      "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
+      "updatedAt": "2026-10-24T15:10:12.677101+00:00"
     }
   ],
   "edges": [
@@ -24642,6 +24648,20 @@
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177"
       ]
+    },
+    {
+      "from": "branch:sample-tcp-port-bounds",
+      "to": "pr:16343",
+      "type": "includes",
+      "reason": "The approved independent proposal is delivered in this public PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16343"
+    },
+    {
+      "from": "branch:fix/tpu-timeout-range",
+      "to": "pr:16344",
+      "type": "includes",
+      "reason": "The approved independent proposal is delivered in this public PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16344"
     }
   ],
   "investigations": [
