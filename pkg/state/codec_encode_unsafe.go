@@ -679,8 +679,6 @@ func (es *encodeState) writeTyped(oes *objectEncodeState, standalone bool) {
 	for i := range oes.objs {
 		if o := &oes.objs[i]; o.typ != nil {
 			b = es.writeRef(b, o)
-		} else {
-			wire.WalkRefs(o.obj, es.walkRef)
 		}
 		es.refOffs = append(es.refOffs, len(b))
 	}
@@ -694,7 +692,7 @@ func (es *encodeState) writeTyped(oes *objectEncodeState, standalone bool) {
 			spec = es.findType(oes.obj.Type())
 		}
 		es.standaloneBuf.Reset()
-		w = &wire.Writer{Writer: &es.standaloneBuf}
+		w = &wire.Writer{Writer: &es.standaloneBuf, OnRef: es.w.OnRef}
 	}
 	es.writePendingTypes()
 	off, refOff := 0, 0

@@ -130,9 +130,6 @@ type encodeState struct {
 	// queue holds the objects to write, in order (see Save).
 	queue []*objectEncodeState
 
-	// walkRef is es.enqueueRef, allocated once.
-	walkRef func(*wire.Ref)
-
 	// standaloneBuf holds the body of a standalone object.
 	standaloneBuf bytes.Buffer
 
@@ -1092,7 +1089,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 // element, whose slice is only reachable from that array) are written last,
 // as standalone objects.
 func (es *encodeState) writeObjects() {
-	es.walkRef = es.enqueueRef
+	es.w.OnRef = es.enqueueRef
 	if es.pending[0] == nil {
 		Failf("root object was merged into another object")
 	}
@@ -1119,7 +1116,6 @@ func (es *encodeState) writeObject(oes *objectEncodeState, standalone bool) {
 		es.writeTyped(oes, standalone)
 		return
 	}
-	wire.WalkRefs(oes.encoded, es.walkRef)
 	es.writePendingTypes()
 	wire.SaveUint(&es.w, uint64(wire.TagUint))
 	wire.SaveUint(&es.w, uint64(oes.id))

@@ -338,28 +338,3 @@ func LoadStructFieldsTagged(r *Reader, id TypeID, tag Tag) *Struct {
 func ReadFull(r *Reader, p []byte) {
 	readFull(r, p)
 }
-
-// WalkRefs calls fn for each reference in obj, including slice references.
-func WalkRefs(obj Object, fn func(*Ref)) {
-	switch x := obj.(type) {
-	case *Ref:
-		fn(x)
-	case *Slice:
-		fn(&x.Ref)
-	case *Array:
-		for _, o := range x.Contents {
-			WalkRefs(o, fn)
-		}
-	case *Map:
-		for i := range x.Keys {
-			WalkRefs(x.Keys[i], fn)
-			WalkRefs(x.Values[i], fn)
-		}
-	case *Interface:
-		WalkRefs(x.Value, fn)
-	case *Struct:
-		for i := 0; i < x.Fields(); i++ {
-			WalkRefs(*x.Field(i), fn)
-		}
-	}
-}
