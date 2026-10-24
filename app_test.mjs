@@ -1254,3 +1254,22 @@ test('registered-only repositories require direct review and retain curated node
   context.registryInput.meta.registeredOnlyRepositories = null;
   assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /registered-only/);
 });
+
+test('copying contributor decisions includes proposal and outgoing-review tracker links', () => {
+  const context = client(), pr = attentionNode(15814);
+  pr.github.headOwner = 'EtiennePerot';
+  pr.contributorReview = { status: 'pending', kind: 'review', head: pr.github.head, url: pr.url };
+  pr.workStates['contributor-review'] = { scope: pr.github.head };
+  const branch = { id: 'branch:review/fix', type: 'branch', contributorReview: { status: 'pending', head: 'b'.repeat(40) },
+    workStates: { 'contributor-review': { scope: 'b'.repeat(40) } } };
+  context.location = { href: 'https://tamird.github.io/gvisor/?q=old#stale' };
+  context.nodesInput = [pr, branch];
+  for (const grouped of [true, false]) {
+    context.groupedInput = grouped;
+    const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird", groupedInput, new Set(["author-proposal"])), "2026-10-24T11:02:00Z")', context);
+    assert.deepEqual(text.split('\n').filter(line => line.startsWith('https://')), [
+      'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#pr%3A15814',
+      'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Areview%2Ffix',
+    ]);
+  }
+});

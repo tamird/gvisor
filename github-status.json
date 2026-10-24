@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T11:02:42.616050+00:00",
-  "registryDate": "2026-10-24T11:03:29.146535+00:00",
+  "registryDate": "2026-10-24T11:06:55.938856+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -169247,7 +169247,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "pr:14237": {
@@ -171098,7 +171098,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "pr:15816": {
@@ -171805,7 +171805,7 @@
         "since": "2026-10-24T10:56:30.150898+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "pr:16077": {
@@ -172340,7 +172340,7 @@
         "since": "2026-10-24T06:19:32.054223+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:review/kernel-14345-contracts": {
@@ -172349,7 +172349,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:review/kernel-14345-parent-death": {
@@ -172358,7 +172358,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:review/kernel-14345-signal-delivery": {
@@ -172367,7 +172367,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:review/kernel-14345-exit-notify": {
@@ -172376,7 +172376,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:linux-header-default": {
@@ -172385,7 +172385,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:review/rseq-signal-header-order": {
@@ -172394,7 +172394,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "issue:16216": {
@@ -172403,7 +172403,7 @@
         "since": "2026-10-24T10:53:05.058293+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:sample-tcp-port-bounds": {
@@ -172412,7 +172412,7 @@
         "since": "2026-10-24T10:56:30.150898+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:tcp-proxy-port-bounds": {
@@ -172421,7 +172421,7 @@
         "since": "2026-10-24T10:56:30.150898+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:metricsviz-time-offset-bounds": {
@@ -172430,7 +172430,7 @@
         "since": "2026-10-24T10:56:30.150898+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     },
     "branch:fix/tpu-timeout-range": {
@@ -172439,7 +172439,7 @@
         "since": "2026-10-24T10:56:30.150898+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-24T11:03:29.146535+00:00"
+        "observedAt": "2026-10-24T11:06:55.938856+00:00"
       }
     }
   },

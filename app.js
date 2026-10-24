@@ -436,19 +436,22 @@ function attentionReasons(node, owner) {
 }
 function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) {
   const entries = nodes.map(node => ({ node, reasons: attentionReasons(node, owner),
-    copyURL: node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null }));
+    copyURL: filters.size === 1 && filters.has("author-proposal") && contributorDecision(node) && states(node)["contributor-review"]
+      ? contributorDecisionURL(node) : node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null }));
   if (!grouped) return [{ id: "visible", owner: "other", title: "Visible PRs", entries }];
   const groups = [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => ({ ...group, entries: [] }));
   for (const entry of entries) {
     const primary = entry.reasons.find(item => filters.has(item.id)) || entry.reasons.find(item => item.id !== "author-proposal") || entry.reasons[0];
     const id = primary?.id || (resolved(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
+    if (id === "author-proposal" && contributorDecision(entry.node)) entry.copyURL = contributorDecisionURL(entry.node);
     groups.find(group => group.id === id).entries.push(entry);
   }
   return groups.filter(group => group.entries.length);
 }
 function attentionText(groups, checkedAt) {
   const shown = groups.filter(group => group.entries.some(entry => entry.copyURL));
-  const intro = shown.length && shown.every(group => group.owner === "maintainer") ? "Could you help with these PRs?" : "PRs grouped by the next action.";
+  const intro = shown.length && shown.every(group => group.owner === "user") ? "Contributor decisions awaiting review."
+    : shown.length && shown.every(group => group.owner === "maintainer") ? "Could you help with these PRs?" : "PRs grouped by the next action.";
   const sections = shown.map(group => `${group.owner === "other" ? group.title : `${ATTENTION_OWNERS[group.owner]}: ${group.title}`}\n${group.entries.filter(entry => entry.copyURL).map(entry => entry.copyURL).join("\n")}`);
   return [intro, `Public GitHub snapshot: ${handoffTimestamp(checkedAt) || "unavailable"}. Internal status may not be visible.`, ...sections].join("\n\n");
 }
@@ -719,6 +722,12 @@ function contributorDecision(node) {
   const decision = node.contributorReview;
   return decision?.status === "pending" && (node.type === "branch"
     || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
+}
+function contributorDecisionURL(node) {
+  const url = new URL(location.href);
+  url.search = "?view=table&reason=author-proposal";
+  url.hash = encodeURIComponent(node.id);
+  return url.href;
 }
 function stateLabel(node, state) {
   if (state === "contributor-review") return contributorDecision(node)?.title || STATE_LABELS[state];
@@ -1097,7 +1106,9 @@ function drawTable(nodes) {
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   visibleTableGroups = attentionGroups(nodes, registry.meta.owner, tableGrouping);
   $("handoff-copy-all").disabled = !model.checkedAt || !visibleTableGroups.some(group => group.entries.some(entry => entry.copyURL));
-  $("handoff-snapshot").textContent = `Copy visible exports the source PRs shown as plain text. Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
+  $("handoff-snapshot").textContent = `${reasonFilters.size === 1 && reasonFilters.has("author-proposal")
+    ? "Copy visible exports every displayed contributor decision with its reviewable tracker link."
+    : "Copy visible exports the source PRs shown as plain text."} Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
   for (const group of visibleTableGroups) {
     if (tableGrouping) {
       const headingRow = element("tr", `attention-heading ${group.owner}${selected === `attention-${group.id}` ? " selected" : ""}`);
