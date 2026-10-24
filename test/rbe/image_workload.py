@@ -1,4 +1,4 @@
-"""Observe the existing two-case FIFO recovery stall without changing traffic."""
+"""Measure the reviewed RACK correction on the retained two-case FIFO carrier."""
 from collections import deque
 import hashlib
 import json
@@ -17,13 +17,74 @@ ROOT = "TestVirtualTCPRecoveryDiagnostic"
 LEAVES = {"cubic_reno_setup01_write01", "cubic_reno_setup01_write10"}
 CASES = {ROOT + "/" + name for name in LEAVES}
 PARENTS = {ROOT}
-# Exact full observations from the retained 0c3e first-write run, before adding
-# this diagnostic. Comparing the entire old object also checks every packet,
-# sender sample, recovery observation, payload hash and completion instant.
-REFERENCES = {
-    "cubic_reno_setup01_write01": "2b66088ff68e0d53396f1be5926f457020317add57d44053a8a487b7f7c4d080",
-    "cubic_reno_setup01_write10": "741ab62dc735d4cd299a25037ed98aff35de9e68f7d7899ffc0266574a6fa2e7",
-}
+# Authenticated retained baseline gate and first admitted payloads; later
+# traffic is deliberately allowed to differ with the production correction.
+BASELINE = {'TestVirtualTCPRecoveryDiagnostic/cubic_reno_setup01_write01': {'pre_gate_sha256': 'f86b1570a1a472fdc940a043dcc57a35ab08c5309f204a7ae45e741168e06a3e',
+                                                                 'writes': [{'Accepted': 1048576,
+                                                                             'AtNS': 250000000,
+                                                                             'Flow': 0},
+                                                                            {'Accepted': 1048576,
+                                                                             'AtNS': 250000000,
+                                                                             'Flow': 1}],
+                                                                 'first_admitted': [[6,
+                                                                                     250000000,
+                                                                                     0,
+                                                                                     0,
+                                                                                     1472,
+                                                                                     1420,
+                                                                                     271965322,
+                                                                                     943095740,
+                                                                                     250000000,
+                                                                                     251177600,
+                                                                                     301177600,
+                                                                                     0,
+                                                                                     0],
+                                                                                    [16,
+                                                                                     250000000,
+                                                                                     0,
+                                                                                     1,
+                                                                                     1472,
+                                                                                     1420,
+                                                                                     3529902345,
+                                                                                     3074080200,
+                                                                                     261776000,
+                                                                                     262953600,
+                                                                                     312953600,
+                                                                                     0,
+                                                                                     0]]},
+ 'TestVirtualTCPRecoveryDiagnostic/cubic_reno_setup01_write10': {'pre_gate_sha256': 'f86b1570a1a472fdc940a043dcc57a35ab08c5309f204a7ae45e741168e06a3e',
+                                                                 'writes': [{'Accepted': 1048576,
+                                                                             'AtNS': 250000000,
+                                                                             'Flow': 1},
+                                                                            {'Accepted': 1048576,
+                                                                             'AtNS': 250000000,
+                                                                             'Flow': 0}],
+                                                                 'first_admitted': [[16,
+                                                                                     250000000,
+                                                                                     0,
+                                                                                     0,
+                                                                                     1472,
+                                                                                     1420,
+                                                                                     271965322,
+                                                                                     943095740,
+                                                                                     261776000,
+                                                                                     262953600,
+                                                                                     312953600,
+                                                                                     0,
+                                                                                     0],
+                                                                                    [6,
+                                                                                     250000000,
+                                                                                     0,
+                                                                                     1,
+                                                                                     1472,
+                                                                                     1420,
+                                                                                     3529902345,
+                                                                                     3074080200,
+                                                                                     250000000,
+                                                                                     251177600,
+                                                                                     301177600,
+                                                                                     0,
+                                                                                     0]]}}
 
 
 def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
@@ -352,13 +413,8 @@ def comparisons(observed: dict) -> list[dict]:
 
 
 def check_diagnostic(value: dict) -> dict:
-    """Require identical old traffic, and retain only the new observed state."""
+    """Validate the unchanged observer without requiring unchanged recovery."""
     name = value["Case"].removeprefix(ROOT + "/")
-    original = {key: item for key, item in value.items() if key != "Diagnostic"}
-    original["Case"] = "TestVirtualTCPApplicationOrder/" + name
-    encoded = json.dumps(original, sort_keys=True, separators=(",", ":")).encode()
-    if hashlib.sha256(encoded).hexdigest() != REFERENCES[name]:
-        raise ValueError(f"{name}: observation changed the retained traffic/state")
     diagnostic = value["Diagnostic"]
     if set(diagnostic) != {"Probes", "State", "Wire"}:
         raise ValueError(f"{name}: diagnostic shape differs")
@@ -388,7 +444,7 @@ def check_diagnostic(value: dict) -> dict:
     for before, after in zip(diagnostic["State"], diagnostic["State"][1:]):
         if any(after[key] < before[key] for key in ("Timeouts", "Retransmits", "FastRetransmits")):
             raise ValueError(f"{name}: per-endpoint counters went backwards")
-    return {"original_observation_sha256": REFERENCES[name], "flow": 1,
+    return {"flow": 1,
             "algorithm": "reno", "observed": diagnostic,
             "scope": "Existing post-ACK probe and post-fence public endpoint counters/TCPInfo, plus original TCP options. No production hook or required diagnosis."}
 
@@ -445,10 +501,14 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 os.environ["PATH"] = original_path
         except (OSError, ValueError, RuntimeError) as error:
             errors.append(str(error))
-        normal = invoke("virtual-normal", ["test", *options, *selected, "--runs_per_test=1",
+        normal = invoke("virtual-normal", ["test", *options, *selected, "--runs_per_test=2",
                          "--test_arg=-test.run=^" + ROOT + "$/^(" + "|".join(sorted(LEAVES)) + ")$", OWNER],
                         "test", targets=[OWNER])
         result["checks"].append({"name": "virtual-normal", "result": normal})
+        race = invoke("virtual-race", ["test", *options, "--config=race", *selected, "--runs_per_test=1",
+                       "--test_arg=-test.run=^" + ROOT + "$/^(" + "|".join(sorted(LEAVES)) + ")$", OWNER],
+                      "test", targets=[OWNER])
+        result["checks"].append({"name": "virtual-race", "result": race})
         nogo = invoke("virtual-nogo", ["test", *options, *selected, "--runs_per_test=1", OWNER + "_nogo"],
                       "test", targets=[OWNER + "_nogo"])
         result["checks"].append({"name": "virtual-nogo", "result": nogo})
@@ -457,8 +517,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                       if row["result"]["status"] != "PASS")
         if errors:
             raise RuntimeError("; ".join(errors))
-        normal_observed = observations(evidence, "virtual-normal", 1)
-        result["phases"] = {"virtual-normal": normal_observed}
+        normal_observed = observations(evidence, "virtual-normal", 2)
+        race_observed = observations(evidence, "virtual-race", 1)
+        result["phases"] = {"virtual-normal": normal_observed, "virtual-race": race_observed}
+        if normal_observed["reference_sample"] != race_observed["reference_sample"]:
+            raise ValueError("Normal/race complete packet and state observations differ")
         result["diagnostics"] = {name: check_diagnostic(value)
                                  for name, value in normal_observed["reference_sample"].items()}
         if len(nogo["executed"]) != 1:
@@ -510,6 +573,13 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         result["observations"] = {name: check_observation(value)
                                   for name, value in normal_observed["reference_sample"].items()}
         result["comparisons"] = comparisons(result["observations"])
+        for name, observed in result["observations"].items():
+            actual = {"pre_gate_sha256": observed["pre_gate_sha256"],
+                      "writes": observed["application_order"]["Writes"],
+                      "first_admitted": observed["first_admitted_payload_events"]}
+            if actual != BASELINE[name]:
+                raise ValueError(f"{name}: baseline gate, offered demand or first admissions changed")
+        result["baseline_gate_match"] = True
         result["status"] = "PASS"
     except Exception as error:
         result.update(status="FAIL", error=str(error))
