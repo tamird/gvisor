@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package atomicptr provides generated typed atomic pointers.
 package atomicptr
 
 // Keep these callers materialized while allowing the reviewed methods to inline.
