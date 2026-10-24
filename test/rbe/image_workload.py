@@ -159,16 +159,29 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         # Retain only source/tool input identities here. The existing recorder
         # separately authenticates and redacts every full native action record.
         native_inputs = []
-        archive_preflight_inputs = []
+        gopath_records = []
+        archive_gopath_inputs = []
         try:
             with execution.open(encoding="utf-8", newline="") as stream:
                 for _, action in execution_records(stream):
-                    if action is not None and action.get("targetLabel") == "//:go_export" and action.get("mnemonic") == "Genrule":
+                    if action is not None and action.get("targetLabel") == "//:gopath" and action.get("mnemonic") == "GoPath":
+                        qualified_inputs = []
                         for output in record["compiler_preflight"]["outputs"]:
                             matches = [item for item in action["inputs"] if item["path"] == output["name"] and digest_matches(item, output)]
                             if len(matches) != 1:
-                                raise ValueError("Source archive did not consume each qualified compiler output")
-                            archive_preflight_inputs.append(matches[0])
+                                raise ValueError("GoPath did not consume each qualified compiler output")
+                            qualified_inputs.append(matches[0])
+                        if argument(action["commandArgs"], "-mode") != "archive":
+                            raise ValueError("Expected GoPath archive mode")
+                        gopath_records.append({"action_digest": action["digest"], "inputs": qualified_inputs,
+                                               "output_path": argument(action["commandArgs"], "-out")})
+                    if action is not None and action.get("targetLabel") == "//:go_export" and action.get("mnemonic") == "Genrule":
+                        words = shlex.split(action["commandArgs"][-1])
+                        gopath = argument(words, "--gopath")
+                        matches = [item for item in action["inputs"] if item["path"] == gopath]
+                        if len(matches) != 1:
+                            raise ValueError("Source archive omitted its actual GoPath archive input")
+                        archive_gopath_inputs.append(matches[0])
                     if action is None or action.get("mnemonic") != "ExportedGoBuild":
                         continue
                     arguments = action["commandArgs"]
@@ -302,10 +315,26 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                          "declared_inputs": selected, "output": output})
         if used_actions != set(range(6)) or len(sdk_identities) != 1:
             raise ValueError("Expected six distinct actions sharing the same declared Go binary")
-        if len(archive_preflight_inputs) != 6:
-            raise ValueError("Missing six compiler-output/archive-input joins")
+        gopath_actions = [action for action in proof["image_actions"]
+                          if action["targetLabel"] == "//:gopath" and action["mnemonic"] == "GoPath"]
+        if len(gopath_records) != 1 or len(gopath_actions) != 1 or len(archive_gopath_inputs) != 1:
+            raise ValueError("Missing unique compiler-output/GoPath/archive-input chain")
+        gopath = gopath_records[0]
+        gopath_action = gopath_actions[0]
+        gopath_input = archive_gopath_inputs[0]
+        if (gopath["action_digest"] != gopath_action["digest"]
+                or gopath["output_path"] != gopath_input["path"]
+                or not any(item["path"] == gopath_input["path"] and item["digest"] == gopath_input["digest"]
+                           for item in gopath_action["actualOutputs"])):
+            raise ValueError("GoPath actual output differs from exported archive input")
+        gopath_path = Path(gopath_input["path"])
+        if gopath_path.is_absolute() or ".." in gopath_path.parts:
+            raise ValueError("Unsafe GoPath output path")
+        if not digest_matches(gopath_input, report.file_record(root / gopath_path)):
+            raise ValueError("Materialized GoPath archive differs from native output/input identity")
         record.update(status="PASS", uncached_remote_module_actions=6,
-                      archive_preflight_inputs=archive_preflight_inputs,
+                      gopath_preflight=gopath, archive_gopath_input=gopath_input,
+                      native_gopath_action=gopath_action,
                       source_archive=archive_output, module_metadata=metadata,
                       exported_entries=len(names), modules=rows,
                       native_archive_action=archive_action)
