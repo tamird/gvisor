@@ -726,7 +726,13 @@ function contributorChanges(node) {
 function contributorDecision(node) {
   const decision = node.contributorReview;
   return decision?.status === "pending" && (node.type === "branch"
+    || node.type === "pr" && decision.kind === "amendment"
     || ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision.kind)) ? decision : null;
+}
+function contributorDecisionHeadChanged(node) {
+  const decision = contributorDecision(node);
+  const head = decision?.kind === "amendment" ? decision.baseHead : decision?.head;
+  return Boolean(node.github?.head && head && head !== node.github.head);
 }
 function humanAction(node) {
   const action = node.humanAction;
@@ -1211,7 +1217,7 @@ function drawDetails() {
     section.append(element("h3", "", decision.title || "Contributor decision requested"));
     if (decision.summary) section.append(element("p", "", decision.summary));
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
-    if (node.github?.head && decision.head && decision.head !== node.github.head)
+    if (contributorDecisionHeadChanged(node))
       section.append(element("p", "", "The published head has changed. Reconcile this recorded decision with the new source before acting."));
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
@@ -1490,13 +1496,18 @@ function validateRegistry(candidate) {
     if (decision !== undefined) {
       const proposal = node.type === "branch" && proposalRepo && /^[a-f0-9]{40}$/.test(decision?.head)
         && decision.url === `https://github.com/${proposalRepo}/commit/${decision.head}`;
+      const amendment = node.type === "pr" && decision?.kind === "amendment"
+        && /^[a-f0-9]{40}$/.test(decision.head) && /^[a-f0-9]{40}$/.test(decision.baseHead)
+        && decision.head !== decision.baseHead
+        && decision.url === `https://github.com/${candidate.meta.owner}/${node.repo.split("/")[1]}/commit/${decision.head}`
+        && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
       const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision?.kind)
         && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
         && (decision.url === node.url || decision.url?.startsWith(node.url + "#"))
         && typeof decision.title === "string" && decision.title.trim()
         && typeof decision.summary === "string" && decision.summary.trim()
         && typeof decision.body === "string" && decision.body.trim();
-      if (!decision || decision.status !== "pending" || !proposal && !outgoing
+      if (!decision || decision.status !== "pending" || !proposal && !amendment && !outgoing
           || decision.body !== undefined && typeof decision.body !== "string"
           || decision.summary !== undefined && typeof decision.summary !== "string"
           || decision.title !== undefined && typeof decision.title !== "string") throw new Error("Invalid contributor decision");

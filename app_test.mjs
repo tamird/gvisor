@@ -207,6 +207,41 @@ test('outgoing review decisions remain visible on external PRs and across public
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
 });
 
+test('PR amendments keep the proposed commit and published base distinct', () => {
+  const context = client(), node = attentionNode(), head = 'c'.repeat(40);
+  node.repo = 'google/gvisor';
+  node.github.checkedAt = context.snapshotInput.checkedAt;
+  node.contributorReview = { status: 'pending', kind: 'amendment', head, baseHead: node.github.head,
+    title: 'Review the amendment', summary: 'Forward source-only dependencies.',
+    body: 'Review this exact proposed commit before updating the public PR.',
+    url: `https://github.com/tamird/gvisor/commit/${head}` };
+  const record = { scope: head, basis: 'observed', since: context.registryInput.meta.updatedAt,
+    observedAt: context.registryInput.meta.updatedAt };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  context.snapshotInput.prs = [node.github];
+  context.snapshotInput.workStates[node.id] = { 'contributor-review': record };
+  context.nodeInput = node;
+  context.location = { href: 'https://tamird.github.io/gvisor/' };
+  vm.runInContext('validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput)', context);
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
+  assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), false);
+  const groups = vm.runInContext('attentionGroups([nodeInput], "tamird", false, new Set(["author-proposal"]))', context);
+  assert.equal(groups[0].entries[0].copyURL, `https://tamird.github.io/gvisor/?view=table&reason=author-proposal#${encodeURIComponent(node.id)}`);
+  node.github.head = 'd'.repeat(40);
+  assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), true);
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), head);
+  for (const change of [{ baseHead: head }, { baseHead: 'unknown' }, { body: '' },
+    { url: `https://github.com/tamird/other/commit/${head}` },
+    { url: `https://github.com/other/gvisor/commit/${head}` }]) {
+    const original = { ...node.contributorReview }; Object.assign(node.contributorReview, change);
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
+    node.contributorReview = original;
+  }
+  delete node.contributorReview;
+  assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"]', context), undefined);
+});
+
 test('outgoing decisions require reviewable text and the owning discussion', () => {
   const context = client();
   const node = { id: 'issue:2', type: 'issue', url: 'https://github.com/google/gvisor/issues/2',
