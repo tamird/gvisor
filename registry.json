@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T15:10:12.677101+00:00",
+    "updatedAt": "2026-10-24T15:25:05.305627+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21748,26 +21748,38 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcp-proxy-port-bounds",
-      "head": "3dfece3307b19a214a41f31b7f21280715a05629",
+      "head": "e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
       "title": "Validate proxy ports before network setup",
-      "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
+      "url": "https://github.com/google/gvisor/pull/16345",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "The revised proposal validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. Mapped IPv4 bytes are preserved by source review. The redundant 70-line parser CLI matrix and test BUILD target are removed. The contributor conditionally approved the proposal with a pointer-receiver correction. Root owns that correction and delivery. This remains agent work until the corrected source is sent; no contributor decision remains pending.\n\nThe original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
-      "updatedAt": "2026-10-24T15:08:56.536047+00:00",
+      "status": "Published as #16345",
+      "summary": "The proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
+      "updatedAt": "2026-10-24T15:25:05.305627+00:00",
       "followup": {
-        "owner": "root",
-        "sourceHead": "3dfece3307b19a214a41f31b7f21280715a05629",
-        "observedAt": "2026-10-24T15:08:56.536047+00:00",
-        "disposition": "Conditional approval; pointer-receiver correction is agent work",
-        "nextAction": "Root will apply the requested pointer-receiver correction and complete delivery under the conditional approval. Record the corrected source and verified publication when supplied; retain the original source-bound qualification separately.",
+        "owner": "work_map_current",
+        "sourceHead": "e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
+        "observedAt": "2026-10-24T15:25:05.305627+00:00",
+        "disposition": "Approved pointer-receiver correction delivered as #16345",
+        "nextAction": "Follow current-head public checks and maintainer review through the existing watcher. No repeat contributor question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629",
-          "https://app.buildbuddy.io/invocation/fcfd72ad-7fb3-4b55-bc00-0a8dcb777a66",
-          "https://app.buildbuddy.io/invocation/36ca4b44-f67b-4443-8f91-10ffa341bd68"
+          "https://github.com/google/gvisor/pull/16345",
+          "https://github.com/tamird/gvisor/commit/e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
+          "https://app.buildbuddy.io/invocation/2006618e-bf44-4f2b-9858-b24168e82a82"
         ]
       },
       "evidence": [
+        {
+          "label": "Delivered public PR",
+          "url": "https://github.com/google/gvisor/pull/16345"
+        },
+        {
+          "label": "Qualified pointer-receiver correction",
+          "url": "https://github.com/tamird/gvisor/commit/e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea"
+        },
+        {
+          "label": "Corrected product native PASS",
+          "url": "https://app.buildbuddy.io/invocation/2006618e-bf44-4f2b-9858-b24168e82a82"
+        },
         {
           "label": "Exact revised proxy proposal",
           "url": "https://github.com/tamird/gvisor/commit/3dfece3307b19a214a41f31b7f21280715a05629"
@@ -22076,6 +22088,63 @@
       "status": "open",
       "summary": "The revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
       "updatedAt": "2026-10-24T15:10:12.677101+00:00"
+    },
+    {
+      "id": "pr:16345",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tcp-proxy-port-bounds",
+      "head": "e3ba4b445a8c7f20959dac44c39a8d5a36cf5dea",
+      "title": "Validate proxy ports before network setup",
+      "url": "https://github.com/google/gvisor/pull/16345",
+      "group": "analysis",
+      "status": "open",
+      "summary": "The proxy validates 16-bit listen ports while retaining hexadecimal input, uses netip for netstack forwarding targets before setup/retry, and preserves native host/service lookup through net.Dial. The contributor’s requested pointer-receiver correction is included in exact e3ba4b44, now published as #16345. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nThe corrected product passes all nine native phases, both architecture binary builds, both-CPU Nogo and four actual AMD64 CLI cases. Independent retained peer 07d7e7b3 joins the configured and executed f45ed699 binary, two uncached owners, five positive XML records and 5.754030 seconds to authenticated consumer. This covers native forwarding and netstack parsing/setup; it does not establish a live netstack forwarding connection, ARM runtime, netem or CodeQL.\n\nHistorical source-specific evidence: The original qualification passed canonical formatting, AMD64/ARM64 binary builds, both-CPU analyzers and four CLI cases, but its aggregate result remains FAIL because the callback queried a different configured binary. The CLI-only recovery queries the actual py_test data dependency and passes all four cases with the same binary hash as the original observations. Independent retained peer 5da0c1bb binds declared and executed paths, one uncached owner and four positive XML records; the authenticated consumer received the verdict 3.688924 seconds after native completion. This covers native forwarding and netstack parsing/setup, not a live netstack forwarding connection, ARM runtime, netem or CodeQL.",
+      "updatedAt": "2026-10-24T15:25:05.305627+00:00",
+      "number": 16345
+    },
+    {
+      "id": "branch:tcp-rack-pipe-accounting",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/tcp-rack-pipe-accounting",
+      "head": "cd2171f0f762d861fe2ed48e4425d05e62adda03",
+      "title": "Account for RACK loss when estimating flight",
+      "url": "https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-10-24T15:25:05.305627+00:00",
+      "summary": "After a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This four-file proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged. The isolated head is a direct child of #15634 at 933263e71c; that unmerged correction is its sole prerequisite. Hostinet is simplifying the test and description before root asks the contributor. No contributor question has been sent.\n\nThe real-endpoint baseline reproduces ten packets counted in flight against a five-packet window. Corrected normal and race runs cover ordinary segments, software GSO, ACK-driven drain and the existing receive-window control. The retry has six uncached attempts and 43 positive candidate records; the three expected baseline failures keep the aggregate native result FAIL while the comparison, candidate and projection pass. Seven earlier classic-SACK normal records remain separately applicable by unchanged source; the retry covers classic-SACK race. Independent retained peer 2842628c confirms ten native phases and 3.677916 seconds to authenticated consumer. Final isolation peer cd52b772 confirms the entire TCP subtree matches the tested candidate. No throughput improvement is claimed.",
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "cd2171f0f762d861fe2ed48e4425d05e62adda03",
+        "observedAt": "2026-10-24T15:25:05.305627+00:00",
+        "disposition": "Qualified isolated proposal; test and description simplification is agent work",
+        "nextAction": "Simplify the test and description under root’s direction, bind the revised source and necessary validation, then give root the exact proposal for a contributor question. Keep the #15634 prerequisite; qualification does not imply publication approval.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03",
+          "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...cd2171f0f762d861fe2ed48e4425d05e62adda03",
+          "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact isolated proposal",
+          "url": "https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03"
+        },
+        {
+          "label": "Four-file change on #15634",
+          "url": "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...cd2171f0f762d861fe2ed48e4425d05e62adda03"
+        },
+        {
+          "label": "Focused baseline/candidate comparison",
+          "url": "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
+        },
+        {
+          "label": "Required SACK-accounting prerequisite",
+          "url": "https://github.com/google/gvisor/pull/15634"
+        }
+      ]
     }
   ],
   "edges": [
@@ -24662,6 +24731,20 @@
       "type": "includes",
       "reason": "The approved independent proposal is delivered in this public PR.",
       "evidence": "https://github.com/google/gvisor/pull/16344"
+    },
+    {
+      "from": "branch:tcp-proxy-port-bounds",
+      "to": "pr:16345",
+      "type": "includes",
+      "reason": "The approved pointer-receiver correction is delivered in this public PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16345"
+    },
+    {
+      "from": "pr:15634",
+      "to": "branch:tcp-rack-pipe-accounting",
+      "type": "depends",
+      "reason": "The isolated RACK accounting correction is based on the SACK accounting fix at exact 933263e71c.",
+      "evidence": "https://github.com/google/gvisor/pull/15634"
     }
   ],
   "investigations": [
