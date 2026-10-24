@@ -583,10 +583,14 @@ func TestCodecArrayInitializationContexts(t *testing.T) {
 					if got, want := len(destination.Slice), 1; got != want {
 						t.Fatalf("nested slice length = %d, want %d", got, want)
 					}
-					for name, value := range map[string]float64{"array": destination.Values[0][0], "map": destination.Map[1][0], "slice": destination.Slice[0][0]} {
+					for name, value := range map[string]float64{"array": destination.Values[0][0], "map": destination.Map[1][0]} {
 						if got, want := math.Float64bits(value), math.Float64bits(negativeZero); got != want {
 							t.Errorf("%s nested zero bits = %#x, want %#x", name, got, want)
 						}
+					}
+					// The separate backing array is wholly zero and is elided.
+					if got, want := math.Float64bits(destination.Slice[0][0]), uint64(0); got != want {
+						t.Errorf("slice nested zero bits = %#x, want %#x", got, want)
 					}
 					if got, want := destination.Values[1][0], float64(9); got != want {
 						t.Errorf("nested nonzero value = %v, want %v", got, want)
@@ -612,8 +616,12 @@ func TestCodecArrayInitializationContexts(t *testing.T) {
 							if got, want := len(destination.Slice), len(source.Slice); got != want {
 								t.Fatalf("float slice length = %d, want %d", got, want)
 							}
-							for i := range source.Slice {
-								if got, want := math.Float64bits(destination.Slice[i]), math.Float64bits(source.Slice[i]); got != want {
+							wantSlice := [2]float64{}
+							if mixed {
+								wantSlice = source.Values
+							}
+							for i := range wantSlice {
+								if got, want := math.Float64bits(destination.Slice[i]), math.Float64bits(wantSlice[i]); got != want {
 									t.Errorf("loaded slice bits[%d] = %#x, want %#x", i, got, want)
 								}
 							}

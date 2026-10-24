@@ -484,7 +484,9 @@ type sliceDecoder[T any] struct {
 
 // decode implements typedDecoder.decode.
 func (s sliceDecoder[T]) decode(d *Decoder, ods *objectDecodeState) {
-	decodeArray(d, unsafe.Slice((*T)(ods.ptr), ods.obj.Len()), s.elem, false)
+	// Fresh backing storage already contains unique scalar zeros. Only
+	// floating-point leaves need whole-array elision for signed zeros.
+	decodeArray(d, unsafe.Slice((*T)(ods.ptr), ods.obj.Len()), s.elem, hasSignedZero(scalarArrayKind(typeOf[T]())))
 }
 
 // alloc implements arrayDecoder.alloc.
@@ -600,12 +602,16 @@ func scalarArrayKind(typ reflect.Type) reflect.Kind {
 	}
 }
 
+func hasSignedZero(kind reflect.Kind) bool {
+	return kind == reflect.Float32 || kind == reflect.Float64 || kind == reflect.Complex64 || kind == reflect.Complex128
+}
+
 // decodeArray uses the same element decoders for fields and fresh slice
 // backing arrays. encodeDefault elides a whole zero array, but encodeArray
 // preserves zero elements within a mixed array. Decoding initialized scalar
 // fields into zeroed storage distinguishes these cases without changing the
 // stream or individual scalar decoders. Floating-point arrays also need this
-// distinction in fresh fields because their negative zero is semantically zero
+// distinction in fresh fields and backing arrays because negative zero is zero
 // but must retain its sign when part of a mixed array.
 func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero bool) {
 	if len(a) == 0 {
@@ -618,9 +624,8 @@ func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero
 	}
 	var destination []T
 	if kind := scalarArrayKind(typeOf[T]()); preserveZero && kind != reflect.Invalid {
-		signedZero := kind == reflect.Float32 || kind == reflect.Float64 || kind == reflect.Complex64 || kind == reflect.Complex128
 		memory := unsafe.Slice((*byte)(unsafe.Pointer(&a[0])), uintptr(len(a))*unsafe.Sizeof(a[0]))
-		if signedZero || bytes.Count(memory, []byte{0}) != len(memory) {
+		if hasSignedZero(kind) || bytes.Count(memory, []byte{0}) != len(memory) {
 			destination = a
 			a = make([]T, len(a))
 		}
