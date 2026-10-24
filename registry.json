@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T08:33:03.659687+00:00",
+    "updatedAt": "2026-10-24T08:49:58.408590+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18090,21 +18090,23 @@
       "url": "https://github.com/google/gvisor/pull/16097",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
-      "summary": "After #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil’s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
+      "updatedAt": "2026-10-24T08:49:58.408590+00:00",
+      "summary": "The contributor has been asked to review the qualified conflict resolution 781d64d844. It unifies generic and CUDA Make context staging and preserves all 40 tracked basic source files across the new Bazel package boundary. Eight native phases pass: eight archive outputs across AMD64/ARM64, ten actual Make tags, and three AMD64 Docker rebuild/reload/execute checks. The archive/tag gates use optimized builds; the unchanged Docker smoke uses default build mode, so its tmpfile tag is separately recorded. Independent retained review passed, with 10.382462 seconds from native completion to authenticated receipt. The two earlier coordinator setup failures remain retained. Publication, the revised description and rereview of the changed Make rule await this existing contributor decision; the live source c2786668 and import #16307 are unchanged.\n\nPrevious conflict diagnosis:\n\nAfter #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil’s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
       "followup": {
         "owner": "root",
         "sourceHead": "c27866684d5b3f68b0120741e3e96be724a5b07a",
-        "observedAt": "2026-10-24T08:04:17.317854+00:00",
-        "disposition": "Confirmed images.mk conflict; root owns source reconciliation",
-        "nextAction": "Root owns the single source reconciliation and qualification, preserving both generic and CUDA context staging. Keep existing import #16307 unchanged. Track the shared Make recipe with newly opened Ollama #16333 and reconcile whichever lands second; no duplicate import owner or reviewer reminder while conflicted.",
+        "observedAt": "2026-10-24T08:49:58.408590+00:00",
+        "disposition": "Qualified conflict resolution; contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision for 781d64d844, including publication, description and original-approver rereview. Keep the current source/import unchanged. Track the shared Make recipe with Ollama #16333/#16334 and reconcile whichever lands second; no duplicate question or reviewer reminder.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/google/gvisor/pull/16097#pullrequestreview-5621263069",
           "https://github.com/tamird/gvisor/commit/c27866684d5b3f68b0120741e3e96be724a5b07a",
           "https://github.com/google/gvisor/pull/16307",
           "https://github.com/google/gvisor/pull/15670",
-          "https://github.com/google/gvisor/pull/16333"
+          "https://github.com/google/gvisor/pull/16333",
+          "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
+          "https://app.buildbuddy.io/invocation/c7dad030-2bcb-4d1c-9297-2c2f0770c527"
         ]
       },
       "evidence": [
@@ -18143,6 +18145,14 @@
         {
           "label": "Landed CUDA image context prerequisite",
           "url": "https://github.com/google/gvisor/pull/15670"
+        },
+        {
+          "label": "Qualified conflict resolution awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7"
+        },
+        {
+          "label": "Actual both-architecture archive/tag checks and separate AMD64 Docker smoke",
+          "url": "https://app.buildbuddy.io/invocation/c7dad030-2bcb-4d1c-9297-2c2f0770c527"
         }
       ],
       "refinement": {
@@ -21077,6 +21087,85 @@
           "url": "https://github.com/google/gvisor/pull/16098"
         }
       ]
+    },
+    {
+      "id": "branch:review/rules-img-basic-cuda-context",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/rules-img-basic-cuda-context",
+      "head": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
+      "title": "Reconcile basic and CUDA image context staging",
+      "url": "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T08:49:58.408590+00:00",
+      "summary": "Proposed amendment to #16097 after the CUDA context interface landed. The unified Make recipe preserves both image paths; a seven-line package-boundary fix restores all 40 basic sources to the shared archive. Eight native phases, eight context outputs, ten Make tags and three AMD64 rebuild/reload/execute checks passed independent retained review. Optimized tag construction and default-mode smoke are separate. Root sent the exact proposal at 08:46 UTC; publication and original-approver rereview await that decision.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
+        "url": "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7"
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
+        "observedAt": "2026-10-24T08:49:58.408590+00:00",
+        "disposition": "Qualified amendment; contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision; do not duplicate the request or amend the public source before it is granted."
+      },
+      "evidence": [
+        {
+          "label": "Exact proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7"
+        },
+        {
+          "label": "Native qualification and independently accepted retained result",
+          "url": "https://app.buildbuddy.io/invocation/c7dad030-2bcb-4d1c-9297-2c2f0770c527"
+        },
+        {
+          "label": "Existing source PR",
+          "url": "https://github.com/google/gvisor/pull/16097"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-img-python-upstream-context",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-python-upstream-context",
+      "head": "fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+      "title": "Use pinned upstream Python images",
+      "url": "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T08:49:58.408590+00:00",
+      "summary": "The contributor has been asked to review exact fd67c097cb on the corrected #16097 foundation. This proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The separate contributor decision and #16097 landing are still required.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+        "url": "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00"
+      },
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+        "observedAt": "2026-10-24T08:49:58.408590+00:00",
+        "disposition": "Qualified Python proposal; contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision, then deliver only after #16097 lands. Do not infer approval from other image grants or send a second question.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact Python proposal awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00"
+        },
+        {
+          "label": "Both image configurations and two actual AMD64 lifecycle cases",
+          "url": "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
+        }
+      ]
     }
   ],
   "edges": [
@@ -23503,6 +23592,24 @@
       "role": "proposed_update",
       "reason": "Validated source-order amendment awaits the existing contributor decision; live PR head remains unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/fd6ad08032cefdd0f256317993ff51b216453b89"
+    },
+    {
+      "from": "branch:review/rules-img-basic-cuda-context",
+      "to": "pr:16097",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Qualified conflict resolution awaits the existing contributor decision; public head remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7"
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-python-upstream-context",
+      "type": "depends_on",
+      "reason": "Uses the image_outputs/Make context interface and corrected basic package boundary from #16097. No Redis or MySQL dependency.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
+        "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00"
+      ]
     }
   ],
   "investigations": [
