@@ -3022,6 +3022,101 @@ func TestSmallSegReceiveWindowAdvertisement(t *testing.T) {
 	}
 }
 
+// TestReceiveWindowWithUnread checks that queued data or a queued FIN prevents
+// accepting payload beyond the advertised receive window.
+func TestReceiveWindowWithUnread(t *testing.T) {
+	const mtu = 1500
+	for _, unread := range []string{"Data", "FIN"} {
+		t.Run(unread, func(t *testing.T) {
+			c := context.New(t, mtu)
+			defer c.Cleanup()
+			c.CreateConnected(context.TestInitialSequenceNumber, 30000, 512 /* epRcvBuf */)
+			ept := endpointTester{c.EP}
+			seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			send := func(data []byte, flags header.TCPFlags, seq seqnum.Value) {
+				t.Helper()
+				c.SendPacket(data, &context.Headers{
+					SrcPort: context.TestPort,
+					DstPort: c.Port,
+					Flags:   header.TCPFlagAck | flags,
+					SeqNum:  seq,
+					AckNum:  c.IRS.Add(1),
+					RcvWnd:  30000,
+				})
+			}
+			checkACK := func(pkt *buffer.View, want seqnum.Value) seqnum.Size {
+				t.Helper()
+				defer pkt.Release()
+				checker.IPv4(t, pkt, checker.TCP(
+					checker.DstPort(context.TestPort),
+					checker.TCPFlags(header.TCPFlagAck),
+					checker.TCPSeqNum(uint32(c.IRS.Add(1))),
+					checker.TCPAckNum(uint32(want)),
+				))
+				return seqnum.Size(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize())
+			}
+
+			receiveACK := func(want seqnum.Value) seqnum.Size {
+				t.Helper()
+				return checkACK(c.GetPacket(), want)
+			}
+
+			const queued = "q"
+			if unread == "Data" {
+				send([]byte(queued), 0, seq)
+			} else {
+				send(nil, header.TCPFlagFin, seq)
+			}
+			seq++ // Both the queued byte and FIN consume one sequence number.
+			window := receiveACK(seq)
+			if window == 0 {
+				t.Fatal("expected a nonzero advertised receive window")
+			}
+			if got, want := int(window)+1, mtu-header.IPv4MinimumSize-header.TCPMinimumSize; got > want {
+				t.Fatalf("probe payload size = %d, want at most %d", got, want)
+			}
+
+			if unread == "Data" {
+				// Start in order but extend one byte beyond the advertised edge.
+				// The entire segment must be rejected while earlier data is unread.
+				send(bytes.Repeat([]byte("x"), int(window)+1), 0, seq)
+				receiveACK(seq)
+				data := ept.CheckRead(t)
+				if got, want := len(data), len(queued); got != want {
+					t.Fatalf("Read after rejected segment returned %d bytes, want %d", got, want)
+				}
+				if got, want := string(data), queued; got != want {
+					t.Fatalf("Read = %q, want %q", got, want)
+				}
+				ept.CheckReadError(t, &tcpip.ErrWouldBlock{})
+
+				// Reading may synchronously advertise the newly available window.
+				if pkt := c.GetPacketNonBlocking(); pkt != nil {
+					checkACK(pkt, seq)
+				}
+
+				// A valid retry at the same sequence number must still be accepted.
+				const retry = "valid"
+				send([]byte(retry), 0, seq)
+				receiveACK(seq.Add(seqnum.Size(len(retry))))
+				if got, want := string(ept.CheckRead(t)), retry; got != want {
+					t.Fatalf("Read retry = %q, want %q", got, want)
+				}
+				ept.CheckReadError(t, &tcpip.ErrWouldBlock{})
+			} else {
+				// A standalone unread FIN also makes a segment at the right edge
+				// unacceptable, even though the receive queue has no payload bytes.
+				send([]byte("x"), 0, seq.Add(window))
+				receiveACK(seq)
+				ept.CheckReadError(t, &tcpip.ErrClosedForReceive{})
+				if got, want := tcp.EndpointState(c.EP.State()), tcp.StateCloseWait; got != want {
+					t.Fatalf("endpoint state = %s, want %s", got, want)
+				}
+			}
+		})
+	}
+}
+
 func TestNoWindowShrinking(t *testing.T) {
 	c := context.New(t, e2e.DefaultMTU)
 	defer c.Cleanup()
