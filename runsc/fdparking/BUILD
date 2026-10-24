@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "go_test")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -21,7 +21,6 @@ genrule(
     srcs = ["fdparking.c"],
     outs = ["runsc-fd-parking"],
     cmd = "$(CC) $(CC_FLAGS) " +
-          "--ld-path=$(execpath {}) ".format(cc_linker) +
           "-Os " +
           "-fno-pie " +
           "-ffreestanding " +
@@ -40,8 +39,10 @@ genrule(
           "$(execpath fdparking.c)",
     executable = True,
     features = ["-pie"],
-    toolchains = [":no_pie_cc_flags"],
-    tools = [cc_linker],
+    toolchains = [
+        cc_toolchain,
+        ":no_pie_cc_flags",
+    ],
     visibility = ["//visibility:public"],
 )
 

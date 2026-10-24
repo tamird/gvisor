@@ -5,7 +5,7 @@
 
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -32,7 +32,6 @@ genrule(
         "vdso.so",
     ],
     cmd = "$(CC) $(CC_FLAGS) " +
-          "--ld-path=$(execpath {}) ".format(cc_linker) +
           "-I. " +
           "-O2 " +
           "-std=c++11 " +
@@ -58,15 +57,16 @@ genrule(
           "$(location vdso.cc) " +
           "$(location vdso_time.cc)",
     features = ["-pie"],
-    toolchains = [":no_pie_cc_flags"],
-    tools = [cc_linker],
+    toolchains = [
+        cc_toolchain,
+        ":no_pie_cc_flags",
+    ],
     visibility = ["//:sandbox"],
 )
 
 cc_flags_supplier(
     name = "no_pie_cc_flags",
     features = ["-pie"],
-    language = "c++",
 )
 
 py_test(
