@@ -153,7 +153,7 @@ func runVirtualTCP(t *testing.T, drop bool) {
 	// goroutine can enqueue more work. With one processor per stack, Pause drains
 	// its endpoint queue. A timer callback may enqueue another endpoint, so drain
 	// immediate clock jobs at the same instant and repeat after resuming if any
-	// callback ran. Time never advances while the processors are paused.
+	// callback ran. The driver advances time only with both processors paused.
 	fence := func() {
 		t.Helper()
 		for pass := 0; pass < 32; pass++ {
@@ -220,7 +220,23 @@ func runVirtualTCP(t *testing.T, drop bool) {
 				next, index = packet.at, i
 			}
 		}
-		clock.Advance(next - now())
+		func() {
+			for _, s := range stacks {
+				s.Pause()
+			}
+			defer func() {
+				for _, s := range stacks {
+					s.Resume()
+				}
+			}()
+			// Timer callbacks may enqueue a TCP processor. Keep it parked
+			// until Advance reaches the end of this bounded tick, so it
+			// cannot observe a scheduler-dependent intermediate clock value.
+			clock.Advance(next - now())
+		}()
+		// Timer-generated output is observed at this tick's end. The link
+		// schedule models that explicit 1 ms resolution, not exact emission.
+		fence()
 		if index != -1 {
 			packet := pending[index]
 			pending = append(pending[:index], pending[index+1:]...)
