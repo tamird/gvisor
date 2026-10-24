@@ -1,0 +1,27 @@
+{
+  "source": "9c630b7d2335a1dbec31406ae0e8c026b75b77c7",
+  "invocation": "26259bda-8ae6-4d09-9a94-423916d7cc62",
+  "case_sha256": {
+    "TestVirtualTCPBurstRecovery/cubic/burst_loss": "f4fc0effa521cce11d30baeacae697d6a9367697a5c6be27923f99f634ccd228",
+    "TestVirtualTCPBurstRecovery/cubic/no_loss": "4b3c7c078c316eb340e7de7e21ff41ea4293931d0bc45d308fb533aafb94fedf",
+    "TestVirtualTCPBurstRecovery/reno/burst_loss": "e380f5a0b121ab72bb76617519c803e0fcb1873d46e4660a55c7fb7687e7a7c1",
+    "TestVirtualTCPBurstRecovery/reno/no_loss": "b4c2d33cb2329a8916dd465e3d41ce7fb9ca345a79a66234183f278a1c24879e"
+  },
+  "references": [
+    {
+      "path": "/private/tmp/gvisor-rbe-next/tcp-virtual-burst-partial-outcome.json",
+      "bytes": 36162,
+      "sha256": "5f3c36fde518c0f24faff7dc5c8305cfa0d317d897632135a105a10dc30d5796"
+    },
+    {
+      "path": "/private/tmp/gvisor-rbe-next/qualification-tcp-virtual-burst-receipt.json",
+      "bytes": 10751,
+      "sha256": "3e63e4eb4487435102fe097e012552556fe0ea9821bdb6a6519fc36d5c6419ee"
+    },
+    {
+      "path": "/private/tmp/gvisor-rbe-next/qualification-tcp-virtual-burst-qualification.tar.gz",
+      "bytes": 662608,
+      "sha256": "acf2178372846ddc3523fc345b4618a5b7bc9bb5d8965335f9f415a15575f0b8"
+    }
+  ]
+}

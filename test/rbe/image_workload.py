@@ -14,7 +14,8 @@ CASES = {f"TestVirtualTCPBurstRecovery/{algorithm}/{loss}"
 PARENTS = {"TestVirtualTCPBurstRecovery", "TestVirtualTCPBurstRecovery/reno", "TestVirtualTCPBurstRecovery/cubic"}
 
 
-def observations(evidence: Path, phase: str, runs: int) -> dict:
+def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
+                 parents: set[str] = PARENTS) -> dict:
     directory = evidence / ("invocation-" + phase)
     verdict = json.loads((directory / "verdict.json").read_text())
     executed = verdict["executed"]
@@ -48,16 +49,16 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
             raise ValueError(f"{phase}: report hash mismatch")
         run = identity["run"]
         if row["name"] == "test.xml":
-            cases = ET.fromstring(body).findall(".//testcase")
-            names = [case.attrib["name"] for case in cases]
-            if (set(names) != CASES | PARENTS or len(names) != 7
-                    or any(list(case) for case in cases) or run in xml_runs):
+            xml_cases = ET.fromstring(body).findall(".//testcase")
+            names = [case.attrib["name"] for case in xml_cases]
+            if (set(names) != cases | parents or len(names) != len(cases | parents)
+                    or any(list(case) for case in xml_cases) or run in xml_runs):
                 raise ValueError(f"{phase}: unexpected XML cases {names}")
             xml_runs.add(run)
         elif row["name"] == "test.log":
             values = [json.loads(line.split("VIRTUAL_TCP ", 1)[1])
                       for line in body.decode().splitlines() if "VIRTUAL_TCP " in line]
-            if {value["Case"] for value in values} != CASES or len(values) != 4 or run in samples:
+            if {value["Case"] for value in values} != cases or len(values) != len(cases) or run in samples:
                 raise ValueError(f"{phase}: missing or duplicate virtual transfers")
             samples[run] = {value["Case"]: value for value in values}
         else:
@@ -90,15 +91,23 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "--test_env=GO_TEST_WRAP_TESTV=1"]
     result = {"status": "INCOMPLETE", "source": config["source"], "phases": {}}
     try:
-        for phase, count, extra in (("virtual-normal", 3, []), ("virtual-race", 1, ["--config=race"])):
-            checked = invoke(phase, ["test", *options, *extra, *selected,
-                                     f"--runs_per_test={count}", "--test_arg=-test.run=^TestVirtualTCPBurstRecovery$", OWNER], "test", targets=[OWNER])
+        prior = json.loads(Path(__file__).with_name("tcp_burst_reference.json").read_text())
+        if set(prior["case_sha256"]) != CASES:
+            raise ValueError("Prior normal reference has a different case census")
+        result["prior_reference"] = prior
+        for loss in ("no_loss", "burst_loss"):
+            phase = "virtual-race-" + loss.replace("_", "-")
+            case = "TestVirtualTCPBurstRecovery/cubic/" + loss
+            checked = invoke(phase, ["test", *options, "--config=race", *selected,
+                                     "--runs_per_test=1", "--test_arg=-test.run=^TestVirtualTCPBurstRecovery$/^cubic$/^" + loss + "$", OWNER], "test", targets=[OWNER])
             if checked["status"] != "PASS":
                 raise RuntimeError(f"{phase}: native test did not pass")
-            result["phases"][phase] = observations(evidence, phase, count)
-        if (result["phases"]["virtual-normal"]["reference_sample"]
-                != result["phases"]["virtual-race"]["reference_sample"]):
-            raise ValueError("Normal and race virtual packet observations differ")
+            observed = observations(evidence, phase, 1, {case}, {"TestVirtualTCPBurstRecovery", "TestVirtualTCPBurstRecovery/cubic"})
+            value = observed["reference_sample"][case]
+            digest = hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            if digest != prior["case_sha256"][case]:
+                raise ValueError(f"{phase}: race observations differ from retained normal runs")
+            result["phases"][phase] = observed
         analyzed = invoke("virtual-nogo", ["test", *options, *selected, "--runs_per_test=1",
                                            OWNER + "_nogo"], "test", targets=[OWNER + "_nogo"])
         if analyzed["status"] != "PASS":
