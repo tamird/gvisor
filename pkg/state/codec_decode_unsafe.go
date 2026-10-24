@@ -536,27 +536,25 @@ func (d *Decoder) slice(elemTyp reflect.Type, dec arrayDecoder) (unsafe.Pointer,
 	return ods.ptr, int(length), int(capacity), true
 }
 
-// byteArray decodes an array of n elements of kind uint8 at p. In field
-// context, an entirely zero array leaves the destination unchanged.
+// arrayPresence reads the strict 0/1 field-presence marker.
+func (d *Decoder) arrayPresence() bool {
+	switch marker := d.fixed(1)[0]; marker {
+	case 0:
+		return false
+	case 1:
+		return true
+	default:
+		Failf("invalid array presence marker %d", marker)
+		return false
+	}
+}
+
+// byteArray decodes an array of n elements of kind uint8 at p.
 func (d *Decoder) byteArray(p unsafe.Pointer, n int, preserveZero bool) {
-	if n == 0 {
+	if n == 0 || (preserveZero && !d.arrayPresence()) {
 		return
 	}
-	destination := unsafe.Slice((*byte)(p), n)
-	if !preserveZero || bytes.Count(destination, []byte{0}) == n {
-		wire.ReadFull(d.r, destination)
-		return
-	}
-	for offset := 0; offset < n; {
-		value := d.fixed(min(n-offset, 16))
-		if bytes.Count(value, []byte{0}) != len(value) {
-			clear(destination[:offset])
-			offset += copy(destination[offset:], value)
-			wire.ReadFull(d.r, destination[offset:])
-			return
-		}
-		offset += len(value)
-	}
+	wire.ReadFull(d.r, unsafe.Slice((*byte)(p), n))
 }
 
 // byteSliceDecoder decodes arrays backing slices of elements of kind uint8.
@@ -585,33 +583,9 @@ func DecodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T)) {
 	decodeArray(d, a, elem, !d.fullValue)
 }
 
-// scalarArrayKind reports the scalar leaf kind whose array elements must
-// overwrite zero values. Pointer-like values retain their existing nil
-// behavior, and structs must load their fields and hooks normally.
-func scalarArrayKind(typ reflect.Type) reflect.Kind {
-	for typ.Kind() == reflect.Array {
-		typ = typ.Elem()
-	}
-	switch typ.Kind() {
-	case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-		reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.String:
-		return typ.Kind()
-	default:
-		return reflect.Invalid
-	}
-}
-
-func hasSignedZero(kind reflect.Kind) bool {
-	return kind == reflect.Float32 || kind == reflect.Float64 || kind == reflect.Complex64 || kind == reflect.Complex128
-}
-
 // decodeArray uses the same element decoders for fields and fresh slice
-// backing arrays. encodeDefault elides a whole zero array, but encodeArray
-// preserves zero elements within a mixed array. Initialized scalar fields keep
-// their zero prefix until the first nonzero element establishes that the whole
-// array must be replaced. Floating-point arrays instead use temporary storage
-// because negative zero is zero but must retain its sign in a mixed array.
+// backing. A present scalar field replaces every element, including zeros;
+// an absent field leaves the existing storage and aliases untouched.
 func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero bool) {
 	if len(a) == 0 {
 		return
@@ -621,41 +595,17 @@ func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero
 		d.lastRef = 0
 		return
 	}
-	var destination []T
-	preservePrefix := false
-	if kind := scalarArrayKind(typeOf[T]()); preserveZero && kind != reflect.Invalid {
-		if hasSignedZero(kind) {
-			destination = a
-			a = make([]T, len(a))
-		} else {
-			memory := unsafe.Slice((*byte)(unsafe.Pointer(&a[0])), uintptr(len(a))*unsafe.Sizeof(a[0]))
-			preservePrefix = bytes.Count(memory, []byte{0}) != len(memory)
+	if preserveZero && scalarArrayKind(typeOf[T]()) != reflect.Invalid {
+		if !d.arrayPresence() {
+			d.lastRef = 0
+			return
 		}
+		clear(a)
 	}
 	ds, ods := d.ds, d.ods
 	fullValue := d.fullValue
 	d.fullValue = true
-	i := 0
-	if preservePrefix {
-		for ; i < len(a); i++ {
-			original := a[i]
-			var zero T
-			a[i] = zero
-			d.lastRef = 0
-			elem(d, &a[i])
-			if d.lastRef != 0 {
-				ds.wait(ods, d.lastRef, nil)
-			}
-			if !reflect.ValueOf(&a[i]).Elem().IsZero() {
-				clear(a[:i])
-				clear(a[i+1:])
-				i++
-				break
-			}
-			a[i] = original
-		}
-	}
-	for ; i < len(a); i++ {
+	for i := range a {
 		d.lastRef = 0
 		elem(d, &a[i])
 		if d.lastRef != 0 {
@@ -664,14 +614,6 @@ func decodeArray[T any](d *Decoder, a []T, elem func(*Decoder, *T), preserveZero
 	}
 	d.fullValue = fullValue
 	d.lastRef = 0
-	if destination != nil {
-		for i := range a {
-			if !reflect.ValueOf(&a[i]).Elem().IsZero() {
-				copy(destination, a)
-				break
-			}
-		}
-	}
 }
 
 // mapDecoder decodes maps, with key; the value decoder is in decArg.
