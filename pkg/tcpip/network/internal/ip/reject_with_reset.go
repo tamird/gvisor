@@ -15,11 +15,12 @@
 package ip
 
 import (
+	"net/netip"
+
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
-	"net/netip"
 )
 
 // ipv6FragmentOffset returns the fragment offset of the IPv6 packet

@@ -15,8 +15,9 @@
 package header
 
 import (
-	"gvisor.dev/gvisor/pkg/tcpip"
 	"net/netip"
+
+	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
 const (
