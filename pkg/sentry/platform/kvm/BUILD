@@ -77,11 +77,11 @@ go_library(
         "vdso_unsafe.go",
         "virtual_map.go",
     ],
-    visibility = ["//pkg/sentry:internal"],
     gc_goopts = [
         "-m=2",
         "-S",
     ],
+    visibility = ["//pkg/sentry:internal"],
     deps = [
         "//pkg/abi/linux",
         "//pkg/atomicbitops",
