@@ -15,7 +15,7 @@ graph = json.loads((evidence / "image-configured-inputs.json").read_text())
 proof = json.loads((evidence / "mixed-images-image-execution.json").read_text())
 root = Path(graph["execution_root"])
 records = {"source": config["source"], "status": "INCOMPLETE", "architectures": [], "aggregate_outputs": []}
-package = "//images/basic:"
+package = "//images/benchmarks:"
 
 
 def owner(label: str, cpu: str) -> dict:
@@ -113,13 +113,15 @@ try:
         row["context"] = identity(context)
         with tarfile.open(context) as contents:
             match [member for member in contents if member.isfile()]:
-                case [member] if member.name.removeprefix("./") == "images/basic/redis/image.tar":
+                case [member] if member.name.removeprefix("./") == "images/benchmarks/redis/image.tar":
                     with contents.extractfile(member) as stream:
                         digest = hashlib.file_digest(stream, "sha256").hexdigest()
                     if digest != row["archive"]["sha256"] or member.size != row["archive"]["bytes"]:
                         raise ValueError("Redis Make context differs from its image archive")
                 case _:
                     raise ValueError("Redis Make context must contain only its expected archive")
+        if row["config_sha256"] != config["basic_redis_config_ids"][arch]:
+            raise ValueError("Benchmark Redis differs from the qualified basic Redis config")
         inventory = evidence / (arch + "-redis-inventory.json")
         inventory.write_text(json.dumps(row, indent=2) + "\n")
         row["runtime_inputs"] = {"status": "PASS", "source": config["source"], "archive": row["archive"],

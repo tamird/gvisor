@@ -16,6 +16,7 @@ benchmark_test(
     name = "redis_test",
     srcs = ["redis_test.go"],
     embed = [":database"],
+    tags = ["go-benchmark-contract"],
     use_for_pgo = True,
     visibility = ["//:sandbox"],
     deps = [

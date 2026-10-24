@@ -1,7 +1,6 @@
-"""Build both Redis image platforms and exercise the existing port-forward consumer."""
+"""Build both Redis image platforms and exercise the existing database benchmark consumer."""
 import json
 import os
-import shlex
 from pathlib import Path
 
 
@@ -18,7 +17,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     if not execution_root.is_absolute() or not execution_root.is_dir():
         raise ValueError("Invalid canonical execution root")
     targets = config["targets"]
-    query = 'filter("^(@@)?//images/basic:", deps(set(' + " ".join(targets) + ')))'
+    query = 'filter("^(@@)?//images/benchmarks:", deps(set(' + " ".join(targets) + ')))'
     queried = invoke("mixed-image-owners", ["cquery", *options, "--output=starlark",
                      "--starlark:file=" + str(scripts / "image_query.bzl"), query], "command", targets=[])
     if queried["status"] != "PASS":
@@ -28,7 +27,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     (evidence / "image-configured-inputs.json").write_text(json.dumps(graph, indent=2) + "\n")
     for cpu in ("k8", "aarch64"):
         for kind in ("archive", "context"):
-            label = "//images/basic:redis_" + kind
+            label = "//images/benchmarks:redis_" + kind
             selected = [row for row in rows if row["label"].removeprefix("@@") == label and row["cpu"] == cpu]
             if len(selected) != 1 or len(selected[0]["files"]) != 1:
                 raise ValueError(f"Expected one configured Redis output: {label} {cpu}: {selected}")
@@ -38,16 +37,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise ValueError(f"Expected two architecture outputs: {label}: {selected}")
     if config.get("graph_only", False):
         return
-    formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; cd "$BUILD_WORKSPACE_DIRECTORY"; exec bash tools/lint.sh gofmt', "--"])
-    formatted = invoke("gofmt", ["run", *options, *config["consumer_options"],
-                       "--run_under=" + formatter, "@io_bazel_rules_go//go:go"], "command", targets=[])
-    if formatted["status"] != "PASS":
-        raise RuntimeError("Canonical Go formatting failed")
-    owner = "//test/root:portforward_test_nogo"
-    analyzed = invoke("redis-nogo", ["test", *options, *config["consumer_options"],
-                      "--nocache_test_results", "--test_output=all", owner], "test", targets=[owner])
-    if analyzed["status"] != "PASS" or analyzed["case_counts"] != {"failed": 0, "passed": 1, "skipped": 0}:
-        raise RuntimeError("Port-forward owning analyzer failed")
     execution_log = private / "mixed-images-execution.json"
     try:
         built = invoke("mixed-images", ["build", *options, "--keep_going",
@@ -62,5 +51,5 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                        "command", targets=[])
     if inspected["status"] != "PASS":
         raise RuntimeError("Pinned Redis base/script layer inspection failed")
-    import redis_image_runtime
-    redis_image_runtime.run(invoke, evidence, private)
+    import redis_benchmark_runtime
+    redis_benchmark_runtime.run(invoke, evidence, private)
