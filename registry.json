@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T11:24:46.222489+00:00",
+    "updatedAt": "2026-10-24T11:40:46.346482+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1429,32 +1429,22 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-10-24T11:22:37.878012+00:00",
-      "summary": "The contributor approved the corrected annotation-only amendment, parent-death fix and exit-status fix. The signal-delivery fix received LGTM subject to root assessing its test. The annotation-only amendment is now published at 2a057f2bba. Root owns the three independent delivery boundaries and the original review reply; no contributor review question remains.\n\nPreserved earlier state:\n\nThe four independent proposals completed their applicable checks before the contributor decisions above. Corrected contracts 2a057f2b drops the iterator annotation that required deferred process-group annotations; executable Go is unchanged. Its standalone analyzer and both combined analyzers pass with explicit AMD64 and ARM64 results. The three behavioral proposals remain unchanged and independent. Their original standalone analyzers passed, and combined kernel normal/race checks each passed 116 XML records. The original contracts analyzer failures and five-source collection error remain recorded. The existing maintainer split thread remains the delivery thread.\n\nPreserved earlier record:\n\nEtienne requested separating annotation-only contracts from changes that acquire locks. Four independent fork proposals are available on the same master 291de749 base: contracts 1eb4c14a, parent-death signal locking cad33143, signal-delivery error deadlock fbe4e871, and exit-notification status locking 9e9228f6. None depends on another proposal. Independent source review confirms identical executable Go in all nine contracts files and checks the three behavioral fixes separately. The initial per-source analyzer and combined kernel normal/race qualification is preserved below, including the corrected annotation-only follow-up.\n\nPreserved earlier record:\n\nReviewed equivalent rebase published; current source CI and review remain separate. Exact head 6b694a6b05 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at d582fa067123 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved kernel-locking change is rebased and published at db1650842. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. Existing reviewer requests are preserved, and no approval was invalidated.\n\nThe current source passed the selected kernel, race and analyzer qualification. The rebase preserves upstream signal handling and the proposal’s TaskSet, signal and atomic ownership checks, parent-death-signal locking, signal-error lock reacquisition and exit-status read. No full-repository or ARM runtime result is claimed.",
+      "summary": "The approved annotation-only amendment is published at 2a057f2bba. The original split-request reply links three independent public fixes: parent-death #16338, exit-status #16339 and signal-delivery #16340. No contributor decision remains and none of the four changes requires another to land.\n\nCorrected standalone and combined analyzer checks passed on both CPUs; executable Go in the annotation-only amendment is unchanged. The original iterator annotation failure and five-source collection error remain recorded. The three behavioral fixes passed their original standalone analyzers and the combined kernel normal/race checks each passed 116 XML records. The signal fix was published after removing the requested new test and its BUILD dependencies, with production bytes unchanged.",
       "followup": {
-        "disposition": "Annotation amendment published; independent fixes assigned",
+        "disposition": "Split request answered; four changes delivered",
         "owner": "root",
-        "nextAction": "Finish the original split-request reply and independently deliver the approved parent-death and exit-status fixes. Assess the signal-delivery test before its conditional delivery.",
+        "nextAction": "Follow current-head checks and any new reviewer response on #14345 and the three independent PRs.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
-          "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55",
-          "https://github.com/tamird/gvisor/commit/db1650842d9b3e403f4b4cd9f16a79fb39e7363a",
-          "https://github.com/tamird/gvisor/commit/d582fa0671235b611ab31d8c2bf5974f5c7a4a5d",
-          "https://github.com/tamird/gvisor/commit/6b694a6b05952e47e4d359981ec39514017131fd",
-          "https://github.com/google/gvisor/pull/14345#discussion_r4366296329",
-          "https://github.com/tamird/gvisor/commit/1eb4c14aabc2a0b6c26b006e1b72781e017794da",
-          "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c",
-          "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
-          "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
-          "https://app.buildbuddy.io/invocation/07f41d88-2c5b-45aa-b356-5acafd15223b",
-          "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176",
-          "https://app.buildbuddy.io/invocation/6c8cf99e-82cb-46b3-9bb5-947ebf1bbc91",
-          "https://app.buildbuddy.io/invocation/ddd408f5-5150-43de-a5d1-4d86ca9fd0dc"
+          "https://github.com/google/gvisor/pull/14345#discussion_r4366994819",
+          "https://github.com/google/gvisor/pull/16338",
+          "https://github.com/google/gvisor/pull/16339",
+          "https://github.com/google/gvisor/pull/16340"
         ],
         "reviewedAt": "2026-10-15T22:59:23.496825+00:00",
         "sourceHead": "2a057f2bba3e94fc57ac86911b275febd284a176",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00"
+        "observedAt": "2026-10-24T11:35:59.115042+00:00"
       },
       "head": "2a057f2bba3e94fc57ac86911b275febd284a176",
       "evidence": [
@@ -16675,26 +16665,23 @@
       "repo": "google/gvisor",
       "number": 16052,
       "ref": "fix/rseq-periodic-interrupt",
-      "head": "fd6376945efa93664fec28669cc18e29c89b8648",
+      "head": "f91284fb893862890de56ab09be5c6caa241396d",
       "title": "Interrupt RSEQ abort tests with a timer",
       "url": "https://github.com/google/gvisor/pull/16052",
       "group": "runtime",
       "status": "open",
-      "summary": "The contributor approved exact header-order proposal 0e079c726; root owns amendment publication and exact-head verification. The current public-head review remains separate.\n\nPreserved earlier state:\n\nThe matching import fails to compile rseq_binary on AMD64 and ARM64 because asm/signal.h sees size_t before its declaring header. Root prepared the narrow header-order correction at 0e079c726ea8; both-CPU GNU compilation and canonical formatting passed with four uncached compile actions. The contributor approved publication and the reply; root owns delivery from the previously observed public head fd6376945efa.\n\nThe latest matching import #16229 at60ccf396d9b5 repeats the source failure in public Buildkite51944/internal33637. The original periodic-signal behavior and prior runtime evidence remain unchanged; this correction does not claim a new runtime test.",
+      "summary": "The contributor-approved header-order correction is published at f91284fb89, patch-identical to proposal 0e079c726. The public reply asks both prior approvers to review the changed head. Native review-request API calls returned HTTP 404, so no formally saved re-request is claimed and no duplicate comment is needed.\n\nThe old import failed rseq_binary compilation on both CPUs because asm/signal.h saw size_t before its declaring header. The approved correction passed both-CPU GNU compilation and canonical formatting with four uncached compile actions. Existing periodic-signal runtime evidence is unchanged; these compile checks do not claim a new runtime test.",
       "followup": {
         "owner": "root",
-        "sourceHead": "fd6376945efa93664fec28669cc18e29c89b8648",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor decision settled; assigned delivery",
-        "nextAction": "The contributor approved exact header-order proposal 0e079c726; root owns amendment publication and exact-head verification. The current public-head review remains separate.",
+        "sourceHead": "f91284fb893862890de56ab09be5c6caa241396d",
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Approved amendment published; human reapproval requested by comment",
+        "nextAction": "Follow the existing comment to both prior approvers and fresh import/checks. Preserve API 404; do not repeat comments or claim a saved native re-request.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39424415522/job/118633206126",
-          "https://github.com/google/gvisor/pull/16031",
-          "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/tamird/gvisor/commit/fd6376945efa93664fec28669cc18e29c89b8648"
+          "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685"
         ]
       },
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -16717,8 +16704,12 @@
           "url": "https://github.com/tamird/gvisor/commit/fd6376945efa93664fec28669cc18e29c89b8648"
         },
         {
-          "label": "Qualified header-order correction awaiting contributor review",
+          "label": "Approved header-order proposal",
           "url": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90"
+        },
+        {
+          "label": "Fresh reapproval requested by comment",
+          "url": "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685"
         }
       ],
       "ciRecovery": {
@@ -18588,17 +18579,16 @@
       "url": "https://github.com/google/gvisor/pull/15814",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
-      "summary": "Outgoing review authorized; publication assigned. Submit the authorized current-head review and measurement request after the final discussion check. No repeated contributor question.\n\nPreserved proposal and evidence:\n\nEtienne updated the head to f4722438 and explicitly re-requested Tamir’s review at 09:35:39Z on October 24 (timeline event 34121373897). Root completed the re-review of the two prior findings and revised registration behavior and received authorization to publish the concrete follow-up review. The independent source read found no blocker: ordinary metadata is validated on save/restore, binary registration remains eager, and the test no longer depends on a cross-test counter. The requested command and before/after measurements behind the stated 0.3ms remain absent. The prior changes-requested review remains on 34490698; no current-head public decision has been sent. This remains an unmerged prerequisite for dependent state work.",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "summary": "Tamir’s authorized approval of exact f47224383 is published. The review confirms the two prior source findings are addressed and asks for the command and before/after measurements behind the stated 0.3 ms startup saving. No contributor decision remains. Ordinary metadata validation stays lazy, binary registration stays eager, and the corrected test no longer depends on a cross-test counter. This remains an unmerged prerequisite for dependent state work.",
       "followup": {
         "owner": "root",
         "sourceHead": "f47224383f4b2cc6f8ec173a250660493e2e719d",
-        "disposition": "Outgoing review authorized; publication assigned",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "nextAction": "Submit the authorized current-head review and measurement request after the final discussion check. No repeated contributor question.",
+        "disposition": "Authorized current-head approval published",
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "nextAction": "Follow the requested measurement details and upstream landing; no duplicate review or contributor question.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15814",
-          "https://github.com/google/gvisor/pull/15814#pullrequestreview-5535906159"
+          "https://github.com/google/gvisor/pull/15814#pullrequestreview-5638060434"
         ]
       },
       "ref": "ckpt-type-reg",
@@ -21302,8 +21292,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a8f37898d52094b71fd786aa31af4476c1133d1d",
       "group": "runtime",
       "status": "Published as #16337",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
-      "summary": "The corrected proposal is published as #16337 at a8f37898d5. The existing conditional approval is satisfied; no new contributor question. The exact revised source has native PASS formatting, 218 behavior records and 13 OFD/16 BSD restore commands; the independent retained peer is being finalized.\n\nPreserved source-specific evidence:\n\nThe a8f37898d5 correction was validated through its exact private child, including the new unused-tree unit test, canonical formatting and all prior held-lock save owners.\n\nPrior reviewed head and evidence:\n\nThe contributor approved this proposal conditional on removing redundant nil checks. The then-current fork head was 503bf57c20; the correction and its new validation are described above.\n\nValidated prior head:\n\nStandalone one-file proposal with the same lock.go postimage as qualified warm source 6cf79b06. One real warm restore passes, and independent per-type normalization finds 624 fewer bytes per enclosing tmpfs object: 5,696,800 fewer logical allocation bytes at the candidate population after charging the entire workload’s one 320-byte standalone lock tree. The two live graphs differ, so total-byte subtraction is not used. This establishes neither a retained-heap reduction nor a timing improvement. The retained c31f0d91 behavior evidence passes all 216 XML records across ten uncached attempts, including 13 OFD and 16 BSD restore steps. ARM64 targets compile and both analyzer architectures pass; runtime evidence is AMD64 only. The invocation remains FAIL because its formatter could not find Go on the host PATH. The separate declared-Go-1.27.3 formatting run now passes all four native command phases, with independent retained review and no repeated behavior tests. Its authenticated verdict followed execution by 5.911079 seconds; the initial whitespace-sensitive report projection is retained. The request for that prior head received conditional approval; the corrected head is now published. The original compiler-configuration failure is preserved. This proposal has no landing dependency on #16216 or typed-checkpoint adoption.",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "summary": "The corrected proposal is published as #16337 at a8f37898d5. The existing conditional approval is satisfied; no new contributor question. The exact revised source has native PASS formatting, 218 behavior records and 13 OFD/16 BSD restore commands; independent retained peer 5c41c224 verifies exact source/native/report identities and the complete case census.\n\nPreserved source-specific evidence:\n\nThe a8f37898d5 correction was validated through its exact private child, including the new unused-tree unit test, canonical formatting and all prior held-lock save owners.\n\nPrior reviewed head and evidence:\n\nThe contributor approved this proposal conditional on removing redundant nil checks. The then-current fork head was 503bf57c20; the correction and its new validation are described above.\n\nValidated prior head:\n\nStandalone one-file proposal with the same lock.go postimage as qualified warm source 6cf79b06. One real warm restore passes, and independent per-type normalization finds 624 fewer bytes per enclosing tmpfs object: 5,696,800 fewer logical allocation bytes at the candidate population after charging the entire workload’s one 320-byte standalone lock tree. The two live graphs differ, so total-byte subtraction is not used. This establishes neither a retained-heap reduction nor a timing improvement. The retained c31f0d91 behavior evidence passes all 216 XML records across ten uncached attempts, including 13 OFD and 16 BSD restore steps. ARM64 targets compile and both analyzer architectures pass; runtime evidence is AMD64 only. The invocation remains FAIL because its formatter could not find Go on the host PATH. The separate declared-Go-1.27.3 formatting run now passes all four native command phases, with independent retained review and no repeated behavior tests. Its authenticated verdict followed execution by 5.911079 seconds; the initial whitespace-sensitive report projection is retained. The request for that prior head received conditional approval; the corrected head is now published. The original compiler-configuration failure is preserved. This proposal has no landing dependency on #16216 or typed-checkpoint adoption.",
       "followup": {
         "owner": "root / node_tls_sni",
         "sourceHead": "a8f37898d52094b71fd786aa31af4476c1133d1d",
@@ -21386,14 +21376,17 @@
       "url": "https://github.com/tamird/gvisor/commit/2a057f2bba3e94fc57ac86911b275febd284a176",
       "group": "analysis",
       "status": "Published",
-      "summary": "The approved annotation-only amendment is published on #14345 at exact 2a057f2bba. Root owns the original split-request reply.\n\nPreserved proposal and evidence:\n\nReplace the broad public revision with checks for existing task and signal locking contracts. Executable Go is unchanged; the deferred process-group annotation is excluded. Corrected independent and combined analyzer checks passed.",
+      "summary": "The approved annotation-only amendment is published on #14345 at exact 2a057f2bba. The original split-request reply links the three independent fixes. Executable Go remains unchanged and the corrected standalone/combined analyzers pass.",
       "updatedAt": "2026-10-24T11:22:37.878012+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "2a057f2bba3e94fc57ac86911b275febd284a176",
         "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Published on existing #14345",
-        "nextAction": "Follow the original split-request reply and current-head checks on #14345; no new contributor question."
+        "disposition": "Published; original split request answered",
+        "nextAction": "Follow current-head checks and new reviewer responses on #14345.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/14345#discussion_r4366994819"
+        ]
       }
     },
     {
@@ -21405,36 +21398,54 @@
       "title": "the parent-death signal locking fix",
       "url": "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "Contributor approved; independent delivery assigned. Deliver the approved parent-death fix as an independently reviewable PR; no dependency on the other three proposals.\n\nPreserved proposal and evidence:\n\nClear the parent-death signal under the task mutex. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Published",
+      "summary": "The independently approved fix is published as #16338 at cad331431626. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes.",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "cad33143162681a715856dd08e0b7190972da39c",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor approved; independent delivery assigned",
-        "nextAction": "Deliver the approved parent-death fix as an independently reviewable PR; no dependency on the other three proposals."
-      }
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Published as #16338",
+        "nextAction": "Follow current-head checks and maintainer review on #16338; no new contributor decision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16338"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published independent fix",
+          "url": "https://github.com/google/gvisor/pull/16338"
+        }
+      ]
     },
     {
       "id": "branch:review/kernel-14345-signal-delivery",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/kernel-14345-signal-delivery",
-      "head": "fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+      "head": "adfa76000e8c17d9514bd704110fb9509b233be2",
       "title": "the signal-delivery deadlock fix",
-      "url": "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
+      "url": "https://github.com/google/gvisor/pull/16340",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "LGTM subject to test assessment; agent work. Assess the requested test boundary before delivery under the conditional approval; no new contributor question is pending.\n\nPreserved proposal and evidence:\n\nAvoid relocking the signal mutex on a platform error. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Published",
+      "summary": "The independently approved fix is published as #16340 at adfa76000e8c. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes. The approved production bytes are unchanged; the 76 newly added test lines and their BUILD dependencies were removed as requested before publication.",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "LGTM subject to test assessment; agent work",
-        "nextAction": "Assess the requested test boundary before delivery under the conditional approval; no new contributor question is pending."
-      }
+        "sourceHead": "adfa76000e8c17d9514bd704110fb9509b233be2",
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Published as #16340",
+        "nextAction": "Follow current-head checks and maintainer review on #16340; no new contributor decision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16340"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published independent fix",
+          "url": "https://github.com/google/gvisor/pull/16340"
+        }
+      ]
     },
     {
       "id": "branch:review/kernel-14345-exit-notify",
@@ -21445,16 +21456,25 @@
       "title": "the exit-status locking fix",
       "url": "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
       "group": "analysis",
-      "status": "Agent work",
-      "summary": "Contributor approved; independent delivery assigned. Deliver the approved exit-status fix as an independently reviewable PR; no dependency on the other three proposals.\n\nPreserved proposal and evidence:\n\nRead the group exit status under the signal mutex. This behavioral fix is independently reviewable and has no prerequisite on the annotation-only amendment or the other two fixes.",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "status": "Published",
+      "summary": "The independently approved fix is published as #16339 at 9e9228f6f8ba. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes.",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
-        "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor approved; independent delivery assigned",
-        "nextAction": "Deliver the approved exit-status fix as an independently reviewable PR; no dependency on the other three proposals."
-      }
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Published as #16339",
+        "nextAction": "Follow current-head checks and maintainer review on #16339; no new contributor decision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16339"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Published independent fix",
+          "url": "https://github.com/google/gvisor/pull/16339"
+        }
+      ]
     },
     {
       "id": "branch:linux-header-default",
@@ -21499,15 +21519,18 @@
       "title": "the #16052 header-order correction",
       "url": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90",
       "group": "runtime",
-      "status": "Agent work",
-      "summary": "Contributor approved; amendment delivery assigned. Deliver the approved header-order amendment to existing #16052 and verify the exact published head.\n\nPreserved proposal and evidence:\n\nThe prepared correction is published on the fork and has not been applied to public PR #16052, which remains fd637694. Both GNU architecture builds and formatting passed. The contributor approved publishing this correction and the prepared reapproval reply.",
+      "status": "Published",
+      "summary": "The approved 0e079c726 header-order proposal is published on #16052 as patch-identical f91284fb89. Both prior approvers were asked in the existing public comment; native re-request calls returned HTTP 404.",
       "updatedAt": "2026-10-24T11:22:37.878012+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "0e079c726ea847f2198aa3a433cd67308f4e3a90",
         "observedAt": "2026-10-24T11:22:37.878012+00:00",
-        "disposition": "Contributor approved; amendment delivery assigned",
-        "nextAction": "Deliver the approved header-order amendment to existing #16052 and verify the exact published head."
+        "disposition": "Published on #16052",
+        "nextAction": "Follow the existing reapproval comment and current public checks; do not repeat the request.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685"
+        ]
       }
     },
     {
@@ -21570,15 +21593,15 @@
       "title": "Validate proxy ports before network setup",
       "url": "https://github.com/tamird/gvisor/commit/f0e518e6bea266980e008cc90043568818b2afe3",
       "group": "analysis",
-      "status": "Contributor review pending; no upstream PR",
-      "summary": "This independently qualified CodeQL follow-up is an existing standalone proposal. Contributor approval was requested and remains pending. No upstream PR has been opened; the four proposals are independently reviewable.",
-      "updatedAt": "2026-10-24T10:56:30.150898+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "f0e518e6bea266980e008cc90043568818b2afe3",
-        "url": "https://github.com/tamird/gvisor/commit/f0e518e6bea266980e008cc90043568818b2afe3",
-        "title": "Review the standalone proposal",
-        "summary": "Validate proxy ports before network setup. Decide whether to publish this qualified standalone change."
+      "status": "Agent work",
+      "summary": "The previous standalone proposal at f0e518 remains unapproved. Its manual parsed-range checks and redundant CLI parsing tests are being simplified under the existing port-bounds work. Root owns the replacement source and validation; no current publication decision is being requested and no upstream PR exists.",
+      "updatedAt": "2026-10-24T11:40:46.346482+00:00",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "f0e518e6bea266980e008cc90043568818b2afe3",
+        "observedAt": "2026-10-24T11:40:46.346482+00:00",
+        "disposition": "Unapproved proposal under revision; Agent work",
+        "nextAction": "Finish the requested simplification and validation, then link any actual contributor request to the exact replacement head. Do not infer approval from the other port-bounds decisions."
       }
     },
     {
@@ -21701,6 +21724,78 @@
         "evidence": [
           "https://github.com/hermeticbuild/hermetic-llvm/pull/883",
           "https://github.com/google/gvisor/pull/16236#issuecomment-6383595195"
+        ]
+      }
+    },
+    {
+      "id": "pr:16338",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16338,
+      "ref": "review/kernel-14345-parent-death",
+      "head": "cad33143162681a715856dd08e0b7190972da39c",
+      "title": "Clear the parent-death signal under the task mutex",
+      "url": "https://github.com/google/gvisor/pull/16338",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "summary": "The independently approved fix is published as #16338 at cad331431626. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "cad33143162681a715856dd08e0b7190972da39c",
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Published as #16338",
+        "nextAction": "Follow current-head checks and maintainer review on #16338; no new contributor decision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16338"
+        ]
+      }
+    },
+    {
+      "id": "pr:16339",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16339,
+      "ref": "review/kernel-14345-exit-notify",
+      "head": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+      "title": "Read the group exit status under the signal mutex",
+      "url": "https://github.com/google/gvisor/pull/16339",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "summary": "The independently approved fix is published as #16339 at 9e9228f6f8ba. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "9e9228f6f8bab459fc3ae82935a2c29012dbfcbf",
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Published as #16339",
+        "nextAction": "Follow current-head checks and maintainer review on #16339; no new contributor decision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16339"
+        ]
+      }
+    },
+    {
+      "id": "pr:16340",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16340,
+      "ref": "review/kernel-14345-signal-delivery",
+      "head": "adfa76000e8c17d9514bd704110fb9509b233be2",
+      "title": "Avoid relocking the signal mutex on a platform error",
+      "url": "https://github.com/google/gvisor/pull/16340",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "summary": "The independently approved fix is published as #16340 at adfa76000e8c. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes. The approved production bytes are unchanged; the 76 newly added test lines and their BUILD dependencies were removed as requested before publication.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "adfa76000e8c17d9514bd704110fb9509b233be2",
+        "observedAt": "2026-10-24T11:35:59.115042+00:00",
+        "disposition": "Published as #16340",
+        "nextAction": "Follow current-head checks and maintainer review on #16340; no new contributor decision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16340"
         ]
       }
     }
@@ -24195,25 +24290,22 @@
       "from": "branch:review/kernel-14345-parent-death",
       "to": "pr:14345",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
-      "evidence": "https://github.com/tamird/gvisor/commit/cad33143162681a715856dd08e0b7190972da39c"
+      "reason": "This independently published fix was split from the original review. It is not a prerequisite for the annotation-only amendment.",
+      "evidence": "https://github.com/google/gvisor/pull/16338"
     },
     {
       "from": "branch:review/kernel-14345-signal-delivery",
       "to": "pr:14345",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
-      "evidence": "https://github.com/tamird/gvisor/commit/fbe4e871b0b7e1dfa50235eed5fa47a1bb408fb3"
+      "reason": "This independently published fix was split from the original review. It is not a prerequisite for the annotation-only amendment.",
+      "evidence": "https://github.com/google/gvisor/pull/16340"
     },
     {
       "from": "branch:review/kernel-14345-exit-notify",
       "to": "pr:14345",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
-      "evidence": "https://github.com/tamird/gvisor/commit/9e9228f6f8bab459fc3ae82935a2c29012dbfcbf"
+      "reason": "This independently published fix was split from the original review. It is not a prerequisite for the annotation-only amendment.",
+      "evidence": "https://github.com/google/gvisor/pull/16339"
     },
     {
       "from": "pr:hermeticbuild/hermetic-llvm:883",
@@ -24226,9 +24318,8 @@
       "from": "branch:review/rseq-signal-header-order",
       "to": "pr:16052",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Independent proposed response to the original review. This relationship is not a prerequisite between proposals.",
-      "evidence": "https://github.com/tamird/gvisor/commit/0e079c726ea847f2198aa3a433cd67308f4e3a90"
+      "reason": "The approved proposal is published as patch-identical f91284fb89 on the existing PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685"
     },
     {
       "from": "branch:lazy-file-lock-trees",
@@ -24241,6 +24332,27 @@
       "type": "includes",
       "reason": "The exact approved supplier proposal is published in this PR.",
       "evidence": "https://github.com/hermeticbuild/hermetic-llvm/pull/883"
+    },
+    {
+      "from": "branch:review/kernel-14345-parent-death",
+      "to": "pr:16338",
+      "type": "includes",
+      "reason": "The independently approved proposal is now published; this is not a dependency between the split fixes.",
+      "evidence": "https://github.com/google/gvisor/pull/16338"
+    },
+    {
+      "from": "branch:review/kernel-14345-exit-notify",
+      "to": "pr:16339",
+      "type": "includes",
+      "reason": "The independently approved proposal is now published; this is not a dependency between the split fixes.",
+      "evidence": "https://github.com/google/gvisor/pull/16339"
+    },
+    {
+      "from": "branch:review/kernel-14345-signal-delivery",
+      "to": "pr:16340",
+      "type": "includes",
+      "reason": "The independently approved proposal is now published; this is not a dependency between the split fixes.",
+      "evidence": "https://github.com/google/gvisor/pull/16340"
     }
   ],
   "investigations": [
