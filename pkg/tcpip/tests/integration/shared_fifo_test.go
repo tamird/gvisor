@@ -80,6 +80,44 @@ func TestVirtualTCPApplicationOrder(t *testing.T) {
 	}
 }
 
+// TestVirtualTCPSustainedFIFO compares one continuously backlogged sender per
+// case after warmup. Tail drops arise from the declared finite queue; neither
+// repeated loss nor an algorithm winner is a test success condition.
+func TestVirtualTCPSustainedFIFO(t *testing.T) {
+	if got, want := runtime.GOMAXPROCS(0), 1; got != want {
+		t.Fatalf("GOMAXPROCS = %d, want %d", got, want)
+	}
+	for _, algorithm := range []string{"reno", "cubic"} {
+		t.Run(algorithm, func(t *testing.T) {
+			runSharedFIFOScenario(t, []string{algorithm}, []int{0}, 0, nil, fifoScenario{
+				capacity: 31250, windowStart: 5 * time.Second, windowEnd: 20 * time.Second,
+				maxTime: 60 * time.Second, dataBytes: 64 << 20, sustained: true,
+			})
+		})
+	}
+}
+
+type fifoScenario struct {
+	capacity    int
+	windowStart time.Duration
+	windowEnd   time.Duration
+	maxTime     time.Duration
+	dataBytes   int
+	sustained   bool
+}
+
+type fifoSustainedSample struct {
+	AtNS                                   int64
+	QueuedBytes                            int
+	Timeouts, Retransmits, FastRetransmits uint64
+}
+
+type fifoSustainedEvidence struct {
+	OfferedBytes int
+	PacketFlags  []uint16
+	Measurements []fifoSustainedSample
+}
+
 const fifoDemandAt = 250 * time.Millisecond
 
 // TestVirtualTCPRecoveryDiagnostic observes the existing mixed-flow pair without
@@ -217,14 +255,25 @@ func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.
 }
 
 func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order []int, stagger time.Duration, application *fifoApplicationOrder) {
+	runSharedFIFOScenario(t, algorithms, order, stagger, application, fifoScenario{
+		capacity: 125000, windowStart: 2 * time.Second, windowEnd: 6 * time.Second,
+		maxTime: 30 * time.Second, dataBytes: 16 << 20,
+	})
+}
+
+func runSharedFIFOScenario(t *testing.T, algorithms []string, order []int, stagger time.Duration, application *fifoApplicationOrder, scenario fifoScenario) {
 	t.Helper()
 	const quantum = time.Millisecond
 	const rate = int64(1250000)
 	const delay = 50 * time.Millisecond
-	const capacity = 125000
-	const windowStart = 2 * time.Second
-	const windowEnd = 6 * time.Second
-	const maxTime = 30 * time.Second
+	capacity, windowStart, windowEnd, maxTime := scenario.capacity, scenario.windowStart, scenario.windowEnd, scenario.maxTime
+	var sustained *fifoSustainedEvidence
+	if scenario.sustained {
+		if got, want := len(algorithms), 1; got != want {
+			t.Fatalf("sustained flow count = %d, want %d", got, want)
+		}
+		sustained = &fifoSustainedEvidence{OfferedBytes: scenario.dataBytes}
+	}
 	var diagnostic *fifoRecoveryDiagnostic
 	if application != nil {
 		diagnostic = application.diagnostic
@@ -331,7 +380,7 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		flow.startAt = time.Duration(position) * stagger
 		flow.startedNS = -1
 		flow.connectedNS = -1
-		flow.data = make([]byte, 16<<20)
+		flow.data = make([]byte, scenario.dataBytes)
 		for i := range flow.data {
 			flow.data[i] = byte(i*17 + i/251 + index*79)
 		}
@@ -441,6 +490,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 							row:    packetObservation{From: side, Acknowledgment: segment.AckNumber(), Flags: uint8(segment.Flags())}})
 					}
 					events = append(events, row)
+					if sustained != nil {
+						sustained.PacketFlags = append(sustained.PacketFlags, uint16(segment.Flags()))
+					}
 					if len(events) > 50000 || len(pending) > 32768 {
 						t.Fatal("bounded FIFO evidence exceeded")
 					}
@@ -495,6 +547,19 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			samples = append(samples, fifoSample{AtNS: int64(now()), Flow: index, Accepted: flow.accepted, Delivered: flow.received.Len(),
 				Highest: flow.highest, Acknowledged: flow.acknowledged, AppRemaining: len(flow.data) - flow.accepted,
 				Cwnd: info.SndCwnd, MSS: info.SndMss, Ssthresh: info.SndSsthresh, RTTNS: int64(info.RTT), RTONS: int64(info.RTO), CCState: info.CcState, Probe: latest[index]})
+			if sustained != nil {
+				var occupancy int
+				for _, packet := range queued {
+					if packet.end > now() {
+						occupancy += packet.bytes
+					}
+				}
+				stats := flow.client.Stats().(*tcp.Stats)
+				sustained.Measurements = append(sustained.Measurements, fifoSustainedSample{
+					AtNS: int64(now()), QueuedBytes: occupancy, Timeouts: stats.SendErrors.Timeouts.Value(),
+					Retransmits: stats.SendErrors.Retransmits.Value(), FastRetransmits: stats.SendErrors.FastRetransmit.Value(),
+				})
+			}
 			if now() >= windowStart && now() <= windowEnd && (flow.accepted == len(flow.data) || flow.accepted <= int(flow.acknowledged)) {
 				t.Fatal("sender demand ended during contention interval")
 			}
@@ -540,8 +605,9 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			TLPRecoveries      uint64
 			ApplicationOrder   *fifoApplicationOrder   `json:",omitempty"`
 			Diagnostic         *fifoRecoveryDiagnostic `json:",omitempty"`
+			Sustained          *fifoSustainedEvidence  `json:",omitempty"`
 		}{t.Name(), algorithms, order, int64(stagger), rate, int64(delay), capacity, int64(windowStart), int64(windowEnd), int64(now()), results, events, samples, changes,
-			stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.SACKRecovery.Value(), stacks[0].Stats().TCP.TLPRecovery.Value(), application, diagnosticCopy}
+			stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.SACKRecovery.Value(), stacks[0].Stats().TCP.TLPRecovery.Value(), application, diagnosticCopy, sustained}
 		encoded, err := json.Marshal(result)
 		if err != nil {
 			t.Fatal(err)
@@ -665,7 +731,15 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		}()
 		// Offer demand to both endpoints before observing their common NIC.
 		fence()
-		if now() == nextSample {
+		sampleReady := now() == nextSample
+		if sustained != nil && sampleReady {
+			for _, packet := range pending {
+				if packet.at <= now() {
+					sampleReady = false
+				}
+			}
+		}
+		if sampleReady {
 			sample()
 			nextSample += 100 * time.Millisecond
 		}

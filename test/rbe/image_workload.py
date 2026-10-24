@@ -1,4 +1,5 @@
-"""Compare single-flow Reno/CUBIC at exact common high-BDP recovery boundaries."""
+"""Compare sustained single-flow Reno/CUBIC over one finite-buffer path."""
+from collections import deque
 from fractions import Fraction
 import hashlib
 import json
@@ -13,9 +14,9 @@ import qualification_report as report
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
 SDK = "@io_bazel_rules_go//go:go"
 PYTHON = "@rules_python//python/bin:python"
-ROOT = "TestVirtualTCPRecoveryWindow"
-CASES = {f"{ROOT}/{algorithm}/{loss}" for algorithm in ("reno", "cubic") for loss in ("no_loss", "burst_loss")}
-PARENTS = {ROOT, ROOT + "/reno", ROOT + "/cubic"}
+ROOT = "TestVirtualTCPSustainedFIFO"
+CASES = {ROOT + "/" + algorithm for algorithm in ("reno", "cubic")}
+PARENTS = {ROOT}
 
 
 def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
@@ -81,8 +82,8 @@ def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
                 raise ValueError(f"{phase}: unexpected XML cases {names}")
             xml_runs.add(run)
         elif row["name"] == "test.log":
-            values = [json.loads(line.split("VIRTUAL_TCP ", 1)[1])
-                      for line in body.decode().splitlines() if "VIRTUAL_TCP " in line]
+            values = [json.loads(line.split("VIRTUAL_FIFO ", 1)[1])
+                      for line in body.decode().splitlines() if "VIRTUAL_FIFO " in line]
             if {value["Case"] for value in values} != cases or len(values) != len(cases) or run in samples:
                 raise ValueError(f"{phase}: missing or duplicate virtual transfers")
             samples[run] = {value["Case"]: value for value in values}
@@ -99,134 +100,188 @@ def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
 
 
 def check_observation(value: dict) -> dict:
-    """Compare exact common-time delivery/ACK progress with clipped link service."""
-    algorithm, loss = value["Case"].split("/")[-2:]
-    assert value["Case"] in CASES and value["Algorithm"] == algorithm
-    assert value["Bytes"] == value["AcceptedBytes"] == value["OfferedBytes"] == 64 << 20
-    assert (value["BDPBytes"], value["RateBytesPerSecond"], value["OneWayDelayNS"]) == (1250000, 12500000, 50000000)
-    finish = value["VirtualNS"]
-    assert 5 * 10**9 < finish <= 30 * 10**9
-    trace, rounds, holes = value["Trace"], value["Rounds"], value["Holes"] or []
-    assert 0 < len(trace) <= 512 and 0 < len(rounds) <= 302
-    assert value["PacketCount"] > len(trace) and len(value["AllPacketsSHA256"]) == 64
-    assert hashlib.sha256(json.dumps(trace, separators=(",", ":")).encode()).hexdigest() == value["TraceSHA256"]
-    assert [row for row in trace if row["Dropped"]] == holes
-    assert len(holes) == (8 if loss == "burst_loss" else 0)
-    repairs = []
-    for index, hole in enumerate(holes):
-        assert hole["From"] == 0 and not hole["Retransmitted"] and hole["PayloadBytes"] > 0
-        if index:
-            assert holes[index - 1]["EndSequence"] == hole["Sequence"]
-        matches = [row for row in trace if row["From"] == 0 and row["Retransmitted"] and not row["Dropped"]
-                   and (row["Sequence"], row["EndSequence"], row["PayloadSHA256"]) ==
-                   (hole["Sequence"], hole["EndSequence"], hole["PayloadSHA256"])]
-        assert matches, hole
-        repairs.append({"sequence": hole["Sequence"], "end_sequence": hole["EndSequence"],
-                        "bytes": hole["PayloadBytes"], "payload_sha256": hole["PayloadSHA256"],
-                        "drop_capture_ns": hole["CapturedAtNS"], "drop_at_ns": hole["AtNS"],
-                        "retransmission_capture_ns": [row["CapturedAtNS"] for row in matches],
-                        "retransmission_arrival_ns": [row["AtNS"] for row in matches]})
-    syns = [row for row in trace if row["Flags"] & 2]
-    assert len(syns) == 2 and {row["From"] for row in syns} == {0, 1} and all(row["SACKPermitted"] for row in syns)
-    for previous, current in zip(rounds, rounds[1:]):
-        for key in ("AtNS", "DeliveredBytes", "AcceptedBytes", "CumulativelyAcknowledgedBytes"):
-            assert previous[key] <= current[key], (key, previous, current)
-    final = rounds[-1]
-    assert final["AcceptedBytes"] == final["DeliveredBytes"] == final["CumulativelyAcknowledgedBytes"] == 64 << 20
-    assert final["AppRemainingBytes"] == 0 and final["Probe"]["SackedOut"] == 0
-    assert all(row["Probe"]["SackedOut"] >= 0 for row in rounds)
-    if loss == "no_loss":
-        assert value["Retransmits"] == value["RTOs"] == 0
-        assert value["PreBurst"] is None and value["HolesAcknowledgedNS"] == 0 and value["DropOffset"] == -1
-    else:
-        assert value["DropOffset"] == 16 << 20 and 0 < value["HolesAcknowledgedNS"] < finish
-        assert value["PreBurst"]["AppRemainingBytes"] > 0
-    window = value["Window"]
-    first, last = window["Start"], window["End"]
-    start, end = first["AtNS"], last["AtNS"]
-    assert (start, end) == (3 * 10**9, 5 * 10**9)
-    assert value["DemandEndedNS"] > end
-    for edge in (first, last):
-        assert edge["OfferedBytes"] == 64 << 20
-        assert edge["AppRemainingBytes"] == (64 << 20) - edge["AcceptedBytes"] > 0
-        assert edge["AcceptedBytes"] > edge["CumulativelyAcknowledgedBytes"]
-        assert 0 <= edge["CumulativelyAcknowledgedBytes"] <= edge["DeliveredBytes"] <= edge["AcceptedBytes"]
-        assert edge["MSS"] > 0 and edge["Cwnd"] > 0 and edge["Probe"]["AtNS"] <= edge["AtNS"]
-    delta_keys = ("DeliveredBytes", "CumulativelyAcknowledgedBytes", "CapturedSequenceBytes", "AcceptedBytes",
-                  "RTOs", "Retransmits", "SACKRecoveries", "TLPRecoveries")
-    deltas = {key: last[key] - first[key] for key in delta_keys}
-    assert all(number >= 0 for number in deltas.values())
-    totals = [{"service_ns": 0, "wire_byte_ns": 0, "payload_byte_ns": 0, "retx_payload_byte_ns": 0,
-               "captured_data_packets": 0, "captured_data_bytes": 0, "captured_retx_packets": 0,
-               "captured_retx_bytes": 0, "captured_drop_packets": 0, "captured_ack_packets": 0,
-               "arrived_data_packets": 0, "arrived_data_bytes": 0, "arrived_ack_packets": 0} for _ in range(2)]
+    """Replay finite admission/service and independently reduce the fixed window."""
+    algorithm = value["Case"].removeprefix(ROOT + "/")
+    assert algorithm in ("reno", "cubic") and value["Case"] in CASES
+    expected = {"Algorithms": [algorithm], "Order": [0], "StaggerNS": 0,
+                "RateBytesPerSecond": 1250000, "OneWayDelayNS": 50000000,
+                "CapacityBytes": 31250, "WindowStartNS": 5 * 10**9, "WindowEndNS": 20 * 10**9}
+    assert {key: value[key] for key in expected} == expected
+    assert "ApplicationOrder" not in value and "Diagnostic" not in value
+    start, end, finish = value["WindowStartNS"], value["WindowEndNS"], value["VirtualEndNS"]
+    assert end <= finish <= 60 * 10**9 and len(value["Flows"]) == 1
+    flow = value["Flows"][0]
+    accepted = flow["Accepted"]
+    assert (flow["Algorithm"], flow["LocalPort"], flow["RemotePort"]) == (algorithm, 40000, 8080)
+    assert 0 < accepted < 64 << 20 and flow["Delivered"] == flow["Acknowledged"] == accepted
+    assert flow["EOF"] is True and flow["FinWait2"] is True
+    assert 0 < flow["ConnectedNS"] <= flow["StartedNS"] < start
+    period = bytes((offset * 17 + offset // 251) % 256 for offset in range(251 * 256))
+    payload_bytes = (period * ((accepted + len(period) - 1) // len(period)))[:accepted]
+    assert hashlib.sha256(payload_bytes).hexdigest() == flow["PayloadSHA256"]
+    observed = value["Sustained"]
+    assert observed["OfferedBytes"] == 64 << 20
+    events, flags = value["Events"], observed["PacketFlags"]
+    assert 0 < len(events) <= 50000 and len(flags) == len(events)
+    next_tx = [0, 0]
+    queued = deque()
+    occupancy = highest = peak = busy = 0
+    service_payload = service_retx = Fraction(0)
+    queue_changes = []
+    drops, retransmissions = [], []
     previous_capture = -1
-    service_ends = [0, 0]
-    rows = window["Packets"]
-    assert 0 < len(rows) <= 60000
-    for row in rows:
+    bins = [{"start_ns": at, "end_ns": at + 10**9, "original_drops": 0, "retransmission_drops": 0,
+             "retransmissions": 0, "new_sequence_bytes": 0} for at in range(start, end, 10**9)]
+    ack_emitted = ack_arrived = data_arrived = 0
+    for ordinal, (row, tcp_flags) in enumerate(zip(events, flags)):
         match row:
-            case [side, capture, service_start, service_end, arrival, wire, payload, retx, drop, flags, ack] if all(type(x) is int for x in row):
+            case [number, capture, direction, index, wire, payload, sequence, ack,
+                  service_start, service_end, arrival, dropped, retx] if all(type(x) is int for x in row):
                 pass
             case _:
-                raise ValueError(f"Malformed window packet: {row}")
-        assert side in (0, 1) and retx in (0, 1) and drop in (0, 1)
-        assert previous_capture <= capture <= service_start < service_end < arrival <= finish
-        assert 40 <= wire <= 1500 and 0 <= payload <= wire - 40 and 0 <= flags <= 255 and 0 <= ack < 2**32
-        assert service_ends[side] <= service_start
-        assert service_end - service_start == (wire * 10**9 + 12500000 - 1) // 12500000
-        assert arrival - service_end == 50000000
-        assert (start <= capture <= end or service_start < end and service_end > start or start <= arrival <= end)
-        assert side == 0 or payload == retx == drop == 0
-        previous_capture, service_ends[side] = capture, service_end
-        busy = max(0, min(end, service_end) - max(start, service_start))
-        total = totals[side]
-        total["service_ns"] += busy
-        # Each byte costs exactly80ns at this rate: clipping remains rational.
-        assert service_end - service_start == wire * 80
-        total["wire_byte_ns"] += busy
-        total["payload_byte_ns"] += Fraction(payload * busy, wire)
-        total["retx_payload_byte_ns"] += Fraction(payload * busy * retx, wire)
+                raise ValueError(f"{algorithm}: malformed event {ordinal}")
+        assert number == ordinal and index == 0 and direction in (0, 1)
+        assert previous_capture <= capture <= finish and 40 <= wire <= 1500 and 0 <= payload <= wire - 40
+        assert 0 <= sequence < 2**32 and 0 <= ack < 2**32 and dropped in (0, 1) and retx in (0, 1)
+        assert type(tcp_flags) is int and 0 <= tcp_flags <= 255
+        previous_capture = capture
+        while queued and queued[0][0] <= capture:
+            occupancy -= queued.popleft()[1]
+        assert dropped == int(direction == 0 and occupancy + wire > 31250), (algorithm, ordinal, "admission")
+        added = 0
+        if direction == 0 and payload:
+            offset = (sequence - flow["DataSequence"]) % 2**32
+            assert offset + payload <= accepted and retx == int(offset < highest)
+            added = max(highest, offset + payload) - highest
+            highest += added
+        else:
+            assert not retx and not payload
+        if dropped:
+            drops.append({"event": ordinal, "at_ns": capture, "bytes": payload, "retransmission": bool(retx)})
+        if retx:
+            retransmissions.append({"event": ordinal, "at_ns": capture, "bytes": payload, "dropped": bool(dropped)})
         if start < capture <= end:
-            total["captured_data_packets"] += int(payload > 0)
-            total["captured_data_bytes"] += payload
-            total["captured_retx_packets"] += retx
-            total["captured_retx_bytes"] += payload * retx
-            total["captured_drop_packets"] += drop
-            total["captured_ack_packets"] += int(payload == 0 and flags & 16 != 0 and flags & 3 == 0)
-        if start < arrival <= end and not drop:
-            total["arrived_data_packets"] += int(payload > 0)
-            total["arrived_data_bytes"] += payload
-            total["arrived_ack_packets"] += int(payload == 0 and flags & 16 != 0 and flags & 3 == 0)
-    for total in totals:
-        assert 0 <= total["service_ns"] <= end - start
-        total["service_utilization"] = total["service_ns"] / (end - start)
-        for key in ("wire", "payload", "retx_payload"):
-            amount = Fraction(total.pop(key + "_byte_ns"), 80)
-            total["service_" + key + "_bytes"] = {"numerator": amount.numerator, "denominator": amount.denominator}
-    return {"algorithm": algorithm, "loss": loss, "window_ns": [start, end], "boundaries": [first, last],
-            "deltas": deltas, "delivery_mbit_s": deltas["DeliveredBytes"] * 8 / 2e6,
-            "ack_progress_mbit_s": deltas["CumulativelyAcknowledgedBytes"] * 8 / 2e6,
-            "directions": totals, "retained_window_packets": len(rows),
-            "window_packets_sha256": hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest(),
-            "exact_holes": repairs, "holes_acknowledged_ns": value["HolesAcknowledgedNS"],
-            "pre_burst": value["PreBurst"], "virtual_end_ns": finish, "demand_ended_ns": value["DemandEndedNS"],
-            "lifetime_recovery": {key: value[key] for key in ("RTOs", "Retransmits", "SACKRecoveries", "TLPRecoveries")},
-            "payload_sha256": value["PayloadSHA256"], "all_packets_sha256": value["AllPacketsSHA256"],
-            "trace_sha256": value["TraceSHA256"], "packet_count": value["PacketCount"],
-            "final": final}
+            second = min((capture - start - 1) // 10**9, len(bins) - 1)
+            bucket = bins[second]
+            bucket["original_drops"] += int(dropped and not retx)
+            bucket["retransmission_drops"] += int(dropped and retx)
+            bucket["retransmissions"] += retx
+            bucket["new_sequence_bytes"] += added
+            ack_emitted += int(direction == 1 and tcp_flags & 16 != 0 and tcp_flags & 3 == 0)
+        if dropped:
+            assert (service_start, service_end, arrival) == (-1, -1, -1)
+            continue
+        wanted_start = max(next_tx[direction], capture)
+        wanted_end = wanted_start + (wire * 10**9 + 1250000 - 1) // 1250000
+        assert (service_start, service_end, arrival) == (wanted_start, wanted_end, wanted_end + 50000000)
+        assert arrival <= finish
+        next_tx[direction] = service_end
+        if start < arrival <= end:
+            ack_arrived += int(direction == 1 and tcp_flags & 16 != 0 and tcp_flags & 3 == 0)
+            data_arrived += int(direction == 0 and payload > 0)
+        if direction == 0:
+            queued.append((service_end, wire))
+            occupancy += wire
+            peak = max(peak, occupancy)
+            queue_changes.extend(((capture, wire), (service_end, -wire)))
+            overlap = max(0, min(service_end, end) - max(service_start, start))
+            busy += overlap
+            service_payload += Fraction(payload * overlap, service_end - service_start)
+            service_retx += Fraction(payload * overlap * retx, service_end - service_start)
+    assert highest == accepted and 0 <= peak <= 31250 and 0 <= busy <= end - start
+    # Full queued packet bytes persist through service completion, matching the
+    # declared queue capacity rather than the continuously shrinking byte tail.
+    queue_changes.sort()
+    area = current = window_peak = 0
+    previous_time = 0
+    queue_states = []
+    for at, change in queue_changes:
+        overlap = max(0, min(at, end) - max(previous_time, start))
+        area += current * overlap
+        if overlap:
+            window_peak = max(window_peak, current)
+        current += change
+        assert 0 <= current <= 31250
+        if start <= at <= end:
+            window_peak = max(window_peak, current)
+        queue_states.append((at, current))
+        previous_time = at
+    assert current == 0
+    samples, measurements = value["Samples"], observed["Measurements"]
+    assert 0 < len(samples) <= 601 and len(samples) == len(measurements)
+    common, counters = [], []
+    previous = None
+    queue_index = 0
+    actual_queue = 0
+    for sample, measurement in zip(samples, measurements):
+        at = sample["AtNS"]
+        assert measurement["AtNS"] == at and sample["Flow"] == 0
+        assert 0 <= sample["Acknowledged"] <= sample["Highest"] <= sample["Accepted"] <= accepted
+        assert 0 <= sample["Delivered"] <= sample["Highest"]
+        assert sample["AppRemaining"] == (64 << 20) - sample["Accepted"]
+        assert 0 <= sample["Probe"]["AtNS"] <= at <= finish and sample["Probe"]["SackedOut"] >= 0
+        assert sample["MSS"] > 0 and sample["Cwnd"] > 0
+        for key in ("Timeouts", "Retransmits", "FastRetransmits"):
+            assert type(measurement[key]) is int and measurement[key] >= 0
+        if previous is not None:
+            prior_sample, prior_counter = previous
+            assert at > prior_sample["AtNS"]
+            assert all(sample[key] >= prior_sample[key] for key in ("Accepted", "Delivered", "Highest", "Acknowledged"))
+            assert all(measurement[key] >= prior_counter[key] for key in ("Timeouts", "Retransmits", "FastRetransmits"))
+        previous = sample, measurement
+        while queue_index < len(queue_states) and queue_states[queue_index][0] <= at:
+            actual_queue = queue_states[queue_index][1]
+            queue_index += 1
+        assert measurement["QueuedBytes"] == actual_queue, (algorithm, at, "queue occupancy")
+        if at >= end:
+            assert sample["Accepted"] == accepted
+        if start <= at <= end:
+            assert sample["AppRemaining"] > 0 and sample["Accepted"] > sample["Acknowledged"]
+            common.append(sample)
+            counters.append(measurement)
+    assert [sample["AtNS"] for sample in common] == list(range(start, end + 1, 100000000))
+    for bucket in bins:
+        left, right = [common[(at - start) // 100000000] for at in (bucket["start_ns"], bucket["end_ns"])]
+        bucket["delivered_bytes"] = right["Delivered"] - left["Delivered"]
+        bucket["acked_bytes"] = right["Acknowledged"] - left["Acknowledged"]
+    active = False
+    recovery_time = -1
+    changes = value["RecoveryChanges"] or []
+    for change in changes:
+        assert change["Flow"] == 0 and type(change["Active"]) is bool and change["Active"] != active
+        assert recovery_time <= change["AtNS"] <= finish and change["SackedOut"] >= 0
+        active, recovery_time = change["Active"], change["AtNS"]
+    window_changes = [change for change in changes if start < change["AtNS"] <= end]
+    entries = [change["AtNS"] for change in window_changes if change["Active"]]
+    delivered = common[-1]["Delivered"] - common[0]["Delivered"]
+    acknowledged = common[-1]["Acknowledged"] - common[0]["Acknowledged"]
+    assert delivered >= 0 and acknowledged >= 0
+    return {"algorithm": algorithm, "window_ns": [start, end], "delivered_bytes": delivered,
+            "acked_bytes": acknowledged, "delivery_mbit_s": delivered * 8 / 15e6,
+            "ack_mbit_s": acknowledged * 8 / 15e6, "accepted_total_bytes": accepted,
+            "full_drain_ns": finish, "payload_sha256": flow["PayloadSHA256"],
+            "service_busy_ns": busy, "service_idle_ns": end - start - busy, "service_utilization": busy / (end - start),
+            "service_payload_bytes_equivalent": {"numerator": service_payload.numerator, "denominator": service_payload.denominator},
+            "service_retx_payload_bytes_equivalent": {"numerator": service_retx.numerator, "denominator": service_retx.denominator},
+            "whole_queue_peak_bytes": peak, "window_queue_peak_bytes": window_peak,
+            "window_queue_byte_ns": area, "window_mean_queue_bytes": area / (end - start),
+            "window_counter_deltas": {key: counters[-1][key] - counters[0][key] for key in ("Timeouts", "Retransmits", "FastRetransmits")},
+            "lifetime_stack_recovery": {key: value[key] for key in ("RTOs", "SACKRecoveries", "TLPRecoveries")},
+            "samples": common, "counter_queue_samples": counters, "recovery_changes": changes,
+            "window_recovery_entries_ns": entries, "repeated_observed_window_recovery": len(entries) >= 2,
+            "drops": drops, "retransmissions": retransmissions, "second_bins": bins,
+            "receiver_ack_packets_emitted": ack_emitted, "sender_ack_packets_arrived": ack_arrived,
+            "data_packets_arrived": data_arrived, "event_count": len(events),
+            "events_sha256": hashlib.sha256(json.dumps(events, separators=(",", ":")).encode()).hexdigest()}
 
 
-def comparisons(observed: dict) -> list:
-    rows = []
-    for loss in ("no_loss", "burst_loss"):
-        reno, cubic = [observed[f"{ROOT}/{algorithm}/{loss}"] for algorithm in ("reno", "cubic")]
-        assert reno["payload_sha256"] == cubic["payload_sha256"]
-        rows.append({"loss": loss, "window_ns": [3 * 10**9, 5 * 10**9],
-                     "cubic_minus_reno_delivered_bytes": cubic["deltas"]["DeliveredBytes"] - reno["deltas"]["DeliveredBytes"],
-                     "cubic_minus_reno_acked_bytes": cubic["deltas"]["CumulativelyAcknowledgedBytes"] - reno["deltas"]["CumulativelyAcknowledgedBytes"],
-                     "reno": reno, "cubic": cubic})
-    return rows
+def comparisons(observations: dict) -> dict:
+    reno, cubic = [observations[ROOT + "/" + algorithm] for algorithm in ("reno", "cubic")]
+    return {"window_ns": [5 * 10**9, 20 * 10**9],
+            "cubic_minus_reno_delivered_bytes": cubic["delivered_bytes"] - reno["delivered_bytes"],
+            "cubic_minus_reno_acked_bytes": cubic["acked_bytes"] - reno["acked_bytes"],
+            "cubic_minus_reno_busy_ns": cubic["service_busy_ns"] - reno["service_busy_ns"],
+            "both_have_repeated_observed_recovery": all(value["repeated_observed_window_recovery"] for value in (reno, cubic))}
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -284,12 +339,9 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         normal = invoke("virtual-normal", ["test", *options, *selected, "--runs_per_test=2",
                          "--test_arg=-test.run=^" + ROOT + "$", OWNER], "test", targets=[OWNER])
         result["checks"].append({"name": "virtual-normal", "result": normal})
-        for algorithm in ("reno", "cubic"):
-            phase = "virtual-race-" + algorithm
-            race = invoke(phase, ["test", *options, "--config=race", *selected, "--runs_per_test=1",
-                          "--test_arg=-test.run=^" + ROOT + "$/^" + algorithm + "$/^burst_loss$", OWNER],
-                          "test", targets=[OWNER])
-            result["checks"].append({"name": phase, "result": race})
+        race = invoke("virtual-race", ["test", *options, "--config=race", *selected, "--runs_per_test=1",
+                       "--test_arg=-test.run=^" + ROOT + "$", OWNER], "test", targets=[OWNER])
+        result["checks"].append({"name": "virtual-race", "result": race})
         nogo = invoke("virtual-nogo", ["test", *options, *selected, "--runs_per_test=1", OWNER + "_nogo"],
                       "test", targets=[OWNER + "_nogo"])
         result["checks"].append({"name": "virtual-nogo", "result": nogo})
@@ -300,13 +352,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise RuntimeError("; ".join(errors))
         normal_observed = observations(evidence, "virtual-normal", 2)
         result["phases"]["virtual-normal"] = normal_observed
-        for algorithm in ("reno", "cubic"):
-            phase = "virtual-race-" + algorithm
-            case = f"{ROOT}/{algorithm}/burst_loss"
-            race_observed = observations(evidence, phase, 1, {case}, {ROOT, ROOT + "/" + algorithm})
-            result["phases"][phase] = race_observed
-            if race_observed["reference_sample"] != {case: normal_observed["reference_sample"][case]}:
-                raise ValueError(f"{algorithm}: normal/race complete observations differ")
+        race_observed = observations(evidence, "virtual-race", 1)
+        result["phases"]["virtual-race"] = race_observed
+        if race_observed["reference_sample"] != normal_observed["reference_sample"]:
+            raise ValueError("Normal/race complete packet/state observations differ")
         if len(nogo["executed"]) != 1:
             raise ValueError("Expected exactly one owning analyzer attempt")
         attempt = nogo["executed"][0]
