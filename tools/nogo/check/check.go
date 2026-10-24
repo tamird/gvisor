@@ -19,7 +19,6 @@
 package check
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -275,23 +274,27 @@ func (i *importer) fastFacts(pkg *types.Package) *facts.Package {
 	return facts
 }
 
-// findArchive finds compiled code for binary analyzers. Export data is separate.
-func (i *importer) findArchive(path string) (io.ReadCloser, error) {
-	if filename, ok := flags.ArchiveMap[path]; ok {
-		return os.Open(filename)
+// findArchive finds the archive for the given package.
+func (i *importer) findArchive(path string) (rc io.ReadCloser, err error) {
+	realPath, ok := flags.ArchiveMap[path]
+	if !ok {
+		return i.findBinary(path)
 	}
-	return findStdPkg(path)
+	return os.Open(realPath)
 }
 
-// findExport finds export data produced by Nogo's source type checker.
-func (i *importer) findExport(path string) (io.ReadCloser, error) {
-	if filename, ok := flags.ImportMap[path]; ok {
-		return os.Open(filename)
+// findBinary finds the binary for the given package.
+func (i *importer) findBinary(path string) (rc io.ReadCloser, err error) {
+	realPath, ok := flags.ImportMap[path]
+	if !ok {
+		// Not found in the import path. Attempt to find the package
+		// via the standard library.
+		rc, err = findStdPkg(path)
+	} else {
+		// Open the file.
+		rc, err = os.Open(realPath)
 	}
-	if flags.Stdlib == "" {
-		return nil, fmt.Errorf("no export data for %q", path)
-	}
-	return os.Open(filepath.Join(flags.Stdlib, path+".export"))
+	return rc, err
 }
 
 // importPackage almost-implements types.ImporterFrom.ImportFrom.
@@ -306,9 +309,6 @@ func (i *importer) importPackage(importPath, dir string) (*types.Package, error)
 	}
 
 	pkgPath := importPath
-	if canonical, ok := flags.ImportPaths[importPath]; ok {
-		pkgPath = canonical
-	}
 	if dir != "" && len(i.roots) > 0 {
 		// Vendor directories get first chance to satisfy import.
 		//
@@ -331,13 +331,13 @@ func (i *importer) importPackage(importPath, dir string) (*types.Package, error)
 				return true
 			}
 
-			// 3. Export data available?
-			rc, err := i.findExport(pkgPath)
+			// 3. Binary available?
+			rc, err := i.findBinary(pkgPath)
 			if err != nil {
 				return false
 			}
 			// TODO(mpratt): Add a more efficient option that doesn't
-			// actually open the export data if this gets too expensive.
+			// actually open the binary if this gets too expensive.
 			rc.Close()
 			return true
 		}
@@ -414,14 +414,18 @@ func (i *importer) importPackage(importPath, dir string) (*types.Package, error)
 
 	// Load all exported data. Unfortunately, we will have to hold the lock
 	// during this time. The imported may access imports directly.
-	rc, err := i.findExport(pkgPath)
+	rc, err := i.findBinary(pkgPath)
 	if err != nil {
 		return nil, err
 	}
 	defer rc.Close()
+	r, err := gcexportdata.NewReader(rc)
+	if err != nil {
+		return nil, err
+	}
 	i.importsMu.Lock()
 	defer i.importsMu.Unlock()
-	entry.pkg, entry.err = gcexportdata.Read(rc, i.fset, i.imports, pkgPath)
+	entry.pkg, entry.err = gcexportdata.Read(r, i.fset, i.imports, pkgPath)
 	return entry.pkg, entry.err
 }
 
@@ -504,7 +508,6 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 	typesSizes := types.SizesFor("gc", flags.GOARCH)
 	typeConfig := types.Config{
 		Importer:  ei,
-		Sizes:     typesSizes,
 		Error:     func(error) {},
 		GoVersion: flags.GOVERSION,
 	}
@@ -523,6 +526,11 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 		return nil, nil, nil, fmt.Errorf("error checking types: %w", err)
 	}
 
+	// Note that facts should be reconcilable between types as of go/tools
+	// commit ee04797aa0b6be5ce3d5f7ac0f91e34716b3acdf. We previously used
+	// to do a sanity check to ensure that binary import data was
+	// compatible with ast-derived data, but this is no longer necessary.
+	// If packages are available locally, we can refer to those directly.
 	astFacts := facts.NewPackage()
 
 	// Analysis can refer to a package through a field or method selection on
@@ -779,8 +787,8 @@ func (i *importer) hardImportPackages(pkgs []string) error {
 	return nil
 }
 
-// Package analyzes a package and writes its source-derived export data.
-func Package(path string, srcs []string, export io.Writer) (FindingSet, facts.Serializer, error) {
+// Package runs all analyzer on a single package.
+func Package(path string, srcs []string) (FindingSet, facts.Serializer, error) {
 	i := &importer{
 		fset:      token.NewFileSet(),
 		cache:     make(map[string]*importerEntry),
@@ -793,12 +801,9 @@ func Package(path string, srcs []string, export io.Writer) (FindingSet, facts.Se
 		return nil, nil, err
 	}
 
-	pkg, findings, facts, err := i.checkPackage(path, srcs)
+	_, findings, facts, err := i.checkPackage(path, srcs)
 	if err != nil {
 		return nil, nil, err
-	}
-	if err := gcexportdata.Write(export, i.fset, pkg); err != nil {
-		return nil, nil, fmt.Errorf("writing export data for %q: %w", path, err)
 	}
 	return findings, facts, nil
 }
@@ -942,12 +947,11 @@ func SplitStdPackages(srcs []string, srcRootPrefix string) (map[string][]string,
 	return sources, nil
 }
 
-// Bundle analyzes packages and writes their export data under exportDir.
-// An empty exportDir omits export data.
+// Bundle checks a bundle of files (typically the standard library).
 //
 // roots is the set of potential GOROOT prefixes on the file paths in sources.
 // GOROOT is effectively a merged version of these roots.
-func Bundle(sources map[string][]string, roots []string, exportDir string) (FindingSet, facts.Serializer, error) {
+func Bundle(sources map[string][]string, roots []string) (FindingSet, facts.Serializer, error) {
 	// Process all packages.
 	i := &importer{
 		fset:      token.NewFileSet(),
@@ -964,30 +968,12 @@ func Bundle(sources map[string][]string, roots []string, exportDir string) (Find
 	sort.Strings(pkgs)
 	for _, pkg := range pkgs {
 		// Was there an error processing this package?
-		p, err := i.importPackage(pkg, "")
-		if err != nil {
+		if _, err := i.importPackage(pkg, ""); err != nil {
 			return nil, nil, err
-		}
-		if exportDir != "" {
-			if err := writeExport(filepath.Join(exportDir, pkg+".export"), i.fset, p); err != nil {
-				return nil, nil, fmt.Errorf("writing export data for %q: %w", pkg, err)
-			}
 		}
 	}
 
 	// All imports and their analyzers completed; this importer is quiescent.
 	findings, facts := i.allFactsAndFindings() // +checklocksignore
 	return findings, facts, nil
-}
-
-// writeExport writes one package in the standard library export directory.
-func writeExport(filename string, fset *token.FileSet, pkg *types.Package) error {
-	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
-		return err
-	}
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	return errors.Join(gcexportdata.Write(f, fset, pkg), f.Close())
 }

@@ -95,7 +95,6 @@ func collectAllFiles(dir string) (files []string, err error) {
 // checkCommon is a common set of flags for check-like commands.
 type checkCommon struct {
 	Facts    string
-	Export   string
 	Findings string
 	Text     bool
 }
@@ -106,7 +105,6 @@ type checkCommon struct {
 // at the bottom, where this files will be registered if they exist already.
 func (c *checkCommon) setFlags(fs *flag.FlagSet, commandType string) {
 	fs.StringVar(&c.Facts, "facts", fmt.Sprintf(".nogo.%s.facts", commandType), "facts output file (optional)")
-	fs.StringVar(&c.Export, "export", "", "export data output (file for check, directory for bundle)")
 	fs.StringVar(&c.Findings, "findings", "", "findings output file (optional)")
 	fs.BoolVar(&c.Text, "text", false, "force text output (by default, only if output is a terminal)")
 }
@@ -190,15 +188,9 @@ func (c *Check) Execute(ctx context.Context, fs *flag.FlagSet, args ...any) subc
 		c.Package = "main" // Default, no imports.
 	}
 
-	export, err := openOutput(c.Export, nil)
-	if err != nil {
-		return failure("opening export data: %v", err)
-	}
-	defer closeOutput(export)
-
 	// Perform the analysis.
 	if err := c.execute(func() (check.FindingSet, facts.Serializer, error) {
-		return check.Package(c.Package /* path */, fs.Args() /* srcs */, export)
+		return check.Package(c.Package /* path */, fs.Args() /* srcs */)
 	}); err != nil {
 		return failure("%v", err)
 	}
@@ -273,7 +265,7 @@ func (b *Bundle) Execute(ctx context.Context, fs *flag.FlagSet, args ...any) sub
 		if err != nil {
 			return nil, nil, fmt.Errorf("error filtering packages: %v", err)
 		}
-		return check.Bundle(sources, srcRootPrefixes, b.Export)
+		return check.Bundle(sources, srcRootPrefixes)
 	}); err != nil {
 		return failure("%v", err)
 	}
