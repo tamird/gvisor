@@ -47,6 +47,8 @@ func TestCheckpointWarmABSL(t *testing.T) {
 	}
 	type commandRecord struct {
 		Args         []string      `json:"args"`
+		PID          int           `json:"pid,omitempty"`
+		ParentPID    int           `json:"parent_pid,omitempty"`
 		Output       string        `json:"output"`
 		OutputBytes  int           `json:"output_bytes"`
 		OutputSHA256 string        `json:"output_sha256"`
@@ -55,6 +57,9 @@ func TestCheckpointWarmABSL(t *testing.T) {
 	}
 	type serverRecord struct {
 		PID       int             `json:"pid"`
+		ParentPID int             `json:"parent_pid"`
+		State     string          `json:"state"`
+		JarExists bool            `json:"jar_exists"`
 		StartTime string          `json:"start_time"`
 		Command   string          `json:"command"`
 		Exe       string          `json:"exe"`
@@ -99,11 +104,55 @@ func TestCheckpointWarmABSL(t *testing.T) {
 		defer cancel()
 		c.CleanUp(cleanup)
 	}()
-	if err := c.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/absl"}, "sleep", "24h"); err != nil {
+	const workdir = "/data/abseil-cpp"
+	build := []string{"build", "--enable_bzlmod=false", "--nofetch", "--repository_disable_download", "-c", "opt", "--host_cxxopt=-std=c++14", "--cxxopt=-std=c++14", "//absl/base/..."}
+	bazelCommand := func(args ...string) []string {
+		return append([]string{"bash", "-c", "cd /data/abseil-cpp && exec bazel \"$@\"", "bazel"}, args...)
+	}
+	// Restore intentionally kills processes originating in Docker Exec. Start
+	// the persistent server from PID 1, and reserve Exec for observation and
+	// the later incremental client. The completion marker follows native exits;
+	// signal.pause only keeps the container's root process alive afterward.
+	warmCommands, err := json.Marshal([][]string{
+		{"mkdir", "-p", "/data"},
+		{"cp", "-r", "/abseil-cpp", "/data/."},
+		bazelCommand("fetch", "--enable_bzlmod=false", "-c", "opt", "--host_cxxopt=-std=c++14", "--cxxopt=-std=c++14", "//absl/base/..."),
+		bazelCommand(append(build, "--execution_log_json_file=/tmp/warm-spawns.json")...),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/absl"}, "python3", "-c", `import hashlib, json, os, pathlib, signal, subprocess, sys, time
+if os.getpid() != 1:
+ raise ValueError('warm workload must start from PID 1')
+rows = []
+status = 1
+try:
+ for args in json.loads(sys.argv[1]):
+  start = time.monotonic_ns()
+  child = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+  output, _ = child.communicate()
+  status = child.returncode
+  row = {'args': args, 'pid': child.pid, 'parent_pid': os.getpid(),
+         'output': output.decode(), 'output_bytes': len(output),
+         'output_sha256': hashlib.sha256(output).hexdigest(),
+         'elapsed_ns': time.monotonic_ns() - start}
+  if status:
+   row['error'] = 'native exit: ' + str(status)
+  rows.append(row)
+  if status:
+   break
+finally:
+ pathlib.Path('/tmp/warm-commands.json').write_text(json.dumps(rows))
+ print('WARM_ABSL_EXIT=' + str(status), flush=True)
+signal.pause()`, string(warmCommands)); err != nil {
 		t.Fatal(err)
 	}
 	record.Container = c.ID()
-	const workdir = "/data/abseil-cpp"
+	completion, err := c.WaitForOutputSubmatch(ctx, `WARM_ABSL_EXIT=(-?[0-9]+)`, 10*time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
 	exec := func(args ...string) string {
 		t.Helper()
 		start := time.Now()
@@ -118,8 +167,23 @@ func TestCheckpointWarmABSL(t *testing.T) {
 		}
 		return out
 	}
-	exec("mkdir", "-p", "/data")
-	exec("cp", "-r", "/abseil-cpp", "/data/.")
+	var warm []commandRecord
+	if err := json.Unmarshal([]byte(exec("cat", "/tmp/warm-commands.json")), &warm); err != nil {
+		t.Fatal(err)
+	}
+	record.Commands[len(record.Commands)-1].Output = ""
+	record.Commands = append(record.Commands, warm...)
+	if len(completion) != 2 || completion[1] != "0" || len(warm) != 4 {
+		t.Fatalf("warm PID 1 workload did not complete: %v (%d commands)", completion, len(warm))
+	}
+	for _, command := range warm {
+		if command.Error != "" || command.PID <= 1 || command.ParentPID != 1 {
+			t.Fatalf("warm command did not originate from PID 1 and succeed: %+v", command)
+		}
+	}
+	if !strings.Contains(warm[3].Output, "Build completed successfully") {
+		t.Fatalf("warm build did not report completion: %s", warm[3].Output)
+	}
 	if got := strings.TrimSpace(exec("git", "-C", workdir, "rev-parse", "HEAD")); got != "79e414672f447ac1b27f8cb27ad61df315a3792b" {
 		t.Fatalf("ABSL source = %q", got)
 	}
@@ -134,17 +198,11 @@ func TestCheckpointWarmABSL(t *testing.T) {
 	}
 	bazel := func(args ...string) string {
 		t.Helper()
-		return exec(append([]string{"bash", "-c", "cd /data/abseil-cpp && exec bazel \"$@\"", "bazel"}, args...)...)
+		return exec(bazelCommand(args...)...)
 	}
-	// This pinned source's WORKSPACE gives hashes for each archive. Its MODULE
-	// has no lockfile. Resolve only that fixed WORKSPACE graph once, then refuse
-	// downloads in the warm build and all post-restore commands. No shared cache
-	// is mounted into this fresh container.
-	bazel("fetch", "--enable_bzlmod=false", "-c", "opt", "--host_cxxopt=-std=c++14", "--cxxopt=-std=c++14", "//absl/base/...")
-	build := []string{"build", "--enable_bzlmod=false", "--nofetch", "--repository_disable_download", "-c", "opt", "--host_cxxopt=-std=c++14", "--cxxopt=-std=c++14", "//absl/base/..."}
-	if out := bazel(append(build, "--execution_log_json_file=/tmp/warm-spawns.json")...); !strings.Contains(out, "Build completed successfully") {
-		t.Fatalf("warm build did not report completion: %s", out)
-	}
+	// The fixed WORKSPACE was fetched with the same opt/C++ configuration.
+	// Both builds prohibit repository downloads; this does not isolate arbitrary
+	// network access by repository commands.
 	serverPID := func() int {
 		t.Helper()
 		pidText := bazel("info", "--enable_bzlmod=false", "--nofetch", "--repository_disable_download", "server_pid")
@@ -183,22 +241,23 @@ func TestCheckpointWarmABSL(t *testing.T) {
 p = pathlib.Path('/proc') / sys.argv[1]
 stat = (p / 'stat').read_text().rsplit(')', 1)[1].split()
 args = (p / 'cmdline').read_bytes().decode().rstrip('\0').split('\0')
-jar_index, = [i for i, arg in enumerate(args) if arg == '-jar']
-jar = pathlib.Path(args[jar_index + 1])
-if not jar.is_absolute() or not jar.is_file():
- raise ValueError('Bazel server JAR is not an installed file')
+jar_indices = [i for i, arg in enumerate(args) if arg == '-jar']
+jar = args[jar_indices[0] + 1] if len(jar_indices) == 1 and jar_indices[0] + 1 < len(args) else ''
 pid_file = int((pathlib.Path(sys.argv[2]) / 'server/server.pid.txt').read_text())
 details = {'status': (p / 'status').read_text(), 'maps': (p / 'maps').read_text(),
            'fd_targets': {}, 'vanished_fds': [],
-           'task_ids': sorted(x.name for x in (p / 'task').iterdir())}
+           'task_ids': sorted(x.name for x in (p / 'task').iterdir()),
+           'init_cmdline': pathlib.Path('/proc/1/cmdline').read_bytes().decode(),
+           'init_stat': pathlib.Path('/proc/1/stat').read_text()}
 for fd in sorted((p / 'fd').iterdir()):
  try:
   details['fd_targets'][fd.name] = os.readlink(fd)
  except FileNotFoundError:
   details['vanished_fds'].append(fd.name)
 print(json.dumps({'pid': int(sys.argv[1]), 'start_time': stat[19],
- 'command': '\0'.join(args), 'exe': os.readlink(p / 'exe'),
- 'pid_file': pid_file, 'server_jar': str(jar),
+ 'command': '\0'.join(args), 'exe': os.readlink(p / 'exe') if (p / 'exe').exists() else '',
+ 'parent_pid': int(stat[1]), 'state': stat[0],
+ 'pid_file': pid_file, 'server_jar': jar, 'jar_exists': bool(jar) and pathlib.Path(jar).is_file(),
  'threads': len(details['task_ids']), 'fds': len(details['fd_targets']),
  'mappings': len(details['maps'].splitlines()), 'details': details}))`, strconv.Itoa(pid), outputBase)
 		var server serverRecord
@@ -208,10 +267,10 @@ print(json.dumps({'pid': int(sys.argv[1]), 'start_time': stat[19],
 		// The decoded record below owns the large process snapshot. Retain
 		// only its byte identity in the command history.
 		record.Commands[len(record.Commands)-1].Output = ""
-		if server.PID != pid || server.PIDFile != pid || server.Threads < 2 || server.FDs == 0 || !filepath.IsAbs(server.ServerJar) {
+		record.Servers = append(record.Servers, server)
+		if server.PID != pid || server.PIDFile != pid || server.ParentPID != 1 || server.State == "Z" || server.Threads < 2 || server.FDs == 0 || !filepath.IsAbs(server.ServerJar) || !server.JarExists {
 			t.Fatalf("not a live Bazel server: %+v", server)
 		}
-		record.Servers = append(record.Servers, server)
 		return server
 	}
 	before := snapshot()
