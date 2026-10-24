@@ -23,7 +23,10 @@ go_library(
 go_test(
     name = "lib_test",
     size = "small",
-    srcs = ["lib_test.go"],
+    srcs = [
+        "lib_test.go",
+        "php_test.go",
+    ],
     embed = [":lib"],
     deps = ["//pkg/test/testutil"],
 )
