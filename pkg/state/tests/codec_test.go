@@ -386,6 +386,8 @@ func TestCodecNestedMaps(t *testing.T) {
 	}
 }
 
+var _ state.Codec = (*foreignArrayValues)(nil)
+
 // TestCodecForeignArrayValues requires full array/map values to retain signed
 // zeros, while a wholly zero struct field leaves initialized storage intact.
 func TestCodecForeignArrayValues(t *testing.T) {
