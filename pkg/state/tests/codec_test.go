@@ -18,9 +18,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"reflect"
 	"testing"
+	"testing/iotest"
 
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/tests/foreign"
@@ -430,16 +432,6 @@ func TestCodecByteArrayInitialization(t *testing.T) {
 func TestCodecArrayInitialization(t *testing.T) {
 	var _ state.Codec = (*initializedArrays)(nil)
 	var _ state.Codec = (*initializedArraySlices)(nil)
-	roundTrip := func(t *testing.T, source, destination any) {
-		t.Helper()
-		var buf bytes.Buffer
-		if _, err := state.Save(context.Background(), &buf, source); err != nil {
-			t.Fatalf("Save: %v", err)
-		}
-		if _, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), destination); err != nil {
-			t.Fatalf("Load: %v", err)
-		}
-	}
 	initial := initializedArrays{Bytes: [3]byte{7, 7, 7}, Ints: [3]uint64{7, 7, 7}}
 	for _, mode := range codecModes {
 		t.Run(mode.name, func(t *testing.T) {
@@ -455,7 +447,7 @@ func TestCodecArrayInitialization(t *testing.T) {
 					t.Run(tc.name, func(t *testing.T) {
 						t.Run("initialized_root", func(t *testing.T) {
 							destination := initial
-							roundTrip(t, &tc.source, &destination)
+							roundTripArrays(t, &tc.source, &destination)
 							t.Logf("saved=%+v initial=%+v loaded=%+v", tc.source, initial, destination)
 							if got, want := destination, tc.want; got != want {
 								t.Errorf("loaded arrays = %+v, want %+v", got, want)
@@ -464,7 +456,7 @@ func TestCodecArrayInitialization(t *testing.T) {
 						t.Run("allocated_object", func(t *testing.T) {
 							source := &tc.source
 							var destination *initializedArrays
-							roundTrip(t, &source, &destination)
+							roundTripArrays(t, &source, &destination)
 							t.Logf("saved=%+v loaded=%+v", tc.source, destination)
 							if got, want := destination, &tc.source; !reflect.DeepEqual(got, want) {
 								t.Errorf("loaded arrays = %+v, want %+v", got, want)
@@ -473,7 +465,7 @@ func TestCodecArrayInitialization(t *testing.T) {
 						t.Run("slice_backing", func(t *testing.T) {
 							source := initializedArraySlices{Bytes: append([]byte(nil), tc.source.Bytes[:]...), Ints: append([]uint64(nil), tc.source.Ints[:]...)}
 							destination := initializedArraySlices{Bytes: []byte{7, 7, 7}, Ints: []uint64{7, 7, 7}}
-							roundTrip(t, &source, &destination)
+							roundTripArrays(t, &source, &destination)
 							t.Logf("saved=%+v loaded=%+v", source, destination)
 							if got, want := destination, source; !reflect.DeepEqual(got, want) {
 								t.Errorf("loaded slices = %+v, want %+v", got, want)
@@ -481,6 +473,153 @@ func TestCodecArrayInitialization(t *testing.T) {
 						})
 					})
 				}
+			})
+		})
+	}
+}
+
+// roundTripArrays fragments reads to exercise the bounded wire-reader scratch
+// storage as well as the array's own decoding behavior.
+func roundTripArrays(t *testing.T, source, destination any) {
+	t.Helper()
+	var buf bytes.Buffer
+	if _, err := state.Save(context.Background(), &buf, source); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	if _, err := state.Load(context.Background(), iotest.OneByteReader(bytes.NewReader(buf.Bytes())), destination); err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+}
+
+func TestCodecArrayInitializationContexts(t *testing.T) {
+	for _, mode := range codecModes {
+		t.Run(mode.name, func(t *testing.T) {
+			withCodecs(mode.codecs, func() {
+				t.Run("nested", func(t *testing.T) {
+					initial := initializedNestedArrays{Values: [2][2]uint64{{7, 7}, {7, 7}}}
+					for _, saved := range [][2][2]uint64{{}, {{0, 0}, {0, 9}}} {
+						source := initializedNestedArrays{Values: saved}
+						destination := initial
+						roundTripArrays(t, &source, &destination)
+						want := source
+						if saved == [2][2]uint64{} {
+							want = initial
+						}
+						if got := destination; got != want {
+							t.Errorf("loaded nested arrays = %+v, want %+v", got, want)
+						}
+					}
+				})
+				t.Run("byte_chunks", func(t *testing.T) {
+					for _, nonzero := range []bool{false, true} {
+						var source, destination initializedWideBytes
+						for i := range destination.Values {
+							destination.Values[i] = 7
+						}
+						want := destination
+						if nonzero {
+							source.Values[33] = 9
+							want = source
+						}
+						roundTripArrays(t, &source, &destination)
+						if got := destination; got != want {
+							t.Errorf("loaded byte array = %+v, want %+v", got, want)
+						}
+					}
+				})
+				t.Run("hooks_and_nil_references", func(t *testing.T) {
+					saved, initial := uint64(9), uint64(7)
+					source := initializedArrayContexts{Elements: [2]initializedArrayElement{{}, {Value: 9}}, Pointers: [2]*uint64{nil, &saved}}
+					destination := initializedArrayContexts{Elements: [2]initializedArrayElement{{Value: 7}, {Value: 7}}, Pointers: [2]*uint64{&initial, &initial}}
+					roundTripArrays(t, &source, &destination)
+					if got, want := destination.Elements, [2]initializedArrayElement{{Value: 7, Loaded: 1}, {Value: 9, Loaded: 1}}; got != want {
+						t.Errorf("loaded elements = %+v, want %+v", got, want)
+					}
+					if got, want := destination.Pointers[0], &initial; got != want {
+						t.Errorf("nil reference replaced initialized pointer: got %p, want %p", got, want)
+					}
+					if got := destination.Pointers[1]; got == nil || *got != saved {
+						t.Errorf("loaded nonnil pointer = %v, want pointer to %d", got, saved)
+					}
+				})
+				t.Run("slice_aliases", func(t *testing.T) {
+					for _, nonzero := range []bool{false, true} {
+						var source initializedArrayAliases
+						destination := initializedArrayAliases{Bytes: [3]byte{7, 7, 7}, Ints: [3]uint64{7, 7, 7}}
+						wantBytes, wantInts := destination.Bytes, destination.Ints
+						if nonzero {
+							source.Bytes[1], source.Ints[1] = 9, 9
+							wantBytes, wantInts = source.Bytes, source.Ints
+						}
+						source.ByteSlice, source.IntSlice = source.Bytes[:], source.Ints[:]
+						destination.ByteSlice, destination.IntSlice = destination.Bytes[:], destination.Ints[:]
+						roundTripArrays(t, &source, &destination)
+						if got, want := destination.Bytes, wantBytes; got != want {
+							t.Errorf("loaded bytes = %v, want %v", got, want)
+						}
+						if got, want := destination.Ints, wantInts; got != want {
+							t.Errorf("loaded ints = %v, want %v", got, want)
+						}
+						if got, want := len(destination.ByteSlice), len(destination.Bytes); got != want {
+							t.Fatalf("byte slice length = %d, want %d", got, want)
+						}
+						if got, want := len(destination.IntSlice), len(destination.Ints); got != want {
+							t.Fatalf("int slice length = %d, want %d", got, want)
+						}
+						if &destination.ByteSlice[0] != &destination.Bytes[0] || &destination.IntSlice[0] != &destination.Ints[0] {
+							t.Error("loaded slices do not alias their array fields")
+						}
+					}
+				})
+				t.Run("nested_signed_zero", func(t *testing.T) {
+					negativeZero := math.Copysign(0, -1)
+					source := initializedNestedFloats{
+						Values: [2][1]float64{{negativeZero}, {9}},
+						Map:    map[int][1]float64{1: {negativeZero}},
+						Slice:  [][1]float64{{negativeZero}},
+					}
+					destination := initializedNestedFloats{Values: [2][1]float64{{7}, {7}}}
+					roundTripArrays(t, &source, &destination)
+					if got, want := len(destination.Slice), 1; got != want {
+						t.Fatalf("nested slice length = %d, want %d", got, want)
+					}
+					for name, value := range map[string]float64{"array": destination.Values[0][0], "map": destination.Map[1][0], "slice": destination.Slice[0][0]} {
+						if got, want := math.Float64bits(value), math.Float64bits(negativeZero); got != want {
+							t.Errorf("%s nested zero bits = %#x, want %#x", name, got, want)
+						}
+					}
+					if got, want := destination.Values[1][0], float64(9); got != want {
+						t.Errorf("nested nonzero value = %v, want %v", got, want)
+					}
+				})
+				t.Run("signed_zero", func(t *testing.T) {
+					negativeZero := math.Copysign(0, -1)
+					for _, initial := range [][2]float64{{}, {7, 7}} {
+						for _, mixed := range []bool{false, true} {
+							source := initializedFloatArrays{Values: [2]float64{negativeZero, 0}, Slice: []float64{negativeZero, 0}}
+							want := initial
+							if mixed {
+								source.Values[1], source.Slice[1] = 9, 9
+								want = source.Values
+							}
+							destination := initializedFloatArrays{Values: initial, Slice: []float64{7, 7}}
+							roundTripArrays(t, &source, &destination)
+							for i := range want {
+								if got, want := math.Float64bits(destination.Values[i]), math.Float64bits(want[i]); got != want {
+									t.Errorf("loaded float bits[%d] = %#x, want %#x", i, got, want)
+								}
+							}
+							if got, want := len(destination.Slice), len(source.Slice); got != want {
+								t.Fatalf("float slice length = %d, want %d", got, want)
+							}
+							for i := range source.Slice {
+								if got, want := math.Float64bits(destination.Slice[i]), math.Float64bits(source.Slice[i]); got != want {
+									t.Errorf("loaded slice bits[%d] = %#x, want %#x", i, got, want)
+								}
+							}
+						}
+					}
+				})
 			})
 		})
 	}

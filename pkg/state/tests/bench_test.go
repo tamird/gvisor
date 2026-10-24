@@ -74,6 +74,28 @@ func buildFieldsObject(n int) any {
 	return &s
 }
 
+// buildByteSliceObject exercises the bulk backing-array decoder.
+func buildByteSliceObject(n int) any {
+	b := make([]byte, n*64)
+	for i := range b {
+		b[i] = byte(i)
+	}
+	return &b
+}
+
+func buildArrayFieldsObject(n int) any {
+	if n != 1024 {
+		panic("fixed array benchmark requires 1024 elements")
+	}
+	a := new(benchArrayFields)
+	for i := range a.Values {
+		if i%4 != 0 {
+			a.Values[i] = uint64(i)
+		}
+	}
+	return a
+}
+
 var allObjects = map[string]struct {
 	New func(int) any
 }{
@@ -88,6 +110,12 @@ var allObjects = map[string]struct {
 	},
 	"fields": {
 		New: buildFieldsObject,
+	},
+	"bytes": {
+		New: buildByteSliceObject,
+	},
+	"arrays": {
+		New: buildArrayFieldsObject,
 	},
 }
 

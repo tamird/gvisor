@@ -148,3 +148,50 @@ type initializedArraySlices struct {
 	Bytes []byte
 	Ints  []uint64
 }
+
+// +stateify savable
+type initializedNestedArrays struct {
+	Values [2][2]uint64
+}
+
+// +stateify savable
+type initializedWideBytes struct {
+	Values [64]byte
+}
+
+// +stateify savable
+type initializedArrayElement struct {
+	Value  uint64
+	Loaded int `state:"nosave"`
+}
+
+func (e *initializedArrayElement) afterLoad(context.Context) {
+	e.Loaded++
+}
+
+// +stateify savable
+type initializedArrayContexts struct {
+	Elements [2]initializedArrayElement
+	Pointers [2]*uint64
+}
+
+// +stateify savable
+type initializedArrayAliases struct {
+	Bytes     [3]byte
+	ByteSlice []byte
+	Ints      [3]uint64
+	IntSlice  []uint64
+}
+
+// +stateify savable
+type initializedFloatArrays struct {
+	Values [2]float64
+	Slice  []float64
+}
+
+// +stateify savable
+type initializedNestedFloats struct {
+	Values [2][1]float64
+	Map    map[int][1]float64
+	Slice  [][1]float64
+}

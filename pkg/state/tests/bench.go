@@ -37,3 +37,10 @@ type benchFields struct {
 	S     string
 	B     bool
 }
+
+// benchArrayFields exercises repeated loads into an initialized fixed field.
+//
+// +stateify savable
+type benchArrayFields struct {
+	Values [1024]uint64
+}
