@@ -135,6 +135,9 @@ func (r *Reader) readByteSlow() byte {
 type Writer struct {
 	io.Writer
 
+	// OnRef, if set, is called for each reference as it is written.
+	OnRef func(*Ref)
+
 	// buf is used by Uint as a scratch buffer.
 	buf [10]byte
 
@@ -495,6 +498,9 @@ func loadRef(r *Reader) Ref {
 
 // save implements Object.save.
 func (r *Ref) save(w *Writer) {
+	if w.OnRef != nil {
+		w.OnRef(r)
+	}
 	r.Root.save(w)
 	l := Uint(len(r.Dots))
 	l.save(w)
