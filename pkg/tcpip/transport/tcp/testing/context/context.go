@@ -580,6 +580,11 @@ func (c *Context) SendAck(seq seqnum.Value, bytesReceived int) {
 
 // SendAckWithSACK sends an ACK packet which includes the sackBlocks specified.
 func (c *Context) SendAckWithSACK(seq seqnum.Value, bytesReceived int, sackBlocks []header.SACKBlock) {
+	c.SendAckWithSACKAndWindow(seq, bytesReceived, sackBlocks, 30000)
+}
+
+// SendAckWithSACKAndWindow sends an ACK with the specified SACK blocks and window.
+func (c *Context) SendAckWithSACKAndWindow(seq seqnum.Value, bytesReceived int, sackBlocks []header.SACKBlock, rcvWnd seqnum.Size) {
 	options := make([]byte, 40)
 	offset := 0
 	if len(sackBlocks) > 0 {
@@ -594,7 +599,7 @@ func (c *Context) SendAckWithSACK(seq seqnum.Value, bytesReceived int, sackBlock
 		Flags:   header.TCPFlagAck,
 		SeqNum:  seq,
 		AckNum:  c.IRS.Add(1 + seqnum.Size(bytesReceived)),
-		RcvWnd:  30000,
+		RcvWnd:  rcvWnd,
 		TCPOpts: options[:offset],
 	})
 }

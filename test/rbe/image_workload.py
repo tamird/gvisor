@@ -1,4 +1,4 @@
-"""Run the focused RACK red/green comparison before interpreting either arm."""
+"""Validate the readability-only RACK fixture and shared ACK helper."""
 import hashlib
 import json
 import os
@@ -115,11 +115,11 @@ def check_phase(evidence: Path, phase: dict, paths: set[Path]) -> dict:
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     arms = config["arms"]
-    if (config.get("draft", True) or [a["name"] for a in arms] != ["before", "after"]
-            or len({a["source"] for a in arms}) != 2
+    if (config.get("draft", True) or [a["name"] for a in arms] != ["after"]
+            or len({a["source"] for a in arms}) != 1
             or report.source_set(config["expected_sources"]) != {a["source"] for a in arms}
             or config["source"] != arms[-1]["source"]):
-        raise ValueError("Unbound two-arm RACK contract")
+        raise ValueError("Unbound single-source RACK fixture contract")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
                "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
     tests = ["--strategy=TestRunner=local", "--nocache_test_results", "--runs_per_test=1",
@@ -128,7 +128,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
              "--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=1"]
     record = {"status": "INCOMPLETE", "source": config["source"],
               "expected_sources": config["expected_sources"], "arms": [], "restored": False,
-              "scope": "Expected native baseline failure is retained; candidate behavior is assessed separately."}
+              "scope": "Readability-only fixture validation; the earlier exact baseline failure remains separate."}
     command_errors = []
     try:
         sdk = invoke("declared-go-sdk", ["run", *options, SDK, "--", "env", "-json", "GOROOT", "GOVERSION"],
@@ -172,9 +172,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                     command_errors.append(name + ": formatter failed")
             finally:
                 os.environ["PATH"] = original_path
-            selected = [("regression", "red", [RACK], "^TestRACKPipeAfterTimeout$", False)] if arm["name"] == "before" else [
+            selected = [
                 ("rack-normal", "green", [RACK], "^(TestRACKPipeAfterTimeout|TestRACKUpdateSackedOut|TestRACKTLPFallbackRTO|TestRACKWithWindowFull)$", False),
                 ("rack-race", "green", [RACK], "^(TestRACKPipeAfterTimeout|TestRACKUpdateSackedOut|TestRACKTLPFallbackRTO|TestRACKWithWindowFull)$", True),
+                ("sack-normal", "green", [SACK], "^(TestSACKRecovery|TestRecoveryEntry|TestDetectSpuriousRecoveryWithRTO|TestSACKDetectSpuriousRecoveryWithDupACK|TestNoSpuriousRecoveryWithDSACK)$", False),
                 ("sack-race", "green", [SACK], "^(TestSACKRecovery|TestRecoveryEntry|TestDetectSpuriousRecoveryWithRTO|TestSACKDetectSpuriousRecoveryWithDupACK|TestNoSpuriousRecoveryWithDSACK)$", True),
                 ("nogo", "nogo", [RACK + "_nogo", SACK + "_nogo"], None, False),
             ]
@@ -186,7 +187,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 result = invoke(name, ["test", *options, *tests, *extra, *owners], "test", targets=owners, source=source)
                 item["phases"].append({"name": name, "kind": kind, "source": source,
                                        "owners": owners, "result": result})
-        # Preserve every native result before interpreting expected red or green.
+        # Preserve every native result before checking the exact positive contract.
         observed = {path.parent.name.removeprefix("invocation-"): json.loads(path.read_text())["source"]
                     for path in evidence.glob("invocation-*/verdict.json")}
         if observed != config["expected_phase_sources"]:
@@ -197,7 +198,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         for arm in record["arms"]:
             for phase in arm["phases"]:
                 phase["checked"] = check_phase(evidence, phase, paths)
-        record.update(status="PASS", baseline_native_status="FAIL", candidate_status="PASS")
+        record.update(status="PASS", candidate_status="PASS")
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         record.update(status="FAIL", error=str(error))
         raise
