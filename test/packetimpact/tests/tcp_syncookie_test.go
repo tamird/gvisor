@@ -172,8 +172,10 @@ func TestSynCookieWindowScale(t *testing.T) {
 			for i := range data {
 				data[i] = byte(i)
 			}
-			if got := dut.Send(t, fd, data, 0); got != int32(len(data)) {
-				t.Fatalf("send accepted %d bytes, want %d", got, len(data))
+			// Fill the window first: Linux need not split a queued sub-MSS
+			// write that is one byte larger than this tiny window.
+			if got := dut.Send(t, fd, data[:wantWindow], 0); got != int32(wantWindow) {
+				t.Fatalf("send accepted %d bytes, want %d", got, wantWindow)
 			}
 			frame, err := conn.ExpectData(t, &testbench.TCP{}, nil, time.Second)
 			if err != nil {
@@ -188,6 +190,9 @@ func TestSynCookieWindowScale(t *testing.T) {
 				t.Fatalf("initial window data (-want +got):\n%s", diff)
 			}
 			tail := &testbench.Payload{Bytes: data[wantWindow:]}
+			if got := dut.Send(t, fd, tail.Bytes, 0); got != 1 {
+				t.Fatalf("send accepted %d tail bytes, want 1", got)
+			}
 			if _, err := conn.ExpectData(t, &testbench.TCP{}, tail, 100*time.Millisecond); err == nil {
 				t.Fatal("data beyond the advertised window arrived before an ACK")
 			}
