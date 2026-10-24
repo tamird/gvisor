@@ -78,6 +78,10 @@ go_library(
         "virtual_map.go",
     ],
     visibility = ["//pkg/sentry:internal"],
+    gc_goopts = [
+        "-m=2",
+        "-S",
+    ],
     deps = [
         "//pkg/abi/linux",
         "//pkg/atomicbitops",
