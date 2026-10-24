@@ -1,0 +1,292 @@
+diff --git a/libcontainerd/remote/client.go b/libcontainerd/remote/client.go
+index 6ea98b0c9c..a95a3d6e7c 100644
+--- a/libcontainerd/remote/client.go
++++ b/libcontainerd/remote/client.go
+@@ -22,6 +22,7 @@ import (
+ 	cerrdefs "github.com/containerd/containerd/errdefs"
+ 	"github.com/containerd/containerd/events"
+ 	"github.com/containerd/containerd/images"
++	"github.com/containerd/containerd/namespaces"
+ 	v2runcoptions "github.com/containerd/containerd/runtime/v2/runc/options"
+ 	"github.com/containerd/typeurl/v2"
+ 	"github.com/docker/docker/errdefs"
+@@ -157,22 +158,27 @@ func (c *container) Start(ctx context.Context, checkpointDir string, withStdin b
+ 	)
+ 
+ 	if checkpointDir != "" {
+-		// write checkpoint to the content store
+-		tar := archive.Diff(ctx, "", checkpointDir)
+-		var err error
+-		checkpoint, err = c.client.writeContent(ctx, images.MediaTypeContainerd1Checkpoint, checkpointDir, tar)
+-		// remove the checkpoint when we're done
++		leaseCtx, releaseLease, err := c.client.client.WithLease(ctx)
++		if err != nil {
++			return nil, errors.Wrap(err, "failed to create checkpoint lease")
++		}
+ 		defer func() {
+-			if checkpoint != nil {
+-				err := c.client.client.ContentStore().Delete(ctx, checkpoint.Digest)
+-				if err != nil {
+-					c.client.logger.WithError(err).WithFields(logrus.Fields{
+-						"ref":    checkpointDir,
+-						"digest": checkpoint.Digest,
+-					}).Warnf("failed to delete temporary checkpoint entry")
+-				}
++			cleanupCtx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
++			defer cancel()
++			if ns, ok := namespaces.Namespace(leaseCtx); ok {
++				cleanupCtx = namespaces.WithNamespace(cleanupCtx, ns)
++			}
++			if err := releaseLease(cleanupCtx); err != nil {
++				c.client.logger.WithError(err).WithField("ref", checkpointDir).
++					Warn("failed to release temporary checkpoint lease")
+ 			}
+ 		}()
++
++		// Equal checkpoint digests can be shared by concurrent restores.
++		// Keep this lease until the task has consumed the content, then release
++		// it instead of deleting content another restore may still need.
++		tar := archive.Diff(leaseCtx, "", checkpointDir)
++		checkpoint, err = c.client.writeContent(leaseCtx, images.MediaTypeContainerd1Checkpoint, checkpointDir, tar)
+ 		if err := tar.Close(); err != nil {
+ 			return nil, errors.Wrap(err, "failed to close checkpoint tar stream")
+ 		}
+@@ -746,10 +752,7 @@ func (c *client) writeContent(ctx context.Context, mediaType, ref string, r io.R
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	labels := map[string]string{
+-		"containerd.io/gc.root": time.Now().UTC().Format(time.RFC3339),
+-	}
+-	if err := writer.Commit(ctx, 0, "", content.WithLabels(labels)); err != nil {
++	if err := writer.Commit(ctx, 0, ""); err != nil && !cerrdefs.IsAlreadyExists(err) {
+ 		return nil, err
+ 	}
+ 	return &types.Descriptor{
+diff --git a/libcontainerd/remote/client_linux_test.go b/libcontainerd/remote/client_linux_test.go
+new file mode 100644
+index 0000000000..ea3ac30c64
+--- /dev/null
++++ b/libcontainerd/remote/client_linux_test.go
+@@ -0,0 +1,221 @@
++package remote
++
++import (
++	"bytes"
++	"context"
++	"errors"
++	"os"
++	"path/filepath"
++	"testing"
++
++	containerd "github.com/containerd/containerd"
++	"github.com/containerd/containerd/cio"
++	"github.com/containerd/containerd/containers"
++	"github.com/containerd/containerd/content"
++	"github.com/containerd/containerd/content/local"
++	cerrdefs "github.com/containerd/containerd/errdefs"
++	"github.com/containerd/containerd/images"
++	"github.com/containerd/containerd/leases"
++	"github.com/containerd/containerd/metadata"
++	"github.com/containerd/containerd/namespaces"
++	"github.com/gogo/protobuf/types"
++	"github.com/opencontainers/go-digest"
++	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
++	"github.com/sirupsen/logrus"
++	bolt "go.etcd.io/bbolt"
++	"gotest.tools/v3/assert"
++)
++
++func TestWriteContentAlreadyExists(t *testing.T) {
++	ctx := namespaces.WithNamespace(context.Background(), "checkpoint-test")
++	c, db, _ := newCheckpointClient(t, ctx)
++	firstCtx, releaseFirst, err := c.client.WithLease(ctx)
++	assert.NilError(t, err)
++
++	payload := []byte("checkpoint content")
++	first, err := c.writeContent(firstCtx, images.MediaTypeContainerd1Checkpoint, "first", bytes.NewReader(payload))
++	assert.NilError(t, err)
++	dgst := digest.FromBytes(payload)
++	labels := map[string]string{"test.owner": "original"}
++	_, err = c.client.ContentStore().Update(firstCtx, content.Info{Digest: dgst, Labels: labels}, "labels")
++	assert.NilError(t, err)
++
++	secondCtx, releaseSecond, err := c.client.WithLease(ctx)
++	assert.NilError(t, err)
++	second, err := c.writeContent(secondCtx, images.MediaTypeContainerd1Checkpoint, "second", bytes.NewReader(payload))
++	assert.NilError(t, err)
++	assert.Equal(t, second.Digest, first.Digest)
++	assert.Equal(t, second.MediaType, first.MediaType)
++	assert.Equal(t, second.Size_, first.Size_)
++	assert.Equal(t, second.Digest, dgst)
++	assert.Equal(t, second.Size_, int64(len(payload)))
++	// Committing the duplicate must attach it to the second lease even
++	// though containerd reports AlreadyExists.
++	assert.NilError(t, releaseFirst(ctx))
++	_, err = db.GarbageCollect(ctx)
++	assert.NilError(t, err)
++	got, err := content.ReadBlob(ctx, c.client.ContentStore(), ocispec.Descriptor{Digest: dgst})
++	assert.NilError(t, err)
++	assert.DeepEqual(t, got, payload)
++	info, err := c.client.ContentStore().Info(ctx, dgst)
++	assert.NilError(t, err)
++	assert.DeepEqual(t, info.Labels, labels)
++	assert.NilError(t, releaseSecond(ctx))
++	_, err = db.GarbageCollect(ctx)
++	assert.NilError(t, err)
++	_, err = c.client.ContentStore().Info(ctx, dgst)
++	assert.Assert(t, cerrdefs.IsNotFound(err), "unreferenced checkpoint survived GC: %v", err)
++}
++
++func TestStartCheckpointLease(t *testing.T) {
++	for _, tc := range []struct {
++		name     string
++		borrowed bool
++		fail     bool
++		cancel   bool
++	}{
++		{name: "owned"},
++		{name: "borrowed", borrowed: true},
++		{name: "task_error", fail: true},
++		{name: "cancelled", cancel: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			ctx := namespaces.WithNamespace(context.Background(), "checkpoint-test")
++			c, db, lm := newCheckpointClient(t, ctx)
++			other, err := lm.Create(ctx, leases.WithID("other"))
++			assert.NilError(t, err)
++			requestCtx, cancel := context.WithCancel(ctx)
++			defer cancel()
++			if tc.borrowed {
++				requestCtx = leases.WithLease(requestCtx, other.ID)
++			}
++			checkpointDir := t.TempDir()
++			assert.NilError(t, os.WriteFile(filepath.Join(checkpointDir, "state"), []byte("checkpoint state"), 0o600))
++
++			var taskErr error
++			if tc.fail {
++				taskErr = errors.New("task creation failed")
++			} else if tc.cancel {
++				taskErr = context.Canceled
++			}
++			var dgst digest.Digest
++			called := false
++			ctr := &container{
++				client: c,
++				c8dCtr: &checkpointContainer{
++					client: c.client,
++					consume: func(info *containerd.TaskInfo) error {
++						called = true
++						assert.Assert(t, info.Checkpoint != nil)
++						dgst = info.Checkpoint.Digest
++						// The restore's lease must protect the upload before any
++						// other owner references it.
++						_, err := db.GarbageCollect(ctx)
++						assert.NilError(t, err)
++						blob, err := content.ReadBlob(ctx, c.client.ContentStore(), ocispec.Descriptor{Digest: dgst})
++						assert.NilError(t, err)
++						assert.Equal(t, digest.FromBytes(blob), dgst)
++						assert.Equal(t, int64(len(blob)), info.Checkpoint.Size_)
++						assert.NilError(t, lm.AddResource(ctx, other, leases.Resource{Type: "content", ID: dgst.String()}))
++						if tc.cancel {
++							cancel()
++						}
++						return taskErr
++					},
++				},
++			}
++			_, err = ctr.Start(requestCtx, checkpointDir, false, nil)
++			if taskErr == nil {
++				assert.NilError(t, err)
++			} else {
++				assert.ErrorIs(t, err, taskErr)
++			}
++			assert.Assert(t, called)
++
++			// Ending this restore must not delete content held by another
++			// lease, including a lease borrowed from its caller.
++			_, err = db.GarbageCollect(ctx)
++			assert.NilError(t, err)
++			_, err = c.client.ContentStore().Info(ctx, dgst)
++			assert.NilError(t, err)
++			remaining, err := lm.List(ctx)
++			assert.NilError(t, err)
++			if got, want := len(remaining), 1; got != want {
++				t.Fatalf("remaining leases = %d, want %d", got, want)
++			}
++			assert.Equal(t, remaining[0].ID, other.ID)
++			// With the final owner gone, no permanent gc.root label should
++			// keep the temporary checkpoint alive.
++			assert.NilError(t, lm.Delete(ctx, other))
++			_, err = db.GarbageCollect(ctx)
++			assert.NilError(t, err)
++			_, err = c.client.ContentStore().Info(ctx, dgst)
++			assert.Assert(t, cerrdefs.IsNotFound(err), "unreferenced checkpoint survived GC: %v", err)
++		})
++	}
++}
++
++// newCheckpointClient uses containerd's real metadata, leases and local content
++// store; only task creation is replaced at the consumption boundary below.
++func newCheckpointClient(t *testing.T, ctx context.Context) (*client, *metadata.DB, *checkpointLeaseManager) {
++	t.Helper()
++	dir := t.TempDir()
++	bdb, err := bolt.Open(filepath.Join(dir, "metadata.db"), 0o600, &bolt.Options{})
++	assert.NilError(t, err)
++	t.Cleanup(func() { assert.NilError(t, bdb.Close()) })
++	cs, err := local.NewStore(filepath.Join(dir, "blobs"))
++	assert.NilError(t, err)
++	db := metadata.NewDB(bdb, cs, nil)
++	assert.NilError(t, db.Init(ctx))
++	lm := &checkpointLeaseManager{Manager: metadata.NewLeaseManager(db)}
++	cc, err := containerd.New("", containerd.WithServices(
++		containerd.WithContentStore(db.ContentStore()),
++		containerd.WithLeasesService(lm),
++	))
++	assert.NilError(t, err)
++	t.Cleanup(func() { assert.NilError(t, cc.Close()) })
++	return &client{client: cc, logger: logrus.NewEntry(logrus.New())}, db, lm
++}
++
++// checkpointLeaseManager preserves real metadata behavior but rejects cancelled
++// calls as the remote lease service would, making cleanup context observable.
++type checkpointLeaseManager struct {
++	leases.Manager
++}
++
++func (m *checkpointLeaseManager) Delete(ctx context.Context, lease leases.Lease, opts ...leases.DeleteOpt) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	return m.Manager.Delete(ctx, lease, opts...)
++}
++
++// checkpointContainer provides the metadata and task-consumption boundary used
++// by Start. Unexpected container operations call the nil embedded interface.
++type checkpointContainer struct {
++	containerd.Container
++	client  *containerd.Client
++	consume func(*containerd.TaskInfo) error
++}
++
++func (c *checkpointContainer) Info(context.Context, ...containerd.InfoOpts) (containers.Container, error) {
++	return containers.Container{Spec: &types.Any{Value: []byte(`{"linux":{},"process":{}}`)}}, nil
++}
++
++func (c *checkpointContainer) NewTask(ctx context.Context, _ cio.Creator, opts ...containerd.NewTaskOpts) (containerd.Task, error) {
++	var info containerd.TaskInfo
++	for _, opt := range opts {
++		if err := opt(ctx, c.client, &info); err != nil {
++			return nil, err
++		}
++	}
++	if err := c.consume(&info); err != nil {
++		return nil, err
++	}
++	return &checkpointTask{}, nil
++}
++
++// checkpointTask is returned after simulated checkpoint consumption.
++type checkpointTask struct{ containerd.Task }
++
++func (*checkpointTask) Start(context.Context) error { return nil }

@@ -1,0 +1,40 @@
+
+# Qualification only: retain the canonical daemon build above and exercise
+# its owning package against the original and patched client implementations.
+FROM build AS checkpoint-qualification
+COPY --from=gotestsum /build/gotestsum /usr/local/bin/gotestsum
+RUN --mount=type=bind,target=.,rw \
+    --mount=type=cache,target=/root/.cache/go-build,id=moby-build-$TARGETPLATFORM <<EOT
+  set -eu
+  mkdir -p /qualification
+  go version > /qualification/go-version.txt
+  dpkg-query -W > /qualification/packages.txt
+  test -z "$(gofmt -l libcontainerd/remote/client.go libcontainerd/remote/client_linux_test.go checkpoint-content-probe/main.go)"
+  CGO_ENABLED=0 hack/with-go-mod.sh go build -mod=vendor -modfile=vendor.mod -tags 'netgo osusergo' -ldflags '-s -w' -o /qualification/checkpoint-content-probe ./checkpoint-content-probe
+  cp libcontainerd/remote/client.go /tmp/checkpoint-client-patched.go
+  cp checkpoint-client-preimage libcontainerd/remote/client.go
+  set +e
+  TESTDIRS=./libcontainerd/remote TESTFLAGS='-run ^(TestWriteContentAlreadyExists|TestStartCheckpointLease)$ -count=1' hack/test/unit > /qualification/red.log 2>&1
+  status=$?
+  set -e
+  echo "$status" > /qualification/red.exit
+  mkdir /qualification/red
+  cp bundles/go-test-report.json bundles/junit-report.xml /qualification/red/
+  cp /tmp/checkpoint-client-patched.go libcontainerd/remote/client.go
+  for mode in normal race; do
+    flags='-run ^(TestWriteContentAlreadyExists|TestStartCheckpointLease)$ -count=1'
+    if [ "$mode" = race ]; then flags="$flags -race"; fi
+    set +e
+    TESTDIRS=./libcontainerd/remote TESTFLAGS="$flags" hack/test/unit > "/qualification/$mode.log" 2>&1
+    status=$?
+    set -e
+    echo "$status" > "/qualification/$mode.exit"
+    mkdir "/qualification/$mode"
+    cp bundles/go-test-report.json bundles/junit-report.xml "/qualification/$mode/"
+  done
+  sha256sum libcontainerd/remote/client.go libcontainerd/remote/client_linux_test.go > /qualification/postimages.txt
+EOT
+
+FROM scratch AS checkpoint-artifacts
+COPY --from=build /build/dockerd /dockerd
+COPY --from=checkpoint-qualification /qualification /qualification

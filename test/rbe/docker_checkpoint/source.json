@@ -1,0 +1,78 @@
+{
+  "base": "fca702de7f71362c8d103073c7e4a1d0a467fadd",
+  "version": "24.0.9",
+  "patch": {
+    "bytes": 11252,
+    "sha256": "1818c05fcc088712a252e16672d85ed01c0c36a71a2ba1e5af9b11cc68edeb00"
+  },
+  "postimages": {
+    "libcontainerd/remote/client.go": {
+      "bytes": 22496,
+      "sha256": "cb93437ebe6cb0e10094b78d584de8925093cc6ce9ce2526ab956868f4a847e5"
+    },
+    "libcontainerd/remote/client_linux_test.go": {
+      "bytes": 7979,
+      "sha256": "92c3e46105c3ba500ccba287b49cde7a8cc7d7c4e34cbce7c85048240c89242b"
+    }
+  },
+  "scope": "Read-only source snapshot from user-owned staged backport; Moby checkout unchanged.",
+  "archive": {
+    "url": "https://codeload.github.com/moby/moby/tar.gz/fca702de7f71362c8d103073c7e4a1d0a467fadd",
+    "bytes": 14670425,
+    "sha256": "cc5fedae9e7234f50277bfd0cb7e2e8d583a10832a70e83b4de50b072a6c9922"
+  },
+  "images": {
+    "library/golang": {
+      "tag": "1.20.13-bullseye",
+      "digest": "sha256:3306760f847ecbe192594da523c3f73f91e6dca31525a535731deb1978d5b64b",
+      "amd64": {
+        "digest": "sha256:76d1198b4575ba12cff2666a57f0fab7951099beaffd081bd55ff2fd84ccef97",
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        },
+        "size": 1791
+      }
+    },
+    "tonistiigi/xx": {
+      "tag": "1.2.1",
+      "digest": "sha256:8879a398dedf0aadaacfbd332b29ff2f84bc39ae6d4e9c0a1109db27ac5ba012",
+      "amd64": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:d890adde6e4e382c10314e4df2ff4df3b3ff2a9bcb07069df99ef28612c802c4",
+        "size": 479,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    },
+    "docker/dockerfile": {
+      "tag": "1.4.3",
+      "digest": "sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc",
+      "amd64": {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "digest": "sha256:ad87fb03593d1b71f9a1cfc1406c4aafcb253b1dabebf569768d6e6166836f34",
+        "size": 528,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    },
+    "docker/buildx-bin": {
+      "tag": "0.11.2",
+      "digest": "sha256:e7f00cf9fc3754de699190b215d383e57bd654179b31b28eefadf978a362e647",
+      "amd64": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:9da9402f6427f20f627178f823f8df1737e1e7b2f90737dcb8e6c6ec6641aa63",
+        "size": 482,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    }
+  }
+}
