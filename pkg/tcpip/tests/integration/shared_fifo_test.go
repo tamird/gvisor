@@ -59,6 +59,48 @@ func TestVirtualTCPSharedFIFO(t *testing.T) {
 	}
 }
 
+// TestVirtualTCPApplicationOrder changes only the first Write batch after both
+// connections have established. Later application batches use the setup order.
+func TestVirtualTCPApplicationOrder(t *testing.T) {
+	if got := runtime.GOMAXPROCS(0); got != 1 {
+		t.Fatalf("GOMAXPROCS = %d, want 1", got)
+	}
+	for _, algorithms := range [][2]string{{"cubic", "reno"}, {"reno", "reno"}, {"cubic", "cubic"}} {
+		for _, setup := range [][2]int{{0, 1}, {1, 0}} {
+			if algorithms[0] == algorithms[1] && setup[0] == 1 {
+				continue
+			}
+			for _, firstWrite := range [][2]int{{0, 1}, {1, 0}} {
+				name := fmt.Sprintf("%s_%s_setup%d%d_write%d%d", algorithms[0], algorithms[1], setup[0], setup[1], firstWrite[0], firstWrite[1])
+				t.Run(name, func(t *testing.T) {
+					runSharedFIFOWithApplicationOrder(t, algorithms[:], setup[:], 0, &fifoApplicationOrder{FirstWriteOrder: firstWrite[:]})
+				})
+			}
+		}
+	}
+}
+
+const fifoDemandAt = 250 * time.Millisecond
+
+type fifoFirstWrite struct {
+	Flow     int
+	AtNS     int64
+	Accepted int
+}
+
+type fifoApplicationOrder struct {
+	FirstWriteOrder    []int
+	DemandAtNS         int64
+	PreGatePackets     []string
+	PreGateEventCount  int
+	PreGateConnectedNS []int64
+	PreGateSenders     []fifoSample
+	PreGatePending     int
+	PreGateQueuedBytes int
+	PreGateNextTXNS    [2]int64
+	Writes             []fifoFirstWrite
+}
+
 type fifoSample struct {
 	AtNS         int64
 	Flow         int
@@ -120,6 +162,10 @@ type fifoFlowResult struct {
 }
 
 func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.Duration) {
+	runSharedFIFOWithApplicationOrder(t, algorithms, order, stagger, nil)
+}
+
+func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order []int, stagger time.Duration, application *fifoApplicationOrder) {
 	t.Helper()
 	const quantum = time.Millisecond
 	const rate = int64(1250000)
@@ -261,6 +307,9 @@ func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.
 					defer packet.DecRef()
 					view := packet.ToView()
 					defer view.Release()
+					if application != nil && now() < fifoDemandAt {
+						application.PreGatePackets = append(application.PreGatePackets, fmt.Sprintf("%x", view.AsSlice()))
+					}
 					ip := header.IPv4(view.AsSlice())
 					if ip.TransportProtocol() != tcp.ProtocolNumber || ip.SourceAddress() != addresses[side] || ip.DestinationAddress() != addresses[1-side] {
 						t.Fatal("unexpected packet identity")
@@ -383,14 +432,33 @@ func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.
 			RTOs               uint64
 			SACKRecoveries     uint64
 			TLPRecoveries      uint64
+			ApplicationOrder   *fifoApplicationOrder `json:",omitempty"`
 		}{t.Name(), algorithms, order, int64(stagger), rate, int64(delay), capacity, int64(windowStart), int64(windowEnd), int64(now()), results, events, samples, changes,
-			stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.SACKRecovery.Value(), stacks[0].Stats().TCP.TLPRecovery.Value()}
+			stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.SACKRecovery.Value(), stacks[0].Stats().TCP.TLPRecovery.Value(), application}
 		encoded, err := json.Marshal(result)
 		if err != nil {
 			t.Fatal(err)
 		}
 		t.Logf("VIRTUAL_FIFO %s", encoded)
 	}()
+	writeFlow := func(index int) {
+		flow := &flows[index]
+		n, err := flow.client.Write(bytes.NewReader(flow.data[flow.accepted:]), tcpip.WriteOptions{})
+		if _, blocked := err.(*tcpip.ErrWouldBlock); err != nil && !blocked {
+			t.Fatal(err)
+		}
+		flow.accepted += int(n)
+		if n != 0 && flow.startedNS < 0 {
+			flow.startedNS = int64(now())
+		}
+		if application != nil && len(application.Writes) < len(flows) {
+			if n == 0 || err != nil || now() != fifoDemandAt {
+				t.Fatalf("first write flow%d accepted=%d error=%v at=%s", index, n, err, now())
+			}
+			application.Writes = append(application.Writes, fifoFirstWrite{Flow: index, AtNS: int64(now()), Accepted: int(n)})
+		}
+	}
+	demandStarted := application == nil
 	nextSample := time.Duration(0)
 	for {
 		// Park the processors while applying each round of application demand.
@@ -437,21 +505,55 @@ func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.
 				default:
 					t.Fatal(err)
 				}
+				if !demandStarted {
+					continue
+				}
 				if now() < windowEnd {
-					n, err := flow.client.Write(bytes.NewReader(flow.data[flow.accepted:]), tcpip.WriteOptions{})
-					if _, blocked := err.(*tcpip.ErrWouldBlock); err != nil && !blocked {
-						t.Fatal(err)
-					}
-					flow.accepted += int(n)
-					if n != 0 && flow.startedNS < 0 {
-						flow.startedNS = int64(now())
-					}
+					writeFlow(index)
 				} else if !flow.closed {
 					if err := flow.client.Shutdown(tcpip.ShutdownWrite); err != nil {
 						t.Fatal(err)
 					}
 					flow.closed = true
 				}
+			}
+			if !demandStarted && now() >= fifoDemandAt {
+				if now() != fifoDemandAt || len(pending) != 0 {
+					t.Fatalf("demand gate at=%s pending=%d", now(), len(pending))
+				}
+				application.DemandAtNS = int64(now())
+				application.PreGateEventCount = len(events)
+				application.PreGatePending = len(pending)
+				application.PreGateNextTXNS = [2]int64{int64(nextTX[0]), int64(nextTX[1])}
+				for _, packet := range queued {
+					if packet.end > now() {
+						application.PreGateQueuedBytes += packet.bytes
+					}
+				}
+				if application.PreGateQueuedBytes != 0 {
+					t.Fatal("handshake FIFO has not drained before demand")
+				}
+				probeMu.Lock()
+				latest := append([]senderObservation(nil), probes...)
+				probeMu.Unlock()
+				for index := range flows {
+					flow := &flows[index]
+					if flow.server == nil || flow.accepted != 0 || flow.received.Len() != 0 || tcp.EndpointState(flow.client.State()) != tcp.StateEstablished || tcp.EndpointState(flow.server.State()) != tcp.StateEstablished {
+						t.Fatalf("flow%d is not established and empty before demand", index)
+					}
+					var info tcpip.TCPInfoOption
+					if err := flow.client.GetSockOpt(&info); err != nil {
+						t.Fatal(err)
+					}
+					application.PreGateConnectedNS = append(application.PreGateConnectedNS, flow.connectedNS)
+					application.PreGateSenders = append(application.PreGateSenders, fifoSample{AtNS: int64(now()), Flow: index,
+						AppRemaining: len(flow.data), Cwnd: info.SndCwnd, MSS: info.SndMss, Ssthresh: info.SndSsthresh,
+						RTTNS: int64(info.RTT), RTONS: int64(info.RTO), CCState: info.CcState, Probe: latest[index]})
+				}
+				for _, index := range application.FirstWriteOrder {
+					writeFlow(index)
+				}
+				demandStarted = true
 			}
 		}()
 		// Offer demand to both endpoints before observing their common NIC.
@@ -472,6 +574,9 @@ func runSharedFIFO(t *testing.T, algorithms []string, order []int, stagger time.
 			t.Fatal("shared FIFO did not reach finite transfer completion")
 		}
 		next := min(now()+quantum, nextSample)
+		if !demandStarted {
+			next = min(next, fifoDemandAt)
+		}
 		for index := range flows {
 			if !flows[index].connected {
 				next = min(next, flows[index].startAt)

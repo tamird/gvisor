@@ -1,4 +1,4 @@
-"""Qualify the fixed shared-FIFO pilot through the existing TCP owner.
+"""Qualify first-write order at fixed established-connection state.
 
 The raw per-flow observations remain authoritative; interval service is separate
 from payload delivered during the final drain.
@@ -17,18 +17,19 @@ import qualification_report as report
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
 SDK = "@io_bazel_rules_go//go:go"
 PYTHON = "@rules_python//python/bin:python"
-ROOT = "TestVirtualTCPSharedFIFO"
-LEAVES = {"single_reno", "single_cubic"} | {
-    f"{first}_{second}_order{order}_{start}"
-    for first, second in (("reno", "reno"), ("cubic", "cubic"),
-                          ("cubic", "reno"), ("reno", "cubic"))
-    for order in ("01", "10")
-    for start in ("simultaneous", "staggered")
+ROOT = "TestVirtualTCPApplicationOrder"
+LEAVES = {
+    f"{first}_{second}_setup{setup}_write{write}"
+    for first, second, setups in (("cubic", "reno", ("01", "10")),
+                                  ("reno", "reno", ("01",)),
+                                  ("cubic", "cubic", ("01",)))
+    for setup in setups
+    for write in ("01", "10")
 }
 CASES = {ROOT + "/" + name for name in LEAVES}
 PARENTS = {ROOT}
-RACE_LEAVES = {"reno_reno_order10_simultaneous", "cubic_cubic_order01_simultaneous",
-               "cubic_reno_order01_staggered", "reno_cubic_order10_staggered"}
+RACE_LEAVES = {"cubic_reno_setup01_write01", "cubic_reno_setup01_write10",
+               "reno_reno_setup01_write10", "cubic_cubic_setup01_write10"}
 RACE_CASES = {ROOT + "/" + name for name in RACE_LEAVES}
 
 
@@ -117,20 +118,41 @@ def check_observation(value: dict) -> dict:
     case = value["Case"].removeprefix(ROOT + "/")
     if case not in LEAVES:
         raise ValueError(f"Unknown shared-FIFO case: {case}")
-    match case.split("_"):
-        case ["single", algorithm]:
-            algorithms, order, stagger = [algorithm], [0], 0
-        case [first, second, "order01", start]:
-            algorithms, order, stagger = [first, second], [0, 1], int(start == "staggered") * 10**9
-        case [first, second, "order10", start]:
-            algorithms, order, stagger = [first, second], [1, 0], int(start == "staggered") * 10**9
-        case other:
-            raise ValueError(f"Unexpected case shape: {other}")
+    first, second, setup, write = case.split("_")
+    algorithms, order, stagger = [first, second], [int(x) for x in setup.removeprefix("setup")], 0
+    first_order = [int(x) for x in write.removeprefix("write")]
     expected = {"Algorithms": algorithms, "Order": order, "StaggerNS": stagger,
                 "RateBytesPerSecond": 1250000, "OneWayDelayNS": 50000000,
                 "CapacityBytes": 125000, "WindowStartNS": 2 * 10**9, "WindowEndNS": 6 * 10**9}
     if {key: value[key] for key in expected} != expected:
         raise ValueError(f"{case}: scenario differs from frozen selection")
+    application = value["ApplicationOrder"]
+    gate = 250000000
+    if (application["FirstWriteOrder"] != first_order or application["DemandAtNS"] != gate
+            or application["PreGatePending"] != 0 or application["PreGateQueuedBytes"] != 0
+            or len(application["PreGateNextTXNS"]) != 2
+            or any(not 0 <= x < gate for x in application["PreGateNextTXNS"])
+            or len(application["PreGateConnectedNS"]) != 2
+            or any(not 0 < x < gate for x in application["PreGateConnectedNS"])):
+        raise ValueError(f"{case}: common established/empty gate differs")
+    writes = application["Writes"]
+    if (len(writes) != 2 or [row["Flow"] for row in writes] != first_order
+            or any(row["AtNS"] != gate or not 0 < row["Accepted"] <= 1 << 20 for row in writes)):
+        raise ValueError(f"{case}: first successful application writes differ")
+    senders = application["PreGateSenders"]
+    if (len(senders) != 2 or [row["Flow"] for row in senders] != [0, 1]
+            or any(row["AtNS"] != gate or row["AppRemaining"] != 16 << 20
+                   or row["Cwnd"] <= 0 or row["MSS"] <= 0
+                   or any(row[key] != 0 for key in ("Accepted", "Delivered", "Highest", "Acknowledged"))
+                   for row in senders)):
+        raise ValueError(f"{case}: initial sender state differs")
+    pre_count = application["PreGateEventCount"]
+    pre_events = value["Events"][:pre_count]
+    packets = application["PreGatePackets"]
+    if (pre_count != 6 or len(packets) != pre_count
+            or any(row[1] >= gate or row[5] != 0 or row[11] != 0 for row in pre_events)
+            or any(len(bytes.fromhex(packet)) != row[4] for packet, row in zip(packets, pre_events))):
+        raise ValueError(f"{case}: complete pre-gate handshake evidence differs")
     start, end = value["WindowStartNS"], value["WindowEndNS"]
     finish, count = value["VirtualEndNS"], len(algorithms)
     flows = value["Flows"]
@@ -280,13 +302,60 @@ def check_observation(value: dict) -> dict:
         raise ValueError(f"{case}: common contention interval delivered no data")
     for flow in summaries:
         flow["window_delivery_share"] = flow["window_delivered_bytes"] / delivered
+    first_payload = {}
+    first_admitted = {}
+    for row in events:
+        if row[2] == 0 and row[5] > 0:
+            first_payload.setdefault(row[3], row)
+            if not row[11]:
+                first_admitted.setdefault(row[3], row)
+    if (set(first_payload) != {0, 1} or set(first_admitted) != {0, 1}
+            or any(flow["StartedNS"] != gate for flow in flows)
+            or any(row[1] < gate for row in first_payload.values())):
+        raise ValueError(f"{case}: first payload evidence differs")
+    trace = json.dumps(events, separators=(",", ":")).encode()
+    gate_state = {key: item for key, item in application.items() if key not in ("FirstWriteOrder", "Writes")}
+    gate_state["Events"] = pre_events
     return {"case": case, "flows": summaries, "window_ns": [start, end],
+            "application_order": application, "pre_gate": gate_state,
+            "packet_trace_sha256": hashlib.sha256(trace).hexdigest(),
+            "pre_gate_sha256": hashlib.sha256(json.dumps(gate_state, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+            "first_payload_events": [first_payload[index] for index in (0, 1)],
+            "first_admitted_payload_events": [first_admitted[index] for index in (0, 1)],
+            "actual_first_payload_flow": min(first_payload, key=lambda index: first_payload[index][0]),
+            "actual_first_admitted_payload_flow": min(first_admitted, key=lambda index: first_admitted[index][0]),
             "service_busy_ns": busy, "service_idle_ns": end - start - busy,
             "service_utilization": busy / (end - start), "queue_peak_bytes": peak,
             "mixed_equal_time_batches": tied, "aggregate_lifetime_recovery": totals,
             "event_count": len(events), "virtual_end_ns": finish,
             "scope": "2–6 s contention; clipped FIFO service and interval delivery are distinct from later drain. Equal-time order is observed, not randomized. Aggregate recovery counters are not per-flow."}
 
+
+
+def comparisons(observed: dict) -> list[dict]:
+    """Matched comparisons report a NIC-order non-effect without failing it."""
+    pairs = []
+    for group in ("cubic_reno_setup01", "cubic_reno_setup10", "reno_reno_setup01", "cubic_cubic_setup01"):
+        before, after = [observed[ROOT + "/" + group + "_write" + suffix] for suffix in ("01", "10")]
+        if before["pre_gate"] != after["pre_gate"]:
+            raise ValueError(f"{group}: setup packet/state evidence changed with application order")
+        accepted = [{row["Flow"]: row["Accepted"] for row in arm["application_order"]["Writes"]}
+                    for arm in (before, after)]
+        if accepted[0] != accepted[1]:
+            raise ValueError(f"{group}: initial offered/accepted demand differs")
+        pairs.append({"pair": group, "pre_gate_sha256": before["pre_gate_sha256"],
+                      "first_payload_order_changed": before["actual_first_payload_flow"] != after["actual_first_payload_flow"],
+                      "first_admitted_payload_order_changed": before["actual_first_admitted_payload_flow"] != after["actual_first_admitted_payload_flow"],
+                      "packet_traces_equal": before["packet_trace_sha256"] == after["packet_trace_sha256"],
+                      "flow0_delivery_share_write01": before["flows"][0]["window_delivery_share"],
+                      "flow0_delivery_share_write10": after["flows"][0]["window_delivery_share"],
+                      "flow0_delivery_share_delta": after["flows"][0]["window_delivery_share"] - before["flows"][0]["window_delivery_share"],
+                      "delivery_bytes_write01": [row["window_delivered_bytes"] for row in before["flows"]],
+                      "delivery_bytes_write10": [row["window_delivered_bytes"] for row in after["flows"]],
+                      "utilization_write01": before["service_utilization"],
+                      "utilization_write10": after["service_utilization"],
+                      "limits": "Only the first application Write batch changes; full finite trace retained. No required effect or algorithm winner; no steady-state/native throughput inference."})
+    return pairs
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -416,6 +485,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             raise ValueError("Analyzer did not affirm both architectures")
         result["observations"] = {name: check_observation(value)
                                   for name, value in normal_observed["reference_sample"].items()}
+        result["comparisons"] = comparisons(result["observations"])
         result["status"] = "PASS"
     except Exception as error:
         result.update(status="FAIL", error=str(error))
