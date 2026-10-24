@@ -211,13 +211,38 @@ class WorkStatesTest(unittest.TestCase):
                                       "contexts": [service, lint.copy()]})
                 self.assertNotIn("failing", pr_states(pr))
                 self.assertEqual(pr_states(pr)["awaiting-import"]["qualifier"],
-                                 "Import status failing; validation checks passed")
+                                 ("Internal import failed" if name == "import/copybara" else "Internal checks failed")
+                                 + "; no public logs; public validation checks passed")
                 self.assertFalse(checks_passed(pr))
                 pr["checks"]["complete"] = False
                 self.assertIn("failing", pr_states(pr))
                 pr["checks"]["complete"] = True
                 pr["checks"]["contexts"][1]["state"] = "FAILURE"
                 self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Source checks failing")
+
+    def test_internal_import_and_feedback_keep_public_export_distinct(self):
+        # Current #16097 and #15648 have an internal import but no public PR.
+        lint = {"name": "lint", "state": "SUCCESS", "purpose": "validation"}
+        imported = {"kind": "status", "name": "import/copybara", "state": "SUCCESS", "url": None}
+        feedback = {"kind": "status", "name": "feedback/copybara", "state": "SUCCESS", "url": None}
+        pr = original(reviewDecision="APPROVED", mergeable="MERGEABLE",
+                      checks={"state": "SUCCESS", "total": 3, "complete": True,
+                              "contexts": [lint, imported, feedback]})
+        result = pr_states(pr)
+        self.assertEqual(result["awaiting-import"]["scope"], pr["head"])
+        self.assertEqual(result["awaiting-import"]["qualifier"],
+                         "Internal import succeeded; Internal checks reported passing; public validation checks passed")
+        self.assertNotIn("waiting-merge", result)
+        feedback["state"] = "FAILURE"
+        pr["checks"]["state"] = "FAILURE"
+        result = pr_states(pr)
+        self.assertEqual(result["awaiting-import"]["qualifier"],
+                         "Internal checks failed; no public logs; Internal import succeeded; public validation checks passed")
+        self.assertNotIn("failing", result)
+        self.assertFalse(checks_passed(pr))
+        lint["state"] = "FAILURE"
+        self.assertIn("failing", pr_states(pr))
+        self.assertIn("public checks failing", pr_states(pr)["awaiting-import"]["qualifier"])
 
     def test_public_import_failure_remains_actionable_with_copybara_error(self):
         imported = original(number=2, head="b" * 40, matchesSourceHead=True,

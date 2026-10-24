@@ -7,7 +7,7 @@ const UI_KEY = "gvisor-work-map-view-v1";
 const VIEWS = ["dag", "table", "investigations"];
 const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
 const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
-  "awaiting-import": "Awaiting import", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
+  "awaiting-import": "Awaiting public export", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
 const FILTER_STATES = ["contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
 const FAILURE_STATES = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"]);
@@ -392,7 +392,7 @@ function attentionReasons(node, owner) {
   if (publicImportFailures.length)
     add("maintainer-import-checks", `${publicImportFailures.join(". ")}. ${importFailures.join(". ")}. Investigate the import’s CI logs.`);
   else if (internalImportFailures.length)
-    add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Ask for the current Copybara check status.`);
+    add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Internal checks failed; public validation results remain separate. ${[pr, ...active].some(item => (item.checks?.contexts || []).some(check => isImportStatus(check) && FAILURE_STATES.has(check.state) && check.url)) ? "Inspect the reported service link." : "No public log URL was reported; internal diagnostics are needed."}`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
   if (review.incomplete || [pr, ...active].some(item => !completeChecks(item)
@@ -419,7 +419,7 @@ function attentionReasons(node, owner) {
       add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.", "Matching import is a draft");
     else if (current.length) add("maintainer-unknown", current.some(item => item.status === "merged") ? "Matching import merged; source PR remains open." : "Matching import closed without a recorded merge; internal disposition unknown.", current.some(item => item.status === "merged") ? "Import merged; source still open" : "Import closed without merge");
-    else if (importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports import success, but no matching public import PR was found in the complete lookup. Ask for the internal import's progress.", "Import succeeded; no public PR");
+    else if (importStatus?.state === "SUCCESS") add("maintainer-unknown", "Copybara reports a successful internal import, but no matching public export PR was found in the complete lookup. Internal checks are reported separately; public export is still pending.", "Waiting for public export");
     else if (importStatus && !FAILURE_STATES.has(importStatus.state)) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. Ask for the import's progress.`, "Import pending; no public PR");
     else if (!importStatus && !feedbackStatus) {
       if (!pr.labels.includes("ready to pull")) add("maintainer-import-label", `${acceptedPatch ? "Approval of the unchanged patch" : "Current-head approval"} is recorded, but the ready to pull label is absent. A maintainer needs to mark the PR for import; an internal CL may already exist.`);

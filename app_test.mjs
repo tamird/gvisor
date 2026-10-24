@@ -639,6 +639,23 @@ test('Copybara failures remain import attention without a public validation fail
   assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
 });
 
+test('internal import success and opaque feedback failure remain distinct from public checks', () => {
+  const node = attentionNode(16097), context = client();
+  node.github.checks.contexts.push(serviceStatus('import/copybara', 'SUCCESS'), serviceStatus('feedback/copybara', 'SUCCESS'));
+  node.github.checks.total = 3;
+  context.nodeInput = node;
+  assert.equal(vm.runInContext('STATE_LABELS["awaiting-import"]', context), 'Awaiting public export');
+  assert.equal(reasonsFor(node)[0].title, 'Waiting for public export');
+  assert.match(reasonsFor(node)[0].detail, /successful internal import/);
+  node.github.checks.contexts[2].state = 'FAILURE';
+  node.github.checks.state = 'FAILURE';
+  assert.equal(reasonsFor(node)[0].id, 'maintainer-internal-feedback');
+  assert.match(reasonsFor(node)[0].detail, /No public log URL.*internal diagnostics/);
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  node.github.checks.contexts[0].state = 'FAILURE';
+  assert.equal(reasonsFor(node)[0].id, 'author-public-checks');
+});
+
 test('attention assigns simultaneous public and internal failures to their actual owners', () => {
   const node = attentionNode();
   node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [serviceStatus('import/copybara', 'ERROR'), serviceStatus('gazelle', 'FAILURE')] };
@@ -914,7 +931,7 @@ test('a confirmed conflict takes priority over opaque import progress', () => {
   assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Unknown');
   assert.equal(vm.runInContext('checkInfo(nodeInput.github).passed', context), false);
   assert.deepEqual(idsFor(node), ['maintainer-unknown']);
-  assert.equal(reasonsFor(node)[0].title, 'Import succeeded; no public PR');
+  assert.equal(reasonsFor(node)[0].title, 'Waiting for public export');
   node.github.checks.complete = false;
   assert.deepEqual(idsFor(node), ['agent-refresh']);
   node.github.checks.complete = true;

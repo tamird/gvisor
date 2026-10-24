@@ -118,13 +118,24 @@ def check_qualifier(pr: dict) -> str:
     validation = ("Checks failing" if states & FAILURES else "Checks pending" if states & PENDING
                   else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
                   else "Checks unknown")
-    imports = {item["state"] for item in (pr.get("checks") or {}).get("contexts", [])
-               if is_import_status(item)}
-    if imports & FAILURES:
-        return "Import status failing; " + validation.lower()
-    if imports & PENDING:
-        return "Import status pending; " + validation.lower()
-    return validation
+    services = {item["name"]: item for item in (pr.get("checks") or {}).get("contexts", [])
+                if is_import_status(item)}
+    if not services:
+        return validation
+    qualifiers = []
+    for name, label in (("feedback/copybara", "Internal checks"),
+                        ("import/copybara", "Internal import")):
+        item = services.get(name, {})
+        if item.get("state") in FAILURES:
+            qualifiers.append(label + " failed" + ("; no public logs" if not item.get("url") else ""))
+        elif item.get("state") in PENDING:
+            qualifiers.append(label + " pending")
+    if services.get("import/copybara", {}).get("state") == "SUCCESS":
+        qualifiers.append("Internal import succeeded")
+    if services.get("feedback/copybara", {}).get("state") == "SUCCESS":
+        qualifiers.append("Internal checks reported passing")
+    qualifiers.append("public " + validation.lower())
+    return "; ".join(qualifiers)
 
 
 def effective_approval(pr: dict) -> dict | None:

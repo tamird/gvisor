@@ -292,7 +292,12 @@ PR URL and source owner/branch. The footer SHA is retained. An older source SHA
 is labeled **older source**; its checks do not validate the current original
 head. Multiple verified imports are all shown. No matching complete timeline
 means **No linked PR found**, not “not imported”: an internal Copybara CL/status
-can exist without a public import PR. Titles, labels and comments never invent
+can exist without a public import PR. The existing **Awaiting public export**
+filter retains that distinction: its qualifier separates internal import success,
+internal check feedback and public validation. An internal failure without a
+public log remains maintainer attention, while an actual public check failure
+keeps its existing author/agent priority. No service status establishes merge
+readiness or a test count. Titles, labels and comments never invent
 an import relationship or graph edge.
 
 Every refreshed tracked PR also inspects the latest 100 cross-reference events
