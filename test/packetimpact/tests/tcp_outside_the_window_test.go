@@ -41,6 +41,8 @@ func TestWindowWithUnreadFIN(t *testing.T) {
 	}{
 		{"AtEdge", 0, "FINOnly", "None"},
 		{"OverlapsEdge", 1, "FINOnly", "None"},
+		{"PeekEOF", 0, "FINOnly", "PeekEOF"},
+		{"ConsumeEOF", 0, "FINOnly", "ConsumeEOF"},
 		{"TogetherExact", 0, "Together", "Exact"},
 		{"TogetherOversized", 0, "Together", "Oversized"},
 		{"TogetherPeek", 0, "Together", "Peek"},
@@ -77,7 +79,15 @@ func TestWindowWithUnreadFIN(t *testing.T) {
 				t.Fatalf("TCP state after FIN = %d, want %d", got, want)
 			}
 
-			if tc.read != "None" {
+			if tc.read == "PeekEOF" || tc.read == "ConsumeEOF" {
+				flags := int32(unix.MSG_DONTWAIT)
+				if tc.read == "PeekEOF" {
+					flags |= unix.MSG_PEEK
+				}
+				if got := dut.Recv(t, fd, 1, flags); len(got) != 0 {
+					t.Fatalf("received %q after FIN, want EOF", got)
+				}
+			} else if tc.read != "None" {
 				readSize := int32(len(queuedData))
 				readFlags := int32(unix.MSG_DONTWAIT)
 				if tc.read == "Oversized" {
@@ -116,11 +126,9 @@ func TestWindowWithUnreadFIN(t *testing.T) {
 			}, &testbench.Payload{Bytes: []byte("xy")}))
 			frames, acknowledged := conn.ListenForFrame(t, testbench.Layers{nil, nil, &ack}, time.Second)
 			t.Logf("READ_BOUNDARY packets=%s read=%s inside=%d ack=%t frames=%v", tc.packets, tc.read, tc.inside, acknowledged, frames)
-			if tc.packets == "FINOnly" && !acknowledged {
-				t.Errorf("no ACK for the unchanged receive sequence")
+			if got, want := acknowledged, tc.read == "None" || tc.read == "Peek" || tc.read == "PeekEOF"; got != want {
+				t.Errorf("unchanged ACK after %s = %t, want %t", tc.read, got, want)
 			}
-			// The new boundary cases observe ACK polarity rather than assuming
-			// that separate wire packets imply separate queued segments.
 			if tc.read == "Peek" {
 				if got, want := string(dut.Recv(t, fd, int32(len(queuedData)+1), unix.MSG_DONTWAIT)), queuedData; got != want {
 					t.Errorf("queued data after peek/probe = %q, want %q", got, want)
