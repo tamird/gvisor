@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import shlex
 from pathlib import Path
 import shutil
 import zipfile
@@ -36,6 +37,92 @@ def digest_matches(item: dict, expected: dict) -> bool:
             and int(item["digest"].get("sizeBytes", 0)) == expected["bytes"])
 
 
+
+COMPILER_TARGETS = [
+    "//pkg/sentry/loader/vdsodata:vdso_arch",
+    "//pkg/sentry/platform/systrap/sysmsg:sighandler_go_arch",
+    "//pkg/sentry/platform/systrap/sysmsg:sighandler_binary_arch",
+]
+COMPILE_OWNERS = {"//vdso:vdso"} | {
+    "//pkg/sentry/platform/systrap/sysmsg:" + name
+    for name in ("sighandler", "syshandler", "sysrestorer", "sysmsg_lib")
+}
+
+
+def compiler_preflight(invoke, record_execution, evidence: Path, private: Path,
+                       root: Path, options: list[str]) -> dict:
+    execution = private / "compiler-preflight-execution.json"
+    built = invoke("compiler-preflight", ["build", *options,
+                   "--modify_execution_info=^(Genrule|ArchGenruleCp)$=+no-remote-cache",
+                   "--execution_log_json_file=" + str(execution),
+                   "--noexecution_log_sort", *COMPILER_TARGETS], "build", targets=COMPILER_TARGETS)
+    inputs = []
+    try:
+        with execution.open(encoding="utf-8", newline="") as stream:
+            for _, action in execution_records(stream):
+                if action is None or action.get("targetLabel") not in COMPILE_OWNERS:
+                    continue
+                if action["mnemonic"] != "Genrule":
+                    continue
+                words = shlex.split(action["commandArgs"][-1])
+                compilers = [word for word in words if word.startswith("external/")
+                             and Path(word).name in ("clang", "clang++")]
+                if len(compilers) != 1:
+                    raise ValueError("Expected one declared clang compiler")
+                compiler = compilers[0]
+                selected = [item for item in action["inputs"] if item["path"] == compiler]
+                if len(selected) != 1 or not selected[0]["digest"]["hash"]:
+                    raise ValueError("Compiler is not an authenticated native action input")
+                triple = argument(words, "-target")
+                if triple not in ("x86_64-linux-gnu", "aarch64-linux-gnu"):
+                    raise ValueError("Unexpected freestanding compiler target")
+                inputs.append({"targetLabel": action["targetLabel"], "action_digest": action["digest"],
+                               "triple": triple, "compiler": selected[0]})
+    finally:
+        record_execution(execution, "x86_64", "compiler-preflight")
+    if built["status"] != "PASS" or built["native_exit"] != 0:
+        raise RuntimeError("Declared compiler prerequisite build failed")
+    proof = json.loads((evidence / "x86_64-compiler-preflight-image-execution.json").read_text())
+    if proof["status"] != "PASS":
+        raise ValueError("Compiler prerequisite physical action proof failed")
+    actions = [row for row in proof["image_actions"]
+               if row["targetLabel"] in COMPILE_OWNERS and row["mnemonic"] == "Genrule"]
+    required = {(label, triple) for label in COMPILE_OWNERS
+                for triple in ("x86_64-linux-gnu", "aarch64-linux-gnu")}
+    if len(actions) != 10 or len(inputs) != 10 or {(row["targetLabel"], row["triple"]) for row in inputs} != required:
+        raise ValueError("Expected all five real compiler owners in both architectures")
+    for action in actions:
+        if (action["runner"] != "remote" or action["cacheHit"] or action["remoteCacheable"]
+                or action["exitCode"] != 0 or action["status"] or not action["remotable"]):
+            raise ValueError("Compiler prerequisite must execute successfully and uncached on RBE")
+        if sum(row["targetLabel"] == action["targetLabel"] and row["action_digest"] == action["digest"]
+               for row in inputs) != 1:
+            raise ValueError("Missing unique compiler action/input join")
+    expected = built["expected"]
+    if len(expected) != 3 or {row["label"] for row in expected} != set(COMPILER_TARGETS):
+        raise ValueError("Unexpected split-architecture owners")
+    owners = {(report.Owner(row["label"], row["configuration"]), "default") for row in expected}
+    outputs = report.advertised_build_outputs(evidence / "invocation-compiler-preflight/events.jsonl", owners)
+    if len(outputs) != 6 or any(sum(item["identity"]["label"] == label for item in outputs) != 2
+                                for label in COMPILER_TARGETS):
+        raise ValueError("Expected six split-architecture outputs")
+    for output in outputs:
+        name = Path(output["name"])
+        if name.is_absolute() or ".." in name.parts or name.parts[:1] != ("bazel-out",):
+            raise ValueError("Unsafe compiler output path")
+        actual = report.file_record(root / name)
+        if any(actual[key] != output[key] for key in ("bytes", "sha256")):
+            raise ValueError("Materialized compiler output differs from configured BEP")
+        matches = [action for action in proof["image_actions"]
+                   if action["mnemonic"] == "ArchGenruleCp" and action["targetLabel"] == output["identity"]["label"]
+                   and any(item["path"] == output["name"] and digest_matches(item, output)
+                           for item in action["actualOutputs"])]
+        if len(matches) != 1 or matches[0]["runner"] != "remote" or matches[0]["cacheHit"]:
+            raise ValueError("Missing actual split-output copy action")
+    return {"status": "PASS", "compiler_inputs": inputs, "outputs": outputs,
+            "scope": "Ten remote compiler actions and six AMD64/ARM64 generated archive inputs."}
+
+
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     targets = config["targets"]
@@ -48,6 +135,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         "--remote_download_outputs=all", "--build_event_json_file_path_conversion=false",
         "--spawn_strategy=remote", "--strategy=TestRunner=remote",
         "--noremote_local_fallback", "--jobs=400", "--build_tag_filters=",
+        "--extra_toolchains=@llvm//toolchain:all",
     ]
     record = {"status": "INCOMPLETE", "source": config["source"],
               "public_source": config["public_source"],
@@ -59,6 +147,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         root = Path((evidence / "invocation-execution-root/stdout.log").read_text().strip())
         if not root.is_absolute() or not root.is_dir():
             raise ValueError("Invalid canonical execution root")
+        record["compiler_preflight"] = compiler_preflight(invoke, record_execution, evidence, private, root, options)
         execution = private / "export-portability-execution.json"
         built = invoke("export-portability", ["build", *options,
                        "--modify_execution_info=^ExportedGoBuild$=+no-remote-cache", "--keep_going",
@@ -70,9 +159,16 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         # Retain only source/tool input identities here. The existing recorder
         # separately authenticates and redacts every full native action record.
         native_inputs = []
+        archive_preflight_inputs = []
         try:
             with execution.open(encoding="utf-8", newline="") as stream:
                 for _, action in execution_records(stream):
+                    if action is not None and action.get("targetLabel") == "//:go_export" and action.get("mnemonic") == "Genrule":
+                        for output in record["compiler_preflight"]["outputs"]:
+                            matches = [item for item in action["inputs"] if item["path"] == output["name"] and digest_matches(item, output)]
+                            if len(matches) != 1:
+                                raise ValueError("Source archive did not consume each qualified compiler output")
+                            archive_preflight_inputs.append(matches[0])
                     if action is None or action.get("mnemonic") != "ExportedGoBuild":
                         continue
                     arguments = action["commandArgs"]
@@ -206,7 +302,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                          "declared_inputs": selected, "output": output})
         if used_actions != set(range(6)) or len(sdk_identities) != 1:
             raise ValueError("Expected six distinct actions sharing the same declared Go binary")
+        if len(archive_preflight_inputs) != 6:
+            raise ValueError("Missing six compiler-output/archive-input joins")
         record.update(status="PASS", uncached_remote_module_actions=6,
+                      archive_preflight_inputs=archive_preflight_inputs,
                       source_archive=archive_output, module_metadata=metadata,
                       exported_entries=len(names), modules=rows,
                       native_archive_action=archive_action)
