@@ -45,7 +45,7 @@ _RUNTIMES = {
         native_reference = True,
         partitions = 2,
         shard_count = more_shards,
-        source_archive = "//test/docker:php_source_amd64",
+        source_archive = ":php-watch006-retained.tar",
     ),
     "python3.12.3": dict(
         exclude_file = "exclude/python.csv",
