@@ -150,6 +150,31 @@ def check_link(value: dict) -> dict:
             or [row["Sequence"] for row in originals] != [selected["Sequence"] + i*mss for i in range(3)]):
         raise ValueError(f"{name}: bounded flight is not exactly three contiguous MSS")
     delivered = {row["CapturedOrder"]: row for row in value["DeliveredTrace"]}
+    # Prove that the high-path setup received an ACK covering more than one
+    # MSS of original data before the bounded flight. This checks actual wire
+    # progress; private minRTT is not exposed by the existing public probe.
+    high_originals = [row for row in trace if row["From"] == 0 and not row["Retransmitted"]
+                      and row["PayloadBytes"] == mss
+                      and high["BeginNS"] <= row["CapturedAtNS"] < high["EndNS"]]
+    setup_ack = None
+    previous_ack = None
+    for ack in value["DeliveredTrace"]:
+        if ack["From"] != 1 or not ack["Flags"] & 16:
+            continue
+        advance = 0 if previous_ack is None else (ack["Acknowledgment"] - previous_ack) % (1 << 32)
+        previous_ack = ack["Acknowledgment"]
+        if not (high["BeginNS"] <= ack["DeliveredAtNS"] <= high["EndNS"] and mss < advance <= 65536):
+            continue
+        matched = [row for row in high_originals
+                   if row["EndSequence"] <= ack["Acknowledgment"]
+                   and delivered[row["CapturedOrder"]]["DeliveredAtNS"] < ack["DeliveredAtNS"]]
+        snapshots = [row for row in value["Probes"]
+                     if row["AtNS"] == ack["DeliveredAtNS"] and row["SndUna"] == ack["Acknowledgment"]]
+        if matched and snapshots:
+            setup_ack = {"packet": matched[0], "ack": ack, "advance": advance, "probe": snapshots[-1]}
+            break
+    if setup_ack is None:
+        raise ValueError(f"{name}: missing full-size high-path cumulative ACK/probe before the flight")
     selected_at = delivered[selected["CapturedOrder"]]["DeliveredAtNS"]
     higher_before = [row for row in originals[1:] if delivered[row["CapturedOrder"]]["DeliveredAtNS"] < selected_at]
     if len(higher_before) != (2 if lag else 0):
@@ -167,7 +192,7 @@ def check_link(value: dict) -> dict:
     return {"algorithm": algorithm, "ordering": ordering, "delivered_bytes": value["Bytes"],
             "bounded_flight_bytes": 3*mss, "bounded_flight_ns": flight["EndNS"]-flight["BeginNS"],
             "recovery_deltas": deltas, "warmup_counters": {key: high["Sample"][key] for key in counters},
-            "before_flight": high["Sample"], "after_flight": flight["Sample"],
+            "high_path_setup_ack": setup_ack, "before_flight": high["Sample"], "after_flight": flight["Sample"],
             "flight_probes": probes, "selected_segment": selected,
             "higher_segments_delivered_first": len(higher_before), "full_packet_count": len(trace),
             "scope": "Finite virtual-time recovery; warmup is separate; no native throughput or Linux fairness claim."}
