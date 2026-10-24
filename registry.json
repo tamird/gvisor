@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T06:31:04.667511+00:00",
+    "updatedAt": "2026-10-24T06:36:31.842005+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19952,16 +19952,69 @@
       "url": "https://github.com/google/gvisor/pull/16250",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-23T10:28:00.997901+00:00",
-      "summary": "Approved readiness fix delivered as #16250 at 8e799fd7 on current upstream8938. Full changed-file payload and complete range-diff equal approved728839; no runtime replay. Exact provider/body/tracking verified; Node owns current CI and substantive feedback.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved 728839737. Node owns the equivalent current-master rebase and upstream delivery; no runtime replay or new contributor decision is required.\n\nEarlier source-specific record:\n\nBind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
+      "updatedAt": "2026-10-24T06:36:31.842005+00:00",
+      "summary": "Etienne approved exact 8e799fd7 with the condition that netstat exists in the selected images. The condition is checked against that source: both basic Nginx and Redis Dockerfiles explicitly install net-tools, and the parent helper already invokes netstat. No new tool dependency, source change or second review is needed. This is source verification, not new installed-tool runtime evidence. Continue ordinary current-head checks and import tracking.\n\nPreserved prior delivery history:\n\nApproved readiness fix delivered as #16250 at 8e799fd7 on current upstream8938. Full changed-file payload and complete range-diff equal approved728839; no runtime replay. Exact provider/body/tracking verified; Node owns current CI and substantive feedback.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved 728839737. Node owns the equivalent current-master rebase and upstream delivery; no runtime replay or new contributor decision is required.\n\nEarlier source-specific record:\n\nBind each Docker Exec readiness probe to the same 30-second PollContext timeout and poll synchronously, removing the leaked polling goroutine and shared result variables. The test already polled netstat; this change makes a timeout terminate the probe work. The published refinement adds the canonical Go import separator to the qualified source without changing runtime behavior. The contributor question is now pending. Required analyzer coverage passed; the original redundant ARM-configured host-executable envelope failure remains recorded. No runtime replay is claimed for the formatting refinement.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72",
-        "observedAt": "2026-10-23T10:28:00.997901+00:00",
-        "disposition": "Approved source delivered; public CI and review pending",
-        "nextAction": "Follow existing PR checks and route substantive feedback to Node; no duplicate review question.",
+        "observedAt": "2026-10-24T06:36:31.842005+00:00",
+        "disposition": "Exact head approved; netstat source condition checked",
+        "nextAction": "Continue ordinary current-head checks and matching import tracking. The reviewer condition is satisfied by exact source; no amendment, acknowledgement or second review request is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16250"
+          "https://github.com/google/gvisor/pull/16250",
+          "https://github.com/google/gvisor/pull/16250#pullrequestreview-5637149140",
+          "https://github.com/google/gvisor/blob/8e799fd7e90e80d7d003a5129a2ce282cc5e5b72/images/basic/nginx/Dockerfile",
+          "https://github.com/google/gvisor/blob/8e799fd7e90e80d7d003a5129a2ce282cc5e5b72/images/basic/redis/Dockerfile",
+          "https://github.com/google/gvisor/blob/8e799fd7e90e80d7d003a5129a2ce282cc5e5b72/test/root/portforward_test.go"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Approval condition checked against source",
+            "nextAction": "The selected images explicitly install net-tools and the parent already uses netstat. Continue ordinary import tracking; no source or reply requested.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/16250#pullrequestreview-5637149140",
+              "https://github.com/google/gvisor/blob/8e799fd7e90e80d7d003a5129a2ce282cc5e5b72/images/basic/nginx/Dockerfile",
+              "https://github.com/google/gvisor/blob/8e799fd7e90e80d7d003a5129a2ce282cc5e5b72/images/basic/redis/Dockerfile",
+              "https://github.com/google/gvisor/blob/8e799fd7e90e80d7d003a5129a2ce282cc5e5b72/test/root/portforward_test.go"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72",
+              "approvedAt": "2026-10-24T06:24:33Z",
+              "headCommittedAt": "2026-10-23T10:22:04Z",
+              "headIntroducedAt": null,
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABUAAR1A",
+                    "url": "https://github.com/google/gvisor/pull/16250#pullrequestreview-5637149140",
+                    "body": "LGTM assuming `netstat` does exist in the image.",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-24T06:24:33Z",
+                    "updatedAt": "2026-10-24T06:24:33Z",
+                    "authorAssociation": "COLLABORATOR",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "8e799fd7e90e80d7d003a5129a2ce282cc5e5b72"
+            }
+          }
         ]
       },
       "refinement": {
