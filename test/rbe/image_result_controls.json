@@ -1,0 +1,3121 @@
+{
+  "pass": {
+    "original_prefix": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry4",
+    "inputs": {
+      "receipt": {
+        "all_skipped_owners": [],
+        "artifact": {
+          "bytes": 787300,
+          "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry4-qualification.tar.gz",
+          "sha256": "7ac80da3223ac2af2669c4a143ed1dd43546e60498ea5359f2ed6c9cf81ac8ce"
+        },
+        "audit_artifacts": [
+          {
+            "bytes": 291307,
+            "name": "mixed-images-execution.json.gz",
+            "sha256": "6a6cb07ae1c21ac5048f576c7e78ca1cf06b9889c1928ffaed48f8dbf878ce93",
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/6a6cb07ae1c21ac5048f576c7e78ca1cf06b9889c1928ffaed48f8dbf878ce93/291307"
+          }
+        ],
+        "audit_upload_errors": [],
+        "audit_upload_status": "PASS",
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 0,
+          "skipped": 0
+        },
+        "collection_finished_at": "2026-10-23T19:34:08.727508+00:00",
+        "collection_status": "COMPLETE",
+        "commands": [
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-pdc9070_/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-jdnn7h3f/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--lockfile_mode=error",
+              "--noannounce_rc",
+              "@rules_python//python/bin:python",
+              "--",
+              "-c",
+              "import os, subprocess, sys; os.chdir(os.environ[\"BUILD_WORKSPACE_DIRECTORY\"]); sys.exit(subprocess.run([\"bash\", \"tools/lint.sh\", \"buildifier\"]).returncode)"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1315,
+                "path": "stderr.log",
+                "sha256": "cc586c6406e31c49b5b4bfb51ac0c6475cd3d07031f446e8b39e6c65c0ca6776"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:31:49.117052+00:00",
+            "invocation": "invocation-00-buildifier/verdict.json",
+            "native_exit": 0,
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-pdc9070_/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-jdnn7h3f/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--lockfile_mode=error",
+              "--noannounce_rc",
+              "@rules_python//python/bin:python",
+              "--",
+              "/root/workspace/repo-root/test/rbe/bun_image_inspect.py",
+              "/tmp/image-qualification-jdnn7h3f/qualification-evidence"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1221,
+                "path": "stderr.log",
+                "sha256": "c5135861a58a46833f0607a5f487c8edb4a4ca19acd0570eb858445176dbcc13"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:31:58.053835+00:00",
+            "invocation": "invocation-bun-image-closure/verdict.json",
+            "native_exit": 0,
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-pdc9070_/credentials.bazelrc",
+              "info",
+              "--downloader_config=/tmp/image-qualification-jdnn7h3f/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "--build_event_json_file_path_conversion=false",
+              "execution_root"
+            ],
+            "bazel_command": "info",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 58,
+                "path": "stderr.log",
+                "sha256": "8e8f506207b2e4fc02290247ba9c13f98ce52fb2dbce657984422925082e7369"
+              },
+              "stdout": {
+                "bytes": 43,
+                "path": "stdout.log",
+                "sha256": "08668a3370041dc031f2e8b5cfddbfdf235d60e7a217dd9ef2ed611ab3a8ae5b"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:31:49.254547+00:00",
+            "invocation": "invocation-canonical-execution-root/verdict.json",
+            "native_exit": 0,
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-pdc9070_/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-jdnn7h3f/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--config=x86_64",
+              "--compilation_mode=opt",
+              "--lockfile_mode=update",
+              "--noannounce_rc",
+              "--output=label",
+              "set(//images/benchmarks/bun-spawn:qualification_bun_archives //images/benchmarks/bun-spawn:qualification_bun_contexts)"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 963,
+                "path": "stderr.log",
+                "sha256": "d0616179d1a3bb07dd84da36377b900fd3718916de46a7cadf5d87c3ead82e98"
+              },
+              "stdout": {
+                "bytes": 134,
+                "path": "stdout.log",
+                "sha256": "688ca096d648bf3bbb0672e43233a6d7b2a8715cae7109c6b489774744371604"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:31:02.378445+00:00",
+            "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json",
+            "native_exit": 0,
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-pdc9070_/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-jdnn7h3f/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--config=x86_64",
+              "--compilation_mode=opt",
+              "--extra_toolchains=@llvm//toolchain:all",
+              "--lockfile_mode=update",
+              "--noannounce_rc",
+              "--output=label",
+              "set(//test/benchmarks/base:bun_spawn_test)"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 2835,
+                "path": "stderr.log",
+                "sha256": "8c8eea37bb29f96a0e8dc917e074fca021d66520b8763e1102717c5ef3ccf2f8"
+              },
+              "stdout": {
+                "bytes": 48,
+                "path": "stdout.log",
+                "sha256": "3d2013244853b1973247789d8d5003424d8902203e55e466e289d3d76fee78e4"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:31:42.641150+00:00",
+            "invocation": "invocation-dependency-preparation-x86_64-runtime/verdict.json",
+            "native_exit": 0,
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-pdc9070_/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-jdnn7h3f/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "--build_event_json_file_path_conversion=false",
+              "--output=starlark",
+              "--starlark:file=/root/workspace/repo-root/test/rbe/image_query.bzl",
+              "filter(\"^(@@)?//images/benchmarks/bun-spawn:\", deps(set(//images/benchmarks/bun-spawn:qualification_bun_archives //images/benchmarks/bun-spawn:qualification_bun_contexts)))"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 826,
+                "path": "stderr.log",
+                "sha256": "853dcdc52c90844a8c323ceb5be460f4eef4995fcaa326e9997ff2d5adeb3727"
+              },
+              "stdout": {
+                "bytes": 3605,
+                "path": "stdout.log",
+                "sha256": "61e87265f959759eb3b9757947dc3f5c87d537c2dd29990429cbe289bbfafcf0"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:31:50.511530+00:00",
+            "invocation": "invocation-mixed-image-owners/verdict.json",
+            "native_exit": 0,
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS"
+          }
+        ],
+        "consumer_verified_at": "2026-10-23T19:34:08.727507+00:00",
+        "coordinator_failed": false,
+        "downloaded_bytes": 787300,
+        "errors": [],
+        "executed_attempt_count": 1,
+        "expected_failures": [],
+        "expected_labels": [
+          "//images/benchmarks/bun-spawn:qualification_bun_archives",
+          "//images/benchmarks/bun-spawn:qualification_bun_contexts",
+          "//test/benchmarks/base:bun_spawn_test"
+        ],
+        "expected_owner_count": 4,
+        "failures": [],
+        "invocations": [
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:49.117052+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-00-buildifier/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:49.123684+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-23T19:34:03.207Z",
+              "finishTimeMillis": "1792784043207",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "test",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 1,
+            "execution_finished_at": "2026-10-23T19:34:03.785625+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 0,
+            "path": "invocation-bun-consumer/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:34:03.800722+00:00"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-23T19:32:51.195Z",
+              "finishTimeMillis": "1792783971195"
+            },
+            "capture_exit": 0,
+            "command_kind": "analysis",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:32:51.915743+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-bun-consumer-analysis/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:32:51.924235+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:58.053835+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-bun-image-closure/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:58.059078+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:49.254547+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-canonical-execution-root/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:49.263720+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:02.378445+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-dependency-preparation-x86_64-images/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:02.386455+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:42.641150+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-dependency-preparation-x86_64-runtime/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:42.647050+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:50.511530+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-mixed-image-owners/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:50.517355+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-23T19:31:53.881Z",
+              "finishTimeMillis": "1792783913881",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "build",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:31:54.541609+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 2,
+            "native_exit": 0,
+            "path": "invocation-mixed-images/verdict.json",
+            "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:31:54.550645+00:00"
+          }
+        ],
+        "missing": [],
+        "native_exit": 0,
+        "native_exits": [
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-00-buildifier/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-bun-consumer/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "exit": 1,
+            "invocation": "invocation-bun-consumer-analysis/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-bun-image-closure/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-canonical-execution-root/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-dependency-preparation-x86_64-runtime/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-mixed-image-owners/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-mixed-images/verdict.json"
+          }
+        ],
+        "native_invocation": {
+          "artifact": {
+            "bytes": 787300,
+            "sha256": "7ac80da3223ac2af2669c4a143ed1dd43546e60498ea5359f2ed6c9cf81ac8ce",
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/7ac80da3223ac2af2669c4a143ed1dd43546e60498ea5359f2ed6c9cf81ac8ce/787300"
+          },
+          "bazelExitCode": "OK",
+          "commitSha": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+          "createdAtUsec": "1792783831808000",
+          "durationUsec": "213118657",
+          "invocationId": "355a5a1d-5863-4cba-9ab8-db85452faac5",
+          "invocationStatus": "COMPLETE_INVOCATION_STATUS",
+          "success": true,
+          "terminal_observed_at": "2026-10-23T19:34:08.413410+00:00",
+          "updatedAtUsec": "1792784047605000"
+        },
+        "non_runtime_owners": [],
+        "observation_retries": [],
+        "producer_status": "PASS",
+        "remote_audits": {
+          "mixed-images-execution.json.gz": {
+            "bytes": 291307,
+            "sha256": "6a6cb07ae1c21ac5048f576c7e78ca1cf06b9889c1928ffaed48f8dbf878ce93"
+          }
+        },
+        "remote_audits_evidence": {
+          "bytes": 148,
+          "sha256": "0a8167faca4ac15789d2060c96e1482437738b4c772dbfb3ed86e0e59809d9e2"
+        },
+        "runner_exit": 0,
+        "schema_version": 1,
+        "skips": [],
+        "sources": [
+          "0c0b49881e60c528bca7ac95532cb8a1da475763"
+        ],
+        "status": "PASS",
+        "submitted_source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+        "verdict_available_at": "2026-10-23T19:34:04.187863+00:00",
+        "zero_case_owners": [
+          {
+            "configuration": "014eb8b4fdf920bd8b2db2105687d236511980c0f3ba51b372ac71d34542c24d",
+            "label": "//test/benchmarks/base:bun_spawn_test"
+          }
+        ]
+      },
+      "plan": {
+        "status": "BOUND_SINGLE_VDSO_GATE_PASS",
+        "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+        "product": "785f27447abfc72f054fd3a9391bd877af97ad68",
+        "foundation": "d19ae1ee04d1b78e84dcfe9f5a6d241a26ab861d",
+        "branch": "qualification/freestanding-toolchain",
+        "scope": "Same nine-phase Bun image/runtime/native100x benchmark qualification; public LLVM toolchain selected only for benchmark dependencies.",
+        "expected_graph_phases": 5,
+        "graph_phases": [
+          "dependency-preparation-x86_64-images",
+          "dependency-preparation-x86_64-runtime",
+          "00-buildifier",
+          "canonical-execution-root",
+          "mixed-image-owners"
+        ],
+        "full_additional_phases": [
+          "mixed-images",
+          "bun-image-closure",
+          "bun-consumer-analysis",
+          "bun-consumer"
+        ],
+        "expected_full_native_phases": 9,
+        "bounds": {
+          "work_seconds": 2100,
+          "report_seconds": 600,
+          "parent_timeout": "45m",
+          "collector_seconds": 3300,
+          "jobs": 400
+        },
+        "postimages": [
+          {
+            "repository_path": "test/rbe/image_bootstrap.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_bootstrap.py",
+            "bytes": 7674,
+            "sha256": "6e3ed89708dea580042bd6ae478d9c176d02c8fd633bd7147a2f502a41872c43",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_qualification.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-image_qualification.py",
+            "bytes": 19911,
+            "sha256": "c39e61a12bc04ae27c3a5672e989d01c2fff8b52bfeb03afcaa260c95fe379a1"
+          },
+          {
+            "repository_path": "test/rbe/image_execution.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_execution.py",
+            "bytes": 1961,
+            "sha256": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_runtime.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-image_runtime.py",
+            "bytes": 12851,
+            "sha256": "b03b1828cd9fe14ce20dce4e986ad59511668e3d455f960cb149200ca8bf1fe7"
+          },
+          {
+            "repository_path": "test/rbe/image_archive.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_archive.py",
+            "bytes": 6980,
+            "sha256": "55254090e2e3e89de476a77a1787b62d7cffaac83cc873efe5864dd99614d922",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_query.bzl",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_query.bzl",
+            "bytes": 1159,
+            "sha256": "e04aab3372ec590a011be9df5bd804ef8ce25ef7da2097c02d9564828a94dd04",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_workload.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-image_workload.py",
+            "bytes": 4536,
+            "sha256": "d4b368de5572ba7fe7accd706477871c407dd882a0b735235a181a012efc1377"
+          },
+          {
+            "repository_path": "test/rbe/bun_image_inspect.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-bun_image_inspect.py",
+            "bytes": 8085,
+            "sha256": "6b3afb4842928eea355a21bdb63c8b27a7339a821abcf265ccff9b837c906640"
+          },
+          {
+            "repository_path": "test/rbe/bun_image_runtime.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-bun_image_runtime.py",
+            "bytes": 11339,
+            "sha256": "fc0d5c0b2266d643b2fbdb26510b6432866336eb4304d81cde269b0a78d725e0"
+          },
+          {
+            "repository_path": "images/benchmarks/bun-spawn/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/bun-script-mode-qualifier-after.BUILD",
+            "bytes": 937,
+            "sha256": "19bf2865ed943afa19381a6b9044c212cac080f0df640b5f8991ecf6d81119e0"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/index.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-index.json",
+            "bytes": 1609,
+            "sha256": "ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/amd64-manifest.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-amd64-manifest.json",
+            "bytes": 1620,
+            "sha256": "c017a211c49a21adc0e49dda7b60ac8112887c3d9465e01427f434ed107c830e"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/amd64-config.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-amd64-config.json",
+            "bytes": 4206,
+            "sha256": "88fe237a77256495f2d42776dc4fa2377b1fd64e6b87bb0a942d571f56f4652e"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/arm64-manifest.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-arm64-manifest.json",
+            "bytes": 1620,
+            "sha256": "bf9d5b1f01be2de7cec5aa6e3977e8848f7ab9a307c6c3a8af7a50a27e609023"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/arm64-config.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-arm64-config.json",
+            "bytes": 4206,
+            "sha256": "3755480cb7c04fb95b5ae2f59236da1ace9f1a49c718b224837125ab1116ea4a"
+          },
+          {
+            "repository_path": "test/benchmarks/base/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-benchmark-BUILD",
+            "bytes": 2496,
+            "sha256": "b21f93a9d284bb24aca8b77af92b2e0288538f5fc32f1845b5808eb8d8aa759b"
+          },
+          {
+            "repository_path": "test/rbe/image_result.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-result-shared/image_result.py",
+            "bytes": 12296,
+            "sha256": "61bac3e7a5e08797a9274c2f82cbddafb3025ad782c446d2fd577ff6bd1d092c"
+          },
+          {
+            "repository_path": "vdso/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-vdso__BUILD-after",
+            "bytes": 2215,
+            "sha256": "f1bfae518ad4822f6270e50c3a9bf95b37c6c4859036fd6a86ff22b9377e6502"
+          },
+          {
+            "repository_path": "pkg/sentry/platform/systrap/sysmsg/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-pkg__sentry__platform__systrap__sysmsg__BUILD-after",
+            "bytes": 3155,
+            "sha256": "d0b115be3a5a2511646322002283fd96e784a37e334098ac2a7cf37fd5a86222"
+          },
+          {
+            "repository_path": "pkg/sentry/platform/systrap/sysmsg/build.bzl",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-pkg__sentry__platform__systrap__sysmsg__build.bzl-after",
+            "bytes": 1834,
+            "sha256": "33a22403dad5124a790d633350a4d1bd46ac91505336caf8517a34f3b97270d2"
+          },
+          {
+            "repository_path": "runsc/fdparking/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-runsc__fdparking__BUILD-after",
+            "bytes": 1737,
+            "sha256": "59068248424703cfe142d7880f14306b1ce67ca5eb442f16c53ad9d4c7eaf2f7"
+          },
+          {
+            "repository_path": "runsc/prewarmer/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-runsc__prewarmer__BUILD-after",
+            "bytes": 2080,
+            "sha256": "874809f2d4a2da33fb64755a515d1eb83648361f9bd2874eadf392907ee3c99f"
+          },
+          {
+            "repository_path": "runsc/procumounter/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-runsc__procumounter__BUILD-after",
+            "bytes": 1651,
+            "sha256": "5b32b0ae77da03f4691230003c2b25c25b6fdf3054f7c9a2329bc065cfe3d538"
+          },
+          {
+            "repository_path": "tools/defs.bzl",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-tools__defs.bzl-after",
+            "bytes": 14934,
+            "sha256": "45c72b282555b8ecfe6ea8fd995e8d43eda8dd5141cb44bbeae7bd861e47aed2"
+          },
+          {
+            "repository_path": "tools/bazeldefs/cc.bzl",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-tools__bazeldefs__cc.bzl-after",
+            "bytes": 4128,
+            "sha256": "a93c628324131b4317ca80ea40af9e9498bf0a5c74cc74d0a3e51f8f9fef08df"
+          },
+          {
+            "repository_path": "test/syscalls/linux/rseq/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-test__syscalls__linux__rseq__BUILD-after",
+            "bytes": 1665,
+            "sha256": "e4f7ab45860955b2cd06e3a3e9d39a5c7da73ee39aa986cababba42624598d91"
+          }
+        ],
+        "references": [
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-source.json",
+            "bytes": 3831,
+            "sha256": "949a364db20da17fa8979cae95e950b6b601958af4d7dd5c6e986d04c4cd519f"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-metadata.json",
+            "bytes": 7798,
+            "sha256": "d486f1491ea74475a1f1a21b492c647588202414ca5f3dec5288876dac395f6a"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-upstream-plan.json",
+            "bytes": 9365,
+            "sha256": "c8469b98c9fa5b2c9e813d78af5f1a1aa4d59155b719b8c38d844d263af0501e"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-benchmark-tag.patch",
+            "bytes": 290,
+            "sha256": "a1042fad78054a4b83ab65eaf1af009f2fe1f8c00921af487d348f867a584bfb"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-v2-prepared-plan.json",
+            "bytes": 7795,
+            "sha256": "db2ac685c9a23a60a215266dc316a0f94440282936a4d98274aeb903c64fa706"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-publication.json",
+            "bytes": 1150,
+            "sha256": "5101303a2868b2ac0c264da2a6bdddf7882c0a20d882b3b65c2636c38daf6fad"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-node-source-review.json",
+            "bytes": 2109,
+            "sha256": "fdec4d74404fd3b575f2a3d0cdb77c44d381046400f4beba8a6c47f436a41ae2"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-qualification-workmap-review.json",
+            "bytes": 3066,
+            "sha256": "99e7cf97d002ec8ba598a6353e1d38688e81a7daa599cceee72ff75bd72b6514"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-result-projection-v3-source.json",
+            "bytes": 1585,
+            "sha256": "b3dc2b1be01dc429e441b8cb4502a3c494afbf993a46102a3dca28fb4ceed8f1"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-result-projection-node-review.json",
+            "bytes": 1918,
+            "sha256": "dd132a249edfa1234210d101d8304bea34db350869cc635d74a5393c9ee62ba9"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-graph-before-projection-peer-plan.json",
+            "bytes": 9956,
+            "sha256": "faccad1f77d892b6d8b36e2bf2b3b9ac19e361e38a4c209f924cf2bca2e6092e"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-graph-plan.json",
+            "bytes": 10387,
+            "sha256": "4a637be6d02a7491b3269c7493e5779811d7027e6e77454335a303706575a804"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-before-graph-result-plan.json",
+            "bytes": 11220,
+            "sha256": "0d019d64220b8b15a3205ce5aadc0b0a1bc147703146ec4c7bd3b20933e2ded0"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-graph-outcome.json",
+            "bytes": 4636,
+            "sha256": "955d7424c37c986cdbe8a2f79f09af4e5aa47bc35c771e060e7ef5e7843eec72"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-script-mode-source.json",
+            "bytes": 3395,
+            "sha256": "ee9d5b4a53e968feae2fdfe8b02455f9f6006e2034a84cdfcf441a76c6df172c"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-script-mode-node-review.json",
+            "bytes": 1791,
+            "sha256": "8bce751cacbc906100f34d3d30b91bee9cdbe56cd691687e02f8f007568c5dea"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-outcome.json",
+            "bytes": 4946,
+            "sha256": "d105a3b47cc6543aaa715e27693c9e81b62eec2da21ff4012013bbe3dfd9d101"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-plan.json",
+            "bytes": 11654,
+            "sha256": "41bc532237b0d43544e13b8f4089bd4515ad7f30ceeaf45b9523be448c8bdd26"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/seal-bun-upstream-v5.py",
+            "bytes": 16272,
+            "sha256": "8d23fa8221126337a4090dd93530c3742feb836411d90dadb63a2a6e044cf2eb"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry1-outcome.json",
+            "bytes": 4983,
+            "sha256": "1f24f5ab71fb5aa69980fd246e671bff5bcdcc40b70c0804a807d3f21df8836e"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-httpd-upstream-paired-retry1-outcome.json",
+            "bytes": 39451,
+            "sha256": "be1062bdbd66fadca7a19796992ad1086acb68b7ab23cde49239e63b2b3d9120"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/httpd-upstream-paired-workmap-result-review.json",
+            "bytes": 3245,
+            "sha256": "553a39e3cc6f996710b2a148fede515d3aa7be1980ef42f34d31ac0607d43ee1"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-supplier.json",
+            "bytes": 1567,
+            "sha256": "8400409d3e3f8ce419d2c9b510eed32f866568a80dcf76c3399e009bde674128"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-node-review.json",
+            "bytes": 3001,
+            "sha256": "2ae1fc12735de6a8719f19223dfef0bf1d5db7b11c991f647d0a6083758af4e2"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-recovery-source.json",
+            "bytes": 3460,
+            "sha256": "9f55c37a0115a21e7acda9a623da6f7ab022efdabacc755d109404fbe0a2c66f"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry2-prepared-plan.json",
+            "bytes": 12427,
+            "sha256": "e5c54ce6e11a8f785ebb4b94dd291926753b05a86a11fa05b2fce5194424f6c3"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-config.json",
+            "bytes": 2531,
+            "sha256": "4995493ae45c2bf3105b0d93e5a455b48b8bda86913bb4c629baf7f66ece31be"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-request.sh",
+            "bytes": 2728,
+            "sha256": "8dc1c7ec80ed1a4a6646fcb052553372401864b7cd615aa762f04d5c843db3c8"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-request.json",
+            "bytes": 4156,
+            "sha256": "ba82bd76ba6a9f89698d32a91e9424e3a0f4a303d1f0f666e083997baf94c3ad"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry2-plan.json",
+            "bytes": 13271,
+            "sha256": "2eba8e81228d9129373ab26184d5226a9fa0c9cd416514ee6f429d2322f2e257"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry2-outcome.json",
+            "bytes": 5457,
+            "sha256": "39818533fe59ee7b5ba869a6c278eabe66040fa48fed1c3735e2802a5172c1f7"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection.patch",
+            "bytes": 3702,
+            "sha256": "9ad3b3568b24792dd162ed96391ac25a007d7a24d7c8a14a039bea1d265ef7ca"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-prepared-plan.json",
+            "bytes": 13555,
+            "sha256": "e6f0177e4fe3a6a020cbe0ce52a1e48ed76d692f29fa9b71a49046fdaef57bfe"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-projection.patch",
+            "bytes": 1038,
+            "sha256": "7c99c4477182b4e2fbaf28091c5c060d493bb7b2b75609cec345735cf9826573"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-workmap-review.json",
+            "bytes": 3059,
+            "sha256": "6dc16609ea534fc0459624e35dfa7a4395a9acb0b8153805d96fc6b93aee249c"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-v2-source.json",
+            "bytes": 1586,
+            "sha256": "85499425ea6beb28afb346548f316cefcd754f98a2e9410446e8bb00248d8b42"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-v2-prepared-plan.json",
+            "bytes": 13983,
+            "sha256": "d486a36d7e2434d962fcbece38e9e6b7e0229b404ee54e17a56e21b547da8f3b"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-before-preflight-result-plan.json",
+            "bytes": 14765,
+            "sha256": "c3c09b131540bb565ed469f4d2fc0f76165e432ec46f7b37ea7b75339e6be369"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-compiler-preflight-selection-assessment.json",
+            "bytes": 2838,
+            "sha256": "73875df50a1009e288d8c20ae7b43c6f7bf2b7bc3e4e744851d60ca084e77a46"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry4-config.json",
+            "bytes": 2531,
+            "sha256": "699804902f922156168533154edd0a31c5913ff57348791ef4dcd19b7eaa49c4"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry4-request.sh",
+            "bytes": 2728,
+            "sha256": "77eccfd7e21e64f81ae42e828f7ce47afc7d10a5a9a9388a0103fa922c7ca2ad"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry4-request.json",
+            "bytes": 4166,
+            "sha256": "8f08adca1eb3367e7e64fb97b3252c7619c9bb8336e6978cd02a803c2dd946cb"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-plan.json",
+            "bytes": 15485,
+            "sha256": "2a476c594076ec2dc64cedcccdd1a9fbc76774a86ff32b76e95a411747672911"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-outcome.json",
+            "bytes": 5457,
+            "sha256": "67b5d0aaebd0f3f0762ee8e2f3439cba7dbeb84d94e34e72c831241fad56715d"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-v2-source.json",
+            "bytes": 9654,
+            "sha256": "858c1ae1112875105219116f6bcc143e53404f59002a5f50656e2dac0b6c8469"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/freestanding-toolchain-node-review.json",
+            "bytes": 1741,
+            "sha256": "daa8a72c9c6f9430fcd79ab3cba596ee109cbd1b68c1e1d79a8690e7a3198998"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry4-before-vdso-plan.json",
+            "bytes": 19163,
+            "sha256": "9e260f914741a18259c071fc6411d21d540643808a6ab0d6381ff42aa4bea5d2"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-freestanding-vdso-outcome.json",
+            "bytes": 20119,
+            "sha256": "34e4cfdd6a45379b6e9c8ef73ef533aaf1c7a7526bbd5b0f0138fd134bf0df3f"
+          }
+        ],
+        "limits": [
+          "Official Bun binaries are inherited by exact layer identity; only the added script is freshly inventoried. No source-built/RBE compiler claim for upstream Bun.",
+          "ARM64 archive/config/script inspected; runtime only on AMD64.",
+          "Functional benchmark reporting uses declared native100x/ns-op row and successful native/BEP/XML, with GO_TEST_WRAP_TESTV=0. No performance improvement claim.",
+          "Prior graph gate passed; this exact supported BUILD mode correction is independently reviewed. Full retry retains its five graph/format phases before build/runtime."
+        ],
+        "refinement": "Qualifier-only go-benchmark-contract tag on actual existing Bun owner enables the shared declared-benchmark reporting contract; product benchmark source/behavior unchanged.",
+        "expected_native_phases": 9,
+        "result_projector": "/private/tmp/gvisor-rbe-next/seal-bun-upstream-v5.py",
+        "recovery": "Exact accepted freestanding compiler/helper conversion fixes the native legacy vDSO tool path. Product/runtime supplier/consumer options and full nine-phase workload unchanged. Prior67b5 FAIL retained; shared actual vdso build required before submission.",
+        "preflight": "Native aquery exit 0 verifies declared LLVM selection; original reporter INCOMPLETE is preserved. Root authorizes actual consumer independently of query-only reporter correction. Assessment reference added after submission; source/config/request unchanged."
+      },
+      "config": {
+        "source": "0c0b49881e60c528bca7ac95532cb8a1da475763",
+        "product": "785f27447abfc72f054fd3a9391bd877af97ad68",
+        "targets": [
+          "//images/benchmarks/bun-spawn:qualification_bun_archives",
+          "//images/benchmarks/bun-spawn:qualification_bun_contexts"
+        ],
+        "action_prefixes": [
+          "//images/benchmarks/bun-spawn:"
+        ],
+        "runtime": true,
+        "preparation_targets": {
+          "x86_64": [
+            "//test/benchmarks/base:bun_spawn_test"
+          ]
+        },
+        "image_targets": {
+          "x86_64": [
+            "//images/benchmarks/bun-spawn:qualification_bun_archives",
+            "//images/benchmarks/bun-spawn:qualification_bun_contexts"
+          ]
+        },
+        "upstream_index_digest": "sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598",
+        "graph_only": false,
+        "runtime_supplier": {
+          "source": "6902f14e488cdc9e433413645ca2eff897ecb1b5",
+          "invocation": "18992418-4b16-4aae-b135-6ab648fdc1ac",
+          "owner": {
+            "label": "//:release",
+            "configuration": "00eb52d107567fd7343f37eea731ccfa2de83bc49b314cb14bf0d5249e64fbde"
+          },
+          "bundle": {
+            "sha256": "d6af8cae2d8fbf5c1ab5f370c74dee1eb43ad07bb17a3081feeca8be42644b13",
+            "bytes": 3747219,
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/d6af8cae2d8fbf5c1ab5f370c74dee1eb43ad07bb17a3081feeca8be42644b13/3747219"
+          },
+          "files": {
+            "gvisor-bin/checkpointgofer": {
+              "sha256": "2995b4e52d9bfabd447d275c670f84d6588feeed75f92101e65283933cc46a94",
+              "bytes": 48438572
+            },
+            "gvisor-bin/gvisor-proc-umounter": {
+              "sha256": "4c265fd6b1f9af17d6cbe72dcfb6e55693fbb3c0f6b44969659af9f6ec0fe467",
+              "bytes": 1080
+            },
+            "gvisor-bin/gvisor-sentry-prewarmer": {
+              "sha256": "8028039742e3a21274b52f7676e4d90dda11ec69f58284875ddd165cc6e15c12",
+              "bytes": 1264
+            },
+            "gvisor-bin/gvisor_sentry": {
+              "sha256": "2628f944047aa0d5de6f1d1e154c37ec83095ef297d47b945f4470a590aa8743",
+              "bytes": 52885253
+            },
+            "gvisor-bin/runsc-fd-parking": {
+              "sha256": "04acf06e03d9c57044f06da608400008bf31385cadba4e6e1b73525c76a0879a",
+              "bytes": 65928
+            },
+            "gvisor-bin/runsc-metric-server": {
+              "sha256": "e108c996c65847008a7383eb2f857d0e889b0f4bf6b5cdff03b6781c19e39426",
+              "bytes": 20995513
+            },
+            "runsc": {
+              "sha256": "b129a452d8371230504b0c84c5663177f893606461b18a03c6314a4f354905ac",
+              "bytes": 18660833
+            }
+          }
+        },
+        "consumer_options": [
+          "--extra_toolchains=@llvm//toolchain:all"
+        ],
+        "compiler_preflight": false
+      }
+    },
+    "original_input_identities": {
+      "receipt": {
+        "bytes": 17105,
+        "sha256": "379854639e05e150680d06513778a8c9243b9f0820ab15fce2a25cdf1f67791d"
+      },
+      "plan": {
+        "bytes": 19587,
+        "sha256": "7b4d2f33718455ea85eca307ec163b4dfcd50a9206ab47a93f1f431dcff26fb8"
+      },
+      "config": {
+        "bytes": 2531,
+        "sha256": "699804902f922156168533154edd0a31c5913ff57348791ef4dcd19b7eaa49c4"
+      }
+    },
+    "bundle": {
+      "bytes": 787300,
+      "sha256": "7ac80da3223ac2af2669c4a143ed1dd43546e60498ea5359f2ed6c9cf81ac8ce",
+      "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/7ac80da3223ac2af2669c4a143ed1dd43546e60498ea5359f2ed6c9cf81ac8ce/787300"
+    },
+    "expected_status": "PASS",
+    "expected_native_status": "PASS",
+    "expected_fields": [
+      "source",
+      "product",
+      "outputs",
+      "audit",
+      "upstream_image",
+      "runtime",
+      "runtime_supplier"
+    ],
+    "expected_projection_sha256": "05db0e97c68a9fbe8261c3de766ab6bdb2ad4c19f90215c15c90030171422a75"
+  },
+  "fail": {
+    "original_prefix": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3",
+    "inputs": {
+      "receipt": {
+        "all_skipped_owners": [],
+        "artifact": {
+          "bytes": 757201,
+          "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-qualification.tar.gz",
+          "sha256": "770ea451e9a7ece9dbe35e6c380fdef447917a4a901b81a516d1cfa442f0a03e"
+        },
+        "audit_artifacts": [
+          {
+            "bytes": 291514,
+            "name": "mixed-images-execution.json.gz",
+            "sha256": "caa6d2fbc41f217cf6d91685088f61f32d9b0be5090ac0344ad949295140a7f2",
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/caa6d2fbc41f217cf6d91685088f61f32d9b0be5090ac0344ad949295140a7f2/291514"
+          }
+        ],
+        "audit_upload_errors": [],
+        "audit_upload_status": "PASS",
+        "build_outputs": [],
+        "capture_exit": 1,
+        "case_counts": {},
+        "collection_finished_at": "2026-10-23T19:10:11.319748+00:00",
+        "collection_status": "COMPLETE",
+        "commands": [
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-gnrkl0t_/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-zp9uvyq4/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--lockfile_mode=error",
+              "--noannounce_rc",
+              "@rules_python//python/bin:python",
+              "--",
+              "-c",
+              "import os, subprocess, sys; os.chdir(os.environ[\"BUILD_WORKSPACE_DIRECTORY\"]); sys.exit(subprocess.run([\"bash\", \"tools/lint.sh\", \"buildifier\"]).returncode)"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1315,
+                "path": "stderr.log",
+                "sha256": "e4d6d72bcc9aaa320ff21386f48d7a6cbe8604e57c370c5e3a75d720f03614a9"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:07:29.806821+00:00",
+            "invocation": "invocation-00-buildifier/verdict.json",
+            "native_exit": 0,
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-gnrkl0t_/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-zp9uvyq4/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--lockfile_mode=error",
+              "--noannounce_rc",
+              "@rules_python//python/bin:python",
+              "--",
+              "/root/workspace/repo-root/test/rbe/bun_image_inspect.py",
+              "/tmp/image-qualification-zp9uvyq4/qualification-evidence"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1221,
+                "path": "stderr.log",
+                "sha256": "fac44ce878b0431c3d6e28a5083298028977a40c995ebd74a8abf7e1afbc6ee7"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:07:39.824815+00:00",
+            "invocation": "invocation-bun-image-closure/verdict.json",
+            "native_exit": 0,
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-gnrkl0t_/credentials.bazelrc",
+              "info",
+              "--downloader_config=/tmp/image-qualification-zp9uvyq4/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "--build_event_json_file_path_conversion=false",
+              "execution_root"
+            ],
+            "bazel_command": "info",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 58,
+                "path": "stderr.log",
+                "sha256": "6a9da3efa623eb1e3db205cb27bbbe2b8b28ee2f65c18c1c9fe6604ff1c2f474"
+              },
+              "stdout": {
+                "bytes": 43,
+                "path": "stdout.log",
+                "sha256": "08668a3370041dc031f2e8b5cfddbfdf235d60e7a217dd9ef2ed611ab3a8ae5b"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:07:30.093077+00:00",
+            "invocation": "invocation-canonical-execution-root/verdict.json",
+            "native_exit": 0,
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-gnrkl0t_/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-zp9uvyq4/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--config=x86_64",
+              "--compilation_mode=opt",
+              "--lockfile_mode=update",
+              "--noannounce_rc",
+              "--output=label",
+              "set(//images/benchmarks/bun-spawn:qualification_bun_archives //images/benchmarks/bun-spawn:qualification_bun_contexts)"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 964,
+                "path": "stderr.log",
+                "sha256": "a2e6ad71981f2140c078bdfbe894ec9748a5f49d23f335cf3f0d210ee2d0ef34"
+              },
+              "stdout": {
+                "bytes": 134,
+                "path": "stdout.log",
+                "sha256": "688ca096d648bf3bbb0672e43233a6d7b2a8715cae7109c6b489774744371604"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:06:39.520954+00:00",
+            "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json",
+            "native_exit": 0,
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-gnrkl0t_/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-zp9uvyq4/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--config=x86_64",
+              "--compilation_mode=opt",
+              "--extra_toolchains=@llvm//toolchain:all",
+              "--lockfile_mode=update",
+              "--noannounce_rc",
+              "--output=label",
+              "set(//test/benchmarks/base:bun_spawn_test)"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 3045,
+                "path": "stderr.log",
+                "sha256": "3b0925e50d48737f5c7e5d896bad4c1c895bede570cce58558388e53745f0446"
+              },
+              "stdout": {
+                "bytes": 48,
+                "path": "stdout.log",
+                "sha256": "3d2013244853b1973247789d8d5003424d8902203e55e466e289d3d76fee78e4"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:07:23.190738+00:00",
+            "invocation": "invocation-dependency-preparation-x86_64-runtime/verdict.json",
+            "native_exit": 0,
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-gnrkl0t_/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-zp9uvyq4/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "--build_event_json_file_path_conversion=false",
+              "--output=starlark",
+              "--starlark:file=/root/workspace/repo-root/test/rbe/image_query.bzl",
+              "filter(\"^(@@)?//images/benchmarks/bun-spawn:\", deps(set(//images/benchmarks/bun-spawn:qualification_bun_archives //images/benchmarks/bun-spawn:qualification_bun_contexts)))"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 826,
+                "path": "stderr.log",
+                "sha256": "46a627f1f5862d7330911a79c889b4608441a634e749c7895cef88b8c28e165f"
+              },
+              "stdout": {
+                "bytes": 3605,
+                "path": "stdout.log",
+                "sha256": "61e87265f959759eb3b9757947dc3f5c87d537c2dd29990429cbe289bbfafcf0"
+              }
+            },
+            "execution_finished_at": "2026-10-23T19:07:31.329431+00:00",
+            "invocation": "invocation-mixed-image-owners/verdict.json",
+            "native_exit": 0,
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS"
+          }
+        ],
+        "consumer_verified_at": "2026-10-23T19:10:11.319746+00:00",
+        "coordinator_failed": false,
+        "downloaded_bytes": 757201,
+        "errors": [],
+        "executed_attempt_count": 0,
+        "expected_failures": [],
+        "expected_labels": [
+          "//images/benchmarks/bun-spawn:qualification_bun_archives",
+          "//images/benchmarks/bun-spawn:qualification_bun_contexts",
+          "//test/benchmarks/base:bun_spawn_test"
+        ],
+        "expected_owner_count": 4,
+        "failures": [
+          {
+            "configuration": "da8ef2cc0943be0c32c9c7a7a4289a7f4958124df8a4befc7e5425afd157bdd2",
+            "label": "//test/benchmarks/base:bun_spawn_test",
+            "reason": "target build failed"
+          }
+        ],
+        "invocations": [
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:07:29.806821+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-00-buildifier/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:07:29.812958+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-23T19:10:05.864Z",
+              "finishTimeMillis": "1792782605864"
+            },
+            "capture_exit": 0,
+            "command_kind": "test",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:10:06.457354+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-bun-consumer/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "FAIL",
+            "verdict_available_at": "2026-10-23T19:10:06.466846+00:00"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-23T19:08:39.096Z",
+              "finishTimeMillis": "1792782519096"
+            },
+            "capture_exit": 0,
+            "command_kind": "analysis",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:08:39.835803+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-bun-consumer-analysis/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:08:39.847484+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:07:39.824815+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-bun-image-closure/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:07:39.830388+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:07:30.093077+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-canonical-execution-root/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:07:30.100379+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:06:39.520954+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-dependency-preparation-x86_64-images/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:06:39.528676+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:07:23.190738+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-dependency-preparation-x86_64-runtime/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:07:23.196342+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:07:31.329431+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-mixed-image-owners/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:07:31.335425+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-23T19:07:35.306Z",
+              "finishTimeMillis": "1792782455306",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "build",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-23T19:07:36.165966+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 2,
+            "native_exit": 0,
+            "path": "invocation-mixed-images/verdict.json",
+            "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-23T19:07:36.175725+00:00"
+          }
+        ],
+        "missing": [
+          {
+            "configuration": "da8ef2cc0943be0c32c9c7a7a4289a7f4958124df8a4befc7e5425afd157bdd2",
+            "label": "//test/benchmarks/base:bun_spawn_test",
+            "reason": "test summary missing"
+          },
+          {
+            "configuration": "da8ef2cc0943be0c32c9c7a7a4289a7f4958124df8a4befc7e5425afd157bdd2",
+            "label": "//test/benchmarks/base:bun_spawn_test",
+            "reason": "test result missing"
+          }
+        ],
+        "native_exit": 1,
+        "native_exits": [
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-00-buildifier/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 1,
+            "invocation": "invocation-bun-consumer/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "exit": 1,
+            "invocation": "invocation-bun-consumer-analysis/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-bun-image-closure/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-canonical-execution-root/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-dependency-preparation-x86_64-runtime/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-mixed-image-owners/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-mixed-images/verdict.json"
+          }
+        ],
+        "native_invocation": {
+          "artifact": {
+            "bytes": 757201,
+            "sha256": "770ea451e9a7ece9dbe35e6c380fdef447917a4a901b81a516d1cfa442f0a03e",
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/770ea451e9a7ece9dbe35e6c380fdef447917a4a901b81a516d1cfa442f0a03e/757201"
+          },
+          "bazelExitCode": "Failed",
+          "commitSha": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+          "createdAtUsec": "1792782367900000",
+          "durationUsec": "239391710",
+          "invocationId": "8ba0db8b-a15f-4ada-a0b2-4161b24a6dfb",
+          "invocationStatus": "COMPLETE_INVOCATION_STATUS",
+          "terminal_observed_at": "2026-10-23T19:10:11.092505+00:00",
+          "updatedAtUsec": "1792782609838000"
+        },
+        "non_runtime_owners": [],
+        "observation_retries": [],
+        "producer_status": "FAIL",
+        "remote_audits": {
+          "mixed-images-execution.json.gz": {
+            "bytes": 291514,
+            "sha256": "caa6d2fbc41f217cf6d91685088f61f32d9b0be5090ac0344ad949295140a7f2"
+          }
+        },
+        "remote_audits_evidence": {
+          "bytes": 148,
+          "sha256": "441fe466d095fea0035410ef1b0b04155c19e48e950be5404986a4e1cdf72afb"
+        },
+        "runner_exit": 1,
+        "schema_version": 1,
+        "skips": [],
+        "sources": [
+          "52ef7254d443d398344dcb1e86c77313b198f0bd"
+        ],
+        "status": "FAIL",
+        "submitted_source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+        "verdict_available_at": "2026-10-23T19:10:06.505512+00:00",
+        "zero_case_owners": []
+      },
+      "plan": {
+        "status": "SUBMITTED_CONFIGURED_SELECTION_VERIFIED",
+        "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+        "product": "785f27447abfc72f054fd3a9391bd877af97ad68",
+        "foundation": "d19ae1ee04d1b78e84dcfe9f5a6d241a26ab861d",
+        "branch": "qualification/bun-upstream",
+        "scope": "Same nine-phase Bun image/runtime/native100x benchmark qualification; public LLVM toolchain selected only for benchmark dependencies.",
+        "expected_graph_phases": 5,
+        "graph_phases": [
+          "dependency-preparation-x86_64-images",
+          "dependency-preparation-x86_64-runtime",
+          "00-buildifier",
+          "canonical-execution-root",
+          "mixed-image-owners"
+        ],
+        "full_additional_phases": [
+          "mixed-images",
+          "bun-image-closure",
+          "bun-consumer-analysis",
+          "bun-consumer"
+        ],
+        "expected_full_native_phases": 9,
+        "bounds": {
+          "work_seconds": 2100,
+          "report_seconds": 600,
+          "parent_timeout": "45m",
+          "collector_seconds": 3300,
+          "jobs": 400
+        },
+        "postimages": [
+          {
+            "repository_path": "test/rbe/image_bootstrap.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_bootstrap.py",
+            "bytes": 7674,
+            "sha256": "6e3ed89708dea580042bd6ae478d9c176d02c8fd633bd7147a2f502a41872c43",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_qualification.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-image_qualification.py",
+            "bytes": 19911,
+            "sha256": "c39e61a12bc04ae27c3a5672e989d01c2fff8b52bfeb03afcaa260c95fe379a1"
+          },
+          {
+            "repository_path": "test/rbe/image_execution.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_execution.py",
+            "bytes": 1961,
+            "sha256": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_runtime.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-image_runtime.py",
+            "bytes": 12851,
+            "sha256": "b03b1828cd9fe14ce20dce4e986ad59511668e3d455f960cb149200ca8bf1fe7"
+          },
+          {
+            "repository_path": "test/rbe/image_archive.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_archive.py",
+            "bytes": 6980,
+            "sha256": "55254090e2e3e89de476a77a1787b62d7cffaac83cc873efe5864dd99614d922",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_query.bzl",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-image_query.bzl",
+            "bytes": 1159,
+            "sha256": "e04aab3372ec590a011be9df5bd804ef8ce25ef7da2097c02d9564828a94dd04",
+            "unchanged_supplier": "36531b7409ea819a2c0a29afc5e43cde28b8915f"
+          },
+          {
+            "repository_path": "test/rbe/image_workload.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-image_workload.py",
+            "bytes": 4536,
+            "sha256": "d4b368de5572ba7fe7accd706477871c407dd882a0b735235a181a012efc1377"
+          },
+          {
+            "repository_path": "test/rbe/bun_image_inspect.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-bun_image_inspect.py",
+            "bytes": 8085,
+            "sha256": "6b3afb4842928eea355a21bdb63c8b27a7339a821abcf265ccff9b837c906640"
+          },
+          {
+            "repository_path": "test/rbe/bun_image_runtime.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-bun_image_runtime.py",
+            "bytes": 11339,
+            "sha256": "fc0d5c0b2266d643b2fbdb26510b6432866336eb4304d81cde269b0a78d725e0"
+          },
+          {
+            "repository_path": "images/benchmarks/bun-spawn/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/bun-script-mode-qualifier-after.BUILD",
+            "bytes": 937,
+            "sha256": "19bf2865ed943afa19381a6b9044c212cac080f0df640b5f8991ecf6d81119e0"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/index.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-index.json",
+            "bytes": 1609,
+            "sha256": "ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/amd64-manifest.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-amd64-manifest.json",
+            "bytes": 1620,
+            "sha256": "c017a211c49a21adc0e49dda7b60ac8112887c3d9465e01427f434ed107c830e"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/amd64-config.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-amd64-config.json",
+            "bytes": 4206,
+            "sha256": "88fe237a77256495f2d42776dc4fa2377b1fd64e6b87bb0a942d571f56f4652e"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/arm64-manifest.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-arm64-manifest.json",
+            "bytes": 1620,
+            "sha256": "bf9d5b1f01be2de7cec5aa6e3977e8848f7ab9a307c6c3a8af7a50a27e609023"
+          },
+          {
+            "repository_path": "test/rbe/bun_upstream/arm64-config.json",
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-1.4.3-arm64-config.json",
+            "bytes": 4206,
+            "sha256": "3755480cb7c04fb95b5ae2f59236da1ace9f1a49c718b224837125ab1116ea4a"
+          },
+          {
+            "repository_path": "test/benchmarks/base/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-benchmark-BUILD",
+            "bytes": 2496,
+            "sha256": "b21f93a9d284bb24aca8b77af92b2e0288538f5fc32f1845b5808eb8d8aa759b"
+          },
+          {
+            "repository_path": "test/rbe/image_result.py",
+            "path": "/private/tmp/gvisor-rbe-next/bun-result-shared/image_result.py",
+            "bytes": 12296,
+            "sha256": "61bac3e7a5e08797a9274c2f82cbddafb3025ad782c446d2fd577ff6bd1d092c"
+          }
+        ],
+        "references": [
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-source.json",
+            "bytes": 3831,
+            "sha256": "949a364db20da17fa8979cae95e950b6b601958af4d7dd5c6e986d04c4cd519f"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-metadata.json",
+            "bytes": 7798,
+            "sha256": "d486f1491ea74475a1f1a21b492c647588202414ca5f3dec5288876dac395f6a"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-upstream-plan.json",
+            "bytes": 9365,
+            "sha256": "c8469b98c9fa5b2c9e813d78af5f1a1aa4d59155b719b8c38d844d263af0501e"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-qualification-benchmark-tag.patch",
+            "bytes": 290,
+            "sha256": "a1042fad78054a4b83ab65eaf1af009f2fe1f8c00921af487d348f867a584bfb"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-v2-prepared-plan.json",
+            "bytes": 7795,
+            "sha256": "db2ac685c9a23a60a215266dc316a0f94440282936a4d98274aeb903c64fa706"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-publication.json",
+            "bytes": 1150,
+            "sha256": "5101303a2868b2ac0c264da2a6bdddf7882c0a20d882b3b65c2636c38daf6fad"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-node-source-review.json",
+            "bytes": 2109,
+            "sha256": "fdec4d74404fd3b575f2a3d0cdb77c44d381046400f4beba8a6c47f436a41ae2"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-upstream-qualification-workmap-review.json",
+            "bytes": 3066,
+            "sha256": "99e7cf97d002ec8ba598a6353e1d38688e81a7daa599cceee72ff75bd72b6514"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-result-projection-v3-source.json",
+            "bytes": 1585,
+            "sha256": "b3dc2b1be01dc429e441b8cb4502a3c494afbf993a46102a3dca28fb4ceed8f1"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-result-projection-node-review.json",
+            "bytes": 1918,
+            "sha256": "dd132a249edfa1234210d101d8304bea34db350869cc635d74a5393c9ee62ba9"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-graph-before-projection-peer-plan.json",
+            "bytes": 9956,
+            "sha256": "faccad1f77d892b6d8b36e2bf2b3b9ac19e361e38a4c209f924cf2bca2e6092e"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-graph-plan.json",
+            "bytes": 10387,
+            "sha256": "4a637be6d02a7491b3269c7493e5779811d7027e6e77454335a303706575a804"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-before-graph-result-plan.json",
+            "bytes": 11220,
+            "sha256": "0d019d64220b8b15a3205ce5aadc0b0a1bc147703146ec4c7bd3b20933e2ded0"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-graph-outcome.json",
+            "bytes": 4636,
+            "sha256": "955d7424c37c986cdbe8a2f79f09af4e5aa47bc35c771e060e7ef5e7843eec72"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-script-mode-source.json",
+            "bytes": 3395,
+            "sha256": "ee9d5b4a53e968feae2fdfe8b02455f9f6006e2034a84cdfcf441a76c6df172c"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-script-mode-node-review.json",
+            "bytes": 1791,
+            "sha256": "8bce751cacbc906100f34d3d30b91bee9cdbe56cd691687e02f8f007568c5dea"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-outcome.json",
+            "bytes": 4946,
+            "sha256": "d105a3b47cc6543aaa715e27693c9e81b62eec2da21ff4012013bbe3dfd9d101"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-plan.json",
+            "bytes": 11654,
+            "sha256": "41bc532237b0d43544e13b8f4089bd4515ad7f30ceeaf45b9523be448c8bdd26"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/seal-bun-upstream-v5.py",
+            "bytes": 16272,
+            "sha256": "8d23fa8221126337a4090dd93530c3742feb836411d90dadb63a2a6e044cf2eb"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry1-outcome.json",
+            "bytes": 4983,
+            "sha256": "1f24f5ab71fb5aa69980fd246e671bff5bcdcc40b70c0804a807d3f21df8836e"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-httpd-upstream-paired-retry1-outcome.json",
+            "bytes": 39451,
+            "sha256": "be1062bdbd66fadca7a19796992ad1086acb68b7ab23cde49239e63b2b3d9120"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/httpd-upstream-paired-workmap-result-review.json",
+            "bytes": 3245,
+            "sha256": "553a39e3cc6f996710b2a148fede515d3aa7be1980ef42f34d31ac0607d43ee1"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-supplier.json",
+            "bytes": 1567,
+            "sha256": "8400409d3e3f8ce419d2c9b510eed32f866568a80dcf76c3399e009bde674128"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-node-review.json",
+            "bytes": 3001,
+            "sha256": "2ae1fc12735de6a8719f19223dfef0bf1d5db7b11c991f647d0a6083758af4e2"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-retained-runtime-recovery-source.json",
+            "bytes": 3460,
+            "sha256": "9f55c37a0115a21e7acda9a623da6f7ab022efdabacc755d109404fbe0a2c66f"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry2-prepared-plan.json",
+            "bytes": 12427,
+            "sha256": "e5c54ce6e11a8f785ebb4b94dd291926753b05a86a11fa05b2fce5194424f6c3"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-config.json",
+            "bytes": 2531,
+            "sha256": "4995493ae45c2bf3105b0d93e5a455b48b8bda86913bb4c629baf7f66ece31be"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-request.sh",
+            "bytes": 2728,
+            "sha256": "8dc1c7ec80ed1a4a6646fcb052553372401864b7cd615aa762f04d5c843db3c8"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-request.json",
+            "bytes": 4156,
+            "sha256": "ba82bd76ba6a9f89698d32a91e9424e3a0f4a303d1f0f666e083997baf94c3ad"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry2-plan.json",
+            "bytes": 13271,
+            "sha256": "2eba8e81228d9129373ab26184d5226a9fa0c9cd416514ee6f429d2322f2e257"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry2-outcome.json",
+            "bytes": 5457,
+            "sha256": "39818533fe59ee7b5ba869a6c278eabe66040fa48fed1c3735e2802a5172c1f7"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection.patch",
+            "bytes": 3702,
+            "sha256": "9ad3b3568b24792dd162ed96391ac25a007d7a24d7c8a14a039bea1d265ef7ca"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-prepared-plan.json",
+            "bytes": 13555,
+            "sha256": "e6f0177e4fe3a6a020cbe0ce52a1e48ed76d692f29fa9b71a49046fdaef57bfe"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-projection.patch",
+            "bytes": 1038,
+            "sha256": "7c99c4477182b4e2fbaf28091c5c060d493bb7b2b75609cec345735cf9826573"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-workmap-review.json",
+            "bytes": 3059,
+            "sha256": "6dc16609ea534fc0459624e35dfa7a4395a9acb0b8153805d96fc6b93aee249c"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-consumer-compiler-selection-v2-source.json",
+            "bytes": 1586,
+            "sha256": "85499425ea6beb28afb346548f316cefcd754f98a2e9410446e8bb00248d8b42"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-v2-prepared-plan.json",
+            "bytes": 13983,
+            "sha256": "d486a36d7e2434d962fcbece38e9e6b7e0229b404ee54e17a56e21b547da8f3b"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-bun-upstream-retry3-before-preflight-result-plan.json",
+            "bytes": 14765,
+            "sha256": "c3c09b131540bb565ed469f4d2fc0f76165e432ec46f7b37ea7b75339e6be369"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/bun-compiler-preflight-selection-assessment.json",
+            "bytes": 2838,
+            "sha256": "73875df50a1009e288d8c20ae7b43c6f7bf2b7bc3e4e744851d60ca084e77a46"
+          }
+        ],
+        "limits": [
+          "Official Bun binaries are inherited by exact layer identity; only the added script is freshly inventoried. No source-built/RBE compiler claim for upstream Bun.",
+          "ARM64 archive/config/script inspected; runtime only on AMD64.",
+          "Functional benchmark reporting uses declared native100x/ns-op row and successful native/BEP/XML, with GO_TEST_WRAP_TESTV=0. No performance improvement claim.",
+          "Prior graph gate passed; this exact supported BUILD mode correction is independently reviewed. Full retry retains its five graph/format phases before build/runtime."
+        ],
+        "refinement": "Qualifier-only go-benchmark-contract tag on actual existing Bun owner enables the shared declared-benchmark reporting contract; product benchmark source/behavior unchanged.",
+        "expected_native_phases": 9,
+        "result_projector": "/private/tmp/gvisor-rbe-next/seal-bun-upstream-v5.py",
+        "recovery": "Both image outputs/mode and retained runtime/Make preparation passed on557403dd, but actual Bun owner build selected absent legacy GCC. One config-defined --extra_toolchains flag is shared by runtime dependency preparation, action preflight, analysis and actual test. Product/runtime supplier unchanged; priorFAIL398185 remains.",
+        "publication": {
+          "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+          "local_tracking_provider_equal": true,
+          "signed": true,
+          "transport": "normal SSH"
+        },
+        "preflight": "Native aquery exit 0 verifies declared LLVM selection; original reporter INCOMPLETE is preserved. Root authorizes actual consumer independently of query-only reporter correction. Assessment reference added after submission; source/config/request unchanged."
+      },
+      "config": {
+        "source": "52ef7254d443d398344dcb1e86c77313b198f0bd",
+        "product": "785f27447abfc72f054fd3a9391bd877af97ad68",
+        "targets": [
+          "//images/benchmarks/bun-spawn:qualification_bun_archives",
+          "//images/benchmarks/bun-spawn:qualification_bun_contexts"
+        ],
+        "action_prefixes": [
+          "//images/benchmarks/bun-spawn:"
+        ],
+        "runtime": true,
+        "preparation_targets": {
+          "x86_64": [
+            "//test/benchmarks/base:bun_spawn_test"
+          ]
+        },
+        "image_targets": {
+          "x86_64": [
+            "//images/benchmarks/bun-spawn:qualification_bun_archives",
+            "//images/benchmarks/bun-spawn:qualification_bun_contexts"
+          ]
+        },
+        "upstream_index_digest": "sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598",
+        "graph_only": false,
+        "runtime_supplier": {
+          "source": "6902f14e488cdc9e433413645ca2eff897ecb1b5",
+          "invocation": "18992418-4b16-4aae-b135-6ab648fdc1ac",
+          "owner": {
+            "label": "//:release",
+            "configuration": "00eb52d107567fd7343f37eea731ccfa2de83bc49b314cb14bf0d5249e64fbde"
+          },
+          "bundle": {
+            "sha256": "d6af8cae2d8fbf5c1ab5f370c74dee1eb43ad07bb17a3081feeca8be42644b13",
+            "bytes": 3747219,
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/d6af8cae2d8fbf5c1ab5f370c74dee1eb43ad07bb17a3081feeca8be42644b13/3747219"
+          },
+          "files": {
+            "gvisor-bin/checkpointgofer": {
+              "sha256": "2995b4e52d9bfabd447d275c670f84d6588feeed75f92101e65283933cc46a94",
+              "bytes": 48438572
+            },
+            "gvisor-bin/gvisor-proc-umounter": {
+              "sha256": "4c265fd6b1f9af17d6cbe72dcfb6e55693fbb3c0f6b44969659af9f6ec0fe467",
+              "bytes": 1080
+            },
+            "gvisor-bin/gvisor-sentry-prewarmer": {
+              "sha256": "8028039742e3a21274b52f7676e4d90dda11ec69f58284875ddd165cc6e15c12",
+              "bytes": 1264
+            },
+            "gvisor-bin/gvisor_sentry": {
+              "sha256": "2628f944047aa0d5de6f1d1e154c37ec83095ef297d47b945f4470a590aa8743",
+              "bytes": 52885253
+            },
+            "gvisor-bin/runsc-fd-parking": {
+              "sha256": "04acf06e03d9c57044f06da608400008bf31385cadba4e6e1b73525c76a0879a",
+              "bytes": 65928
+            },
+            "gvisor-bin/runsc-metric-server": {
+              "sha256": "e108c996c65847008a7383eb2f857d0e889b0f4bf6b5cdff03b6781c19e39426",
+              "bytes": 20995513
+            },
+            "runsc": {
+              "sha256": "b129a452d8371230504b0c84c5663177f893606461b18a03c6314a4f354905ac",
+              "bytes": 18660833
+            }
+          }
+        },
+        "consumer_options": [
+          "--extra_toolchains=@llvm//toolchain:all"
+        ],
+        "compiler_preflight": false
+      }
+    },
+    "original_input_identities": {
+      "receipt": {
+        "bytes": 17467,
+        "sha256": "e690eec370aa1c99fe74a895e25a562b6ef8f9d2799ae96ff83dc46b84f6f074"
+      },
+      "plan": {
+        "bytes": 15485,
+        "sha256": "2a476c594076ec2dc64cedcccdd1a9fbc76774a86ff32b76e95a411747672911"
+      },
+      "config": {
+        "bytes": 2531,
+        "sha256": "4995493ae45c2bf3105b0d93e5a455b48b8bda86913bb4c629baf7f66ece31be"
+      }
+    },
+    "bundle": {
+      "bytes": 757201,
+      "sha256": "770ea451e9a7ece9dbe35e6c380fdef447917a4a901b81a516d1cfa442f0a03e",
+      "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/770ea451e9a7ece9dbe35e6c380fdef447917a4a901b81a516d1cfa442f0a03e/757201"
+    },
+    "expected_status": "FAIL",
+    "expected_native_status": "FAIL"
+  },
+  "metadata_bytes": {
+    "index": "{\n  \"schemaVersion\": 2,\n  \"mediaType\": \"application/vnd.oci.image.index.v1+json\",\n  \"manifests\": [\n    {\n      \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n      \"digest\": \"sha256:c017a211c49a21adc0e49dda7b60ac8112887c3d9465e01427f434ed107c830e\",\n      \"size\": 1620,\n      \"platform\": {\n        \"architecture\": \"amd64\",\n        \"os\": \"linux\"\n      }\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n      \"digest\": \"sha256:bf9d5b1f01be2de7cec5aa6e3977e8848f7ab9a307c6c3a8af7a50a27e609023\",\n      \"size\": 1620,\n      \"platform\": {\n        \"architecture\": \"arm64\",\n        \"os\": \"linux\"\n      }\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n      \"digest\": \"sha256:12a69642cd73323065cc11196f5ebb37fdc4a60c032b40859df5242f77e3030b\",\n      \"size\": 838,\n      \"annotations\": {\n        \"vnd.docker.reference.digest\": \"sha256:c017a211c49a21adc0e49dda7b60ac8112887c3d9465e01427f434ed107c830e\",\n        \"vnd.docker.reference.type\": \"attestation-manifest\"\n      },\n      \"platform\": {\n        \"architecture\": \"unknown\",\n        \"os\": \"unknown\"\n      }\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n      \"digest\": \"sha256:52bd6025998e51be5a34b4b114d23ed7f4369294653ba374c4d778741f69ed5b\",\n      \"size\": 838,\n      \"annotations\": {\n        \"vnd.docker.reference.digest\": \"sha256:bf9d5b1f01be2de7cec5aa6e3977e8848f7ab9a307c6c3a8af7a50a27e609023\",\n        \"vnd.docker.reference.type\": \"attestation-manifest\"\n      },\n      \"platform\": {\n        \"architecture\": \"unknown\",\n        \"os\": \"unknown\"\n      }\n    }\n  ]\n}",
+    "amd64-manifest": "{\n  \"schemaVersion\": 2,\n  \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n  \"config\": {\n    \"mediaType\": \"application/vnd.oci.image.config.v1+json\",\n    \"digest\": \"sha256:88fe237a77256495f2d42776dc4fa2377b1fd64e6b87bb0a942d571f56f4652e\",\n    \"size\": 4206\n  },\n  \"layers\": [\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:4846f29007305297af653c57bf9b60ba8f676a38695c68d98460063442581671\",\n      \"size\": 49393200\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:c4194ac610532fb49347ef44e90e48ecc22b10a02687eabe9bfd5ff52daa254f\",\n      \"size\": 2380226\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:5fe4e744a71a8d133570450f29a5bd309c1fcc63e417a435e7d08d261fc14f9f\",\n      \"size\": 296\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:1a556d540a858922a7cd17dcf78bc92d11faa7d39620303d106296a2f1513a93\",\n      \"size\": 42944074\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:c6792e97436b631a987945cff9cc24c269f0c782b51481b1839adb2a898c96fc\",\n      \"size\": 185\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:b521ffe452bc180facf1acfffca94d2f847fcff2747c91217a17a8bd72e8c0bc\",\n      \"size\": 3396\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:8a6cfacb307681bcd44a7c252eb3edc04071ef1008636364c07e1563cc705b06\",\n      \"size\": 140\n    }\n  ]\n}",
+    "amd64-config": "{\"architecture\":\"amd64\",\"config\":{\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bun-node-fallback-bin\",\"BUN_RUNTIME_TRANSPILER_CACHE_PATH=0\",\"BUN_INSTALL_BIN=/usr/local/bin\"],\"Entrypoint\":[\"/usr/local/bin/docker-entrypoint.sh\"],\"Cmd\":[\"/usr/local/bin/bun\"],\"WorkingDir\":\"/home/bun/app\",\"Labels\":{\"org.opencontainers.image.created\":\"2026-10-10T05:28:31.623Z\",\"org.opencontainers.image.description\":\"Incredibly fast JavaScript runtime, bundler, test runner, and package manager \u2013 all in one\",\"org.opencontainers.image.licenses\":\"NOASSERTION\",\"org.opencontainers.image.revision\":\"c6da4a4d3010e5553438c60f6bd76d981976867c\",\"org.opencontainers.image.source\":\"https://github.com/oven-sh/bun\",\"org.opencontainers.image.title\":\"bun\",\"org.opencontainers.image.url\":\"https://github.com/oven-sh/bun\",\"org.opencontainers.image.version\":\"1.4.3\"},\"ArgsEscaped\":true},\"created\":\"2026-10-10T05:28:49.433580414Z\",\"history\":[{\"created\":\"2026-10-05T00:00:00Z\",\"created_by\":\"# debian.sh --arch 'amd64' out/ 'trixie' '@1791158400'\",\"comment\":\"debuerreotype 0.17\"},{\"created\":\"2026-10-10T05:28:43.439526417Z\",\"created_by\":\"RUN /bin/sh -c apt-get update -qq     \\u0026\\u0026 apt-get install -qq --no-install-recommends ca-certificates     \\u0026\\u0026 apt-get clean     \\u0026\\u0026 rm -rf /var/lib/apt/lists/* # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:28:43.46041895Z\",\"created_by\":\"COPY docker-entrypoint.sh /usr/local/bin # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:28:49.241135714Z\",\"created_by\":\"COPY /usr/local/bin/bun /usr/local/bin/bun # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:28:49.317415135Z\",\"created_by\":\"RUN /bin/sh -c mkdir -p /usr/local/bun-node-fallback-bin \\u0026\\u0026 ln -s /usr/local/bin/bun /usr/local/bun-node-fallback-bin/node # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:28:49.421073403Z\",\"created_by\":\"ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bun-node-fallback-bin\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:28:49.421073403Z\",\"created_by\":\"ARG BUN_RUNTIME_TRANSPILER_CACHE_PATH=0\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:28:49.421073403Z\",\"created_by\":\"ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:28:49.421073403Z\",\"created_by\":\"ARG BUN_INSTALL_BIN=/usr/local/bin\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:28:49.421073403Z\",\"created_by\":\"ENV BUN_INSTALL_BIN=/usr/local/bin\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:28:49.421073403Z\",\"created_by\":\"RUN |2 BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 BUN_INSTALL_BIN=/usr/local/bin /bin/sh -c groupadd bun       --gid 1000     \\u0026\\u0026 useradd bun       --uid 1000       --gid bun       --shell /bin/sh       --create-home     \\u0026\\u0026 ln -s /usr/local/bin/bun /usr/local/bin/bunx     \\u0026\\u0026 which bun     \\u0026\\u0026 which bunx     \\u0026\\u0026 bun --version # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:28:49.433580414Z\",\"created_by\":\"WORKDIR /home/bun/app\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:28:49.433580414Z\",\"created_by\":\"ENTRYPOINT [\\\"/usr/local/bin/docker-entrypoint.sh\\\"]\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:28:49.433580414Z\",\"created_by\":\"CMD [\\\"/usr/local/bin/bun\\\"]\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true}],\"os\":\"linux\",\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:0487fc82d485c6e44b5d5474f45d9740d7009d35040b4f0aad06327293ae5128\",\"sha256:50db8351c5656ed5f009db5cd5952fafba2c1d347fa08bac6848cc7eb39d7045\",\"sha256:c832714678468e81ff1f48d4dedf06b1e8c88115278a0357309545cd790f8fff\",\"sha256:6c04c2b058b92dbfea172624bb50ad65f423a651d9f78b6699ed4912453686b7\",\"sha256:18fa3c8262f09a60b9531c7a210782ade593f14de4b4d21ae70266a354010893\",\"sha256:7d7e5edd555c292596c3ac64319672f98eb49040f96030a5f7ec8e0392bb5922\",\"sha256:bba7cbd90ad4cabedb06c065847d5d138f93873f4d2ff40aee2ec573cc06a0f7\"]}}",
+    "arm64-manifest": "{\n  \"schemaVersion\": 2,\n  \"mediaType\": \"application/vnd.oci.image.manifest.v1+json\",\n  \"config\": {\n    \"mediaType\": \"application/vnd.oci.image.config.v1+json\",\n    \"digest\": \"sha256:3755480cb7c04fb95b5ae2f59236da1ace9f1a49c718b224837125ab1116ea4a\",\n    \"size\": 4206\n  },\n  \"layers\": [\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:df9831efb49cab24dec437e8482f2a9ddbd9e239131fa3ffe095dc1492081e1d\",\n      \"size\": 49761105\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:42f7bda71565c87e5a1bc593680956102923732e98ae0446479c9cd52d03e363\",\n      \"size\": 2362074\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:763d4bfbb7f9ee4225bf088755cc871f15d848a26813c5fe2caf374ea2f5eddc\",\n      \"size\": 295\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:c5cf81e59c56e1fae0031fcebe8ddddeea2bc033363c508787657922fbcdc536\",\n      \"size\": 43496659\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:ad145fe24980bc2e5e70e94b4238c6d6da3a7156fb0c356be46b818c85a02dc9\",\n      \"size\": 184\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:cc0e2c8f97a26b331e97b6b2b1cd79746d5d517d342cfeb31aba73a46d676423\",\n      \"size\": 3396\n    },\n    {\n      \"mediaType\": \"application/vnd.oci.image.layer.v1.tar+gzip\",\n      \"digest\": \"sha256:d7754100b9a0043e47576c9730d3fd6b0c61771308139e590f82ed1e5e731a7d\",\n      \"size\": 139\n    }\n  ]\n}",
+    "arm64-config": "{\"architecture\":\"arm64\",\"config\":{\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bun-node-fallback-bin\",\"BUN_RUNTIME_TRANSPILER_CACHE_PATH=0\",\"BUN_INSTALL_BIN=/usr/local/bin\"],\"Entrypoint\":[\"/usr/local/bin/docker-entrypoint.sh\"],\"Cmd\":[\"/usr/local/bin/bun\"],\"WorkingDir\":\"/home/bun/app\",\"Labels\":{\"org.opencontainers.image.created\":\"2026-10-10T05:28:31.623Z\",\"org.opencontainers.image.description\":\"Incredibly fast JavaScript runtime, bundler, test runner, and package manager \u2013 all in one\",\"org.opencontainers.image.licenses\":\"NOASSERTION\",\"org.opencontainers.image.revision\":\"c6da4a4d3010e5553438c60f6bd76d981976867c\",\"org.opencontainers.image.source\":\"https://github.com/oven-sh/bun\",\"org.opencontainers.image.title\":\"bun\",\"org.opencontainers.image.url\":\"https://github.com/oven-sh/bun\",\"org.opencontainers.image.version\":\"1.4.3\"},\"ArgsEscaped\":true},\"created\":\"2026-10-10T05:31:10.574252128Z\",\"history\":[{\"created\":\"2026-10-05T00:00:00Z\",\"created_by\":\"# debian.sh --arch 'arm64' out/ 'trixie' '@1791158400'\",\"comment\":\"debuerreotype 0.17\"},{\"created\":\"2026-10-10T05:30:10.59729954Z\",\"created_by\":\"RUN /bin/sh -c apt-get update -qq     \\u0026\\u0026 apt-get install -qq --no-install-recommends ca-certificates     \\u0026\\u0026 apt-get clean     \\u0026\\u0026 rm -rf /var/lib/apt/lists/* # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:30:10.614477839Z\",\"created_by\":\"COPY docker-entrypoint.sh /usr/local/bin # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:31:10.044649927Z\",\"created_by\":\"COPY /usr/local/bin/bun /usr/local/bin/bun # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:31:10.181129678Z\",\"created_by\":\"RUN /bin/sh -c mkdir -p /usr/local/bun-node-fallback-bin \\u0026\\u0026 ln -s /usr/local/bin/bun /usr/local/bun-node-fallback-bin/node # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:31:10.565513359Z\",\"created_by\":\"ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bun-node-fallback-bin\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:31:10.565513359Z\",\"created_by\":\"ARG BUN_RUNTIME_TRANSPILER_CACHE_PATH=0\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:31:10.565513359Z\",\"created_by\":\"ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:31:10.565513359Z\",\"created_by\":\"ARG BUN_INSTALL_BIN=/usr/local/bin\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:31:10.565513359Z\",\"created_by\":\"ENV BUN_INSTALL_BIN=/usr/local/bin\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:31:10.565513359Z\",\"created_by\":\"RUN |2 BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 BUN_INSTALL_BIN=/usr/local/bin /bin/sh -c groupadd bun       --gid 1000     \\u0026\\u0026 useradd bun       --uid 1000       --gid bun       --shell /bin/sh       --create-home     \\u0026\\u0026 ln -s /usr/local/bin/bun /usr/local/bin/bunx     \\u0026\\u0026 which bun     \\u0026\\u0026 which bunx     \\u0026\\u0026 bun --version # buildkit\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:31:10.574252128Z\",\"created_by\":\"WORKDIR /home/bun/app\",\"comment\":\"buildkit.dockerfile.v0\"},{\"created\":\"2026-10-10T05:31:10.574252128Z\",\"created_by\":\"ENTRYPOINT [\\\"/usr/local/bin/docker-entrypoint.sh\\\"]\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true},{\"created\":\"2026-10-10T05:31:10.574252128Z\",\"created_by\":\"CMD [\\\"/usr/local/bin/bun\\\"]\",\"comment\":\"buildkit.dockerfile.v0\",\"empty_layer\":true}],\"os\":\"linux\",\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:3d70f8bfe61d83ca77e6af597587d17eb2507936ea88c91faed16039b36efb13\",\"sha256:7901f5736626b0c74bbb0e8be4e1c633657275290a65c13b87f04e7a72ca79fb\",\"sha256:64ffb00896e114f3896101a36a081e66add78239e1755d5698890cbd9ad4314a\",\"sha256:27cbd076551c7649cbf67dc19cb1ac4101f180a787ed01e66befca11c5070643\",\"sha256:73a583f3f8af85d0b9930c9f3040c9077c19ab53ea55084cd79a3c18dc1a9275\",\"sha256:8e4631015f97556df05726723c1260df9df7d33d1c897f97a28a5998d2ea26ff\",\"sha256:4e9de48c80a9787e3a507749b117e587dd11337ad999e2970f597823ee7d5b3b\"]}}"
+  },
+  "script": "// Copyright 2026 The gVisor Authors.\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//     http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\nconst iterations = Number(process.argv[2]);\nif (!Number.isSafeInteger(iterations) || iterations <= 0) {\n  throw new Error('expected a positive iteration count');\n}\n\nfor (let i = 0; i < iterations; i++) {\n  const child = Bun.spawnSync(['/bin/true']);\n  if (child.exitCode !== 0) {\n    throw new Error(`child exited with ${child.exitCode}`);\n  }\n}\n",
+  "nginx": {
+    "original_prefix": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final",
+    "inputs": {
+      "receipt": {
+        "all_skipped_owners": [],
+        "artifact": {
+          "bytes": 2031379,
+          "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-qualification.tar.gz",
+          "sha256": "20f7b1145fed2137bc50bae734438a3b79e5653e81980b7e9625f35f325702a1"
+        },
+        "audit_artifacts": [
+          {
+            "bytes": 294983,
+            "name": "mixed-images-execution.json.gz",
+            "sha256": "704fd1fa59ff70c87be74c2a0f64a91f8ddf238c30171ae3cd35f33570e4842a",
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/704fd1fa59ff70c87be74c2a0f64a91f8ddf238c30171ae3cd35f33570e4842a/294983"
+          }
+        ],
+        "audit_upload_errors": [],
+        "audit_upload_status": "PASS",
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 0,
+          "skipped": 0
+        },
+        "collection_finished_at": "2026-10-24T01:21:13.530059+00:00",
+        "collection_status": "COMPLETE",
+        "commands": [
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--lockfile_mode=error",
+              "--noannounce_rc",
+              "@rules_python//python/bin:python",
+              "--",
+              "-c",
+              "import os, subprocess, sys; os.chdir(os.environ[\"BUILD_WORKSPACE_DIRECTORY\"]); sys.exit(subprocess.run([\"bash\", \"tools/lint.sh\", \"buildifier\"]).returncode)"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1589,
+                "path": "stderr.log",
+                "sha256": "d0b973081be616e4b2ff9db0a5f53934b3dc2c7ad41eb0fcee013adae8eab0b9"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:16:59.003787+00:00",
+            "invocation": "invocation-00-buildifier/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "info",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "execution_root"
+            ],
+            "bazel_command": "info",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 58,
+                "path": "stderr.log",
+                "sha256": "eec51f3d0c478f5a23787af12c68ad3c6bf570cbb9da193916a68133c4fe0d6d"
+              },
+              "stdout": {
+                "bytes": 43,
+                "path": "stdout.log",
+                "sha256": "08668a3370041dc031f2e8b5cfddbfdf235d60e7a217dd9ef2ed611ab3a8ae5b"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:16:59.276912+00:00",
+            "invocation": "invocation-canonical-execution-root/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--config=x86_64",
+              "--compilation_mode=opt",
+              "--lockfile_mode=update",
+              "--noannounce_rc",
+              "--output=label",
+              "set(//images/benchmarks:qualification_nginx_archives //images/benchmarks:qualification_nginx_contexts)"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 3295,
+                "path": "stderr.log",
+                "sha256": "5c0e70b5225df1597a73f0b66db2421cf68526956c8f1f2c8205d585a4502598"
+              },
+              "stdout": {
+                "bytes": 118,
+                "path": "stdout.log",
+                "sha256": "2eeb50b30565ac2754ece084bfe7f2bae2a184fb7b3d29f044ad610776087890"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:15:53.950113+00:00",
+            "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--config=x86_64",
+              "--compilation_mode=opt",
+              "--lockfile_mode=update",
+              "--noannounce_rc",
+              "--output=label",
+              "set(//test/benchmarks/network:nginx_test //test/benchmarks/base:startup_test //test/benchmarks/base:size_test //test/benchmarks/base:usage_test //images/benchmarks:hey_archive //images/benchmarks:hey_context @io_bazel_rules_go//go:go @rules_python//python/bin:python)"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 10123,
+                "path": "stderr.log",
+                "sha256": "e9855ad71839fd8ee046f8439089b56c21ac9c5e3e75ec2c19a5d84b297bb556"
+              },
+              "stdout": {
+                "bytes": 343,
+                "path": "stdout.log",
+                "sha256": "ce938973596b259f801df617620d1250c35cddb436eed9dd2f7ff2304011ed9c"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:16:50.712495+00:00",
+            "invocation": "invocation-dependency-preparation-x86_64-runtime/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "--run_under=bash -c 'set -eu; export PATH=\"$(dirname \"$1\"):$PATH\"; cd \"$BUILD_WORKSPACE_DIRECTORY\"; exec bash tools/lint.sh gofmt' --",
+              "@io_bazel_rules_go//go:go"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1841,
+                "path": "stderr.log",
+                "sha256": "d2f98dfe18d63e36be2570bce47ed487641295b8ed16c675ec613c58ca225e1b"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:17:20.669696+00:00",
+            "invocation": "invocation-gofmt/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "cquery",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--compilation_mode=opt",
+              "--config=x86_64",
+              "--lockfile_mode=error",
+              "--remote_download_outputs=all",
+              "--noannounce_rc",
+              "--output=starlark",
+              "--starlark:file=/root/workspace/repo-root/test/rbe/image_query.bzl",
+              "filter(\"^(@@)?//images/benchmarks:\", deps(set(//images/benchmarks:qualification_nginx_archives //images/benchmarks:qualification_nginx_contexts)))"
+            ],
+            "bazel_command": "cquery",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 877,
+                "path": "stderr.log",
+                "sha256": "ae80e8027fbc06872edb2497b12d6fe0f9390e3e7b5fd63e769b559fbf28bc9e"
+              },
+              "stdout": {
+                "bytes": 6121,
+                "path": "stdout.log",
+                "sha256": "7d1add470961f887462e0e7255c18475aebcd18186d3557d28923b70d49565b7"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:17:02.018799+00:00",
+            "invocation": "invocation-mixed-image-owners/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          },
+          {
+            "arguments": [
+              "--bazelrc=/tmp/syscall-applicability-auth-wroqvmjl/credentials.bazelrc",
+              "run",
+              "--downloader_config=/tmp/image-qualification-7ofv8tsq/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+              "--lockfile_mode=error",
+              "--noannounce_rc",
+              "@rules_python//python/bin:python",
+              "--",
+              "/root/workspace/repo-root/test/rbe/nginx_image_inspect.py",
+              "/tmp/image-qualification-7ofv8tsq/qualification-evidence"
+            ],
+            "bazel_command": "run",
+            "command_outputs": {
+              "stderr": {
+                "bytes": 1203,
+                "path": "stderr.log",
+                "sha256": "8f6cd5a3eaae871821988baaede391ed37153c5702a634efac30af4fb5362920"
+              },
+              "stdout": {
+                "bytes": 0,
+                "path": "stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "execution_finished_at": "2026-10-24T01:17:39.887817+00:00",
+            "invocation": "invocation-nginx-image-closure/verdict.json",
+            "native_exit": 0,
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS"
+          }
+        ],
+        "consumer_verified_at": "2026-10-24T01:21:13.530056+00:00",
+        "coordinator_failed": false,
+        "downloaded_bytes": 2031379,
+        "errors": [],
+        "executed_attempt_count": 4,
+        "expected_failures": [],
+        "expected_labels": [
+          "//images/benchmarks:qualification_nginx_archives",
+          "//images/benchmarks:qualification_nginx_contexts",
+          "//test/benchmarks/base:size_test",
+          "//test/benchmarks/base:startup_test",
+          "//test/benchmarks/base:usage_test",
+          "//test/benchmarks/network:nginx_test"
+        ],
+        "expected_owner_count": 10,
+        "failures": [],
+        "invocations": [
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:16:59.003787+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-00-buildifier/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:16:59.010519+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:16:59.276912+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-canonical-execution-root/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:16:59.283532+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:15:53.950113+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-dependency-preparation-x86_64-images/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:15:53.957779+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:16:50.712495+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-dependency-preparation-x86_64-runtime/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:16:50.719836+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:17:20.669696+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-gofmt/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:17:20.676069+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:17:02.018799+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-mixed-image-owners/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:17:02.024864+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-24T01:17:35.568Z",
+              "finishTimeMillis": "1792804655568",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "build",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:17:36.122078+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 2,
+            "native_exit": 0,
+            "path": "invocation-mixed-images/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:17:36.131379+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-24T01:20:06.829Z",
+              "finishTimeMillis": "1792804806829",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "test",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 1,
+            "execution_finished_at": "2026-10-24T01:20:07.384814+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 0,
+            "path": "invocation-nginx-benchmark-lifecycle/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:20:07.395770+00:00"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-24T01:19:45.779Z",
+              "finishTimeMillis": "1792804785779"
+            },
+            "capture_exit": 0,
+            "command_kind": "analysis",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:19:46.281758+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-nginx-benchmark-lifecycle-analysis/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:19:46.291449+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-24T01:19:42.449Z",
+              "finishTimeMillis": "1792804782449",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "test",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 1,
+            "execution_finished_at": "2026-10-24T01:19:42.997330+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 0,
+            "path": "invocation-nginx-benchmark-serving/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:19:43.008399+00:00"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-24T01:18:59.193Z",
+              "finishTimeMillis": "1792804739193"
+            },
+            "capture_exit": 0,
+            "command_kind": "analysis",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:18:59.819197+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-nginx-benchmark-serving-analysis/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:18:59.830147+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-24T01:20:23.881Z",
+              "finishTimeMillis": "1792804823881",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "test",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 1,
+            "execution_finished_at": "2026-10-24T01:20:24.506043+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 0,
+            "path": "invocation-nginx-benchmark-size/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:20:24.555243+00:00"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-24T01:20:09.315Z",
+              "finishTimeMillis": "1792804809315"
+            },
+            "capture_exit": 0,
+            "command_kind": "analysis",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:20:09.920779+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-nginx-benchmark-size-analysis/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:20:09.929801+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": {
+              "exitCode": {
+                "name": "SUCCESS"
+              },
+              "finishTime": "2026-10-24T01:21:01.229Z",
+              "finishTimeMillis": "1792804861229",
+              "overallSuccess": true
+            },
+            "capture_exit": 0,
+            "command_kind": "test",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 1,
+            "execution_finished_at": "2026-10-24T01:21:01.735488+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 0,
+            "path": "invocation-nginx-benchmark-usage/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:21:01.746364+00:00"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "bep_finish": {
+              "exitCode": {
+                "code": 1,
+                "name": "BUILD_FAILURE"
+              },
+              "finishTime": "2026-10-24T01:20:25.118Z",
+              "finishTimeMillis": "1792804825118"
+            },
+            "capture_exit": 0,
+            "command_kind": "analysis",
+            "completed_aspects": [],
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:20:25.711288+00:00",
+            "expected_aspects": [],
+            "expected_owner_count": 1,
+            "native_exit": 1,
+            "path": "invocation-nginx-benchmark-usage-analysis/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:20:25.721286+00:00"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "bep_finish": null,
+            "capture_exit": 0,
+            "command_kind": "command",
+            "errors": [],
+            "executed_attempt_count": 0,
+            "execution_finished_at": "2026-10-24T01:17:39.887817+00:00",
+            "expected_owner_count": 0,
+            "native_exit": 0,
+            "path": "invocation-nginx-image-closure/verdict.json",
+            "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+            "status": "PASS",
+            "verdict_available_at": "2026-10-24T01:17:39.895243+00:00"
+          }
+        ],
+        "missing": [],
+        "native_exit": 0,
+        "native_exits": [
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-00-buildifier/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-canonical-execution-root/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-dependency-preparation-x86_64-runtime/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-gofmt/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-mixed-image-owners/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-mixed-images/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-nginx-benchmark-lifecycle/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "exit": 1,
+            "invocation": "invocation-nginx-benchmark-lifecycle-analysis/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-nginx-benchmark-serving/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "exit": 1,
+            "invocation": "invocation-nginx-benchmark-serving-analysis/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-nginx-benchmark-size/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "exit": 1,
+            "invocation": "invocation-nginx-benchmark-size-analysis/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-nginx-benchmark-usage/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": true,
+            "exit": 1,
+            "invocation": "invocation-nginx-benchmark-usage-analysis/verdict.json"
+          },
+          {
+            "accepted_analysis_exit": false,
+            "exit": 0,
+            "invocation": "invocation-nginx-image-closure/verdict.json"
+          }
+        ],
+        "native_invocation": {
+          "artifact": {
+            "bytes": 2031379,
+            "sha256": "20f7b1145fed2137bc50bae734438a3b79e5653e81980b7e9625f35f325702a1",
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/20f7b1145fed2137bc50bae734438a3b79e5653e81980b7e9625f35f325702a1/2031379"
+          },
+          "bazelExitCode": "OK",
+          "commitSha": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+          "createdAtUsec": "1792804510830000",
+          "durationUsec": "354498762",
+          "invocationId": "be939767-0447-4d81-898b-9d5146765c1d",
+          "invocationStatus": "COMPLETE_INVOCATION_STATUS",
+          "success": true,
+          "terminal_observed_at": "2026-10-24T01:21:12.733537+00:00",
+          "updatedAtUsec": "1792804868433000"
+        },
+        "non_runtime_owners": [],
+        "observation_retries": [],
+        "producer_status": "PASS",
+        "remote_audits": {
+          "mixed-images-execution.json.gz": {
+            "bytes": 294983,
+            "sha256": "704fd1fa59ff70c87be74c2a0f64a91f8ddf238c30171ae3cd35f33570e4842a"
+          }
+        },
+        "remote_audits_evidence": {
+          "bytes": 148,
+          "sha256": "51999123200de94e35513579c4a5ef1ee7ce3e1b838ba79f21e90b42e9b8c1cb"
+        },
+        "runner_exit": 0,
+        "schema_version": 1,
+        "skips": [],
+        "sources": [
+          "37abecfbcced7e65a26e12987ec6224a6ac8edac"
+        ],
+        "status": "PASS",
+        "submitted_source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+        "verdict_available_at": "2026-10-24T01:21:04.135628+00:00",
+        "zero_case_owners": [
+          {
+            "configuration": "c58d550e7850b9c8442be91e98a22c00644c0319cd09b2350142488f32dc37e9",
+            "label": "//test/benchmarks/base:startup_test"
+          },
+          {
+            "configuration": "7e3c130c196ca9e61e1258c4537940285d7d5548e740a419c8e6f166bad9e2f1",
+            "label": "//test/benchmarks/network:nginx_test"
+          },
+          {
+            "configuration": "df02cb387b34eaa2cbdf26544970ae4d8bfba34e32e67e29f3423d162f2855bb",
+            "label": "//test/benchmarks/base:size_test"
+          },
+          {
+            "configuration": "df02cb387b34eaa2cbdf26544970ae4d8bfba34e32e67e29f3423d162f2855bb",
+            "label": "//test/benchmarks/base:usage_test"
+          }
+        ]
+      },
+      "plan": {
+        "status": "REVIEWED_SOURCE_BOUND_NOT_SUBMITTED",
+        "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+        "parent": "9ce9b811233b2bf95f285692cbe37a19ab61551d",
+        "product": "8b67b29fcbfcc9ce3bf3c71ac84c928305636327",
+        "branch": "qualification/nginx-benchmark-upstream",
+        "scope": "Both official Nginx1.25.1 image platforms and appended fixture files; four actual AMD64 native benchmark groups (six serving100x, three lifecycle1x, size1x, usage1x) plus both response configurations. One retained source-built runtime, current source-built Hey, immutable utility. Functional only; later fixed16 comparison separate.",
+        "bounds": {
+          "work_seconds": 2100,
+          "report_seconds": 600,
+          "parent_timeout": "45m",
+          "collector_seconds": 3300,
+          "jobs": 400
+        },
+        "graph_phases": [
+          "dependency-preparation-x86_64-images",
+          "dependency-preparation-x86_64-runtime",
+          "00-buildifier",
+          "canonical-execution-root",
+          "mixed-image-owners"
+        ],
+        "full_additional_phases": [
+          "gofmt",
+          "mixed-images",
+          "nginx-image-closure",
+          "nginx-benchmark-serving-analysis",
+          "nginx-benchmark-serving",
+          "nginx-benchmark-lifecycle-analysis",
+          "nginx-benchmark-lifecycle",
+          "nginx-benchmark-size-analysis",
+          "nginx-benchmark-size",
+          "nginx-benchmark-usage-analysis",
+          "nginx-benchmark-usage"
+        ],
+        "expected_native_phases": 16,
+        "expected_aggregate_outputs": 4,
+        "expected_runtime_attempts": 4,
+        "source_changes": [
+          {
+            "repository_path": "test/rbe/image_workload.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__image_workload.py",
+            "bytes": 4124,
+            "sha256": "7be767eadb1e16ba46c2aa43d7b06e256a7601f965c4f6ebfe6b3f930223492e"
+          },
+          {
+            "repository_path": "test/rbe/nginx_image_inspect.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__nginx_image_inspect.py",
+            "bytes": 9406,
+            "sha256": "42cc0a6912756664b2a9c52754e99bffa3b062ce81552e70c8ce8cdcb022be85"
+          },
+          {
+            "repository_path": "test/rbe/nginx_benchmark_runtime.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-v2-test__rbe__nginx_benchmark_runtime.py",
+            "bytes": 16088,
+            "sha256": "77f0d11e165202a79533c26f9ccf2be95acc0e46d6ddf7be9225b76d0c90f7df"
+          },
+          {
+            "repository_path": "test/rbe/image_runtime.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-v2-test__rbe__image_runtime.py",
+            "bytes": 26542,
+            "sha256": "77cc20ea3e00ac8f71dea700a858db75e572e46fbb43bc74552cb7f1d5918b49"
+          },
+          {
+            "repository_path": "test/benchmarks/base/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__benchmarks__base__BUILD",
+            "bytes": 2346,
+            "sha256": "e1b2094b8f088ab4ea26acd56aadb3ffd740b68d656e54c3295691e0522768e6"
+          },
+          {
+            "repository_path": "test/benchmarks/network/BUILD",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__benchmarks__network__BUILD",
+            "bytes": 2141,
+            "sha256": "f78193b22b0bc08a122f7971605bfa8c6485d21903ca2c091257bb933f624a92"
+          },
+          {
+            "repository_path": "test/rbe/nginx_benchmark_upstream/index.json",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__nginx_benchmark_upstream__index.json",
+            "bytes": 1862,
+            "sha256": "67f9a4f10d147a6e04629340e6493c9703300ca23a2f7f3aa56fe615d75d31ca"
+          },
+          {
+            "repository_path": "test/rbe/nginx_benchmark_upstream/amd64-manifest.json",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__nginx_benchmark_upstream__amd64-manifest.json",
+            "bytes": 1778,
+            "sha256": "73e957703f1266530db0aeac1fd6a3f87c1e59943f4c13eb340bb8521c6041d7"
+          },
+          {
+            "repository_path": "test/rbe/nginx_benchmark_upstream/amd64-config.json",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__nginx_benchmark_upstream__amd64-config.json",
+            "bytes": 8149,
+            "sha256": "89da1fb6dcb964dd35c3f41b7b93ffc35eaf20bc61f2e1335fea710a18424287"
+          },
+          {
+            "repository_path": "test/rbe/nginx_benchmark_upstream/arm64-manifest.json",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__nginx_benchmark_upstream__arm64-manifest.json",
+            "bytes": 1778,
+            "sha256": "6faff3cb6b8c141d4828ac6c884a38a680ec6ad122c19397e4774f0bb9616f0c"
+          },
+          {
+            "repository_path": "test/rbe/nginx_benchmark_upstream/arm64-config.json",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full-test__rbe__nginx_benchmark_upstream__arm64-config.json",
+            "bytes": 8166,
+            "sha256": "ff78c7a65ec2b1fb09f58b27b0dd022ac1f4e16b9bcfe1cbdc18c36f2e0e1842"
+          }
+        ],
+        "unchanged_helpers": [
+          {
+            "repository_path": "test/rbe/image_qualification.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-graph-test__rbe__image_qualification.py",
+            "bytes": 19911,
+            "sha256": "c39e61a12bc04ae27c3a5672e989d01c2fff8b52bfeb03afcaa260c95fe379a1"
+          },
+          {
+            "repository_path": "test/rbe/image_execution.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-graph-test__rbe__image_execution.py",
+            "bytes": 1961,
+            "sha256": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e"
+          },
+          {
+            "repository_path": "test/rbe/image_archive.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-graph-test__rbe__image_archive.py",
+            "bytes": 6980,
+            "sha256": "55254090e2e3e89de476a77a1787b62d7cffaac83cc873efe5864dd99614d922"
+          },
+          {
+            "repository_path": "test/rbe/image_query.bzl",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-graph-test__rbe__image_query.bzl",
+            "bytes": 1159,
+            "sha256": "e04aab3372ec590a011be9df5bd804ef8ce25ef7da2097c02d9564828a94dd04"
+          },
+          {
+            "repository_path": "test/rbe/image_bootstrap.py",
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-graph-test__rbe__image_bootstrap.py",
+            "bytes": 7674,
+            "sha256": "6e3ed89708dea580042bd6ae478d9c176d02c8fd633bd7147a2f502a41872c43"
+          }
+        ],
+        "references": [
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-prepared-config.json",
+            "bytes": 3089,
+            "sha256": "3e0f24294c7e747bdbaa17c0f8d4f5e69927687dd065c87654db4aa2cc3acbc8"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-prepared-request.sh",
+            "bytes": 3238,
+            "sha256": "eabd255ae9584f9e72c350489bb0a4e54e289e76de276296d13dcdb3ef4b5fba"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-prepared-request.json",
+            "bytes": 4714,
+            "sha256": "0b57510c022ba53136dbe87d49124a5c3cde5d01f6d61d2b4d0dbe1b5747dde7"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-full.patch",
+            "bytes": 56989,
+            "sha256": "31a4d61dcc98039724d4816264c8c815cec0a3daa9ee6e6a0dd2aa8883603ec8"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-runtime-before.py",
+            "bytes": 14286,
+            "sha256": "af7029eca06550ca2726bdf2877813ef11dcead78442b2616d1c5b058c37cb5d"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-graph-final-outcome.json",
+            "bytes": 2911,
+            "sha256": "27a79d1b224ce56dc11a2dd5602980893cef7403047447d166b3620cfce78624"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-node-review.json",
+            "bytes": 2842,
+            "sha256": "37e20334acadc77d9541401670b0831a1ab31f278f86cb9d39370d29cb89a17a"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/redis-upstream-materializer-node-review.json",
+            "bytes": 4090,
+            "sha256": "ab20ffb1156a0176c5a0337eac9826e409bf6aa3777416e84bdd431cd862b4e5"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/redis-upstream-workmap-result-review.json",
+            "bytes": 4897,
+            "sha256": "5017c82d25dabb0fa428719af68bf9a736fafc80374b9b78d340b0719641c52c"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-prepared-plan.json",
+            "bytes": 8439,
+            "sha256": "7ce44297e8e10cda43cf1a6fb6b91f061c582056b33bd5a01cffb5139c85a397"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-runtime-workmap-review.json",
+            "bytes": 1679,
+            "sha256": "9dc7dca2a20a034ea4d36335925fee69ddd256c49fc0fea2fe91036101f09198"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/checkpoint-experimental-final-test__rbe__image_runtime.py",
+            "bytes": 17949,
+            "sha256": "01ea169ffa37ea9dadc995527ed35393d1bcb2f55aab8523f564c828c55e6956"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/checkpoint-experimental-publication.json",
+            "bytes": 2359,
+            "sha256": "44be56b1e9be13a1c4ff932c8b27a16deac0f60027d1b051879158d856a02574"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-state-kernel-paired-experimental-outcome.json",
+            "bytes": 32176,
+            "sha256": "7df5600042a7b19971019c2d7b6c5caaae81200cbfcaee222331d779e404a5f6"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-experimental.patch",
+            "bytes": 14936,
+            "sha256": "a8cf8475e48e626b8f186c8880c18b4403830c5c3662d6682c940bfab643f468"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-config.json",
+            "bytes": 3089,
+            "sha256": "198b7cbf3a22e6204fd6cf47d4e36e0813b6bf72bc17c94e04c2eb02dc5e6699"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-request.sh",
+            "bytes": 3238,
+            "sha256": "e32a178fe60caa654fa03500900dd4909b1600e52b330c3d73e459b547fe1a4a"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-request.json",
+            "bytes": 4711,
+            "sha256": "ebae97e8f28b31453ba7b5cec0941ab536085666a5849dbbbbe44fbf87a91621"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-runtime-v2-workmap-review.json",
+            "bytes": 2398,
+            "sha256": "09521d0062ad8503e420b8c4fff5659567eb57471a5e85d486b44e6061792333"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-inspector-node-review.json",
+            "bytes": 3099,
+            "sha256": "91b82c4c38205e3ba89fa10442829880eee2c415208257e142e02b3426eb8064"
+          },
+          {
+            "path": "/private/tmp/gvisor-rbe-next/nginx-benchmark-upstream-result-source.json",
+            "bytes": 2685,
+            "sha256": "ee0b9ef93ec8a1dd4c5db49c3892b3b446b19800cca9ac962669169149e5edb8"
+          }
+        ],
+        "source_preflight": {
+          "action_budget_bytes": 3571,
+          "action_budget_limit": 45056,
+          "largest_step_argument_bytes": 3239
+        },
+        "readiness_cleanup": "network.go exact0f80 and harness/util.go exact19a12 already in qualified graph parent; no consumer source or timer changes.",
+        "experimental_refinement": "Existing checkpoint prepared_runtime copied exactly except existing image_make_arguments call and accepted retained-file guard; prior helper materializer/Hey/Make functions unchanged. Opt-in Docker24.0.9 experimental startup/restore, source version guard and native ExperimentalBuild assertion. Per-group inventory gate stops contaminated follow-ons; scope/bounds/request unchanged.",
+        "prepared_plan": {
+          "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-v2-prepared-plan.json",
+          "bytes": 10155,
+          "sha256": "20c0cf2356e661702492445c23d02b72feaa3273c20c0bb8e9b3bd34001fa9ac"
+        },
+        "binding": "All16 changed/unchanged Git postimages match reviewed bytes. Request inverse is source/name only; parsed embedded config equals exact final config; retained supplier6902 and product8b67 remain unchanged.",
+        "preflight": {
+          "action_budget_bytes": 3568,
+          "action_budget_limit": 45056,
+          "largest_step_argument_bytes": 3239
+        }
+      },
+      "config": {
+        "source": "37abecfbcced7e65a26e12987ec6224a6ac8edac",
+        "product": "8b67b29fcbfcc9ce3bf3c71ac84c928305636327",
+        "targets": [
+          "//images/benchmarks:qualification_nginx_archives",
+          "//images/benchmarks:qualification_nginx_contexts"
+        ],
+        "action_prefixes": [
+          "//images/benchmarks:"
+        ],
+        "runtime": true,
+        "preparation_targets": {
+          "x86_64": [
+            "//test/benchmarks/network:nginx_test",
+            "//test/benchmarks/base:startup_test",
+            "//test/benchmarks/base:size_test",
+            "//test/benchmarks/base:usage_test",
+            "//images/benchmarks:hey_archive",
+            "//images/benchmarks:hey_context",
+            "@io_bazel_rules_go//go:go",
+            "@rules_python//python/bin:python"
+          ]
+        },
+        "image_targets": {
+          "x86_64": [
+            "//images/benchmarks:qualification_nginx_archives",
+            "//images/benchmarks:qualification_nginx_contexts"
+          ]
+        },
+        "upstream_index_digest": "sha256:67f9a4f10d147a6e04629340e6493c9703300ca23a2f7f3aa56fe615d75d31ca",
+        "graph_only": false,
+        "runtime_supplier": {
+          "source": "6902f14e488cdc9e433413645ca2eff897ecb1b5",
+          "invocation": "18992418-4b16-4aae-b135-6ab648fdc1ac",
+          "owner": {
+            "label": "//:release",
+            "configuration": "00eb52d107567fd7343f37eea731ccfa2de83bc49b314cb14bf0d5249e64fbde"
+          },
+          "bundle": {
+            "sha256": "d6af8cae2d8fbf5c1ab5f370c74dee1eb43ad07bb17a3081feeca8be42644b13",
+            "bytes": 3747219,
+            "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/d6af8cae2d8fbf5c1ab5f370c74dee1eb43ad07bb17a3081feeca8be42644b13/3747219"
+          },
+          "files": {
+            "gvisor-bin/checkpointgofer": {
+              "sha256": "2995b4e52d9bfabd447d275c670f84d6588feeed75f92101e65283933cc46a94",
+              "bytes": 48438572
+            },
+            "gvisor-bin/gvisor-proc-umounter": {
+              "sha256": "4c265fd6b1f9af17d6cbe72dcfb6e55693fbb3c0f6b44969659af9f6ec0fe467",
+              "bytes": 1080
+            },
+            "gvisor-bin/gvisor-sentry-prewarmer": {
+              "sha256": "8028039742e3a21274b52f7676e4d90dda11ec69f58284875ddd165cc6e15c12",
+              "bytes": 1264
+            },
+            "gvisor-bin/gvisor_sentry": {
+              "sha256": "2628f944047aa0d5de6f1d1e154c37ec83095ef297d47b945f4470a590aa8743",
+              "bytes": 52885253
+            },
+            "gvisor-bin/runsc-fd-parking": {
+              "sha256": "04acf06e03d9c57044f06da608400008bf31385cadba4e6e1b73525c76a0879a",
+              "bytes": 65928
+            },
+            "gvisor-bin/runsc-metric-server": {
+              "sha256": "e108c996c65847008a7383eb2f857d0e889b0f4bf6b5cdff03b6781c19e39426",
+              "bytes": 20995513
+            },
+            "runsc": {
+              "sha256": "b129a452d8371230504b0c84c5663177f893606461b18a03c6314a4f354905ac",
+              "bytes": 18660833
+            }
+          }
+        },
+        "benchmark_utility": {
+          "immutable_image": "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/util_x86_64@sha256:1c1e09a0ed76fec9cb2489227c8e9ad4f7c45d824126b12a1610c45ead46cbe5",
+          "manifest_digest": "sha256:1c1e09a0ed76fec9cb2489227c8e9ad4f7c45d824126b12a1610c45ead46cbe5",
+          "image_config_digest": "sha256:f103cb5ceec85e84c8d7791899439996c16735e73fd0b0ea7f7194b28ab0f13a"
+        }
+      }
+    },
+    "original_input_identities": {
+      "receipt": {
+        "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-receipt.json",
+        "bytes": 25192,
+        "sha256": "09035031972bd6a27abcdd34b017955f0e94a3bc77990d4a00dc60d7c8e9c193"
+      },
+      "plan": {
+        "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-plan.json",
+        "bytes": 12050,
+        "sha256": "0b26dcb0bde33863eaab369d1540a7b3ba70674399de3741ad5669cde7f65342"
+      },
+      "config": {
+        "path": "/private/tmp/gvisor-rbe-next/qualification-nginx-benchmark-upstream-final-config.json",
+        "bytes": 3089,
+        "sha256": "198b7cbf3a22e6204fd6cf47d4e36e0813b6bf72bc17c94e04c2eb02dc5e6699"
+      }
+    },
+    "bundle": {
+      "uri": "bytestream://remote.buildbuddy.io/bb-snapshot/blobs/20f7b1145fed2137bc50bae734438a3b79e5653e81980b7e9625f35f325702a1/2031379",
+      "sha256": "20f7b1145fed2137bc50bae734438a3b79e5653e81980b7e9625f35f325702a1",
+      "bytes": 2031379
+    },
+    "expected_status": "PASS",
+    "expected_native_status": "PASS",
+    "expected_fields": [
+      "source",
+      "product",
+      "outputs",
+      "audit",
+      "upstream_image",
+      "runtime",
+      "runtime_supplier"
+    ],
+    "expected_projection_sha256": "b33c65d4d7f4e34a4910ff2ebb9a3a281a5ed5c704edcf1407d4d8eb1d78a5bc",
+    "metadata_bytes": {
+      "arm64-manifest": "{\n   \"schemaVersion\": 2,\n   \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n   \"config\": {\n      \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n      \"size\": 8166,\n      \"digest\": \"sha256:ff78c7a65ec2b1fb09f58b27b0dd022ac1f4e16b9bcfe1cbdc18c36f2e0e1842\"\n   },\n   \"layers\": [\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 29157226,\n         \"digest\": \"sha256:90524f7dc01b4ce9b387992acc6cbdbcc2a9ee8c6addfd632429ca06ea18751e\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 38132571,\n         \"digest\": \"sha256:14cea127239b32d0c5eac040e75642512bd7303c2f8de555b40d1d49200e16dc\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 626,\n         \"digest\": \"sha256:8a2be7a4590d90e310c4700655a09be3fd2f7d17973ad4cb1ef58a9ebcf15aac\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 956,\n         \"digest\": \"sha256:9dc7844e6774cde2d75a219cc309573ae5cef652e7b380e3221d6acef085d1f8\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 365,\n         \"digest\": \"sha256:a274c3e9974e2d38c4ba7b5e07495719f632340f28bb14c85229273c9680b689\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 1210,\n         \"digest\": \"sha256:b24de7c2768b83475efd04c2d4634d28f7a86985ce5ee261533d690519005652\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 1403,\n         \"digest\": \"sha256:49c25f2442ea80b3ddbd13b8bf6a5d614b75d099d0684a6ecdba4c1346f2e3f2\"\n      }\n   ]\n}",
+      "amd64-manifest": "{\n   \"schemaVersion\": 2,\n   \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n   \"config\": {\n      \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n      \"size\": 8149,\n      \"digest\": \"sha256:89da1fb6dcb964dd35c3f41b7b93ffc35eaf20bc61f2e1335fea710a18424287\"\n   },\n   \"layers\": [\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 29124532,\n         \"digest\": \"sha256:648e0aadf75ac2ef63c5390adc6dc14fde37a5ad88c2870ea604df0a9c0eb4e5\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 41460244,\n         \"digest\": \"sha256:262696647b70a57f5f7dbf97a91091e7b51c1d2537dff72a2bdf908a06549197\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 625,\n         \"digest\": \"sha256:e66d0270d23f3038e0e8c94ee9244950fbfdb582476f61736b3c28a6ed159921\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 957,\n         \"digest\": \"sha256:55ac49bd649c325395133ae4f3640a07e28d9a25c4a56eb8ac3df91e1c639f51\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 366,\n         \"digest\": \"sha256:cbf42f5a00d268edb1684b8eb9039543669fc5f5d0aa801a01d3460048b7d487\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 1209,\n         \"digest\": \"sha256:8015f365966bfa259003c319a44df5bb9290d279ca775b4f249f291e323b38f1\"\n      },\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\": 1403,\n         \"digest\": \"sha256:4cadff8bc2aa83b23dd9e02a590174a84691f954eff4346888724c073ddc2524\"\n      }\n   ]\n}",
+      "amd64-config": "{\"architecture\":\"amd64\",\"config\":{\"Hostname\":\"\",\"Domainname\":\"\",\"User\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,\"AttachStderr\":false,\"ExposedPorts\":{\"80/tcp\":{}},\"Tty\":false,\"OpenStdin\":false,\"StdinOnce\":false,\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\",\"NGINX_VERSION=1.25.1\",\"NJS_VERSION=0.7.12\",\"PKG_RELEASE=1~bookworm\"],\"Cmd\":[\"nginx\",\"-g\",\"daemon off;\"],\"Image\":\"sha256:6634f389b46db3b5c23f6c0a5f9e5595c83a2cbd9f1359a47028ab313a393315\",\"Volumes\":null,\"WorkingDir\":\"\",\"Entrypoint\":[\"/docker-entrypoint.sh\"],\"OnBuild\":null,\"Labels\":{\"maintainer\":\"NGINX Docker Maintainers \\u003cdocker-maint@nginx.com\\u003e\"},\"StopSignal\":\"SIGQUIT\"},\"container\":\"bf98dc4dfdd59d7841d9111d2c8e347b70b76c5e224de9e5469a37cd6192b60f\",\"container_config\":{\"Hostname\":\"bf98dc4dfdd5\",\"Domainname\":\"\",\"User\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,\"AttachStderr\":false,\"ExposedPorts\":{\"80/tcp\":{}},\"Tty\":false,\"OpenStdin\":false,\"StdinOnce\":false,\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\",\"NGINX_VERSION=1.25.1\",\"NJS_VERSION=0.7.12\",\"PKG_RELEASE=1~bookworm\"],\"Cmd\":[\"/bin/sh\",\"-c\",\"#(nop) \",\"CMD [\\\"nginx\\\" \\\"-g\\\" \\\"daemon off;\\\"]\"],\"Image\":\"sha256:6634f389b46db3b5c23f6c0a5f9e5595c83a2cbd9f1359a47028ab313a393315\",\"Volumes\":null,\"WorkingDir\":\"\",\"Entrypoint\":[\"/docker-entrypoint.sh\"],\"OnBuild\":null,\"Labels\":{\"maintainer\":\"NGINX Docker Maintainers \\u003cdocker-maint@nginx.com\\u003e\"},\"StopSignal\":\"SIGQUIT\"},\"created\":\"2023-07-28T02:30:07.215160457Z\",\"docker_version\":\"20.10.23\",\"history\":[{\"created\":\"2023-07-27T23:24:44.884852356Z\",\"created_by\":\"/bin/sh -c #(nop) ADD file:209589a8bdb5a3788ee42ecdbccbbb561835dab96b0d8286bb5a2229d2f41be7 in / \"},{\"created\":\"2023-07-27T23:24:45.218735641Z\",\"created_by\":\"/bin/sh -c #(nop)  CMD [\\\"bash\\\"]\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:29:44.607074836Z\",\"created_by\":\"/bin/sh -c #(nop)  LABEL maintainer=NGINX Docker Maintainers \\u003cdocker-maint@nginx.com\\u003e\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:29:44.6938505Z\",\"created_by\":\"/bin/sh -c #(nop)  ENV NGINX_VERSION=1.25.1\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:29:44.780430134Z\",\"created_by\":\"/bin/sh -c #(nop)  ENV NJS_VERSION=0.7.12\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:29:44.866310397Z\",\"created_by\":\"/bin/sh -c #(nop)  ENV PKG_RELEASE=1~bookworm\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:30:06.198052209Z\",\"created_by\":\"/bin/sh -c set -x     \\u0026\\u0026 groupadd --system --gid 101 nginx     \\u0026\\u0026 useradd --system --gid nginx --no-create-home --home /nonexistent --comment \\\"nginx user\\\" --shell /bin/false --uid 101 nginx     \\u0026\\u0026 apt-get update     \\u0026\\u0026 apt-get install --no-install-recommends --no-install-suggests -y gnupg1 ca-certificates     \\u0026\\u0026     NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62;     NGINX_GPGKEY_PATH=/usr/share/keyrings/nginx-archive-keyring.gpg;     export GNUPGHOME=\\\"$(mktemp -d)\\\";     found='';     for server in         hkp://keyserver.ubuntu.com:80         pgp.mit.edu     ; do         echo \\\"Fetching GPG key $NGINX_GPGKEY from $server\\\";         gpg1 --keyserver \\\"$server\\\" --keyserver-options timeout=10 --recv-keys \\\"$NGINX_GPGKEY\\\" \\u0026\\u0026 found=yes \\u0026\\u0026 break;     done;     test -z \\\"$found\\\" \\u0026\\u0026 echo \\u003e\\u00262 \\\"error: failed to fetch GPG key $NGINX_GPGKEY\\\" \\u0026\\u0026 exit 1;     gpg1 --export \\\"$NGINX_GPGKEY\\\" \\u003e \\\"$NGINX_GPGKEY_PATH\\\" ;     rm -rf \\\"$GNUPGHOME\\\";     apt-get remove --purge --auto-remove -y gnupg1 \\u0026\\u0026 rm -rf /var/lib/apt/lists/*     \\u0026\\u0026 dpkgArch=\\\"$(dpkg --print-architecture)\\\"     \\u0026\\u0026 nginxPackages=\\\"         nginx=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-xslt=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-geoip=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-image-filter=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-njs=${NGINX_VERSION}+${NJS_VERSION}-${PKG_RELEASE}     \\\"     \\u0026\\u0026 case \\\"$dpkgArch\\\" in         amd64|arm64)             echo \\\"deb [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/mainline/debian/ bookworm nginx\\\" \\u003e\\u003e /etc/apt/sources.list.d/nginx.list             \\u0026\\u0026 apt-get update             ;;         *)             echo \\\"deb-src [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/mainline/debian/ bookworm nginx\\\" \\u003e\\u003e /etc/apt/sources.list.d/nginx.list                         \\u0026\\u0026 tempDir=\\\"$(mktemp -d)\\\"             \\u0026\\u0026 chmod 777 \\\"$tempDir\\\"                         \\u0026\\u0026 savedAptMark=\\\"$(apt-mark showmanual)\\\"                         \\u0026\\u0026 apt-get update             \\u0026\\u0026 apt-get build-dep -y $nginxPackages             \\u0026\\u0026 (                 cd \\\"$tempDir\\\"                 \\u0026\\u0026 DEB_BUILD_OPTIONS=\\\"nocheck parallel=$(nproc)\\\"                     apt-get source --compile $nginxPackages             )                         \\u0026\\u0026 apt-mark showmanual | xargs apt-mark auto \\u003e /dev/null             \\u0026\\u0026 { [ -z \\\"$savedAptMark\\\" ] || apt-mark manual $savedAptMark; }                         \\u0026\\u0026 ls -lAFh \\\"$tempDir\\\"             \\u0026\\u0026 ( cd \\\"$tempDir\\\" \\u0026\\u0026 dpkg-scanpackages . \\u003e Packages )             \\u0026\\u0026 grep '^Package: ' \\\"$tempDir/Packages\\\"             \\u0026\\u0026 echo \\\"deb [ trusted=yes ] file://$tempDir ./\\\" \\u003e /etc/apt/sources.list.d/temp.list             \\u0026\\u0026 apt-get -o Acquire::GzipIndexes=false update             ;;     esac         \\u0026\\u0026 apt-get install --no-install-recommends --no-install-suggests -y                         $nginxPackages                         gettext-base                         curl     \\u0026\\u0026 apt-get remove --purge --auto-remove -y \\u0026\\u0026 rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list         \\u0026\\u0026 if [ -n \\\"$tempDir\\\" ]; then         apt-get purge -y --auto-remove         \\u0026\\u0026 rm -rf \\\"$tempDir\\\" /etc/apt/sources.list.d/temp.list;     fi     \\u0026\\u0026 ln -sf /dev/stdout /var/log/nginx/access.log     \\u0026\\u0026 ln -sf /dev/stderr /var/log/nginx/error.log     \\u0026\\u0026 mkdir /docker-entrypoint.d\"},{\"created\":\"2023-07-28T02:30:06.567308259Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:7b307b62e82255f040c9812421a30090bf9abf3685f27b02d77fcca99f997911 in / \"},{\"created\":\"2023-07-28T02:30:06.652740263Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:5c18272734349488bd0c94ec8d382c872c1a0a435cca13bd4671353d6021d2cb in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T02:30:06.734550537Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:d4375883ed5db364232ccf781e8ad28514cd005edb385d43dbfb984f2c63edb9 in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T02:30:06.81666842Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:36429cfeeb299f9913b84ea136b004be12fbe4bb4f975a977a3608044e8bfa91 in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T02:30:06.897846617Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:e57eef017a414ca793499729d80a7b9075790c9a804f930f1417e56d506970cf in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T02:30:06.972688408Z\",\"created_by\":\"/bin/sh -c #(nop)  ENTRYPOINT [\\\"/docker-entrypoint.sh\\\"]\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:30:07.053298634Z\",\"created_by\":\"/bin/sh -c #(nop)  EXPOSE 80\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:30:07.135532473Z\",\"created_by\":\"/bin/sh -c #(nop)  STOPSIGNAL SIGQUIT\",\"empty_layer\":true},{\"created\":\"2023-07-28T02:30:07.215160457Z\",\"created_by\":\"/bin/sh -c #(nop)  CMD [\\\"nginx\\\" \\\"-g\\\" \\\"daemon off;\\\"]\",\"empty_layer\":true}],\"os\":\"linux\",\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:c6e34807c2d51444c41c15f4fda65847faa2f43c9b4b976a2f6f476eca7429ce\",\"sha256:24ee1d7d6a627866b28ea4606d2cefa5441de7bda3c7b572b4ae2ad64b9c3015\",\"sha256:4deafab383fa6927aa8bf6f8eca2d6e9753e915586c646ce52282fb9ae30cb95\",\"sha256:8aedfcd777c711e7340119f3a0ec335c627bd27f8ff7fdab6625b68399556e0a\",\"sha256:c88d3a8ff0091f25bdc96b39ec98a24febf6322d7029658739fd66b2cac9ef55\",\"sha256:abc3beec4b30391beaa095ee8912bbf9266029b57007991a703038de9dd2d68c\",\"sha256:922d16116201a9a9ce374dee93adc656cc91f5165dc3ee2d4606c5d71681fd6a\"]}}",
+      "arm64-config": "{\"architecture\":\"arm64\",\"config\":{\"Hostname\":\"\",\"Domainname\":\"\",\"User\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,\"AttachStderr\":false,\"ExposedPorts\":{\"80/tcp\":{}},\"Tty\":false,\"OpenStdin\":false,\"StdinOnce\":false,\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\",\"NGINX_VERSION=1.25.1\",\"NJS_VERSION=0.7.12\",\"PKG_RELEASE=1~bookworm\"],\"Cmd\":[\"nginx\",\"-g\",\"daemon off;\"],\"Image\":\"sha256:718176f15b16102048ea96598bcdc66dc48ff6bebe4f01c5107d7d9470e6b34c\",\"Volumes\":null,\"WorkingDir\":\"\",\"Entrypoint\":[\"/docker-entrypoint.sh\"],\"OnBuild\":null,\"Labels\":{\"maintainer\":\"NGINX Docker Maintainers \\u003cdocker-maint@nginx.com\\u003e\"},\"StopSignal\":\"SIGQUIT\"},\"container\":\"946242d98f381081e09aa419be8ee298a687becf8fcc27ed26c1a3172f693de3\",\"container_config\":{\"Hostname\":\"946242d98f38\",\"Domainname\":\"\",\"User\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,\"AttachStderr\":false,\"ExposedPorts\":{\"80/tcp\":{}},\"Tty\":false,\"OpenStdin\":false,\"StdinOnce\":false,\"Env\":[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\",\"NGINX_VERSION=1.25.1\",\"NJS_VERSION=0.7.12\",\"PKG_RELEASE=1~bookworm\"],\"Cmd\":[\"/bin/sh\",\"-c\",\"#(nop) \",\"CMD [\\\"nginx\\\" \\\"-g\\\" \\\"daemon off;\\\"]\"],\"Image\":\"sha256:718176f15b16102048ea96598bcdc66dc48ff6bebe4f01c5107d7d9470e6b34c\",\"Volumes\":null,\"WorkingDir\":\"\",\"Entrypoint\":[\"/docker-entrypoint.sh\"],\"OnBuild\":null,\"Labels\":{\"maintainer\":\"NGINX Docker Maintainers \\u003cdocker-maint@nginx.com\\u003e\"},\"StopSignal\":\"SIGQUIT\"},\"created\":\"2023-07-28T14:03:28.831667681Z\",\"docker_version\":\"20.10.23\",\"history\":[{\"created\":\"2023-07-27T23:43:00.459034437Z\",\"created_by\":\"/bin/sh -c #(nop) ADD file:1de2ba0dc88aa343332814e19adc6b850d08e62c31589fe902b8eb2cb465934e in / \"},{\"created\":\"2023-07-27T23:43:00.847546648Z\",\"created_by\":\"/bin/sh -c #(nop)  CMD [\\\"bash\\\"]\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:08.679499671Z\",\"created_by\":\"/bin/sh -c #(nop)  LABEL maintainer=NGINX Docker Maintainers \\u003cdocker-maint@nginx.com\\u003e\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:08.761205122Z\",\"created_by\":\"/bin/sh -c #(nop)  ENV NGINX_VERSION=1.25.1\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:08.839107865Z\",\"created_by\":\"/bin/sh -c #(nop)  ENV NJS_VERSION=0.7.12\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:08.915233422Z\",\"created_by\":\"/bin/sh -c #(nop)  ENV PKG_RELEASE=1~bookworm\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:27.937997336Z\",\"created_by\":\"/bin/sh -c set -x     \\u0026\\u0026 groupadd --system --gid 101 nginx     \\u0026\\u0026 useradd --system --gid nginx --no-create-home --home /nonexistent --comment \\\"nginx user\\\" --shell /bin/false --uid 101 nginx     \\u0026\\u0026 apt-get update     \\u0026\\u0026 apt-get install --no-install-recommends --no-install-suggests -y gnupg1 ca-certificates     \\u0026\\u0026     NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62;     NGINX_GPGKEY_PATH=/usr/share/keyrings/nginx-archive-keyring.gpg;     export GNUPGHOME=\\\"$(mktemp -d)\\\";     found='';     for server in         hkp://keyserver.ubuntu.com:80         pgp.mit.edu     ; do         echo \\\"Fetching GPG key $NGINX_GPGKEY from $server\\\";         gpg1 --keyserver \\\"$server\\\" --keyserver-options timeout=10 --recv-keys \\\"$NGINX_GPGKEY\\\" \\u0026\\u0026 found=yes \\u0026\\u0026 break;     done;     test -z \\\"$found\\\" \\u0026\\u0026 echo \\u003e\\u00262 \\\"error: failed to fetch GPG key $NGINX_GPGKEY\\\" \\u0026\\u0026 exit 1;     gpg1 --export \\\"$NGINX_GPGKEY\\\" \\u003e \\\"$NGINX_GPGKEY_PATH\\\" ;     rm -rf \\\"$GNUPGHOME\\\";     apt-get remove --purge --auto-remove -y gnupg1 \\u0026\\u0026 rm -rf /var/lib/apt/lists/*     \\u0026\\u0026 dpkgArch=\\\"$(dpkg --print-architecture)\\\"     \\u0026\\u0026 nginxPackages=\\\"         nginx=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-xslt=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-geoip=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-image-filter=${NGINX_VERSION}-${PKG_RELEASE}         nginx-module-njs=${NGINX_VERSION}+${NJS_VERSION}-${PKG_RELEASE}     \\\"     \\u0026\\u0026 case \\\"$dpkgArch\\\" in         amd64|arm64)             echo \\\"deb [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/mainline/debian/ bookworm nginx\\\" \\u003e\\u003e /etc/apt/sources.list.d/nginx.list             \\u0026\\u0026 apt-get update             ;;         *)             echo \\\"deb-src [signed-by=$NGINX_GPGKEY_PATH] https://nginx.org/packages/mainline/debian/ bookworm nginx\\\" \\u003e\\u003e /etc/apt/sources.list.d/nginx.list                         \\u0026\\u0026 tempDir=\\\"$(mktemp -d)\\\"             \\u0026\\u0026 chmod 777 \\\"$tempDir\\\"                         \\u0026\\u0026 savedAptMark=\\\"$(apt-mark showmanual)\\\"                         \\u0026\\u0026 apt-get update             \\u0026\\u0026 apt-get build-dep -y $nginxPackages             \\u0026\\u0026 (                 cd \\\"$tempDir\\\"                 \\u0026\\u0026 DEB_BUILD_OPTIONS=\\\"nocheck parallel=$(nproc)\\\"                     apt-get source --compile $nginxPackages             )                         \\u0026\\u0026 apt-mark showmanual | xargs apt-mark auto \\u003e /dev/null             \\u0026\\u0026 { [ -z \\\"$savedAptMark\\\" ] || apt-mark manual $savedAptMark; }                         \\u0026\\u0026 ls -lAFh \\\"$tempDir\\\"             \\u0026\\u0026 ( cd \\\"$tempDir\\\" \\u0026\\u0026 dpkg-scanpackages . \\u003e Packages )             \\u0026\\u0026 grep '^Package: ' \\\"$tempDir/Packages\\\"             \\u0026\\u0026 echo \\\"deb [ trusted=yes ] file://$tempDir ./\\\" \\u003e /etc/apt/sources.list.d/temp.list             \\u0026\\u0026 apt-get -o Acquire::GzipIndexes=false update             ;;     esac         \\u0026\\u0026 apt-get install --no-install-recommends --no-install-suggests -y                         $nginxPackages                         gettext-base                         curl     \\u0026\\u0026 apt-get remove --purge --auto-remove -y \\u0026\\u0026 rm -rf /var/lib/apt/lists/* /etc/apt/sources.list.d/nginx.list         \\u0026\\u0026 if [ -n \\\"$tempDir\\\" ]; then         apt-get purge -y --auto-remove         \\u0026\\u0026 rm -rf \\\"$tempDir\\\" /etc/apt/sources.list.d/temp.list;     fi     \\u0026\\u0026 ln -sf /dev/stdout /var/log/nginx/access.log     \\u0026\\u0026 ln -sf /dev/stderr /var/log/nginx/error.log     \\u0026\\u0026 mkdir /docker-entrypoint.d\"},{\"created\":\"2023-07-28T14:03:28.262825495Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:7b307b62e82255f040c9812421a30090bf9abf3685f27b02d77fcca99f997911 in / \"},{\"created\":\"2023-07-28T14:03:28.333970149Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:5c18272734349488bd0c94ec8d382c872c1a0a435cca13bd4671353d6021d2cb in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T14:03:28.40329473Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:d4375883ed5db364232ccf781e8ad28514cd005edb385d43dbfb984f2c63edb9 in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T14:03:28.469810059Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:36429cfeeb299f9913b84ea136b004be12fbe4bb4f975a977a3608044e8bfa91 in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T14:03:28.536791099Z\",\"created_by\":\"/bin/sh -c #(nop) COPY file:e57eef017a414ca793499729d80a7b9075790c9a804f930f1417e56d506970cf in /docker-entrypoint.d \"},{\"created\":\"2023-07-28T14:03:28.608023181Z\",\"created_by\":\"/bin/sh -c #(nop)  ENTRYPOINT [\\\"/docker-entrypoint.sh\\\"]\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:28.682856948Z\",\"created_by\":\"/bin/sh -c #(nop)  EXPOSE 80\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:28.756707831Z\",\"created_by\":\"/bin/sh -c #(nop)  STOPSIGNAL SIGQUIT\",\"empty_layer\":true},{\"created\":\"2023-07-28T14:03:28.831667681Z\",\"created_by\":\"/bin/sh -c #(nop)  CMD [\\\"nginx\\\" \\\"-g\\\" \\\"daemon off;\\\"]\",\"empty_layer\":true}],\"os\":\"linux\",\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:8450f74cd36b8dee83cbb893350e167acb792b321fad0c2180abfd1ef0fcdf55\",\"sha256:b0ff37385ae938a3bcb5241789f33ddf9e3841cdbb16e51c9f5bf12d556899ab\",\"sha256:1e451eaa30b322397195118e9c7e2fe22ae01e463d21afe36be988cb82ccd001\",\"sha256:3c6148273d487a83886a7412441cbd39d142a7ab15b223a5f86cf5753efc53e2\",\"sha256:482f7b7b1b0385901b7dd61fe06c63a9b8218725edcac24bb19c8eb82c01e495\",\"sha256:83cb32b689ff60bf5aa47efdd1714c27f0ba4a160524f8e110725ea43461ae1e\",\"sha256:facf79a780de4bb891d6a7beeb8e160d6201e46703cf7ddcc1ed5edd0760a7e8\"]},\"variant\":\"v8\"}",
+      "index": "{\"manifests\":[{\"digest\":\"sha256:73e957703f1266530db0aeac1fd6a3f87c1e59943f4c13eb340bb8521c6041d7\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"amd64\",\"os\":\"linux\"},\"size\":1778},{\"digest\":\"sha256:66a85fdc92faf83693551c6818f71d9380dd9c00f160950fe8f5d7325f576760\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"arm\",\"os\":\"linux\",\"variant\":\"v5\"},\"size\":1778},{\"digest\":\"sha256:25af23085f95a7496956ce30ae1aca7fec4c13c38930de777ee00a00315ff94e\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"arm\",\"os\":\"linux\",\"variant\":\"v7\"},\"size\":1778},{\"digest\":\"sha256:6faff3cb6b8c141d4828ac6c884a38a680ec6ad122c19397e4774f0bb9616f0c\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"arm64\",\"os\":\"linux\",\"variant\":\"v8\"},\"size\":1778},{\"digest\":\"sha256:6a598f26769bc7011d9a9e1f6923f4b8dc508e1386e2da286323645e352943d9\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"386\",\"os\":\"linux\"},\"size\":1778},{\"digest\":\"sha256:acced8cabb48138dd052a1edd28c0f20a15f7c2080ce76d416b80bd77c18ee2f\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"mips64le\",\"os\":\"linux\"},\"size\":1778},{\"digest\":\"sha256:2e0b052fdd9da1817854ac5d3a6c12ceac97dc7d97b939f768b1379a1578ea6a\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"ppc64le\",\"os\":\"linux\"},\"size\":1778},{\"digest\":\"sha256:0ac3978afacb722fdc59eed0d782d61a09e7fc41c05a4b0f0703c2186d5b3c62\",\"mediaType\":\"application\\/vnd.docker.distribution.manifest.v2+json\",\"platform\":{\"architecture\":\"s390x\",\"os\":\"linux\"},\"size\":1778}],\"mediaType\":\"application\\/vnd.docker.distribution.manifest.list.v2+json\",\"schemaVersion\":2}"
+    },
+    "fixture_bytes": {
+      "nginx.conf": "user   nginx;\ndaemon off;\n\nerror_log /var/log/nginx/error.log warn;\npid       /var/run/nginx.pid;\n\nevents {}\nhttp {\n    server {\n      access_log off;\n      location / {\n        root /tmp/html;\n      }\n    }\n}\n",
+      "nginx_gofer.conf": "user   nginx;\ndaemon off;\n\nerror_log /var/log/nginx/error.log warn;\npid       /var/run/nginx.pid;\n\nevents {}\nhttp {\n    server {\n      access_log off;\n      location / {\n        root /local;\n      }\n    }\n}\n"
+    }
+  }
+}

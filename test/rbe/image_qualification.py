@@ -104,7 +104,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         option_index = 2 if arguments[:2] == ["mod", "deps"] else 1
         command = [*startup, *arguments[:option_index], "--downloader_config=" + str(downloader), *arguments[option_index:]]
         if kind != "command":
-            command.append("--build_event_json_file=" + str(raw_events))
+            command.extend(["--build_event_json_file_path_conversion=false", "--build_event_json_file=" + str(raw_events)])
         (directory / "arguments.txt").write_text(json.dumps(command) if kind == "command" else "\n".join(command) + "\n")
         (directory / "expected-targets.txt").write_text("".join(target + "\n" for target in targets))
         git_record(directory / "commit.txt", "cat-file", "commit", SOURCE)
