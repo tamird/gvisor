@@ -78,6 +78,7 @@ type packetObservation struct {
 }
 
 type delivery struct {
+	flow   int
 	at     time.Duration
 	from   int
 	packet *stack.PacketBuffer
@@ -197,6 +198,50 @@ func TestVirtualTCPBurstRecovery(t *testing.T) {
 			}
 		})
 	}
+}
+
+// drainVirtualTCP is a workload-specific fence: endpoint calls have returned,
+// link injection is stopped, and each stack has one processor. It is not a
+// general quiescence interface for arbitrary background work.
+func drainVirtualTCP(t *testing.T, clock *completedClock, stacks []*stack.Stack, observe func()) {
+	t.Helper()
+	for pass := 0; pass < 32; pass++ {
+		generation := clock.callbacks.Load()
+		clock.RunImmediatelyScheduledJobs()
+		for _, s := range stacks {
+			s.Pause()
+		}
+		stable := func() bool {
+			defer func() {
+				for _, s := range stacks {
+					s.Resume()
+				}
+			}()
+			clock.RunImmediatelyScheduledJobs()
+			if clock.callbacks.Load() != generation {
+				return false
+			}
+			observe()
+			return true
+		}()
+		if stable {
+			return
+		}
+	}
+	t.Fatal("TCP callbacks did not reach the bounded same-instant fence")
+}
+
+func advanceVirtualTCP(clock *completedClock, stacks []*stack.Stack, duration time.Duration) {
+	for _, s := range stacks {
+		s.Pause()
+	}
+	defer func() {
+		for _, s := range stacks {
+			s.Resume()
+		}
+	}()
+	// Keep processors parked while callbacks observe intermediate deadlines.
+	clock.Advance(duration)
 }
 
 func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProtocolFactory, scenario virtualScenario) {
@@ -402,132 +447,111 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	// callback ran. The driver advances time only with both processors paused.
 	fence := func() {
 		t.Helper()
-		for pass := 0; pass < 32; pass++ {
-			generation := clock.callbacks.Load()
-			clock.RunImmediatelyScheduledJobs()
-			for _, s := range stacks {
-				s.Pause()
+		drainVirtualTCP(t, clock, stacks[:], func() {
+			stats := stacks[0].Stats().TCP
+			observation := recoveryObservation{
+				AtNS: int64(now()), RTOs: stats.Timeouts.Value(),
+				SACKRecoveries: stats.SACKRecovery.Value(),
+				TLPRecoveries:  stats.TLPRecovery.Value(), TimerCallbacks: clock.callbacks.Load(),
+				FastRetransmit: stats.FastRetransmit.Value(),
+				Retransmits:    stats.Retransmits.Value(),
 			}
-			stable := func() bool {
-				defer func() {
-					for _, s := range stacks {
-						s.Resume()
-					}
-				}()
-				clock.RunImmediatelyScheduledJobs()
-				if clock.callbacks.Load() != generation {
-					return false
+			changed := len(progress) == 0
+			if !changed {
+				previous := progress[len(progress)-1]
+				previous.AtNS = observation.AtNS
+				if scenario.streaming {
+					previous.TimerCallbacks = observation.TimerCallbacks
 				}
-				stats := stacks[0].Stats().TCP
-				observation := recoveryObservation{
-					AtNS: int64(now()), RTOs: stats.Timeouts.Value(),
-					SACKRecoveries: stats.SACKRecovery.Value(),
-					TLPRecoveries:  stats.TLPRecovery.Value(), TimerCallbacks: clock.callbacks.Load(),
-					FastRetransmit: stats.FastRetransmit.Value(),
-					Retransmits:    stats.Retransmits.Value(),
+				changed = previous != observation
+			}
+			if changed {
+				if scenario.streaming && len(progress) == 512 {
+					t.Fatal("recovery events exceeded512 records")
 				}
-				changed := len(progress) == 0
-				if !changed {
-					previous := progress[len(progress)-1]
-					previous.AtNS = observation.AtNS
-					if scenario.streaming {
-						previous.TimerCallbacks = observation.TimerCallbacks
-					}
-					changed = previous != observation
-				}
-				if changed {
-					if scenario.streaming && len(progress) == 512 {
-						t.Fatal("recovery events exceeded512 records")
-					}
-					progress = append(progress, observation)
-				}
-				for side, link := range links {
-					for packet := link.Read(); packet != nil; packet = link.Read() {
-						view := packet.ToView()
-						ip := header.IPv4(view.AsSlice())
-						if got, want := ip.TransportProtocol(), tcp.ProtocolNumber; got != want {
-							view.Release()
-							packet.DecRef()
-							t.Fatalf("transport protocol = %d, want %d", got, want)
-						}
-						segment := header.TCP(ip.Payload())
-						payload := segment.Payload()
-						payloadHash := fmt.Sprintf("%x", sha256.Sum256(payload))
-						var retransmitted, isLoss bool
-						if side == 0 && len(payload) != 0 {
-							if !dataStarted {
-								dataSequence, dataStarted = segment.SequenceNumber(), true
-							}
-							offset := segment.SequenceNumber() - dataSequence
-							retransmitted = offset < highestSent
-							highestSent = max(highestSent, offset+uint32(len(payload)))
-							if !dropped {
-								maxOutstandingBeforeBurst = max(maxOutstandingBeforeBurst, highestSent-acknowledged)
-							}
-							beginsBurst := dropOffset >= 0 && !dropped && int(offset) <= dropOffset && dropOffset < int(offset)+len(payload)
-							isLoss = !retransmitted && (beginsBurst || (dropped && burstDropped < scenario.burstSegments))
-							if isLoss {
-								if !dropped {
-									dropped, lostSequence, lostPayload = true, segment.SequenceNumber(), payloadHash
-									if scenario.streaming {
-										row := sample()
-										preBurst = &row
-									}
-								} else if segment.SequenceNumber() != lostEnd {
-									sequence := segment.SequenceNumber()
-									view.Release()
-									packet.DecRef()
-									t.Fatalf("burst segment starts %d, want %d", sequence, lostEnd)
-								}
-								burstDropped++
-								lostEnd = segment.SequenceNumber() + uint32(len(payload))
-							} else if dropped && segment.SequenceNumber() == lostSequence && segment.SequenceNumber()+uint32(len(payload)) == lostEnd && payloadHash == lostPayload {
-								recovered = true
-							}
-						}
-						var sackPermitted bool
-						if segment.Flags().Contains(header.TCPFlagSyn) {
-							sackPermitted = header.ParseSynOptions(segment.Options(), segment.Flags().Contains(header.TCPFlagAck)).SACKPermitted
-						}
-
-						// Dropped packets still consume their serialization time.
-						nextTX[side] = max(nextTX[side], now()) + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
-						at := nextTX[side] + delay
-						row := packetObservation{
-							AtNS: int64(at), CapturedAtNS: int64(now()), From: side,
-							Sequence: segment.SequenceNumber(), EndSequence: segment.SequenceNumber() + uint32(len(payload)),
-							Acknowledgment: segment.AckNumber(), Flags: uint8(segment.Flags()), PayloadBytes: len(payload),
-							PacketSHA256: fmt.Sprintf("%x", sha256.Sum256(view.AsSlice())), PayloadSHA256: payloadHash,
-							OptionsHex: fmt.Sprintf("%x", segment.Options()), SACKBlocks: header.ParseTCPOptions(segment.Options()).SACKBlocks,
-							SACKPermitted: sackPermitted, Retransmitted: retransmitted, Dropped: isLoss,
-						}
-						if isLoss {
-							holes = append(holes, row)
-						}
-						if retransmitted {
-							for _, hole := range holes {
-								if row.Sequence == hole.Sequence && row.EndSequence == hole.EndSequence && row.PayloadSHA256 == hole.PayloadSHA256 {
-									repaired[hole.Sequence] = true
-								}
-							}
-						}
-						pending = append(pending, delivery{at: at, from: side, packet: stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: packet.ToBuffer()}), row: row})
-						if len(pending) > 32768 {
-							view.Release()
-							packet.DecRef()
-							t.Fatal("virtual link exceeded 32768 queued packets")
-						}
+				progress = append(progress, observation)
+			}
+			for side, link := range links {
+				for packet := link.Read(); packet != nil; packet = link.Read() {
+					view := packet.ToView()
+					ip := header.IPv4(view.AsSlice())
+					if got, want := ip.TransportProtocol(), tcp.ProtocolNumber; got != want {
 						view.Release()
 						packet.DecRef()
+						t.Fatalf("transport protocol = %d, want %d", got, want)
 					}
+					segment := header.TCP(ip.Payload())
+					payload := segment.Payload()
+					payloadHash := fmt.Sprintf("%x", sha256.Sum256(payload))
+					var retransmitted, isLoss bool
+					if side == 0 && len(payload) != 0 {
+						if !dataStarted {
+							dataSequence, dataStarted = segment.SequenceNumber(), true
+						}
+						offset := segment.SequenceNumber() - dataSequence
+						retransmitted = offset < highestSent
+						highestSent = max(highestSent, offset+uint32(len(payload)))
+						if !dropped {
+							maxOutstandingBeforeBurst = max(maxOutstandingBeforeBurst, highestSent-acknowledged)
+						}
+						beginsBurst := dropOffset >= 0 && !dropped && int(offset) <= dropOffset && dropOffset < int(offset)+len(payload)
+						isLoss = !retransmitted && (beginsBurst || (dropped && burstDropped < scenario.burstSegments))
+						if isLoss {
+							if !dropped {
+								dropped, lostSequence, lostPayload = true, segment.SequenceNumber(), payloadHash
+								if scenario.streaming {
+									row := sample()
+									preBurst = &row
+								}
+							} else if segment.SequenceNumber() != lostEnd {
+								sequence := segment.SequenceNumber()
+								view.Release()
+								packet.DecRef()
+								t.Fatalf("burst segment starts %d, want %d", sequence, lostEnd)
+							}
+							burstDropped++
+							lostEnd = segment.SequenceNumber() + uint32(len(payload))
+						} else if dropped && segment.SequenceNumber() == lostSequence && segment.SequenceNumber()+uint32(len(payload)) == lostEnd && payloadHash == lostPayload {
+							recovered = true
+						}
+					}
+					var sackPermitted bool
+					if segment.Flags().Contains(header.TCPFlagSyn) {
+						sackPermitted = header.ParseSynOptions(segment.Options(), segment.Flags().Contains(header.TCPFlagAck)).SACKPermitted
+					}
+
+					// Dropped packets still consume their serialization time.
+					nextTX[side] = max(nextTX[side], now()) + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
+					at := nextTX[side] + delay
+					row := packetObservation{
+						AtNS: int64(at), CapturedAtNS: int64(now()), From: side,
+						Sequence: segment.SequenceNumber(), EndSequence: segment.SequenceNumber() + uint32(len(payload)),
+						Acknowledgment: segment.AckNumber(), Flags: uint8(segment.Flags()), PayloadBytes: len(payload),
+						PacketSHA256: fmt.Sprintf("%x", sha256.Sum256(view.AsSlice())), PayloadSHA256: payloadHash,
+						OptionsHex: fmt.Sprintf("%x", segment.Options()), SACKBlocks: header.ParseTCPOptions(segment.Options()).SACKBlocks,
+						SACKPermitted: sackPermitted, Retransmitted: retransmitted, Dropped: isLoss,
+					}
+					if isLoss {
+						holes = append(holes, row)
+					}
+					if retransmitted {
+						for _, hole := range holes {
+							if row.Sequence == hole.Sequence && row.EndSequence == hole.EndSequence && row.PayloadSHA256 == hole.PayloadSHA256 {
+								repaired[hole.Sequence] = true
+							}
+						}
+					}
+					pending = append(pending, delivery{at: at, from: side, packet: stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: packet.ToBuffer()}), row: row})
+					if len(pending) > 32768 {
+						view.Release()
+						packet.DecRef()
+						t.Fatal("virtual link exceeded 32768 queued packets")
+					}
+					view.Release()
+					packet.DecRef()
 				}
-				return true
-			}()
-			if stable {
-				return
 			}
-		}
-		t.Fatal("TCP callbacks did not reach the bounded same-instant fence")
+		})
 	}
 	step := func() {
 		t.Helper()
@@ -542,20 +566,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 				next, index = packet.at, i
 			}
 		}
-		func() {
-			for _, s := range stacks {
-				s.Pause()
-			}
-			defer func() {
-				for _, s := range stacks {
-					s.Resume()
-				}
-			}()
-			// Timer callbacks may enqueue a TCP processor. Keep it parked
-			// until Advance reaches the end of this bounded tick, so it
-			// cannot observe a scheduler-dependent intermediate clock value.
-			clock.Advance(next - now())
-		}()
+		advanceVirtualTCP(clock, stacks[:], next-now())
 		// Timer-generated output is observed at this tick's end. The link
 		// schedule models that explicit 1 ms resolution, not exact emission.
 		fence()
