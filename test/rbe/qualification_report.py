@@ -401,13 +401,14 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     return result
 
 
-def xml_cases(path: Path) -> dict[str, object]:
+def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, object]:
     """Count actual entries, retaining skips/notrun separately from passes."""
     root = ET.parse(path).getroot()
     if root.tag not in ("testsuites", "testsuite"):
         raise ValueError(f"Unexpected XML root: {root.tag}")
     counts: Counter[str] = Counter()
     failures, skips = [], []
+    matched = set()
     for case in root.iter("testcase"):
         name = "/".join(filter(None, (case.get("classname"), case.get("name"))))
         if case.find("failure") is not None or case.find("error") is not None:
@@ -418,6 +419,8 @@ def xml_cases(path: Path) -> dict[str, object]:
             skips.append({"name": name, "status": case.get("status"), "reason": "".join(case.find("skipped").itertext()) if case.find("skipped") is not None else case.get("result", "notrun")})
         else:
             counts["passed"] += 1
+            if name in required:
+                matched.add(name)
     # Suite failures can exist without a corresponding named testcase.
     suite_errors = sum(number(suite.get(key, 0)) for suite in root.iter("testsuite") for key in ("failures", "errors"))
     if suite_errors and not counts["failed"]:
@@ -425,7 +428,8 @@ def xml_cases(path: Path) -> dict[str, object]:
     declared = root.get("tests")
     if declared is not None and number(declared) != sum(counts.values()):
         raise ValueError(f"XML declares {declared} tests but contains {sum(counts.values())}")
-    return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"], "failures": failures, "skips": skips}
+    return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"],
+            "failures": failures, "skips": skips, **({"required_passed": sorted(matched)} if required else {})}
 
 
 def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
@@ -773,7 +777,21 @@ def command_verdict(context: Path) -> dict[str, object]:
             if info["execution_finished_at"] is not None else None}
 
 
-def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
+def required_cases(path: Path, labels: set[str]) -> dict[str, frozenset[str]]:
+    """Read the XML classname/name pairs that must pass for each selected owner."""
+    raw = read_json(path)
+    if not raw or raw.keys() - labels:
+        raise ValueError(f"Required cases must name selected test owners: {sorted(raw.keys() - labels)}")
+    owners = {}
+    for label, values in raw.items():
+        names = [string(value) for value in sequence(values)]
+        if not names or any(not name.strip() for name in names) or len(set(names)) != len(names):
+            raise ValueError(f"Expected distinct, nonempty required case names for {label}")
+        owners[label] = frozenset(names)
+    return owners
+
+
+def preflight(events: Path, native_exit: int, kind: str, case_manifest: Path | None = None) -> dict[str, object]:
     """Validate analysis before allowing the caller to start expensive actions."""
     errors: list[str] = []
     targets: dict[str, unit_matrix.ConfiguredTarget] = {}
@@ -785,6 +803,10 @@ def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
             str(events), tests=True if kind == "test" else None,
             allow_test_no_build=kind == "test", expected_exit=native_exit,
         )
+        if case_manifest is not None:
+            if kind != "test":
+                raise ValueError("Required cases apply only to test invocations")
+            required_cases(case_manifest, set(targets))
         groups = declared_output_groups(targets)
         if groups:
             output_options = ["--output_groups=+" + ",+".join(sorted({group for _, group in groups})),
@@ -834,7 +856,7 @@ def marshal_test_contract(log: Path) -> dict[str, object]:
 
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
             expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None,
-            declared_benchmarks: Path | None = None) -> dict[str, object]:
+            declared_benchmarks: Path | None = None, case_manifest: Path | None = None) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
     started = time.monotonic()
     errors: list[str] = []
@@ -1015,6 +1037,14 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     different = expected - configured if testing else configured ^ expected
     if different:
         errors.append(f"Configured owners differ from expected: {sorted(different)}")
+    named_cases: dict[str, frozenset[str]] = {}
+    if case_manifest is not None:
+        try:
+            if info["command_kind"] != "test":
+                raise ValueError("Required cases apply only to ordinary test invocations")
+            named_cases = required_cases(case_manifest, {owner.label for owner in expected})
+        except (OSError, ValueError) as error:
+            errors.append(f"Required cases: {error}")
     if benchmark_mode and set(benchmark_expected) != {owner.label for owner in expected}:
         errors.append("Benchmark manifest must cover every selected owner, and no others")
     selected_declared = set(declared_expected) & {owner.label for owner in expected}
@@ -1056,6 +1086,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     observations: list[dict[str, object]] = []
     owner_cases: Counter[Owner] = Counter()
     owner_executed: Counter[Owner] = Counter()
+    passed_by_run: dict[tuple[Owner, int], set[str]] = {}
     skips: list[dict[str, object]] = []
     expected_failures: list[dict[str, object]] = []
     marshal_contracts: dict[Attempt, dict[str, object]] = {}
@@ -1091,7 +1122,13 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 log = reports[(attempt, "test.log")]
                 if not log.stat().st_size:
                     raise ValueError(f"Empty original test log: {attempt}")
-                counts = xml_cases(xml)
+                required = named_cases.get(attempt.owner.label, frozenset())
+                counts = xml_cases(xml, required)
+                if required:
+                    # Shards divide a suite; another run or configuration
+                    # cannot supply a case missing from this one.
+                    passed = passed_by_run.setdefault((attempt.owner, attempt.run), set())
+                    passed.update(string(name) for name in sequence(counts["required_passed"]))
                 observation["xml"] = counts
                 cases.update({key: number(counts[key]) for key in ("passed", "failed", "skipped")})
                 owner_cases[attempt.owner] += sum(number(counts[key]) for key in ("passed", "failed", "skipped"))
@@ -1162,6 +1199,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if result.get("status") != "PASSED":
                 failures.append({**asdict(attempt), "reason": "test result", "status": result.get("status")})
             observations.append(observation)
+        for (owner, run), passed in sorted(passed_by_run.items()):
+            missing.extend({**asdict(owner), "run": run, "name": name, "reason": "required case did not pass"}
+                           for name in sorted(named_cases[owner.label] - passed))
         for owner, summary in sorted(summaries.items()):
             attempts = [attempt for attempt in results if attempt.owner == owner]
             if number(summary.get("totalRunCount", 0)) != len(attempts):
@@ -1522,6 +1562,7 @@ def main() -> int:
     analyze.add_argument("--native-exit", type=int, required=True)
     analyze.add_argument("--kind", choices=("test", "build"), required=True)
     analyze.add_argument("--output-options", type=Path)
+    analyze.add_argument("--required-cases", type=Path)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
         check.add_argument("--" + name, type=Path, required=True)
@@ -1530,6 +1571,7 @@ def main() -> int:
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
     check.add_argument("--expected-benchmarks", type=Path)
     check.add_argument("--declared-benchmarks", type=Path)
+    check.add_argument("--required-cases", type=Path)
     command_check = commands.add_parser("command-verdict")
     for name in ("context", "output"):
         command_check.add_argument("--" + name, type=Path, required=True)
@@ -1591,7 +1633,7 @@ def main() -> int:
                          tuple(args.expected_analysis))
         return int(bool(result["errors"]))
     if args.command == "preflight":
-        result = preflight(args.events, args.native_exit, args.kind)
+        result = preflight(args.events, args.native_exit, args.kind, args.required_cases)
         write_json(args.output, result)
         if args.output_options is not None and result["status"] == "PASS":
             args.output_options.write_text("".join(option + "\n" for option in result["output_options"]))
@@ -1599,7 +1641,7 @@ def main() -> int:
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
                          args.expected_targets, tuple(args.expected_analysis), args.expected_benchmarks,
-                         args.declared_benchmarks)
+                         args.declared_benchmarks, args.required_cases)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     if args.command == "command-verdict":
