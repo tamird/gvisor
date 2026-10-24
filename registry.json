@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T15:25:05.305627+00:00",
+    "updatedAt": "2026-10-24T15:30:56.801176+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24742,7 +24742,7 @@
     {
       "from": "pr:15634",
       "to": "branch:tcp-rack-pipe-accounting",
-      "type": "depends",
+      "type": "depends_on",
       "reason": "The isolated RACK accounting correction is based on the SACK accounting fix at exact 933263e71c.",
       "evidence": "https://github.com/google/gvisor/pull/15634"
     }
