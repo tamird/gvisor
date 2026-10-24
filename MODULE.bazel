@@ -618,6 +618,11 @@ go_deps.module(
     version = "v0.0.0-20240912202439-0a2b6291aafd",
 )
 go_deps.module(
+    path = "github.com/chzyer/readline",
+    sum = "h1:upd/6fQk4src78LMRzh5vItIt361/o4uq553V8B5sGI=",
+    version = "v1.5.1",
+)
+go_deps.module(
     path = "github.com/google/pprof",
     sum = "h1:xRmpO92tb8y+Z85iUOMOicpCfaYcv7o3Cg3wKrIpg8g=",
     version = "v0.0.0-20240711041743-f6c9dda6c6da",
