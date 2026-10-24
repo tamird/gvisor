@@ -250,10 +250,6 @@ def _nogo_package_config(ctx, deps, importpath = None, objfiles = (None, None), 
     return go_ctx, args, inputs, raw_findings
 
 def _nogo_aspect_impl(target, ctx):
-    # Proto compilers inject Go runtime dependencies into generated packages.
-    if ctx.rule.kind == "_go_proto_compiler":
-        return [NogoInfo(deps = ctx.rule.attr.deps)]
-
     # If this is a nogo rule itself (and not the shadow of a go_library or
     # go_binary rule created by such a rule), then we simply return nothing.
     # All work is done in the shadow properties for go rules. For a proto
@@ -279,11 +275,7 @@ def _nogo_aspect_impl(target, ctx):
         # _nogo_config for the workaround that directly adds all proto
         # transitive dependencies.
         srcs = []
-        deps = list(ctx.rule.attr.deps)
-        if ctx.rule.kind == "go_proto_library":
-            compilers = [ctx.rule.attr.compiler] if ctx.rule.attr.compiler else ctx.rule.attr.compilers
-            for compiler in compilers:
-                deps.extend(compiler[NogoInfo].deps)
+        deps = ctx.rule.attr.deps
     else:
         return [NogoInfo()]
 
@@ -373,8 +365,6 @@ nogo_aspect = go_rule(
         "deps",
         "library",
         "embed",
-        "compiler",
-        "compilers",
     ],
     attrs = {
         "_nogo": attr.label(
