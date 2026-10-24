@@ -35,11 +35,19 @@ def assembly(text: str, symbol: str) -> dict:
         locals_match = re.search(r"\blocals=(0x[0-9a-f]+|\d+)", header)
         if locals_match is None:
             raise ValueError("Missing compiler frame size: " + symbol)
-        results.append({"symbol": symbol, "header": header, "locals_bytes": int(locals_match.group(1), 0),
+        text_lines = [line for line in block.splitlines() if "\tTEXT\t" in line]
+        if len(text_lines) != 1:
+            raise ValueError("Missing unique TEXT directive: " + symbol)
+        flags = text_lines[0].split(",", 1)[1].rsplit(",", 1)[0].strip().split("|")
+        abi = "ABIWRAPPER" if "ABIWRAPPER" in flags else "ABIInternal" if "ABIInternal" in flags else None
+        if abi is None:
+            raise ValueError("Unrecognized compiler ABI: " + text_lines[0])
+        results.append({"symbol": symbol, "abi": abi, "header": header, "locals_bytes": int(locals_match.group(1), 0),
                         "instructions": instructions, "calls": calls})
-    if any(row != results[0] for row in results[1:]):
-        raise ValueError("Inconsistent duplicate compiler bodies: " + symbol)
-    return results[0]
+    internal = [row for row in results if row["abi"] == "ABIInternal"]
+    if len(internal) != 1:
+        raise ValueError("Expected one ABIInternal compiler body: " + symbol)
+    return {**internal[0], "abi_wrappers": [row for row in results if row["abi"] == "ABIWRAPPER"]}
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
@@ -59,6 +67,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                            "command", targets=[])
         if formatted["status"] != "PASS" or (evidence / "invocation-goimports/stdout.log").read_bytes():
             raise RuntimeError("Canonical Go formatting failed")
+        compiler_texts = {}
         for architecture in ("x86_64", "aarch64"):
             entry = {"phases": {}, "probes": {}, "wrapper_inline_diagnostics": []}
             result["architectures"][architecture] = entry
@@ -68,34 +77,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                                        "--noremote_accept_cached", "--experimental_ui_max_stdouterr_bytes=16777216", target], "build", targets=[target])
                 entry["phases"][package] = verdict
                 if verdict["status"] != "PASS":
-                    raise RuntimeError("Native code-generation build failed: " + name)
+                    result["errors"].append("Native code-generation build failed: " + name)
                 directory = evidence / ("invocation-" + name)
                 text = "\n".join((directory / stream).read_text() for stream in ("stdout.log", "stderr.log"))
                 entry[package + "_compiler_output"] = [report.file_record(directory / stream) for stream in ("stdout.log", "stderr.log")]
-                entry["wrapper_inline_diagnostics"].extend(line for line in text.splitlines()
-                    if ("can inline" in line or "cannot inline" in line or "inlining call to" in line)
-                    and ("AtomicPtr" in line or "sync/atomic.(*Pointer" in line))
-                if package == "atomicptr":
-                    for function in ("loadBefore", "loadAfter", "storeBefore", "storeAfter", "swapBefore", "swapAfter", "loadNoInline", "loadControl"):
-                        entry["probes"][function] = assembly(text, "gvisor.dev/gvisor/pkg/sync/atomicptr." + function)
-                else:
-                    entry["real_nosplit_caller"] = assembly(text, "gvisor.dev/gvisor/pkg/sentry/platform/kvm.seccompMmapHandler")
-            probes = entry["probes"]
-            entry["negative_control_detected"] = any("loadNoInline" in line for line in probes["loadControl"]["calls"])
-            if not entry["negative_control_detected"]:
-                result["errors"].append(architecture + ": deliberate direct call was not detected")
-            for operation in ("load", "store", "swap"):
-                before, after = probes[operation + "Before"], probes[operation + "After"]
-                after["same_instructions_as_before"] = after["instructions"] == before["instructions"]
-                after["frame_delta_bytes"] = after["locals_bytes"] - before["locals_bytes"]
-                if any("AtomicPtr" in line or "sync/atomic.(*Pointer" in line for line in after["calls"]):
-                    result["errors"].append(architecture + ": residual typed wrapper call in " + operation)
-            for key in ("loadBefore", "loadAfter"):
-                if probes[key]["calls"] or "nosplit" not in probes[key]["header"].lower():
-                    result["errors"].append(architecture + ": load probe has a call or lacks NOSPLIT")
-            real = entry["real_nosplit_caller"]
-            if "nosplit" not in real["header"].lower() or any("machineAtomicPtr" in line or "sync/atomic.(*Pointer" in line for line in real["calls"]):
-                result["errors"].append(architecture + ": real signal handler has a wrapper call or lacks NOSPLIT")
+                compiler_texts[(architecture, package)] = text
         linked = invoke("atomicptr-link-aarch64", ["build", "--config=aarch64", *common, TEST], "build", targets=[TEST])
         selected = ["--strategy=TestRunner=local", "--nocache_test_results", "--runs_per_test=1",
                     "--flaky_test_attempts=1", "--test_sharding_strategy=disabled", "--test_output=all",
@@ -103,6 +89,38 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         normal = invoke("atomicptr-normal", ["test", "--config=x86_64", *common, *selected, TEST], "test", targets=[TEST])
         nogo = invoke("atomicptr-nogo", ["test", "--config=x86_64", *common, *selected, *ANALYZERS], "test", targets=ANALYZERS)
         result.update(arm64_link=linked, normal=normal, nogo=nogo)
+        # Finish every native phase before interpreting compiler diagnostics.
+        for architecture in ("x86_64", "aarch64"):
+            entry = result["architectures"][architecture]
+            try:
+                for package in ("atomicptr", "kvm"):
+                    text = compiler_texts[(architecture, package)]
+                    entry["wrapper_inline_diagnostics"].extend(line for line in text.splitlines()
+                        if ("can inline" in line or "cannot inline" in line or "inlining call to" in line)
+                        and ("AtomicPtr" in line or "sync/atomic.(*Pointer" in line))
+                    if package == "atomicptr":
+                        for function in ("loadBefore", "loadAfter", "storeBefore", "storeAfter", "swapBefore", "swapAfter", "loadNoInline", "loadControl"):
+                            entry["probes"][function] = assembly(text, "gvisor.dev/gvisor/pkg/sync/atomicptr." + function)
+                    else:
+                        entry["real_nosplit_caller"] = assembly(text, "gvisor.dev/gvisor/pkg/sentry/platform/kvm.seccompMmapHandler")
+                probes = entry["probes"]
+                entry["negative_control_detected"] = any("loadNoInline" in line for line in probes["loadControl"]["calls"])
+                if not entry["negative_control_detected"]:
+                    result["errors"].append(architecture + ": deliberate direct call was not detected")
+                for operation in ("load", "store", "swap"):
+                    before, after = probes[operation + "Before"], probes[operation + "After"]
+                    after["same_instructions_as_before"] = after["instructions"] == before["instructions"]
+                    after["frame_delta_bytes"] = after["locals_bytes"] - before["locals_bytes"]
+                    if any("AtomicPtr" in line or "sync/atomic.(*Pointer" in line for line in after["calls"]):
+                        result["errors"].append(architecture + ": residual typed wrapper call in " + operation)
+                for key in ("loadBefore", "loadAfter"):
+                    if probes[key]["calls"] or "nosplit" not in probes[key]["header"].lower():
+                        result["errors"].append(architecture + ": load probe has a call or lacks NOSPLIT")
+                real = entry["real_nosplit_caller"]
+                if "nosplit" not in real["header"].lower() or any("machineAtomicPtr" in line or "sync/atomic.(*Pointer" in line for line in real["calls"]):
+                    result["errors"].append(architecture + ": real signal handler has a wrapper call or lacks NOSPLIT")
+            except (ValueError, KeyError) as error:
+                result["errors"].append(architecture + ": " + str(error))
         if any(row["status"] != "PASS" for row in (linked, normal, nogo)):
             raise RuntimeError("Native link/correctness/analyzer gate failed")
         for name, owners in (("atomicptr-normal", [TEST]), ("atomicptr-nogo", ANALYZERS)):
