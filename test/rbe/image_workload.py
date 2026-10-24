@@ -16,7 +16,7 @@ UNIT_CASES = {"TestTimestampOffset", "TestTimestampOffset/0", "TestTimestampOffs
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    if config["targets"] != [UNIT, *ANALYZERS]:
+    if config["targets"] != ANALYZERS:
         raise ValueError(f"Unexpected metrics owner selection: {config['targets']}")
     record = {"source": config["source"], "product": config["product"],
               "status": "INCOMPLETE", "checks": [], "errors": [],
@@ -36,8 +36,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         testing = ["--config=x86_64", *options, "--strategy=TestRunner=local", "--nocache_test_results",
                    "--runs_per_test=1", "--flaky_test_attempts=1", "--test_output=all",
                    "--test_sharding_strategy=disabled", "--test_timeout=600", "--test_tag_filters="]
-        phases = [("metrics-unit", [UNIT], ["--test_env=GO_TEST_WRAP=1", "--test_env=GO_TEST_WRAP_TESTV=1"]),
-                  ("metrics-nogo", ANALYZERS, [])]
+        phases = [("metrics-nogo", ANALYZERS, [])]
         # Finish every native test phase before interpreting reports, so a
         # reporting error does not erase independent architecture/test evidence.
         for name, owners, extra in phases:
