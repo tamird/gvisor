@@ -57,12 +57,16 @@ def build_ids(path: Path) -> dict:
 
 
 def profile_summary(text: str, binary: Path, identifiers: dict) -> dict:
-    samples = text.split("Samples:", 1)[1].split("Locations", 1)[0]
+    _, samples_marker, body = text.partition("\nSamples:\n")
+    samples, locations_marker, body = body.partition("\nLocations\n")
+    _, mappings_marker, mapping_text = body.partition("\nMappings\n")
+    if not all((samples_marker, locations_marker, mappings_marker)):
+        raise ValueError("Native CPU report omitted Samples, Locations, or Mappings")
     values = [tuple(map(int, match)) for match in re.findall(r"^\s+(\d+)\s+(\d+):", samples, re.MULTILINE)]
     if ("samples/count cpu/nanoseconds" not in " ".join(samples.split()) or not values or
             sum(value[0] for value in values) <= 0 or sum(value[1] for value in values) <= 0):
         raise ValueError("CPU profile omitted positive native samples")
-    mappings = text.split("\nMappings\n", 1)[1].splitlines()
+    mappings = mapping_text.splitlines()
     sentry, = [line for line in mappings if "/gvisor_sentry " in line]
     # The runtime records GNU IDs, not Go IDs. An absent GNU ID is explicitly
     # retained; the installed-file digest and source/output joins still apply.
