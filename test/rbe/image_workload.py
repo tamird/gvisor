@@ -39,10 +39,14 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         paths = (evidence / "invocation-emulator-path/stdout.log").read_text().splitlines()
         if len(paths) != 1:
             raise ValueError(f"Expected one declared QEMU executable: {paths}")
-        emulator = Path(paths[0]).resolve(strict=True)
+        relative_emulator = Path(paths[0])
+        if relative_emulator.is_absolute() or relative_emulator.parts[0] != "external" or ".." in relative_emulator.parts:
+            raise ValueError("Expected a declared external QEMU source file")
+        emulator = (output_root / relative_emulator).resolve(strict=True)
         if not os.access(emulator, os.X_OK):
             raise ValueError("Declared emulator is not executable")
-        record["emulator"] = {"path": str(emulator), **report.file_record(emulator)}
+        record["emulator"] = {"path": str(emulator), "cquery_path": paths[0],
+                              "output_base": str(output_root), **report.file_record(emulator)}
         testing = [*options, "--strategy=TestRunner=local", "--nocache_test_results",
                    "--runs_per_test=1", "--flaky_test_attempts=1", "--test_output=all",
                    "--test_sharding_strategy=disabled", "--test_timeout=900", "--test_tag_filters=",
