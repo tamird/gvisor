@@ -110,6 +110,7 @@ def runtime_test(name, partitions, memory = None, source_archive = None, ipv6 = 
     result_tags = {
         "java": ["jtreg-results"],
         "nodejs": ["nodejs-exact-results"],
+        "php": ["php-results"],
     }.get(kwargs.get("lang"), [])
     _runtime_test(
         name = name,

@@ -58,7 +58,7 @@ MAX_REPORT_BYTES = 512 * 1024 * 1024
 MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
-RUNTIME_RESULT_TAGS = {"jtreg-results"} | NODE_RESULT_TAGS
+RUNTIME_RESULT_TAGS = {"jtreg-results", "php-results"} | NODE_RESULT_TAGS
 RESULT_OUTPUT_PATTERNS = {
     **dict.fromkeys(RUNTIME_RESULT_TAGS, RUNTIME_OUTPUT_NAME),
     "source-image-results": (r"source-images/(?:selection\.json|[A-Za-z0-9][A-Za-z0-9_.-]*/"
