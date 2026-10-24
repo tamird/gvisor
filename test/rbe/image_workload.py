@@ -175,13 +175,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
             selected = [("regression", "red", [RACK], "^TestRACKPipeAfterTimeout$", False)] if arm["name"] == "before" else [
                 ("rack-normal", "green", [RACK], "^(TestRACKPipeAfterTimeout|TestRACKUpdateSackedOut|TestRACKTLPFallbackRTO|TestRACKWithWindowFull)$", False),
                 ("rack-race", "green", [RACK], "^(TestRACKPipeAfterTimeout|TestRACKUpdateSackedOut|TestRACKTLPFallbackRTO|TestRACKWithWindowFull)$", True),
-                ("sack-normal", "green", [SACK], "^(TestSACKRecovery|TestRecoveryEntry|TestDetectSpuriousRecoveryWithRTO|TestSACKDetectSpuriousRecoveryWithDupACK|TestNoSpuriousRecoveryWithDSACK)$", False),
                 ("sack-race", "green", [SACK], "^(TestSACKRecovery|TestRecoveryEntry|TestDetectSpuriousRecoveryWithRTO|TestSACKDetectSpuriousRecoveryWithDupACK|TestNoSpuriousRecoveryWithDSACK)$", True),
                 ("nogo", "nogo", [RACK + "_nogo", SACK + "_nogo"], None, False),
             ]
             for suffix, kind, owners, pattern, race in selected:
                 name = arm["name"] + "-" + suffix
-                extra = (["--@io_bazel_rules_go//go/config:race=true"] if race else [])
+                extra = (["--config=race"] if race else [])
                 if pattern is not None:
                     extra.append("--test_arg=-test.run=" + pattern)
                 result = invoke(name, ["test", *options, *tests, *extra, *owners], "test", targets=owners, source=source)

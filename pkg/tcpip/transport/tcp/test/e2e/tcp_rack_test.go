@@ -1062,13 +1062,19 @@ func TestRACKPipeAfterTimeout(t *testing.T) {
 			// Prime a cumulative ACK beyond the initial recovery boundary.
 			// All other originals except the tail are lost. Do not queue new
 			// application data yet, so TLP cannot send it instead of probing the tail.
-			write(data[:12*maxPayload])
+			// Keep the priming packet separate so its ACK retires a whole
+			// segment and initializes RACK's RTT in both GSO modes.
+			write(data[:maxPayload])
+			write(data[maxPayload : 12*maxPayload])
 			var echo uint32
 			for offset := 0; offset < 10*maxPayload; offset += maxPayload {
 				echo = read(offset)
 			}
 			clock.Advance(100 * time.Millisecond)
-			ack(maxPayload, echo, false)
+			primed := ack(maxPayload, echo, false)
+			if got, want := primed.Sender.RACKState.RTT, 100*time.Millisecond; got != want {
+				t.Fatalf("primed RACK RTT = %s, want %s", got, want)
+			}
 			read(10 * maxPayload)
 			read(11 * maxPayload)
 			stats := c.EP.Stats().(*tcp.Stats)
@@ -1415,7 +1421,19 @@ func TestRACKWithWindowFull(t *testing.T) {
 	end := start.Add(seqnum.Size(maxPayload))
 	dsackStart := c.IRS.Add(seqnum.Size(1 + (numPkts-1)*maxPayload))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, 2*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}})
+	// Limit recovery to one packet at a time. Otherwise packets sent under
+	// the old open window can still be queued when the zero-window ACK arrives.
+	options := make([]byte, 40)
+	n := header.EncodeSACKBlocks([]header.SACKBlock{{dsackStart, dsackEnd}, {start, end}}, options)
+	for n%4 != 0 {
+		options[n] = header.TCPOptionNOP
+		n++
+	}
+	c.SendPacket(nil, &context.Headers{
+		SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck,
+		SeqNum: seq, AckNum: c.IRS.Add(1 + 2*maxPayload),
+		RcvWnd: maxPayload, TCPOpts: options[:n],
+	})
 
 	var info tcpip.TCPInfoOption
 	if err := c.EP.GetSockOpt(&info); err != nil {
@@ -1428,7 +1446,10 @@ func TestRACKWithWindowFull(t *testing.T) {
 	c.ReceiveAndCheckPacketWithOptions(data, 2*maxPayload, maxPayload, e2e.TSOptionSize)
 
 	// Send ACK for #2 packet.
-	c.SendAck(seq, 3*maxPayload)
+	c.SendPacket(nil, &context.Headers{
+		SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck,
+		SeqNum: seq, AckNum: c.IRS.Add(1 + 3*maxPayload), RcvWnd: maxPayload,
+	})
 
 	// Expect retransmission of #3 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, 3*maxPayload, maxPayload, e2e.TSOptionSize)
