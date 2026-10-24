@@ -22,6 +22,9 @@ type Bytes []byte
 // Array is an array of bytes.
 type Array [5]byte
 
+// FloatArray is an array whose zero values can have distinct bit patterns.
+type FloatArray [2]float64
+
 // Empty is an unregistered struct without fields.
 type Empty struct{}
 

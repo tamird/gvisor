@@ -129,3 +129,13 @@ func (n *graphNode) afterLoad(context.Context) {
 type nestedMaps struct {
 	M map[int]map[int32]struct{}
 }
+
+// foreignArrayValues distinguishes full values from zero-elided fields.
+//
+// +stateify savable
+type foreignArrayValues struct {
+	Array    [2]foreign.FloatArray
+	Map      map[int]foreign.FloatArray
+	Field    foreign.FloatArray
+	Neighbor int
+}
