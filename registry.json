@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T03:16:47.524591+00:00",
+    "updatedAt": "2026-10-24T04:00:27.778768+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22905,9 +22905,43 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-24T00:41:46.011059+00:00",
-      "summary": "The changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
+      "updatedAt": "2026-10-24T04:00:27.778768+00:00",
+      "summary": "Six independent processes produced identical finite virtual-time TCP traces for 128 KiB transfers, including one RTO after the first data packet was dropped. This is deterministic recovery-fixture evidence, not a congestion-control comparison. Separately, all three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
+        {
+          "text": "Finite virtual-time TCP validation passed in five normal processes and one race process, with identical full packet traces in all six. Each case delivered 128 KiB: the no-loss case completed at 127.672 ms with no retransmission; dropping the first data packet produced one deterministic RTO and one retransmission, completing at 478.1584 ms. The two cases, their parent cases and the owning analyzer total 19 positive XML records; the analyzer also passed for AMD64 and ARM64. This establishes the finite real-stack fixture and its RTO recovery. It is not a CUBIC-versus-Reno comparison, fast-recovery result or network performance measurement.",
+          "evidence": [
+            {
+              "label": "Six-process virtual TCP validation and retained packet traces",
+              "url": "https://app.buildbuddy.io/invocation/962a1c1e-b426-44ab-8690-57ce36ed2824"
+            },
+            {
+              "label": "Exact qualified virtual-time source",
+              "url": "https://github.com/tamird/gvisor/commit/5bde9a99d2bdc214821fab87f13399f14e29b292"
+            }
+          ]
+        },
+        {
+          "text": "The three-line BuildBuddy NETEM configuration change built all three kernel targets successfully. The exact newly built AMD64 Linux 6.18.57 kernel then booted under pinned QEMU 10.0.8 TCG and accepted netem add/change/delete on a veth, changing the configured delay from 50 ms to 5 ms at 20 Mbit. The named guest test, normal shutdown and cleanup passed. The original Firecracker smoke did not execute because no Linux AMD64 bare executors were registered. QEMU success establishes this kernel capability only; it does not establish Firecracker support, deployed worker capability, packet timing/rate accuracy or any CUBIC trial result.",
+          "evidence": [
+            {
+              "label": "Published three-line NETEM configuration change",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13938"
+            },
+            {
+              "label": "Three fresh kernel builds; original bare-executor limitation",
+              "url": "https://app.buildbuddy.io/invocation/809eeba2-e738-4268-ba63-b994efb94522"
+            },
+            {
+              "label": "Exact-kernel QEMU TCG netem validation",
+              "url": "https://app.buildbuddy.io/invocation/f4161012-ea68-4752-9746-a5f381f25710"
+            },
+            {
+              "label": "NETEM configuration proposal",
+              "url": "https://github.com/tamird/buildbuddy/commit/91c8a6b35e7ca4c0af5a2f9c139b246344bf20cf"
+            }
+          ]
+        },
         {
           "text": "The changing-RTT mixed-flow pilot stopped before trials: the baseline build passed, then output hashing failed on root-owned Bazel paths. The candidate build, four 120-second matched controls and one 480-second before/after pair did not execute. Hostinet owns the narrow setup and evidence-publication corrections; another authenticated run remains held on its credential prerequisite. The original failure and planned receiver, clock, qdisc and cleanup gates remain. No changing-RTT, comparative-significance, sender minRTT-expiry, historical-outage or fairness-cause result is available.",
           "evidence": [
@@ -23639,7 +23673,7 @@
           ]
         }
       ],
-      "nextStep": "Hostinet owns finding a supported existing runner/kernel route with actual netem capability before the unchanged bounded traffic pilot. Preserve the hosted native failure and successful cleanup. The credential-free publication controls are complete; authenticated public Actions remain held pending key state. No changing-RTT performance or outage-cause conclusion is established.",
+      "nextStep": "Preserve the finite virtual-time RTO result separately from a future congestion-control comparison. Follow BuildBuddy #13938 checks and maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, fairness or outage-cause conclusion is established.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
