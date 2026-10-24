@@ -57,8 +57,8 @@ func (nodejsRunner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (nodejsRunner) TestCmds(tests []string) []*exec.Cmd {
-	return []*exec.Cmd{nodejsCommand(tests...)}
+func (nodejsRunner) TestCmds(tests []string) ([]*exec.Cmd, error) {
+	return []*exec.Cmd{nodejsCommand(tests...)}, nil
 }
 
 func nodejsCommand(tests ...string) *exec.Cmd {

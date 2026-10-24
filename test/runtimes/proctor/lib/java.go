@@ -67,7 +67,7 @@ func (javaRunner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
+func (javaRunner) TestCmds(tests []string) ([]*exec.Cmd, error) {
 	args := append(
 		[]string{
 			"-agentvm",                    // Execute each action using a pool of reusable JVMs.
@@ -82,5 +82,5 @@ func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
 		},
 		tests...,
 	)
-	return []*exec.Cmd{exec.Command("jtreg", args...)}
+	return []*exec.Cmd{exec.Command("jtreg", args...)}, nil
 }

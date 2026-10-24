@@ -73,7 +73,7 @@ func (goRunner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (goRunner) TestCmds(tests []string) []*exec.Cmd {
+func (goRunner) TestCmds(tests []string) ([]*exec.Cmd, error) {
 	var toolTests, onDiskTests []string
 	for _, test := range tests {
 		if strings.HasSuffix(test, ".go") {
@@ -97,5 +97,5 @@ func (goRunner) TestCmds(tests []string) []*exec.Cmd {
 		cmds = append(cmds, cmd)
 	}
 
-	return cmds
+	return cmds, nil
 }
