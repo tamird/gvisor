@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T13:05:36.508839+00:00",
+    "updatedAt": "2026-10-24T13:14:50.403609+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -14796,21 +14796,24 @@
       "url": "https://github.com/google/gvisor/pull/15970",
       "group": "analysis",
       "status": "PR open",
-      "updatedAt": "2026-10-24T13:05:36.508839+00:00",
-      "summary": "Matching import #16188 at dcab91809e failed Buildkite 52158. The AMD64 build, ARM64 build and Nogo logs show the same missing validate.pb.go protoreflect archive as #15981; Nogo also reports Docker plugin.pb.go. These three observed failures route to root and Node’s existing full #16098/minimal compiler-dependency contrast for the exact generated owners. No per-import duplicate qualification is needed. The other five failed-job causes were not inspected in this bounded read, and the AMD64 build log is truncated. The ARM64 build job emits an AMD64 analyzer target here; the job label alone is not target-architecture proof. All eight native failures remain visible; no candidate repair is credited as passing current import CI.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at bb2628f9faaf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved standalone codeload parser is now open as google/gvisor#15970 at exact ff7e8b92523c6ab3d38eb187069c3d82fa7f3c7b. The master base, author, commit title and wrapped commit body with attribution were read back and verified. The 2,069-entry canonical Fetch/Verify and complete 93-case licensecheck qualification remain source-bound evidence; no contributor decision remains.\n\nThe standalone codeload parser at ff7e8b92523c6ab3d38eb187069c3d82fa7f3c7b is now qualified by the 2,069-entry canonical Fetch/Verify and the complete existing licensecheck owner (93 passing cases, native 18828cdb-bfcd-4971-a16f-359208b4e1b7). Root has sent the actual contributor-review question for this exact published commit before opening its independent upstream PR. The parser proposal is awaiting that decision; no upstream PR has been opened.\n\nThe existing Linux source archive uses the direct GitHub codeload endpoint, which the license audit parser did not recognize. The reviewed correction adds its tar.gz/zip URL form and preserves complete qualified refs, with three focused parser cases. The standalone branch is published and independently source-reviewed; the same patch is integrated into the active CodeQL audit source 1983251aa407ac6b20e3c76a0e209174404490a3. Canonical dependency audit and the full checker test remain pending. No contributor-review hold or upstream submission readiness is claimed.",
+      "updatedAt": "2026-10-24T13:14:50.403609+00:00",
+      "summary": "Matching import #16188 at dcab91809e failed Buildkite 52158. The AMD64 build, ARM64 build and Nogo logs show the same missing validate.pb.go protoreflect archive as #15981; Nogo also reports Docker plugin.pb.go. These three observed failures route to root and Node’s existing full #16098/minimal compiler-dependency contrast for the exact generated owners. No per-import duplicate qualification is needed. The other five failed-job causes were not inspected in this bounded read, and the AMD64 build log is truncated. The ARM64 build job emits an AMD64 analyzer target here; the job label alone is not target-architecture proof. All eight native failures remain visible; no candidate repair is credited as passing current import CI.\n\nCurrent upstream #16335 at 131c3169b9 is an alternate repair spanning all three categories: the NVIDIA availability flag, .clang-tidy ignoring Benchmark component headers, and Nogo excluding embedded sources that their owner does not analyze. Its own Buildkite 52157 and internal 33884 checks pass, but it remains open and has not repaired these retained failed imports. #16098 separately changes exported compiler/runtime dependencies, while #16313 adds umbrella-header export annotations. These overlapping goals do not establish equivalence or supersession; keep all existing owners and wait for actual landing and fresh import results.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at bb2628f9faaf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved standalone codeload parser is now open as google/gvisor#15970 at exact ff7e8b92523c6ab3d38eb187069c3d82fa7f3c7b. The master base, author, commit title and wrapped commit body with attribution were read back and verified. The 2,069-entry canonical Fetch/Verify and complete 93-case licensecheck qualification remain source-bound evidence; no contributor decision remains.\n\nThe standalone codeload parser at ff7e8b92523c6ab3d38eb187069c3d82fa7f3c7b is now qualified by the 2,069-entry canonical Fetch/Verify and the complete existing licensecheck owner (93 passing cases, native 18828cdb-bfcd-4971-a16f-359208b4e1b7). Root has sent the actual contributor-review question for this exact published commit before opening its independent upstream PR. The parser proposal is awaiting that decision; no upstream PR has been opened.\n\nThe existing Linux source archive uses the direct GitHub codeload endpoint, which the license audit parser did not recognize. The reviewed correction adds its tar.gz/zip URL form and preserves complete qualified refs, with three focused parser cases. The standalone branch is published and independently source-reviewed; the same patch is integrated into the active CodeQL audit source 1983251aa407ac6b20e3c76a0e209174404490a3. Canonical dependency audit and the full checker test remain pending. No contributor-review hold or upstream submission readiness is claimed.",
       "followup": {
         "owner": "root / node_tls_sni",
         "disposition": "Agent work: shared generated-protobuf import failure; existing contrast owns validation",
         "sourceHead": "bb2628f9faafc740a6b302b7f9fbabe020f661eb",
-        "observedAt": "2026-10-24T13:05:36.508839+00:00",
-        "nextAction": "Reuse the existing #15981 validate_go/Docker runtime contrast against full #16098 and the minimal extraction. Root owns any source delivery. Keep all eight Buildkite 52158 failures visible and retain the five uninspected-job limit; do not start another qualification or post a duplicate reply.",
+        "observedAt": "2026-10-24T13:14:50.403609+00:00",
+        "nextAction": "Reuse the existing #15981 validate_go/Docker runtime contrast against full #16098 and the minimal extraction. Root owns any source delivery. Keep all eight Buildkite 52158 failures visible and retain the five uninspected-job limit; do not start another qualification or post a duplicate reply. Track current #16335 as an alternate upstream repair, with its own passing checks distinct from these failed imports; do not close or duplicate #16098/#16313 merely because their goals overlap.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/bb2628f9faafc740a6b302b7f9fbabe020f661eb",
           "https://github.com/google/gvisor/pull/16188",
           "https://buildkite.com/gvisor/pipeline/builds/52158#01a16db3-17d7-407b-82e2-28e22186289f",
           "https://buildkite.com/gvisor/pipeline/builds/52158#01a16da5-709a-4604-af1c-cba7e7d09adc",
           "https://buildkite.com/gvisor/pipeline/builds/52158#01a16dad-ab77-4ec2-ba4b-c54bcc634be7",
-          "https://github.com/google/gvisor/pull/16098"
+          "https://github.com/google/gvisor/pull/16098",
+          "https://github.com/google/gvisor/pull/16335",
+          "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a",
+          "https://buildkite.com/gvisor/pipeline/builds/52157"
         ]
       },
       "evidence": [
@@ -14841,6 +14844,10 @@
         {
           "label": "Candidate compiler dependency repair; shared validation pending",
           "url": "https://github.com/google/gvisor/pull/16098"
+        },
+        {
+          "label": "Alternate upstream repair at current head; affected imports still unresolved",
+          "url": "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a"
         }
       ]
     },
@@ -15684,14 +15691,14 @@
       "url": "https://github.com/google/gvisor/pull/15981",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T13:05:36.508839+00:00",
-      "summary": "Import #16241 at fca4c84e10 failed all eight Buildkite 52156 jobs. Root inspected all eight logs: both architecture builds, Nogo, cgroupv1 unit tests and ARM64 unit tests report a missing protoreflect archive; Nogo also names Docker plugin.pb.go. GPU smoke and all three unit jobs report HTTP 404 for the ARM64 NVIDIA 620.51.03 installer, tracked by existing #16335. C++ lint includes the Benchmark umbrella-header warnings tracked by #16313. These are observed, overlapping diagnostics, not exclusive causes or verified fixes; some logs are truncated. The import contains only the expected three user-resolution files on d15d5319c3. Root owns the diagnosis and Node owns the shared focused validate_go/Docker runtime contrast against full #16098 and its minimal compiler-dependency extraction. The same contrast covers #15970/import #16188; no duplicate qualification. Public import failures remain agent work, with no new source amendment or public reply.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
+      "updatedAt": "2026-10-24T13:14:50.403609+00:00",
+      "summary": "Import #16241 at fca4c84e10 failed all eight Buildkite 52156 jobs. Root inspected all eight logs: both architecture builds, Nogo, cgroupv1 unit tests and ARM64 unit tests report a missing protoreflect archive; Nogo also names Docker plugin.pb.go. GPU smoke and all three unit jobs report HTTP 404 for the ARM64 NVIDIA 620.51.03 installer, tracked by existing #16335. C++ lint includes the Benchmark umbrella-header warnings tracked by #16313. These are observed, overlapping diagnostics, not exclusive causes or verified fixes; some logs are truncated. The import contains only the expected three user-resolution files on d15d5319c3. Root owns the diagnosis and Node owns the shared focused validate_go/Docker runtime contrast against full #16098 and its minimal compiler-dependency extraction. The same contrast covers #15970/import #16188; no duplicate qualification. Public import failures remain agent work, with no new source amendment or public reply.\n\nCurrent upstream #16335 at 131c3169b9 is an alternate repair spanning all three categories: the NVIDIA availability flag, .clang-tidy ignoring Benchmark component headers, and Nogo excluding embedded sources that their owner does not analyze. Its own Buildkite 52157 and internal 33884 checks pass, but it remains open and has not repaired these retained failed imports. #16098 separately changes exported compiler/runtime dependencies, while #16313 adds umbrella-header export annotations. These overlapping goals do not establish equivalence or supersession; keep all existing owners and wait for actual landing and fresh import results.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
       "followup": {
         "owner": "root / node_tls_sni",
         "sourceHead": "b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
-        "observedAt": "2026-10-24T13:05:36.508839+00:00",
+        "observedAt": "2026-10-24T13:14:50.403609+00:00",
         "disposition": "Agent work: diagnose generated-protobuf imports and validate candidate compiler dependency repair",
-        "nextAction": "Finish the one shared validate_go/Docker runtime contrast for #15981 and #15970; root owns any source delivery. Follow existing #16335 (ARM64 installer availability) and #16313 (Benchmark headers) through the current watcher. Retain all eight native failed jobs until fresh import checks resolve them; overlapping diagnostics do not establish exclusive causes or a passing import. No duplicate run, patch or reply.",
+        "nextAction": "Finish the one shared validate_go/Docker runtime contrast for #15981 and #15970; root owns any source delivery. Follow existing #16335 (ARM64 installer availability) and #16313 (Benchmark headers) through the current watcher. Retain all eight native failed jobs until fresh import checks resolve them; overlapping diagnostics do not establish exclusive causes or a passing import. No duplicate run, patch or reply. Track current #16335 as an alternate upstream repair, with its own passing checks distinct from these failed imports; do not close or duplicate #16098/#16313 merely because their goals overlap.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15981#issuecomment-6275554145",
           "https://github.com/tamird/gvisor/commit/b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
@@ -15702,7 +15709,9 @@
           "https://github.com/google/gvisor/pull/16241",
           "https://buildkite.com/gvisor/pipeline/builds/52156",
           "https://github.com/google/gvisor/pull/16335",
-          "https://github.com/google/gvisor/pull/16313"
+          "https://github.com/google/gvisor/pull/16313",
+          "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a",
+          "https://buildkite.com/gvisor/pipeline/builds/52157"
         ]
       },
       "evidence": [
@@ -15757,6 +15766,10 @@
         {
           "label": "Existing Benchmark umbrella-header fix",
           "url": "https://github.com/google/gvisor/pull/16313"
+        },
+        {
+          "label": "Alternate upstream repair at current head; affected imports still unresolved",
+          "url": "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a"
         }
       ]
     },
@@ -21338,24 +21351,38 @@
       "repo": "google/gvisor",
       "number": 16335,
       "ref": "test/cl1006187014",
-      "head": "d5c40c82dcd94f947fcb3a71fc8aaf10fced24af",
+      "head": "131c3169b9128ef02f0807cccbb3030b000bf90a",
       "title": "Mark the NVIDIA 620.51.03 ARM64 installer unavailable",
       "url": "https://github.com/google/gvisor/pull/16335",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-24T09:19:58.280493+00:00",
-      "summary": "Existing upstream Copybara fix for the ARM64 620.51.03 download returning HTTP 404. Exact d5c40c82 adds NoPublicARM64Installer while preserving the ARM64 checksum and the existing no-x86-driver marker. It owns the shared GPU checksum and three unit-job failures observed on #16249 import #16329. This is upstream work being followed, not a new agent proposal or a runtime validation claim.",
+      "updatedAt": "2026-10-24T13:14:50.403609+00:00",
+      "summary": "Current upstream Copybara PR at 131c3169b9128ef02f0807cccbb3030b000bf90a includes three changes: marking the ARM64 620.51.03 installer unavailable while retaining its checksum, ignoring Benchmark component headers in .clang-tidy, and excluding embedded Go sources from Nogo when their owner does not analyze them. Root verified the current three-file diff. The 13:12:27 UTC provider snapshot shows Buildkite pipeline 52157 and internal 33884 passing; the PR remains open and mergeable. This is an alternate upstream repair for diagnostics observed on #15981/import #16241 and #15970/import #16188, alongside its existing #16249/import #16329 coverage. Those failed imports remain unresolved until fresh checks run after landing. #16098 changes compiler/runtime dependency exports, and #16313 adds umbrella-header export annotations; neither is declared equivalent or superseded. No duplicate patch, closure, public reply or new contributor decision is authorized by this overlap.\n\nEarlier NVIDIA-only source record:\n\nExisting upstream Copybara fix for the ARM64 620.51.03 download returning HTTP 404. Exact d5c40c82 adds NoPublicARM64Installer while preserving the ARM64 checksum and the existing no-x86-driver marker. It owns the shared GPU checksum and three unit-job failures observed on #16249 import #16329. This is upstream work being followed, not a new agent proposal or a runtime validation claim.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "d5c40c82dcd94f947fcb3a71fc8aaf10fced24af",
-        "observedAt": "2026-10-24T09:19:58.280493+00:00",
-        "disposition": "Existing upstream owner for shared ARM64 driver availability failure",
-        "nextAction": "Observe landing through the existing watcher, notify root and follow the affected fresh import. Do not submit a duplicate patch or comment.",
+        "sourceHead": "131c3169b9128ef02f0807cccbb3030b000bf90a",
+        "observedAt": "2026-10-24T13:14:50.403609+00:00",
+        "disposition": "Open upstream alternate repair across three shared failure categories; its own checks pass",
+        "nextAction": "Observe the actual #16335 landing through the existing watcher and notify root, then follow fresh affected imports. Keep #16098 compiler/runtime exports and #16313 umbrella export annotations distinct; retain prior failed jobs and do not infer equivalence, close overlapping PRs or submit a duplicate.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16335",
-          "https://buildkite.com/gvisor/pipeline/builds/52132"
+          "https://buildkite.com/gvisor/pipeline/builds/52132",
+          "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a",
+          "https://buildkite.com/gvisor/pipeline/builds/52157",
+          "https://github.com/google/gvisor/pull/15981",
+          "https://github.com/google/gvisor/pull/15970"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Current three-category upstream repair",
+          "url": "https://github.com/google/gvisor/pull/16335/commits/131c3169b9128ef02f0807cccbb3030b000bf90a"
+        },
+        {
+          "label": "Current-head public pipeline passed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52157"
+        }
+      ]
     },
     {
       "id": "branch:lazy-file-lock-trees",
