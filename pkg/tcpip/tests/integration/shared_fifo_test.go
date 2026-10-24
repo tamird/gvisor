@@ -82,6 +82,56 @@ func TestVirtualTCPApplicationOrder(t *testing.T) {
 
 const fifoDemandAt = 250 * time.Millisecond
 
+// TestVirtualTCPRecoveryDiagnostic observes the existing mixed-flow pair without
+// changing its packets, demand, clocks, or queue. The callback compares the full
+// original observations to the retained first-write run before interpreting it.
+func TestVirtualTCPRecoveryDiagnostic(t *testing.T) {
+	if got := runtime.GOMAXPROCS(0); got != 1 {
+		t.Fatalf("GOMAXPROCS = %d, want 1", got)
+	}
+	for _, write := range [][2]int{{0, 1}, {1, 0}} {
+		t.Run(fmt.Sprintf("cubic_reno_setup01_write%d%d", write[0], write[1]), func(t *testing.T) {
+			runSharedFIFOWithApplicationOrder(t, []string{"cubic", "reno"}, []int{0, 1}, 0,
+				&fifoApplicationOrder{FirstWriteOrder: write[:], diagnostic: &fifoRecoveryDiagnostic{}})
+		})
+	}
+}
+
+// Diagnostic records cover only the Reno sender in the existing 0.6–6 s
+// interval. Probe records are post-ACK; State records are read after each fence
+// and retained when counters or congestion state change, including timer work.
+type fifoRecoveryDiagnostic struct {
+	Probes []fifoDiagnosticProbe
+	State  []fifoDiagnosticState
+	Wire   []fifoDiagnosticWire
+}
+
+type fifoDiagnosticProbe struct {
+	AtNS, LastSendNS, RTONS, RACKXmitNS, RACKRTTNS, ReoWndNS int64
+	Cwnd, Ssthresh, Outstanding, SackedOut, DupACKs, CAAcks  int
+	SndUna, SndNxt, SndWnd, RACKEnd, FACK, MaxSACKED         uint32
+	Reord, SpuriousRecovery                                  bool
+	Recovery                                                 tcp.TCPFastRecoveryState
+	SACK                                                     []header.SACKBlock
+}
+
+type fifoDiagnosticState struct {
+	AtNS                                   int64
+	Timeouts, Retransmits, FastRetransmits uint64
+	Cwnd, Ssthresh                         uint32
+	RTONS                                  int64
+	CCState                                tcpip.CongestionControlState
+}
+
+type fifoDiagnosticWire struct {
+	Event        int
+	Flags        uint8
+	Window       uint16
+	TS           bool
+	TSVal, TSEcr uint32
+	SACK         []header.SACKBlock
+}
+
 type fifoFirstWrite struct {
 	Flow     int
 	AtNS     int64
@@ -89,6 +139,7 @@ type fifoFirstWrite struct {
 }
 
 type fifoApplicationOrder struct {
+	diagnostic         *fifoRecoveryDiagnostic
 	FirstWriteOrder    []int
 	DemandAtNS         int64
 	PreGatePackets     []string
@@ -174,6 +225,10 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 	const windowStart = 2 * time.Second
 	const windowEnd = 6 * time.Second
 	const maxTime = 30 * time.Second
+	var diagnostic *fifoRecoveryDiagnostic
+	if application != nil {
+		diagnostic = application.diagnostic
+	}
 	clock := &completedClock{ManualClock: faketime.NewManualClock()}
 	now := func() time.Duration { return clock.NowMonotonic().Sub(tcpip.MonotonicTime{}) }
 	var stacks [2]*stack.Stack
@@ -197,6 +252,17 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 		probeMu.Lock()
 		defer probeMu.Unlock()
 		probes[index] = row
+		if diagnostic != nil && index == 1 && row.AtNS >= int64(600*time.Millisecond) && row.AtNS <= int64(windowEnd) {
+			s := state.Sender
+			diagnostic.Probes = append(diagnostic.Probes, fifoDiagnosticProbe{
+				AtNS: row.AtNS, LastSendNS: int64(s.LastSendTime.Sub(tcpip.MonotonicTime{})), RTONS: int64(s.RTO),
+				RACKXmitNS: int64(s.RACKState.XmitTime.Sub(tcpip.MonotonicTime{})), RACKRTTNS: int64(s.RACKState.RTT), ReoWndNS: int64(s.RACKState.ReoWnd),
+				Cwnd: s.SndCwnd, Ssthresh: s.Ssthresh, Outstanding: s.Outstanding, SackedOut: s.SackedOut, DupACKs: s.DupAckCount, CAAcks: s.SndCAAckCount,
+				SndUna: uint32(s.SndUna), SndNxt: uint32(s.SndNxt), SndWnd: uint32(s.SndWnd), RACKEnd: uint32(s.RACKState.EndSequence), FACK: uint32(s.RACKState.FACK),
+				MaxSACKED: uint32(state.SACK.MaxSACKED), Reord: s.RACKState.Reord, SpuriousRecovery: s.SpuriousRecovery,
+				Recovery: s.FastRecovery, SACK: append([]header.SACKBlock(nil), state.SACK.ReceivedBlocks...),
+			})
+		}
 		negativeSACK = negativeSACK || row.SackedOut < 0
 		if active[index] != state.Sender.FastRecovery.Active {
 			active[index] = state.Sender.FastRecovery.Active
@@ -350,6 +416,11 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 						flow.highest = max(flow.highest, end)
 					}
 					row := [13]int64{int64(len(events)), int64(now()), int64(side), int64(index), int64(packet.Size()), int64(len(payload)), int64(segment.SequenceNumber()), int64(segment.AckNumber()), -1, -1, -1, 0, retx}
+					if diagnostic != nil && index == 1 && now() >= 600*time.Millisecond && now() <= windowEnd {
+						options := header.ParseTCPOptions(segment.Options())
+						diagnostic.Wire = append(diagnostic.Wire, fifoDiagnosticWire{Event: len(events), Flags: uint8(segment.Flags()), Window: segment.WindowSize(),
+							TS: options.TS, TSVal: options.TSVal, TSEcr: options.TSEcr, SACK: append([]header.SACKBlock(nil), options.SACKBlocks...)})
+					}
 					for len(queued) != 0 && queued[0].end <= now() {
 						queuedBytes -= queued[0].bytes
 						queued = queued[1:]
@@ -377,7 +448,34 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			}
 		}
 	}
-	fence := func() { drainVirtualTCP(t, clock, stacks[:], capture) }
+	fence := func() {
+		drainVirtualTCP(t, clock, stacks[:], capture)
+		if diagnostic == nil || now() < 600*time.Millisecond || now() > windowEnd {
+			return
+		}
+		endpoint := flows[1].client
+		stats := endpoint.Stats().(*tcp.Stats)
+		var info tcpip.TCPInfoOption
+		if err := endpoint.GetSockOpt(&info); err != nil {
+			t.Fatal(err)
+		}
+		row := fifoDiagnosticState{Timeouts: stats.SendErrors.Timeouts.Value(), Retransmits: stats.SendErrors.Retransmits.Value(), FastRetransmits: stats.SendErrors.FastRetransmit.Value(),
+			Cwnd: info.SndCwnd, Ssthresh: info.SndSsthresh, RTONS: int64(info.RTO), CCState: info.CcState}
+		probeMu.Lock()
+		defer probeMu.Unlock()
+		if len(diagnostic.Probes) > 10000 || len(diagnostic.State) > 10000 || len(diagnostic.Wire) > 10000 {
+			t.Fatal("bounded recovery diagnostic exceeded")
+		}
+		if len(diagnostic.State) != 0 {
+			previous := diagnostic.State[len(diagnostic.State)-1]
+			previous.AtNS = 0
+			if previous == row {
+				return
+			}
+		}
+		row.AtNS = int64(now())
+		diagnostic.State = append(diagnostic.State, row)
+	}
 	sample := func() {
 		probeMu.Lock()
 		latest := append([]senderObservation(nil), probes...)
@@ -405,6 +503,14 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 	defer func() {
 		probeMu.Lock()
 		changes := append([]fifoRecovery(nil), recoveries...)
+		var diagnosticCopy *fifoRecoveryDiagnostic
+		if diagnostic != nil {
+			diagnosticCopy = &fifoRecoveryDiagnostic{
+				Probes: append([]fifoDiagnosticProbe(nil), diagnostic.Probes...),
+				State:  append([]fifoDiagnosticState(nil), diagnostic.State...),
+				Wire:   append([]fifoDiagnosticWire(nil), diagnostic.Wire...),
+			}
+		}
 		probeMu.Unlock()
 		var results []fifoFlowResult
 		for index := range flows {
@@ -432,9 +538,10 @@ func runSharedFIFOWithApplicationOrder(t *testing.T, algorithms []string, order 
 			RTOs               uint64
 			SACKRecoveries     uint64
 			TLPRecoveries      uint64
-			ApplicationOrder   *fifoApplicationOrder `json:",omitempty"`
+			ApplicationOrder   *fifoApplicationOrder   `json:",omitempty"`
+			Diagnostic         *fifoRecoveryDiagnostic `json:",omitempty"`
 		}{t.Name(), algorithms, order, int64(stagger), rate, int64(delay), capacity, int64(windowStart), int64(windowEnd), int64(now()), results, events, samples, changes,
-			stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.SACKRecovery.Value(), stacks[0].Stats().TCP.TLPRecovery.Value(), application}
+			stacks[0].Stats().TCP.Timeouts.Value(), stacks[0].Stats().TCP.SACKRecovery.Value(), stacks[0].Stats().TCP.TLPRecovery.Value(), application, diagnosticCopy}
 		encoded, err := json.Marshal(result)
 		if err != nil {
 			t.Fatal(err)

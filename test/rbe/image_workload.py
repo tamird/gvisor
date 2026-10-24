@@ -1,8 +1,4 @@
-"""Qualify first-write order at fixed established-connection state.
-
-The raw per-flow observations remain authoritative; interval service is separate
-from payload delivered during the final drain.
-"""
+"""Observe the existing two-case FIFO recovery stall without changing traffic."""
 from collections import deque
 import hashlib
 import json
@@ -17,20 +13,17 @@ import qualification_report as report
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
 SDK = "@io_bazel_rules_go//go:go"
 PYTHON = "@rules_python//python/bin:python"
-ROOT = "TestVirtualTCPApplicationOrder"
-LEAVES = {
-    f"{first}_{second}_setup{setup}_write{write}"
-    for first, second, setups in (("cubic", "reno", ("01", "10")),
-                                  ("reno", "reno", ("01",)),
-                                  ("cubic", "cubic", ("01",)))
-    for setup in setups
-    for write in ("01", "10")
-}
+ROOT = "TestVirtualTCPRecoveryDiagnostic"
+LEAVES = {"cubic_reno_setup01_write01", "cubic_reno_setup01_write10"}
 CASES = {ROOT + "/" + name for name in LEAVES}
 PARENTS = {ROOT}
-RACE_LEAVES = {"cubic_reno_setup01_write01", "cubic_reno_setup01_write10",
-               "reno_reno_setup01_write10", "cubic_cubic_setup01_write10"}
-RACE_CASES = {ROOT + "/" + name for name in RACE_LEAVES}
+# Exact full observations from the retained 0c3e first-write run, before adding
+# this diagnostic. Comparing the entire old object also checks every packet,
+# sender sample, recovery observation, payload hash and completion instant.
+REFERENCES = {
+    "cubic_reno_setup01_write01": "2b66088ff68e0d53396f1be5926f457020317add57d44053a8a487b7f7c4d080",
+    "cubic_reno_setup01_write10": "741ab62dc735d4cd299a25037ed98aff35de9e68f7d7899ffc0266574a6fa2e7",
+}
 
 
 def observations(evidence: Path, phase: str, runs: int, cases: set[str] = CASES,
@@ -335,7 +328,7 @@ def check_observation(value: dict) -> dict:
 def comparisons(observed: dict) -> list[dict]:
     """Matched comparisons report a NIC-order non-effect without failing it."""
     pairs = []
-    for group in ("cubic_reno_setup01", "cubic_reno_setup10", "reno_reno_setup01", "cubic_cubic_setup01"):
+    for group in ("cubic_reno_setup01",):
         before, after = [observed[ROOT + "/" + group + "_write" + suffix] for suffix in ("01", "10")]
         if before["pre_gate"] != after["pre_gate"]:
             raise ValueError(f"{group}: setup packet/state evidence changed with application order")
@@ -358,6 +351,40 @@ def comparisons(observed: dict) -> list[dict]:
     return pairs
 
 
+def check_diagnostic(value: dict) -> dict:
+    """Require identical old traffic, and retain only the new observed state."""
+    name = value["Case"].removeprefix(ROOT + "/")
+    original = {key: item for key, item in value.items() if key != "Diagnostic"}
+    original["Case"] = "TestVirtualTCPApplicationOrder/" + name
+    encoded = json.dumps(original, sort_keys=True, separators=(",", ":")).encode()
+    if hashlib.sha256(encoded).hexdigest() != REFERENCES[name]:
+        raise ValueError(f"{name}: observation changed the retained traffic/state")
+    diagnostic = value["Diagnostic"]
+    if set(diagnostic) != {"Probes", "State", "Wire"}:
+        raise ValueError(f"{name}: diagnostic shape differs")
+    for kind, rows in diagnostic.items():
+        if not rows or len(rows) > 10000:
+            raise ValueError(f"{name}: missing or excessive {kind}")
+        previous = -1
+        for row in rows:
+            if kind == "Wire":
+                event = value["Events"][row["Event"]]
+                at = event[1]
+                if event[3] != 1 or not 0 <= row["Flags"] < 256 or not 0 <= row["Window"] < 65536:
+                    raise ValueError(f"{name}: wrong wire identity")
+            else:
+                at = row["AtNS"]
+            if not 600000000 <= at <= 6000000000 or at < previous:
+                raise ValueError(f"{name}: diagnostic time/order differs")
+            previous = at
+    for before, after in zip(diagnostic["State"], diagnostic["State"][1:]):
+        if any(after[key] < before[key] for key in ("Timeouts", "Retransmits", "FastRetransmits")):
+            raise ValueError(f"{name}: per-endpoint counters went backwards")
+    return {"original_observation_sha256": REFERENCES[name], "flow": 1,
+            "algorithm": "reno", "observed": diagnostic,
+            "scope": "Existing post-ACK probe and post-fence public endpoint counters/TCPInfo, plus original TCP options. No production hook or required diagnosis."}
+
+
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     if config["targets"] != [OWNER, OWNER + "_nogo"] or not config["matched_inputs"]:
@@ -374,11 +401,6 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     result = {"status": "INCOMPLETE", "source": config["source"], "checks": [], "phases": {}}
     errors = []
     try:
-        race_prep = invoke("race-dependency-preparation", ["cquery", "--config=x86_64", "--config=race",
-                            "--compilation_mode=opt", *config["consumer_options"],
-                            "--lockfile_mode=update", "--noannounce_rc", "--output=label", OWNER],
-                           "command", targets=[])
-        result["checks"].append({"name": "race-dependency-preparation", "result": race_prep})
         sdk = invoke("declared-go-sdk", ["run", *options, SDK, "--", "env", "-json", "GOROOT", "GOVERSION"],
                      "command", targets=[])
         result["checks"].append({"name": "declared-go-sdk", "result": sdk})
@@ -415,14 +437,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 os.environ["PATH"] = original_path
         except (OSError, ValueError, RuntimeError) as error:
             errors.append(str(error))
-        normal = invoke("virtual-normal", ["test", *options, *selected, "--runs_per_test=2",
+        normal = invoke("virtual-normal", ["test", *options, *selected, "--runs_per_test=1",
                          "--test_arg=-test.run=^" + ROOT + "$/^(" + "|".join(sorted(LEAVES)) + ")$", OWNER],
                         "test", targets=[OWNER])
         result["checks"].append({"name": "virtual-normal", "result": normal})
-        race = invoke("virtual-race", ["test", *options, "--config=race", *selected, "--runs_per_test=1",
-                       "--test_arg=-test.run=^" + ROOT + "$/^(" + "|".join(sorted(RACE_LEAVES)) + ")$", OWNER],
-                      "test", targets=[OWNER])
-        result["checks"].append({"name": "virtual-race", "result": race})
         nogo = invoke("virtual-nogo", ["test", *options, *selected, "--runs_per_test=1", OWNER + "_nogo"],
                       "test", targets=[OWNER + "_nogo"])
         result["checks"].append({"name": "virtual-nogo", "result": nogo})
@@ -431,12 +449,10 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                       if row["result"]["status"] != "PASS")
         if errors:
             raise RuntimeError("; ".join(errors))
-        normal_observed = observations(evidence, "virtual-normal", 2)
-        race_observed = observations(evidence, "virtual-race", 1, RACE_CASES, PARENTS)
-        for name, value in race_observed["reference_sample"].items():
-            if value != normal_observed["reference_sample"][name]:
-                raise ValueError(f"{name}: race observation differs from both normal runs")
-        result["phases"] = {"virtual-normal": normal_observed, "virtual-race": race_observed}
+        normal_observed = observations(evidence, "virtual-normal", 1)
+        result["phases"] = {"virtual-normal": normal_observed}
+        result["diagnostics"] = {name: check_diagnostic(value)
+                                 for name, value in normal_observed["reference_sample"].items()}
         if len(nogo["executed"]) != 1:
             raise ValueError("Expected exactly one owning analyzer attempt")
         attempt = nogo["executed"][0]
