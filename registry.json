@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T06:19:32.054223+00:00",
+    "updatedAt": "2026-10-24T06:31:04.667511+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -13619,8 +13619,8 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15937",
       "status": "open",
-      "updatedAt": "2026-10-24T01:41:57.339121+00:00",
-      "summary": "Current conflict repair is published at 9da6f49c82 on master 491c2af99a. It preserves the landed metric-test inclusion while removing only the coretag exclusion. Independent source review confirms the same original operation and unchanged remaining source; GitHub verifies this exact head mergeable. Current-head CI and existing maintainer review requests remain separate. No new review or runtime execution is claimed.\n\nEarlier evidence:\n\nCore-tagging selector correction rebased, preserving the landed trace-test inclusion. Exact head 6b39c8e12c is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe authorized Gazelle rebase is complete at 3f8833c521. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 3f8833c521759f8982130e180115a67af426c52b on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nRoot published the independently reviewed rebase as exact signed b1bcc69621 on current upstream 82396309. Its only remaining change removes the coretag unit-test exclusion; the complete Make hunk is identical to approved b210. Upstream d838 already supplies the valid support probe, so BUILD/test/production remain unchanged from upstream. The title and body now describe the selector-only change. No new comment, reviewer request or runtime qualification was needed. Exact new-head Gazelle job118816302756 reports only the unused //pkg/zip dependency in tools/nogo/check/BUILD, already owned by #16031; the selector itself has no new demonstrated failure.\n\nThe 18:30 source observation reports the contributor-approved core-tagging PR b210a0034 as conflicting with current base 9e9495997. Existing strict-SMT guest/analyzer evidence and native unsupported-worker limitations remain preserved. Root owns the bounded rebase and compatibility review in the released gvisor-15049 checkout; no new human feedback or source mutation is implied.\n\nSkip only Linux ENODEV when active SMT is unavailable and restore the coretag unit selector. Both strict SMT guests execute and pass the unchanged functional assertions, with actual CONFIG_SCHED_CORE and thread topology enforced. Both raw native owners skip and retain an incomplete qualification verdict. The published PR is contributor-approved; no contributor decision is pending. The context-only Make rebase is published at 6be1abc48d, preserving the intervening tracereplay landing and the entire reviewed topic change. Independent source review accepted it; no new workload or public review request was needed.",
+      "updatedAt": "2026-10-24T06:24:54.773472+00:00",
+      "summary": "Etienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nCurrent conflict repair is published at 9da6f49c82 on master 491c2af99a. It preserves the landed metric-test inclusion while removing only the coretag exclusion. Independent source review confirms the same original operation and unchanged remaining source; GitHub verifies this exact head mergeable. Current-head CI and existing maintainer review requests remain separate. No new review or runtime execution is claimed.\n\nEarlier evidence:\n\nCore-tagging selector correction rebased, preserving the landed trace-test inclusion. Exact head 6b39c8e12c is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe authorized Gazelle rebase is complete at 3f8833c521. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 3f8833c521759f8982130e180115a67af426c52b on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nRoot published the independently reviewed rebase as exact signed b1bcc69621 on current upstream 82396309. Its only remaining change removes the coretag unit-test exclusion; the complete Make hunk is identical to approved b210. Upstream d838 already supplies the valid support probe, so BUILD/test/production remain unchanged from upstream. The title and body now describe the selector-only change. No new comment, reviewer request or runtime qualification was needed. Exact new-head Gazelle job118816302756 reports only the unused //pkg/zip dependency in tools/nogo/check/BUILD, already owned by #16031; the selector itself has no new demonstrated failure.\n\nThe 18:30 source observation reports the contributor-approved core-tagging PR b210a0034 as conflicting with current base 9e9495997. Existing strict-SMT guest/analyzer evidence and native unsupported-worker limitations remain preserved. Root owns the bounded rebase and compatibility review in the released gvisor-15049 checkout; no new human feedback or source mutation is implied.\n\nSkip only Linux ENODEV when active SMT is unavailable and restore the coretag unit selector. Both strict SMT guests execute and pass the unchanged functional assertions, with actual CONFIG_SCHED_CORE and thread topology enforced. Both raw native owners skip and retain an incomplete qualification verdict. The published PR is contributor-approved; no contributor decision is pending. The context-only Make rebase is published at 6be1abc48d, preserving the intervening tracereplay landing and the entire reviewed topic change. Independent source review accepted it; no new workload or public review request was needed.",
       "evidence": [
         {
           "label": "Strict guest and analyzer qualification",
@@ -13658,14 +13658,61 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "9da6f49c82abc45876590cffb68f38ece09ef76a",
-        "observedAt": "2026-10-24T01:41:57.339121+00:00",
-        "disposition": "Mechanical conflict repair delivered; current checks and existing review pending",
-        "nextAction": "Follow current-head checks, existing maintainer review requests and exact-source import progression through the existing refresh. The Make context conflict is repaired; do not repeat the rebase or send another notification.",
+        "observedAt": "2026-10-24T06:24:54.773472+00:00",
+        "disposition": "Exact head approved; public validation passed; import pending",
+        "nextAction": "Follow the approved exact head and matching import through the existing watcher. No source amendment, acknowledgement or repeat reviewer request is needed.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39477252830/job/118816302756",
           "https://github.com/google/gvisor/pull/16048",
           "https://github.com/tamird/gvisor/commit/6be1abc48dccd28dea019ea0783df8b59b65f851",
-          "https://github.com/tamird/gvisor/commit/6b39c8e12c7e0c42f7342e9520747c4a3d529356"
+          "https://github.com/tamird/gvisor/commit/6b39c8e12c7e0c42f7342e9520747c4a3d529356",
+          "https://github.com/google/gvisor/pull/15937#pullrequestreview-5637140919"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Exact-head approval triaged",
+            "nextAction": "Etienne approved this exact head without requesting source changes. Continue ordinary import tracking; no reply requested.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15937#pullrequestreview-5637140919"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "9da6f49c82abc45876590cffb68f38ece09ef76a",
+              "approvedAt": "2026-10-24T06:21:33Z",
+              "headCommittedAt": "2026-10-24T01:37:47Z",
+              "headIntroducedAt": "2026-10-24T01:39:19Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT__xtw",
+                    "url": "https://github.com/google/gvisor/pull/15937#pullrequestreview-5637140919",
+                    "body": "Cool spotting",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-24T06:21:33Z",
+                    "updatedAt": "2026-10-24T06:21:34Z",
+                    "authorAssociation": "COLLABORATOR",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "9da6f49c82abc45876590cffb68f38ece09ef76a"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "9da6f49c82abc45876590cffb68f38ece09ef76a"
+            }
+          }
         ]
       },
       "ciRecovery": {
@@ -13707,17 +13754,64 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 1e4bf6e0d617 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier without changing dependency versions or license records. All four focused parser/ABI owners pass at integration c5ec864087: 52 cases pass, with 18 existing unavailable-source skips and no failures or missing results. Validation used the integrated LLVM 23.1.2 supplier; upstream retains the older pin with the same source-verified target-selection API. Published as ready PR #15940 after contributor approval. The public buildifier requested multiline list formatting; that formatting-only amendment is published at 297d9b6582 with unchanged executable behavior and description. Exact head, master base and single-commit scope are verified. No contributor decision remains. This does not replace the separate compiler migration.",
+      "updatedAt": "2026-10-24T06:24:54.773472+00:00",
+      "summary": "Etienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nThe requested post-#16046 rebase is published at 1e4bf6e0d617 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier without changing dependency versions or license records. All four focused parser/ABI owners pass at integration c5ec864087: 52 cases pass, with 18 existing unavailable-source skips and no failures or missing results. Validation used the integrated LLVM 23.1.2 supplier; upstream retains the older pin with the same source-verified target-selection API. Published as ready PR #15940 after contributor approval. The public buildifier requested multiline list formatting; that formatting-only amendment is published at 297d9b6582 with unchanged executable behavior and description. Exact head, master base and single-commit scope are verified. No contributor decision remains. This does not replace the separate compiler migration.",
       "followup": {
         "owner": "root",
-        "disposition": "Formatting amendment published; current public checks pending",
+        "disposition": "Exact head approved; public validation passed; import pending",
         "sourceHead": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "nextAction": "Follow current-head public lint and actionable upstream feedback through the existing status workflow.",
+        "observedAt": "2026-10-24T06:24:54.773472+00:00",
+        "nextAction": "Follow the approved exact head and matching import through the existing watcher. No source amendment, acknowledgement or repeat reviewer request is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/39083076451",
-          "https://github.com/tamird/gvisor/commit/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912"
+          "https://github.com/tamird/gvisor/commit/1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
+          "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088"
+        ],
+        "attentionDispositions": [
+          {
+            "reason": "author-feedback",
+            "title": "Exact-head approval triaged",
+            "nextAction": "Etienne approved this exact head without requesting source changes. Continue ordinary import tracking; no reply requested.",
+            "evidence": [
+              "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088"
+            ],
+            "binding": {
+              "reviewDecision": "APPROVED",
+              "approvedHead": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912",
+              "approvedAt": "2026-10-24T06:22:03Z",
+              "headCommittedAt": "2026-10-22T00:17:33Z",
+              "headIntroducedAt": "2026-10-22T00:20:41Z",
+              "headHistoryComplete": true,
+              "threads": {
+                "unresolved": 0,
+                "total": 0,
+                "complete": true
+              },
+              "feedback": {
+                "complete": true,
+                "items": [
+                  {
+                    "kind": "review",
+                    "id": "PRR_kwDOB9IlXs8AAAABT__2SA",
+                    "url": "https://github.com/google/gvisor/pull/15940#pullrequestreview-5637142088",
+                    "body": "👍 ",
+                    "state": "APPROVED",
+                    "submittedAt": "2026-10-24T06:22:03Z",
+                    "updatedAt": "2026-10-24T06:22:03Z",
+                    "authorAssociation": "COLLABORATOR",
+                    "author": {
+                      "login": "EtiennePerot",
+                      "__typename": "User"
+                    },
+                    "commit": {
+                      "oid": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912"
+                    }
+                  }
+                ]
+              },
+              "sourceHead": "1e4bf6e0d6177b6ca3f8480e4e22a57c835c0912"
+            }
+          }
         ]
       },
       "number": 15940,
@@ -20631,6 +20725,46 @@
           "https://app.buildbuddy.io/invocation/d353d7ac-6973-43f3-997f-91bb8a5e818a"
         ]
       }
+    },
+    {
+      "id": "branch:rules-img-mysql-upstream",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rules-img-mysql-upstream",
+      "head": "7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+      "title": "Use pinned upstream MySQL images",
+      "url": "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-24T06:31:04.667511+00:00",
+      "summary": "The contributor has been asked to review exact 7cf4bb5314. This proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. Only #16097 is a prerequisite; the Redis approval does not apply to this separate proposal.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+        "url": "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a"
+      },
+      "followup": {
+        "owner": "hostinet_delivery",
+        "sourceHead": "7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+        "observedAt": "2026-10-24T06:31:04.667511+00:00",
+        "disposition": "Qualified proposal; contributor decision outstanding",
+        "nextAction": "Await the existing contributor decision, then deliver only after #16097 lands. Do not infer approval from other image grants or send a second review request.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Qualified product awaiting contributor decision",
+          "url": "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a"
+        },
+        {
+          "label": "Both image configurations and one actual AMD64 SQL consumer",
+          "url": "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
+        }
+      ]
     }
   ],
   "edges": [
@@ -23032,6 +23166,16 @@
       "type": "depends_on",
       "reason": "The independently reviewed umbrella-header exports are now tracked in standalone #16313 after the Benchmark version update landed.",
       "evidence": "https://github.com/google/gvisor/pull/16313"
+    },
+    {
+      "from": "pr:16097",
+      "to": "branch:rules-img-mysql-upstream",
+      "type": "depends_on",
+      "reason": "Requires image_outputs and the Make image-context interface from #16097; no Redis dependency.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16097",
+        "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a"
+      ]
     }
   ],
   "investigations": [
