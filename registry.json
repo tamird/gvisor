@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T10:58:57.442050+00:00",
+    "updatedAt": "2026-10-24T11:03:29.146535+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21318,19 +21318,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "lazy-file-lock-trees",
-      "head": "503bf57c20e672dbc5c87c54e6ee334bcba4826a",
+      "head": "a8f37898d52094b71fd786aa31af4476c1133d1d",
       "title": "Allocate advisory file-lock trees on first use",
-      "url": "https://github.com/tamird/gvisor/commit/503bf57c20e672dbc5c87c54e6ee334bcba4826a",
+      "url": "https://github.com/tamird/gvisor/commit/a8f37898d52094b71fd786aa31af4476c1133d1d",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved this proposal conditional on removing redundant nil checks. Root owns that correction; the current fork head remains 503bf57c20 and no upstream PR is open. This is agent work, not a pending contributor decision.\n\nValidated prior head:\n\nStandalone one-file proposal with the same lock.go postimage as qualified warm source 6cf79b06. One real warm restore passes, and independent per-type normalization finds 624 fewer bytes per enclosing tmpfs object: 5,696,800 fewer logical allocation bytes at the candidate population after charging the entire workload’s one 320-byte standalone lock tree. The two live graphs differ, so total-byte subtraction is not used. This establishes neither a retained-heap reduction nor a timing improvement. The retained c31f0d91 behavior evidence passes all 216 XML records across ten uncached attempts, including 13 OFD and 16 BSD restore steps. ARM64 targets compile and both analyzer architectures pass; runtime evidence is AMD64 only. The invocation remains FAIL because its formatter could not find Go on the host PATH. The separate declared-Go-1.27.3 formatting run now passes all four native command phases, with independent retained review and no repeated behavior tests. Its authenticated verdict followed execution by 5.911079 seconds; the initial whitespace-sensitive report projection is retained. Root has already sent the contributor review request for this exact standalone head, and contributor approval is now the only remaining publication condition. The original compiler-configuration failure is preserved; no upstream PR has been opened. This proposal has no landing dependency on #16216 or typed-checkpoint adoption.",
+      "updatedAt": "2026-10-24T11:03:29.146535+00:00",
+      "summary": "Root has prepared the requested nil-check correction at a8f37898d5. Node is validating the exact private child in the existing lock behavior suite, including the new unused-tree unit test, canonical formatting and all prior held-lock save owners. This remains Agent work under the conditional approval; no new contributor question or upstream PR is pending.\n\nPrior reviewed head and evidence:\n\nThe contributor approved this proposal conditional on removing redundant nil checks. The then-current fork head was 503bf57c20; the correction and its new validation are described above.\n\nValidated prior head:\n\nStandalone one-file proposal with the same lock.go postimage as qualified warm source 6cf79b06. One real warm restore passes, and independent per-type normalization finds 624 fewer bytes per enclosing tmpfs object: 5,696,800 fewer logical allocation bytes at the candidate population after charging the entire workload’s one 320-byte standalone lock tree. The two live graphs differ, so total-byte subtraction is not used. This establishes neither a retained-heap reduction nor a timing improvement. The retained c31f0d91 behavior evidence passes all 216 XML records across ten uncached attempts, including 13 OFD and 16 BSD restore steps. ARM64 targets compile and both analyzer architectures pass; runtime evidence is AMD64 only. The invocation remains FAIL because its formatter could not find Go on the host PATH. The separate declared-Go-1.27.3 formatting run now passes all four native command phases, with independent retained review and no repeated behavior tests. Its authenticated verdict followed execution by 5.911079 seconds; the initial whitespace-sensitive report projection is retained. The request for that prior head received conditional approval; the current correction is Agent work. The original compiler-configuration failure is preserved; no upstream PR has been opened. This proposal has no landing dependency on #16216 or typed-checkpoint adoption.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "503bf57c20e672dbc5c87c54e6ee334bcba4826a",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Conditional approval; remove redundant nil checks",
-        "nextAction": "Root owns removing the redundant nil checks from the approved one-file proposal and verifying that correction before publication. Preserve existing warm, behavior and separate formatter evidence; no additional contributor question or dependency on #16216."
+        "owner": "root / node_tls_sni",
+        "sourceHead": "a8f37898d52094b71fd786aa31af4476c1133d1d",
+        "observedAt": "2026-10-24T11:03:29.146535+00:00",
+        "disposition": "Requested correction prepared; behavior validation running",
+        "nextAction": "Complete the existing f939b268 validation and independently review its retained result, then deliver within the conditional approval. No new contributor question; preserve prior warm and behavior limits."
       },
       "evidence": [
         {
@@ -21352,6 +21352,14 @@
         {
           "label": "Separate declared-SDK formatting PASS; zero behavior tests repeated",
           "url": "https://app.buildbuddy.io/invocation/2a5c1a0a-8de2-4747-8ca4-3c8341f3fd79"
+        },
+        {
+          "label": "Requested nil-check correction",
+          "url": "https://github.com/tamird/gvisor/commit/a8f37898d52094b71fd786aa31af4476c1133d1d"
+        },
+        {
+          "label": "Corrected-source behavior validation",
+          "url": "https://app.buildbuddy.io/invocation/f939b268-ee37-4c82-9e2e-6e604405bf61"
         }
       ],
       "contributorChangesRequested": {

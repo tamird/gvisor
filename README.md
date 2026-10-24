@@ -436,8 +436,12 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   head, CI and import states. A changed public head prompts reconciliation rather
   than silently deleting the outstanding question. Text and links appear in the
   existing Table/details path and the **Contributor decisions** attention filter.
-  Remove the object when the decision is answered; GitHub review and prose do
-  not infer a contributor hold.
+  When asking Tamir for a decision, record it here and link the request to its
+  canonical tracker item with the exact proposed commit or reviewable reply.
+  Verify that the item appears in the contributor filter before considering the
+  request handed off. When answered, remove the pending object and record the
+  disposition and remaining prerequisites on that same item. GitHub review and
+  prose alone do not infer a contributor hold.
 - **Maintainer review:** an open, nondraft PR without approval or changes
   requested, including GitHub's null review decision (no approval reported).
 - **Prepared proposals:** unpublished candidate branches awaiting fresh scope
