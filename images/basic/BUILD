@@ -44,6 +44,23 @@ image_outputs(
     image_name = "basic/redis",
 )
 
+# Load the original config, including Docker's health check, without an OCI
+# manifest conversion.
+alias(
+    name = "mysql",
+    actual = select({
+        "@platforms//cpu:aarch64": "@test_mysql_arm64",
+        "@platforms//cpu:x86_64": "@test_mysql_amd64",
+    }),
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "mysql",
+    image = ":mysql",
+    image_name = "basic/mysql",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
@@ -77,4 +94,16 @@ arch_genrule(
     name = "qualification_redis_contexts",
     src = ":redis_context",
     template = "qualification_redis_context_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_mysql_archives",
+    src = ":mysql_archive",
+    template = "qualification_mysql_archive_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_mysql_contexts",
+    src = ":mysql_context",
+    template = "qualification_mysql_context_%s.tar",
 )

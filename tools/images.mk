@@ -51,6 +51,7 @@ LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
 BAZEL_IMAGE_CONTEXTS := \
   basic_alpine=//images/basic:alpine_context \
   basic_busybox=//images/basic:busybox_context \
+  basic_mysql=//images/basic:mysql_context \
   basic_redis=//images/basic:redis_context \
   basic_tmpfile=//images/basic:tmpfile_context \
   benchmarks_redis=//images/benchmarks:redis_context \
