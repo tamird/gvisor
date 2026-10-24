@@ -1026,28 +1026,53 @@ func (s *Stack) localRoute(msg *nlmsg.Message) (tcpip.Route, *syserr.Error) {
 			return tcpip.Route{}, syserr.ErrNotSupported
 		}
 	}
-	var dest netip.Prefix
 	// When no destination address is provided, the new route might be the default route.
-	if route.DstAddr == nil {
-		switch route.Family {
-		case linux.AF_INET:
-			dest = header.IPv4EmptySubnet
-		case linux.AF_INET6:
-			dest = header.IPv6EmptySubnet
-		default:
-			return tcpip.Route{}, syserr.ErrNotSupported
-		}
-		if route.GatewayAddr != nil {
-			addressSize := dest.Addr().BitLen() / 8
-			if len(route.GatewayAddr) < addressSize {
-				return tcpip.Route{}, syserr.ErrRange
+	var dest netip.Prefix
+	switch route.Family {
+	case linux.AF_INET:
+		dest = header.IPv4EmptySubnet
+	case linux.AF_INET6:
+		dest = header.IPv6EmptySubnet
+	default:
+		return tcpip.Route{}, syserr.ErrNotSupported
+	}
+	if msg.Header().Type == linux.RTM_NEWROUTE {
+		switch route.Type {
+		case linux.RTN_UNICAST:
+		case linux.RTN_UNSPEC:
+			if route.Family == linux.AF_INET {
+				return tcpip.Route{}, syserr.ErrInvalidArgument
 			}
-			route.GatewayAddr = route.GatewayAddr[:addressSize]
-		} else if route.OutputInterface == 0 && msg.Header().Type == linux.RTM_NEWROUTE {
-			return tcpip.Route{}, syserr.ErrNoDevice
+		case linux.RTN_BLACKHOLE, linux.RTN_UNREACHABLE, linux.RTN_PROHIBIT, linux.RTN_THROW, linux.RTN_NAT, linux.RTN_XRESOLVE:
+			if route.Family == linux.AF_INET && (route.GatewayAddr != nil || route.OutputInterface != 0) {
+				return tcpip.Route{}, syserr.ErrInvalidArgument
+			}
+			return tcpip.Route{}, syserr.ErrNotSupported
+		case linux.RTN_LOCAL, linux.RTN_BROADCAST, linux.RTN_ANYCAST, linux.RTN_MULTICAST:
+			return tcpip.Route{}, syserr.ErrNotSupported
+		default:
+			return tcpip.Route{}, syserr.ErrInvalidArgument
 		}
-	} else if addr, ok := netip.AddrFromSlice(route.DstAddr); ok {
-		dest = netip.PrefixFrom(addr, min(int(route.DstLen), addr.BitLen())).Masked()
+	}
+	addressSize := dest.Addr().BitLen() / 8
+	if route.GatewayAddr != nil {
+		if len(route.GatewayAddr) < addressSize {
+			return tcpip.Route{}, syserr.ErrRange
+		}
+		route.GatewayAddr = route.GatewayAddr[:addressSize]
+	} else if route.DstAddr == nil && route.OutputInterface == 0 && msg.Header().Type == linux.RTM_NEWROUTE {
+		return tcpip.Route{}, syserr.ErrNoDevice
+	}
+	if route.DstAddr != nil {
+		dst := make([]byte, addressSize)
+		if copy(dst, route.DstAddr)*8 < int(route.DstLen) {
+			return tcpip.Route{}, syserr.ErrInvalidArgument
+		}
+		addr, ok := netip.AddrFromSlice(dst)
+		if !ok {
+			return tcpip.Route{}, syserr.ErrInvalidArgument
+		}
+		dest = netip.PrefixFrom(addr, int(route.DstLen)).Masked()
 	}
 
 	localRoute := tcpip.Route{
