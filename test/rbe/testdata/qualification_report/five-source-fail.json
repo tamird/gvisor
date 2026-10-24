@@ -1,0 +1,3481 @@
+{
+  "all_skipped_owners": [],
+  "build_outputs": [],
+  "capture_exit": 1,
+  "case_counts": {
+    "failed": 3,
+    "passed": 236,
+    "skipped": 0
+  },
+  "commands": [
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "run",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=error",
+        "--noannounce_rc",
+        "@rules_python//python/bin:python",
+        "--",
+        "-c",
+        "import os, subprocess, sys; os.chdir(os.environ[\"BUILD_WORKSPACE_DIRECTORY\"]); sys.exit(subprocess.run([\"bash\", \"tools/lint.sh\", \"buildifier\"]).returncode)"
+      ],
+      "bazel_command": "run",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 1075,
+          "path": "stderr.log",
+          "sha256": "38b74ab5f244f3b9b8f39544023dcc8095c4f5844551ac9d32d6525297241043"
+        },
+        "stdout": {
+          "bytes": 0,
+          "path": "stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:18:46.415554+00:00",
+      "invocation": "invocation-00-buildifier/verdict.json",
+      "native_exit": 0,
+      "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "run",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=error",
+        "--remote_download_outputs=all",
+        "--noannounce_rc",
+        "--run_in_cwd",
+        "@org_golang_x_tools//cmd/goimports",
+        "--",
+        "-format-only",
+        "-d",
+        "pkg/sentry/kernel/ptrace.go",
+        "pkg/sentry/kernel/task.go",
+        "pkg/sentry/kernel/task_cgroup.go",
+        "pkg/sentry/kernel/task_exec.go",
+        "pkg/sentry/kernel/task_exit.go",
+        "pkg/sentry/kernel/task_identity.go",
+        "pkg/sentry/kernel/task_signals.go",
+        "pkg/sentry/kernel/task_stop.go",
+        "pkg/sentry/kernel/task_test.go",
+        "pkg/sentry/kernel/thread_group.go",
+        "pkg/sentry/kernel/threads.go"
+      ],
+      "bazel_command": "run",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 1204,
+          "path": "stderr.log",
+          "sha256": "5a09dc10e92dbb62c53a0cb42d2bf53e5796ccf8d232af437b832d139354b2a8"
+        },
+        "stdout": {
+          "bytes": 0,
+          "path": "stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:30:10.495029+00:00",
+      "invocation": "invocation-combined-goimports/verdict.json",
+      "native_exit": 0,
+      "source": "1fa527642631e90a21752297955c51490b86ab28",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "run",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=error",
+        "--remote_download_outputs=all",
+        "--noannounce_rc",
+        "--run_in_cwd",
+        "@org_golang_x_tools//cmd/goimports",
+        "--",
+        "-format-only",
+        "-d",
+        "pkg/sentry/kernel/ptrace.go",
+        "pkg/sentry/kernel/task.go",
+        "pkg/sentry/kernel/task_cgroup.go",
+        "pkg/sentry/kernel/task_exec.go",
+        "pkg/sentry/kernel/task_exit.go",
+        "pkg/sentry/kernel/task_signals.go",
+        "pkg/sentry/kernel/task_stop.go",
+        "pkg/sentry/kernel/thread_group.go",
+        "pkg/sentry/kernel/threads.go"
+      ],
+      "bazel_command": "run",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 2033,
+          "path": "stderr.log",
+          "sha256": "a99e36ad88268ecf693c73edc2f85329b83d65f9b95b70d86ca4d811c795e384"
+        },
+        "stdout": {
+          "bytes": 0,
+          "path": "stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:19:14.656684+00:00",
+      "invocation": "invocation-contracts-goimports/verdict.json",
+      "native_exit": 0,
+      "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "cquery",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=update",
+        "--noannounce_rc",
+        "--output=label",
+        "set(//pkg/sentry/kernel:kernel_test //pkg/sentry/kernel:kernel_nogo //pkg/sentry/kernel:kernel_test_nogo @org_golang_x_tools//cmd/goimports @rules_python//python/bin:python)"
+      ],
+      "bazel_command": "cquery",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 2606,
+          "path": "stderr.log",
+          "sha256": "6b79891f48333b5707c243799f81770bdd36952c75bb841665958bbe550f18f9"
+        },
+        "stdout": {
+          "bytes": 381,
+          "path": "stdout.log",
+          "sha256": "3126f813539b4c06e5e33b8d41a8092376d899c7c32efbf4507c5dc6c2bf8268"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:18:39.849431+00:00",
+      "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json",
+      "native_exit": 0,
+      "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "run",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=error",
+        "--remote_download_outputs=all",
+        "--noannounce_rc",
+        "--run_in_cwd",
+        "@org_golang_x_tools//cmd/goimports",
+        "--",
+        "-format-only",
+        "-d",
+        "pkg/sentry/kernel/task_exit.go",
+        "pkg/sentry/kernel/thread_group.go"
+      ],
+      "bazel_command": "run",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 1211,
+          "path": "stderr.log",
+          "sha256": "75526e215be9a1ec2cff5a3784518ea21775f1fb17fce93954c64cd43e2c5504"
+        },
+        "stdout": {
+          "bytes": 0,
+          "path": "stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:29:10.873912+00:00",
+      "invocation": "invocation-exit-status-goimports/verdict.json",
+      "native_exit": 0,
+      "source": "adc17f1a66b3db1d2eca2c123e2895bbd5ad807a",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "run",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=error",
+        "--remote_download_outputs=all",
+        "--noannounce_rc",
+        "--run_in_cwd",
+        "@org_golang_x_tools//cmd/goimports",
+        "--",
+        "-format-only",
+        "-d",
+        "pkg/sentry/kernel/task.go",
+        "pkg/sentry/kernel/task_exec.go",
+        "pkg/sentry/kernel/task_identity.go"
+      ],
+      "bazel_command": "run",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 1211,
+          "path": "stderr.log",
+          "sha256": "15bd33f6400dfcca32df75be2c96fecd4b8fe81ab3c02ecd926502c42fdb6287"
+        },
+        "stdout": {
+          "bytes": 0,
+          "path": "stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:25:25.045266+00:00",
+      "invocation": "invocation-parent-death-goimports/verdict.json",
+      "native_exit": 0,
+      "source": "d13be1b283d490c274d7b14dd8360010daba3b1b",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "run",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--lockfile_mode=error",
+        "--remote_download_outputs=all",
+        "--noannounce_rc",
+        "--run_in_cwd",
+        "@org_golang_x_tools//cmd/goimports",
+        "--",
+        "-format-only",
+        "-d",
+        "pkg/sentry/kernel/task_exit.go",
+        "pkg/sentry/kernel/task_signals.go",
+        "pkg/sentry/kernel/task_test.go"
+      ],
+      "bazel_command": "run",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 1204,
+          "path": "stderr.log",
+          "sha256": "edb6033c6a44936922a3655bbed5efa3a3fed1f7b7e7f6c5e755727d0bd38964"
+        },
+        "stdout": {
+          "bytes": 0,
+          "path": "stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:26:25.390083+00:00",
+      "invocation": "invocation-pull-full-state-goimports/verdict.json",
+      "native_exit": 0,
+      "source": "8c3ce60fd4eda9d1c74ee10c8feda0bf712cd888",
+      "status": "PASS"
+    },
+    {
+      "arguments": [
+        "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+        "cquery",
+        "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+        "--config=x86_64",
+        "--compilation_mode=opt",
+        "--extra_toolchains=@llvm//toolchain:all",
+        "--build_tag_filters=",
+        "--remote_download_outputs=all",
+        "--noannounce_rc",
+        "--config=race",
+        "--lockfile_mode=update",
+        "--output=label",
+        "set(//pkg/sentry/kernel:kernel_test)"
+      ],
+      "bazel_command": "cquery",
+      "command_outputs": {
+        "stderr": {
+          "bytes": 1686,
+          "path": "stderr.log",
+          "sha256": "301faa6c2d0f6a2d027fe11c7ca14659a00d5d872ea475a414b7fb2c956efe6f"
+        },
+        "stdout": {
+          "bytes": 42,
+          "path": "stdout.log",
+          "sha256": "e1aabd10cb973ba2739f3912dd0d0943ea1066fe572b1a6c87e94ed10475f388"
+        }
+      },
+      "execution_finished_at": "2026-10-24T07:19:03.811636+00:00",
+      "invocation": "invocation-race-dependency-preparation/verdict.json",
+      "native_exit": 0,
+      "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+      "status": "PASS"
+    }
+  ],
+  "coordinator_failed": false,
+  "errors": [
+    "Invocation sources are absent or inconsistent"
+  ],
+  "executed": [
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "exitCode": 1,
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.045s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.046s"
+        }
+      },
+      "invocation": "invocation-combined-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED",
+      "xml": {
+        "failed": 1,
+        "failures": [
+          "pkg/sentry/kernel/kernel_nogo"
+        ],
+        "passed": 0,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "exitCode": 1,
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.046s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.047s"
+        }
+      },
+      "invocation": "invocation-combined-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_test_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED",
+      "xml": {
+        "failed": 1,
+        "failures": [
+          "pkg/sentry/kernel/kernel_test_nogo"
+        ],
+        "passed": 0,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "3.041s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "3.042s"
+        }
+      },
+      "invocation": "invocation-combined-race/verdict.json",
+      "owner": {
+        "configuration": "2d5b9046e07406682fc4fe5e5b9c84e40f53e966a908166c2a3b7734bc1df845",
+        "label": "//pkg/sentry/kernel:kernel_test"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 116,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.812s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.813s"
+        }
+      },
+      "invocation": "invocation-combined-units/verdict.json",
+      "owner": {
+        "configuration": "0f13ecabef9bf098f42305bf16b61beb0656361ab10d4ca83bee33e75ef6f7f9",
+        "label": "//pkg/sentry/kernel:kernel_test"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 116,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "exitCode": 1,
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0.006s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.061s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.085s"
+        }
+      },
+      "invocation": "invocation-contracts-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED",
+      "xml": {
+        "failed": 1,
+        "failures": [
+          "pkg/sentry/kernel/kernel_nogo"
+        ],
+        "passed": 0,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.050s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.051s"
+        }
+      },
+      "invocation": "invocation-exit-status-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 1,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.048s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.050s"
+        }
+      },
+      "invocation": "invocation-parent-death-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 1,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.046s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.046s"
+        }
+      },
+      "invocation": "invocation-pull-full-state-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 1,
+        "skipped": 0,
+        "skips": []
+      }
+    },
+    {
+      "attempt": 1,
+      "cached_locally": false,
+      "execution_info": {
+        "hostname": "192.168.241.2",
+        "strategy": "local",
+        "timingBreakdown": {
+          "child": [
+            {
+              "name": "parseTime",
+              "time": "0s"
+            },
+            {
+              "name": "fetchTime",
+              "time": "0s"
+            },
+            {
+              "name": "queueTime",
+              "time": "0s"
+            },
+            {
+              "name": "uploadTime",
+              "time": "0s"
+            },
+            {
+              "name": "setupTime",
+              "time": "0s"
+            },
+            {
+              "name": "executionWallTime",
+              "time": "0.049s"
+            },
+            {
+              "name": "processOutputsTime",
+              "time": "0s"
+            },
+            {
+              "name": "networkTime",
+              "time": "0s"
+            }
+          ],
+          "name": "totalTime",
+          "time": "0.050s"
+        }
+      },
+      "invocation": "invocation-pull-full-state-nogo/verdict.json",
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_test_nogo"
+      },
+      "run": 1,
+      "shard": 1,
+      "status": "PASSED",
+      "xml": {
+        "failed": 0,
+        "failures": [],
+        "passed": 1,
+        "skipped": 0,
+        "skips": []
+      }
+    }
+  ],
+  "expected": [
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-combined-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_nogo"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-combined-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_test_nogo"
+    },
+    {
+      "configuration": "2d5b9046e07406682fc4fe5e5b9c84e40f53e966a908166c2a3b7734bc1df845",
+      "invocation": "invocation-combined-race/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_test"
+    },
+    {
+      "configuration": "0f13ecabef9bf098f42305bf16b61beb0656361ab10d4ca83bee33e75ef6f7f9",
+      "invocation": "invocation-combined-units/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_test"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-contracts-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_nogo"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-exit-status-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_nogo"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-parent-death-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_nogo"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-pull-full-state-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_nogo"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "invocation": "invocation-pull-full-state-nogo/verdict.json",
+      "label": "//pkg/sentry/kernel:kernel_test_nogo"
+    }
+  ],
+  "expected_failures": [],
+  "failures": [
+    {
+      "attempt": 1,
+      "cases": [
+        "pkg/sentry/kernel/kernel_nogo"
+      ],
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "reason": "XML test failures",
+      "run": 1,
+      "shard": 1
+    },
+    {
+      "attempt": 1,
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "reason": "test result",
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED"
+    },
+    {
+      "attempt": 1,
+      "cases": [
+        "pkg/sentry/kernel/kernel_test_nogo"
+      ],
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_test_nogo"
+      },
+      "reason": "XML test failures",
+      "run": 1,
+      "shard": 1
+    },
+    {
+      "attempt": 1,
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_test_nogo"
+      },
+      "reason": "test result",
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "label": "//pkg/sentry/kernel:kernel_nogo",
+      "reason": "test summary",
+      "status": "FAILED"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "label": "//pkg/sentry/kernel:kernel_test_nogo",
+      "reason": "test summary",
+      "status": "FAILED"
+    },
+    {
+      "attempt": 1,
+      "cases": [
+        "pkg/sentry/kernel/kernel_nogo"
+      ],
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "reason": "XML test failures",
+      "run": 1,
+      "shard": 1
+    },
+    {
+      "attempt": 1,
+      "owner": {
+        "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+        "label": "//pkg/sentry/kernel:kernel_nogo"
+      },
+      "reason": "test result",
+      "run": 1,
+      "shard": 1,
+      "status": "FAILED"
+    },
+    {
+      "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+      "label": "//pkg/sentry/kernel:kernel_nogo",
+      "reason": "test summary",
+      "status": "FAILED"
+    }
+  ],
+  "invocations": [
+    {
+      "bytes": 3733,
+      "path": "invocation-00-buildifier/verdict.json",
+      "sha256": "f4d9ea5e942efb51c724235f5739f56567669885c5cc035c9d2c9942a49e7cf6",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "run",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--noannounce_rc",
+          "@rules_python//python/bin:python",
+          "--",
+          "-c",
+          "import os, subprocess, sys; os.chdir(os.environ[\"BUILD_WORKSPACE_DIRECTORY\"]); sys.exit(subprocess.run([\"bash\", \"tools/lint.sh\", \"buildifier\"]).returncode)"
+        ],
+        "bazel_command": "run",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 1075,
+            "path": "stderr.log",
+            "sha256": "38b74ab5f244f3b9b8f39544023dcc8095c4f5844551ac9d32d6525297241043"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:18:46.415554+00:00",
+        "execution_to_verdict_seconds": 0.005435,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0006967159999931027,
+        "schema_version": 1,
+        "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 693,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/commit.txt",
+            "sha256": "fb7d250797eea4d5ccd3aec1bd4926ad761ff59e62725341a3c2935630d74a72"
+          },
+          "executed_arguments": {
+            "bytes": 569,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/arguments.txt",
+            "sha256": "c4d086825369ef93f6e42177cf402fe996679b8c78879b9370ebfb5df015f6b8"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/head.txt",
+            "sha256": "3c9b501b9c30e42ffebdc7bdbdcc3cf5267dee8814f1e425d2c50fdce7a2612c"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-00-buildifier/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:18:46.420989+00:00"
+      }
+    },
+    {
+      "bytes": 4106,
+      "path": "invocation-combined-goimports/verdict.json",
+      "sha256": "5c8378930d6724c510fe9e50f179f347014d28c758688b03767f060c71c0a4cc",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "run",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--run_in_cwd",
+          "@org_golang_x_tools//cmd/goimports",
+          "--",
+          "-format-only",
+          "-d",
+          "pkg/sentry/kernel/ptrace.go",
+          "pkg/sentry/kernel/task.go",
+          "pkg/sentry/kernel/task_cgroup.go",
+          "pkg/sentry/kernel/task_exec.go",
+          "pkg/sentry/kernel/task_exit.go",
+          "pkg/sentry/kernel/task_identity.go",
+          "pkg/sentry/kernel/task_signals.go",
+          "pkg/sentry/kernel/task_stop.go",
+          "pkg/sentry/kernel/task_test.go",
+          "pkg/sentry/kernel/thread_group.go",
+          "pkg/sentry/kernel/threads.go"
+        ],
+        "bazel_command": "run",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 1204,
+            "path": "stderr.log",
+            "sha256": "5a09dc10e92dbb62c53a0cb42d2bf53e5796ccf8d232af437b832d139354b2a8"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:30:10.495029+00:00",
+        "execution_to_verdict_seconds": 0.005205,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0006506969999691137,
+        "schema_version": 1,
+        "source": "1fa527642631e90a21752297955c51490b86ab28",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 681,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/commit.txt",
+            "sha256": "6b94882de83ce891af6bb0fb7d767aaf24c2c595410f2f46a97ffd917751a17a"
+          },
+          "executed_arguments": {
+            "bytes": 845,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/arguments.txt",
+            "sha256": "cf6768a45c61daf8b4534388ee9b6dc3e950d529da97c17d42bd80b0125c88d7"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/head.txt",
+            "sha256": "481d74499916bb7dc3607946f4bc2f1afd3cbed5d48361089d0f6bd5acd3a48b"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-goimports/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:30:10.500234+00:00"
+      }
+    },
+    {
+      "bytes": 9335,
+      "path": "invocation-combined-nogo/verdict.json",
+      "sha256": "0864494c916877ea7460eb30391ea6aa716d69ca398098334844a678b5bf6262",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "//pkg/sentry/kernel:kernel_nogo",
+          "//pkg/sentry/kernel:kernel_test_nogo",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/combined-nogo.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "code": 3,
+            "name": "TESTS_FAILED"
+          },
+          "finishTime": "2026-10-24T07:31:28.009Z",
+          "finishTimeMillis": "1792827088009"
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 2,
+          "passed": 0,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "exitCode": 1,
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.045s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.046s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "FAILED",
+            "xml": {
+              "failed": 1,
+              "failures": [
+                "pkg/sentry/kernel/kernel_nogo"
+              ],
+              "passed": 0,
+              "skipped": 0,
+              "skips": []
+            }
+          },
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "exitCode": 1,
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.046s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.047s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_test_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "FAILED",
+            "xml": {
+              "failed": 1,
+              "failures": [
+                "pkg/sentry/kernel/kernel_test_nogo"
+              ],
+              "passed": 0,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:31:28.521959+00:00",
+        "execution_to_verdict_seconds": 0.010211,
+        "expected": [
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo"
+          },
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_test_nogo"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_nogo",
+          "//pkg/sentry/kernel:kernel_test_nogo"
+        ],
+        "failures": [
+          {
+            "attempt": 1,
+            "cases": [
+              "pkg/sentry/kernel/kernel_nogo"
+            ],
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "reason": "XML test failures",
+            "run": 1,
+            "shard": 1
+          },
+          {
+            "attempt": 1,
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "reason": "test result",
+            "run": 1,
+            "shard": 1,
+            "status": "FAILED"
+          },
+          {
+            "attempt": 1,
+            "cases": [
+              "pkg/sentry/kernel/kernel_test_nogo"
+            ],
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_test_nogo"
+            },
+            "reason": "XML test failures",
+            "run": 1,
+            "shard": 1
+          },
+          {
+            "attempt": 1,
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_test_nogo"
+            },
+            "reason": "test result",
+            "run": 1,
+            "shard": 1,
+            "status": "FAILED"
+          },
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo",
+            "reason": "test summary",
+            "status": "FAILED"
+          },
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_test_nogo",
+            "reason": "test summary",
+            "status": "FAILED"
+          }
+        ],
+        "missing": [],
+        "native_exit": 3,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.0014558260000967493,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "1fa527642631e90a21752297955c51490b86ab28",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 681,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/commit.txt",
+            "sha256": "6b94882de83ce891af6bb0fb7d767aaf24c2c595410f2f46a97ffd917751a17a"
+          },
+          "executed_arguments": {
+            "bytes": 755,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/arguments.txt",
+            "sha256": "270f87e07bfee54ce4960dc5fda3ed48b9d9ec6db373649f172d90dab8ca09de"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/head.txt",
+            "sha256": "481d74499916bb7dc3607946f4bc2f1afd3cbed5d48361089d0f6bd5acd3a48b"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/native-exit",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-nogo/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "FAIL",
+        "verdict_available_at": "2026-10-24T07:31:28.532170+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 5917,
+      "path": "invocation-combined-race/verdict.json",
+      "sha256": "9815e42f51835039709f1d750e380bd64ec8f75dfd81ef2d83ad2383a9fe97b7",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--config=race",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "--test_env=GO_TEST_WRAP=1",
+          "--test_env=GO_TEST_WRAP_TESTV=1",
+          "//pkg/sentry/kernel:kernel_test",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/combined-race.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-10-24T07:37:34.104Z",
+          "finishTimeMillis": "1792827454104",
+          "overallSuccess": true
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 116,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "3.041s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "3.042s"
+              }
+            },
+            "owner": {
+              "configuration": "2d5b9046e07406682fc4fe5e5b9c84e40f53e966a908166c2a3b7734bc1df845",
+              "label": "//pkg/sentry/kernel:kernel_test"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "PASSED",
+            "xml": {
+              "failed": 0,
+              "failures": [],
+              "passed": 116,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:37:34.665732+00:00",
+        "execution_to_verdict_seconds": 0.010053,
+        "expected": [
+          {
+            "configuration": "2d5b9046e07406682fc4fe5e5b9c84e40f53e966a908166c2a3b7734bc1df845",
+            "label": "//pkg/sentry/kernel:kernel_test"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_test"
+        ],
+        "failures": [],
+        "missing": [],
+        "native_exit": 0,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.001473161000149048,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "1fa527642631e90a21752297955c51490b86ab28",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 681,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/commit.txt",
+            "sha256": "6b94882de83ce891af6bb0fb7d767aaf24c2c595410f2f46a97ffd917751a17a"
+          },
+          "executed_arguments": {
+            "bytes": 790,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/arguments.txt",
+            "sha256": "30ef5de4c22adaa7b6d104a935f50a717db51a80fdfc5aab8be3d852970234c9"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/head.txt",
+            "sha256": "481d74499916bb7dc3607946f4bc2f1afd3cbed5d48361089d0f6bd5acd3a48b"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-race/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:37:34.675785+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 5907,
+      "path": "invocation-combined-units/verdict.json",
+      "sha256": "12c1bc01d2765a32087cdb5e1b42fea54c433638586064e49bc3b2eef0f8ade0",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "--test_env=GO_TEST_WRAP=1",
+          "--test_env=GO_TEST_WRAP_TESTV=1",
+          "//pkg/sentry/kernel:kernel_test",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/combined-units.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-10-24T07:31:54.140Z",
+          "finishTimeMillis": "1792827114140",
+          "overallSuccess": true
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 116,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.812s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.813s"
+              }
+            },
+            "owner": {
+              "configuration": "0f13ecabef9bf098f42305bf16b61beb0656361ab10d4ca83bee33e75ef6f7f9",
+              "label": "//pkg/sentry/kernel:kernel_test"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "PASSED",
+            "xml": {
+              "failed": 0,
+              "failures": [],
+              "passed": 116,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:31:54.607397+00:00",
+        "execution_to_verdict_seconds": 0.009733,
+        "expected": [
+          {
+            "configuration": "0f13ecabef9bf098f42305bf16b61beb0656361ab10d4ca83bee33e75ef6f7f9",
+            "label": "//pkg/sentry/kernel:kernel_test"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_test"
+        ],
+        "failures": [],
+        "missing": [],
+        "native_exit": 0,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.0014768280000225786,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "1fa527642631e90a21752297955c51490b86ab28",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 681,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/commit.txt",
+            "sha256": "6b94882de83ce891af6bb0fb7d767aaf24c2c595410f2f46a97ffd917751a17a"
+          },
+          "executed_arguments": {
+            "bytes": 777,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/arguments.txt",
+            "sha256": "0ffa1f3fd8b8bb4698efe59e7e12019536b9e68424ade120a286b55653a62b7c"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/head.txt",
+            "sha256": "481d74499916bb7dc3607946f4bc2f1afd3cbed5d48361089d0f6bd5acd3a48b"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-combined-units/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:31:54.617130+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 4033,
+      "path": "invocation-contracts-goimports/verdict.json",
+      "sha256": "170e12f7ac62b019c087d9cf643482c46cd5000c1fb2c60460196d0032316168",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "run",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--run_in_cwd",
+          "@org_golang_x_tools//cmd/goimports",
+          "--",
+          "-format-only",
+          "-d",
+          "pkg/sentry/kernel/ptrace.go",
+          "pkg/sentry/kernel/task.go",
+          "pkg/sentry/kernel/task_cgroup.go",
+          "pkg/sentry/kernel/task_exec.go",
+          "pkg/sentry/kernel/task_exit.go",
+          "pkg/sentry/kernel/task_signals.go",
+          "pkg/sentry/kernel/task_stop.go",
+          "pkg/sentry/kernel/thread_group.go",
+          "pkg/sentry/kernel/threads.go"
+        ],
+        "bazel_command": "run",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 2033,
+            "path": "stderr.log",
+            "sha256": "a99e36ad88268ecf693c73edc2f85329b83d65f9b95b70d86ca4d811c795e384"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:19:14.656684+00:00",
+        "execution_to_verdict_seconds": 0.0059,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0006068109999972648,
+        "schema_version": 1,
+        "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 693,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/commit.txt",
+            "sha256": "fb7d250797eea4d5ccd3aec1bd4926ad761ff59e62725341a3c2935630d74a72"
+          },
+          "executed_arguments": {
+            "bytes": 773,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/arguments.txt",
+            "sha256": "396a9e1e7045890c48825e27a3a61cb8754681843f842654efc24e80ecf16c59"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/head.txt",
+            "sha256": "3c9b501b9c30e42ffebdc7bdbdcc3cf5267dee8814f1e425d2c50fdce7a2612c"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-goimports/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:19:14.662584+00:00"
+      }
+    },
+    {
+      "bytes": 6747,
+      "path": "invocation-contracts-nogo/verdict.json",
+      "sha256": "154aa2e49e7633be14d69bced1b0c4f51c8d646da635bfd4977a0140c1aa87f9",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "//pkg/sentry/kernel:kernel_nogo",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/contracts-nogo.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "code": 3,
+            "name": "TESTS_FAILED"
+          },
+          "finishTime": "2026-10-24T07:25:21.933Z",
+          "finishTimeMillis": "1792826721933"
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 1,
+          "passed": 0,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "exitCode": 1,
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0.006s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.061s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.085s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "FAILED",
+            "xml": {
+              "failed": 1,
+              "failures": [
+                "pkg/sentry/kernel/kernel_nogo"
+              ],
+              "passed": 0,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:25:22.562563+00:00",
+        "execution_to_verdict_seconds": 0.009868,
+        "expected": [
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_nogo"
+        ],
+        "failures": [
+          {
+            "attempt": 1,
+            "cases": [
+              "pkg/sentry/kernel/kernel_nogo"
+            ],
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "reason": "XML test failures",
+            "run": 1,
+            "shard": 1
+          },
+          {
+            "attempt": 1,
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "reason": "test result",
+            "run": 1,
+            "shard": 1,
+            "status": "FAILED"
+          },
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo",
+            "reason": "test summary",
+            "status": "FAILED"
+          }
+        ],
+        "missing": [],
+        "native_exit": 3,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.001263296999979957,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 693,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/commit.txt",
+            "sha256": "fb7d250797eea4d5ccd3aec1bd4926ad761ff59e62725341a3c2935630d74a72"
+          },
+          "executed_arguments": {
+            "bytes": 719,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/arguments.txt",
+            "sha256": "ee0e927bc2124ab551a0430b9817cc11ebd3c46937d5a2020379bef99a7d2e83"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/head.txt",
+            "sha256": "3c9b501b9c30e42ffebdc7bdbdcc3cf5267dee8814f1e425d2c50fdce7a2612c"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/native-exit",
+            "sha256": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-contracts-nogo/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "FAIL",
+        "verdict_available_at": "2026-10-24T07:25:22.572431+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 3387,
+      "path": "invocation-dependency-preparation-x86_64-images/verdict.json",
+      "sha256": "6dc85a63dc809399e9e02f660e6a486320893bc7e62beb8ea466c9d670aae5d8",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "cquery",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=update",
+          "--noannounce_rc",
+          "--output=label",
+          "set(//pkg/sentry/kernel:kernel_test //pkg/sentry/kernel:kernel_nogo //pkg/sentry/kernel:kernel_test_nogo @org_golang_x_tools//cmd/goimports @rules_python//python/bin:python)"
+        ],
+        "bazel_command": "cquery",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 2606,
+            "path": "stderr.log",
+            "sha256": "6b79891f48333b5707c243799f81770bdd36952c75bb841665958bbe550f18f9"
+          },
+          "stdout": {
+            "bytes": 381,
+            "path": "stdout.log",
+            "sha256": "3126f813539b4c06e5e33b8d41a8092376d899c7c32efbf4507c5dc6c2bf8268"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:18:39.849431+00:00",
+        "execution_to_verdict_seconds": 0.006594,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0006266799999963268,
+        "schema_version": 1,
+        "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 693,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/commit.txt",
+            "sha256": "fb7d250797eea4d5ccd3aec1bd4926ad761ff59e62725341a3c2935630d74a72"
+          },
+          "executed_arguments": {
+            "bytes": 553,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/arguments.txt",
+            "sha256": "b0277fe7ea9ba6a6aeb0b562ebc200fe94a3df2d50099c17a5c8fe49078749fc"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/head.txt",
+            "sha256": "3c9b501b9c30e42ffebdc7bdbdcc3cf5267dee8814f1e425d2c50fdce7a2612c"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-dependency-preparation-x86_64-images/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:18:39.856025+00:00"
+      }
+    },
+    {
+      "bytes": 3791,
+      "path": "invocation-exit-status-goimports/verdict.json",
+      "sha256": "7f1c084b4085dabe56758f6fd6660e7b8b9415e5a6fd3a36faf32ca9803c1976",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "run",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--run_in_cwd",
+          "@org_golang_x_tools//cmd/goimports",
+          "--",
+          "-format-only",
+          "-d",
+          "pkg/sentry/kernel/task_exit.go",
+          "pkg/sentry/kernel/thread_group.go"
+        ],
+        "bazel_command": "run",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 1211,
+            "path": "stderr.log",
+            "sha256": "75526e215be9a1ec2cff5a3784518ea21775f1fb17fce93954c64cd43e2c5504"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:29:10.873912+00:00",
+        "execution_to_verdict_seconds": 0.005933,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.000671559000011257,
+        "schema_version": 1,
+        "source": "adc17f1a66b3db1d2eca2c123e2895bbd5ad807a",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 681,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/commit.txt",
+            "sha256": "bfc5c2809813f9d3d54ec7b0a18b023f9163736b7f9be3fa78b3fca2259f481a"
+          },
+          "executed_arguments": {
+            "bytes": 540,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/arguments.txt",
+            "sha256": "478a46f089fe045d952a689f8357eafe563516bffc831242be224a3390a940fa"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/head.txt",
+            "sha256": "231d13012ee87a7dfa4959d644337b5e0bdc684a035aaa09182ef2175fceab8e"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-goimports/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:29:10.879845+00:00"
+      }
+    },
+    {
+      "bytes": 5851,
+      "path": "invocation-exit-status-nogo/verdict.json",
+      "sha256": "e94d56339bb27a3ae498195ee596763cd8562439c8d49622ded27b0438da3394",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "//pkg/sentry/kernel:kernel_nogo",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/exit-status-nogo.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-10-24T07:30:07.323Z",
+          "finishTimeMillis": "1792827007323",
+          "overallSuccess": true
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.050s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.051s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "PASSED",
+            "xml": {
+              "failed": 0,
+              "failures": [],
+              "passed": 1,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:30:07.921174+00:00",
+        "execution_to_verdict_seconds": 0.009663,
+        "expected": [
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_nogo"
+        ],
+        "failures": [],
+        "missing": [],
+        "native_exit": 0,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.0011314589999074087,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "adc17f1a66b3db1d2eca2c123e2895bbd5ad807a",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 681,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/commit.txt",
+            "sha256": "bfc5c2809813f9d3d54ec7b0a18b023f9163736b7f9be3fa78b3fca2259f481a"
+          },
+          "executed_arguments": {
+            "bytes": 721,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/arguments.txt",
+            "sha256": "f59674df28ec656db57c0bf009d3a2ee159e07cb0d7fdd04bcf8adb5642fc02e"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/head.txt",
+            "sha256": "231d13012ee87a7dfa4959d644337b5e0bdc684a035aaa09182ef2175fceab8e"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-exit-status-nogo/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:30:07.930837+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 3835,
+      "path": "invocation-parent-death-goimports/verdict.json",
+      "sha256": "04f2dce82ecb74e645476a4b98ab3051e77697f4265114b4c4e2673c85f46c97",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "run",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--run_in_cwd",
+          "@org_golang_x_tools//cmd/goimports",
+          "--",
+          "-format-only",
+          "-d",
+          "pkg/sentry/kernel/task.go",
+          "pkg/sentry/kernel/task_exec.go",
+          "pkg/sentry/kernel/task_identity.go"
+        ],
+        "bazel_command": "run",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 1211,
+            "path": "stderr.log",
+            "sha256": "15bd33f6400dfcca32df75be2c96fecd4b8fe81ab3c02ecd926502c42fdb6287"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:25:25.045266+00:00",
+        "execution_to_verdict_seconds": 0.005305,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0005996399999617097,
+        "schema_version": 1,
+        "source": "d13be1b283d490c274d7b14dd8360010daba3b1b",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 650,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/commit.txt",
+            "sha256": "41fa2861429b48ed1605ef0ee366b6e82ac74494a7c84090d02b6593074a1671"
+          },
+          "executed_arguments": {
+            "bytes": 570,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/arguments.txt",
+            "sha256": "eae6865b11a9758f3f33bf8eea023dbeda1a62f370bda0a1b486a1545d95bc3f"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/head.txt",
+            "sha256": "d3059c8f57e4e1445a6afa8895fbf1399eca18f8cb987935f3dcd967fa3d22a7"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-goimports/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:25:25.050571+00:00"
+      }
+    },
+    {
+      "bytes": 5861,
+      "path": "invocation-parent-death-nogo/verdict.json",
+      "sha256": "9ee524f7da708ac1ee68a6ef94aae0d6f88fa4ae74054a371a43910fc696c0a5",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "//pkg/sentry/kernel:kernel_nogo",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/parent-death-nogo.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-10-24T07:26:22.326Z",
+          "finishTimeMillis": "1792826782326",
+          "overallSuccess": true
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.048s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.050s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "PASSED",
+            "xml": {
+              "failed": 0,
+              "failures": [],
+              "passed": 1,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:26:22.884061+00:00",
+        "execution_to_verdict_seconds": 0.009861,
+        "expected": [
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_nogo"
+        ],
+        "failures": [],
+        "missing": [],
+        "native_exit": 0,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.0010836069999413667,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "d13be1b283d490c274d7b14dd8360010daba3b1b",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 650,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/commit.txt",
+            "sha256": "41fa2861429b48ed1605ef0ee366b6e82ac74494a7c84090d02b6593074a1671"
+          },
+          "executed_arguments": {
+            "bytes": 722,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/arguments.txt",
+            "sha256": "88cece0e395fa1287f88013abbd8e066ddc5d45d51bb3a9a38190ee8babe9f43"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/head.txt",
+            "sha256": "d3059c8f57e4e1445a6afa8895fbf1399eca18f8cb987935f3dcd967fa3d22a7"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-parent-death-nogo/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:26:22.893922+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 3866,
+      "path": "invocation-pull-full-state-goimports/verdict.json",
+      "sha256": "84abda1121dd5b956150507bb6bd38c7ba25cf69b94f01319b2cdec81c868212",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "run",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--run_in_cwd",
+          "@org_golang_x_tools//cmd/goimports",
+          "--",
+          "-format-only",
+          "-d",
+          "pkg/sentry/kernel/task_exit.go",
+          "pkg/sentry/kernel/task_signals.go",
+          "pkg/sentry/kernel/task_test.go"
+        ],
+        "bazel_command": "run",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 1204,
+            "path": "stderr.log",
+            "sha256": "edb6033c6a44936922a3655bbed5efa3a3fed1f7b7e7f6c5e755727d0bd38964"
+          },
+          "stdout": {
+            "bytes": 0,
+            "path": "stdout.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:26:25.390083+00:00",
+        "execution_to_verdict_seconds": 0.005395,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0005897559999539226,
+        "schema_version": 1,
+        "source": "8c3ce60fd4eda9d1c74ee10c8feda0bf712cd888",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 690,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/commit.txt",
+            "sha256": "6b958cadf694726470ebcd0799fc63a87fa3c0d81acbcea3affba3e2021ca6cf"
+          },
+          "executed_arguments": {
+            "bytes": 574,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/arguments.txt",
+            "sha256": "81728a9657c1fe4d7a113d6fc3c934f2ba68bedc373d8d1efdd4484a1d33a35e"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/head.txt",
+            "sha256": "ee01618ffe2085c014aba6d98f70e0fa36adfcf1f4a9bca5eb3e149a5db5d419"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-goimports/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:26:25.395478+00:00"
+      }
+    },
+    {
+      "bytes": 7550,
+      "path": "invocation-pull-full-state-nogo/verdict.json",
+      "sha256": "0869300cd997d13ed5d587af75774864a063c126091d6c35a69f5a60222d52cb",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "all_skipped_owners": [],
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "test",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--lockfile_mode=error",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--strategy=TestRunner=local",
+          "--nocache_test_results",
+          "--runs_per_test=1",
+          "--flaky_test_attempts=1",
+          "--test_output=all",
+          "--test_timeout=600",
+          "--test_sharding_strategy=disabled",
+          "--test_tag_filters=",
+          "--keep_going",
+          "//pkg/sentry/kernel:kernel_nogo",
+          "//pkg/sentry/kernel:kernel_test_nogo",
+          "--build_event_json_file_path_conversion=false",
+          "--build_event_json_file=/tmp/image-qualification-0azx209l/pull-full-state-nogo.events.jsonl"
+        ],
+        "bazel_command": "test",
+        "benchmark_manifest": {},
+        "bep_finish": {
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-10-24T07:29:07.343Z",
+          "finishTimeMillis": "1792826947343",
+          "overallSuccess": true
+        },
+        "build_outputs": [],
+        "capture_exit": 0,
+        "case_counts": {
+          "failed": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        "command_kind": "test",
+        "completed_aspects": [],
+        "declared_benchmark_manifest": {},
+        "errors": [],
+        "executed": [
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.046s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.046s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "PASSED",
+            "xml": {
+              "failed": 0,
+              "failures": [],
+              "passed": 1,
+              "skipped": 0,
+              "skips": []
+            }
+          },
+          {
+            "attempt": 1,
+            "cached_locally": false,
+            "execution_info": {
+              "hostname": "192.168.241.2",
+              "strategy": "local",
+              "timingBreakdown": {
+                "child": [
+                  {
+                    "name": "parseTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "fetchTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "queueTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "uploadTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "setupTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "executionWallTime",
+                    "time": "0.049s"
+                  },
+                  {
+                    "name": "processOutputsTime",
+                    "time": "0s"
+                  },
+                  {
+                    "name": "networkTime",
+                    "time": "0s"
+                  }
+                ],
+                "name": "totalTime",
+                "time": "0.050s"
+              }
+            },
+            "owner": {
+              "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+              "label": "//pkg/sentry/kernel:kernel_test_nogo"
+            },
+            "run": 1,
+            "shard": 1,
+            "status": "PASSED",
+            "xml": {
+              "failed": 0,
+              "failures": [],
+              "passed": 1,
+              "skipped": 0,
+              "skips": []
+            }
+          }
+        ],
+        "execution_finished_at": "2026-10-24T07:29:07.950407+00:00",
+        "execution_to_verdict_seconds": 0.012395,
+        "expected": [
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_nogo"
+          },
+          {
+            "configuration": "2f1181ec0ca1860363bab30ec0f43490128a38519113266e56b5739dda52c941",
+            "label": "//pkg/sentry/kernel:kernel_test_nogo"
+          }
+        ],
+        "expected_aspects": [],
+        "expected_failures": [],
+        "expected_labels": [
+          "//pkg/sentry/kernel:kernel_nogo",
+          "//pkg/sentry/kernel:kernel_test_nogo"
+        ],
+        "failures": [],
+        "missing": [],
+        "native_exit": 0,
+        "non_runtime_owners": [],
+        "reporting_elapsed_seconds": 0.0015559659999553332,
+        "schema_version": 1,
+        "skipped_owners": [],
+        "skips": [],
+        "source": "8c3ce60fd4eda9d1c74ee10c8feda0bf712cd888",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 690,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/commit.txt",
+            "sha256": "6b958cadf694726470ebcd0799fc63a87fa3c0d81acbcea3affba3e2021ca6cf"
+          },
+          "executed_arguments": {
+            "bytes": 762,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/arguments.txt",
+            "sha256": "2ef82dcbf62de565deade8f61be5bd73a0ce64b0868996189fa429deaa95e294"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/head.txt",
+            "sha256": "ee01618ffe2085c014aba6d98f70e0fa36adfcf1f4a9bca5eb3e149a5db5d419"
+          },
+          "lock_after": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/lock-after",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "lock_before": {
+            "bytes": 116924,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/lock-before",
+            "sha256": "fc8e26761ec75ae1a99cac0b9b90c1b0b213393fa100c18717c691025550a535"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-pull-full-state-nogo/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:29:07.962802+00:00",
+        "zero_case_owners": []
+      }
+    },
+    {
+      "bytes": 3244,
+      "path": "invocation-race-dependency-preparation/verdict.json",
+      "sha256": "b8c61fe0c7d48ac4fcc0c230c5b575794850964f39e27f99a6ef100a5a467fff",
+      "verdict": {
+        "accepted_analysis_exit": false,
+        "arguments": [
+          "--bazelrc=/tmp/syscall-applicability-auth-kxua9qvi/credentials.bazelrc",
+          "cquery",
+          "--downloader_config=/tmp/image-qualification-0azx209l/qualification-evidence/ubuntu-pinned-package-downloader.cfg",
+          "--config=x86_64",
+          "--compilation_mode=opt",
+          "--extra_toolchains=@llvm//toolchain:all",
+          "--build_tag_filters=",
+          "--remote_download_outputs=all",
+          "--noannounce_rc",
+          "--config=race",
+          "--lockfile_mode=update",
+          "--output=label",
+          "set(//pkg/sentry/kernel:kernel_test)"
+        ],
+        "bazel_command": "cquery",
+        "bep_finish": null,
+        "capture_exit": 0,
+        "case_counts": {},
+        "command_kind": "command",
+        "command_outputs": {
+          "stderr": {
+            "bytes": 1686,
+            "path": "stderr.log",
+            "sha256": "301faa6c2d0f6a2d027fe11c7ca14659a00d5d872ea475a414b7fb2c956efe6f"
+          },
+          "stdout": {
+            "bytes": 42,
+            "path": "stdout.log",
+            "sha256": "e1aabd10cb973ba2739f3912dd0d0943ea1066fe572b1a6c87e94ed10475f388"
+          }
+        },
+        "errors": [],
+        "executed": [],
+        "execution_finished_at": "2026-10-24T07:19:03.811636+00:00",
+        "execution_to_verdict_seconds": 0.006942,
+        "expected": [],
+        "native_exit": 0,
+        "reporting_elapsed_seconds": 0.0003386289999980363,
+        "schema_version": 1,
+        "source": "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+        "source_evidence": {
+          "capture_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/capture-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "commit_file": {
+            "bytes": 693,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/commit.txt",
+            "sha256": "fb7d250797eea4d5ccd3aec1bd4926ad761ff59e62725341a3c2935630d74a72"
+          },
+          "executed_arguments": {
+            "bytes": 466,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/arguments.txt",
+            "sha256": "35abea6c145e940e79dbf0dddf68808396f5675d9d578bc4998a19564c9453b6"
+          },
+          "final_head": {
+            "bytes": 41,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/head.txt",
+            "sha256": "3c9b501b9c30e42ffebdc7bdbdcc3cf5267dee8814f1e425d2c50fdce7a2612c"
+          },
+          "native_exit": {
+            "bytes": 2,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/native-exit",
+            "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+          },
+          "source_after": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/after.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "source_before": {
+            "bytes": 0,
+            "path": "/tmp/image-qualification-0azx209l/qualification-evidence/invocation-race-dependency-preparation/before.txt",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "status": "PASS",
+        "verdict_available_at": "2026-10-24T07:19:03.818578+00:00"
+      }
+    }
+  ],
+  "missing": [],
+  "native_exit": 3,
+  "native_exits": [
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-00-buildifier/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-combined-goimports/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 3,
+      "invocation": "invocation-combined-nogo/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-combined-race/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-combined-units/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-contracts-goimports/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 3,
+      "invocation": "invocation-contracts-nogo/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-dependency-preparation-x86_64-images/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-exit-status-goimports/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-exit-status-nogo/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-parent-death-goimports/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-parent-death-nogo/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-pull-full-state-goimports/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-pull-full-state-nogo/verdict.json"
+    },
+    {
+      "accepted_analysis_exit": false,
+      "exit": 0,
+      "invocation": "invocation-race-dependency-preparation/verdict.json"
+    }
+  ],
+  "non_runtime_owners": [],
+  "runner_exit": 3,
+  "schema_version": 1,
+  "skips": [],
+  "sources": [
+    "1fa527642631e90a21752297955c51490b86ab28",
+    "8c3ce60fd4eda9d1c74ee10c8feda0bf712cd888",
+    "aa3c859c159d0fede2dda5f41fed5bdeec34b1e8",
+    "adc17f1a66b3db1d2eca2c123e2895bbd5ad807a",
+    "d13be1b283d490c274d7b14dd8360010daba3b1b"
+  ],
+  "status": "FAIL",
+  "verdict_available_at": "2026-10-24T07:37:34.742982+00:00",
+  "zero_case_owners": []
+}

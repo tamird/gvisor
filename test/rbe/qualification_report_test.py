@@ -2954,6 +2954,73 @@ signal.pause()
         (self.evidence / "invocation-missing").mkdir()
         self.assertEqual(report.bundle(self.evidence, 0, 0, output)["status"], "INCOMPLETE")
 
+    def test_explicit_source_set_preserves_retained_failure(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        expected = producer["sources"]
+        rows = producer["invocations"]
+        value = report.summarize_verdicts(rows, producer["runner_exit"], producer["capture_exit"], [],
+                                          expected_sources=expected)
+        self.assertEqual((value["status"], value["native_exit"], value["errors"]), ("FAIL", 3, []))
+        for key in ("sources", "native_exits", "case_counts", "failures", "executed"):
+            self.assertEqual(value[key], producer[key], key)
+        for declared in (expected[:-1], [*expected, "0" * 40]):
+            with self.subTest(declared=declared):
+                rejected = report.summarize_verdicts(rows, 0, 0, [], expected_sources=declared)
+                self.assertEqual(rejected["status"], "FAIL")
+                self.assertTrue(any("Invocation sources differ" in item for item in rejected["errors"]))
+        passing = [row for row in rows if row["path"] in (
+            "invocation-parent-death-nogo/verdict.json", "invocation-exit-status-nogo/verdict.json")]
+        declared = [row["verdict"]["source"] for row in passing]
+        self.assertEqual(len(passing), 2)
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [], expected_sources=declared)["status"], "PASS")
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [], expected_sources=declared[:1])["status"], "INCOMPLETE")
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [])["status"], "INCOMPLETE")
+        empty = report.summarize_verdicts([], 0, 0, [], expected_sources=expected)
+        self.assertEqual((empty["status"], empty["native_exit"]), ("INCOMPLETE", None))
+
+    def test_explicit_source_set_receipt_requires_exact_sources(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        artifact = self.root / "multi-source.tar.gz"
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        digest = report.file_record(artifact)["sha256"]
+        source = producer["sources"][0]
+        with self.assertRaisesRegex(ValueError, "Producer sources"):
+            report.receipt(artifact, digest, source)
+        result = report.receipt(artifact, digest, source, expected_sources=producer["sources"])
+        self.assertEqual((result["status"], result["native_exit"]), ("FAIL", 3))
+        self.assertEqual(result["errors"], producer["errors"])
+        self.assertEqual(result["expected_sources"], producer["sources"])
+        with self.assertRaisesRegex(ValueError, "Producer sources"):
+            report.receipt(artifact, digest, source, expected_sources=producer["sources"][:-1])
+        with self.assertRaisesRegex(ValueError, "Submitted source"):
+            report.receipt(artifact, digest, "0" * 40, expected_sources=producer["sources"])
+        output = self.root / "multi-source-receipt.json"
+        command = subprocess.run([sys.executable, report.__file__, "receipt", "--artifact", str(artifact),
+                                  "--sha256", digest, "--expected-source", source, "--output", str(output),
+                                  *[arg for commit in producer["sources"] for arg in ("--invocation-source", commit)]],
+                                 capture_output=True, text=True, check=False)
+        self.assertEqual(command.returncode, 1, command.stderr)
+        self.assertEqual(report.read_json(output)["status"], "FAIL")
+        producer["invocations"][0]["verdict"]["source"] = "0" * 40
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        with self.assertRaisesRegex(ValueError, "Producer invocation"):
+            report.receipt(artifact, report.file_record(artifact)["sha256"], source,
+                           expected_sources=producer["sources"])
+
+
+    def test_explicit_source_set_rejects_invalid_contracts(self) -> None:
+        for sources in ([], [""], ["a" * 39], ["a" * 40, "a" * 40]):
+            with self.subTest(sources=sources), self.assertRaisesRegex(ValueError, "unique full commit"):
+                report.summarize_verdicts([], 0, 0, [], expected_sources=sources)
+
     def test_empty_bundle_never_passes(self) -> None:
         value = report.bundle(self.evidence, 19, 0, self.root / "bundle.tar.gz")
         self.assertEqual(value["status"], "INCOMPLETE")
@@ -3599,6 +3666,9 @@ signal.pause()
                             "all_skipped_owners", "native_exits", "verdict_available_at"):
                     self.assertEqual(value[key], producer[key], key)
                 self.assertEqual(value["invocations"][0]["errors"], producer["invocations"][0]["verdict"]["errors"])
+                explicit = report.receipt(artifact, digest, producer["sources"][0], expected_sources=producer["sources"])
+                self.assertEqual(explicit["status"], status)
+                self.assertEqual(explicit["case_counts"], producer["case_counts"])
                 self.assertEqual(value["expected_owner_count"], len(producer["expected"]))
                 self.assertEqual(value["executed_attempt_count"], len(producer["executed"]))
                 phase = producer["invocations"][0]["verdict"]

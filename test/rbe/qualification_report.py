@@ -2324,13 +2324,25 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if info["execution_finished_at"] is not None else None}
 
 
+def source_set(sources: list[str]) -> set[str]:
+    """Validate the explicitly supplied full commit identities."""
+    if not sources or any(not isinstance(source, str) or re.fullmatch(r"[0-9a-f]{40}", source) is None
+                          for source in sources) or len(set(sources)) != len(sources):
+        raise ValueError("Expected source set must contain unique full commit SHAs")
+    return set(sources)
+
+
 def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_exit: int,
-                       errors: list[str]) -> dict[str, object]:
+                       errors: list[str], *, expected_sources: list[str] | None = None) -> dict[str, object]:
     """Keep original command exits distinct from the enclosing runner's exit."""
     if not rows:
         errors.append("No invocation verdicts were retained")
     sources = {string(mapping(row["verdict"]).get("source")) for row in rows}
-    if len(sources) != 1:
+    if expected_sources is not None:
+        expected = source_set(expected_sources)
+        if sources != expected:
+            errors.append(f"Invocation sources differ: missing {sorted(expected - sources)}, unexpected {sorted(sources - expected)}")
+    elif len(sources) != 1:
         errors.append("Invocation sources are absent or inconsistent")
     verdicts = [mapping(row["verdict"]) for row in rows]
     cases: Counter[str] = Counter()
@@ -2356,6 +2368,7 @@ def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_
     else:
         status = "PASS"
     return {"schema_version": 1, "status": status, "sources": sorted(sources), "native_exit": native_exit,
+              **({"expected_sources": sorted(expected_sources)} if expected_sources is not None else {}),
               "native_exits": native_exits, "runner_exit": runner_exit, "coordinator_failed": coordinator_failed,
               "capture_exit": capture_exit, "invocations": rows, "errors": errors,
               "expected": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("expected", []))],
@@ -2417,7 +2430,8 @@ def execution_summary(action: dict[str, object]) -> dict[str, object]:
             "full_record_sha256": hashlib.sha256(encoded).hexdigest()}
 
 
-def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
+def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path, *,
+           expected_sources: list[str] | None = None) -> dict[str, object]:
     rows = []
     errors = []
     for invocation in sorted(directory.rglob("invocation-*")):
@@ -2428,7 +2442,7 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
             rows.append({"path": str(path.relative_to(directory)), "verdict": read_json(path), **file_record(path)})
         except (OSError, ValueError) as error:
             errors.append(str(error))
-    result = summarize_verdicts(rows, runner_exit, capture_exit, errors)
+    result = summarize_verdicts(rows, runner_exit, capture_exit, errors, expected_sources=expected_sources)
     metadata = directory / "matrix-row.json"
     if metadata.exists():
         try:
@@ -2558,7 +2572,8 @@ def producer_verdict(artifact: Path, *, deadline: float | None = None) -> dict[s
 
 
 def receipt(artifact: Path, sha256: str, expected_source: str,
-            targets: list[str] | None = None, *, deadline: float | None = None) -> dict[str, object]:
+            targets: list[str] | None = None, *, deadline: float | None = None,
+            expected_sources: list[str] | None = None) -> dict[str, object]:
     """Authenticate a downloaded artifact and retain its producer verdict."""
     identity = file_record(artifact, deadline=deadline)
     if identity["sha256"] != sha256.removeprefix("sha256:"):
@@ -2566,8 +2581,16 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
     producer = producer_verdict(artifact, deadline=deadline)
     if producer.get("schema_version") != 1 or producer.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
         raise ValueError("Unsupported producer verdict")
-    if producer.get("sources") != [expected_source]:
-        raise ValueError(f"Producer sources {producer.get('sources')} differ from {expected_source}")
+    expected_commits = source_set(expected_sources) if expected_sources is not None else {expected_source}
+    if expected_source not in expected_commits:
+        raise ValueError("Submitted source is absent from the expected source set")
+    if producer.get("sources") != sorted(expected_commits):
+        raise ValueError(f"Producer sources {producer.get('sources')} differ from {sorted(expected_commits)}")
+    if expected_sources is not None:
+        observed = {string(mapping(mapping(row)["verdict"]).get("source"))
+                    for row in sequence(producer["invocations"])}
+        if observed != expected_commits or producer.get("expected_sources", sorted(expected_commits)) != sorted(expected_commits):
+            raise ValueError("Producer invocation or declared sources differ from the expected source set")
     expected = sequence(producer["expected"])
     labels = sorted({string(mapping(owner)["label"]) for owner in expected})
     if targets is not None and set(targets) != set(labels):
@@ -2592,6 +2615,7 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
     check_deadline(deadline)
     return {**result, "artifact": {"path": str(artifact), **identity},
             "expected_labels": labels, "expected_owner_count": len(expected),
+            **({"expected_sources": sorted(expected_sources)} if expected_sources is not None else {}),
             "executed_attempt_count": len(sequence(producer["executed"])), "invocations": invocations,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
@@ -2980,7 +3004,8 @@ def compose(plan_path: Path, results_path: Path, directory: Path, output: Path) 
 
 
 def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, output: Path,
-                   expected_source: str, targets: list[str] | None, timeout_seconds: float) -> dict[str, object]:
+                   expected_source: str, targets: list[str] | None, timeout_seconds: float, *,
+                   expected_sources: list[str] | None = None) -> dict[str, object]:
     """Wait for one native invocation and authenticate its qualification bundle."""
     partial = artifact.with_name(artifact.name + ".partial")
     if output.resolve() in (artifact.resolve(), partial.resolve()):
@@ -3019,6 +3044,8 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
             raise ValueError("Expected a canonical invocation UUID")
         if re.fullmatch(r"[0-9a-f]{40}", expected_source) is None:
             raise ValueError("Expected a full source commit SHA")
+        if expected_sources is not None and expected_source not in source_set(expected_sources):
+            raise ValueError("Submitted source is absent from the expected source set")
         api_key = api_key_file.read_text().strip()
         if not api_key or any(not 33 <= ord(character) <= 126 for character in api_key):
             raise ValueError("BuildBuddy API key file must contain one nonempty ASCII token")
@@ -3106,7 +3133,7 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         if artifact.stat().st_size != size:
             raise ValueError("Existing artifact differs from its advertised size")
         remaining()
-        result = receipt(artifact, sha256, expected_source, targets, deadline=deadline)
+        result = receipt(artifact, sha256, expected_source, targets, deadline=deadline, expected_sources=expected_sources)
         result["producer_status"] = result["status"]
         result["audit_artifacts"] = []
         result["audit_upload_errors"] = []
@@ -3206,6 +3233,9 @@ def main() -> int:
         native.add_argument("--" + name, required=True)
     native.add_argument("--target", action="append")
     native.add_argument("--timeout-seconds", type=float, required=True)
+    for command in (pack, consume, native):
+        command.add_argument("--invocation-source", action="append", dest="expected_sources",
+                             help="Exact allowed invocation commit; repeat for every expected source")
     args = parser.parse_args()
     if args.command == "source-image-expectations":
         try:
@@ -3233,14 +3263,14 @@ def main() -> int:
     if args.command == "native-receipt":
         try:
             result = native_receipt(args.invocation_id, args.api_key_file, args.artifact, args.output,
-                                    args.expected_source, args.target, args.timeout_seconds)
+                                    args.expected_source, args.target, args.timeout_seconds, expected_sources=args.expected_sources)
         except (OSError, ValueError) as error:
             parser.error(str(error))
         print(f"{result['status']}: {args.output}")
         return int(result["status"] != "PASS")
     if args.command == "receipt":
         try:
-            result = receipt(args.artifact, args.sha256, args.expected_source, args.target)
+            result = receipt(args.artifact, args.sha256, args.expected_source, args.target, expected_sources=args.expected_sources)
         except (OSError, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
             parser.error(str(error))
         write_json(args.output, result)
@@ -3279,7 +3309,7 @@ def main() -> int:
         result = command_verdict(args.context)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else result["native_exit"] or 1
-    result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
+    result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output, expected_sources=args.expected_sources)
     exit_code = number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
     # The coordinator can upload the archive and then lose its build-event
     # stream. Retain its CAS identity in the execution log for recovery.
