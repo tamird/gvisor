@@ -166,3 +166,35 @@ image_outputs(
     image = ":httpd",
     image_name = "benchmarks/httpd",
 )
+
+write_file(
+    name = "nginx_index",
+    out = "nginx-index.html",
+    content = [],
+)
+
+image_layer(
+    name = "nginx_config_layer",
+    srcs = {
+        "/etc/nginx/nginx.conf": "nginx/nginx.conf",
+        "/etc/nginx/nginx_gofer.conf": "nginx/nginx_gofer.conf",
+        "/local/index.html": ":nginx_index",
+    },
+    default_metadata = file_metadata(mode = "0644"),
+)
+
+image_manifest(
+    name = "nginx",
+    base = "@benchmark_nginx",
+    layers = [
+        ":http_payload_layer",
+        ":nginx_config_layer",
+    ],
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "nginx",
+    image = ":nginx",
+    image_name = "benchmarks/nginx",
+)

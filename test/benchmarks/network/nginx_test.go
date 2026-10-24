@@ -23,7 +23,7 @@ import (
 	"gvisor.dev/gvisor/test/benchmarks/tools"
 )
 
-// see Dockerfile '//images/benchmarks/nginx'.
+// See //images/benchmarks:nginx for the served files.
 var nginxDocs = map[string]string{
 	"notfound": "notfound",
 	"1Kb":      "latin1k.txt",
