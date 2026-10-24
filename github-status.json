@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-24T15:40:36.678704+00:00",
-  "registryDate": "2026-10-24T15:30:56.801176+00:00",
+  "registryDate": "2026-10-24T15:44:26.071457+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -175548,6 +175548,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-24T15:40:36.403965+00:00"
+      }
+    },
+    "branch:tcp-rack-pipe-accounting": {
+      "contributor-review": {
+        "scope": "3327ae6769dfd2426f27bb69730051eb96333773",
+        "since": "2026-10-24T15:44:26.071457+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-24T15:44:26.071457+00:00"
       }
     }
   },

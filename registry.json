@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T15:30:56.801176+00:00",
+    "updatedAt": "2026-10-24T15:44:26.071457+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22107,44 +22107,61 @@
       "id": "branch:tcp-rack-pipe-accounting",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "fix/tcp-rack-pipe-accounting",
-      "head": "cd2171f0f762d861fe2ed48e4425d05e62adda03",
+      "ref": "fix/tcp-rack-pipe-accounting-readable",
+      "head": "3327ae6769dfd2426f27bb69730051eb96333773",
       "title": "Account for RACK loss when estimating flight",
-      "url": "https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03",
+      "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-24T15:25:05.305627+00:00",
-      "summary": "After a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This four-file proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged. The isolated head is a direct child of #15634 at 933263e71c; that unmerged correction is its sole prerequisite. Hostinet is simplifying the test and description before root asks the contributor. No contributor question has been sent.\n\nThe real-endpoint baseline reproduces ten packets counted in flight against a five-packet window. Corrected normal and race runs cover ordinary segments, software GSO, ACK-driven drain and the existing receive-window control. The retry has six uncached attempts and 43 positive candidate records; the three expected baseline failures keep the aggregate native result FAIL while the comparison, candidate and projection pass. Seven earlier classic-SACK normal records remain separately applicable by unchanged source; the retry covers classic-SACK race. Independent retained peer 2842628c confirms ten native phases and 3.677916 seconds to authenticated consumer. Final isolation peer cd52b772 confirms the entire TCP subtree matches the tested candidate. No throughput improvement is claimed.",
+      "status": "Contributor review",
+      "updatedAt": "2026-10-24T15:44:26.071457+00:00",
+      "summary": "After a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This four-file proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged. The readable proposal 3327ae replaces cd2171 with simpler regression setup and description; its production bytes are unchanged. It is a direct child of #15634 at 933263e71c, its sole prerequisite.\n\nThe revised normal/race RACK and classic-SACK suites and both analyzer owners pass: nine native-zero phases, six uncached attempts, 50 positive XML records and no failures or skips. Independent retained peer 9c8c8ed6 authenticates the exact 30fa qualification, with a verdict 5.774948 seconds after native completion. Final isolation peer 979e95d2 confirms all four product files and the entire TCP subtree match the tested source. The earlier baseline/candidate comparison separately retains three expected baseline failures, aggregate native FAIL and passing candidate/comparison/projection. No throughput improvement is claimed.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "cd2171f0f762d861fe2ed48e4425d05e62adda03",
-        "observedAt": "2026-10-24T15:25:05.305627+00:00",
-        "disposition": "Qualified isolated proposal; test and description simplification is agent work",
-        "nextAction": "Simplify the test and description under root’s direction, bind the revised source and necessary validation, then give root the exact proposal for a contributor question. Keep the #15634 prerequisite; qualification does not imply publication approval.",
+        "owner": "root",
+        "sourceHead": "3327ae6769dfd2426f27bb69730051eb96333773",
+        "observedAt": "2026-10-24T15:44:26.071457+00:00",
+        "disposition": "Exact readable proposal is ready for the contributor decision",
+        "nextAction": "Resolve the contributor decision for exact 3327ae; publication remains gated by that decision and the sole #15634 prerequisite. Preserve the earlier expected-red comparison separately from the readable positive validation.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03",
-          "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...cd2171f0f762d861fe2ed48e4425d05e62adda03",
+          "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
+          "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773",
+          "https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f",
           "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
         ]
       },
       "evidence": [
         {
-          "label": "Exact isolated proposal",
+          "label": "Exact readable proposal",
+          "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773"
+        },
+        {
+          "label": "Readable four-file change on #15634",
+          "url": "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773"
+        },
+        {
+          "label": "Previous qualified proposal",
           "url": "https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03"
         },
         {
-          "label": "Four-file change on #15634",
-          "url": "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...cd2171f0f762d861fe2ed48e4425d05e62adda03"
+          "label": "Readable normal/race and analyzer qualification",
+          "url": "https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f"
         },
         {
-          "label": "Focused baseline/candidate comparison",
+          "label": "Historical expected-red baseline/candidate comparison",
           "url": "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
         },
         {
           "label": "Required SACK-accounting prerequisite",
           "url": "https://github.com/google/gvisor/pull/15634"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "head": "3327ae6769dfd2426f27bb69730051eb96333773",
+        "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
+        "title": "Review the readable RACK flight-accounting proposal",
+        "summary": "Exclude RACK-lost transmissions from the flight estimate and refresh it before the recovery-window check. The simpler regression and description retain unchanged production bytes. Delivery requires #15634.",
+        "body": "Publish the readable RACK proposal 3327ae6769dfd2426f27bb69730051eb96333773 after #15634 lands?\n\nAfter a retransmission timeout and a sparse tail SACK, RACK recovery\ncounted ten packets in flight against a five-packet congestion window.\nAlready-lost originals kept the window full, so ACKs for retransmitted\ndata did not release enough room to continue recovery.\n\nRACK detects loss by transmission time, but pipe used classic SACK\nthresholds and HighRxt bookkeeping. Count each unsacked current\ntransmission once unless RACK has marked it lost, and refresh the\nestimate after loss detection before checking the recovery window.\nClassic SACK accounting is unchanged.\n\nThe regression checks that five retransmissions fill the window once\nand that later ACKs drain the pending data without another timeout,\nwith and without software GSO. The receive-window control drains each\npermitted retransmission before closing the window.\n\nDepends on the SACK-accounting correction in #15634.\n\nCurrent proposal: https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773\n\nPrevious proposal: https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03\n\nhttps://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773\n\ngit range-diff cd2171f0f762d861fe2ed48e4425d05e62adda03^! 3327ae6769dfd2426f27bb69730051eb96333773^!\n\nReadable qualification: https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f\n\nNine native-zero phases, six uncached attempts and 50 positive records.\nThe earlier expected-red comparison keeps its aggregate native FAIL;\nits candidate and scoped comparison pass: https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540\n\nSole prerequisite: https://github.com/google/gvisor/pull/15634\n\nCanonical decision: https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Atcp-rack-pipe-accounting"
+      }
     }
   ],
   "edges": [
