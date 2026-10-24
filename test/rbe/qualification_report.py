@@ -33,6 +33,7 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 import datetime
+import errno
 import hashlib
 from http.client import HTTPException, HTTPResponse, HTTPSConnection
 import json
@@ -2947,13 +2948,19 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
                         raw.extend(chunk)
                         if len(raw) > 4 * 1024 * 1024:
                             raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
-            except (TimeoutError, ConnectionResetError) as error:
+            except OSError as error:
+                if isinstance(error, (TimeoutError, ConnectionResetError)):
+                    reason = type(error).__name__
+                elif error.errno == errno.EADDRNOTAVAIL:
+                    reason = "EADDRNOTAVAIL"
+                else:
+                    raise
                 # A failed status read says nothing about the running build.
                 # Retry that read within the original collection deadline.
                 remaining()
                 observation_retries.append({
                     "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                    "error": type(error).__name__,
+                    "error": reason,
                 })
                 time.sleep(min(5, remaining()))
                 continue
