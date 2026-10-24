@@ -164,4 +164,4 @@ func DisableCodecs() func() {
 }
 
 // codecsDisabled is set by DisableCodecs.
-var codecsDisabled bool
+var codecsDisabled = true
