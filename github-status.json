@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-25T22:22:37.451530+00:00",
-  "registryDate": "2026-10-25T22:23:32.244708+00:00",
+  "registryDate": "2026-10-25T22:39:19.071953+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -179046,15 +179046,15 @@
       "checkedAt": "2026-10-25T22:22:27.799167+00:00",
       "mergeabilityCheckedAt": "2026-10-25T22:22:06.679733+00:00",
       "sourceBranchMismatch": false,
-      "owner": "ndp_integration",
+      "owner": "root",
       "action": "Verify the current head/base conflict and route the repair to its owner. Keep the blocker active until the exact source or import is confirmed mergeable or closed.",
       "recordedFollowup": {
-        "owner": "ndp_integration",
+        "owner": "root",
         "sourceHead": "5f99029c1c4db8350968ee61c332624c9404c190",
-        "disposition": "Current source conflict after #15318; standalone fork amendment in validation",
-        "nextAction": "Finish the standalone e7990b3b public-source regression gate and independent review. Keep the exact fork proposal and copyable comparison visible as agent work; do not request a contributor decision or mutate upstream until ready and authorized."
+        "disposition": "Current source conflict; exact fork amendment qualified for contributor review",
+        "nextAction": "Obtain the contributor decision for the existing e7990b3b proposal before updating upstream #15730. No new maintainer changes-requested event is implied; both inline threads remain resolved."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-10-25T22:22:27.799167+00:00"
     }
   ],
   "checkFailures": [
@@ -182553,7 +182553,16 @@
         "since": "2026-10-25T17:18:41.123958+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-25T22:23:32.244708+00:00"
+        "observedAt": "2026-10-25T22:39:19.071953+00:00"
+      }
+    },
+    "branch:review/tcpip-netip-ndp-restore": {
+      "contributor-review": {
+        "scope": "e7990b3b307ca62f23dbf51ff305ed0ddfaf077e",
+        "since": "2026-10-25T22:39:19.071953+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-25T22:39:19.071953+00:00"
       }
     }
   },
