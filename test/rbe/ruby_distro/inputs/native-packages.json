@@ -1,0 +1,142 @@
+[
+  {
+    "url": "https://deb.debian.org/debian/pool/main/p/puma/puma_6.6.0-4_amd64.deb",
+    "archive": "/private/tmp/gvisor-rbe-next/ruby-http-distro-puma_6.6.0-4_amd64.deb",
+    "bytes": 189304,
+    "sha256": "12220483cd7abaf73af466a6aa4b460eb077c04c8483f642331ac5caed6420d0",
+    "control": "Package: puma\nVersion: 6.6.0-4\nArchitecture: amd64\nMaintainer: Debian Ruby Team <pkg-ruby-extras-maintainers@lists.alioth.debian.org>\nInstalled-Size: 558\nDepends: ruby, ruby-nio4r (>= 2.0), libc6 (>= 2.14), libssl3t64 (>= 3.0.0), libruby3.3 (>= 3.3.1), libruby (>= 1:3.3~0), libruby (<< 1:3.4~)\nBreaks: rails (<< 2:6.1.7.3+dfsg-3~)\nSection: web\nPriority: optional\nHomepage: https://puma.io\nDescription: threaded HTTP 1.1 server for Ruby/Rack applications\n Puma is a simple, fast, threaded, and highly concurrent HTTP 1.1 server for\n Ruby/Rack applications. Puma is intended for use in both development and\n production environments.\n",
+    "native_files": [
+      {
+        "path": "./usr/lib/x86_64-linux-gnu/rubygems-integration/3.3.0/extensions/x86_64-linux-gnu/3.3.0/puma-6.6.0/puma/puma_http11.so",
+        "machine": 62,
+        "sha256": "9c7aa758d93ece0ddf6b7c0df1c8c9d904c0da3fd1914932366fde723b71c37d",
+        "bytes": 44152,
+        "contains_libruby3_3": true
+      }
+    ],
+    "gemspecs": [
+      {
+        "path": "./usr/lib/x86_64-linux-gnu/rubygems-integration/3.3.0/specifications/puma-6.6.0.gemspec",
+        "content": "# -*- encoding: utf-8 -*-\n# stub: puma 6.6.0 ruby lib\n# stub: ext/puma_http11/extconf.rb\n\nGem::Specification.new do |s|\n  s.name = \"puma\".freeze\n  s.version = \"6.6.0\".freeze\n\n  s.required_rubygems_version = Gem::Requirement.new(\">= 0\".freeze) if s.respond_to? :required_rubygems_version=\n  s.metadata = { \"bug_tracker_uri\" => \"https://github.com/puma/puma/issues\", \"changelog_uri\" => \"https://github.com/puma/puma/blob/master/History.md\", \"homepage_uri\" => \"https://puma.io\", \"rubygems_mfa_required\" => \"true\", \"source_code_uri\" => \"https://github.com/puma/puma\" } if s.respond_to? :metadata=\n  s.require_paths = [\"lib\".freeze]\n  s.authors = [\"Evan Phoenix\".freeze]\n  s.date = \"2025-07-17\"\n  s.description = \"Puma is a simple, fast, multi-threaded, and highly parallel HTTP 1.1 server\\nfor Ruby/Rack applications. Puma is intended for use in both development and\\nproduction environments. It's great for highly parallel Ruby implementations such as\\nJRuby and TruffleRuby as well as as providing process worker support to support CRuby well.\\n\".freeze\n  s.email = [\"evan@phx.io\".freeze]\n  s.executables = [\"puma\".freeze, \"pumactl\".freeze]\n  s.extensions = [\"ext/puma_http11/extconf.rb\".freeze]\n  s.files = [\"bin/puma\".freeze, \"bin/pumactl\".freeze, \"ext/puma_http11/extconf.rb\".freeze]\n  s.homepage = \"https://puma.io\".freeze\n  s.licenses = [\"BSD-3-Clause\".freeze]\n  s.required_ruby_version = Gem::Requirement.new(\">= 2.4\".freeze)\n  s.rubygems_version = \"3.6.7\".freeze\n  s.summary = \"A Ruby/Rack web server built for parallelism.\".freeze\n\n  s.installed_by_version = \"3.6.7\".freeze\n\n  s.specification_version = 4\n\n  s.add_runtime_dependency(%q<nio4r>.freeze, [\"~> 2.0\".freeze])\nend\n"
+      }
+    ],
+    "copyright_paths": [
+      "./usr/share/doc/puma/copyright"
+    ]
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/p/puma/puma_6.6.0-4_arm64.deb",
+    "archive": "/private/tmp/gvisor-rbe-next/ruby-http-distro-puma_6.6.0-4_arm64.deb",
+    "bytes": 188608,
+    "sha256": "67b63c23ff35fb2eefc89665f3d981a4889418b089fbf42de0024ef0ec878ddf",
+    "control": "Package: puma\nVersion: 6.6.0-4\nArchitecture: arm64\nMaintainer: Debian Ruby Team <pkg-ruby-extras-maintainers@lists.alioth.debian.org>\nInstalled-Size: 582\nDepends: ruby, ruby-nio4r (>= 2.0), libc6 (>= 2.17), libssl3t64 (>= 3.0.0), libruby3.3 (>= 3.3.1), libruby (>= 1:3.3~0), libruby (<< 1:3.4~)\nBreaks: rails (<< 2:6.1.7.3+dfsg-3~)\nSection: web\nPriority: optional\nHomepage: https://puma.io\nDescription: threaded HTTP 1.1 server for Ruby/Rack applications\n Puma is a simple, fast, threaded, and highly concurrent HTTP 1.1 server for\n Ruby/Rack applications. Puma is intended for use in both development and\n production environments.\n",
+    "native_files": [
+      {
+        "path": "./usr/lib/aarch64-linux-gnu/rubygems-integration/3.3.0/extensions/aarch64-linux-gnu/3.3.0/puma-6.6.0/puma/puma_http11.so",
+        "machine": 183,
+        "sha256": "2947efee1d4b44a71ad012d8f20bf9e6e63ab8dec9247ac996adb770501abd34",
+        "bytes": 68720,
+        "contains_libruby3_3": true
+      }
+    ],
+    "gemspecs": [
+      {
+        "path": "./usr/lib/aarch64-linux-gnu/rubygems-integration/3.3.0/specifications/puma-6.6.0.gemspec",
+        "content": "# -*- encoding: utf-8 -*-\n# stub: puma 6.6.0 ruby lib\n# stub: ext/puma_http11/extconf.rb\n\nGem::Specification.new do |s|\n  s.name = \"puma\".freeze\n  s.version = \"6.6.0\".freeze\n\n  s.required_rubygems_version = Gem::Requirement.new(\">= 0\".freeze) if s.respond_to? :required_rubygems_version=\n  s.metadata = { \"bug_tracker_uri\" => \"https://github.com/puma/puma/issues\", \"changelog_uri\" => \"https://github.com/puma/puma/blob/master/History.md\", \"homepage_uri\" => \"https://puma.io\", \"rubygems_mfa_required\" => \"true\", \"source_code_uri\" => \"https://github.com/puma/puma\" } if s.respond_to? :metadata=\n  s.require_paths = [\"lib\".freeze]\n  s.authors = [\"Evan Phoenix\".freeze]\n  s.date = \"2025-07-17\"\n  s.description = \"Puma is a simple, fast, multi-threaded, and highly parallel HTTP 1.1 server\\nfor Ruby/Rack applications. Puma is intended for use in both development and\\nproduction environments. It's great for highly parallel Ruby implementations such as\\nJRuby and TruffleRuby as well as as providing process worker support to support CRuby well.\\n\".freeze\n  s.email = [\"evan@phx.io\".freeze]\n  s.executables = [\"puma\".freeze, \"pumactl\".freeze]\n  s.extensions = [\"ext/puma_http11/extconf.rb\".freeze]\n  s.files = [\"bin/puma\".freeze, \"bin/pumactl\".freeze, \"ext/puma_http11/extconf.rb\".freeze]\n  s.homepage = \"https://puma.io\".freeze\n  s.licenses = [\"BSD-3-Clause\".freeze]\n  s.required_ruby_version = Gem::Requirement.new(\">= 2.4\".freeze)\n  s.rubygems_version = \"3.6.7\".freeze\n  s.summary = \"A Ruby/Rack web server built for parallelism.\".freeze\n\n  s.installed_by_version = \"3.6.7\".freeze\n\n  s.specification_version = 4\n\n  s.add_runtime_dependency(%q<nio4r>.freeze, [\"~> 2.0\".freeze])\nend\n"
+      }
+    ],
+    "copyright_paths": [
+      "./usr/share/doc/puma/copyright"
+    ]
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/r/ruby-nio4r/ruby-nio4r_2.7.3-1+b2_amd64.deb",
+    "archive": "/private/tmp/gvisor-rbe-next/ruby-http-distro-ruby-nio4r_2.7.3-1+b2_amd64.deb",
+    "bytes": 114316,
+    "sha256": "fdc62cfecffeda788f435fddceb0f7cb0ed171c2ca7c9b414ad8fa245a55da06",
+    "control": "Package: ruby-nio4r\nSource: ruby-nio4r (2.7.3-1)\nVersion: 2.7.3-1+b2\nArchitecture: amd64\nMaintainer: Debian Ruby Team <pkg-ruby-extras-maintainers@lists.alioth.debian.org>\nInstalled-Size: 461\nDepends: libc6 (>= 2.38), libruby3.3 (>= 3.3.1), libruby (>= 1:3.3~0), libruby (<< 1:3.4~)\nSection: ruby\nPriority: optional\nHomepage: https://github.com/socketry/nio4r\nDescription: Ruby library providing a selector API for monitoring IO objects\n nio4r (New IO for Ruby) provides an abstract, cross-platform stateful\n I/O selector API for Ruby. I/O selectors are the heart of\n \"reactor\"-based event loops, and monitor multiple I/O objects for\n various types of readiness, e.g. ready for reading or writing.\n .\n The most similar API provided by Ruby today is Kernel.select, however\n the select API requires you to pass in arrays of all of the I/O\n objects you're interested in every time. nio4r provides a more\n object-oriented API that lets you register I/O objects with a selector\n then handle them when they're selected for various types of events.\n .\n nio4r is modeled after the Java NIO API, but simplified for\n ease-of-use.\n .\n Its goals are:\n .\n  * Expose high-level interfaces for stateful IO selectors.\n  * Keep the API small to maximize both portability and performance across\n    many different OSes and Ruby VMs.\n  * Provide inherently thread-safe facilities for working with IO objects.\n",
+    "native_files": [
+      {
+        "path": "./usr/lib/x86_64-linux-gnu/rubygems-integration/3.3.0/extensions/x86_64-linux-gnu/3.3.0/nio4r-2.7.3/nio4r_ext.so",
+        "machine": 62,
+        "sha256": "09fc03f6a55d0ea2cfd2d962eb7c8c7269e6355c204e0b9f9fd27bb93408a535",
+        "bytes": 83952,
+        "contains_libruby3_3": true
+      }
+    ],
+    "gemspecs": [
+      {
+        "path": "./usr/lib/x86_64-linux-gnu/rubygems-integration/3.3.0/specifications/nio4r-2.7.3.gemspec",
+        "content": "# -*- encoding: utf-8 -*-\n# stub: nio4r 2.7.3 ruby lib\n# stub: ext/nio4r/extconf.rb\n\nGem::Specification.new do |s|\n  s.name = \"nio4r\".freeze\n  s.version = \"2.7.3\".freeze\n\n  s.required_rubygems_version = Gem::Requirement.new(\">= 0\".freeze) if s.respond_to? :required_rubygems_version=\n  s.metadata = { \"bug_tracker_uri\" => \"https://github.com/socketry/nio4r/issues\", \"changelog_uri\" => \"https://github.com/socketry/nio4r/blob/main/changes.md\", \"documentation_uri\" => \"https://www.rubydoc.info/gems/nio4r\", \"funding_uri\" => \"https://github.com/sponsors/ioquatix/\", \"source_code_uri\" => \"https://github.com/socketry/nio4r.git\", \"wiki_uri\" => \"https://github.com/socketry/nio4r/wiki\" } if s.respond_to? :metadata=\n  s.require_paths = [\"lib\".freeze]\n  s.authors = [\"Tony Arcieri\".freeze, \"Samuel Williams\".freeze, \"Olle Jonsson\".freeze, \"Gregory Longtin\".freeze, \"Tiago Cardoso\".freeze, \"Joao Fernandes\".freeze, \"Thomas Dziedzic\".freeze, \"Boaz Segev\".freeze, \"Logan Bowers\".freeze, \"Pedro Paiva\".freeze, \"Jun Aruga\".freeze, \"Omer Katz\".freeze, \"Upekshe Jayasekera\".freeze, \"Tim Carey-Smith\".freeze, \"Benoit Daloze\".freeze, \"Sergey Avseyev\".freeze, \"Tomoya Ishida\".freeze, \"Usaku Nakamura\".freeze, \"C\\u00E9dric Boutillier\".freeze, \"Daniel Berger\".freeze, \"Dirkjan Bussink\".freeze, \"Hiroshi Shibata\".freeze, \"Jes\\u00FAs Burgos Maci\\u00E1\".freeze, \"Luis Lavena\".freeze, \"Pavel Rosick\\u00FD\".freeze, \"Sadayuki Furuhashi\".freeze, \"Stephen von Takach\".freeze, \"Vladimir Kochnev\".freeze, \"V\\u00EDt Ondruch\".freeze, \"Anatol Pomozov\".freeze, \"Bernd Ahlers\".freeze, \"Charles Oliver Nutter\".freeze, \"Denis Washington\".freeze, \"Elad Eyal\".freeze, \"Jean byroot Boussier\".freeze, \"Jeffrey Martin\".freeze, \"John Thornton\".freeze, \"Jun Jiang\".freeze, \"Lars Kanis\".freeze, \"Marek Kowalcze\".freeze, \"Maxime Demolin\".freeze, \"Orien Madgwick\".freeze, \"Pavel Lobashov\".freeze, \"Per Lundberg\".freeze, \"Phillip Aldridge\".freeze, \"Ravil Bayramgalin\".freeze, \"Shannon Skipper\".freeze, \"Tao Luo\".freeze, \"Thomas Kuntz\".freeze, \"Tsimnuj Hawj\".freeze, \"Zhang Kang\".freeze]\n  s.cert_chain = [\"-----BEGIN CERTIFICATE-----\\nMIIE2DCCA0CgAwIBAgIBATANBgkqhkiG9w0BAQsFADBhMRgwFgYDVQQDDA9zYW11\\nZWwud2lsbGlhbXMxHTAbBgoJkiaJk/IsZAEZFg1vcmlvbnRyYW5zZmVyMRIwEAYK\\nCZImiZPyLGQBGRYCY28xEjAQBgoJkiaJk/IsZAEZFgJuejAeFw0yMjA4MDYwNDUz\\nMjRaFw0zMjA4MDMwNDUzMjRaMGExGDAWBgNVBAMMD3NhbXVlbC53aWxsaWFtczEd\\nMBsGCgmSJomT8ixkARkWDW9yaW9udHJhbnNmZXIxEjAQBgoJkiaJk/IsZAEZFgJj\\nbzESMBAGCgmSJomT8ixkARkWAm56MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIB\\nigKCAYEAomvSopQXQ24+9DBB6I6jxRI2auu3VVb4nOjmmHq7XWM4u3HL+pni63X2\\n9qZdoq9xt7H+RPbwL28LDpDNflYQXoOhoVhQ37Pjn9YDjl8/4/9xa9+NUpl9XDIW\\nsGkaOY0eqsQm1pEWkHJr3zn/fxoKPZPfaJOglovdxf7dgsHz67Xgd/ka+Wo1YqoE\\ne5AUKRwUuvaUaumAKgPH+4E4oiLXI4T1Ff5Q7xxv6yXvHuYtlMHhYfgNn8iiW8WN\\nXibYXPNP7NtieSQqwR/xM6IRSoyXKuS+ZNGDPUUGk8RoiV/xvVN4LrVm9upSc0ss\\nRZ6qwOQmXCo/lLcDUxJAgG95cPw//sI00tZan75VgsGzSWAOdjQpFM0l4dxvKwHn\\ntUeT3ZsAgt0JnGqNm2Bkz81kG4A2hSyFZTFA8vZGhp+hz+8Q573tAR89y9YJBdYM\\nzp0FM4zwMNEUwgfRzv1tEVVUEXmoFCyhzonUUw4nE4CFu/sE3ffhjKcXcY//qiSW\\nxm4erY3XAgMBAAGjgZowgZcwCQYDVR0TBAIwADALBgNVHQ8EBAMCBLAwHQYDVR0O\\nBBYEFO9t7XWuFf2SKLmuijgqR4sGDlRsMC4GA1UdEQQnMCWBI3NhbXVlbC53aWxs\\naWFtc0BvcmlvbnRyYW5zZmVyLmNvLm56MC4GA1UdEgQnMCWBI3NhbXVlbC53aWxs\\naWFtc0BvcmlvbnRyYW5zZmVyLmNvLm56MA0GCSqGSIb3DQEBCwUAA4IBgQB5sxkE\\ncBsSYwK6fYpM+hA5B5yZY2+L0Z+27jF1pWGgbhPH8/FjjBLVn+VFok3CDpRqwXCl\\nxCO40JEkKdznNy2avOMra6PFiQyOE74kCtv7P+Fdc+FhgqI5lMon6tt9rNeXmnW/\\nc1NaMRdxy999hmRGzUSFjozcCwxpy/LwabxtdXwXgSay4mQ32EDjqR1TixS1+smp\\n8C/NCWgpIfzpHGJsjvmH2wAfKtTTqB9CVKLCWEnCHyCaRVuKkrKjqhYCdmMBqCws\\nJkxfQWC+jBVeG9ZtPhQgZpfhvh+6hMhraUYRQ6XGyvBqEUe+yo6DKIT3MtGE2+CP\\neX9i9ZWBydWb8/rvmwmX2kkcBbX0hZS1rcR593hGc61JR6lvkGYQ2MYskBveyaxt\\nQ2K9NVun/S785AP05vKkXZEFYxqG6EW012U4oLcFl5MySFajYXRYbuUpH6AY+HP8\\nvoD0MPg1DssDLKwXyt1eKD/+Fq0bFWhwVM/1XiAXL7lyYUyOq24KHgQ2Csg=\\n-----END CERTIFICATE-----\\n\".freeze]\n  s.date = \"2025-02-12\"\n  s.extensions = [\"ext/nio4r/extconf.rb\".freeze]\n  s.files = [\"ext/nio4r/extconf.rb\".freeze]\n  s.homepage = \"https://github.com/socketry/nio4r\".freeze\n  s.licenses = [\"MIT\".freeze, \"BSD-2-Clause\".freeze]\n  s.required_ruby_version = Gem::Requirement.new(\">= 2.4\".freeze)\n  s.rubygems_version = \"3.6.3\".freeze\n  s.summary = \"New IO for Ruby\".freeze\n\n  s.installed_by_version = \"3.6.3\".freeze\nend\n"
+      }
+    ],
+    "copyright_paths": [
+      "./usr/share/doc/ruby-nio4r/copyright"
+    ]
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/r/ruby-nio4r/ruby-nio4r_2.7.3-1+b2_arm64.deb",
+    "archive": "/private/tmp/gvisor-rbe-next/ruby-http-distro-ruby-nio4r_2.7.3-1+b2_arm64.deb",
+    "bytes": 111800,
+    "sha256": "21f893df9f1b718cfe346140112b0d8356c4da4612c452c32a37f2a066077b6a",
+    "control": "Package: ruby-nio4r\nSource: ruby-nio4r (2.7.3-1)\nVersion: 2.7.3-1+b2\nArchitecture: arm64\nMaintainer: Debian Ruby Team <pkg-ruby-extras-maintainers@lists.alioth.debian.org>\nInstalled-Size: 509\nDepends: libc6 (>= 2.38), libruby3.3 (>= 3.3.1), libruby (>= 1:3.3~0), libruby (<< 1:3.4~)\nSection: ruby\nPriority: optional\nHomepage: https://github.com/socketry/nio4r\nDescription: Ruby library providing a selector API for monitoring IO objects\n nio4r (New IO for Ruby) provides an abstract, cross-platform stateful\n I/O selector API for Ruby. I/O selectors are the heart of\n \"reactor\"-based event loops, and monitor multiple I/O objects for\n various types of readiness, e.g. ready for reading or writing.\n .\n The most similar API provided by Ruby today is Kernel.select, however\n the select API requires you to pass in arrays of all of the I/O\n objects you're interested in every time. nio4r provides a more\n object-oriented API that lets you register I/O objects with a selector\n then handle them when they're selected for various types of events.\n .\n nio4r is modeled after the Java NIO API, but simplified for\n ease-of-use.\n .\n Its goals are:\n .\n  * Expose high-level interfaces for stateful IO selectors.\n  * Keep the API small to maximize both portability and performance across\n    many different OSes and Ruby VMs.\n  * Provide inherently thread-safe facilities for working with IO objects.\n",
+    "native_files": [
+      {
+        "path": "./usr/lib/aarch64-linux-gnu/rubygems-integration/3.3.0/extensions/aarch64-linux-gnu/3.3.0/nio4r-2.7.3/nio4r_ext.so",
+        "machine": 183,
+        "sha256": "8c6cac969143e47d9e53c2126fc13541c973730ddb9b2c526b29f467153aa5d1",
+        "bytes": 133120,
+        "contains_libruby3_3": true
+      }
+    ],
+    "gemspecs": [
+      {
+        "path": "./usr/lib/aarch64-linux-gnu/rubygems-integration/3.3.0/specifications/nio4r-2.7.3.gemspec",
+        "content": "# -*- encoding: utf-8 -*-\n# stub: nio4r 2.7.3 ruby lib\n# stub: ext/nio4r/extconf.rb\n\nGem::Specification.new do |s|\n  s.name = \"nio4r\".freeze\n  s.version = \"2.7.3\".freeze\n\n  s.required_rubygems_version = Gem::Requirement.new(\">= 0\".freeze) if s.respond_to? :required_rubygems_version=\n  s.metadata = { \"bug_tracker_uri\" => \"https://github.com/socketry/nio4r/issues\", \"changelog_uri\" => \"https://github.com/socketry/nio4r/blob/main/changes.md\", \"documentation_uri\" => \"https://www.rubydoc.info/gems/nio4r\", \"funding_uri\" => \"https://github.com/sponsors/ioquatix/\", \"source_code_uri\" => \"https://github.com/socketry/nio4r.git\", \"wiki_uri\" => \"https://github.com/socketry/nio4r/wiki\" } if s.respond_to? :metadata=\n  s.require_paths = [\"lib\".freeze]\n  s.authors = [\"Tony Arcieri\".freeze, \"Samuel Williams\".freeze, \"Olle Jonsson\".freeze, \"Gregory Longtin\".freeze, \"Tiago Cardoso\".freeze, \"Joao Fernandes\".freeze, \"Thomas Dziedzic\".freeze, \"Boaz Segev\".freeze, \"Logan Bowers\".freeze, \"Pedro Paiva\".freeze, \"Jun Aruga\".freeze, \"Omer Katz\".freeze, \"Upekshe Jayasekera\".freeze, \"Tim Carey-Smith\".freeze, \"Benoit Daloze\".freeze, \"Sergey Avseyev\".freeze, \"Tomoya Ishida\".freeze, \"Usaku Nakamura\".freeze, \"C\\u00E9dric Boutillier\".freeze, \"Daniel Berger\".freeze, \"Dirkjan Bussink\".freeze, \"Hiroshi Shibata\".freeze, \"Jes\\u00FAs Burgos Maci\\u00E1\".freeze, \"Luis Lavena\".freeze, \"Pavel Rosick\\u00FD\".freeze, \"Sadayuki Furuhashi\".freeze, \"Stephen von Takach\".freeze, \"Vladimir Kochnev\".freeze, \"V\\u00EDt Ondruch\".freeze, \"Anatol Pomozov\".freeze, \"Bernd Ahlers\".freeze, \"Charles Oliver Nutter\".freeze, \"Denis Washington\".freeze, \"Elad Eyal\".freeze, \"Jean byroot Boussier\".freeze, \"Jeffrey Martin\".freeze, \"John Thornton\".freeze, \"Jun Jiang\".freeze, \"Lars Kanis\".freeze, \"Marek Kowalcze\".freeze, \"Maxime Demolin\".freeze, \"Orien Madgwick\".freeze, \"Pavel Lobashov\".freeze, \"Per Lundberg\".freeze, \"Phillip Aldridge\".freeze, \"Ravil Bayramgalin\".freeze, \"Shannon Skipper\".freeze, \"Tao Luo\".freeze, \"Thomas Kuntz\".freeze, \"Tsimnuj Hawj\".freeze, \"Zhang Kang\".freeze]\n  s.cert_chain = [\"-----BEGIN CERTIFICATE-----\\nMIIE2DCCA0CgAwIBAgIBATANBgkqhkiG9w0BAQsFADBhMRgwFgYDVQQDDA9zYW11\\nZWwud2lsbGlhbXMxHTAbBgoJkiaJk/IsZAEZFg1vcmlvbnRyYW5zZmVyMRIwEAYK\\nCZImiZPyLGQBGRYCY28xEjAQBgoJkiaJk/IsZAEZFgJuejAeFw0yMjA4MDYwNDUz\\nMjRaFw0zMjA4MDMwNDUzMjRaMGExGDAWBgNVBAMMD3NhbXVlbC53aWxsaWFtczEd\\nMBsGCgmSJomT8ixkARkWDW9yaW9udHJhbnNmZXIxEjAQBgoJkiaJk/IsZAEZFgJj\\nbzESMBAGCgmSJomT8ixkARkWAm56MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIB\\nigKCAYEAomvSopQXQ24+9DBB6I6jxRI2auu3VVb4nOjmmHq7XWM4u3HL+pni63X2\\n9qZdoq9xt7H+RPbwL28LDpDNflYQXoOhoVhQ37Pjn9YDjl8/4/9xa9+NUpl9XDIW\\nsGkaOY0eqsQm1pEWkHJr3zn/fxoKPZPfaJOglovdxf7dgsHz67Xgd/ka+Wo1YqoE\\ne5AUKRwUuvaUaumAKgPH+4E4oiLXI4T1Ff5Q7xxv6yXvHuYtlMHhYfgNn8iiW8WN\\nXibYXPNP7NtieSQqwR/xM6IRSoyXKuS+ZNGDPUUGk8RoiV/xvVN4LrVm9upSc0ss\\nRZ6qwOQmXCo/lLcDUxJAgG95cPw//sI00tZan75VgsGzSWAOdjQpFM0l4dxvKwHn\\ntUeT3ZsAgt0JnGqNm2Bkz81kG4A2hSyFZTFA8vZGhp+hz+8Q573tAR89y9YJBdYM\\nzp0FM4zwMNEUwgfRzv1tEVVUEXmoFCyhzonUUw4nE4CFu/sE3ffhjKcXcY//qiSW\\nxm4erY3XAgMBAAGjgZowgZcwCQYDVR0TBAIwADALBgNVHQ8EBAMCBLAwHQYDVR0O\\nBBYEFO9t7XWuFf2SKLmuijgqR4sGDlRsMC4GA1UdEQQnMCWBI3NhbXVlbC53aWxs\\naWFtc0BvcmlvbnRyYW5zZmVyLmNvLm56MC4GA1UdEgQnMCWBI3NhbXVlbC53aWxs\\naWFtc0BvcmlvbnRyYW5zZmVyLmNvLm56MA0GCSqGSIb3DQEBCwUAA4IBgQB5sxkE\\ncBsSYwK6fYpM+hA5B5yZY2+L0Z+27jF1pWGgbhPH8/FjjBLVn+VFok3CDpRqwXCl\\nxCO40JEkKdznNy2avOMra6PFiQyOE74kCtv7P+Fdc+FhgqI5lMon6tt9rNeXmnW/\\nc1NaMRdxy999hmRGzUSFjozcCwxpy/LwabxtdXwXgSay4mQ32EDjqR1TixS1+smp\\n8C/NCWgpIfzpHGJsjvmH2wAfKtTTqB9CVKLCWEnCHyCaRVuKkrKjqhYCdmMBqCws\\nJkxfQWC+jBVeG9ZtPhQgZpfhvh+6hMhraUYRQ6XGyvBqEUe+yo6DKIT3MtGE2+CP\\neX9i9ZWBydWb8/rvmwmX2kkcBbX0hZS1rcR593hGc61JR6lvkGYQ2MYskBveyaxt\\nQ2K9NVun/S785AP05vKkXZEFYxqG6EW012U4oLcFl5MySFajYXRYbuUpH6AY+HP8\\nvoD0MPg1DssDLKwXyt1eKD/+Fq0bFWhwVM/1XiAXL7lyYUyOq24KHgQ2Csg=\\n-----END CERTIFICATE-----\\n\".freeze]\n  s.date = \"2025-02-12\"\n  s.extensions = [\"ext/nio4r/extconf.rb\".freeze]\n  s.files = [\"ext/nio4r/extconf.rb\".freeze]\n  s.homepage = \"https://github.com/socketry/nio4r\".freeze\n  s.licenses = [\"MIT\".freeze, \"BSD-2-Clause\".freeze]\n  s.required_ruby_version = Gem::Requirement.new(\">= 2.4\".freeze)\n  s.rubygems_version = \"3.6.3\".freeze\n  s.summary = \"New IO for Ruby\".freeze\n\n  s.installed_by_version = \"3.6.3\".freeze\nend\n"
+      }
+    ],
+    "copyright_paths": [
+      "./usr/share/doc/ruby-nio4r/copyright"
+    ]
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/r/ruby3.3/ruby3.3_3.3.8-2_amd64.deb",
+    "archive": "/private/tmp/gvisor-rbe-next/ruby-http-distro-ruby3.3_3.3.8-2_amd64.deb",
+    "bytes": 834088,
+    "sha256": "10798ffe8edc86d7f9491655a115049a7a77dfbef5dc909dc13803cbb6c47f9b",
+    "control": "Package: ruby3.3\nVersion: 3.3.8-2\nArchitecture: amd64\nMaintainer: Debian Ruby Team <pkg-ruby-extras-maintainers@lists.alioth.debian.org>\nInstalled-Size: 898\nDepends: rubygems-integration (>= 1.17.1~), libc6 (>= 2.34), libcrypt1 (>= 1:4.1.0), libgmp10 (>= 2:6.3.0+dfsg), libruby3.3 (>= 3.3.0~preview1), zlib1g (>= 1:1.1.4)\nRecommends: fonts-lato, libjs-jquery\nSection: ruby\nPriority: optional\nMulti-Arch: allowed\nHomepage: https://www.ruby-lang.org/\nDescription: Interpreter of object-oriented scripting language Ruby\n Ruby is the interpreted scripting language for quick and easy\n object-oriented programming.  It has many features to process text\n files and to do system management tasks (as in perl).  It is simple,\n straight-forward, and extensible.\n .\n In the name of this package, `3.3' indicates the Ruby library compatibility\n version. This package currently provides the `3.3.x' branch of Ruby.\n",
+    "native_files": [
+      {
+        "path": "./usr/bin/ruby3.3",
+        "machine": 62,
+        "sha256": "d23057791401d5687392c05b258a7e4fe1ebf85a447372ce11169b5e27cc3e2f",
+        "bytes": 14416,
+        "contains_libruby3_3": true
+      }
+    ],
+    "gemspecs": [],
+    "copyright_paths": [
+      "./usr/share/doc/ruby3.3/copyright"
+    ]
+  },
+  {
+    "url": "https://deb.debian.org/debian/pool/main/r/ruby3.3/ruby3.3_3.3.8-2_arm64.deb",
+    "archive": "/private/tmp/gvisor-rbe-next/ruby-http-distro-ruby3.3_3.3.8-2_arm64.deb",
+    "bytes": 834304,
+    "sha256": "a9f2660cd68c3bd72dff9136148e42f0653bbc93fbef775fec52ea778aa3b009",
+    "control": "Package: ruby3.3\nVersion: 3.3.8-2\nArchitecture: arm64\nMaintainer: Debian Ruby Team <pkg-ruby-extras-maintainers@lists.alioth.debian.org>\nInstalled-Size: 950\nDepends: rubygems-integration (>= 1.17.1~), libc6 (>= 2.34), libcrypt1 (>= 1:4.1.0), libgmp10 (>= 2:6.3.0+dfsg), libruby3.3 (>= 3.3.0~preview1), zlib1g (>= 1:1.1.4)\nRecommends: fonts-lato, libjs-jquery\nSection: ruby\nPriority: optional\nMulti-Arch: allowed\nHomepage: https://www.ruby-lang.org/\nDescription: Interpreter of object-oriented scripting language Ruby\n Ruby is the interpreted scripting language for quick and easy\n object-oriented programming.  It has many features to process text\n files and to do system management tasks (as in perl).  It is simple,\n straight-forward, and extensible.\n .\n In the name of this package, `3.3' indicates the Ruby library compatibility\n version. This package currently provides the `3.3.x' branch of Ruby.\n",
+    "native_files": [
+      {
+        "path": "./usr/bin/ruby3.3",
+        "machine": 183,
+        "sha256": "cb7e90fb5b912f45b43b16ecadabeaa7cf8f2a0095a0af5f18a4def1df7defe7",
+        "bytes": 67592,
+        "contains_libruby3_3": true
+      }
+    ],
+    "gemspecs": [],
+    "copyright_paths": [
+      "./usr/share/doc/ruby3.3/copyright"
+    ]
+  }
+]

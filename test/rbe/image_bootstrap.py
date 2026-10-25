@@ -84,6 +84,7 @@ def main() -> int:
         raise RuntimeError("Unexpected bootstrap source")
     if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]):
         raise RuntimeError("Tracked bootstrap source is dirty")
+    lock_mode = "error" if subprocess.check_output(["git", "ls-files", "--", "MODULE.bazel.lock"]) else "update"
     deadline = time.monotonic() + 2100
     os.environ["APPLICABILITY_WORK_DEADLINE"] = str(deadline)
     artifacts = Path(os.environ["BUILDBUDDY_ARTIFACTS_DIRECTORY"])
@@ -102,7 +103,7 @@ def main() -> int:
         os.environ["QUALIFICATION_NATIVE_PATH"] = os.environ["PATH"]
         os.environ["QUALIFICATION_NATIVE_BAZEL"] = subprocess.check_output(["sh", "-c", "command -v bazel"], text=True).strip()
         launch_script = private / "pinned-python.sh"
-        command = ["bazel", "--bazelrc=" + str(auth_rc), "run", "--lockfile_mode=update", "--noannounce_rc", "--script_path=" + str(launch_script),
+        command = ["bazel", "--bazelrc=" + str(auth_rc), "run", "--lockfile_mode=" + lock_mode, "--noannounce_rc", "--script_path=" + str(launch_script),
                    "@rules_python//python/bin:python", "--",
                    str(Path.cwd() / "test/rbe/image_qualification.py")]
         try:
@@ -131,7 +132,7 @@ def main() -> int:
                     destination.write(data)
                     destination.flush()
                 (artifacts / "bootstrap.json").write_text(json.dumps({"source": source, "native_exit": status,
-                    "headers": ["remote_header", "bes_header"], "initial_lock_mode": "update", "outputs": logs}, indent=2) + "\n")
+                    "headers": ["remote_header", "bes_header"], "initial_lock_mode": lock_mode, "outputs": logs}, indent=2) + "\n")
             except (OSError, ValueError):
                 status = status or 1
                 raise
