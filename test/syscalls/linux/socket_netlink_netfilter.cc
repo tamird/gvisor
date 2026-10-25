@@ -4744,9 +4744,6 @@ struct RuleWithExprTestParams {
   std::string expr_name;
   NlNestedAttr expr_attrs;
   int expected_error_no;
-  // Older native kernels may lack the validation being tested. gVisor always
-  // checks the current contract, independently of its reported kernel version.
-  std::optional<KernelVersion> min_native_kernel_version;
   // If non-null, the expected errno is determined by this function
   // rather than the above expected_error_no
   int (*expected_error_fn)(const KernelVersion&) = nullptr;
@@ -4765,15 +4762,6 @@ class AddRuleWithExprTest
 
 TEST_P(AddRuleWithExprTest, AddRuleWithExpr) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCaps()));
-  if (!IsRunningOnGvisor() && GetParam().min_native_kernel_version) {
-    const KernelVersion version = ASSERT_NO_ERRNO_AND_VALUE(GetKernelVersion());
-    const KernelVersion minimum = *GetParam().min_native_kernel_version;
-    if (std::tie(version.major, version.minor, version.micro) <
-        std::tie(minimum.major, minimum.minor, minimum.micro)) {
-      GTEST_SKIP() << "Requires native kernel " << minimum.major << "."
-                   << minimum.minor << "." << minimum.micro << " or newer";
-    }
-  }
   FileDescriptor fd =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_NETFILTER));
   std::vector<char> expr_data = NlNestedAttr(GetParam().expr_attrs).Build();
@@ -5374,11 +5362,7 @@ std::vector<RuleWithExprTestParams> GetFibRuleTestParams() {
                             .U32Attr(NFTA_FIB_RESULT, NFT_FIB_RESULT_OIFNAME)
                             .U32Attr(NFTA_FIB_FLAGS,
                                      NFTA_FIB_F_SADDR | NFTA_FIB_F_PRESENT),
-          .expected_error_no = EINVAL,
-          // Linux 7.1 restricts PRESENT to OIF:
-          // https://github.com/torvalds/linux/commit/ab185e0c4
-          // Stable and vendor backports make older release numbers ambiguous.
-          .min_native_kernel_version = KernelVersion{7, 1, 0}},
+          .expected_error_no = EINVAL},
       RuleWithExprTestParams{
           .test_name = "ADDRTYPEWithPresent",
           .expr_name = "fib",
@@ -5387,8 +5371,7 @@ std::vector<RuleWithExprTestParams> GetFibRuleTestParams() {
                             .U32Attr(NFTA_FIB_RESULT, NFT_FIB_RESULT_ADDRTYPE)
                             .U32Attr(NFTA_FIB_FLAGS,
                                      NFTA_FIB_F_SADDR | NFTA_FIB_F_PRESENT),
-          .expected_error_no = EINVAL,
-          .min_native_kernel_version = KernelVersion{7, 1, 0}},
+          .expected_error_no = EINVAL},
   };
 }
 
@@ -5799,47 +5782,64 @@ TEST(NetlinkNetfilterTest, ErrUpdateBindingChain) {
   ASSERT_NO_ERRNO(NetfilterFlushRuleset(fd));
 }
 
+std::vector<char> BuildCompatMatchRevisionRequest(uint8_t family,
+                                                  const std::string& match,
+                                                  uint32_t revision,
+                                                  uint16_t flags) {
+  std::vector<char> attrs = NlNestedAttr()
+                                .StrAttr(NFTA_COMPAT_NAME, match)
+                                .U32Attr(NFTA_COMPAT_REV, revision)
+                                .U32Attr(NFTA_COMPAT_TYPE, 0)
+                                .Build();
+  std::vector<char> request(NLMSG_LENGTH(sizeof(nfgenmsg)) + attrs.size());
+  auto* hdr = reinterpret_cast<nlmsghdr*>(request.data());
+  InitNetlinkHdr(
+      hdr, request.size(),
+      MakeNetlinkMsgType(NFNL_SUBSYS_NFT_COMPAT, NFNL_MSG_COMPAT_GET), kSeq,
+      NLM_F_REQUEST | flags);
+  InitNetfilterGenmsg(reinterpret_cast<nfgenmsg*>(NLMSG_DATA(hdr)), family,
+                      NFNETLINK_V0, 0);
+  memcpy(request.data() + NLMSG_LENGTH(sizeof(nfgenmsg)), attrs.data(),
+         attrs.size());
+  return request;
+}
+
+void ExpectCompatMatchRevision(const FileDescriptor& fd, uint8_t family,
+                               const std::string& match, uint32_t revision,
+                               ::testing::Matcher<uint32_t> expected_revision) {
+  std::vector<char> request =
+      BuildCompatMatchRevisionRequest(family, match, revision, 0);
+  const auto* hdr = reinterpret_cast<const nlmsghdr*>(request.data());
+  std::optional<uint32_t> received_revision;
+  ASSERT_NO_ERRNO(NetlinkRequestResponseSingle(
+      fd, request.data(), request.size(), [&](const nlmsghdr* response) {
+        ASSERT_EQ(response->nlmsg_seq, kSeq);
+        ASSERT_EQ(response->nlmsg_type, hdr->nlmsg_type);
+        const nfattr* name = FindNfAttr(response, nullptr, NFTA_COMPAT_NAME);
+        const nfattr* rev = FindNfAttr(response, nullptr, NFTA_COMPAT_REV);
+        ASSERT_NE(name, nullptr);
+        ASSERT_NE(rev, nullptr);
+        ASSERT_EQ(GetNfAttrString(name), match);
+        received_revision = GetNfAttrU32(rev);
+      }));
+  ASSERT_THAT(received_revision, ::testing::Optional(expected_revision));
+}
+
 TEST(NetlinkNetfilterTest, CommentMatchRevision) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCaps()));
   for (uint8_t family : {NFPROTO_IPV4, NFPROTO_IPV6}) {
     for (uint32_t revision : {0, 1}) {
       SCOPED_TRACE(absl::StrCat("family=", family, " revision=", revision));
       FileDescriptor fd = ASSERT_NO_ERRNO_AND_VALUE(NetfilterBoundSocket());
-      std::vector<char> attrs = NlNestedAttr()
-                                    .StrAttr(NFTA_COMPAT_NAME, "comment")
-                                    .U32Attr(NFTA_COMPAT_REV, revision)
-                                    .U32Attr(NFTA_COMPAT_TYPE, 0)
-                                    .Build();
-      std::vector<char> request(NLMSG_LENGTH(sizeof(nfgenmsg)) + attrs.size());
-      auto* hdr = reinterpret_cast<nlmsghdr*>(request.data());
-      InitNetlinkHdr(
-          hdr, request.size(),
-          MakeNetlinkMsgType(NFNL_SUBSYS_NFT_COMPAT, NFNL_MSG_COMPAT_GET), kSeq,
-          NLM_F_REQUEST | (revision == 0 ? 0 : NLM_F_ACK));
-      InitNetfilterGenmsg(reinterpret_cast<nfgenmsg*>(NLMSG_DATA(hdr)), family,
-                          NFNETLINK_V0, 0);
-      memcpy(request.data() + NLMSG_LENGTH(sizeof(nfgenmsg)), attrs.data(),
-             attrs.size());
-      if (revision != 0) {
+      if (revision == 0) {
+        ExpectCompatMatchRevision(fd, family, "comment", revision, 0);
+      } else {
+        std::vector<char> request = BuildCompatMatchRevisionRequest(
+            family, "comment", revision, NLM_F_ACK);
         ASSERT_THAT(
             NetlinkRequestAckOrError(fd, kSeq, request.data(), request.size()),
             PosixErrorIs(EPROTONOSUPPORT, _));
-        continue;
       }
-      bool received = false;
-      ASSERT_NO_ERRNO(NetlinkRequestResponseSingle(
-          fd, request.data(), request.size(), [&](const nlmsghdr* response) {
-            received = true;
-            EXPECT_EQ(response->nlmsg_type, hdr->nlmsg_type);
-            const nfattr* name =
-                FindNfAttr(response, nullptr, NFTA_COMPAT_NAME);
-            const nfattr* rev = FindNfAttr(response, nullptr, NFTA_COMPAT_REV);
-            ASSERT_NE(name, nullptr);
-            ASSERT_NE(rev, nullptr);
-            EXPECT_EQ(GetNfAttrString(name), "comment");
-            EXPECT_EQ(GetNfAttrU32(rev), 0);
-          }));
-      EXPECT_TRUE(received);
     }
   }
 }
@@ -5924,6 +5924,8 @@ struct CompatTestParam {
   std::string chain_type = "filter";
   uint32_t compat_proto = 0;
   std::optional<CompatMatchOptions> match_opts;
+  // A supported revision to query when testing an unsupported one.
+  std::optional<uint32_t> autoload_match_revision;
   std::optional<CompatTargetOptions> target_opts;
   bool gvisor_only = false;
   int expected_error = 0;
@@ -6004,6 +6006,17 @@ TEST_P(NetlinkNetfilterCompatTest, AddCompatRule) {
                                     .Req(rule_req.Build())
                                     .SeqEnd(kSeq + 4)
                                     .Build();
+
+  if (param.family == NFPROTO_INET && param.match_opts &&
+      param.match_opts->name && param.match_opts->rev) {
+    const CompatMatchOptions& match = *param.match_opts;
+    // Linux has IPv4 and IPv6 module aliases for these matches, but no
+    // INET alias. Query a supported IPv4 revision to load the match.
+    const uint32_t revision =
+        param.autoload_match_revision.value_or(*match.rev);
+    ASSERT_NO_FATAL_FAILURE(ExpectCompatMatchRevision(
+        fd, NFPROTO_IPV4, *match.name, revision, ::testing::Ge(revision)));
+  }
 
   if (param.expected_error == 0) {
     ASSERT_NO_ERRNO(NetlinkNetfilterBatchRequestAckOrError(
@@ -6380,6 +6393,7 @@ INSTANTIATE_TEST_SUITE_P(
                     .rev = 4,
                     .info_data = StructToBytes(xt_conntrack_mtinfo3{}),
                 },
+            .autoload_match_revision = 3,
             .expected_error = ENOENT,
         },
         CompatTestParam{
