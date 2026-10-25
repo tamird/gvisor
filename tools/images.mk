@@ -261,6 +261,10 @@ define native_image_context =
 $(foreach op,$(_image_context_operations),$(op)-$(1)): _image_context_target := $(2)
 endef
 $(foreach entry,$(BAZEL_IMAGE_CONTEXTS),$(eval $(call native_image_context,$(word 1,$(subst =, ,$(entry))),$(word 2,$(subst =, ,$(entry))))))
+# Ruby's native gems use the same pinned action image locally and remotely.
+# Scope the local Docker strategy to these actions; other image builds retain
+# their normal execution strategy and do not need to probe the Docker daemon.
+$(addsuffix -image-test_ruby,$(_image_context_operations)): _image_context_options += --experimental_enable_docker_sandbox --experimental_docker_use_customized_images=false --strategy_regexp=//images/image-test/ruby:gems_=docker
 $(_image_context_targets):
 	@set -eu; image_context_dir=$$(mktemp -d); trap 'rm -rf "$$image_context_dir"' EXIT; \
 	$(MAKE) --no-print-directory -C "$(dir $(_image_root_makefile))" -f "$(_image_root_makefile)" copy \

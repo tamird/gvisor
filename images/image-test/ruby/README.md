@@ -8,11 +8,19 @@ pinned Ruby image, using its matching headers, library, and compiler.
 Remote actions require native AMD64 or ARM64 workers and disable network
 access. The application does not install gems at startup.
 
+The ordinary `make rebuild-image-test_ruby` path uses Bazel's Docker
+sandbox for the two native-gem actions. It uses the existing builder's
+Docker daemon and the same pinned action image as remote execution; it
+does not require Ruby or its compiler on the host. The selected build
+architecture must match the machine running those actions. No additional
+execution platforms or remote execution credentials are needed for a
+native build.
+
 The native build maps temporary paths in debug information to
 /usr/src/ruby-http, retains the source files and notices, and puts full
-build logs in action output. The generated tar and JSON profile normalize timestamps and temporary
-paths. The profile records the
-actual Ruby ABI, compiler, gem hashes, and native ELF identities.
+build logs in action output. The generated tar and JSON profile normalize
+timestamps and temporary paths. The profile records the actual Ruby ABI,
+compiler, gem hashes, and native ELF identities.
 
 licenses.json binds the selected terms to notice bytes inside each
 pinned gem and their matching upstream source. The image retains those

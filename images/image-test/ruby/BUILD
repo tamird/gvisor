@@ -56,7 +56,10 @@ genrule(
         "network": "off",
         "workload-isolation-type": "oci",
     },
-    tags = ["manual"],
+    tags = [
+        "block-network",
+        "manual",
+    ],
 )
 
 genrule(
@@ -83,7 +86,10 @@ genrule(
         "network": "off",
         "workload-isolation-type": "oci",
     },
-    tags = ["manual"],
+    tags = [
+        "block-network",
+        "manual",
+    ],
 )
 
 filegroup(
