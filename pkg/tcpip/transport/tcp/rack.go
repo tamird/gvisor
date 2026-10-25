@@ -195,6 +195,7 @@ func (s *sender) schedulePTO() {
 			pto = s.resendTimer.target.Sub(now)
 		}
 		s.resendTimer.disable()
+		s.traceWatch("disable_for_pto")
 	}
 
 	s.probeTimer.enable(pto)
@@ -382,6 +383,7 @@ func (rc *rackControl) exitRecovery() {
 //
 // +checklocks:rc.snd.ep.mu
 func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
+	rc.snd.traceWatchRange("rack_scan", nil, rcvTime)
 	var timeout time.Duration
 	numLost := 0
 	clockResolution := rc.snd.ep.stack.ClockResolution()
@@ -473,6 +475,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 // +checklocksexclude:rc.snd.rtt.rttMutex
 func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 	snd := rc.snd
+	snd.traceWatch("rack_recovery_scan")
 	if fastRetransmit {
 		snd.resendSegment()
 	}

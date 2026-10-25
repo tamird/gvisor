@@ -63,6 +63,7 @@ type flightAction struct {
 	// Trigger is the most recent wire input currently being processed, if
 	// any. A timer firing without an input has a nil Trigger.
 	Trigger *flightWire
+	Watch   *tcp.TCPRecoveryWatch `json:",omitempty"`
 }
 
 type flightEvent struct {
@@ -109,6 +110,22 @@ func newFlight(role string, mode tcpip.TCPRecovery, ref, cmp *flightResult) *fli
 	}
 }
 
+const originalRole = "original_fifo"
+const originalTraceWindow = 2100 * time.Millisecond
+
+// The retained original freezes a 651-MSS cumulative ACK for three 100ms
+// samples preceding its first RTO. Watch that byte; do not choose it again
+// using the new trace. Wire/peer history is retained from first data.
+func (f *flightRecorder) watch(localPort uint16, at int64) (uint32, bool) {
+	if localPort != 40000 {
+		return 0, false
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	since := at - f.first
+	return f.base[0] + 651*1420, f.first != 0 && since >= int64(1200*time.Millisecond) && since <= int64(originalTraceWindow)
+}
+
 func (f *flightRecorder) header(side int, flags header.TCPFlags, seq uint32, payload int, at int64) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -140,6 +157,9 @@ func (f *flightRecorder) wire(p packetObservation) flightWire {
 // unexplained input/state difference terminates the comparison.
 func (f *flightRecorder) event(e flightEvent) {
 	r := &f.result
+	if r.Role == originalRole && e.At > int64(originalTraceWindow) {
+		return
+	}
 	if f.first == 0 || r.End != "" || r.Match == "unmatched_prefix" || (f.ref == nil && r.ReferenceCut != 0) {
 		return
 	}
@@ -280,12 +300,12 @@ func (f *flightRecorder) decision(d tcp.TCPRecoveryDecision) {
 		return
 	}
 	a := flightAction{Path: d.Path, Una: int32(d.Una - f.base[0]), Nxt: int32(d.Nxt - f.base[0]), Window: d.Window,
-		Cwnd: d.Cwnd, Ssthresh: d.Ssthresh, Outstanding: d.Outstanding, Duplicates: d.DupACKs, Trigger: f.input}
+		Cwnd: d.Cwnd, Ssthresh: d.Ssthresh, Outstanding: d.Outstanding, Duplicates: d.DupACKs, Trigger: f.input, Watch: d.Watch}
 	if d.HasRange {
 		a.Range = &flightRange{int32(d.Start - f.base[0]), int32(d.End - f.base[0])}
 	}
 	f.event(flightEvent{Kind: "decision", At: d.AtNS - f.first, Action: &a})
-	if f.ref == nil && f.result.ReferenceCut == 0 && (d.Path == "three_duplicate_acks" || d.Path == "sack_scoreboard" || d.Path == "rack_on_ack" || d.Path == "rack_reordering_timer" || d.Path == "tlp_recovery" || d.Path == "rto") {
+	if f.result.Role == "reference" && f.result.ReferenceCut == 0 && (d.Path == "three_duplicate_acks" || d.Path == "sack_scoreboard" || d.Path == "rack_on_ack" || d.Path == "rack_reordering_timer" || d.Path == "tlp_recovery" || d.Path == "rto") {
 		f.result.ReferenceCut = len(f.result.Events)
 		f.result.Fence = uint32(a.Nxt)
 	}
@@ -298,6 +318,9 @@ func (f *flightRecorder) offer(p packetObservation) {
 		return
 	}
 	w := f.wire(p)
+	if f.result.Role == originalRole && w.Captured > int64(originalTraceWindow) {
+		return
+	}
 	if w.Side == 0 && w.Payload != 0 && !w.Retransmit && (f.ref == nil || w.Seq < int32(f.ref.Fence)) {
 		f.result.Originals = append(f.result.Originals, w)
 		if w.Dropped {
@@ -432,4 +455,18 @@ func TestVirtualTCPFrozenRecoveryFlight(t *testing.T) {
 		return
 	}
 	run("sack_replay", 0, ref, rack)
+}
+
+// TestVirtualTCPOriginalFIFORTO preserves the original finite-FIFO transfers,
+// deadline and recovery mode. It qualifies reproduction of the known incomplete
+// transfer, not its completion. The original comparison test remains unchanged.
+func TestVirtualTCPOriginalFIFORTO(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("the manual clock fixture requires one TCP processor per stack")
+	}
+	t.Run(originalRole, func(t *testing.T) {
+		f := newFlight(originalRole, tcpip.TCPRACKLossDetection, nil, nil)
+		runVirtualTCP(t, "cubic", nil, virtualScenario{delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second, bytes: 16 << 20,
+			dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{LowerMSS: 30}, hyStartPlus: true, forwardQueue: &startupQueue{Rate: 1250000, Capacity: 125000}, flight: f})
+	})
 }

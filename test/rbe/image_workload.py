@@ -1,4 +1,4 @@
-"""Replay the first finite-FIFO loss flight under two real recovery modes."""
+"""Trace the first true RTO on the unchanged, continuously dropping original FIFO."""
 from collections import Counter
 import hashlib
 import json
@@ -10,156 +10,130 @@ import xml.etree.ElementTree as ET
 
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
 TCP_NOGO = "//pkg/tcpip/transport/tcp:tcp_test_nogo"
-ROOT = "TestVirtualTCPFrozenRecoveryFlight"
-ROLES = ("reference", "rack_replay", "sack_replay")
+ROOT = "TestVirtualTCPOriginalFIFORTO"
+ROLE = "original_fifo"
 
 
 def digest(value) -> str:
     return hashlib.sha256(json.dumps(value, separators=(",", ":"), sort_keys=True).encode()).hexdigest()
 
 
-def common_event(event: dict) -> dict:
-    if "Endpoint" not in event:
-        return event
-    # Only RACK maintains this internal SACK packet counter. Wire SACK ranges
-    # and both endpoint scoreboards remain in the common-state comparison.
-    return {**event, "Endpoint": {**event["Endpoint"], "Sacked": 0}}
-
-
-def repair(hole: dict, inputs: list[dict]) -> dict:
-    start, end = hole["Seq"], hole["End"]
-    intervals = []
-    repaired_at = cumulative_at = None
-    for wire in inputs:
-        if wire["Side"] == 1:
-            if cumulative_at is None and wire["Ack"] >= end:
-                cumulative_at = wire["Arrival"]
-            continue
-        if not wire["Retransmit"] or wire["End"] <= start or end <= wire["Seq"]:
-            continue
-        intervals.append((max(start, wire["Seq"]), min(end, wire["End"])))
-        if repaired_at is None:
-            contiguous = start
-            for left, right in sorted(intervals):
-                if left > contiguous:
-                    break
-                contiguous = max(contiguous, right)
-            if contiguous == end:
-                repaired_at = wire["Arrival"]
-    return {"first": start, "end": end, "repair_ns": repaired_at, "cumulative_ack_ns": cumulative_at}
+def covered(intervals: list[tuple[int, int]], first: int = 0) -> int:
+    edge = first
+    for left, right in sorted(intervals):
+        if left > edge:
+            break
+        edge = max(edge, right)
+    return edge
 
 
 def measure(samples: dict) -> dict:
-    arms = {name.rsplit("/", 1)[1]: sample for name, sample in samples.items()}
-    roles = set(arms)
-    if roles not in ({ROLES[0]}, set(ROLES[:2]), set(ROLES)):
-        raise ValueError(f"Unexpected flight roles {roles}")
-    output = {}
-    for role in ROLES:
-        if role not in arms:
-            continue
-        sample = arms[role]
-        flight = sample["Flight"]
-        events = flight["Events"] or []
-        last = sample["Rounds"][-1]
-        startup = sample["Startup"]
-        if (flight["Role"] != role or sample["Algorithm"] != "cubic" or startup["MSS"] != 1420
-                or not all(ack["Plus"] for ack in startup["ACKs"])
-                or sample["OfferedBytes"] != 16 << 20 or sample["OneWayDelayNS"] != 50_000_000
-                or flight["ForwardRate"] != sample["RateBytesPerSecond"] or flight["ForwardRate"] != 1_250_000
-                or flight["QueueCapacity"] != 125_000 or sample["BDPBytes"] != 125_000
-                or flight["ReceiverMode"] != 1 or flight["SenderMode"] != int(role != "sack_replay")
-                or flight["EndNS"] + startup["FirstPayloadNS"] != sample["VirtualNS"]
-                or not 0 < sample["VirtualNS"] <= 30_000_000_000
-                or last["CumulativelyAcknowledgedBytes"] != flight["EndAck"]):
-            raise ValueError(f"{role}: recovery setting, link, demand, clock or endpoint differs")
-        unmatched = flight["Match"] == "unmatched_prefix"
-        if not unmatched:
-            if (flight["SenderLatchedMode"] != flight["SenderMode"] or
-                    {e["Endpoint"]["Side"] for e in events if "Endpoint" in e} != {0, 1}
-                    or not all(e["Endpoint"]["Timestamps"] and e["Endpoint"]["SACKEnabled"]
-                               for e in events if "Endpoint" in e)):
-                raise ValueError(f"{role}: negotiated SACK, timestamps or active recovery mode unverified")
-        holes = flight["Holes"] or []
-        if role == "reference" and not unmatched:
-            cutoff = flight["ReferenceCut"]
-            onset = events[cutoff - 1]
-            queue = sample["ForwardQueue"]
-            if (flight["Match"] != "reference" or flight["End"] != "reference_first_recovery"
-                    or not holes or holes[0]["Seq"] != 335 * 1420 or holes[0]["Captured"] != 523_572_800
-                    or onset["At"] != 726_122_240 or onset["Action"]["Trigger"]["Ack"] != 335 * 1420
-                    or flight["Originals"][-1]["End"] != flight["Fence"]
-                    or queue["Rate"] != flight["ForwardRate"] or queue["Capacity"] != flight["QueueCapacity"]):
-                raise ValueError("Reference does not reproduce historical loss and recovery onset")
-        elif role != "reference" and not unmatched:
-            ref = arms["reference"]["Flight"]
-            if flight["Originals"] != ref["Originals"] or holes != ref["Holes"] or flight["Fence"] != ref["Fence"]:
-                raise ValueError(f"{role}: byte ranges, original timing, windows, payload or FIFO exposure differ")
-            if any(e["Wire"]["Dropped"] and (e["Wire"]["Retransmit"] or e["Wire"] not in holes)
-                   for e in events if e["Kind"] == "offer"):
-                raise ValueError(f"{role}: unexpected loss after reference cut")
-            if flight["End"] == "flight_acknowledged":
-                if flight["EndAck"] < ref["Fence"]:
-                    raise ValueError(f"{role}: completion before cumulative fence")
-            elif flight["End"] != "absolute_cap" or sample["VirtualNS"] != 30_000_000_000 or flight["EndAck"] >= ref["Fence"]:
-                raise ValueError(f"{role}: neither completion nor the specified absolute censor time")
-            if role == "rack_replay":
-                if flight["Match"] != "reference_prefix_matched" or events[:ref["ReferenceCut"]] != ref["Events"]:
-                    raise ValueError("RACK replay differs from its authentic reference")
-            else:
-                rack = arms["rack_replay"]["Flight"]
-                i = flight["SplitIndex"] if flight["Match"] == "matched_decision" else len(events)
-                if (list(map(common_event, events[:i])) != list(map(common_event, rack["Events"][:i]))
-                        or (flight["Match"] == "matched_decision" and
-                            (flight["Expected"] != rack["Events"][i] or flight["Actual"] != events[i]))
-                        or (flight["Match"] == "no_observed_mode_divergence" and events != rack["Events"]
-                            and list(map(common_event, events)) != list(map(common_event, rack["Events"])))
-                        or flight["Match"] not in ("matched_decision", "no_observed_mode_divergence")):
-                    raise ValueError("Alternate mode has no common prefix up to the stated decision")
-        inputs = [e["Wire"] for e in events if e["Kind"] == "input"]
-        repairs = [repair(hole, inputs) for hole in holes]
-        acts = [e for e in events if "Action" in e and e["Action"]["Path"] not in ("ack_begin", "ack_end")]
-        packets = [e["Wire"] for e in events if e["Kind"] == "offer" and e["Wire"]["Side"] == 0]
-        post = [p for p in packets if p["Retransmit"] and p["Captured"] >= 726_122_240]
-        output[role] = {"match": flight["Match"], "end": flight["End"], "events": len(events),
-                        "sample_sha256": digest(sample), "originals_sha256": digest(flight["Originals"]),
-                        "original_packets": len(flight["Originals"] or []), "fence": flight["Fence"],
-                        "end_relative_ns": flight["EndNS"], "end_ack": flight["EndAck"],
-                        "delivered": sample["Bytes"], "rto_count": sample["RTOs"],
-                        "retransmits": sample["Retransmits"], "sack_recoveries": sample["SACKRecoveries"],
-                        "tlp_recoveries": sample["TLPRecoveries"], "first_choice": acts[:1],
-                        "action_counts": dict(Counter(e["Action"]["Path"] for e in acts)),
-                        "first_retransmits": post[:8], "holes": repairs, "holes_sha256": digest(holes),
-                        "split_index": flight["SplitIndex"], "expected": flight.get("Expected"),
-                        "actual": flight.get("Actual"), "max_external_stage_ns": flight["MaxProtectedWaitNS"],
-                        "staged_packets": flight["StagedPackets"], "latched_mode": flight["SenderLatchedMode"],
-                        "state_at_end": last}
-    if ((arms["reference"]["Flight"]["Match"] == "reference") != ("rack_replay" in arms) or
-            ("rack_replay" in arms and
-             ((arms["rack_replay"]["Flight"]["Match"] == "reference_prefix_matched") != ("sack_replay" in arms)))):
-        raise ValueError("Replay continued after an unmatched reference or skipped a matched arm")
-    if roles == set(ROLES) and output["sack_replay"]["match"] in ("matched_decision", "no_observed_mode_divergence"):
-        rack, sack = (arms[role]["Flight"] for role in ROLES[1:])
-        horizon = min(rack["EndNS"], sack["EndNS"])
-        contrast = {}
-        for side, label in enumerate(("forward", "reverse")):
-            series = [[e["Wire"] for e in arm["Events"] if e["Kind"] == "offer"
-                       and e["Wire"]["Side"] == side and e["At"] <= horizon] for arm in (rack, sack)]
-            split = next((i for i, (left, right) in enumerate(zip(*series)) if left != right), min(map(len, series)))
-            contrast[label] = {"equal_offers": split,
-                               "rack_next": series[0][split] if split < len(series[0]) else None,
-                               "sack_next": series[1][split] if split < len(series[1]) else None}
-        common = {}
-        for role in ROLES[1:]:
-            item = output[role]
-            common[role] = {"holes_repaired": sum(h["repair_ns"] is not None and h["repair_ns"] <= horizon
-                                                   for h in item["holes"]),
-                            "holes_cumulatively_acked": sum(h["cumulative_ack_ns"] is not None
-                                                            and h["cumulative_ack_ns"] <= horizon for h in item["holes"]),
-                            "rtos": sum(e["At"] <= horizon and e.get("Action", {}).get("Path") == "rto"
-                                        for e in arms[role]["Flight"]["Events"])}
-        output["comparison"] = {"common_horizon_ns": horizon, "first_unequal_offers": contrast, "common": common}
-    return output
+    key = f"{ROOT}/{ROLE}"
+    if set(samples) != {key}:
+        raise ValueError("Expected exactly the original finite-FIFO diagnostic")
+    s = samples[key]
+    f = s["Flight"]
+    first, base = s["Startup"]["FirstPayloadNS"], s["Startup"]["DataSequence"]
+    q = s["ForwardQueue"]
+    if (s["VirtualNS"] != 30_000_331_840 or s["Bytes"] != 1_121_800 or s["AcceptedBytes"] != 9_510_408
+            or s["OfferedBytes"] != 16 << 20 or s["Algorithm"] != "cubic" or s["Startup"]["MSS"] != 1420
+            or not all(ack["Plus"] for ack in s["Startup"]["ACKs"])
+            or s["RecoveryClass"] != "original_deadline_incomplete" or f["Match"] != s["RecoveryClass"]
+            or f["SenderMode"] != 1 or f["ReceiverMode"] != 1 or f["SenderLatchedMode"] != 1
+            or s["RTOs"] != 70 or s["Retransmits"] != 363 or s["SACKRecoveries"] != 72 or s["TLPRecoveries"]
+            or s["PacketCount"] != 2059 or q["OfferedPackets"] != 1218 or q["AdmittedPackets"] != 844
+            or q["DroppedPackets"] != 374 or q["FirstSecondDrops"] != 374 or q["Capacity"] != 125000
+            or q["Rate"] != 1250000 or s["OneWayDelayNS"] != 50000000
+            or f["StagedPackets"] or f["MaxProtectedWaitNS"] or f["EndNS"] != s["VirtualNS"]-first
+            or s["AllPacketsSHA256"] != "98c0724b98db9f9590c94924f489f1d35e4dddd72895caea4aa06bf22211827b"
+            or s["PayloadSHA256"] != "cc7be120a6b9ede5fdca259c7ecb82a1c8214f68eec1afaedee09d7299282b56"):
+        raise ValueError("The original transport, drop policy, complete wire or original failure changed")
+    events = f["Events"]
+    peers = [e["Endpoint"] for e in events if "Endpoint" in e]
+    if {e["Side"] for e in peers} != {0, 1} or not all(e["SACKEnabled"] and e["Timestamps"] for e in peers):
+        raise ValueError("Missing negotiated timestamp/SACK or both endpoints")
+    if max(e["At"] for e in events) > 2_100_000_000:
+        raise ValueError("Observer exceeded its fixed 2.1s detail interval")
+    losses = [e["Wire"] for e in events if e["Kind"] == "offer" and e["Wire"]["Dropped"]]
+    discards = [e["Wire"] for e in events if e["Kind"] == "discard"]
+    if (len(losses) != 374 or len(discards) != 374 or losses[0]["Seq"] != 335*1420
+            or losses[0]["Captured"] != 523_572_800 or Counter(map(digest, losses)) != Counter(map(digest, discards))):
+        raise ValueError("Not every original refusal was joined to its actual discard")
+    timed = next(r for r in s["RecoveryTrace"] if r["RTOs"])
+    i = next(i for i, e in enumerate(events) if e.get("Action", {}).get("Path") == "rto_expiry_pre_backoff")
+    expiry = events[i]
+    ex_at, action = expiry["At"], expiry["Action"]
+    w = action["Watch"]
+    if (timed["AtNS"] - first != 1_818_839_360 or not 0 <= timed["AtNS"]-first-ex_at <= 1_000_000
+            or action["Trigger"] is not None or w["Focus"] != (base + 651*1420) % 2**32
+            or w["RTO"] <= 0 or w["ResendEnabled"] or not w["Head"]):
+        raise ValueError("First true RTO, historical fence or watched byte unverified")
+    before = events[:i]
+    timer_ops = [e for e in before if e.get("Action", {}).get("Path", "").startswith(("arm_", "disable_"))]
+    if not timer_ops:
+        raise ValueError("Missing the preceding resend-timer operation")
+    arm = timer_ops[-1]
+    if (not arm["Action"]["Path"].startswith("arm_") or not arm["Action"]["Watch"]["ResendEnabled"]
+            or w["ResendTarget"] != arm["Action"]["Watch"]["ResendTarget"]
+            or w["ResendTarget"]-first != arm["At"]+arm["Action"]["Watch"]["RTO"]
+            or ex_at < w["ResendTarget"]-first):
+        raise ValueError("Last timer arm, requested target or true expiry is inconsistent")
+    input_before = [e["Wire"] for e in before if e["Kind"] == "input"]
+    wire_edge = covered([(p["Seq"], p["End"]) for p in input_before if not p["Side"] and p["Payload"]])
+    receiver = next(e for e in reversed(before) if e.get("Endpoint", {}).get("Side") == 1)
+    sender = next(e for e in reversed(before) if e.get("Endpoint", {}).get("Side") == 0)
+    if receiver["Endpoint"]["RcvNxt"] != wire_edge:
+        raise ValueError(f"Cannot join receiver holdback to the physical first hole: {wire_edge}")
+    first_ack = max((p["Ack"] for p in input_before if p["Side"] and p["Flags"] & 16), default=None)
+    if first_ack != action["Una"]:
+        raise ValueError("Latest cumulative ACK does not match the sender at true RTO")
+    since = [e for e in events if e["Kind"] == "input" and e["Wire"]["Side"] == 1
+             and e["Wire"]["Ack"] > action["Una"] and e["At"] >= ex_at]
+    if not since:
+        raise ValueError("No advancing ACK after first RTO within the fixed observer bound")
+    advance = since[0]
+    ranges = {"sender_head": (w["Head"]["Start"]-base) % 2**32, "wire_missing": wire_edge, "predeclared": 651*1420}
+    readout = {}
+    for start in set(ranges.values()):
+        offers = [e["Wire"] for e in events if e["Kind"] == "offer" and e["Wire"]["Side"] == 0
+                  and e["Wire"]["Seq"] <= start < e["Wire"]["End"]]
+        ingress = [e["Wire"] for e in events if e["Kind"] == "input" and e["Wire"]["Side"] == 0
+                   and e["Wire"]["Seq"] <= start < e["Wire"]["End"]]
+        # Distinguish physical delivery, sender stack acceptance, and a
+        # serializer drop: these can differ for the same retransmission.
+        if (not offers or any(not p["Dropped"] and p["Arrival"] <= 2_100_000_000 and p not in ingress for p in offers)
+                or any(p not in offers for p in ingress)):
+            raise ValueError(f"Unmatched offer/admission/ingress for byte {start}")
+        readout[str(start)] = {"offers": offers, "receiver_input": ingress,
+                              "positive_sender_actions": [e for e in events if "Action" in e and
+                               e["Action"].get("Range", {}).get("Start", 2**31) <= start <
+                               e["Action"].get("Range", {}).get("End", 0)]}
+    true_rack_scans = [e for e in before if e.get("Action", {}).get("Path") == "rack_scan"
+                       and e["Action"].get("Watch") and e["Action"]["Watch"]["Segment"]]
+    # Keep the last scan and evidence whenever the gate's predicates change;
+    # the full authenticated native log retains all scans, peers and timers.
+    scans = []
+    for e in true_rack_scans:
+        snap = e["Action"]["Watch"]
+        seg = snap["Segment"]
+        ordered = (seg["LastXmit"], (seg["End"]-base) % 2**32) < (snap["RackXmit"], (snap["RackEnd"]-base) % 2**32)
+        remaining = seg["LastXmit"] - snap["RackEvalNS"] + snap["RackRTT"] + snap["ReoWindow"] + snap["ClockResolution"]
+        eligible_now = (remaining < 0) or (remaining == 0 and snap["ClockResolution"] == 0)
+        gates = [seg["Lost"], seg["ScoreboardSacked"], ordered, eligible_now,
+                 e["Action"]["Outstanding"] >= e["Action"]["Cwnd"]]
+        if not scans or gates != scans[-1]["gates"] or e is true_rack_scans[-1]:
+            scans.append({"at": e["At"], "gates": gates, "remaining_ns": remaining, "event": e})
+    return {"full_sample_sha256": digest(s), "events": len(events), "all_wire_sha256": s["AllPacketsSHA256"],
+            "original_fifo": q, "outcome": {"virtual_ns": s["VirtualNS"], "delivered": s["Bytes"],
+            "retransmits": s["Retransmits"], "rtos": s["RTOs"], "incomplete": s["Bytes"] != s["OfferedBytes"]},
+            "first_true_rto": expiry, "stats_observed_at": timed["AtNS"]-first,
+            "last_arm": arm, "timeout_after_target_ns": ex_at-(w["ResendTarget"]-first),
+            "sequence_base": base, "first_data_ns": first, "ranges": ranges, "packet_histories": readout,
+            "last_sender_probe": sender, "last_receiver_probe": receiver, "next_advancing_ack": advance,
+            "first_rto_reset": next(e for e in events[i:] if e.get("Action", {}).get("Path") == "rto_reset"),
+            "wire_edge_at_rto": wire_edge, "last_wire_high_ack": first_ack,
+            "drop_original_vs_retry": dict(Counter("retry" if p["Retransmit"] else "original" for p in losses)),
+            "watch_scan_gates_lost_sacked_ordered_timeeligible_cwndblocked": scans}
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:
@@ -268,7 +242,7 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     if config["targets"] != [OWNER, OWNER + "_nogo", TCP_NOGO]:
-        raise ValueError("Unexpected recovery qualification owners")
+        raise ValueError("Unexpected original FIFO qualification owners")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
                "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
     formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; '
@@ -287,7 +261,7 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                                      f"--runs_per_test={count}", f"--test_arg=-test.run=^{ROOT}$", OWNER],
                              "test", targets=[OWNER])
             if checked["status"] != "PASS":
-                raise RuntimeError(f"{phase}: native recovery owner did not pass")
+                raise RuntimeError(f"{phase}: native first-RTO owner did not pass")
             result["phases"][phase] = observations(evidence, phase, count)
         if result["phases"]["virtual-normal"]["complete_observation_sha256"] != result["phases"]["virtual-race"]["complete_observation_sha256"]:
             raise ValueError("Normal and race virtual packet observations differ")

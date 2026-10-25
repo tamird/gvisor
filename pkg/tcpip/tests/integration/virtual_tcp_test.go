@@ -359,6 +359,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	var latestACK startupACK
 	startup := scenario.startup
 	flight := scenario.flight
+	originalFIFO := flight != nil && flight.result.Role == originalRole
 	queue := scenario.forwardQueue
 	forwardRate := rate
 	if queue != nil {
@@ -377,6 +378,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		}
 		if flight != nil {
 			newProbe = func(p tcp.TCPProbeFunc) func(*stack.Stack) stack.TransportProtocol {
+				if originalFIFO {
+					return tcp.NewProtocolProbeHyStartPlusWatch(p, flight.decision, flight.watch)
+				}
 				return tcp.NewProtocolProbeHyStartPlusRecovery(p, flight.decision)
 			}
 		}
@@ -785,14 +789,31 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		}
 		t.Fatal("TCP callbacks did not reach the bounded same-instant fence")
 	}
+	originalDone := false
 	step := func() {
 		t.Helper()
 		fence()
 		if now() >= maxTime {
+			if originalFIFO {
+				// This is the original failure boundary: the application has
+				// performed its final Write, but no more clock time is allowed.
+				flight.mu.Lock()
+				if flight.result.End != "" {
+					previous := flight.result.End
+					flight.mu.Unlock()
+					t.Fatalf("original observer ended before deadline: %s", previous)
+				}
+				originalDone = true
+				flight.result.Match = "original_deadline_incomplete"
+				flight.result.End = "original_deadline_incomplete"
+				flight.result.EndNS, flight.result.EndAck = int64(now())-flight.first, acknowledged
+				flight.mu.Unlock()
+				return
+			}
 			t.Fatalf("transfer exceeded %v virtual time; queued=%d", maxTime, len(pending))
 		}
 		next := now() + quantum
-		if flight != nil {
+		if flight != nil && !originalFIFO {
 			next = min(next, maxTime)
 		}
 		if startup != nil && dataStarted && startup.Deadline == nil {
@@ -831,7 +852,16 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 				flight.ingress(packet.row)
 			}
 			packetCount++
-			encoded, err := json.Marshal(packet.row)
+			hashRow := packet.row
+			if originalFIFO {
+				// Hash exactly the pre-observer row, using the original
+				// timestamp readout (echo only on a reverse ACK).
+				hashRow.WireWindow, hashRow.WireTSVal = 0, 0
+				if hashRow.From != 1 || hashRow.Flags != uint8(header.TCPFlagAck) {
+					hashRow.TSEcr = 0
+				}
+			}
+			encoded, err := json.Marshal(hashRow)
 			if err != nil {
 				packet.packet.DecRef()
 				t.Fatal(err)
@@ -1055,6 +1085,16 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			writeClosed = true
 		}
 		step()
+		if originalDone {
+			// The archived transfer was incomplete at this exact virtual
+			// instant with the same full wire digest and delivered bytes.
+			if now() != 30000331840*time.Nanosecond || received.Len() != 1121800 || acceptedBytes != 9510408 ||
+				!bytes.Equal(received.Bytes(), data[:received.Len()]) || fmt.Sprintf("%x", allPackets.Sum(nil)) != "98c0724b98db9f9590c94924f489f1d35e4dddd72895caea4aa06bf22211827b" {
+				t.Fatalf("original deadline/delivered payload/packet digest changed: t=%v delivered=%d accepted=%d digest=%x", now(), received.Len(), acceptedBytes, allPackets.Sum(nil))
+			}
+			classification = flight.result.End
+			return
+		}
 		_, err := server.Read(&received, tcpip.ReadOptions{})
 		switch err.(type) {
 		case nil, *tcpip.ErrWouldBlock:
@@ -1064,7 +1104,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("Read: %s", err)
 		}
 		fence()
-		if flight != nil && flight.stop(int64(now()), acknowledged, int64(maxTime)) {
+		if flight != nil && !originalFIFO && flight.stop(int64(now()), acknowledged, int64(maxTime)) {
 			if received.Len() > len(data) || !bytes.Equal(received.Bytes(), data[:received.Len()]) {
 				t.Fatalf("received bytes do not match the offered prefix")
 			}

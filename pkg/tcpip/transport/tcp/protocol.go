@@ -132,8 +132,9 @@ type protocol struct {
 	// TCP segment.
 	//
 	// This is immutable after creation.
-	probe         TCPProbeFunc              `state:"nosave"`
-	recoveryProbe func(TCPRecoveryDecision) `state:"nosave"`
+	probe         TCPProbeFunc                       `state:"nosave"`
+	recoveryProbe func(TCPRecoveryDecision)          `state:"nosave"`
+	recoveryWatch func(uint16, int64) (uint32, bool) `state:"nosave"`
 
 	// The following secrets are used for ISN and timestamp-offset
 	// generation. They are not serialized into checkpoint state and are
@@ -589,10 +590,18 @@ func NewProtocolProbeHyStartPlus(probe TCPProbeFunc) func(*stack.Stack) stack.Tr
 // NewProtocolProbeHyStartPlusRecovery also records actual recovery choices in
 // the isolated diagnostic stack. Neither callback is used by normal stacks.
 func NewProtocolProbeHyStartPlusRecovery(probe TCPProbeFunc, recovery func(TCPRecoveryDecision)) func(*stack.Stack) stack.TransportProtocol {
+	return NewProtocolProbeHyStartPlusWatch(probe, recovery, nil)
+}
+
+// NewProtocolProbeHyStartPlusWatch adds a bounded, read-only view of one
+// sequence range to the diagnostic sender. The predicate receives the local
+// port and absolute monotonic clock in ns.
+func NewProtocolProbeHyStartPlusWatch(probe TCPProbeFunc, recovery func(TCPRecoveryDecision), watch func(uint16, int64) (uint32, bool)) func(*stack.Stack) stack.TransportProtocol {
 	return func(s *stack.Stack) stack.TransportProtocol {
 		p := newProtocol(s, ccReno, probe)
 		p.hyStartPlus = true
 		p.recoveryProbe = recovery
+		p.recoveryWatch = watch
 		return p
 	}
 }

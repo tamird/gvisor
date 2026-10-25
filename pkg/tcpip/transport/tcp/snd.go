@@ -101,13 +101,36 @@ type TCPRecoveryDecision struct {
 	Start, End                           uint32
 	Cwnd, Ssthresh, Outstanding, DupACKs int
 	Mode                                 tcpip.TCPRecovery
+	Watch                                *TCPRecoveryWatch
+}
+
+// TCPRecoveryWatch snapshots the actual resend timer and the sender's view
+// of one predeclared sequence byte. Sequences and clock values are absolute.
+type TCPRecoveryWatch struct {
+	RackEvalNS                                        int64
+	Focus, MaxSACKed, RackEnd, WriteNext              uint32
+	HasWriteNext, Fast, ResendEnabled, ReorderEnabled bool
+	RTO, RackRTT, ReoWindow, ClockResolution          time.Duration
+	ResendTarget, ReorderTarget, RackXmit             int64
+	SACK                                              []header.SACKBlock
+	Head, Segment                                     *TCPRecoverySegment
+}
+
+// TCPRecoverySegment is a read-only write-list entry at a recovery decision.
+type TCPRecoverySegment struct {
+	Start, End, Count                             uint32
+	LastXmit                                      int64
+	Lost, Acked, ScoreboardSacked, ScoreboardLost bool
 }
 
 // +checklocks:s.ep.mu
 func (s *sender) traceRecovery(path string) { s.traceRecoveryRange(path, nil) }
 
 // +checklocks:s.ep.mu
-func (s *sender) traceRecoveryRange(path string, seg *segment) {
+func (s *sender) traceRecoveryRange(path string, seg *segment) { s.emitRecovery(path, seg, 0) }
+
+// +checklocks:s.ep.mu
+func (s *sender) emitRecovery(path string, seg *segment, evalNS int64) {
 	if p := s.ep.protocol; p != nil && p.recoveryProbe != nil {
 		d := TCPRecoveryDecision{
 			Path: path, AtNS: int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{})),
@@ -119,7 +142,60 @@ func (s *sender) traceRecoveryRange(path string, seg *segment) {
 			d.Start = uint32(seg.sequenceNumber)
 			d.End = d.Start + uint32(seg.payloadSize())
 		}
+		if p.recoveryWatch != nil {
+			if focus, ok := p.recoveryWatch(d.LocalPort, d.AtNS); ok {
+				d.Watch = s.recoveryWatch(focus)
+				d.Watch.RackEvalNS = evalNS
+			}
+		}
 		p.recoveryProbe(d)
+	}
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) recoverySegment(seg *segment) *TCPRecoverySegment {
+	if seg == nil {
+		return nil
+	}
+	b := seg.sackBlock()
+	return &TCPRecoverySegment{Start: uint32(b.Start), End: uint32(b.End), Count: seg.xmitCount,
+		LastXmit: int64(seg.xmitTime.Sub(tcpip.MonotonicTime{})), Lost: seg.lost, Acked: seg.acked,
+		ScoreboardSacked: s.ep.scoreboard.IsSACKED(b), ScoreboardLost: s.ep.scoreboard.IsRangeLost(b)}
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) recoveryWatch(focus uint32) *TCPRecoveryWatch {
+	blocks, maxSACK := s.ep.scoreboard.Copy()
+	ns := func(t tcpip.MonotonicTime) int64 { return int64(t.Sub(tcpip.MonotonicTime{})) }
+	w := &TCPRecoveryWatch{Focus: focus, MaxSACKed: uint32(maxSACK), SACK: blocks, Fast: s.FastRecovery.Active,
+		RTO: s.RTO, ResendEnabled: s.resendTimer.enabled(), ResendTarget: ns(s.resendTimer.target),
+		ReorderEnabled: s.reorderTimer.enabled(), ReorderTarget: ns(s.reorderTimer.target),
+		RackRTT: s.rc.RTT, ReoWindow: s.rc.ReoWnd, ClockResolution: s.ep.stack.ClockResolution(),
+		RackXmit: ns(s.rc.XmitTime), RackEnd: uint32(s.rc.EndSequence), Head: s.recoverySegment(s.writeList.Front())}
+	if seg := s.writeNext; seg != nil {
+		w.HasWriteNext = true
+		w.WriteNext = uint32(seg.sequenceNumber)
+	}
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		b := seg.sackBlock()
+		if seqnum.Value(focus).InRange(b.Start, b.End) {
+			w.Segment = s.recoverySegment(seg)
+			break
+		}
+	}
+	return w
+}
+
+// traceWatch records only the chosen sender and time window.
+// +checklocks:s.ep.mu
+func (s *sender) traceWatch(path string) { s.traceWatchRange(path, nil, tcpip.MonotonicTime{}) }
+
+// +checklocks:s.ep.mu
+func (s *sender) traceWatchRange(path string, seg *segment, eval tcpip.MonotonicTime) {
+	if p := s.ep.protocol; p != nil && p.recoveryWatch != nil {
+		if _, ok := p.recoveryWatch(s.ep.TransportEndpointInfo.ID.LocalPort, int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{}))); ok {
+			s.emitRecovery(path, seg, int64(eval.Sub(tcpip.MonotonicTime{})))
+		}
 	}
 }
 
@@ -613,6 +689,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.traceWatch("rto_expiry_pre_backoff")
 	s.ep.stack.Stats().TCP.Timeouts.Increment()
 	s.ep.stats.SendErrors.Timeouts.Increment()
 
@@ -708,6 +785,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// information is usable after an RTO.
 	s.ep.scoreboard.Reset()
 	s.updateWriteNext(s.writeList.Front())
+	s.traceWatch("rto_reset")
 
 	// RFC 1122 4.2.2.17: Start sending zero window probes when we still see a
 	// zero receive window after retransmission interval and we have data to
@@ -1089,6 +1167,7 @@ func (s *sender) sendZeroWindowProbe() {
 
 	// Rearm the timer to continue probing.
 	s.resendTimer.enable(s.RTO)
+	s.traceWatch("arm_zero_probe")
 }
 
 // +checklocks:s.ep.mu
@@ -1101,13 +1180,16 @@ func (s *sender) enableZeroWindowProbing() {
 		s.firstRetransmittedSegXmitTime = s.ep.stack.Clock().NowMonotonic()
 	}
 	s.resendTimer.enable(s.RTO)
+	s.traceWatch("arm_enable_zero_probe")
 }
 
+// +checklocks:s.ep.mu
 func (s *sender) disableZeroWindowProbing() {
 	s.zeroWindowProbing = false
 	s.unackZeroWindowProbes = 0
 	s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
 	s.resendTimer.disable()
+	s.traceWatch("disable_zero_probe")
 }
 
 // +checklocks:s.ep.mu
@@ -1140,6 +1222,7 @@ func (s *sender) postXmit(dataSent bool, shouldScheduleProbe bool) {
 				// Enable the resend timer if it's not enabled yet and there is
 				// outstanding data.
 				s.resendTimer.enable(s.RTO)
+				s.traceWatch("arm_post_xmit")
 			}
 		}
 	}
@@ -1737,6 +1820,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// RFC 6298 5.3
 			s.probeTimer.disable()
 			s.resendTimer.enable(s.RTO)
+			s.traceWatch("arm_advancing_ack")
 		}
 
 		// Remove all acknowledged data from the write list.
@@ -1832,6 +1916,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// Reset firstRetransmittedSegXmitTime to the zero value.
 			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
 			s.resendTimer.disable()
+			s.traceWatch("disable_all_acked")
 			s.probeTimer.disable()
 		}
 	}
@@ -1896,6 +1981,13 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	seg.lost = false
 
 	err := s.sendSegmentFromPacketBuffer(seg.pkt, seg.flags, seg.sequenceNumber)
+	if seg.xmitCount > 1 && seg.payloadSize() > 0 {
+		if err == nil {
+			s.traceWatchRange("retry_stack_accepted", seg, tcpip.MonotonicTime{})
+		} else {
+			s.traceWatchRange("retry_stack_error", seg, tcpip.MonotonicTime{})
+		}
+	}
 
 	// Every time a packet containing data is sent (including a
 	// retransmission), if SACK is enabled and we are retransmitting data
@@ -1904,9 +1996,11 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	if err != nil && seg.payloadSize() != 0 {
 		if s.FastRecovery.Active && seg.xmitCount > 1 && s.ep.SACKPermitted {
 			s.resendTimer.enable(s.RTO)
+			s.traceWatch("arm_send_error_recovery")
 		} else {
 			if !s.resendTimer.enabled() {
 				s.resendTimer.enable(s.RTO)
+				s.traceWatch("arm_send_error_idle")
 			}
 		}
 	}
