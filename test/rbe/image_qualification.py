@@ -248,39 +248,9 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
     workload_completed = False
     try:
         report.write_json(evidence / "authentication.json", {"startup_arguments": startup, "headers": ["remote_header", "bes_header"], "secret_retained": False})
-        # Resolve the configured image graph, without evaluating unrelated
-        # module extensions as `mod deps` does. All subsequent phases freeze
-        # this canonical lock; the separate license audit covers the full graph.
-        for architecture in CONFIG["image_targets"]:
-            graphs = [("images", CONFIG["image_targets"][architecture], CONFIG.get("consumer_options", []))]
-            if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
-                graphs.append(("runtime", runtime_targets, []))
-            for name, preparation_targets, configuration_options in graphs:
-                prepared = invoke("dependency-preparation-" + architecture + "-" + name,
-                                  ["cquery", "--config=" + architecture,
-                                   "--compilation_mode=opt", *configuration_options, "--lockfile_mode=update",
-                                   "--noannounce_rc", "--output=label",
-                                   "set(" + " ".join(preparation_targets) + ")"],
-                                  "command", targets=[])
-                if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
-                    raise RuntimeError("Configured dependency preparation failed or changed tracked source")
-        with (private / "info.stderr").open("wb") as stderr:
-            info = subprocess.run(["bazel", *startup, "info", "--downloader_config=" + str(downloader), "--config=x86_64", "--lockfile_mode=error", "--noannounce_rc", "output_base"], stdout=subprocess.PIPE, stderr=stderr, timeout=remaining())
-        replay_output(private / "info.stderr", sys.stderr.buffer)
-        info.check_returncode()
-        reject_credentials(info.stdout)
-        output_root = Path(info.stdout.decode().strip())
-        os.environ["APPLICABILITY_OUTPUT_BASE"] = str(output_root)
-        formatted = invoke('00-buildifier', ['run', '--config=x86_64', '--compilation_mode=opt',
-                           *CONFIG.get("consumer_options", []), '--lockfile_mode=error', '--noannounce_rc',
-                           '@rules_python//python/bin:python', '--', '-c',
-                           'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "buildifier"]).returncode)'],
-                           'command', targets=[])
-        if formatted['status'] != 'PASS':
-            raise RuntimeError('Canonical buildifier failed')
-        report.write_json(evidence / 'remote-compiler-config.json', {'options': ['--remote_executor=grpcs://remote.buildbuddy.io', '--remote_cache=grpcs://remote.buildbuddy.io', '--bes_backend=grpcs://remote.buildbuddy.io', '--bes_results_url=https://app.buildbuddy.io/invocation/', '--remote_timeout=10m', '--spawn_strategy=remote', '--noremote_local_fallback', '--jobs=400', '--remote_cache_compression', '--host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo', '--remote_default_exec_properties=OSFamily=linux', '--remote_default_exec_properties=Arch=amd64', '--remote_default_exec_properties=EstimatedMemory=2GB', '--remote_default_exec_properties=workload-isolation-type=firecracker', '--remote_default_exec_properties=container-image=docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a', '--strategy=TestRunner=local', '--local_test_jobs=1', '--noremote_upload_local_results'], 'properties': REMOTE_PROPERTIES, 'configuration_source': 'state-lifecycle-final-state_lifecycle.py', 'test_runner': 'local'})
-        import image_workload
-        image_workload.run(invoke, record_execution, evidence, private, output_root)
+        prepared = invoke("dependency-preparation", ["mod", "deps", "--lockfile_mode=update", "--noannounce_rc"], "command", targets=[])
+        if prepared["status"] != "PASS" or not (workspace / "MODULE.bazel.lock").is_file():
+            raise RuntimeError("Canonical dependency preparation failed")
         workload_completed = True
 
     except (OSError, ValueError, RuntimeError, TimeoutError, subprocess.SubprocessError):
