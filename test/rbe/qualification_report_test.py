@@ -124,7 +124,13 @@ class QualificationReportTest(unittest.TestCase):
         value = self.verdict(invocation, case_manifest=manifest)
         self.assertEqual(value["status"], "INCOMPLETE")
         self.assertEqual({(item["label"], item["name"]) for item in value["missing"]},
-                         {(first, "ElfTest/PIEOutOfOrderSegments"), (second, "ElfTest/Execute")})
+                         {(second, "ElfTest/Execute")})
+        skipped, = value["unpassed_required_cases"]
+        self.assertEqual((skipped["label"], skipped["name"], skipped["outcomes"]),
+                         (first, "ElfTest/PIEOutOfOrderSegments", ["skipped"]))
+        report.write_json(manifest, {first: [skipped["name"]]})
+        value = self.verdict(invocation, case_manifest=manifest)
+        self.assertEqual((value["status"], value["missing"]), ("INCOMPLETE", []))
         (invocation / "native-exit").write_text("3\n")
         self.assertEqual(self.verdict(invocation, case_manifest=manifest)["status"], "FAIL")
 
@@ -2081,11 +2087,18 @@ class QualificationReportTest(unittest.TestCase):
     def test_retained_failure_preserves_missing_shards(self) -> None:
         invocation = self.fixture("fail")
         self.assertEqual(self.capture(invocation)["errors"], [])
-        value = self.verdict(invocation)
+        manifest = invocation / "required.json"
+        case = "container/TestMountEROFS"
+        label = (invocation / "expected.txt").read_text().strip()
+        report.write_json(manifest, {label: [case]})
+        value = self.verdict(invocation, case_manifest=manifest)
         self.assertEqual(value["status"], "FAIL")
         self.assertEqual(value["native_exit"], 3)
         self.assertEqual(value["case_counts"]["failed"], 1)
         self.assertEqual(sum(item.get("reason") == "announced result missing" for item in value["missing"]), 7)
+        self.assertNotIn(case, [item.get("name") for item in value["missing"]])
+        failed, = value["unpassed_required_cases"]
+        self.assertEqual((failed["name"], failed["outcomes"]), (case, ["failed"]))
         self.assertEqual(any(item["reason"] == "XML test failures" for item in value["failures"]), True)
 
     def test_expected_failure_requires_declared_passing_wrapper(self) -> None:
@@ -2119,7 +2132,8 @@ class QualificationReportTest(unittest.TestCase):
                 }[child]
                 (invocation / "test.xml").write_text("<testsuite>" + xml + "</testsuite>")
                 self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
+                analysis = self.analysis(invocation)
+                value = self.verdict(invocation, analysis=analysis)
                 accepted = declared and wrapper_passes and child == "failed"
                 failed = child in ("failed", "unnamed")
                 status = "PASS" if accepted else "FAIL" if failed else "INCOMPLETE"
@@ -2130,6 +2144,14 @@ class QualificationReportTest(unittest.TestCase):
                     self.assertEqual(value["case_counts"]["passed"], 0)
                     combined = report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")
                     self.assertEqual(combined["expected_failures"], value["expected_failures"])
+                    manifest = invocation / "required.json"
+                    label = (invocation / "expected.txt").read_text().strip()
+                    report.write_json(manifest, {label: ["Unsupported"]})
+                    value = self.verdict(invocation, analysis=analysis, case_manifest=manifest)
+                    self.assertEqual((value["status"], value["missing"]), ("INCOMPLETE", []))
+                    combined = report.bundle(self.evidence, 0, 0, self.root / "required.tar.gz")
+                    case, = combined["unpassed_required_cases"]
+                    self.assertEqual((case["name"], case["outcomes"]), ("Unsupported", ["failed"]))
                 shutil.rmtree(invocation)
 
     def test_retained_absent_results(self) -> None:
@@ -2929,7 +2951,10 @@ signal.pause()
                 event["testSummary"].update(shardCount=2, totalRunCount=2)
         self.write_events(invocation, [empty] + events)
         self.assertEqual(self.capture(invocation)["errors"], [])
-        value = self.verdict(invocation)
+        manifest = invocation / "required.json"
+        label = (invocation / "expected.txt").read_text().strip()
+        report.write_json(manifest, {label: ["ElfTest/Execute"]})
+        value = self.verdict(invocation, case_manifest=manifest)
         self.assertEqual(value["status"], "PASS", value)
         self.assertEqual(value["case_counts"], {"passed": 45, "failed": 0, "skipped": 4})
         self.assertEqual(value["zero_case_owners"], [])
