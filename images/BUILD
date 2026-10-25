@@ -12,6 +12,7 @@ filegroup(
     name = "sources",
     srcs = glob(["**"]) + [
         "//images/gpu/ollama/client:sources",
+        "//images/image-test/ruby:sources",
     ],
 )
 

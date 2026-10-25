@@ -1,0 +1,238 @@
+[
+  {
+    "gem": "base64-0.3.0.gem",
+    "sha256": "27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b",
+    "source_commit": "c5d3c7f3c06b40e956a04b4df57a60c0f5daea39",
+    "selected_licenses": [
+      "BSD-2-Clause"
+    ],
+    "selection": "Select the explicit BSD-2-Clause alternative from COPYING/BSDL. LEGAL contains generic license texts without assigning them to shipped gem members; do not infer additional file attribution.",
+    "notices": [
+      {
+        "archive_path": "BSDL",
+        "sha256": "36a9a6e7347214bbba599a412617204e65bff065dcbe5c46f5cb454c80de9eb0",
+        "permalink": "https://github.com/ruby/base64/blob/c5d3c7f3c06b40e956a04b4df57a60c0f5daea39/BSDL",
+        "bytes": 1291
+      },
+      {
+        "archive_path": "COPYING",
+        "sha256": "967586d538a28955ec2541910cf63c5ac345fcdea94bfb1f1705a1f6eb36bcbb",
+        "permalink": "https://github.com/ruby/base64/blob/c5d3c7f3c06b40e956a04b4df57a60c0f5daea39/COPYING",
+        "bytes": 2427
+      },
+      {
+        "archive_path": "LEGAL",
+        "sha256": "bf3d56d47f8dfcaf3640e1287b2297bf7b310fe1226d6269a5380bbd868d8a42",
+        "permalink": "https://github.com/ruby/base64/blob/c5d3c7f3c06b40e956a04b4df57a60c0f5daea39/LEGAL",
+        "bytes": 3088
+      }
+    ]
+  },
+  {
+    "gem": "logger-1.7.0.gem",
+    "sha256": "196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203",
+    "source_commit": "f474d07d9890a03e6e40430c4e2ee933c6193d7e",
+    "selected_licenses": [
+      "BSD-2-Clause"
+    ],
+    "selection": "Select the explicit BSD-2-Clause alternative from COPYING/BSDL.",
+    "notices": [
+      {
+        "archive_path": "BSDL",
+        "sha256": "36a9a6e7347214bbba599a412617204e65bff065dcbe5c46f5cb454c80de9eb0",
+        "permalink": "https://github.com/ruby/logger/blob/f474d07d9890a03e6e40430c4e2ee933c6193d7e/BSDL",
+        "bytes": 1291
+      },
+      {
+        "archive_path": "COPYING",
+        "sha256": "967586d538a28955ec2541910cf63c5ac345fcdea94bfb1f1705a1f6eb36bcbb",
+        "permalink": "https://github.com/ruby/logger/blob/f474d07d9890a03e6e40430c4e2ee933c6193d7e/COPYING",
+        "bytes": 2427
+      }
+    ]
+  },
+  {
+    "gem": "mustermann-3.1.1.gem",
+    "sha256": "4c6170c7234d5499c345562ba7c7dfe73e1754286dcc1abb053064d66a127198",
+    "source_commit": "97a46ad2b15a21efd1108de912f876eb44847709",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Classify the exact pinned upstream notice whose bytes equal the packaged notice.",
+    "notices": [
+      {
+        "archive_path": "LICENSE",
+        "sha256": "144ff5ffc4ce7759a50e330e18eb6f4084a57608579a59d2fea2399345a7d6e7",
+        "permalink": "https://github.com/sinatra/mustermann/blob/97a46ad2b15a21efd1108de912f876eb44847709/LICENSE",
+        "bytes": 1103
+      }
+    ]
+  },
+  {
+    "gem": "nio4r-2.7.3.gem",
+    "sha256": "54b94cdd4b8f9dc39aaad5f699e97afae13efb44f2b180a6e724df76105ff604",
+    "source_commit": "d0a36cd4537dcb73778999d68196e5454f459df6",
+    "selected_licenses": [
+      "BSD-2-Clause",
+      "MIT"
+    ],
+    "selection": "MIT for nio4r plus BSD-2-Clause alternative for the bundled libev; retain both shipped notices.",
+    "notices": [
+      {
+        "archive_path": "ext/libev/LICENSE",
+        "sha256": "c4dd1a5bc38b041a320b93c5d6c08f5c41a63f2ce718ee16cfcb757fad448199",
+        "permalink": "https://github.com/socketry/nio4r/blob/d0a36cd4537dcb73778999d68196e5454f459df6/ext/libev/LICENSE",
+        "bytes": 2055
+      },
+      {
+        "archive_path": "license.md",
+        "sha256": "88f04061f51be0f8cd73e90791710d8ac7062f84499ee278e30253ad1c194213",
+        "permalink": "https://github.com/socketry/nio4r/blob/d0a36cd4537dcb73778999d68196e5454f459df6/license.md",
+        "bytes": 3255
+      }
+    ]
+  },
+  {
+    "gem": "puma-6.6.0.gem",
+    "sha256": "f25c06873eb3d5de5f0a4ebc783acc81a4ccfe580c760cfe323497798018ad87",
+    "source_commit": "5a58290f05bb964bf3d913b9b03564a916e84815",
+    "selected_licenses": [
+      "BSD-3-Clause",
+      "MIT"
+    ],
+    "selection": "BSD-3-Clause root plus MIT in shipped lib/puma/sd_notify.rb.",
+    "notices": [
+      {
+        "archive_path": "LICENSE",
+        "sha256": "4aa997b8c797a11bc0c6b8439124825970d298dc36b008dfc8d8e65652deee85",
+        "permalink": "https://github.com/puma/puma/blob/5a58290f05bb964bf3d913b9b03564a916e84815/LICENSE",
+        "bytes": 1554
+      },
+      {
+        "archive_path": "lib/puma/sd_notify.rb",
+        "sha256": "b89b93d98e77733beafd60fab756f0f1cd3c125e823fa2753ec75d9086f9569f",
+        "permalink": "https://github.com/puma/puma/blob/5a58290f05bb964bf3d913b9b03564a916e84815/lib/puma/sd_notify.rb",
+        "bytes": 4826
+      }
+    ]
+  },
+  {
+    "gem": "rack-3.2.7.gem",
+    "sha256": "93e13e1c24f93556671d85d2d79fa228c3485815c50d7e2f265b5330c6528fb7",
+    "source_commit": "70d2e1046789a70e240e01b9ac0b3ffc9b26d33f",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Exact shipped MIT-LICENSE is not a recognized automatic root notice name.",
+    "notices": [
+      {
+        "archive_path": "MIT-LICENSE",
+        "sha256": "1b7ebcb5691b416620794892b6ff40473485770dbcc6c63bd33409d4cfd0cefc",
+        "permalink": "https://github.com/rack/rack/blob/70d2e1046789a70e240e01b9ac0b3ffc9b26d33f/MIT-LICENSE",
+        "bytes": 1108
+      }
+    ]
+  },
+  {
+    "gem": "rack-protection-4.1.1.gem",
+    "sha256": "51a254a5d574a7f0ca4f0672025ce2a5ef7c8c3bd09c431349d683e825d7d16a",
+    "source_commit": "7b50a1bbb5324838908dfaa00ec53ad322673a29",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Exact shipped License is upstream rack-protection/License, distinct from the monorepo root LICENSE.",
+    "notices": [
+      {
+        "archive_path": "License",
+        "sha256": "aa9feb353249256a9aba02e22d7adfadfd0a339daf39d21d367fe7f7e620b96d",
+        "permalink": "https://github.com/sinatra/sinatra/blob/7b50a1bbb5324838908dfaa00ec53ad322673a29/rack-protection/License",
+        "bytes": 1126
+      }
+    ]
+  },
+  {
+    "gem": "rack-session-2.1.2.gem",
+    "sha256": "595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8",
+    "source_commit": "504367b59caf7ec78127785cc6351f46be14f8ca",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Classify the exact pinned upstream notice whose bytes equal the packaged notice.",
+    "notices": [
+      {
+        "archive_path": "license.md",
+        "sha256": "2044115ff3f9ee2b3bfb54d088f74f4b7388bba03fd42ecaee206ebd68595c84",
+        "permalink": "https://github.com/rack/rack-session/blob/504367b59caf7ec78127785cc6351f46be14f8ca/license.md",
+        "bytes": 3049
+      }
+    ]
+  },
+  {
+    "gem": "rackup-2.1.0.gem",
+    "sha256": "6ecb884a581990332e45ee17bdfdc14ccbee46c2f710ae1566019907869a6c4d",
+    "source_commit": "eaea24a3d64a1b117df943a9d06779e659bb61af",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Classify the exact pinned upstream notice whose bytes equal the packaged notice.",
+    "notices": [
+      {
+        "archive_path": "license.md",
+        "sha256": "df9c1a3ca656708fe312c0cf24611263c40b6a6d6f67c7f1b437c3b6de7cce67",
+        "permalink": "https://github.com/rack/rackup/blob/eaea24a3d64a1b117df943a9d06779e659bb61af/license.md",
+        "bytes": 3235
+      }
+    ]
+  },
+  {
+    "gem": "sinatra-4.1.1.gem",
+    "sha256": "4e997b859aa1b5d2e624f85d5b0fd0f0b3abc0da44daa6cbdf10f7c0da9f4d00",
+    "source_commit": "7b50a1bbb5324838908dfaa00ec53ad322673a29",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Classify the exact pinned upstream notice whose bytes equal the packaged notice.",
+    "notices": [
+      {
+        "archive_path": "LICENSE",
+        "sha256": "f2f60556a2d5c8d7ef9d54ec1c62152ff40d626b807aba5bdc5126f669ed500f",
+        "permalink": "https://github.com/sinatra/sinatra/blob/7b50a1bbb5324838908dfaa00ec53ad322673a29/LICENSE",
+        "bytes": 1172
+      }
+    ]
+  },
+  {
+    "gem": "tilt-2.9.0.gem",
+    "sha256": "da5735d0280bba96e9a91041bb14aee435ccad5c17b0fa519249ae543d9aa3a5",
+    "source_commit": "f0d75c60e3a6aeb85505773af7e1ea2f4fcce17c",
+    "selected_licenses": [
+      "MIT"
+    ],
+    "selection": "Classify the exact pinned upstream notice whose bytes equal the packaged notice.",
+    "notices": [
+      {
+        "archive_path": "COPYING",
+        "sha256": "f6d4f8b3b35d3d751489e12f48a65400b2dd61e635af9e5258625b21e2e7c5e6",
+        "permalink": "https://github.com/jeremyevans/tilt/blob/f0d75c60e3a6aeb85505773af7e1ea2f4fcce17c/COPYING",
+        "bytes": 1121
+      }
+    ]
+  },
+  {
+    "gem": "webrick-1.9.2.gem",
+    "sha256": "beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131",
+    "source_commit": "b1684cecf9eb87cb2ae20fd52fbb80cf3e859c8a",
+    "selected_licenses": [
+      "BSD-2-Clause"
+    ],
+    "selection": "Classify the exact pinned upstream notice whose bytes equal the packaged notice.",
+    "notices": [
+      {
+        "archive_path": "LICENSE.txt",
+        "sha256": "a5e3042dacb53eebda91f3b1caefbfec8307711df8c4ed1ed20e4e97c43307a4",
+        "permalink": "https://github.com/ruby/webrick/blob/b1684cecf9eb87cb2ae20fd52fbb80cf3e859c8a/LICENSE.txt",
+        "bytes": 1282
+      }
+    ]
+  }
+]
