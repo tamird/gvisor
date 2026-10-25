@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-24T21:48:49.659913+00:00",
+    "updatedAt": "2026-10-25T12:46:43.341670+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11737,15 +11737,15 @@
       "title": "Age RACK measurements with compact metadata",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d",
-      "status": "Contributor approved; waiting for #15819",
-      "updatedAt": "2026-10-16T09:59:12.905019+00:00",
-      "summary": "The compact amendment preserves the reviewed path-minimum correction while replacing stored original payload size with a trim flag and reducing sender padding. Selected unit, packet and analyzer checks pass; matched layouts restore the baseline segment and sender heap classes. The new fixed comparison is independently verified, and neither aggregate confidence interval excludes zero. This does not establish equivalence or recovery benefit on lossy or changing paths. The earlier approved proposal remains unchanged. Compare the single commits with git range-diff 7e371d8acc^! ca492fef9^!. The contributor approved this exact compact amendment after reviewing its range-diff. Upstream submission waits for #15819 to land.",
+      "status": "Contributor approved; prerequisites landed",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The recorded #15819 prerequisite landings are now observed. The existing exact-source contributor approval remains valid; source integration and delivery are agent work.\n\nPreserved approved proposal:\n\nThe compact amendment preserves the reviewed path-minimum correction while replacing stored original payload size with a trim flag and reducing sender padding. Selected unit, packet and analyzer checks pass; matched layouts restore the baseline segment and sender heap classes. The new fixed comparison is independently verified, and neither aggregate confidence interval excludes zero. This does not establish equivalence or recovery benefit on lossy or changing paths. The earlier approved proposal remains unchanged. Compare the single commits with git range-diff 7e371d8acc^! ca492fef9^!. The contributor approved this exact compact amendment after reviewing its range-diff. Upstream submission waits for #15819 to land.",
       "followup": {
-        "owner": "external_sweeps",
-        "disposition": "Contributor approved; Karn prerequisite remains",
+        "owner": "root",
+        "disposition": "Recorded prerequisites landed; existing contributor approval retained",
         "sourceHead": "ca492fef95e67b769f0369c68e18a7edb28e1f2d",
-        "observedAt": "2026-10-16T09:59:12.905019+00:00",
-        "nextAction": "Follow #15819 landing before upstream submission. The contributor approved ca492fef9; the original-to-compact range-diff remains available.",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "nextAction": "Reconcile the exact approved patch with current upstream and deliver under the existing contributor grant. Root coordinates delivery ownership; no repeated contributor question or automatic merge is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d",
           "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
@@ -15853,14 +15853,14 @@
       "url": "https://github.com/google/gvisor/pull/15981",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
-      "summary": "Public PR #15981 remains at 4cbfbc9d210184f78809d741642ece5f4e95b31a. Its matching import #16241 refreshed to b47cec66d4de0c87070f8b1b672b0789643e4e0b at 21:42:19Z; current Buildkite checks are pending. The preceding matching import head 0d0152b70b53f3171cc2b5f3669cc4c8f68dd663 passed public Buildkite 52166 and internal Buildkite 33892. Separately, source feedback/copybara changed to FAILURE at 2026-10-24T21:31:43Z: Google internal checks failed for a run created at 20:16:54.775467799Z. The provider exposes no individual internal failure details. Import/copybara remains successful. Keep this in maintainer internal feedback, with the public import statuses distinguished by revision; no source rebase or reminder is requested for this status alone. Earlier failed import heads remain historical evidence.\n\nEarlier source-specific evidence:\n\nThe prior import #16241 at fca4c84e10 failed all eight Buildkite 52156 jobs. Root inspected all eight logs: both architecture builds, Nogo, cgroupv1 unit tests and ARM64 unit tests report a missing protoreflect archive; Nogo also names Docker plugin.pb.go. GPU smoke and all three unit jobs report HTTP 404 for the ARM64 NVIDIA 620.51.03 installer, tracked by existing #16335. C++ lint includes the Benchmark umbrella-header warnings tracked by #16313. These are observed, overlapping diagnostics, not exclusive causes or verified fixes; some logs are truncated. The import contains only the expected three user-resolution files on d15d5319c3. Root owns the diagnosis and Node owns the shared focused validate_go/Docker runtime contrast against full #16098 and its minimal compiler-dependency extraction. The same contrast covers #15970/import #16188; no duplicate qualification. Those retained pre-landing import failures remain historical; root subsequently published the patch-preserving landed-base rebase.\n\nThe shared three-source contrast is complete at ce548b75, with overall native, comparison and projection FAIL preserved. Public d15d reproduces the missing protoreflect archive for validate_go and Docker runtime on both analyzer CPUs before any wrapper executes. Full #16098 passes both uncached analyzer wrappers, each reporting amd64 and arm64 PASS. The minimal compiler-dependency extraction reaches actual typechecking on both CPUs but both wrappers fail only the generated unsafe-import policy. The full and minimal treatments each have four successful remote, uncached typechecking actions with the generated files and protoreflect/protoimpl imports; this is not a passing minimal repair or a whole-import result. The complete native result was authenticated 17.110956 seconds after the last inner phase. Original formatter-only failure 0ba556 remains separate; no workload was repeated for retained analysis.\n\nUpstream #16335 landed at c341af3e04fb on 2026-10-24. Its NVIDIA availability flag, Benchmark-header ignore and Nogo embedded-source exclusion are now in the public base. The earlier 131c3169 source and its own passing checks remain historical evidence. Root rebased the affected source PRs onto the actual landing; the old failed imports still refer to their old source heads and do not establish current-head CI failure or success. #16098 retains its distinct export/dependency behavior and #16313 its header-annotation policy; no equivalence or automatic supersession is inferred.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The latest matching import #16241 at 8a0eba3a6ab2 is closed. Its Buildkite public #52226 and internal #33951 lanes passed, while feedback/copybara separately reports internal-check failure for the 06:08:17 UTC run. The source remains 4cbfbc9d2101, with effective review required. This remains maintainer internal-feedback work, with no new source correction or reminder inferred.\n\nHistorical disposition:\n\nPublic PR #15981 remains at 4cbfbc9d210184f78809d741642ece5f4e95b31a. Its matching import #16241 refreshed to b47cec66d4de0c87070f8b1b672b0789643e4e0b at 21:42:19Z; current Buildkite checks are pending. The preceding matching import head 0d0152b70b53f3171cc2b5f3669cc4c8f68dd663 passed public Buildkite 52166 and internal Buildkite 33892. Separately, source feedback/copybara changed to FAILURE at 2026-10-24T21:31:43Z: Google internal checks failed for a run created at 20:16:54.775467799Z. The provider exposes no individual internal failure details. Import/copybara remains successful. Keep this in maintainer internal feedback, with the public import statuses distinguished by revision; no source rebase or reminder is requested for this status alone. Earlier failed import heads remain historical evidence.\n\nEarlier source-specific evidence:\n\nThe prior import #16241 at fca4c84e10 failed all eight Buildkite 52156 jobs. Root inspected all eight logs: both architecture builds, Nogo, cgroupv1 unit tests and ARM64 unit tests report a missing protoreflect archive; Nogo also names Docker plugin.pb.go. GPU smoke and all three unit jobs report HTTP 404 for the ARM64 NVIDIA 620.51.03 installer, tracked by existing #16335. C++ lint includes the Benchmark umbrella-header warnings tracked by #16313. These are observed, overlapping diagnostics, not exclusive causes or verified fixes; some logs are truncated. The import contains only the expected three user-resolution files on d15d5319c3. Root owns the diagnosis and Node owns the shared focused validate_go/Docker runtime contrast against full #16098 and its minimal compiler-dependency extraction. The same contrast covers #15970/import #16188; no duplicate qualification. Those retained pre-landing import failures remain historical; root subsequently published the patch-preserving landed-base rebase.\n\nThe shared three-source contrast is complete at ce548b75, with overall native, comparison and projection FAIL preserved. Public d15d reproduces the missing protoreflect archive for validate_go and Docker runtime on both analyzer CPUs before any wrapper executes. Full #16098 passes both uncached analyzer wrappers, each reporting amd64 and arm64 PASS. The minimal compiler-dependency extraction reaches actual typechecking on both CPUs but both wrappers fail only the generated unsafe-import policy. The full and minimal treatments each have four successful remote, uncached typechecking actions with the generated files and protoreflect/protoimpl imports; this is not a passing minimal repair or a whole-import result. The complete native result was authenticated 17.110956 seconds after the last inner phase. Original formatter-only failure 0ba556 remains separate; no workload was repeated for retained analysis.\n\nUpstream #16335 landed at c341af3e04fb on 2026-10-24. Its NVIDIA availability flag, Benchmark-header ignore and Nogo embedded-source exclusion are now in the public base. The earlier 131c3169 source and its own passing checks remain historical evidence. Root rebased the affected source PRs onto the actual landing; the old failed imports still refer to their old source heads and do not establish current-head CI failure or success. #16098 retains its distinct export/dependency behavior and #16313 its header-annotation policy; no equivalence or automatic supersession is inferred.\n\nPreserved delivered source and validation:\n\nThe requested post-#16046 rebase is published at b36bfb53d0c1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved selected-passwd amendment is delivered at29195900fa. It rejects malformed explicitly selected records while retaining unselected fallback. The reviewed before/after proof covers six reproduced errors and84 passing owner cases. The substantive review reply and PR body were verified; native re-request returned404 and was not saved. Public checks and maintainer review remain separate.\n\nThe selected-passwd-record amendment is now independently qualified at review291959: all six malformed selected records reproduce fallback IDs before the change, then the full three-owner run passes84 cases including all58 table cases. Unselected malformed fallback remains covered. Public30fdf is unchanged; root is preparing the contributor decision before amending the PR.\n\nNew review identifies malformed selected passwd records that still return fallback IDs after valid numeric fields. Hostinet is preparing a focused correction and before/after validation; the published numeric-bounds fix remains qualified at its exact source. The additional structural-error contract will receive contributor review after proof.\n\nThe contributor approved exact 30fdf4caad, now delivered as PR #15981. User resolution rejects negative, oversized and reserved numeric requests or selected account fields before creating credentials, while retaining unknown-name and missing-file fallback. Before validation reproduces five invalid-input resolutions to zero IDs. The corrected six-owner run passes 84 cases, including all 51 VFS-backed resolver table cases, without skips or gaps. All three qualified files match the standalone proposal; public review and CI are pending.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "4cbfbc9d210184f78809d741642ece5f4e95b31a",
-        "observedAt": "2026-10-24T21:47:05.202240+00:00",
-        "disposition": "Maintainer internal feedback failure; refreshed matching import checks pending",
-        "nextAction": "Keep the internal Copybara feedback failure, new matching-import checks and preceding-head successful Buildkite results distinct. Follow substantive maintainer feedback and current-head import status through the existing watcher; root owns any internal follow-up. Do not rebase or send a reminder for this status alone.",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Maintainer internal feedback remains distinct from passing public import checks",
+        "nextAction": "Keep this item in maintainer internal-feedback routing. The matching import is closed; its Buildkite success does not resolve the separate feedback/copybara failure. No source rebase or reminder is warranted for this status alone.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15981#issuecomment-6275554145",
           "https://github.com/tamird/gvisor/commit/b36bfb53d0c13ce8802b51c18a8257dbc48c836b",
@@ -17024,26 +17024,27 @@
       "repo": "google/gvisor",
       "number": 16053,
       "ref": "fix/netlink-operstate-wait",
-      "head": "46aadd608aa19c1bbc33a425475d8900d6c9b5a7",
+      "head": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
       "title": "Wait for veth operational state in the netlink test",
       "url": "https://github.com/google/gvisor/pull/16053",
       "group": "runtime",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at 46aadd608aa1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 59b68fe499. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 59b68fe49953968abdce68d1992f541643beb2d0 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633224546 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16053 at 4051c2dd7c2c3073db81f947ddc1a9371cc04f97. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe earlier proposal revision is retained through an explicit old/new range-diff action; the existing exact-head contributor question and qualification limits remain unchanged.\n\nWait for Linux\u2019s asynchronous veth operational-state update before asserting IF_OPER_UP. The existing test uses a five-second monotonic polling budget and preserves missing-response, malformed-attribute and final-state failures. All six selected native/systrap direct/shared variants passed at integration38eb3280fe on AMD64 and ARM64 RC TCG. That run remains raw FAIL solely for comment formatting; the comment-only81917272 continuation passed buildifier and clang-format without repeating runtime cases. The exact standalone624b09d5b is published and the contributor review question has been sent once. No upstream PR is open.",
+      "summary": "The requested rebase is delivered at 5e04edceda66 directly on public 7bffefa, with provider readback mergeable. The approved changed-line stream and stable patch identity are preserved, including independently landed lock annotations and current container.State API where applicable. No runtime replay or new exact-head approval is claimed. The previously matching #16326 import at e1b7a796 passed both Buildkite lanes for old 46aadd; it is historical after this new source head and was not changed or retried.\n\nHistorical source record:\n\nThe requested post-#16046 rebase is published at 46aadd608aa1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 59b68fe499. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 59b68fe49953968abdce68d1992f541643beb2d0 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633224546 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16053 at 4051c2dd7c2c3073db81f947ddc1a9371cc04f97. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe earlier proposal revision is retained through an explicit old/new range-diff action; the existing exact-head contributor question and qualification limits remain unchanged.\n\nWait for Linux\u2019s asynchronous veth operational-state update before asserting IF_OPER_UP. The existing test uses a five-second monotonic polling budget and preserves missing-response, malformed-attribute and final-state failures. All six selected native/systrap direct/shared variants passed at integration38eb3280fe on AMD64 and ARM64 RC TCG. That run remains raw FAIL solely for comment formatting; the comment-only81917272 continuation passed buildifier and clang-format without repeating runtime cases. The exact standalone624b09d5b is published and the contributor review question has been sent once. No upstream PR is open.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "46aadd608aa19c1bbc33a425475d8900d6c9b5a7",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "disposition": "Gazelle rebase complete; exact current-head Gazelle check succeeded",
-        "nextAction": "Follow new substantive review, import and merge events in the existing sweep; preserve current maintainer holds and do not repeat the completed rebase.",
+        "sourceHead": "5e04edceda66b502e1cb5be55e04019aaf9fcba8",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Requested source rebase delivered",
+        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39424420500/job/118633224546",
           "https://github.com/google/gvisor/pull/16031",
           "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/tamird/gvisor/commit/46aadd608aa19c1bbc33a425475d8900d6c9b5a7"
+          "https://github.com/tamird/gvisor/commit/46aadd608aa19c1bbc33a425475d8900d6c9b5a7",
+          "https://github.com/tamird/gvisor/commit/5e04edceda66b502e1cb5be55e04019aaf9fcba8"
         ]
       },
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -18319,24 +18320,26 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/ipv6-quoted-extension-headers",
-      "head": "7a48d5a71efe1439fcb2621e3209e26cdd78393b",
+      "head": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
       "title": "netstack: parse quoted IPv6 extension headers",
       "url": "https://github.com/google/gvisor/pull/16096",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
-      "summary": "The requested post-#16046 rebase is published at 7a48d5a71efe on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16096 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Quoted-error delivery, conntrack lookup and NAT rewriting reuse the existing IPv6 extension-header iterator and agree on the final protocol and offset. Valid truncated quotes and first/atomic fragments remain supported; incomplete extensions and non-first fragments are rejected. Independent review accepted the failing-before evidence and the corrected 13-owner gate: 17,858 positive XML records including parents, with seven analyzer owners reporting both architectures. The final subject-only amendment has the same tree as qualified 89f154da36. This proposal is independent of the forwarding-checksum correction and the deprecation-policy PR.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The October 25 rebase request is delivered at af38f71655e6 on public master 7bffefa9185a. Provider readback is mergeable. The IPv6 extension-header iterator keeps the approved ICMP and conntrack iterator changes while retaining the independently landed checksum and test changes. The two conflicting base-header substitutions affect code already replaced by the iterator. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe requested post-#16046 rebase is published at 7a48d5a71efe on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16096 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Quoted-error delivery, conntrack lookup and NAT rewriting reuse the existing IPv6 extension-header iterator and agree on the final protocol and offset. Valid truncated quotes and first/atomic fragments remain supported; incomplete extensions and non-first fragments are rejected. Independent review accepted the failing-before evidence and the corrected 13-owner gate: 17,858 positive XML records including parents, with seven analyzer owners reporting both architectures. The final subject-only amendment has the same tree as qualified 89f154da36. This proposal is independent of the forwarding-checksum correction and the deprecation-policy PR.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Current Copybara migration error; maintainer diagnostic needed",
-        "sourceHead": "7a48d5a71efe1439fcb2621e3209e26cdd78393b",
-        "observedAt": "2026-10-22T20:52:33.431429+00:00",
-        "nextAction": "Track the exact current-head migration error. No matching public import or diagnostic is exposed; obtain an authorized maintainer diagnostic before choosing a source correction. Do not blindly rebase or send an unrequested public comment.",
+        "disposition": "Requested rebase delivered; follow exact-head checks and review",
+        "sourceHead": "af38f71655e6a9d0ee3c780bd355fdae9bc53fc3",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16096",
           "https://github.com/tamird/gvisor/commit/4913272f2637242d49f2b1cc31e48d802109863d",
           "https://app.buildbuddy.io/invocation/a8acb9fb-e1b7-4817-a035-9179e0e26fee",
-          "https://github.com/tamird/gvisor/commit/7a48d5a71efe1439fcb2621e3209e26cdd78393b"
+          "https://github.com/tamird/gvisor/commit/7a48d5a71efe1439fcb2621e3209e26cdd78393b",
+          "https://github.com/google/gvisor/pull/16096#issuecomment-6393576687",
+          "https://github.com/tamird/gvisor/commit/af38f71655e6a9d0ee3c780bd355fdae9bc53fc3"
         ]
       },
       "evidence": [
@@ -18405,15 +18408,15 @@
       "title": "Build basic test images with rules_img",
       "url": "https://github.com/google/gvisor/pull/16097",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "Approved amendment781d64d844 is published and mergeable. The original approver has already been asked to review the changed Make rule; no new contributor approval is needed.\n\nHistorical record:\n\nThe contributor approved the qualified amendment 781d64d844. Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second. Do not repeat the completed contributor question. The live source head remains c27866684d until publication.\n\nPrior source and validation record:\n\nThe contributor has been asked to review the qualified conflict resolution 781d64d844. It unifies generic and CUDA Make context staging and preserves all 40 tracked basic source files across the new Bazel package boundary. Eight native phases pass: eight archive outputs across AMD64/ARM64, ten actual Make tags, and three AMD64 Docker rebuild/reload/execute checks. The archive/tag gates use optimized builds; the unchanged Docker smoke uses default build mode, so its tmpfile tag is separately recorded. Independent retained review passed, with 10.382462 seconds from native completion to authenticated receipt. The two earlier coordinator setup failures remain retained. Publication, the revised description and rereview of the changed Make rule await this existing contributor decision; the live source c2786668 and import #16307 are unchanged.\n\nPrevious conflict diagnosis:\n\nAfter #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil\u2019s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
+      "status": "closed",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The source PR is closed following the merged #16307 import at c3e0783a533c. The import marker names older c2786668; the actual imported source also omits the two basic-context exports from approved 781d. Independent source review confirms the rules_img pins, image_outputs interface and archive-before-tag behavior; the separate CUDA recipe preserves its architecture and race=false staging. The approved basic:sources filegroup and parent edge were omitted, excluding basic contexts at the Bazel package boundary. The seven-line restoration is delivered as #16374 at 8d851dcbcd, with both complete BUILD postimages identical to approved 781d. Root also owns the shared Docker Hub mirror prerequisite before pull-adding proposals are delivered; their existing grants remain in force. No new runtime result is claimed.\n\nHistorical source and validation record:\n\nApproved amendment781d64d844 is published and mergeable. The original approver has already been asked to review the changed Make rule; no new contributor approval is needed.\n\nHistorical record:\n\nThe contributor approved the qualified amendment 781d64d844. Root owns exact-lease publication to #16097, updated description and original-approver rereview. First recheck overlapping Ollama #16333/#16334; reconcile whichever Make change lands second. Do not repeat the completed contributor question. The live source head remains c27866684d until publication.\n\nPrior source and validation record:\n\nThe contributor has been asked to review the qualified conflict resolution 781d64d844. It unifies generic and CUDA Make context staging and preserves all 40 tracked basic source files across the new Bazel package boundary. Eight native phases pass: eight archive outputs across AMD64/ARM64, ten actual Make tags, and three AMD64 Docker rebuild/reload/execute checks. The archive/tag gates use optimized builds; the unchanged Docker smoke uses default build mode, so its tmpfile tag is separately recorded. Independent retained review passed, with 10.382462 seconds from native completion to authenticated receipt. The two earlier coordinator setup failures remain retained. Publication, the revised description and rereview of the changed Make rule await this existing contributor decision; the live source c2786668 and import #16307 are unchanged.\n\nPrevious conflict diagnosis:\n\nAfter #15670 landed, both the current source c2786668 and public import #16307 at 20ac8038 have a confirmed conflict with master d15d5319. Independent Git merge tests identify only tools/images.mk: the generic Bazel image context block and the newly landed CUDA context block were appended at the same location. Both source and import have the same image Makefile bytes. This is an actual source overlap, separate from opaque internal-check status and the broader UNKNOWN cohort. No repair or new approval is claimed.\n\nPreserved earlier record:\n\nThe quiet current-master rebase is published at c27866684d on 491c2af99a and verified mergeable. Independent review confirms unchanged topic bytes; only adjacent libbpf context differs. Anil\u2019s October 22 approval of 3987e82eec is retained as approval of the equivalent patch, not a fresh review. The earlier internal import/check success belongs to the old head; current-head checks and public export remain separately observed. No reviewer reminder is warranted for this rebase.\n\nEarlier source-specific evidence:\n\nThe requested resource layout correction is published at 3987e82eec on current master 30ace3e2a9. The tmpfile input now lives in its image directory; installed names, modes and bytes are unchanged. Independent review verified the equivalent rebase, including new upstream LLVM/libbpf context. Both-architecture archives and Make contexts at the actual final head exactly match the controlled comparison outputs. The original historical serialization and alias-history failures remain retained; no runtime or catalog suite was replayed. One collector permission failure required same-invocation recovery, recorded separately from the passing workload. Current source PR is open and mergeable; maintainer review and prerequisite landings remain.\n\nEarlier delivery and validation:\n\nThe requested post-#16046 rebase is published at 1d562c448fe8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16097 at exact cf55245b69. The ready upstream PR has one commit and verified title/body/head readback. The consolidated basic-image layout and Make interface passed the independently accepted combined gate at child 5ac1aa8e95: six archive/context outputs for each architecture, formatting, and actual AMD64 Make rebuild, deleted-tag restoration and container checks for all three images. Canonical license evidence retains its original source identity. Current-head CI and maintainer review remain; no contributor decision is pending. ARM64 qualification is archive/context construction, not runtime execution.",
       "followup": {
         "owner": "root",
         "sourceHead": "781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
-        "observedAt": "2026-10-24T10:53:05.058293+00:00",
-        "disposition": "Approved amendment published; original approver rereview requested",
-        "nextAction": "Follow exact-head checks and the existing maintainer reapproval request. Preserve the Make overlap with Ollama and reconcile whichever lands second. No contributor decision remains.",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Source PR closed through merged import; exact source differences remain",
+        "nextAction": "Root owns the shared Docker Hub mirror prerequisite. The missing basic-context export is delivered as #16374, and all ten mirror amendments are fork-published and independently source-reviewed; follow their remaining prerequisite and current CI state. Preserve existing grants and the pending MariaDB decision. Do not treat the merged import as exact 781d source parity.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/google/gvisor/pull/16097#pullrequestreview-5621263069",
@@ -18423,7 +18426,11 @@
           "https://github.com/google/gvisor/pull/16333",
           "https://github.com/tamird/gvisor/commit/781d64d84443b4bfffaa5cbdcf75e748d4d826d7",
           "https://app.buildbuddy.io/invocation/c7dad030-2bcb-4d1c-9297-2c2f0770c527",
-          "https://github.com/google/gvisor/pull/16097#issuecomment-6383269376"
+          "https://github.com/google/gvisor/pull/16097#issuecomment-6383269376",
+          "https://github.com/google/gvisor/pull/16097#issuecomment-6394120821",
+          "https://github.com/google/gvisor/commit/c3e0783a533c34c33e5fbaa57c915f622f85aa41",
+          "https://github.com/tamird/gvisor/commit/8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
+          "https://github.com/google/gvisor/pull/16374"
         ]
       },
       "evidence": [
@@ -18503,32 +18510,37 @@
       }
     },
     {
-      "id": "branch:rules-img-syscallbench",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16376",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "rules-img-syscallbench",
-      "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
+      "head": "08d531c471191b1233f4721fed9c5b0475a302e4",
       "title": "Build the syscall benchmark image from source",
-      "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
+      "url": "https://github.com/google/gvisor/pull/16376",
       "group": "bazel",
-      "status": "Contributor approved; awaiting prerequisite",
-      "updatedAt": "2026-10-21T14:15:29.126079+00:00",
-      "summary": "The contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
+      "status": "open",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The approved source-built syscall benchmark image is delivered on public 7bffefa. The original packaging and AMD64 mapping are preserved, with explicit source exports across the new benchmarks package boundary. Current upstream C is moved byte-for-byte, including its newly landed fork/exit/wait mode. Earlier runtime receipts cover their historical modes, not this newly landed mode. No new image pull or shared-registry prerequisite is added. Published as #16376, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nThe contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor approved; awaiting PR #16097",
-        "sourceHead": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
-        "observedAt": "2026-10-21T14:15:29.126079+00:00",
-        "nextAction": "Deliver the approved child after PR #16097 lands, preserving the reviewed layout and exact range-diff. Validation is complete; no new child approval question or repeated runtime gate is needed.",
+        "owner": "work_map_current",
+        "disposition": "Approved proposal delivered as an open source PR",
+        "sourceHead": "08d531c471191b1233f4721fed9c5b0475a302e4",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "nextAction": "Follow exact-head CI, imports and maintainer review through the existing watcher. No contributor decision remains pending.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
           "https://github.com/tamird/gvisor/commit/16ac29620279b0c0ecdfc4df2739ea854c8f38d3",
           "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6",
-          "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
+          "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d",
+          "https://github.com/google/gvisor/pull/16376"
         ]
       },
       "evidence": [
+        {
+          "label": "Delivered source pull request",
+          "url": "https://github.com/google/gvisor/pull/16376"
+        },
         {
           "label": "Published refinement and description",
           "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
@@ -18549,7 +18561,8 @@
         "after": {
           "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
         }
-      }
+      },
+      "number": 16376
     },
     {
       "id": "pr:golang/tools:702",
@@ -19134,24 +19147,26 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/nested-runtime-host-cgroupns",
-      "head": "8b47e3b5e93b8e0ad38643efb08feb0a66438c8d",
+      "head": "328b512656744bb12ce870146f4d3aa23f7ffb15",
       "title": "Align nested test cgroup namespace and mount",
       "url": "https://github.com/google/gvisor/pull/16168",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-22T01:44:47.504469+00:00",
-      "summary": "The contributor approved the standalone three-line fixture correction, now delivered as ready PR #16168. Published 8b47 is a message-only amendment of reviewed 25ac with an identical source tree. Variants that intentionally bind host cgroupfs also select the host cgroup namespace, so membership paths and the mounted hierarchy agree. A same-worker comparison reproduces clone3 ENOENT before the correction and passes afterward with identical image/runtime files and host nsdelegate unchanged. The complete six-variant parent also passes. Source CI and maintainer review are now pending; no new contributor decision is needed.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The October 25 rebase request is delivered at 328b51265674 on public master 7bffefa9185a. Provider readback is mergeable. The complete changed file is byte-identical to the approved source, with the same stable patch identity. Only variants binding host cgroupfs select the host cgroup namespace. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe contributor approved the standalone three-line fixture correction, now delivered as ready PR #16168. Published 8b47 is a message-only amendment of reviewed 25ac with an identical source tree. Variants that intentionally bind host cgroupfs also select the host cgroup namespace, so membership paths and the mounted hierarchy agree. A same-worker comparison reproduces clone3 ENOENT before the correction and passes afterward with identical image/runtime files and host nsdelegate unchanged. The complete six-variant parent also passes. Source CI and maintainer review are now pending; no new contributor decision is needed.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "8b47e3b5e93b8e0ad38643efb08feb0a66438c8d",
-        "observedAt": "2026-10-22T20:52:33.431429+00:00",
-        "disposition": "Current Copybara migration error; maintainer diagnostic needed",
-        "nextAction": "Track the exact current-head migration error. No matching public import or diagnostic is exposed; obtain an authorized maintainer diagnostic before choosing a source correction. Do not blindly rebase or send an unrequested public comment.",
+        "sourceHead": "328b512656744bb12ce870146f4d3aa23f7ffb15",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Requested rebase delivered; follow exact-head checks and review",
+        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb",
           "https://app.buildbuddy.io/invocation/d34c2337-c216-4b83-a69c-93cb7801707f",
           "https://app.buildbuddy.io/invocation/0bccee95-c3ba-442d-abc7-5bdee79d5dee",
-          "https://github.com/google/gvisor/pull/16168"
+          "https://github.com/google/gvisor/pull/16168",
+          "https://github.com/google/gvisor/pull/16168#issuecomment-6393577704",
+          "https://github.com/tamird/gvisor/commit/328b512656744bb12ce870146f4d3aa23f7ffb15"
         ],
         "reviewedHead": "25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb"
       },
@@ -19428,9 +19443,9 @@
       "title": "Retain typed homogeneous state arrays",
       "url": "https://github.com/tamird/gvisor/commit/4b896b20690e5dbcb8128b2a90d84e21c9b1db78",
       "group": "runtime",
-      "status": "Contributor approved; waiting for #15648 and #15814",
-      "updatedAt": "2026-10-22T10:37:37.771699+00:00",
-      "summary": "Contributor approval is complete after the requested comment/prose clarification. Exact 4b896 preserves approved 9ecf implementation and explains the Array interface/type switch without temporal restoreFloatArray wording. The original decoder and wire grammar remain shared. Normal/race checks pass. The isolated sixteen-pair comparison found graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts unchanged, binaries grow 52/56 KiB. These are AMD64 package results, not startup timing. Open after #15648 and #15814. The unified-engine investigation remains separate.",
+      "status": "Contributor approved; prerequisites landed",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The recorded #15648 and #15814 prerequisite landings are now observed. The existing exact-source contributor approval remains valid; source integration and delivery are agent work.\n\nPreserved approved proposal:\n\nContributor approval is complete after the requested comment/prose clarification. Exact 4b896 preserves approved 9ecf implementation and explains the Array interface/type switch without temporal restoreFloatArray wording. The original decoder and wire grammar remain shared. Normal/race checks pass. The isolated sixteen-pair comparison found graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts unchanged, binaries grow 52/56 KiB. These are AMD64 package results, not startup timing. Open after #15648 and #15814. The unified-engine investigation remains separate.",
       "links": [
         {
           "label": "Complete isolated change",
@@ -19442,11 +19457,11 @@
         }
       ],
       "followup": {
-        "owner": "node_tls_sni",
+        "owner": "root",
         "sourceHead": "4b896b20690e5dbcb8128b2a90d84e21c9b1db78",
-        "observedAt": "2026-10-22T10:37:37.771699+00:00",
-        "disposition": "Contributor approved; waiting for #15648 and #15814",
-        "nextAction": "Wait for actual prerequisite landings and preserve the existing contributor approval.",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Recorded prerequisites landed; existing contributor approval retained",
+        "nextAction": "Reconcile the exact approved patch with current upstream and deliver under the existing contributor grant. Root coordinates delivery ownership; no repeated contributor question or automatic merge is authorized.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4b896b20690e5dbcb8128b2a90d84e21c9b1db78"
         ]
@@ -20501,24 +20516,26 @@
       "id": "branch:source-built-nginx-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-nginx-upstream",
-      "head": "e2b318ab2eec75d29ab9b91ef242c43bf9804163",
+      "ref": "review/rules-img-nginx-upstream-mirrors",
+      "head": "0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
       "title": "Layer netstat onto the pinned Nginx image",
-      "url": "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163",
+      "url": "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
       "group": "bazel",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-23T13:29:48.932995+00:00",
-      "summary": "The contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "e2b318ab2eec75d29ab9b91ef242c43bf9804163",
-        "observedAt": "2026-10-23T13:29:48.932995+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Deliver the approved pinned-upstream revision after the shared utility/compiler prerequisites land; no repeat contributor question. Continue the separate review of other third-party image ports under the requested maintained-upstream direction.",
+        "sourceHead": "0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
           "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163",
-          "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d"
+          "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d",
+          "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
+          "https://github.com/tamird/gvisor/compare/e2b318ab2eec75d29ab9b91ef242c43bf9804163...0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
         ]
       },
       "links": [
@@ -20540,6 +20557,10 @@
         }
       },
       "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/e2b318ab2eec75d29ab9b91ef242c43bf9804163...0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
+        },
         {
           "label": "Approved maintained-upstream revision",
           "url": "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163"
@@ -20682,13 +20703,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fix/http-readiness-cancellation",
-      "head": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
+      "head": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
       "url": "https://github.com/google/gvisor/pull/16253",
       "title": "Clean up HTTP probes after cancellation",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-23T13:19:33.592807+00:00",
-      "summary": "The contributor approved the direct WithoutCancel cleanup and Node delivered it as #16253 at exact19a12. The published commit and body match the reviewed independent correction. Retained uncached cancellation validation proves the running probe is absent before fallback cleanup. No image-migration dependency or repeated contributor question applies.\n\nEarlier source-specific record:\n\nRoot requested contributor review of the independent cleanup correction at 19a12d5fc. A direct deferred CleanUp(context.WithoutCancel(ctx)) preserves caller values while allowing cleanup after cancellation; the arbitrary thirty-second timeout and closure are removed at the user's request. The real uncached native cancellation case passes: a running probe is absent before fallback cleanup. The same retained source-built BusyBox fixture and unchanged Docker client/caller mechanism were used; the old distro utility image was not replayed. No image-migration prerequisite applies. Original failure and the earlier timeout-version PASS remain retained. Compare git range-diff 2409f500f^! 19a12d5fc^!.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The requested rebase is delivered at 70cebfe4bfa1 directly on public 7bffefa, with provider readback mergeable. The approved changed-line stream and stable patch identity are preserved, including independently landed lock annotations and current container.State API where applicable. No runtime replay or new exact-head approval is claimed.\n\nHistorical source record:\n\nThe contributor approved the direct WithoutCancel cleanup and Node delivered it as #16253 at exact19a12. The published commit and body match the reviewed independent correction. Retained uncached cancellation validation proves the running probe is absent before fallback cleanup. No image-migration dependency or repeated contributor question applies.\n\nEarlier source-specific record:\n\nRoot requested contributor review of the independent cleanup correction at 19a12d5fc. A direct deferred CleanUp(context.WithoutCancel(ctx)) preserves caller values while allowing cleanup after cancellation; the arbitrary thirty-second timeout and closure are removed at the user's request. The real uncached native cancellation case passes: a running probe is absent before fallback cleanup. The same retained source-built BusyBox fixture and unchanged Docker client/caller mechanism were used; the old distro utility image was not replayed. No image-migration prerequisite applies. Original failure and the earlier timeout-version PASS remain retained. Compare git range-diff 2409f500f^! 19a12d5fc^!.",
       "refinement": {
         "before": {
           "head": "2409f500fc6515efd1c57524f75de9e5e4cd82cf"
@@ -20698,13 +20719,14 @@
         }
       },
       "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "19a12d5fcbdf44923499d2a1df2a8ddc9aab7c45",
-        "observedAt": "2026-10-23T13:19:33.592807+00:00",
-        "disposition": "Approved source delivered; current public CI and review pending",
-        "nextAction": "Follow exact current checks and substantive reviews through the existing tracker; preserve approval and prior validation, with no duplicate question.",
+        "owner": "work_map_current",
+        "sourceHead": "70cebfe4bfa1e41a1f4797f7e5062234e067b48a",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Requested source rebase delivered",
+        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16253"
+          "https://github.com/google/gvisor/pull/16253",
+          "https://github.com/tamird/gvisor/commit/70cebfe4bfa1e41a1f4797f7e5062234e067b48a"
         ]
       },
       "number": 16253
@@ -20991,51 +21013,67 @@
       "id": "branch:rules-img-httpd-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-httpd-upstream",
-      "head": "eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+      "ref": "review/rules-img-httpd-upstream-mirrors",
+      "head": "8b2c4cbe03cc70e2f14e849b952b2216e130197a",
       "title": "Use pinned official Apache images with fixture layers",
-      "url": "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
+      "url": "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
-      "summary": "The contributor approved this exact revision for delivery after #16097 lands. Basic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The source requires the image_outputs and Make image-context interfaces from #16097; it does not consume shared BusyBox/compiler outputs.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is 8b2c4cbe03cc, replacing proposal source eab6a14ae890. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved this exact revision for delivery after #16097 lands. Basic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The source requires the image_outputs and Make image-context interfaces from #16097; it does not consume shared BusyBox/compiler outputs.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
-        "observedAt": "2026-10-23T18:50:53.058692+00:00",
-        "disposition": "Contributor approved; image-context prerequisite remains",
-        "nextAction": "After the existing watcher observes #16097 landing, extract and deliver the exact approved patch with its retained functional and paired evidence. No new contributor question.",
+        "sourceHead": "8b2c4cbe03cc70e2f14e849b952b2216e130197a",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
           "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805"
+          "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805",
+          "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a",
+          "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a"
+        }
+      ]
     },
     {
       "id": "branch:rules-img-bun-spawn",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-bun-spawn",
-      "head": "f3617c9bd90d886d5f1376845a102ea9a42b5066",
+      "ref": "review/rules-img-bun-spawn-mirrors",
+      "head": "f97de383f63c560aee4e38c68ba0e1005567ab73",
       "title": "Use a pinned upstream Bun benchmark image",
-      "url": "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
+      "url": "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-23T19:46:46.966078+00:00",
-      "summary": "The contributor approved exact f3617c9bd9 for delivery after PR #16097 lands. The pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. Only the image_outputs/Make context prerequisite remains; no shared BusyBox or compiler source dependency.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is f97de383f63c, replacing proposal source f3617c9bd90d. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved exact f3617c9bd9 for delivery after PR #16097 lands. The pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. The final commit has the same whole tree as qualified 785f27447a. Only the image_outputs/Make context prerequisite remains; no shared BusyBox or compiler source dependency.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "f3617c9bd90d886d5f1376845a102ea9a42b5066",
-        "observedAt": "2026-10-23T19:46:46.966078+00:00",
-        "disposition": "Contributor approved; actual image-context prerequisite remains",
-        "nextAction": "When the existing watcher observes PR #16097 landed, extract and deliver this exact approved change on current upstream. No new contributor question.",
+        "sourceHead": "f97de383f63c560aee4e38c68ba0e1005567ab73",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
           "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/355a5a1d-5863-4cba-9ab8-db85452faac5"
+          "https://app.buildbuddy.io/invocation/355a5a1d-5863-4cba-9ab8-db85452faac5",
+          "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
+          "https://github.com/tamird/gvisor/compare/f3617c9bd90d886d5f1376845a102ea9a42b5066...f97de383f63c560aee4e38c68ba0e1005567ab73"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/f3617c9bd90d886d5f1376845a102ea9a42b5066...f97de383f63c560aee4e38c68ba0e1005567ab73"
+        }
+      ]
     },
     {
       "id": "branch:systrap-test-glibc-rseq",
@@ -21094,25 +21132,27 @@
       "id": "branch:rules-img-redis-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-redis-upstream",
-      "head": "d16b540dc2e98d32f818df666c651e7cecc169b2",
+      "ref": "review/rules-img-redis-upstream-mirrors",
+      "head": "e3f204357353f305f932098b7651591f8c242a21",
       "title": "Use pinned official Redis images and Redis readiness checks",
-      "url": "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
+      "url": "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-23T23:33:03.380784+00:00",
-      "summary": "The contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "d16b540dc2e98d32f818df666c651e7cecc169b2",
-        "observedAt": "2026-10-23T23:33:03.380784+00:00",
-        "disposition": "Contributor approved; image-context prerequisite remains",
-        "nextAction": "After the existing watcher observes #16097 landing, deliver the approved patch with the retained functional evidence. No new contributor decision or qualification is needed for the import-separator refinement.",
+        "sourceHead": "e3f204357353f305f932098b7651591f8c242a21",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
           "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad",
           "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/04dda148-db97-42f6-939f-c1516a51ae30"
+          "https://app.buildbuddy.io/invocation/04dda148-db97-42f6-939f-c1516a51ae30",
+          "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21",
+          "https://github.com/tamird/gvisor/compare/d16b540dc2e98d32f818df666c651e7cecc169b2...e3f204357353f305f932098b7651591f8c242a21"
         ]
       },
       "refinement": {
@@ -21122,7 +21162,13 @@
         "after": {
           "head": "d16b540dc2e98d32f818df666c651e7cecc169b2"
         }
-      }
+      },
+      "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/d16b540dc2e98d32f818df666c651e7cecc169b2...e3f204357353f305f932098b7651591f8c242a21"
+        }
+      ]
     },
     {
       "id": "branch:review/pr15730-route-validation-20261024",
@@ -21235,26 +21281,34 @@
       "id": "branch:rules-img-nginx-benchmark-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-nginx-benchmark-upstream",
-      "head": "34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+      "ref": "review/rules-img-nginx-benchmark-upstream-mirrors",
+      "head": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
       "title": "Use the pinned official Nginx image for benchmarks",
-      "url": "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830",
+      "url": "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
       "group": "bazel",
-      "status": "Contributor approved; waiting for Apache eab6a14ae8 after #16097",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved exact 34ae8afe75 for delivery after Apache eab6a14ae8 after #16097. Deliver after the approved Apache shared-payload prerequisite lands; Apache itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image migration preserves Nginx 1.25.1 and depends on the approved Apache shared payload layer. Both CPU image assembly and the four existing AMD64 benchmark groups passed. The independently reviewed fixed comparison completed 136 fresh children and 352 measured rows, with sixteen pairs per case and the same retained runtime/helper images on both arms. The final proposal changes only the commit message from the qualified product tree. Native benchstat comparisons remain workload-specific; no general migration speedup, ARM runtime result or image-size claim is inferred. This benchmark child needs its own contributor decision; Apache approval is unchanged.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is 33a66c674d55, replacing proposal source 34ae8afe757c. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved exact 34ae8afe75 for delivery after Apache eab6a14ae8 after #16097. Deliver after the approved Apache shared-payload prerequisite lands; Apache itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image migration preserves Nginx 1.25.1 and depends on the approved Apache shared payload layer. Both CPU image assembly and the four existing AMD64 benchmark groups passed. The independently reviewed fixed comparison completed 136 fresh children and 352 measured rows, with sixteen pairs per case and the same retained runtime/helper images on both arms. The final proposal changes only the commit message from the qualified product tree. Native benchstat comparisons remain workload-specific; no general migration speedup, ARM runtime result or image-size claim is inferred. This benchmark child needs its own contributor decision; Apache approval is unchanged.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "34ae8afe757c6dd9e4ebefb9352bf407040c3830",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Contributor approved; waiting for Apache eab6a14ae8 after #16097",
-        "nextAction": "Deliver after the approved Apache shared-payload prerequisite lands; Apache itself waits for #16097. Do not repeat the completed contributor question.",
+        "sourceHead": "33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/34ae8afe757c6dd9e4ebefb9352bf407040c3830",
           "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
-          "https://app.buildbuddy.io/invocation/35d94ab7-743f-427a-a755-5997c9f26c4b"
+          "https://app.buildbuddy.io/invocation/35d94ab7-743f-427a-a755-5997c9f26c4b",
+          "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4",
+          "https://github.com/tamird/gvisor/compare/34ae8afe757c6dd9e4ebefb9352bf407040c3830...33a66c674d55deb90ec6e6bfecc4a55e738b2af4"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/34ae8afe757c6dd9e4ebefb9352bf407040c3830...33a66c674d55deb90ec6e6bfecc4a55e738b2af4"
+        }
+      ]
     },
     {
       "id": "branch:tcp-cookie-sack-negotiation",
@@ -21402,27 +21456,33 @@
       "id": "branch:rules-img-mysql-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-mysql-upstream",
-      "head": "7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+      "ref": "review/rules-img-mysql-upstream-mirrors",
+      "head": "85033b2dc96550a21eff4b3587e5536b5efa8f76",
       "title": "Use pinned upstream MySQL images",
-      "url": "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
+      "url": "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved exact 7cf4bb5314 for delivery after #16097. After #16097 lands, deliver the exact approved MySQL patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact 7cf4bb5314. This proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. Only #16097 is a prerequisite; the Redis approval does not apply to this separate proposal.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is 85033b2dc965, replacing proposal source 7cf4bb53140e. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved exact 7cf4bb5314 for delivery after #16097. After #16097 lands, deliver the exact approved MySQL patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact 7cf4bb5314. This proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. Only #16097 is a prerequisite; the Redis approval does not apply to this separate proposal.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Contributor approved; waiting for #16097",
-        "nextAction": "After #16097 lands, deliver the exact approved MySQL patch with its retained validation. Do not repeat the completed contributor question.",
+        "sourceHead": "85033b2dc96550a21eff4b3587e5536b5efa8f76",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
           "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
+          "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f",
+          "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
+          "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76"
         ]
       },
       "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76"
+        },
         {
           "label": "Qualified product awaiting contributor decision",
           "url": "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a"
@@ -21439,24 +21499,26 @@
       "repo": "google/gvisor",
       "number": 16333,
       "ref": "ollama-bazel-client",
-      "head": "462d71abc83b38ccd48c40146537f93e3bb3768b",
+      "head": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
       "title": "Build the Ollama image client with Bazel",
       "url": "https://github.com/google/gvisor/pull/16333",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-10-24T08:25:54.763459+00:00",
-      "summary": "Etienne approved exact published head 462d71ab at 08:17:24 UTC on October 24, with no source or reply request. Current public checks and import remain separate.\n\nThe approved Ollama client extraction is published after #15670 merged. Earlier source-built two-architecture archive, Make entrypoint and analyzer evidence remains tied to its original sources; current public CI and maintainer review are separate. This PR and #16097 touch the image context-staging recipe, so the second landing requires source reconciliation. No model or GPU execution is claimed.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The October 25 rebase request is delivered at 1f8ed82325a9 on public master 7bffefa9185a. Provider readback is mergeable. The Ollama Make conflict is resolved by adding its helper to the existing source-context staging path. The new native-image mapping, selected architecture and race=false remain intact; the three product postimages and helper behavior are preserved. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nEtienne approved exact published head 462d71ab at 08:17:24 UTC on October 24, with no source or reply request. Current public checks and import remain separate.\n\nThe approved Ollama client extraction is published after #15670 merged. Earlier source-built two-architecture archive, Make entrypoint and analyzer evidence remains tied to its original sources; current public CI and maintainer review are separate. This PR and #16097 touch the image context-staging recipe, so the second landing required source reconciliation, completed by the October 25 rebase. No model or GPU execution is claimed.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "462d71abc83b38ccd48c40146537f93e3bb3768b",
-        "observedAt": "2026-10-24T08:25:54.763459+00:00",
-        "disposition": "Exact-head maintainer approval observed; follow public checks/import",
-        "nextAction": "Follow exact-head public CI and import; no acknowledgement is needed for the empty-body approval. Coordinate the shared Make recipe with root-owned #16097.",
+        "sourceHead": "1f8ed82325a943d475c4ecfcab7989e3860873c3",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Requested rebase delivered; follow exact-head checks and review",
+        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16333",
           "https://github.com/google/gvisor/pull/15670",
           "https://github.com/google/gvisor/pull/16097",
-          "https://github.com/google/gvisor/pull/16333#pullrequestreview-5637487741"
+          "https://github.com/google/gvisor/pull/16333#pullrequestreview-5637487741",
+          "https://github.com/google/gvisor/pull/16333#issuecomment-6393354486",
+          "https://github.com/tamird/gvisor/commit/1f8ed82325a943d475c4ecfcab7989e3860873c3"
         ]
       }
     },
@@ -21532,27 +21594,33 @@
       "id": "branch:rules-img-python-upstream-context",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-python-upstream-context",
-      "head": "fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+      "ref": "review/rules-img-python-upstream-context-mirrors",
+      "head": "05a50fb8f99369a1bbe3755bc881f3cf2607b903",
       "title": "Use pinned upstream Python images",
-      "url": "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
+      "url": "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved exact fd67c097cb for delivery after #16097. After #16097 lands, deliver the exact approved Python patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact fd67c097cb on the corrected #16097 foundation. This proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The separate contributor decision and #16097 landing are still required.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is 05a50fb8f993, replacing proposal source fd67c097cb74. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved exact fd67c097cb for delivery after #16097. After #16097 lands, deliver the exact approved Python patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact fd67c097cb on the corrected #16097 foundation. This proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The separate contributor decision and #16097 landing are still required.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Contributor approved; waiting for #16097",
-        "nextAction": "After #16097 lands, deliver the exact approved Python patch with its retained validation. Do not repeat the completed contributor question.",
+        "sourceHead": "05a50fb8f99369a1bbe3755bc881f3cf2607b903",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
           "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d"
+          "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d",
+          "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
+          "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903"
         ]
       },
       "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903"
+        },
         {
           "label": "Exact Python proposal awaiting contributor decision",
           "url": "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00"
@@ -21567,27 +21635,33 @@
       "id": "branch:rules-img-postgresql-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-postgresql-upstream",
-      "head": "e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+      "ref": "review/rules-img-postgresql-upstream-mirrors",
+      "head": "ce20befb2e4e54a21d600f35b72c39f3822f6157",
       "title": "Use pinned upstream PostgreSQL images",
-      "url": "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
+      "url": "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved exact e485bb2b07 for delivery after #16097. After #16097 lands, deliver the exact approved PostgreSQL patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact e485bb2b07, based on the corrected #16097 foundation. This proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The separate contributor decision and #16097 landing are required.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is ce20befb2e4e, replacing proposal source e485bb2b079c. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nThe contributor approved exact e485bb2b07 for delivery after #16097. After #16097 lands, deliver the exact approved PostgreSQL patch with its retained validation.\n\nValidation and prior decision record:\n\nThe contributor has been asked to review exact e485bb2b07, based on the corrected #16097 foundation. This proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The separate contributor decision and #16097 landing are required.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "e485bb2b079ca2d94c55955e66c5c86a388eb9be",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Contributor approved; waiting for #16097",
-        "nextAction": "After #16097 lands, deliver the exact approved PostgreSQL patch with its retained validation. Do not repeat the completed contributor question.",
+        "sourceHead": "ce20befb2e4e54a21d600f35b72c39f3822f6157",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
           "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
+          "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad",
+          "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157",
+          "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157"
         ]
       },
       "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/e485bb2b079ca2d94c55955e66c5c86a388eb9be...ce20befb2e4e54a21d600f35b72c39f3822f6157"
+        },
         {
           "label": "Exact PostgreSQL proposal awaiting contributor decision",
           "url": "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be"
@@ -22211,21 +22285,22 @@
       "repo": "google/gvisor",
       "number": 16340,
       "ref": "review/kernel-14345-signal-delivery",
-      "head": "adfa76000e8c17d9514bd704110fb9509b233be2",
+      "head": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
       "title": "Avoid relocking the signal mutex on a platform error",
       "url": "https://github.com/google/gvisor/pull/16340",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
-      "summary": "The independently approved fix is published as #16340 at adfa76000e8c. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes. The approved production bytes are unchanged; the 76 newly added test lines and their BUILD dependencies were removed as requested before publication.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The requested rebase is delivered at b7a43f35edcf directly on public 7bffefa, with provider readback mergeable. The approved changed-line stream and stable patch identity are preserved, including independently landed lock annotations and current container.State API where applicable. No runtime replay or new exact-head approval is claimed.\n\nHistorical source record:\n\nThe independently approved fix is published as #16340 at adfa76000e8c. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes. The approved production bytes are unchanged; the 76 newly added test lines and their BUILD dependencies were removed as requested before publication.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "adfa76000e8c17d9514bd704110fb9509b233be2",
-        "observedAt": "2026-10-24T11:35:59.115042+00:00",
-        "disposition": "Published as #16340",
-        "nextAction": "Follow current-head checks and maintainer review on #16340; no new contributor decision.",
+        "owner": "work_map_current",
+        "sourceHead": "b7a43f35edcf10a2fa8446b7009fa4ae291ce225",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Requested source rebase delivered",
+        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16340"
+          "https://github.com/google/gvisor/pull/16340",
+          "https://github.com/tamird/gvisor/commit/b7a43f35edcf10a2fa8446b7009fa4ae291ce225"
         ]
       }
     },
@@ -22235,39 +22310,55 @@
       "repo": "google/gvisor",
       "number": 16341,
       "ref": "delivery/metricsviz-time-offset-bounds",
-      "head": "f47ebb419ccd9a2ef111e26833db45f03252aabe",
+      "head": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
       "title": "Reject overflowing metric timestamp offsets",
       "url": "https://github.com/google/gvisor/pull/16341",
       "group": "analysis",
       "status": "open",
-      "summary": "The approved bounds patch is published as #16341 at f47ebb419c on current master d15d. The standalone run retains its aggregate failure on the unchanged generated-protobuf Nogo dependency, alongside eight passing parser cases and canonical formatting. The separate analyzer-only recovery with the exact #16098 export fix passes both architectures. No old metrics PASS or passing standalone aggregate is inferred.",
-      "updatedAt": "2026-10-24T11:49:51.178662+00:00"
+      "summary": "The requested rebase is delivered at dc9eb0f9a925 directly on public 7bffefa, with provider readback mergeable. The approved changed-line stream and stable patch identity are preserved, including independently landed lock annotations and current container.State API where applicable. No runtime replay or new exact-head approval is claimed.\n\nHistorical source record:\n\nThe approved bounds patch is published as #16341 at f47ebb419c on current master d15d. The standalone run retains its aggregate failure on the unchanged generated-protobuf Nogo dependency, alongside eight passing parser cases and canonical formatting. The separate analyzer-only recovery with the exact #16098 export fix passes both architectures. No old metrics PASS or passing standalone aggregate is inferred.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Requested source rebase delivered",
+        "nextAction": "Follow exact-head checks, matching imports and required review through the existing watcher; previous results and approvals keep their original source identity.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5"
+        ]
+      }
     },
     {
       "id": "branch:rules-img-tomcat-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-tomcat-upstream",
-      "head": "728c76fdcd6a7947176e015c8259f386270b7177",
+      "ref": "review/rules-img-tomcat-upstream-mirrors",
+      "head": "c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
       "title": "Pin the existing Tomcat fixture images",
-      "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
+      "url": "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
       "group": "bazel",
-      "status": "Contributor approved; waiting for #16097",
-      "updatedAt": "2026-10-24T15:08:56.536047+00:00",
-      "summary": "Pins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests behind #16097. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head for delivery after #16097 lands. No contributor decision remains pending. No upstream PR is published; delivery requires #16097 to land.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is c96b1ceb4b6f, replacing proposal source 728c76fdcd6a. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests behind #16097. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head for delivery after #16097 lands. No contributor decision remains pending. No upstream PR is published; delivery requires #16097 to land.",
       "followup": {
         "owner": "hostinet_delivery",
-        "sourceHead": "728c76fdcd6a7947176e015c8259f386270b7177",
-        "observedAt": "2026-10-24T15:08:56.536047+00:00",
-        "disposition": "Contributor approved exact head; delivery waits for #16097",
-        "nextAction": "After #16097 lands, deliver the approved 728c76fdcd patch with its retained validation. Preserve that sole prerequisite and do not repeat the completed contributor question.",
+        "sourceHead": "c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
           "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
-          "https://github.com/google/gvisor/pull/16097"
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
+          "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf"
         ]
       },
       "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf"
+        },
         {
           "label": "Exact original-image pinning proposal",
           "url": "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177"
@@ -22333,15 +22424,15 @@
       "title": "Account for RACK loss when estimating flight",
       "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
       "group": "runtime",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-24T15:44:26.071457+00:00",
-      "summary": "After a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This four-file proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged. The readable proposal 3327ae replaces cd2171 with simpler regression setup and description; its production bytes are unchanged. It is a direct child of #15634 at 933263e71c, its sole prerequisite.\n\nThe revised normal/race RACK and classic-SACK suites and both analyzer owners pass: nine native-zero phases, six uncached attempts, 50 positive XML records and no failures or skips. Independent retained peer 9c8c8ed6 authenticates the exact 30fa qualification, with a verdict 5.774948 seconds after native completion. Final isolation peer 979e95d2 confirms all four product files and the entire TCP subtree match the tested source. The earlier baseline/candidate comparison separately retains three expected baseline failures, aggregate native FAIL and passing candidate/comparison/projection. No throughput improvement is claimed.",
+      "status": "Contributor approved; waiting for #15634",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The contributor approved exact readable 3327ae6769dfd2426f27bb69730051eb96333773. It remains fork-published only, with #15634 as the sole outstanding prerequisite. The proposal is based on historical 933263e71c; the current open prerequisite head is b909bc689866, so root owns exact-source composition and delivery after landing.\n\nAfter a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This four-file proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged. The readable proposal 3327ae replaces cd2171 with simpler regression setup and description; its production bytes are unchanged. It is a direct child of #15634 at 933263e71c, its sole prerequisite.\n\nThe revised normal/race RACK and classic-SACK suites and both analyzer owners pass: nine native-zero phases, six uncached attempts, 50 positive XML records and no failures or skips. Independent retained peer 9c8c8ed6 authenticates the exact 30fa qualification, with a verdict 5.774948 seconds after native completion. Final isolation peer 979e95d2 confirms all four product files and the entire TCP subtree match the tested source. The earlier baseline/candidate comparison separately retains three expected baseline failures, aggregate native FAIL and passing candidate/comparison/projection. No throughput improvement is claimed.",
       "followup": {
         "owner": "root",
         "sourceHead": "3327ae6769dfd2426f27bb69730051eb96333773",
-        "observedAt": "2026-10-24T15:44:26.071457+00:00",
-        "disposition": "Exact readable proposal is ready for the contributor decision",
-        "nextAction": "Resolve the contributor decision for exact 3327ae; publication remains gated by that decision and the sole #15634 prerequisite. Preserve the earlier expected-red comparison separately from the readable positive validation.",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Contributor approved exact readable proposal; sole prerequisite remains open",
+        "nextAction": "Root owns delivery of approved 3327ae after #15634 lands. Keep the existing prerequisite and preserve source-specific qualification; no repeated contributor question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
           "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773",
@@ -22374,43 +22465,41 @@
           "label": "Required SACK-accounting prerequisite",
           "url": "https://github.com/google/gvisor/pull/15634"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "3327ae6769dfd2426f27bb69730051eb96333773",
-        "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
-        "title": "Review the readable RACK flight-accounting proposal",
-        "summary": "Exclude RACK-lost transmissions from the flight estimate and refresh it before the recovery-window check. The simpler regression and description retain unchanged production bytes. Delivery requires #15634.",
-        "body": "Publish the readable RACK proposal 3327ae6769dfd2426f27bb69730051eb96333773 after #15634 lands?\n\nAfter a retransmission timeout and a sparse tail SACK, RACK recovery\ncounted ten packets in flight against a five-packet congestion window.\nAlready-lost originals kept the window full, so ACKs for retransmitted\ndata did not release enough room to continue recovery.\n\nRACK detects loss by transmission time, but pipe used classic SACK\nthresholds and HighRxt bookkeeping. Count each unsacked current\ntransmission once unless RACK has marked it lost, and refresh the\nestimate after loss detection before checking the recovery window.\nClassic SACK accounting is unchanged.\n\nThe regression checks that five retransmissions fill the window once\nand that later ACKs drain the pending data without another timeout,\nwith and without software GSO. The receive-window control drains each\npermitted retransmission before closing the window.\n\nDepends on the SACK-accounting correction in #15634.\n\nCurrent proposal: https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773\n\nPrevious proposal: https://github.com/tamird/gvisor/commit/cd2171f0f762d861fe2ed48e4425d05e62adda03\n\nhttps://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773\n\ngit range-diff cd2171f0f762d861fe2ed48e4425d05e62adda03^! 3327ae6769dfd2426f27bb69730051eb96333773^!\n\nReadable qualification: https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f\n\nNine native-zero phases, six uncached attempts and 50 positive records.\nThe earlier expected-red comparison keeps its aggregate native FAIL;\nits candidate and scoped comparison pass: https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540\n\nSole prerequisite: https://github.com/google/gvisor/pull/15634\n\nCanonical decision: https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Atcp-rack-pipe-accounting"
-      }
+      ]
     },
     {
       "id": "branch:rules-img-mariadb-upstream",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-mariadb-upstream",
-      "head": "6840a53eaae2a153d23843c2e28023143a03bf00",
+      "ref": "review/rules-img-mariadb-upstream-mirrors",
+      "head": "aafc177480a2742cb5a3a7f38077805c2c397919",
       "title": "Pin the existing MariaDB fixture image",
-      "url": "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
+      "url": "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
       "group": "bazel",
       "status": "Contributor review",
-      "updatedAt": "2026-10-24T20:47:04.114732+00:00",
-      "summary": "Pins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. Product composition is qualified; contributor review is pending, with #16097 as the sole prerequisite.",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The fork-only mirror amendment is aafc177480a2, replacing proposal source 6840a53eaae2. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force, and MariaDB's separate decision remains pending. Delivery also requires the shared Docker Hub mirror policy at c3174eb917aa.\n\nHistorical proposal and validation:\n\nPins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. Product composition is qualified; contributor review is pending, with #16097 as the sole prerequisite.",
       "followup": {
         "owner": "root",
-        "sourceHead": "6840a53eaae2a153d23843c2e28023143a03bf00",
-        "observedAt": "2026-10-24T20:47:04.114732+00:00",
-        "disposition": "Exact qualified proposal awaits contributor review",
-        "nextAction": "Resolve the contributor decision for exact 6840a53e; delivery also requires #16097. Preserve AMD64-only SQL runtime scope and the original aggregate failure.",
+        "sourceHead": "aafc177480a2742cb5a3a7f38077805c2c397919",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
+        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
           "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00",
           "https://app.buildbuddy.io/invocation/e4e379f6-be83-46b2-a519-a234a3b86c79",
           "https://app.buildbuddy.io/invocation/96245ba8-af7a-4a49-aa66-fe46d99a9b6a",
-          "https://github.com/google/gvisor/pull/16097"
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
+          "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919"
         ]
       },
       "evidence": [
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919"
+        },
         {
           "label": "Exact MariaDB image proposal",
           "url": "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00"
@@ -22434,40 +22523,45 @@
       ],
       "contributorReview": {
         "status": "pending",
-        "head": "6840a53eaae2a153d23843c2e28023143a03bf00",
-        "url": "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
+        "head": "aafc177480a2742cb5a3a7f38077805c2c397919",
+        "url": "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
         "title": "Review the MariaDB image proposal",
-        "summary": "Pin the original MariaDB 12.3.2 images; AMD64 runc/runsc SQL and both archives are qualified. Delivery requires #16097.",
-        "body": "Publish the MariaDB image proposal 6840a53eaae2a153d23843c2e28023143a03bf00 after #16097 lands?\n\nThe MariaDB compatibility fixture currently builds a Dockerfile that\ncontains only `FROM mariadb:12.3.2`. Pin the official AMD64 and ARM64\nimages by digest and export their archives and Docker contexts through\nrules_img. This preserves the upstream configuration and all eight\nlayers without rebuilding MariaDB.\n\nKeep the existing TestMariaDB SQL consumer and logical image name. The\nMake image mapping uses the exported context for the selected CPU.\n\nValidation: the unchanged SQL roundtrip passed remotely under runc and\nrunsc. Both architecture archives preserve the original full image\nconfiguration and eight layers; the exported contexts and buildifier\nalso passed. The first qualification failure remains recorded.\n\nDepends on #16097.\n\nProposal: https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00\n\nComplete change: https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00\n\nAMD64 SQL evidence: https://app.buildbuddy.io/invocation/e4e379f6-be83-46b2-a519-a234a3b86c79\nArchive/formatter recovery: https://app.buildbuddy.io/invocation/96245ba8-af7a-4a49-aa66-fe46d99a9b6a\n\nARM64 has archive/config/layer inspection only; no ARM runtime claim.\nThe initial qualification failure remains separate from the passing\nrecovery and exact cross-run image/source composition.\n\nCanonical decision: https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Arules-img-mariadb-upstream"
+        "summary": "Review the MariaDB image proposal with the shared mirror convention. Original AMD64 SQL and both-archive evidence remains source-specific; no ARM runtime claim.",
+        "body": "Review current MariaDB mirror amendment aafc177480a2742cb5a3a7f38077805c2c397919.\n\nThe original product 6840a53eaae2a153d23843c2e28023143a03bf00 and its source-specific qualification are preserved. Only registry selection changes to the shared mirror-first list; image identities and consumer behavior are unchanged. The contributor decision remains pending. Delivery requires the image foundation and shared mirror policy.\n\nCurrent proposal: https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919\nPrior/current comparison: https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919\n\ngit range-diff 6840a53eaae2a153d23843c2e28023143a03bf00^! aafc177480a2742cb5a3a7f38077805c2c397919^!\n\nOriginal review record: Publish the MariaDB image proposal 6840a53eaae2a153d23843c2e28023143a03bf00 after #16097 lands?\n\nThe MariaDB compatibility fixture currently builds a Dockerfile that\ncontains only `FROM mariadb:12.3.2`. Pin the official AMD64 and ARM64\nimages by digest and export their archives and Docker contexts through\nrules_img. This preserves the upstream configuration and all eight\nlayers without rebuilding MariaDB.\n\nKeep the existing TestMariaDB SQL consumer and logical image name. The\nMake image mapping uses the exported context for the selected CPU.\n\nValidation: the unchanged SQL roundtrip passed remotely under runc and\nrunsc. Both architecture archives preserve the original full image\nconfiguration and eight layers; the exported contexts and buildifier\nalso passed. The first qualification failure remains recorded.\n\nDepends on #16097.\n\nProposal: https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00\n\nComplete change: https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00\n\nAMD64 SQL evidence: https://app.buildbuddy.io/invocation/e4e379f6-be83-46b2-a519-a234a3b86c79\nArchive/formatter recovery: https://app.buildbuddy.io/invocation/96245ba8-af7a-4a49-aa66-fe46d99a9b6a\n\nARM64 has archive/config/layer inspection only; no ARM runtime claim.\nThe initial qualification failure remains separate from the passing\nrecovery and exact cross-run image/source composition.\n\nCanonical decision: https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Arules-img-mariadb-upstream"
       }
     },
     {
-      "id": "branch:packetimpact-closing-eof",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16377",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "fix/packetimpact-closing-eof-upstream",
-      "head": "279e11e71e4161a5c63a2d3137f380579d0ffc5e",
+      "head": "ca4f51e3a018cacbd80f9f7bcb83a75d17d48bf5",
       "title": "Read EOF before probing closing TCP states",
-      "url": "https://github.com/tamird/gvisor/commit/279e11e71e4161a5c63a2d3137f380579d0ffc5e",
+      "url": "https://github.com/google/gvisor/pull/16377",
       "group": "tests",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-24T21:13:07.924597+00:00",
-      "summary": "Read EOF before the three closing-state packet probes and verify the connection remains in CLOSE_WAIT or CLOSING. This makes their empty-queue setup explicit while preserving the existing packet and negative-response assertions. The exact public-base proposal is 279e11e71e4161a5c63a2d3137f380579d0ffc5e; no upstream PR is published. Its changed hunks and both test-file postimages match qualified fork d8acb109. Seven remote uncached owners pass 63 XML records, including six parent records. This does not resolve unread-FIN behavior; that remains a separate investigation. No prerequisite PR.",
+      "status": "open",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The approved EOF fixture is delivered independently on public 7bffefa. Its patch identity and changed-line stream match approved 279e; the only additional helper-file context is the independently landed gRPC NewClient adaptation. The separate unread-FIN investigation remains agent work. Published as #16377, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nRead EOF before the three closing-state packet probes and verify the connection remains in CLOSE_WAIT or CLOSING. This makes their empty-queue setup explicit while preserving the existing packet and negative-response assertions. The exact public-base proposal is 279e11e71e4161a5c63a2d3137f380579d0ffc5e; that historical source preceded the delivered PR. Its changed hunks and both test-file postimages match qualified fork d8acb109. Seven remote uncached owners pass 63 XML records, including six parent records. This does not resolve unread-FIN behavior; that remains a separate investigation. No prerequisite PR.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "279e11e71e4161a5c63a2d3137f380579d0ffc5e",
-        "observedAt": "2026-10-24T21:13:07.924597+00:00",
-        "disposition": "Exact qualified fork proposal awaits contributor review; no upstream PR published",
-        "nextAction": "Resolve the contributor decision for this exact independent proposal. No prerequisite PR or approval is inferred; preserve the separate unread-FIN investigation.",
+        "owner": "work_map_current",
+        "sourceHead": "ca4f51e3a018cacbd80f9f7bcb83a75d17d48bf5",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Approved proposal delivered as an open source PR",
+        "nextAction": "Follow exact-head CI, imports and maintainer review through the existing watcher. No contributor decision remains pending.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/279e11e71e4161a5c63a2d3137f380579d0ffc5e",
           "https://github.com/tamird/gvisor/compare/c341af3e04fb051c7a0b2a394f91789f16d3deab...279e11e71e4161a5c63a2d3137f380579d0ffc5e",
-          "https://app.buildbuddy.io/invocation/aed2c740-81ba-41fc-8992-17f327f26c7d"
+          "https://app.buildbuddy.io/invocation/aed2c740-81ba-41fc-8992-17f327f26c7d",
+          "https://github.com/google/gvisor/pull/16377"
         ]
       },
       "evidence": [
         {
-          "label": "Exact fork proposal; no upstream PR published",
+          "label": "Delivered source pull request",
+          "url": "https://github.com/google/gvisor/pull/16377"
+        },
+        {
+          "label": "Original approved fork proposal",
           "url": "https://github.com/tamird/gvisor/commit/279e11e71e4161a5c63a2d3137f380579d0ffc5e"
         },
         {
@@ -22479,43 +22573,41 @@
           "url": "https://app.buildbuddy.io/invocation/aed2c740-81ba-41fc-8992-17f327f26c7d"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "279e11e71e4161a5c63a2d3137f380579d0ffc5e",
-        "url": "https://github.com/tamird/gvisor/commit/279e11e71e4161a5c63a2d3137f380579d0ffc5e",
-        "title": "Review Read EOF before probing closing TCP states",
-        "summary": "Read EOF before the three closing-state packet probes and verify the connection remains in CLOSE_WAIT or CLOSING. This makes their empty-queue setup explicit while preserving the existing packet and negative-response assertions. The exact public-base proposal is 279e11e71e4161a5c63a2d3137f380579d0ffc5e; no upstream PR is published. Its changed hunks and both test-file postimages match qualified fork d8acb109. Seven remote uncached owners pass 63 XML records, including six parent records. This does not resolve unread-FIN behavior; that remains a separate investigation. No prerequisite PR.",
-        "body": "Publish 279e11e71e4161a5c63a2d3137f380579d0ffc5e as an independent pull request?\n\nRead EOF with a nonblocking receive and verify CLOSE_WAIT or CLOSING\nbefore the three existing packet probes. Keep their negative response\nassertions unchanged. This makes the empty-queue setup explicit.\n\nValidation: native Linux and netstack closing roots, the testbench\nanalyzer and both format checks pass in seven remote uncached attempts\n(63 positive XML records, including six parent records). The public\nproposal has the same changed hunks and both test-file postimages as\nthe qualified fork.\n\nUnread-FIN/queued-data compatibility remains a separate investigation.\nThe original full-suite failures and collection recovery are retained.\n\nNo prerequisite PR. This proposal is independent of the other TCP fix.\n\nProposal: https://github.com/tamird/gvisor/commit/279e11e71e4161a5c63a2d3137f380579d0ffc5e\n\nComplete change: https://github.com/tamird/gvisor/compare/c341af3e04fb051c7a0b2a394f91789f16d3deab...279e11e71e4161a5c63a2d3137f380579d0ffc5e\n\nEOF empty-queue fixture qualification: 63 positive XML records: https://app.buildbuddy.io/invocation/aed2c740-81ba-41fc-8992-17f327f26c7d\n\nCanonical decision: https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Apacketimpact-closing-eof"
-      }
+      "number": 16377
     },
     {
-      "id": "branch:tcp-future-ack-discard",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:16378",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tcp-future-ack-discard",
-      "head": "3d17e956611c17719835876ac9d1d63c4c85a38e",
+      "head": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
       "title": "tcp: reject acknowledgments beyond sent data",
-      "url": "https://github.com/tamird/gvisor/commit/3d17e956611c17719835876ac9d1d63c4c85a38e",
+      "url": "https://github.com/google/gvisor/pull/16378",
       "group": "runtime",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-24T21:13:07.924597+00:00",
-      "summary": "Reject ESTABLISHED segments that acknowledge unsent data before delivering their payload or passing their acknowledgment to the sender, and send an unchanged acknowledgment through the existing limiter. The shared test checks that rejected payload is not delivered and valid traffic can continue. Public-base proposal 3d17e956611c17719835876ac9d1d63c4c85a38e has no published upstream PR or prerequisite PR. The test-only baseline d517 retains native FAIL and proves both invalid payload deliveries; corrected 245c passes native Linux and netstack plus TCP Nogo and goimports (four remote uncached owners, 16 positive XML records). This focused result does not cover FIN-specific rejection, limiter saturation or performance.",
+      "status": "open",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "The approved future-ACK repair is delivered independently on public 7bffefa. Both complete product postimages and patch identity match approved 3d17. It rejects invalid payload before consumption or sender ACK processing; the separate unread-FIN investigation remains agent work. Published as #16378, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nReject ESTABLISHED segments that acknowledge unsent data before delivering their payload or passing their acknowledgment to the sender, and send an unchanged acknowledgment through the existing limiter. The shared test checks that rejected payload is not delivered and valid traffic can continue. Public-base proposal 3d17e956611c17719835876ac9d1d63c4c85a38e was the independently qualified pre-delivery source with no prerequisite PR. The test-only baseline d517 retains native FAIL and proves both invalid payload deliveries; corrected 245c passes native Linux and netstack plus TCP Nogo and goimports (four remote uncached owners, 16 positive XML records). This focused result does not cover FIN-specific rejection, limiter saturation or performance.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "3d17e956611c17719835876ac9d1d63c4c85a38e",
-        "observedAt": "2026-10-24T21:13:07.924597+00:00",
-        "disposition": "Exact qualified fork proposal awaits contributor review; no upstream PR published",
-        "nextAction": "Resolve the contributor decision for this exact independent proposal. No prerequisite PR or approval is inferred; preserve the separate unread-FIN investigation.",
+        "owner": "work_map_current",
+        "sourceHead": "8dd08c771bf94a55fbea7cd0da6f3e5c34307f5f",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Approved proposal delivered as an open source PR",
+        "nextAction": "Follow exact-head CI, imports and maintainer review through the existing watcher. No contributor decision remains pending.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3d17e956611c17719835876ac9d1d63c4c85a38e",
           "https://github.com/tamird/gvisor/compare/c341af3e04fb051c7a0b2a394f91789f16d3deab...3d17e956611c17719835876ac9d1d63c4c85a38e",
           "https://app.buildbuddy.io/invocation/d517b9e8-43f4-4d52-8184-a8423fec40ca",
-          "https://app.buildbuddy.io/invocation/245c8b33-c937-4cce-897e-dd78267336ab"
+          "https://app.buildbuddy.io/invocation/245c8b33-c937-4cce-897e-dd78267336ab",
+          "https://github.com/google/gvisor/pull/16378"
         ]
       },
       "evidence": [
         {
-          "label": "Exact fork proposal; no upstream PR published",
+          "label": "Delivered source pull request",
+          "url": "https://github.com/google/gvisor/pull/16378"
+        },
+        {
+          "label": "Original approved fork proposal",
           "url": "https://github.com/tamird/gvisor/commit/3d17e956611c17719835876ac9d1d63c4c85a38e"
         },
         {
@@ -22531,13 +22623,56 @@
           "url": "https://app.buildbuddy.io/invocation/245c8b33-c937-4cce-897e-dd78267336ab"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "head": "3d17e956611c17719835876ac9d1d63c4c85a38e",
-        "url": "https://github.com/tamird/gvisor/commit/3d17e956611c17719835876ac9d1d63c4c85a38e",
-        "title": "Review tcp: reject acknowledgments beyond sent data",
-        "summary": "Reject ESTABLISHED segments that acknowledge unsent data before delivering their payload or passing their acknowledgment to the sender, and send an unchanged acknowledgment through the existing limiter. The shared test checks that rejected payload is not delivered and valid traffic can continue. Public-base proposal 3d17e956611c17719835876ac9d1d63c4c85a38e has no published upstream PR or prerequisite PR. The test-only baseline d517 retains native FAIL and proves both invalid payload deliveries; corrected 245c passes native Linux and netstack plus TCP Nogo and goimports (four remote uncached owners, 16 positive XML records). This focused result does not cover FIN-specific rejection, limiter saturation or performance.",
-        "body": "Publish 3d17e956611c17719835876ac9d1d63c4c85a38e as an independent pull request?\n\nEstablished TCP connections accepted payload from segments that\nacknowledged data the sender had not sent. The receive path consumed the\npayload before the sender processed the invalid acknowledgment.\n\nReject these segments before delivering their payload or passing their\nacknowledgment to the sender. Send the current acknowledgment through\nthe existing rate limiter, as required by RFC 9293 [1].\n\nUpdate the shared packet test to require an unchanged acknowledgment, an\nempty receive buffer after rejection, and successful valid continuation.\n\n[1]: https://www.rfc-editor.org/rfc/rfc9293.html#section-3.10.7.4\n\nValidation: the test-only baseline demonstrates both invalid payload\ndeliveries and remains native FAIL. The correction passes shared native\nLinux/netstack assertions, TCP Nogo and goimports: four remote uncached\nowners and 16 positive XML records. No FIN-specific, limiter-saturation\nor performance result is claimed.\n\nNo prerequisite PR. This proposal is independent of the other TCP fix.\n\nProposal: https://github.com/tamird/gvisor/commit/3d17e956611c17719835876ac9d1d63c4c85a38e\n\nComplete change: https://github.com/tamird/gvisor/compare/c341af3e04fb051c7a0b2a394f91789f16d3deab...3d17e956611c17719835876ac9d1d63c4c85a38e\n\nFuture-ACK test-only baseline: actual invalid payload delivery: https://app.buildbuddy.io/invocation/d517b9e8-43f4-4d52-8184-a8423fec40ca\nFuture-ACK correction: native/netstack and owning checks pass: https://app.buildbuddy.io/invocation/245c8b33-c937-4cce-897e-dd78267336ab\n\nCanonical decision: https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Atcp-future-ack-discard"
+      "number": 16378
+    },
+    {
+      "id": "pr:16374",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16374,
+      "url": "https://github.com/google/gvisor/pull/16374",
+      "title": "Restore basic image sources in the shared context archive",
+      "group": "bazel",
+      "status": "open",
+      "head": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "Restores the basic:sources filegroup and its images:sources edge omitted from merged import #16307. Adding images/basic/BUILD made a Bazel package boundary, so the parent glob stopped including the remaining basic Docker contexts. The two complete BUILD postimages exactly match approved #16097 source 781d; only seven lines are added on public 7bffefa. Delivered ready for review with independent source/prose equivalence checked. Earlier image qualification remains source-specific; no new runtime or current-head CI result is claimed. This source export repair is not a blanket prerequisite for every image proposal.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Exact approved source restoration delivered",
+        "nextAction": "Follow current-head checks, matching import and maintainer review through the existing watcher. Keep the Docker Hub mirror convention and per-child source dependencies separate.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16374",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/google/gvisor/pull/16307",
+          "https://github.com/tamird/gvisor/commit/8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd"
+        ]
+      }
+    },
+    {
+      "id": "branch:shared-docker-hub-registries",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "shared-docker-hub-registries",
+      "head": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+      "url": "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+      "title": "Share the Docker Hub mirror policy",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "summary": "Defines one Docker Hub registry list, trying mirror.gcr.io before index.docker.io, and reuses it at the existing Alpine and BusyBox callsites. The two callsites retain identical values and image identities; brief README guidance makes the convention explicit. Independent source review checks pinned rules_img 0.3.23: singular registry is prepended before plural registries, so child amendments remove the singular attribute rather than leaving Docker Hub first. Root owns remote validation and public delivery. No new runtime or contributor approval is inferred.",
+      "followup": {
+        "owner": "root",
+        "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "observedAt": "2026-10-25T12:46:43.341670+00:00",
+        "disposition": "Fork-published shared prerequisite; source review passed",
+        "nextAction": "Complete the actual remote validation and public delivery. Reconcile the public PR identity when available; child proposals preserve their existing grants and source-specific evidence.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+          "https://github.com/bazel-contrib/rules_img/blob/v0.3.23/img/private/repository_rules/registry.bzl#L3-L25"
+        ]
       }
     }
   ],
@@ -24487,7 +24622,7 @@
     },
     {
       "from": "pr:16097",
-      "to": "branch:rules-img-syscallbench",
+      "to": "pr:16376",
       "type": "depends_on",
       "reason": "The contributor-approved syscallbench child uses the archive and Make adapter delivered by PR #16097 at cf55245b69. Open it after that parent lands; no other proposal prerequisite is required.",
       "evidence": [
@@ -24497,7 +24632,7 @@
       ]
     },
     {
-      "from": "branch:rules-img-syscallbench",
+      "from": "pr:16376",
       "to": "branch:native-go-images",
       "type": "depends_on",
       "reason": "The current cc4 modernization is based on the accepted grouped image lineage at 5ac1; it reuses the basic image adapter and shared benchmark package. No Ollama-source or CUDA prerequisite remains.",
@@ -25149,6 +25284,115 @@
         "https://github.com/google/gvisor/pull/16097",
         "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00"
       ]
+    },
+    {
+      "from": "pr:16051",
+      "to": "branch:rules-img-tcpdump",
+      "type": "depends_on",
+      "reason": "The retained approved tcpdump proposal explicitly waits for the manual-license artifact fix as well as the image foundation.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16051"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:source-built-nginx-image",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-httpd-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-bun-spawn",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-redis-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-nginx-benchmark-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/33a66c674d55deb90ec6e6bfecc4a55e738b2af4"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-mysql-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-python-upstream-context",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-postgresql-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/ce20befb2e4e54a21d600f35b72c39f3822f6157"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-tomcat-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf"
+      ]
+    },
+    {
+      "from": "branch:shared-docker-hub-registries",
+      "to": "branch:rules-img-mariadb-upstream",
+      "type": "depends_on",
+      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
+        "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919"
+      ]
     }
   ],
   "investigations": [
@@ -25157,7 +25401,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-24T21:48:49.659913+00:00",
+      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
       "summary": "On the corrected RACK source, CUBIC delivers 17,458,816 bytes versus Reno\u2019s 16,401,720 (+6.445031%) during the same predeclared 5\u201320 second interval on a virtual 10 Mbit/s, nominal 100 ms path with a 31,250-byte FIFO. It keeps the forward link busier, with a larger mean queue and six original-packet losses/retransmissions versus two. Both flows are tested independently and have zero retransmission timeouts. This finite congestion result complements the earlier burst and common-window comparisons; it does not establish a general algorithm ranking.\n\nEarlier common-window result:\n\nOn the corrected RACK source, the single-flow comparison has different answers for repair time and later goodput. The eight lost ranges are cumulatively acknowledged 210.292480 ms earlier in the CUBIC arm, which completes the fixed 64 MiB transfer plus fixture FIN processing 113.998720 ms earlier. In the predeclared 3\u20135 second backlogged interval, it delivers 23,975,196 bytes versus Reno\u2019s 24,116,444 (95.900784 versus 96.465776 Mbit/s); both clean controls deliver the Reno value. This is one deterministic virtual path with an unbounded serializer, not a general algorithm ranking.\n\nEarlier corrected FIFO result:\n\nThe RACK pipe-accounting correction removes the observed Reno stall in the two finite mixed-flow FIFO cases. With CUBIC writing first, Reno delivers 25,560 \u2192 2,451,348 bytes in the 2\u20136 second interval while CUBIC delivers 2,952,608 \u2192 2,371,828 bytes; FIFO utilization rises from 61.50064% to 100%. The reverse first-write control also completes with both senders backlogged. This is a deterministic virtual-link result, not a general fairness, native throughput or default-algorithm conclusion.\n\nEarlier first-Write-order control:\n\nA separate first-Write-order control now isolates the initial application batch within fixed connection setup in the deterministic FIFO fixture. In the finite 2\u20136 second mixed-flow interval, reversing that batch changes CUBIC delivery from 2,952,608 to 2,697,008 bytes while Reno changes from 25,560 to 2,051,712 bytes. Retained traces show that the high CUBIC share primarily reflects Reno sending no new payload during that interval; its 18 payload attempts all retransmit earlier losses. This is an order-sensitive diagnostic, not a recommendation to change the default congestion-control algorithm.\n\nEarlier shared-FIFO finding:\n\nA shared-FIFO feasibility run now establishes repeatable two-sender observations and strong entry-order sensitivity in a short common interval; it does not establish algorithm fairness. The detailed finding separates application delivery, link service and inherited warmup-loss recovery.\n\nA finite aged-path comparison now shows the candidate avoids one redundant retransmission and one SACK recovery for both Reno and CUBIC, with unchanged first-full-ACK timing and identical original-flight delivery. The original outer callback failure and its separate retained-only correction remain explicit.\n\nThe fixed sustained-demand Reno/CUBIC burst experiment has matching normal and race observations. A separate integration check on existing PR #15634 now keeps sampled selective-ACK credit nonnegative, with unchanged packet digests, eight loss repairs and virtual completion times. Six finite Reno/CUBIC cases now repeat exactly across five normal processes and one race process. Both middle-loss cases show SACK recovery without an RTO; prefix recovery remains unclassified. The earlier cookie-path/RTO fixture is separate. All three proposed NETEM kernels built and the exact AMD64 6.18.57 kernel passed QEMU TCG qdisc operations; Firecracker execution and hosted deployment remain unverified. The changing-RTT traffic pilot has not run.\n\nThe changing-RTT pilot stopped before trials. The baseline build passed, then output hashing failed on root-owned Bazel paths; the candidate build, four matched controls and changing-delay pair did not run. The original failure is retained. Hostinet owns the setup and evidence-publication corrections before another authenticated run. No changing-RTT, fairness or outage-cause result follows from this attempt.\n\nSeparately delivered fixture evidence:\n\nThe contributor approved exact RACK fixture commit 8643925c8874de893b4971b810841098ff16aa33, and the change is delivered as PR #16055. Current revision bd37d23bc935b2585ade8c056c26c8ca8fb17dc2 has an equal single-commit range-diff to that approved source. It restores the existing skipped test using a manual clock and sender-state observations, without changing the production algorithm. At validation source 6c8c, all 18 RACK methods pass on each architecture, plus the owning Nogo and buildifier checks (38 positive records, four uncached remote attempts, no skips). Disabling only the Reord assignment at d2eb produces the intended final assertion failure on both architectures. The initial invalid buildifier label failed before execution and remains recorded. The tests establish the controlled fixture behavior; they do not reproduce or identify the historical timing failure. The latest provider observation keeps #16055 open and mergeable with successful checks; no maintainer approval or import is recorded. Contributor approval and PR delivery are complete.\n\nEarlier investigation evidence:\n\nThe current unit inventory retains two skipped records for TestRACKDetectReorder, one per architecture. Hostinet is investigating the existing source and fixture. The skip message attributes this to missing DSACK support, while the fixture sends ordinary SACK followed by a cumulative ACK; the cited RFC 8985 section 6.2 step 3 concerns a never-retransmitted lower segment. A timer or retransmission race under near-zero RTT is only a hypothesis. Both skips remain uncredited, and no correction or new runtime result is claimed.\n\nEarlier investigation evidence:\n\nThe packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval \u22120.0103% to +2.76%) and Download (+0.83%, \u22121.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite. Current Karn head a4eadcd7e is maintainer-approved, but Copybara import failed without a public diagnostic; the compact amendment remains held until the prerequisite actually merges.",
       "findings": [
         {
@@ -26067,7 +26311,7 @@
           ]
         },
         {
-          "text": "The fork-only read-boundary control on b6b0ffbcb6 ran the same packet probes against native Linux 6.18.57 and unchanged netstack. Within the one-second probe observation, native Linux sends the unchanged ACK for unread FIN-only probes and both peek cases; exact-size and oversized consuming reads suppress that ACK in both combined and separately ACKed wire arrangements. Netstack suppresses all probe ACKs. All six added cases per backend preserve the expected data, EOF and TCP state. The original two netstack failures plus their parent remain: three remote uncached owners produce 16 positive and three failed XML records, so aggregate FAIL is preserved. Separately ACKed wire packets do not prove distinct receive skbs, and these observations establish no general read-budget requirement. Root owns the queued-window compatibility repair. Initial corrected invocation 81663166-f6db-40fe-b73e-736ea9c028b3 uses c6d9e691a8c667f9cca4330b0bb8f1a3dc5d2656; its qualification remains pending an authenticated verdict. This work is separate from the reviewed EOF279e and future-ACK3d17 proposals.",
+          "text": "The fork-only read-boundary control on b6b0ffbcb6 ran the same packet probes against native Linux 6.18.57 and unchanged netstack. Within the one-second probe observation, native Linux sends the unchanged ACK for unread FIN-only probes and both peek cases; exact-size and oversized consuming reads suppress that ACK in both combined and separately ACKed wire arrangements. Netstack suppresses all probe ACKs. All six added cases per backend preserve the expected data, EOF and TCP state. The original two netstack failures plus their parent remain: three remote uncached owners produce 16 positive and three failed XML records, so aggregate FAIL is preserved. Separately ACKed wire packets do not prove distinct receive skbs, and these observations establish no general read-budget requirement. Root owns the queued-window compatibility repair. Corrected invocation 81663166-f6db-40fe-b73e-736ea9c028b3 at c6d9e691a8c667f9cca4330b0bb8f1a3dc5d2656 has an authenticated inner PASS: four owners, 24 positive XML records, native/capture/runner exits zero and no missing cases or errors. Independent wire review checks all ten packet cases per backend, including five required ACK and five no-ACK observations, with positive data/EOF/state assertions. The original consumer receipt remains FAIL because the outer hosted invocation reports Failed despite that passing producer. The same invocation's outer terminal/exit evidence is needed to explain the discrepancy; no runtime replay or aggregate PASS is claimed. This work is separate from the reviewed EOF279e and future-ACK3d17 proposals.",
           "evidence": [
             {
               "label": "Native Linux/netstack read-boundary control; original failures retained",
@@ -26078,7 +26322,7 @@
               "url": "https://github.com/tamird/gvisor/commit/b6b0ffbcb6f307e08103c11b6a31c89d0110ea44"
             },
             {
-              "label": "Initial corrected queued-window qualification; verdict pending",
+              "label": "Corrected inner tests pass; outer hosted failure remains",
               "url": "https://app.buildbuddy.io/invocation/81663166-f6db-40fe-b73e-736ea9c028b3"
             },
             {
@@ -26088,7 +26332,7 @@
           ]
         }
       ],
-      "nextStep": "Complete the source-bound queued-window correction and directly affected regression checks under root ownership, preserving the native read-control failure and the initial corrected invocation. Keep EOF279e and future-ACK3d17 as separate contributor decisions; the diagnostic creates no new proposal.\n\nThe focused RACK regression, corrected FIFO, single-flow common-window and sustained finite-FIFO comparisons are complete. Await the existing contributor decision on readable proposal 3327ae; #15634 is its only upstream prerequisite. Preserve the differing finite-window results separately from any default-algorithm decision. Follow BuildBuddy #13938 upstream review, checks and merge before maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, general fairness or outage-cause conclusion is established.",
+      "nextStep": "Complete the source-bound queued-window correction and directly affected regression checks under root ownership, preserving the native read-control failure and the initial corrected invocation. The approved EOF and future-ACK proposals are delivered independently as #16377 and #16378. The queued-window compatibility work remains separate agent work; the diagnostic creates no new proposal.\n\nThe focused RACK regression, corrected FIFO, single-flow common-window and sustained finite-FIFO comparisons are complete. Readable proposal 3327ae is contributor-approved; root owns exact-source composition and delivery after its sole #15634 prerequisite lands. Preserve the differing finite-window results separately from any default-algorithm decision. Follow BuildBuddy #13938 upstream review, checks and merge before maintainer rollout, then verify a supported deployed runner before the unchanged changing-RTT traffic pilot. QEMU success does not release the Firecracker or authenticated public-Actions holds; no changing-RTT, general fairness or outage-cause conclusion is established.",
       "evidence": [
         {
           "label": "Burst integration on the existing repair",
@@ -26219,7 +26463,7 @@
           "url": "https://github.com/tamird/gvisor/commit/b6b0ffbcb6f307e08103c11b6a31c89d0110ea44"
         },
         {
-          "label": "Initial corrected queued-window qualification; verdict pending",
+          "label": "Corrected inner tests pass; outer hosted failure remains",
           "url": "https://app.buildbuddy.io/invocation/81663166-f6db-40fe-b73e-736ea9c028b3"
         },
         {
