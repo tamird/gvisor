@@ -41,7 +41,9 @@ Dir.mktmpdir("ruby-http-build-") do |work|
   ENV["GEM_HOME"] = home
   ENV["GEM_PATH"] = home
   ENV["SOURCE_DATE_EPOCH"] = "0"
-  cflags = RbConfig::CONFIG.fetch("CFLAGS") + " -ffile-prefix-map=#{work}=/usr/src/ruby-http"
+  ENV["RUBY_HTTP_BUILD_ROOT"] = work
+  # mkmf and make both expand this environment variable at command execution.
+  cflags = RbConfig::CONFIG.fetch("CFLAGS") + " -ffile-prefix-map=$(RUBY_HTTP_BUILD_ROOT)=/usr/src/ruby-http"
   puts "NATIVE_GEM_BUILD_DIRECTORY #{JSON.generate({directory: work, output: output, compiler_flags: cflags})}"
   specs = inputs.map { |path| Gem::Package.new(path).spec }
   native = specs.select { |spec| !spec.extensions.empty? }.map(&:name).sort
@@ -71,8 +73,10 @@ Dir.mktmpdir("ruby-http-build-") do |work|
     {path: path.delete_prefix(work + "/"), bytes: File.size(path),
      sha256: Digest::SHA256.file(path).hexdigest, readelf: header}
   end
-  logs = Dir.glob(File.join(home, "extensions/**/gem_make.out")).sort
-  abort "Expected two native build logs" unless logs.length == 2
+  logs = Dir.glob(File.join(home, "extensions/**/{gem_make.out,mkmf.log}")).sort
+  abort "Expected four native build logs" unless logs.length == 4
+  source_files = specs.flat_map { |spec| spec.files.map { |name| File.join(home, "gems", spec.full_name, name) } }
+  abort "Build log overlaps original gem source" unless (logs & source_files).empty?
   logs.each do |path|
     record = {path: path.delete_prefix(work + "/"), bytes: File.size(path), sha256: Digest::SHA256.file(path).hexdigest}
     puts "NATIVE_GEM_BUILD_LOG #{JSON.generate(record)}"
