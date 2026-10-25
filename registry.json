@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T12:59:04.302653+00:00",
+    "updatedAt": "2026-10-25T13:15:07.380213+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19442,17 +19442,17 @@
       "id": "branch:state-wire-storage",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "state-wire-storage",
-      "head": "4b896b20690e5dbcb8128b2a90d84e21c9b1db78",
+      "ref": "review/state-wire-storage-current",
+      "head": "f7204694d85924f979109ff60ea28f34abf14714",
       "title": "Retain typed homogeneous state arrays",
-      "url": "https://github.com/tamird/gvisor/commit/4b896b20690e5dbcb8128b2a90d84e21c9b1db78",
+      "url": "https://github.com/google/gvisor/pull/16380",
       "group": "runtime",
-      "status": "Contributor approved; prerequisites landed",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
-      "summary": "The recorded #15648 and #15814 prerequisite landings are now observed. The existing exact-source contributor approval remains valid; source integration and delivery are agent work.\n\nPreserved approved proposal:\n\nContributor approval is complete after the requested comment/prose clarification. Exact 4b896 preserves approved 9ecf implementation and explains the Array interface/type switch without temporal restoreFloatArray wording. The original decoder and wire grammar remain shared. Normal/race checks pass. The isolated sixteen-pair comparison found graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts unchanged, binaries grow 52/56 KiB. These are AMD64 package results, not startup timing. Open after #15648 and #15814. The unified-engine investigation remains separate.",
+      "status": "Published as #16380",
+      "updatedAt": "2026-10-25T13:15:07.380213+00:00",
+      "summary": "The approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
-          "label": "Complete isolated change",
+          "label": "Original approved change",
           "url": "https://github.com/tamird/gvisor/compare/5e8968c9fdc848235cad5a5ca0a5f3fcdb6532ac...9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d"
         },
         {
@@ -19461,14 +19461,16 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "sourceHead": "4b896b20690e5dbcb8128b2a90d84e21c9b1db78",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "disposition": "Recorded prerequisites landed; existing contributor approval retained",
-        "nextAction": "Reconcile the exact approved patch with current upstream and deliver under the existing contributor grant. Root coordinates delivery ownership; no repeated contributor question or automatic merge is authorized.",
+        "owner": "work_map_current",
+        "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
+        "disposition": "Approved source delivered as #16380; current normal and race qualification pass",
+        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing watcher. The approved destination-kind child retains its separate source grant and waits for actual #16380 landing. No repeated contributor question.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4b896b20690e5dbcb8128b2a90d84e21c9b1db78"
-        ]
+          "https://github.com/google/gvisor/pull/16380",
+          "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
+          "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615"
+        ],
+        "observedAt": "2026-10-25T13:15:07.380213+00:00"
       },
       "refinement": {
         "before": {
@@ -19477,7 +19479,21 @@
         "after": {
           "head": "4b896b20690e5dbcb8128b2a90d84e21c9b1db78"
         }
-      }
+      },
+      "evidence": [
+        {
+          "label": "Delivered source PR",
+          "url": "https://github.com/google/gvisor/pull/16380"
+        },
+        {
+          "label": "Current normal suites and analyzers PASS",
+          "url": "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c"
+        },
+        {
+          "label": "Current race suites PASS with two declared skips",
+          "url": "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615"
+        }
+      ]
     },
     {
       "id": "branch:state-destination-kind",
@@ -22701,6 +22717,56 @@
           "url": "https://app.buildbuddy.io/invocation/5837b7ca-add5-46ce-815a-370912dd7090"
         }
       ]
+    },
+    {
+      "id": "pr:16380",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/state-wire-storage-current",
+      "head": "f7204694d85924f979109ff60ea28f34abf14714",
+      "title": "Retain typed homogeneous state arrays",
+      "url": "https://github.com/google/gvisor/pull/16380",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-25T13:15:07.380213+00:00",
+      "summary": "The approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
+      "links": [
+        {
+          "label": "Original approved change",
+          "url": "https://github.com/tamird/gvisor/compare/5e8968c9fdc848235cad5a5ca0a5f3fcdb6532ac...9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d"
+        },
+        {
+          "label": "Fixed original-baseline comparison",
+          "url": "https://app.buildbuddy.io/invocation/47729edd-e1df-4c9b-a133-a4f8da64a2c8"
+        }
+      ],
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
+        "disposition": "Approved source delivered as #16380; current normal and race qualification pass",
+        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing watcher. The approved destination-kind child retains its separate source grant and waits for actual #16380 landing. No repeated contributor question.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16380",
+          "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
+          "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615"
+        ],
+        "observedAt": "2026-10-25T13:15:07.380213+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Delivered source PR",
+          "url": "https://github.com/google/gvisor/pull/16380"
+        },
+        {
+          "label": "Current normal suites and analyzers PASS",
+          "url": "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c"
+        },
+        {
+          "label": "Current race suites PASS with two declared skips",
+          "url": "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615"
+        }
+      ],
+      "number": 16380
     }
   ],
   "edges": [
@@ -24770,13 +24836,6 @@
       "evidence": "https://github.com/google/gvisor/pull/15814"
     },
     {
-      "from": "branch:state-wire-storage",
-      "to": "branch:state-destination-kind",
-      "type": "depends_on",
-      "reason": "The independent destination-kind correction is a child of the isolated array-storage proposal.",
-      "evidence": "https://github.com/tamird/gvisor/commit/5d5f2da2a33dea00e4d905cf4121c8507f089f9d"
-    },
-    {
       "from": "branch:rules-img-gnu-prerequisite",
       "to": "branch:rules-img-libacl",
       "type": "depends_on",
@@ -25420,6 +25479,20 @@
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
         "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919"
       ]
+    },
+    {
+      "from": "branch:state-wire-storage",
+      "to": "pr:16380",
+      "type": "includes",
+      "reason": "The approved array-storage proposal is delivered in this public PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16380"
+    },
+    {
+      "from": "pr:16380",
+      "to": "branch:state-destination-kind",
+      "type": "depends_on",
+      "reason": "The independently approved destination-kind correction waits for the delivered array-storage prerequisite.",
+      "evidence": "https://github.com/google/gvisor/pull/16380"
     }
   ],
   "investigations": [
