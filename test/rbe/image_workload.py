@@ -190,9 +190,9 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    source, prerequisite = config["source"], config["prerequisite"]
-    if (config["targets"] != [OWNER] or config["expected_sources"] != [source, prerequisite]
-            or subprocess.check_output(["git", "rev-parse", source + "^"], text=True).strip() != prerequisite):
+    source, child, prerequisite = config["source"], config["product"], config["prerequisite"]
+    if (config["targets"] != [OWNER] or config["expected_sources"] != [source, child, prerequisite]
+            or subprocess.check_output(["git", "rev-parse", source + "^", source + "^^"], text=True).splitlines() != [child, prerequisite]):
         raise ValueError("Unexpected native owner or candidate ancestry")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
                "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
@@ -207,12 +207,20 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "--test_env=GO_TEST_WRAP_TESTV=1", "--runs_per_test=1", f"--test_arg=-test.run=^{ROOT}$"]
     result = {"status": "INCOMPLETE", "source": source, "phases": {}}
     try:
-        for phase, revision in (("sack-credit", prerequisite), ("rack-flight", source)):
+        for phase, revision in (("sack-credit", prerequisite), ("rack-flight", child)):
             subprocess.run(["git", "switch", "--detach", revision], check=True)
             checked = invoke(phase, ["test", *options, *selected, OWNER], "test", targets=[OWNER], source=revision)
-            if checked["status"] != "PASS" or checked["source"] != revision:
-                raise RuntimeError(f"{phase}: native finite FIFO owner or source failed")
-            result["phases"][phase] = {"source": revision, **observations(evidence, phase, 1)}
+            if checked["source"] != revision:
+                raise RuntimeError(f"{phase}: native source differs from the requested candidate")
+            if checked["status"] != "PASS":
+                result["phases"][phase] = {"source": revision, "error": "native finite FIFO owner failed"}
+                continue
+            try:
+                result["phases"][phase] = {"source": revision, **observations(evidence, phase, 1)}
+            except (KeyError, ValueError, OSError) as error:
+                result["phases"][phase] = {"source": revision, "error": str(error)}
+        if any("error" in phase for phase in result["phases"].values()):
+            raise RuntimeError("One or more candidate observations failed")
         result["status"] = "PASS"
     finally:
         subprocess.run(["git", "switch", "--detach", source], check=True)

@@ -26,8 +26,8 @@ if resolved_bazel is None or not native_bazel.samefile(resolved_bazel):
 
 CONFIG = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
 SOURCE = CONFIG["source"]
-REPORTER_SOURCE = "462126434f0cdf5e56f37603c82b563b456f1ce8"
-REPORTER_HASHES = {'qualification_report.py': '3929b631d7d28c9dd97720281d8629af7a6bb611d670dafaf96793a4a8652e83', 'unit_matrix.py': '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37'}
+REPORTER_SOURCE = "313f893378515d94fd05cb168eff6732f981f4d5"
+REPORTER_HASHES = {'qualification_report.py': 'b533caee13ec901cd17fd9e02b8f896a43a940d38e4a14d5199bc19f2ac133eb', 'unit_matrix.py': '209f47696a8c28e0072a6199d40f85edb855e656195189741ba4cb6215246a37'}
 TARGETS = CONFIG["targets"]
 REMOTE_PROPERTIES = {'OSFamily': 'linux', 'Arch': 'amd64', 'EstimatedMemory': '2GB', 'workload-isolation-type': 'firecracker', 'container-image': 'docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a'}
 OPTIONS = ["--compilation_mode=opt", "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
@@ -297,7 +297,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
             for path in evidence.rglob("*"):
                 if path.is_file():
                     reject_credentials(path.read_bytes())
-            result = report.bundle(evidence, runner_exit, capture_exit, artifacts / "qualification.tar.gz")
+            result = report.bundle(evidence, runner_exit, capture_exit, artifacts / "qualification.tar.gz",
+                                   expected_sources=CONFIG["expected_sources"])
             print(json.dumps({"qualification_archive": report.file_record(artifacts / "qualification.tar.gz"), "sources": result["sources"], "status": result["status"]}), flush=True)
             runner_exit = runner_exit or result["native_exit"] or int(result["status"] != "PASS")
         except (OSError, ValueError):
