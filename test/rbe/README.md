@@ -185,16 +185,21 @@ For Go tests, the XML suite name comes from the last component of the
 configured test's import path. For example, `iptables_test_arm64` emits
 `iptables_test_arm64/TestMasqueradePortRange`, while `ptrace_test_arm64`
 embeds the `ptrace` package and emits `ptrace/TestStubFilterPrecompiled`.
-Give the public target labels and Go test names (including any subtests) to
-`go_required_cases.py`. Run it on the coordinator with the same Bazel options
-as the test. It follows each frontend to its Go test generator and writes the
-exact manifest before execution:
+Set `QUALIFICATION_GO_REQUIRED_CASES` to a JSON file mapping public target
+labels to Go test names (including any subtests), for example:
 
-```sh
-python3 test/rbe/go_required_cases.py go-cases.json required-cases.json \
-    --evidence go-case-analysis.json -- --config=rbe-matrix --config=x86_64
-export QUALIFICATION_REQUIRED_CASES="$PWD/required-cases.json"
+```json
+{"//pkg/aio:aio_test_arm64": ["TestSerialGoQueue", "TestSerialGoQueue/Read"]}
 ```
+
+In the explicit `test` lane, `actions.sh` resolves these names with
+`go_required_cases.py` using the actual test invocation's options, startup RC
+and coordinator execution policy. It retains the input, configured generator
+joins, query options, resolved XML manifest and authoring exit status. Analysis
+errors stop before the native test; missing or skipped cases fail the ordinary
+required-case verdict. Use either this input or `QUALIFICATION_REQUIRED_CASES`,
+not both. The helper remains available directly for other callers that already
+have the exact configured Bazel options.
 
 Build targets can tag small report groups with
 `qualification-output-group=<group>`. The coordinator asks Bazel to materialize

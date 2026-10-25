@@ -203,6 +203,15 @@ qualification_declared_benchmarks=$qualification_artifacts/declared-benchmarks.j
 cp test/benchmarks/lifecycle.json "$qualification_declared_benchmarks"
 sha256sum "$qualification_declared_benchmarks" > "$qualification_artifacts/declared-benchmarks.sha256"
 export qualification_benchmark_manifest qualification_benchmark_arguments qualification_retain_outputs qualification_declared_benchmarks
+if [[ -v QUALIFICATION_REQUIRED_CASES && -v QUALIFICATION_GO_REQUIRED_CASES ]]; then
+  printf 'Select either XML required cases or Go required cases, not both.\n' >&2
+  exit 2
+fi
+if [[ -v QUALIFICATION_GO_REQUIRED_CASES ]]; then
+  [[ ${lanes[*]} == test && ${#selected_targets[@]} -gt 0 && -z $qualification_benchmark_manifest ]]
+  cp -- "$QUALIFICATION_GO_REQUIRED_CASES" "$qualification_artifacts/go-cases.json"
+  sha256sum "$qualification_artifacts/go-cases.json" > "$qualification_artifacts/go-cases.sha256"
+fi
 if [[ -v QUALIFICATION_REQUIRED_CASES ]]; then
   [[ ${lanes[*]} == test && ${#selected_targets[@]} -gt 0 && -z $qualification_benchmark_manifest ]]
   cp -- "$QUALIFICATION_REQUIRED_CASES" "$qualification_artifacts/required-cases.json"
@@ -429,7 +438,8 @@ bazel() {
   local argument command_kind="" result=0 capture_status=0 verdict_status=0 preflight_status=0 analysis_only=false
   local directory raw_events expected_events="" index command_only=false arguments_file=arguments.txt
   local -a capture_prefix=() capture_options=() verdict_options=() command_args=("$@") target_args=() selection_options=()
-  local -a case_options=()
+  local case_checksum=""
+  local -a case_options=() go_case_options=()
   if [[ $qualification_retain_outputs == true ]]; then capture_options=(--retain-outputs); fi
   for argument in "$@"; do
     case "$argument" in
@@ -440,6 +450,7 @@ bazel() {
   done
   if [[ $command_kind == test && -v QUALIFICATION_REQUIRED_CASES ]]; then
     case_options=(--required-cases "$qualification_artifacts/required-cases.json")
+    case_checksum=$qualification_artifacts/required-cases.sha256
   fi
   if [[ $command_kind == run || $command_kind == query ]]; then
     command_only=true
@@ -484,6 +495,38 @@ bazel() {
   if [[ $command_only == true ]]; then
     # Keep argument boundaries, including literal newlines, in command evidence.
     python3 -c 'import json,sys; print(json.dumps(sys.argv[1:]))' "$@" > "$directory/$arguments_file" || return 1
+  fi
+
+  if [[ $command_kind == test && $analysis_only == false && -v QUALIFICATION_GO_REQUIRED_CASES ]]; then
+    # Replace only command/target selection. Configuration and test options come
+    # from this invocation, including the mixed-platform configuration chosen by
+    # qualify.sh; callers must not reconstruct them for the authoring query.
+    for argument in "${command_args[@]}"; do
+      case "$argument" in
+        test|--target_pattern_file=*|//*|@*//*) ;;
+        --*) go_case_options+=("$argument") ;;
+        *) printf 'Unsupported test argument for Go case analysis: %s\n' "$argument" >&2; return 2 ;;
+      esac
+    done
+    printf '%s\n' "${go_case_options[@]}" > "$directory/go-case-options.txt" || return 1
+    # Use the same startup RC, coordinator identity and remaining work deadline.
+    printf '#!/bin/bash\nqualification_bazel "$@"\n' > "$qualification_private/go-case-bazel" || return 1
+    chmod +x "$qualification_private/go-case-bazel" || return 1
+    python3 "$qualification_workspace/test/rbe/go_required_cases.py" \
+      "$qualification_artifacts/go-cases.json" "$directory/required-cases.json" \
+      --evidence "$directory/go-case-analysis.json" \
+      --bazel "$qualification_private/go-case-bazel" -- "${go_case_options[@]}" \
+      > "$directory/go-case-stdout.log" 2> "$directory/go-case-stderr.log" || result=$?
+    printf '%s\n' "$result" > "$directory/go-case-exit.txt" || return 1
+    cat -- "$directory/go-case-stdout.log" || return 1
+    cat -- "$directory/go-case-stderr.log" >&2 || return 1
+    # An authoring failure is not a native test result. Leave the incomplete
+    # invocation and original diagnostic in the bundle, without starting tests.
+    if (( result != 0 )); then return "$result"; fi
+    sha256sum --check "$qualification_artifacts/go-cases.sha256" >&2 || return 1
+    case_checksum=$directory/required-cases.sha256
+    sha256sum "$directory/required-cases.json" > "$case_checksum" || return 1
+    case_options=(--required-cases "$directory/required-cases.json")
   fi
 
   # Resolve the exact command before starting its actions. Besides catching
@@ -560,7 +603,7 @@ bazel() {
     sha256sum --check "$qualification_artifacts/benchmark-manifest.sha256" >&2 || capture_status=1
   fi
   if (( ${#case_options[@]} )); then
-    sha256sum --check "$qualification_artifacts/required-cases.sha256" >&2 || capture_status=1
+    sha256sum --check "$case_checksum" >&2 || capture_status=1
   fi
   sha256sum --check "$qualification_artifacts/declared-benchmarks.sha256" >&2 || capture_status=1
   printf '%s\n' "$capture_status" > "$directory/capture-exit.txt" || capture_status=1
