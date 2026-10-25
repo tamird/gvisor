@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T18:24:09.103154+00:00",
+    "updatedAt": "2026-10-25T18:38:59.084783+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22774,20 +22774,21 @@
       "title": "Share the Docker Hub mirror policy",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-25T12:59:04.302653+00:00",
-      "summary": "Exact shared policy c3174eb917aa passed remote qualification: both repositories record mirror.gcr.io before index.docker.io with the pinned image identities, and all four architecture archives pass inspection. The contributor approved this exact source and it is delivered as open, non-draft #16379. No contributor decision remains pending. Defines a single registry list and reuses it for Alpine and BusyBox, with brief README guidance. Pinned rules_img 0.3.23 prepends singular registry before plural registries, so child amendments remove the singular attribute. Existing image-proposal grants and historical runtime scope remain separate.",
+      "updatedAt": "2026-10-25T18:38:59.084783+00:00",
+      "summary": "Etienne approved exact c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4 at 18:28:14 UTC on October 25, with no additional source request. The source PR remains open; approved image successors still wait for its actual landing.\n\nExact shared policy c3174eb917aa passed remote qualification: both repositories record mirror.gcr.io before index.docker.io with the pinned image identities, and all four architecture archives pass inspection. The contributor approved this exact source and it is delivered as open, non-draft #16379. No contributor decision remains pending. Defines a single registry list and reuses it for Alpine and BusyBox, with brief README guidance. Pinned rules_img 0.3.23 prepends singular registry before plural registries, so child amendments remove the singular attribute. Existing image-proposal grants and historical runtime scope remain separate.",
       "followup": {
         "owner": "root",
         "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "observedAt": "2026-10-25T12:59:04.302653+00:00",
-        "disposition": "Contributor-approved shared policy delivered as #16379",
-        "nextAction": "Follow exact-head checks, matching import and maintainer review on #16379. Child proposals retain their existing grants and wait for the actual remaining source prerequisites; no contributor decision remains pending.",
+        "observedAt": "2026-10-25T18:38:59.084783+00:00",
+        "disposition": "Exact-head maintainer approval received; actual landing remains the image release gate",
+        "nextAction": "Follow the matching import and actual landing through the existing watcher. Approval does not clear child source prerequisites, and no source change or public reply was requested.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
           "https://github.com/bazel-contrib/rules_img/blob/v0.3.23/img/private/repository_rules/registry.bzl#L3-L25",
           "https://app.buildbuddy.io/invocation/5837b7ca-add5-46ce-815a-370912dd7090",
           "https://github.com/google/gvisor/pull/16379"
-        ]
+        ],
+        "reviewedAt": "2026-10-25T18:28:14Z"
       },
       "number": 16379,
       "evidence": [
@@ -22798,8 +22799,13 @@
         {
           "label": "Both repository orders and four archives pass",
           "url": "https://app.buildbuddy.io/invocation/5837b7ca-add5-46ce-815a-370912dd7090"
+        },
+        {
+          "label": "Etienne approves exact shared policy head",
+          "url": "https://github.com/google/gvisor/pull/16379#pullrequestreview-5644649721"
         }
-      ]
+      ],
+      "reviewDecision": "APPROVED"
     },
     {
       "id": "pr:16380",
@@ -23105,6 +23111,67 @@
         {
           "label": "Linux FIN-only end-sequence exception",
           "url": "https://github.com/torvalds/linux/commit/1e3bb184e94125bae7c1703472109a646d0f79d9"
+        }
+      ]
+    },
+    {
+      "id": "branch:nft-compat-inet-autoload",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fix/nft-compat-inet-autoload",
+      "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
+      "title": "Load xtables matches before testing INET rules",
+      "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
+      "group": "runtime",
+      "status": "Contributor review",
+      "updatedAt": "2026-10-25T18:38:59.084783+00:00",
+      "summary": "The independently reviewed standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is ready for contributor review. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact fork source is on public master 7bffefa, with no prerequisite PR and no upstream PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
+        "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
+        "title": "Publish the INET xtables setup correction",
+        "summary": "Load the supported match before INET rule tests; independent native and native/systrap checks pass. No prerequisite PR.",
+        "body": "A standalone INET comment rule fails with ENOENT on Linux when the xt_comment module is not loaded. The kernel can request the IPv4 or IPv6 module alias, but there is no alias for the combined INET family.\n\nQuery a supported IPv4 revision before installing an INET match rule. Use a supported revision for setup even when the rule under test must reject an unsupported one.\n\nOpen this standalone change at f1305131246efe3874ba4a7231a20d3076ff5e44?\n\nValidation: https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6\nNative and systrap: https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163\nSame-guest diagnostic: https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679\nUnchanged native control: https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6\n\nIndependent source review is complete. The unchanged control failure remains separate from the passing correction; the selected native and systrap runs pass four cases each without skips. The original public worker\u2019s module state is unknown. No prerequisite PR or upstream PR."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "f1305131246efe3874ba4a7231a20d3076ff5e44",
+        "observedAt": "2026-10-25T18:38:59.084783+00:00",
+        "disposition": "Independently reviewed and remotely validated; contributor decision pending",
+        "nextAction": "Root owns the single contributor decision for exact f1305131246efe3874ba4a7231a20d3076ff5e44 before any upstream submission. Preserve the failed control and the unknown original public-worker module state.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
+          "https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6",
+          "https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6",
+          "https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163",
+          "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact independently reviewed INET setup correction",
+          "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44"
+        },
+        {
+          "label": "Standalone change on public master",
+          "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...f1305131246efe3874ba4a7231a20d3076ff5e44"
+        },
+        {
+          "label": "Unchanged native control failure",
+          "url": "https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6"
+        },
+        {
+          "label": "Fixed independent native result",
+          "url": "https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6"
+        },
+        {
+          "label": "Fixed native and systrap: four cases each, no skips",
+          "url": "https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163"
+        },
+        {
+          "label": "Observable same-guest diagnostic",
+          "url": "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
         }
       ]
     }
@@ -35345,12 +35412,41 @@
       "id": "investigation:nftables-native-comment-install",
       "title": "Native Linux nftables comment-rule installation",
       "status": "active",
-      "owner": "tcp_fin_review \u2014 experiments and fix",
-      "updatedAt": "2026-10-25T18:15:01.557775+00:00",
-      "summary": "Current-master Buildkite 52327 reports ENOENT while installing the Inet comment rule on three attempts. The failing job is 01a17302-9c52-4994-917e-e7853c9b96db. Linux module autoload is a hypothesis, not an established cause. tcp_fin_review owns the experiments and any fix; this is separate from #10045 unit-test restoration and is not attributed to a pending source PR.",
+      "owner": "root \u2014 contributor decision; tcp_fin_review \u2014 source and experiments",
+      "updatedAt": "2026-10-25T18:38:59.084783+00:00",
+      "summary": "The independently reviewed standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is ready for contributor review. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact fork source is on public master 7bffefa, with no prerequisite PR and no upstream PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
       "findings": [
         {
-          "text": "The observed master job fails the native Linux Inet comment-rule installation with ENOENT on three attempts. No source correction or passing recovery is yet established. The passing #10045 unit jobs belong to different jobs in the same overall failed pipeline.",
+          "text": "The standalone setup correction is independently reviewed and remotely validated. The failed unchanged native control is preserved; the fixed independent native result and four native/four systrap cases pass without skips. The same-guest diagnostic is separate evidence, not identification of the original public worker.",
+          "evidence": [
+            {
+              "label": "Exact independently reviewed INET setup correction",
+              "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44"
+            },
+            {
+              "label": "Standalone change on public master",
+              "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...f1305131246efe3874ba4a7231a20d3076ff5e44"
+            },
+            {
+              "label": "Unchanged native control failure",
+              "url": "https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6"
+            },
+            {
+              "label": "Fixed independent native result",
+              "url": "https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6"
+            },
+            {
+              "label": "Fixed native and systrap: four cases each, no skips",
+              "url": "https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163"
+            },
+            {
+              "label": "Observable same-guest diagnostic",
+              "url": "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
+            }
+          ]
+        },
+        {
+          "text": "Earlier public observation: Buildkite 52327 failed the native Linux Inet comment-rule installation with ENOENT on three attempts. The original worker\u2019s module state remains unknown. Its passing #10045 unit jobs are separate jobs in the same overall failed pipeline.",
           "evidence": [
             {
               "label": "Current-master Inet comment-rule failure",
@@ -35359,11 +35455,15 @@
           ]
         }
       ],
-      "nextStep": "tcp_fin_review will distinguish actual module availability/autoload behavior from a source defect and qualify any minimal correction. Do not infer a #15955 source regression or reopen #10045 from this master failure.",
+      "nextStep": "Contributor review is ready on the exact standalone fork commit; root owns the decision and any later submission. No PR prerequisite. Keep the public worker\u2019s module state and the original Buildkite failure distinct from the controlled reproduction.",
       "evidence": [
         {
           "label": "Current public master",
           "url": "https://github.com/google/gvisor/commit/7bffefa9185aa55ba377e8a5534210a7f0cbf266"
+        },
+        {
+          "label": "Contributor review: exact INET setup correction",
+          "url": "https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Anft-compat-inet-autoload"
         }
       ]
     }
