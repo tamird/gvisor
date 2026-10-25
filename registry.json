@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T17:18:41.123958+00:00",
+    "updatedAt": "2026-10-25T17:24:38.907255+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21461,19 +21461,19 @@
       "repo": "google/gvisor",
       "number": 16313,
       "ref": "benchmark-umbrella-exports-bcr",
-      "head": "ac3c504072ccec549ee68a00fc1cee8a37df6e08",
+      "head": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
       "title": "Declare the Benchmark umbrella header exports",
       "url": "https://github.com/google/gvisor/pull/16313",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-25T15:59:58.851816+00:00",
-      "summary": "The contributor-approved amendment is delivered to gVisor #16313 at ac3c504072ccec549ee68a00fc1cee8a37df6e08 on current public base 7bffefa. It backports the Benchmark umbrella export annotations and removes the blanket Benchmark-header ignore introduced by #16335. The functional four-file patch matches approved proposal 4992bf8e5a; the commit message and patch-header comments now cite the upstream change and original Buildkite failure. No contributor decision remains pending.\n\nUpstream Benchmark PR #2351 is open at 224d4dc2fd7913a0b3d26858b3a428a0fcee5007. That commit is a message-only revision of the qualified fdc176fc72 source, with the same parent and source tree. The upstream Benchmark PR and downstream gVisor backport are distinct publications. Prior focused qualification d353d7ac remains source-specific evidence.\n\nA separate direct clang-tidy 22.1.8 contrast on the hosted AMD64 Linux worker now reproduces the current Benchmark umbrella-header issue. With exact current-main 1fa8ea1c headers, the small consumer reports missing direct providers for benchmark::State and BENCHMARK; the unchanged candidate source adds the two export comments and removes those errors. Both unrelated std::vector negative controls still fail. Invocation5ffa retains the expected native aggregate FAIL, while the independently checked contrast and projection pass. This validates the narrow include-cleaner behavior, not Benchmark library compilation, linking, runtime, ARM execution or the downstream blanket-ignore amendment. Earlier99010 remains an inapplicable contrast because its before action consumed the annotated header.",
+      "updatedAt": "2026-10-25T17:24:38.907255+00:00",
+      "summary": "The contributor-approved amendment is delivered to gVisor #16313 at b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48 on public base 7bffefa. It backports the Benchmark umbrella export annotations and removes the blanket Benchmark-header ignore introduced by #16335. The citation-only update from ac3c504072 changes the patch header and commit message to cite the landed upstream commit; the upstream patch hunk is identical. The functional four-file change remains the approved 4992bf8e5a proposal. No contributor decision remains pending.\n\nUpstream Benchmark PR #2351 merged on October 25 at 17:14:05 UTC as squash commit 0a78b5d203283b54f65590ecef23e0b835b4787c. The merged commit is the current upstream source citation; #2351 remains the historical upstream PR identity. Its original head 224d4dc2fd was a message-only revision of the qualified fdc176fc72 source. The upstream merge and still-open downstream gVisor backport are distinct states. Prior focused qualification d353d7ac remains source-specific evidence; the citation update adds no new runtime result.\n\nThe retained direct clang-tidy 22.1.8 contrast on the hosted AMD64 Linux worker reproduced the Benchmark umbrella-header issue on then-current main 1fa8ea1c. With those exact headers, the small consumer reports missing direct providers for benchmark::State and BENCHMARK; the unchanged candidate source adds the two export comments and removes those errors. Both unrelated std::vector negative controls still fail. Invocation5ffa retains the expected native aggregate FAIL, while the independently checked contrast and projection pass. This validates the narrow include-cleaner behavior, not Benchmark library compilation, linking, runtime, ARM execution or the downstream blanket-ignore amendment. Earlier99010 remains an inapplicable contrast because its before action consumed the annotated header.",
       "followup": {
         "owner": "root",
-        "sourceHead": "ac3c504072ccec549ee68a00fc1cee8a37df6e08",
-        "observedAt": "2026-10-25T15:59:58.851816+00:00",
-        "disposition": "Contributor-approved amendment delivered; upstream Benchmark PR and downstream gVisor head verified",
-        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing watcher. The upstream Benchmark PR is open and the downstream approval is settled; no repeated contributor question or additional submission is needed.",
+        "sourceHead": "b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48",
+        "observedAt": "2026-10-25T17:24:38.907255+00:00",
+        "disposition": "Benchmark upstream fix merged; downstream citation-only amendment published at the verified head",
+        "nextAction": "Follow exact-head CI, matching imports and maintainer review for the still-open gVisor #16313 through the existing watcher. Benchmark #2351 is merged, and the downstream backport cites its squash commit. Contributor approval remains settled; no new decision, submission or public comment is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16313",
           "https://github.com/tamird/gvisor/commit/c08f137603d71b90615172f34ca2adfdf53d1260",
@@ -21483,12 +21483,22 @@
           "https://github.com/google/gvisor/commit/c341af3e04fb051c7a0b2a394f91789f16d3deab",
           "https://app.buildbuddy.io/invocation/5ffa2cc5-2fb5-4a67-8358-20c316727cd2",
           "https://github.com/google/benchmark/pull/2351",
-          "https://github.com/google/gvisor/pull/16313/commits/ac3c504072ccec549ee68a00fc1cee8a37df6e08"
+          "https://github.com/google/gvisor/pull/16313/commits/ac3c504072ccec549ee68a00fc1cee8a37df6e08",
+          "https://github.com/google/benchmark/commit/0a78b5d203283b54f65590ecef23e0b835b4787c",
+          "https://github.com/google/gvisor/pull/16313/commits/b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48"
         ]
       },
       "evidence": [
         {
-          "label": "Delivered gVisor amendment with upstream provenance",
+          "label": "Published gVisor amendment citing the merged upstream commit",
+          "url": "https://github.com/google/gvisor/pull/16313/commits/b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48"
+        },
+        {
+          "label": "Merged Benchmark umbrella export fix: current upstream source",
+          "url": "https://github.com/google/benchmark/commit/0a78b5d203283b54f65590ecef23e0b835b4787c"
+        },
+        {
+          "label": "Earlier delivered gVisor amendment before the merged-commit citation",
           "url": "https://github.com/google/gvisor/pull/16313/commits/ac3c504072ccec549ee68a00fc1cee8a37df6e08"
         },
         {
@@ -21508,7 +21518,7 @@
           "url": "https://app.buildbuddy.io/invocation/5ffa2cc5-2fb5-4a67-8358-20c316727cd2"
         },
         {
-          "label": "Published upstream Benchmark umbrella export fix",
+          "label": "Merged upstream Benchmark PR (historical PR identity)",
           "url": "https://github.com/google/benchmark/pull/2351"
         }
       ]
