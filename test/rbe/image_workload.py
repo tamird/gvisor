@@ -1,53 +1,49 @@
-"""Compare native gem payloads built under two distinct Bazel configurations."""
+"""Run the unchanged HTTP fixture against the assembled official Ruby image."""
 
-import hashlib
 import json
-from pathlib import Path
-import shutil
+import xml.etree.ElementTree as ET
+
+import qualification_report as report
 
 
 def run(invoke, record_execution, evidence, private, output_root):
-    targets = ["//test/rbe/ruby_official:gems_" + arch for arch in ("amd64", "arm64")]
-    records = []
-    profiles = {}
-    payloads = {}
-    paths = []
-    for mode in ("fastbuild", "opt"):
-        phase = "ruby-native-" + mode
-        result = invoke(phase, [
-            "build", "--config=rbe-matrix", "--config=x86_64", "--compilation_mode=" + mode,
-            "--lockfile_mode=error", "--noannounce_rc", "--keep_going",
-            "--remote_download_outputs=all",
-            "--execution_log_compact_file=" + str(evidence / (phase + "-execution.binpb")),
-            *targets,
-        ], "build", targets=targets, retain_outputs=True)
-        if result["status"] != "PASS":
-            raise RuntimeError("Official Ruby native " + mode + " build failed")
-        for arch in ("amd64", "arm64"):
-            for suffix in ("json", "tar"):
-                archive = Path("bazel-bin/test/rbe/ruby_official") / f"gems_{arch}.{suffix}"
-                size = archive.stat().st_size
-                if size > 32 * 1024 * 1024:
-                    raise ValueError(f"Native gem output exceeds the 32 MiB retention bound: {archive}: {size}")
-                destination = evidence / f"{mode}-gems_{arch}.{suffix}"
-                shutil.copyfile(archive, destination)
-                digest = hashlib.sha256(destination.read_bytes()).hexdigest()
-                records.append({"architecture": arch, "mode": mode, "output": str(archive), "bytes": size, "sha256": digest})
-                if suffix == "json":
-                    profiles[arch, mode] = (size, digest)
-                else:
-                    payloads[arch, mode] = (size, digest)
-        directory = evidence / ("invocation-" + phase)
-        paths.extend(json.loads(line.removeprefix("NATIVE_GEM_BUILD_DIRECTORY "))
-                     for name in ("stdout.log", "stderr.log")
-                     for line in (directory / name).read_text().splitlines()
-                     if line.startswith("NATIVE_GEM_BUILD_DIRECTORY "))
-    (evidence / "native-gems-record.json").write_text(json.dumps(records, indent=2) + "\n")
-    for arch in ("amd64", "arm64"):
-        if profiles[arch, "fastbuild"] != profiles[arch, "opt"]:
-            raise ValueError(f"{arch} native gem profile differs across configurations")
-        if payloads[arch, "fastbuild"] != payloads[arch, "opt"]:
-            raise ValueError(f"{arch} native gem tar bytes differ across configurations")
-    if len(paths) != 4 or len({row["directory"] for row in paths}) != 4 or len({row["output"] for row in paths}) != 4:
-        raise ValueError("Expected four actual distinct native build paths in action output")
-    (evidence / "native-repeatability.json").write_text(json.dumps({"status": "PASS", "payloads": {arch: payloads[arch, "fastbuild"] for arch in ("amd64", "arm64")}}, indent=2) + "\n")
+    names = {
+        "//test/image:qualification_ruby_native_test": "image/TestRuby",
+        "//test/image:qualification_ruby_systrap_test": "image/TestRuby",
+        "//test/rbe/ruby_official:image_identity_test": "test/rbe/ruby_official/image_identity_test",
+    }
+    result = invoke("ruby-official-http", [
+        "test", "--config=rbe-matrix", "--config=x86_64", "--compilation_mode=opt",
+        "--lockfile_mode=error", "--noannounce_rc", "--keep_going",
+        "--build_tag_filters=", "--test_tag_filters=",
+        "--strategy=TestRunner=remote", "--nocache_test_results",
+        "--runs_per_test=1", "--flaky_test_attempts=1", "--test_sharding_strategy=disabled",
+        "--test_timeout=900", "--test_output=all", "--remote_download_outputs=all",
+        "--execution_log_compact_file=" + str(evidence / "native-execution.binpb"),
+        *names,
+    ], "test", targets=list(names))
+    if result["status"] != "PASS":
+        raise RuntimeError("Official Ruby HTTP/identity qualification failed")
+    attempts = result["executed"]
+    if len(attempts) != len(names) or {row["owner"]["label"] for row in attempts} != set(names):
+        raise ValueError("Actual Ruby owner set differs")
+    for row in attempts:
+        execution = row["execution_info"]
+        if (row["status"] != "PASSED" or row["cached_locally"] or execution.get("cachedRemotely", False)
+                or execution.get("strategy") != "remote" or (row["run"], row["shard"], row["attempt"]) != (1, 1, 1)
+                or (row["xml"]["passed"], row["xml"]["failed"], row["xml"]["skipped"]) != (1, 0, 0)):
+            raise ValueError("Expected one uncached remote positive case per owner")
+    directory = evidence / "invocation-ruby-official-http"
+    _, reports, errors = report.retained_reports(directory / "events.jsonl.manifest.json")
+    if errors:
+        raise ValueError(errors)
+    observed = {}
+    for (attempt, kind), path in reports.items():
+        if kind == "test.xml":
+            actual = ["/".join(filter(None, (case.get("classname"), case.get("name")))) for case in ET.parse(path).getroot().iter("testcase")]
+            if actual != [names[attempt.owner.label]] or attempt.owner.label in observed:
+                raise ValueError(f"Unexpected actual case: {attempt}: {actual}")
+            observed[attempt.owner.label] = {"case": actual[0], **report.file_record(path)}
+    if set(observed) != set(names):
+        raise ValueError("Missing original XML")
+    (evidence / "ruby-http-required-cases.json").write_text(json.dumps(observed, indent=2) + "\n")
