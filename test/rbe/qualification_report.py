@@ -2085,7 +2085,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     observations: list[dict[str, object]] = []
     owner_cases: Counter[Owner] = Counter()
     owner_executed: Counter[Owner] = Counter()
-    passed_by_run: dict[tuple[Owner, int], set[str]] = {}
+    required_by_run: dict[tuple[Owner, int], dict[str, set[str]]] = {}
+    unpassed_cases: list[dict[str, object]] = []
     skips: list[dict[str, object]] = []
     expected_failures: list[dict[str, object]] = []
     marshal_contracts: dict[Attempt, dict[str, object]] = {}
@@ -2135,8 +2136,11 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 if required:
                     # Shards divide a suite; another run or configuration
                     # cannot supply a case missing from this one.
-                    passed = passed_by_run.setdefault((attempt.owner, attempt.run), set())
-                    passed.update(string(name) for name in sequence(counts["required_passed"]))
+                    observed = required_by_run.setdefault((attempt.owner, attempt.run), {})
+                    for outcome, names in (("passed", counts["required_passed"]), ("failed", counts["failures"]),
+                                           ("skipped", [mapping(item)["name"] for item in sequence(counts["skips"])])):
+                        for name in required.intersection(sequence(names)):
+                            observed.setdefault(name, set()).add(outcome)
                 observation["xml"] = counts
                 cases.update({key: number(counts[key]) for key in ("passed", "failed", "skipped")})
                 owner_cases[attempt.owner] += sum(number(counts[key]) for key in ("passed", "failed", "skipped"))
@@ -2207,9 +2211,11 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if result.get("status") != "PASSED":
                 failures.append({**asdict(attempt), "reason": "test result", "status": result.get("status")})
             observations.append(observation)
-        for (owner, run), passed in sorted(passed_by_run.items()):
-            missing.extend({**asdict(owner), "run": run, "name": name, "reason": "required case did not pass"}
-                           for name in sorted(named_cases[owner.label] - passed))
+        for (owner, run), observed in sorted(required_by_run.items()):
+            missing.extend({**asdict(owner), "run": run, "name": name, "reason": "required case not reported"}
+                           for name in sorted(named_cases[owner.label] - observed.keys()))
+            unpassed_cases.extend({**asdict(owner), "run": run, "name": name, "outcomes": sorted(outcomes)}
+                                  for name, outcomes in sorted(observed.items()) if "passed" not in outcomes)
         for owner, summary in sorted(summaries.items()):
             attempts = [attempt for attempt in results if attempt.owner == owner]
             if number(summary.get("totalRunCount", 0)) != len(attempts):
@@ -2245,7 +2251,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append("Build/analysis invocation unexpectedly contains test execution")
     if info["capture_exit"] != 0:
         errors.append("Caller recorded a capture failure")
-    status = "FAIL" if (info["native_exit"] != 0 and not accepted_analysis_exit) or failures else "INCOMPLETE" if errors or missing else "PASS"
+    if (info["native_exit"] != 0 and not accepted_analysis_exit) or failures:
+        status = "FAIL"
+    elif errors or missing or unpassed_cases:
+        status = "INCOMPLETE"
+    else:
+        status = "PASS"
     now = datetime.datetime.now(datetime.timezone.utc)
     return {"schema_version": 1, **info, "status": status, "accepted_analysis_exit": accepted_analysis_exit,
             "errors": errors, "failures": failures,
@@ -2255,7 +2266,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "expected_aspects": [{**asdict(aspect.owner), "aspect": aspect.name} for aspect in sorted(expected_aspects)],
             "completed_aspects": [{**asdict(aspect.owner), "aspect": aspect.name, "success": ok}
                                   for aspect, ok in sorted(completed_aspects.items())],
-            "missing": missing, "skips": skips, "case_counts": dict(cases),
+            "missing": missing, "skips": skips, "unpassed_required_cases": unpassed_cases, "case_counts": dict(cases),
             "expected_failures": expected_failures,
             "non_runtime_owners": non_runtime_owners,
             "benchmark_manifest": benchmark_evidence,
@@ -2317,6 +2328,8 @@ def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_
                                 for item in sequence(mapping(row["verdict"]).get("build_outputs", []))],
               "expected_failures": [item for row in verdicts for item in sequence(row.get("expected_failures", []))],
               "missing": [item for row in verdicts for item in sequence(row.get("missing", []))],
+              "unpassed_required_cases": [{"invocation": row["path"], **mapping(item)} for row in rows
+                                         for item in sequence(mapping(row["verdict"]).get("unpassed_required_cases", []))],
               "skips": [item for row in verdicts for item in sequence(row.get("skips", []))],
               "verdict_available_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
