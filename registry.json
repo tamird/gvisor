@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T13:15:07.380213+00:00",
+    "updatedAt": "2026-10-25T13:33:50.027303+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22265,23 +22265,34 @@
       "repo": "google/gvisor",
       "number": 16338,
       "ref": "review/kernel-14345-parent-death",
-      "head": "cad33143162681a715856dd08e0b7190972da39c",
+      "head": "ef26d82645e82c03a9360f9f239489629787633c",
       "title": "Clear the parent-death signal under the task mutex",
       "url": "https://github.com/google/gvisor/pull/16338",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
-      "summary": "The independently approved fix is published as #16338 at cad331431626. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes.",
+      "updatedAt": "2026-10-25T13:33:50.027303+00:00",
+      "summary": "The independently approved fix is refreshed on current source as #16338 at ef26d82645e82c03a9360f9f239489629787633c. The resolution routes the parent-death-signal writes through the task-mutex setter while preserving the identity-transition conditions and ordering, including the newly landed commitIDChange path. Independent source review accepted the composition. The 13:28 UTC provider snapshot confirms MERGEABLE with fresh current-head CI pending. No prerequisite on the annotation-only amendment or the other behavioral fixes, and no new contributor decision.\n\nThe declared-toolchain qualifier at 1889643b7b6d7a3eb711b1d30f8f752b10175cbe passed the genuinely remote follow-up: 117 positive XML records, all three attempts remote, no skips, missing cases or failures, and both analyzer logs explicitly pass AMD64 and ARM64 targets. The earlier hosted-local invocation remains FAIL because its separate ARM-configured analyzer executables could not run on the AMD64 coordinator; its 115 unit records and normal analyzer checks passed. This does not claim ARM64 unit runtime.",
       "followup": {
         "owner": "root",
-        "sourceHead": "cad33143162681a715856dd08e0b7190972da39c",
-        "observedAt": "2026-10-24T11:35:59.115042+00:00",
-        "disposition": "Published as #16338",
-        "nextAction": "Follow current-head checks and maintainer review on #16338; no new contributor decision.",
+        "sourceHead": "ef26d82645e82c03a9360f9f239489629787633c",
+        "observedAt": "2026-10-25T13:33:50.027303+00:00",
+        "disposition": "Current-source resolution published; provider confirms MERGEABLE",
+        "nextAction": "Follow current-head CI and maintainer review on the delivered source. Remote qualification is complete; preserve the earlier local executable-mismatch failure separately. No new contributor decision.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16338"
+          "https://github.com/google/gvisor/pull/16338",
+          "https://app.buildbuddy.io/invocation/e4f1d3aa-2e27-48f2-83ad-b0d61dcc3e40"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Remote unit and both-target analyzer follow-up",
+          "url": "https://app.buildbuddy.io/invocation/e4f1d3aa-2e27-48f2-83ad-b0d61dcc3e40"
+        },
+        {
+          "label": "Earlier local execution mismatch (preserved FAIL)",
+          "url": "https://app.buildbuddy.io/invocation/7dffe115-aa6e-4370-98b6-660afd7644ea"
+        }
+      ]
     },
     {
       "id": "pr:16339",
@@ -22449,20 +22460,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fix/tcp-rack-pipe-accounting-readable",
-      "head": "3327ae6769dfd2426f27bb69730051eb96333773",
+      "head": "83ab4392c284f6804ef13dc0efe5291d688bdca5",
       "title": "Account for RACK loss when estimating flight",
-      "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
+      "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
       "group": "runtime",
       "status": "Contributor approved; waiting for #15634",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
-      "summary": "The contributor approved exact readable 3327ae6769dfd2426f27bb69730051eb96333773. It remains fork-published only, with #15634 as the sole outstanding prerequisite. The proposal is based on historical 933263e71c; the current open prerequisite head is b909bc689866, so root owns exact-source composition and delivery after landing.\n\nAfter a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This four-file proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged. The readable proposal 3327ae replaces cd2171 with simpler regression setup and description; its production bytes are unchanged. It is a direct child of #15634 at 933263e71c, its sole prerequisite.\n\nThe revised normal/race RACK and classic-SACK suites and both analyzer owners pass: nine native-zero phases, six uncached attempts, 50 positive XML records and no failures or skips. Independent retained peer 9c8c8ed6 authenticates the exact 30fa qualification, with a verdict 5.774948 seconds after native completion. Final isolation peer 979e95d2 confirms all four product files and the entire TCP subtree match the tested source. The earlier baseline/candidate comparison separately retains three expected baseline failures, aggregate native FAIL and passing candidate/comparison/projection. No throughput improvement is claimed.",
+      "updatedAt": "2026-10-25T13:28:53.298229+00:00",
+      "summary": "The contributor approved 3327ae6769dfd2426f27bb69730051eb96333773. Its equivalent refresh 83ab4392c284f6804ef13dc0efe5291d688bdca5 is now fork-published directly on the current #15634 head, b909bc6898663235442ae8be2ff97607115d39d8. All four complete topic changes are preserved, and the test/helper postimages are identical. The parent contributes RACK comment corrections and the landed Karn RTT change; independent source peers accepted their composition. #15634 remains open and is the sole upstream prerequisite. No renewed contributor question.\n\nAfter a retransmission timeout and a sparse tail SACK, RACK recovery can count already-lost originals against its congestion window and stop sending. This proposal counts each unsacked current transmission once unless RACK marks it lost, then refreshes the estimate before the recovery-window check. Classic SACK accounting remains unchanged.\n\nHistorical readable-source qualification passed nine native-zero phases, six uncached attempts and 50 positive XML records: normal/race RACK and classic-SACK suites plus both analyzer owners, with no failures or skips. Those TestRunner executions were hosted-local on Linux; the receipt was verified 5.774948 seconds after native completion. The product/source join was independently checked against exact qualifier 30fa. This mechanical refresh adds source-equivalence evidence, not a new runtime or compiler-location result. The earlier baseline/candidate comparison retains its expected baseline failures and aggregate native FAIL. No throughput improvement is claimed.\n\nPrevious approved source: 3327ae6769dfd2426f27bb69730051eb96333773.\n\ngit range-diff 3327ae6769dfd2426f27bb69730051eb96333773^! 83ab4392c284f6804ef13dc0efe5291d688bdca5^!",
       "followup": {
         "owner": "root",
-        "sourceHead": "3327ae6769dfd2426f27bb69730051eb96333773",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "disposition": "Contributor approved exact readable proposal; sole prerequisite remains open",
-        "nextAction": "Root owns delivery of approved 3327ae after #15634 lands. Keep the existing prerequisite and preserve source-specific qualification; no repeated contributor question.",
+        "sourceHead": "83ab4392c284f6804ef13dc0efe5291d688bdca5",
+        "observedAt": "2026-10-25T13:28:53.298229+00:00",
+        "disposition": "Contributor-approved topic refreshed on current prerequisite; waiting for #15634 landing",
+        "nextAction": "Root owns upstream delivery after #15634 actually lands. Preserve the existing contributor approval, exact prior 3327 source and historical qualification; no repeated question.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
+          "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...83ab4392c284f6804ef13dc0efe5291d688bdca5",
           "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
           "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773",
           "https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f",
@@ -22471,11 +22484,19 @@
       },
       "evidence": [
         {
-          "label": "Exact readable proposal",
+          "label": "Current equivalent fork proposal",
+          "url": "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5"
+        },
+        {
+          "label": "Four-file change on current #15634",
+          "url": "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...83ab4392c284f6804ef13dc0efe5291d688bdca5"
+        },
+        {
+          "label": "Prior contributor-approved readable proposal",
           "url": "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773"
         },
         {
-          "label": "Readable four-file change on #15634",
+          "label": "Historical readable four-file change",
           "url": "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773"
         },
         {
@@ -25358,7 +25379,7 @@
       "from": "pr:15634",
       "to": "branch:tcp-rack-pipe-accounting",
       "type": "depends_on",
-      "reason": "The isolated RACK accounting correction is based on the SACK accounting fix at exact 933263e71c.",
+      "reason": "The approved RACK accounting correction is refreshed directly on current SACK-accounting prerequisite head b909bc689866; upstream submission waits for #15634 to land.",
       "evidence": "https://github.com/google/gvisor/pull/15634"
     },
     {
