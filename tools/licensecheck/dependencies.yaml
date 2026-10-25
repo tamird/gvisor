@@ -609,6 +609,18 @@
   commit: f7a0894074d194bcf19eec5411fec0528f7f4180
   sha256: 3369c58038b4d55c08928affafb653716eb1e7b3cabb4a391aef979dd921f4e1
   license: MIT
+- dependency: busybox_source
+  version: https://busybox.net/downloads/busybox-1.38.0.tar.bz2
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: 34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2
+  license: LicenseRef-BusyBox-1.38.0-source-bundle
+- dependency: bzip2
+  version: https://mirror.bazel.build/sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
+  retrieved: "2026-10-22"
+  commit: ""
+  sha256: ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269
+  license: bzip2-1.0.6
 - dependency: cel-spec
   version: https://github.com/google/cel-spec/archive/refs/tags/v0.25.1.tar.gz
   retrieved: "2026-08-27"
@@ -1659,6 +1671,12 @@
   retrieved: "2026-10-21"
   commit: b9da1141985c4a84f696326006e0d85659c40747
   sha256: 5d43f4f44f0f0fb614194a07a6dcf7b29338cfc8ab7f6129ad1e4403c1ad1c73
+  license: Apache-2.0
+- dependency: rules_foreign_cc
+  version: https://github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz
+  retrieved: "2026-10-22"
+  commit: 931cb33cf882380394a9c32dcd548259a2a0a357
+  sha256: 327b3fcacde97b9665424db2b6c37e6f8da59ecc783dc5b8683c69396f820a12
   license: Apache-2.0
 - dependency: rules_go
   version: https://github.com/bazel-contrib/rules_go/releases/download/v0.63.0/rules_go-v0.63.0.zip

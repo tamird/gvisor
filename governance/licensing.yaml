@@ -411,6 +411,22 @@ exceptions:
       - GPL-3.0
       - GPL-3.0-or-later
     exception_rationale: *helper_image_resolver
+  - dependency: busybox_source
+    license: LicenseRef-BusyBox-1.38.0-source-bundle
+    exception_rationale: >-
+      This BusyBox release supplies the shell and utility applets for
+      scratch test images. Its aggregate LICENSE specifies GPL-2.0
+      only. Individual files retain GPL/LGPL, BSD, MIT, ISC, bzip2
+      and public-domain terms. The images include the aggregate license
+      and supplemental shell and support-source notices. gVisor release
+      binaries do not link BusyBox. Changes to the reviewed source URL
+      or archive hash require a new audit.
+  - dependency: bzip2
+    license: bzip2-1.0.6
+    exception_rationale: >-
+      BusyBox's source generators use this execution-platform compressor.
+      The pinned release retains its bzip2 license and source notices.
+      The compressor runs only during the build.
   - dependency: gawk
     license: LicenseRef-Gawk-source-bundle
     exception_rationale: >-

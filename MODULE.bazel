@@ -11,6 +11,8 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
+bazel_dep(name = "bzip2", version = "1.0.8.bcr.4")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 
@@ -289,6 +291,14 @@ http_file(
 )
 
 ### Docker integration test images
+http_archive(
+    name = "busybox_source",
+    build_file = "//images:busybox.BUILD",
+    sha256 = "34f9ea6ff8636f2c9241153b9114eefa9e65674a45318ae1ef95bb5f31c53bb2",
+    strip_prefix = "busybox-1.38.0",
+    urls = ["https://busybox.net/downloads/busybox-1.38.0.tar.bz2"],
+)
+
 # Pin both architectures of the existing test distributions. Image assembly
 # uses declared layers and does not require a Docker daemon.
 img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
