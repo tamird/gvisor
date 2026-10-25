@@ -40,12 +40,14 @@ Dir.mktmpdir("ruby-http-build-") do |work|
   ENV["HOME"] = work
   ENV["GEM_HOME"] = home
   ENV["GEM_PATH"] = home
+  ENV["SOURCE_DATE_EPOCH"] = "0"
+  cflags = RbConfig::CONFIG.fetch("CFLAGS") + " -ffile-prefix-map=#{work}=/usr/src/ruby-http"
   specs = inputs.map { |path| Gem::Package.new(path).spec }
   native = specs.select { |spec| !spec.extensions.empty? }.map(&:name).sort
   abort "Unexpected native extensions #{native}" unless native == ["nio4r", "puma"]
   system("/usr/local/bin/ruby", "/usr/local/bin/gem", "install", "--local",
          "--ignore-dependencies", "--no-document", "--install-dir", home,
-         *inputs, exception: true)
+         *inputs, "--", "--with-cflags=#{cflags}", exception: true)
   Gem.clear_paths
   specs.each do |spec|
     actual = Gem::Specification.find_by_name(spec.name, spec.version)
@@ -68,7 +70,16 @@ Dir.mktmpdir("ruby-http-build-") do |work|
     {path: path.delete_prefix(work + "/"), bytes: File.size(path),
      sha256: Digest::SHA256.file(path).hexdigest, readelf: header}
   end
-  profile = {ruby: RUBY_VERSION, platform: RUBY_PLATFORM, compiler_target: compiler.strip,
+  logs = Dir.glob(File.join(home, "extensions/**/gem_make.out")).sort
+  abort "Expected two native build logs" unless logs.length == 2
+  log_records = logs.map do |path|
+    record = {path: path.delete_prefix(work + "/"), bytes: File.size(path), sha256: Digest::SHA256.file(path).hexdigest}
+    puts "NATIVE_GEM_BUILD_LOG #{JSON.generate(record)}"
+    print File.binread(path)
+    puts "NATIVE_GEM_BUILD_LOG_END"
+    record
+  end
+  profile = {build_directory: work, compiler_flags: cflags, build_logs: log_records, ruby: RUBY_VERSION, platform: RUBY_PLATFORM, compiler_target: compiler.strip,
              sources: inputs.map { |path| {file: File.basename(path), sha256: Digest::SHA256.file(path).hexdigest} },
              gems: specs.sort_by(&:name).map { |spec| {name: spec.name, version: spec.version.to_s} },
              extensions: files,
@@ -80,6 +91,8 @@ Dir.mktmpdir("ruby-http-build-") do |work|
                [path, {resolved: File.realpath(path), sha256: Digest::SHA256.file(path).hexdigest}]
              }}
   File.write(profile_output, JSON.pretty_generate(profile) + "\n")
+  # Keep diagnostics in the action output, not in the runtime image.
+  FileUtils.rm(logs)
   FileUtils.rm_rf(File.join(home, "cache"))
   system("/usr/bin/tar", "--sort=name", "--mtime=@0", "--owner=0", "--group=0",
          "--numeric-owner", "-cf", output, "-C", work, "opt", exception: true)
