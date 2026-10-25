@@ -34,6 +34,7 @@ bzl_library(
 filegroup(
     name = "sources",
     srcs = glob(["**"]) + [
+        "//images/image-test/ruby:sources",
         "//images/gpu/triton:sources",
         "//images/jekyll:sources",
     ],

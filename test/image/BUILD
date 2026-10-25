@@ -48,7 +48,7 @@ sh_binary(
 docker_daemon_config(
     name = "qualification_ruby_native_config",
     testonly = True,
-    images = ["//test/docker:images_image_test_ruby_amd64_tar"],
+    images = ["//images/image-test/ruby:ruby_archive"],
     runtime = None,
     tags = ["manual"],
 )
@@ -58,7 +58,7 @@ docker_command_test(
     size = "large",
     command = ":qualification_ruby_consumer",
     command_args = [
-        "$(rootpath //test/docker:images_image_test_ruby_amd64_tar)",
+        "$(rootpath //images/image-test/ruby:ruby_archive)",
         "$(rootpath :image_test)",
         "--runtime=runc",
         "-test.run=^TestRuby$",
@@ -66,7 +66,7 @@ docker_command_test(
     ],
     data = [
         ":image_test",
-        "//test/docker:images_image_test_ruby_amd64_tar",
+        "//images/image-test/ruby:ruby_archive",
     ],
     docker_config = ":qualification_ruby_native_config",
     exec_properties = docker_test_exec_properties(
@@ -80,7 +80,7 @@ docker_command_test(
 docker_daemon_config(
     name = "qualification_ruby_systrap_config",
     testonly = True,
-    images = ["//test/docker:images_image_test_ruby_amd64_tar"],
+    images = ["//images/image-test/ruby:ruby_archive"],
     runtime = "//:release",
     runtime_args = ["--platform=systrap"],
     tags = ["manual"],
@@ -91,7 +91,7 @@ docker_command_test(
     size = "large",
     command = ":qualification_ruby_consumer",
     command_args = [
-        "$(rootpath //test/docker:images_image_test_ruby_amd64_tar)",
+        "$(rootpath //images/image-test/ruby:ruby_archive)",
         "$(rootpath :image_test)",
         "--runtime=runsc",
         "-test.run=^TestRuby$",
@@ -99,7 +99,7 @@ docker_command_test(
     ],
     data = [
         ":image_test",
-        "//test/docker:images_image_test_ruby_amd64_tar",
+        "//images/image-test/ruby:ruby_archive",
     ],
     docker_config = ":qualification_ruby_systrap_config",
     exec_properties = docker_test_exec_properties(
