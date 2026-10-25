@@ -18,7 +18,9 @@ bazel_dep(name = "tar.bzl", version = "0.10.4")
 
 # Use gawk's regex fixes when compiling the image assembly tools.
 bazel_dep(name = "gawk", version = "5.4.0.bcr.3")
-bazel_dep(name = "rules_cc", version = "0.2.22")
+bazel_dep(name = "rules_cc", version = "0.2.25")
+bazel_dep(name = "llvm", version = "0.8.24")
+bazel_dep(name = "libbpf", version = "1.7.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
 
@@ -98,6 +100,12 @@ image_apt.install(
 )
 use_repo(image_apt, "helper_image_packages")
 
+single_version_override(
+    module_name = "libbpf",
+    patch_strip = 1,
+    patches = ["//tools:libbpf_headers.patch"],
+)
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -128,12 +136,9 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
-### Crosstool
-coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
-use_repo(coral_crosstool_extension, "coral_crosstool")
-
-crosstool = use_extension("//tools/bazeldefs:extensions/crosstool.bzl", "crosstool_extension")
-use_repo(crosstool, "crosstool")
+### Linux headers
+kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
+use_repo(kernel_headers, "kernel_headers")
 
 ### zlib-ng
 # TODO: try using "zlib-ng" from BCR
@@ -339,9 +344,7 @@ img_pull(
 )
 
 ### Toolchains
-register_toolchains("//:cc_toolchain_k8")
-
-register_toolchains("//:cc_toolchain_aarch64")
+register_toolchains("@llvm//toolchain:all")
 
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
