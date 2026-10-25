@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T20:44:14.493573+00:00",
+    "updatedAt": "2026-10-25T20:45:37.300394+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23244,26 +23244,19 @@
       "ref": "fix/nft-compat-inet-autoload",
       "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
       "title": "Load xtables matches before testing INET rules",
-      "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
+      "url": "https://github.com/google/gvisor/pull/16392",
       "group": "runtime",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-25T18:38:59.084783+00:00",
-      "summary": "The independently reviewed standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is ready for contributor review. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact fork source is on public master 7bffefa, with no prerequisite PR and no upstream PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
-        "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
-        "title": "Publish the INET xtables setup correction",
-        "summary": "Load the supported match before INET rule tests; independent native and native/systrap checks pass. No prerequisite PR.",
-        "body": "A standalone INET comment rule fails with ENOENT on Linux when the xt_comment module is not loaded. The kernel can request the IPv4 or IPv6 module alias, but there is no alias for the combined INET family.\n\nQuery a supported IPv4 revision before installing an INET match rule. Use a supported revision for setup even when the rule under test must reject an unsupported one.\n\nOpen this standalone change at f1305131246efe3874ba4a7231a20d3076ff5e44?\n\nValidation: https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6\nNative and systrap: https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163\nSame-guest diagnostic: https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679\nUnchanged native control: https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6\n\nIndependent source review is complete. The unchanged control failure remains separate from the passing correction; the selected native and systrap runs pass four cases each without skips. The original public worker\u2019s module state is unknown. No prerequisite PR or upstream PR."
-      },
+      "status": "Published as #16392",
+      "updatedAt": "2026-10-25T20:45:37.072123+00:00",
+      "summary": "The contributor-approved standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is delivered as open, non-draft #16392. No contributor decision remains pending. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact delivered source is on public master 7bffefa, with no prerequisite PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
       "followup": {
-        "owner": "root",
+        "owner": "work_map_current",
         "sourceHead": "f1305131246efe3874ba4a7231a20d3076ff5e44",
-        "observedAt": "2026-10-25T18:38:59.084783+00:00",
-        "disposition": "Independently reviewed and remotely validated; contributor decision pending",
-        "nextAction": "Root owns the single contributor decision for exact f1305131246efe3874ba4a7231a20d3076ff5e44 before any upstream submission. Preserve the failed control and the unknown original public-worker module state.",
+        "observedAt": "2026-10-25T20:45:37.072123+00:00",
+        "disposition": "Contributor-approved exact INET setup correction delivered as #16392",
+        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing intake. Preserve the failed control and unknown original public-worker module state. No repeated contributor question or public notification.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16392",
           "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
           "https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6",
           "https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6",
@@ -23272,6 +23265,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Delivered INET xtables setup PR",
+          "url": "https://github.com/google/gvisor/pull/16392"
+        },
         {
           "label": "Exact independently reviewed INET setup correction",
           "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44"
@@ -23406,6 +23403,65 @@
       ],
       "updatedAt": "2026-10-25T20:42:47.994980+00:00",
       "number": 16391
+    },
+    {
+      "id": "pr:16392",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "fix/nft-compat-inet-autoload",
+      "head": "f1305131246efe3874ba4a7231a20d3076ff5e44",
+      "title": "Load xtables matches before testing INET rules",
+      "url": "https://github.com/google/gvisor/pull/16392",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-25T20:45:37.072123+00:00",
+      "summary": "The contributor-approved standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is delivered as open, non-draft #16392. No contributor decision remains pending. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact delivered source is on public master 7bffefa, with no prerequisite PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "f1305131246efe3874ba4a7231a20d3076ff5e44",
+        "observedAt": "2026-10-25T20:45:37.072123+00:00",
+        "disposition": "Contributor-approved exact INET setup correction delivered as #16392",
+        "nextAction": "Follow exact-head CI, matching imports and maintainer review through the existing intake. Preserve the failed control and unknown original public-worker module state. No repeated contributor question or public notification.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16392",
+          "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44",
+          "https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6",
+          "https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6",
+          "https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163",
+          "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Delivered INET xtables setup PR",
+          "url": "https://github.com/google/gvisor/pull/16392"
+        },
+        {
+          "label": "Exact independently reviewed INET setup correction",
+          "url": "https://github.com/tamird/gvisor/commit/f1305131246efe3874ba4a7231a20d3076ff5e44"
+        },
+        {
+          "label": "Standalone change on public master",
+          "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...f1305131246efe3874ba4a7231a20d3076ff5e44"
+        },
+        {
+          "label": "Unchanged native control failure",
+          "url": "https://app.buildbuddy.io/invocation/fd8a6c2e-5ae3-4ccd-8b81-b7846fcf19d6"
+        },
+        {
+          "label": "Fixed independent native result",
+          "url": "https://app.buildbuddy.io/invocation/a7954977-c61a-49aa-a557-30b8f5f781c6"
+        },
+        {
+          "label": "Fixed native and systrap: four cases each, no skips",
+          "url": "https://app.buildbuddy.io/invocation/8bb5a72a-1a21-42e8-9778-544d8eb33163"
+        },
+        {
+          "label": "Observable same-guest diagnostic",
+          "url": "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
+        }
+      ],
+      "number": 16392
     }
   ],
   "edges": [
@@ -26139,6 +26195,13 @@
       "type": "includes",
       "reason": "The approved journal readiness proposal is delivered in this public PR.",
       "evidence": "https://github.com/google/gvisor/pull/16391"
+    },
+    {
+      "from": "branch:nft-compat-inet-autoload",
+      "to": "pr:16392",
+      "type": "includes",
+      "reason": "The approved INET setup proposal is delivered in this public PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16392"
     }
   ],
   "investigations": [
@@ -35662,8 +35725,8 @@
       "title": "Native Linux nftables comment-rule installation",
       "status": "active",
       "owner": "root \u2014 contributor decision; tcp_fin_review \u2014 source and experiments",
-      "updatedAt": "2026-10-25T19:19:27.227362+00:00",
-      "summary": "The independently reviewed standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is ready for contributor review. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact fork source is on public master 7bffefa, with no prerequisite PR and no upstream PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
+      "updatedAt": "2026-10-25T20:45:37.300394+00:00",
+      "summary": "The contributor-approved standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is delivered as open, non-draft #16392. No contributor decision remains pending. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact delivered source is on public master 7bffefa, with no prerequisite PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
       "findings": [
         {
           "text": "The standalone setup correction is independently reviewed and remotely validated. The failed unchanged native control is preserved; the fixed independent native result and four native/four systrap cases pass without skips. The same-guest diagnostic is separate evidence, not identification of the original public worker.",
@@ -35747,8 +35810,12 @@
           ]
         }
       ],
-      "nextStep": "Contributor review is ready on the exact standalone fork commit; root owns the decision and any later submission. No PR prerequisite. Keep the public worker\u2019s module state and the original Buildkite failure distinct from the controlled reproduction.",
+      "nextStep": "Follow exact-head checks and maintainer review on delivered #16392 through the existing intake. Contributor approval and source publication are complete; no prerequisite or repeated decision remains. Keep the public worker\u2019s unknown module state and original public failures distinct from the controlled reproduction.",
       "evidence": [
+        {
+          "label": "Delivered INET setup correction #16392",
+          "url": "https://github.com/google/gvisor/pull/16392"
+        },
         {
           "label": "Current public master",
           "url": "https://github.com/google/gvisor/commit/7bffefa9185aa55ba377e8a5534210a7f0cbf266"
