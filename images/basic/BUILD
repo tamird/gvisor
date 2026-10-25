@@ -31,6 +31,18 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+image_manifest(
+    name = "nginx",
+    base = "@test_nginx",
+    tags = ["manual"],
+)
+
+image_outputs(
+    name = "nginx",
+    image = ":nginx",
+    image_name = "basic/nginx",
+)
+
 # The integration test checks that mounting /tmp preserves image contents.
 image_layer(
     name = "tmpfile_layer",
