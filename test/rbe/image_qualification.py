@@ -21,7 +21,9 @@ print(f"Qualification reporter interpreter: {sys.version}", flush=True)
 lane = os.environ["QUALIFICATION_LANES"]
 if lane == "test":
     required = Path(os.environ["RUNNER_TEMP"]) / "ruby-http-distro-required-cases.json"
-    required.write_text(json.dumps({'//test/image:qualification_ruby_native_test': ['image/TestRuby'], '//test/image:qualification_ruby_systrap_test': ['image/TestRuby'], '//test/rbe/ruby_distro:image_identity_test': ['test/rbe/ruby_distro/image_identity_test'], '//tools/lint:buildifier': ['tools/lint/buildifier/buildifier']}, indent=2) + "\n")
+    cases = {'//test/image:qualification_ruby_native_test': ['image/TestRuby'], '//test/image:qualification_ruby_systrap_test': ['image/TestRuby'], '//test/rbe/ruby_distro:image_identity_test': ['test/rbe/ruby_distro/image_identity_test'], '//tools/lint:buildifier': ['tools/lint/buildifier/buildifier']}
+    selected = {target: cases[target] for target in os.environ['QUALIFICATION_TARGETS'].split()}
+    required.write_text(json.dumps(selected, indent=2) + "\n")
     os.environ["QUALIFICATION_REQUIRED_CASES"] = str(required)
 elif lane == "license-check":
     os.environ.pop("QUALIFICATION_REQUIRED_CASES", None)
