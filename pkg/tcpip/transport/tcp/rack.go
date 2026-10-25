@@ -431,6 +431,10 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	if rc.snd.reorderTimer.isUninitialized() || !rc.snd.reorderTimer.checkExpiration() {
 		return nil
 	}
+	rc.snd.observeRTO("timer_expired", nil, 0)
+	if rc.snd.state == tcpip.RTORecovery && rc.snd.ep.protocol.rtoDiagnostic != nil && rc.snd.ep.protocol.rtoDiagnostic.GuardTimer {
+		return nil
+	}
 
 	// Evaluate loss as of the time the reorder timer was scheduled to fire (its
 	// target), not the current clock. The timer is armed for the instant a
@@ -443,6 +447,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	// (gvisor#9707/#9778). detectLoss arms the timer from rcvdTime-derived
 	// values, so evaluating it at the timer target keeps the two consistent.
 	numLost := rc.detectLoss(rc.snd.reorderTimer.target)
+	rc.snd.observeRTO("timer_scan", nil, numLost)
 	if numLost == 0 {
 		return nil
 	}

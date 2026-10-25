@@ -625,6 +625,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	//     After a retransmit timeout, record the highest sequence number
 	//     transmitted in the variable recover, and exit the fast recovery
 	//     procedure if applicable.
+	s.observeRTO("rto_interrupt", nil, 0)
 	s.FastRecovery.Last = s.SndNxt - 1
 
 	if s.FastRecovery.Active {
@@ -664,6 +665,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// information is usable after an RTO.
 	s.ep.scoreboard.Reset()
 	s.updateWriteNext(s.writeList.Front())
+	s.observeRTO("rto_enter", nil, 0)
 
 	// RFC 1122 4.2.2.17: Start sending zero window probes when we still see a
 	// zero receive window after retransmission interval and we have data to
@@ -1148,6 +1150,7 @@ func (s *sender) sendData() {
 
 // +checklocks:s.ep.mu
 func (s *sender) enterRecovery() {
+	s.observeRTO("enter_recovery", nil, 0)
 	// Initialize the variables used to detect spurious recovery after
 	// entering recovery.
 	//
@@ -1549,6 +1552,10 @@ func (s *sender) inRecovery() bool {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
+	s.observeRTO("ack_begin", rcvdSeg, 0)
+	if s.ep.protocol.rtoDiagnostic != nil {
+		defer s.observeRTO("ack_end", rcvdSeg, 0)
+	}
 	bestRTT := unknownRTT
 
 	// Check if we can extract an RTT measurement from this ack. Measure against
@@ -1621,6 +1628,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// Detect loss by counting the duplicates and enter recovery.
 		fastRetransmit = s.detectLoss(rcvdSeg)
 	}
+	s.observeRTO("after_dupack", rcvdSeg, 0)
 
 	// See if TLP based recovery was successful.
 	if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
@@ -1789,7 +1797,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// After the reorder window is calculated, detect any loss by checking
 		// if the time elapsed after the segments are sent is greater than the
 		// reorder window.
-		if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active {
+		numLost := s.rc.detectLoss(rcvdSeg.rcvdTime)
+		s.observeRTO("ack_scan", rcvdSeg, numLost)
+		if numLost > 0 && !s.FastRecovery.Active && !(s.state == tcpip.RTORecovery && s.ep.protocol.rtoDiagnostic != nil && s.ep.protocol.rtoDiagnostic.GuardACK) {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.

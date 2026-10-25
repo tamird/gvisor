@@ -131,6 +131,8 @@ type protocol struct {
 	//
 	// This is immutable after creation.
 	probe TCPProbeFunc `state:"nosave"`
+	// rtoDiagnostic is immutable and is set only by the fork qualification.
+	rtoDiagnostic *RTODiagnostic `state:"nosave"`
 
 	// The following secrets are used for ISN and timestamp-offset
 	// generation. They are not serialized into checkpoint state and are
@@ -583,6 +585,56 @@ func NewProtocolProbe(probe TCPProbeFunc) func(*stack.Stack) stack.TransportProt
 // TODO(b/345835636): Remove this and make CUBIC the default across the board.
 func NewProtocolCUBIC(s *stack.Stack) stack.TransportProtocol {
 	return newProtocol(s, ccCubic, nil)
+}
+
+// RTODiagnostic configures the fork-only no-timestamp RTO comparison.
+type RTODiagnostic struct {
+	GuardACK   bool
+	GuardTimer bool
+	Observe    func(RTOEvent)
+}
+
+// RTOEvent describes an actual sender decision on its native clock.
+type RTOEvent struct {
+	Kind                            string
+	At, RTO                         int64
+	UNA, NXT, Last, ACK             uint32
+	State                           tcpip.CongestionControlState
+	Active, SACKEnabled, Timestamps bool
+	NewSACK                         bool
+	SACK                            []header.SACKBlock
+	Cwnd, Threshold, Flight, Sacked int
+	Lost                            int
+}
+
+// NewProtocolRTODiagnostic creates the qualification's active opener.
+func NewProtocolRTODiagnostic(algorithm string, diagnostic *RTODiagnostic) stack.TransportProtocolFactory {
+	return func(s *stack.Stack) stack.TransportProtocol {
+		p := newProtocol(s, algorithm, nil).(*protocol)
+		p.rtoDiagnostic = diagnostic
+		return p
+	}
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) observeRTO(kind string, seg *segment, lost int) {
+	d := s.ep.protocol.rtoDiagnostic
+	if d == nil {
+		return
+	}
+	row := RTOEvent{
+		Kind: kind, At: int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{})),
+		RTO: int64(s.RTO), UNA: uint32(s.SndUna), NXT: uint32(s.SndNxt),
+		Last: uint32(s.FastRecovery.Last), State: s.state, Active: s.FastRecovery.Active,
+		SACKEnabled: s.ep.SACKPermitted, Timestamps: s.ep.SendTSOk,
+		Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Flight: s.Outstanding, Sacked: s.SackedOut, Lost: lost,
+	}
+	if seg != nil {
+		row.ACK = uint32(seg.ackNumber)
+		row.SACK = append([]header.SACKBlock(nil), seg.parsedOptions.SACKBlocks...)
+		row.NewSACK = seg.hasNewSACKInfo
+	}
+	d.Observe(row)
 }
 
 func newProtocol(s *stack.Stack, cc string, probe TCPProbeFunc) stack.TransportProtocol {
