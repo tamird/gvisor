@@ -205,10 +205,10 @@ func decisionSplit(a, b flightEvent, prefix []flightEvent) bool {
 		if earlier.Action == nil || earlier.Action.Trigger != nil || earlier.At >= later.At {
 			continue
 		}
-		// No input is being handled. A positive timer action strictly
-		// before the other side's next event is sufficient; ties are not.
+		// Require an explicit timer callback. A retransmission without an
+		// input can also be caused by an application write.
 		switch earlier.Action.Path {
-		case "rto", "rack_mark_lost", "rack_reordering_timer", "tlp_sent", "retransmit":
+		case "rto", "rack_reordering_timer", "tlp_sent":
 			return true
 		}
 	}
