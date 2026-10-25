@@ -3497,14 +3497,15 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 	// Set the buffer size such that a window scale of 5 will be used.
 	const bufSz = 65535 * 10
 	const ws = uint32(5)
+	const segmentSize = 50000
 	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, bufSz, []byte{
 		header.TCPOptionWS, 3, 0, header.TCPOptionNOP,
 	})
 
-	// Write chunks of 50000 bytes.
+	// Write full segments until the remaining window is smaller.
 	remain := 0
 	sent := 0
-	data := make([]byte, 50000)
+	data := make([]byte, segmentSize)
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
 	// Keep writing till the window drops below len(data).
 	for {
@@ -3569,23 +3570,47 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 		remain = wnd << ws
 	}
 
-	// Read at least 2MSS of data. An ack should be sent in response to that.
-	// Since buffer space is now split in half between window and application
-	// data we need to read more than 1 MSS(65536) of data for a non-zero window
-	// update to be sent. For 1MSS worth of window to be available we need to
-	// read at least 128KB. Since our segments above were 50KB each it means
-	// we need to read at 3 packets.
-	w := tcpip.LimitedWriter{
-		W: io.Discard,
-		N: e2e.DefaultMTU * 2,
-	}
-	for w.N != 0 {
-		res, err := c.EP.Read(&w, tcpip.ReadOptions{})
-		t.Logf("err=%v res=%#v", err, res)
-		if err != nil {
-			t.Fatalf("Read failed: %s", err)
+	read := func(size int64) {
+		t.Helper()
+		w := tcpip.LimitedWriter{W: io.Discard, N: size}
+		for w.N != 0 {
+			if _, err := c.EP.Read(&w, tcpip.ReadOptions{}); err != nil {
+				t.Fatalf("Read failed: %s", err)
+			}
 		}
 	}
+
+	// Releasing one segment leaves the available window below the reopening
+	// threshold. A probe must still see zero, even if the previous non-scaled
+	// window had low bits that were discarded for its wire advertisement.
+	read(segmentSize)
+	if pkt := c.GetPacketNonBlocking(); pkt != nil {
+		pkt.Release()
+		t.Fatal("unexpected ACK below the window reopening threshold")
+	}
+	c.SendPacket([]byte{0}, &context.Headers{
+		SrcPort: context.TestPort,
+		DstPort: c.Port,
+		Flags:   header.TCPFlagAck,
+		SeqNum:  iss.Add(seqnum.Size(sent - 1)),
+		AckNum:  c.IRS.Add(1),
+		RcvWnd:  30000,
+	})
+	probeACK := c.GetPacket()
+	defer probeACK.Release()
+	checker.IPv4(t, probeACK,
+		checker.PayloadLen(header.TCPMinimumSize),
+		checker.TCP(
+			checker.DstPort(context.TestPort),
+			checker.TCPSeqNum(uint32(c.IRS)+1),
+			checker.TCPAckNum(uint32(iss)+uint32(sent)),
+			checker.TCPWindow(0),
+			checker.TCPFlags(header.TCPFlagAck),
+		),
+	)
+
+	// Reading the rest frees enough space to cross the reopening threshold.
+	read(e2e.DefaultMTU*2 - segmentSize)
 
 	v := c.GetPacket()
 	defer v.Release()

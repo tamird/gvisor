@@ -159,26 +159,17 @@ func (r *receiver) getSendParams() (RcvNxt seqnum.Value, rcvWnd seqnum.Size) {
 		r.ep.rcvQueueMu.Unlock()
 	}
 
-	// Stash away the non-scaled receive window as we use it for measuring
-	// receiver's estimated RTT.
-	r.rcvWnd = newWnd
 	r.rcvWUP = r.RcvNxt
 	r.prevBufUsed = bufUsed
-	scaledWnd := r.rcvWnd >> r.RcvWndScale
+	scaledWnd := min(newWnd>>r.RcvWndScale, math.MaxUint16)
 	if scaledWnd == 0 {
 		// Increment a metric if we are advertising an actual zero window.
 		r.ep.stats.ReceiveErrors.ZeroRcvWindowState.Increment()
 	}
 
-	// If we started off with a window larger than what can he held in
-	// the 16bit window field, we ceil the value to the max value.
-	if scaledWnd > math.MaxUint16 {
-		scaledWnd = seqnum.Size(math.MaxUint16)
-
-		// Ensure that the stashed receive window always reflects what
-		// is being advertised.
-		r.rcvWnd = scaledWnd << r.RcvWndScale
-	}
+	// Store the decoded window so later window selection and receiver RTT
+	// measurements use the window we actually advertised.
+	r.rcvWnd = scaledWnd << r.RcvWndScale
 	return r.RcvNxt, scaledWnd
 }
 
