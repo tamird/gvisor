@@ -25,7 +25,7 @@ if lane == "test":
     selected = {target: cases[target] for target in os.environ['QUALIFICATION_TARGETS'].split()}
     required.write_text(json.dumps(selected, indent=2) + "\n")
     os.environ["QUALIFICATION_REQUIRED_CASES"] = str(required)
-elif lane == "license-check":
+elif lane in ("license-check", "license-fetch"):
     os.environ.pop("QUALIFICATION_REQUIRED_CASES", None)
 else:
     raise ValueError(f"Unexpected Ruby qualification lane: {lane}")
