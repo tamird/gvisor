@@ -11,6 +11,7 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
@@ -277,6 +278,45 @@ img_pull(
     repository = "library/busybox",
     tag = "1.31.1",
 )
+
+img_pull(
+    name = "ruby_http_debian",
+    digest = "sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/debian",
+    tag = "trixie-slim",
+)
+
+# Debian builds the native Puma and nio4r extensions against its Ruby 3.3 ABI
+# on each architecture. Keep their complete runtime closure at one snapshot.
+ruby_http_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt", isolate = True)
+ruby_http_apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = ["trixie"],
+    types = ["deb"],
+    uris = ["https://snapshot.debian.org/archive/debian/20261024T000000Z"],
+)
+ruby_http_apt.install(
+    dependency_set = "ruby_http_packages",
+    packages = [
+        # Package copyrights reference /usr/share/common-licenses.
+        "base-files",
+        "puma",
+        "ruby-rackup",
+        "ruby-sinatra",
+        "ruby3.3",
+    ],
+)
+use_repo(ruby_http_apt, "ruby_http_packages")
 
 ### Toolchains
 register_toolchains("//:cc_toolchain_k8")
