@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T17:34:06.867593+00:00",
+    "updatedAt": "2026-10-25T17:45:37.300367+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -13659,19 +13659,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "trace-assertions",
-      "head": "408c0759a0588e58707336dc40585e469b9aa8be",
+      "head": "06a73ca10996bd195ddedfe9dcca489c03460923",
       "title": "Strengthen trace event validation",
       "group": "tests",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at 408c0759a058 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved amendment scopes fixture-specific read/write offset bounds to read-write.txt, preserving generic checks for other files. The original full-unit failure came from valid dynamic-loader reads of libc.so.6 at offsets 848 and 896. Both complete architecture owners and both-architecture Nogo checks pass on the corrected integration; the exact public head, description and reply are verified. No contributor decision remains.\n\nPublished as ready PR #15936 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nStrengthen timestamp, file-offset and exec-argument checks in the existing trace suite. Full AMD64 validation passes. Full ARM64 validation exposed a separate fchdir producer defect; after that independent correction, both complete native-namespace owners pass with no skips or missing results. The correction and these assertion improvements remain separate changes.",
+      "summary": "Current public head 06a73ca10996 remains open. This change strengthens trace timestamps, workload-file offset checks and argv validation; it does not change Makefile or BUILD selection and is not a prerequisite for #10045 selection restoration. All five formerly excluded labels, including trace, are already selected on public 7bffefa9185a. Earlier runtime evidence below retains its original source identity.\n\nHistorical source and qualification record:\n\nThe requested post-#16046 rebase is published at 408c0759a058 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved amendment scopes fixture-specific read/write offset bounds to read-write.txt, preserving generic checks for other files. The original full-unit failure came from valid dynamic-loader reads of libc.so.6 at offsets 848 and 896. Both complete architecture owners and both-architecture Nogo checks pass on the corrected integration; the exact public head, description and reply are verified. No contributor decision remains.\n\nPublished as ready PR #15936 after contributor approval. Exact reviewed head, master base, wrapped description, changed files and one-commit scope are read back and verified. No contributor decision is pending. Both full native architecture owners pass on the corrected integration, and the two owning Nogo targets pass with verified AMD64 and ARM64 findings.\n\nStrengthen timestamp, file-offset and exec-argument checks in the existing trace suite. Full AMD64 validation passes. Full ARM64 validation exposed a separate fchdir producer defect; after that independent correction, both complete native-namespace owners pass with no skips or missing results. The correction and these assertion improvements remain separate changes.",
       "url": "https://github.com/google/gvisor/pull/15936",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-10-25T17:45:37.300367+00:00",
       "followup": {
         "owner": "Codex",
-        "disposition": "Amendment published; awaiting maintainer review and CI",
-        "next": "Follow actionable upstream feedback and checks through the existing status workflow.",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00",
-        "sourceHead": "408c0759a0588e58707336dc40585e469b9aa8be",
+        "disposition": "Independent trace assertion strengthening; current public head remains under review",
+        "next": "Follow substantive review and exact-head checks through the existing watcher. Do not treat this change as a prerequisite for the completed #10045 selector restoration.",
+        "observedAt": "2026-10-25T17:45:37.300367+00:00",
+        "sourceHead": "06a73ca10996bd195ddedfe9dcca489c03460923",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/408c0759a0588e58707336dc40585e469b9aa8be"
         ]
@@ -13966,10 +13966,26 @@
       "title": "Run core tagging tests in unit CI",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15937",
-      "status": "open",
-      "updatedAt": "2026-10-24T06:24:54.773472+00:00",
-      "summary": "Etienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nCurrent conflict repair is published at 9da6f49c82 on master 491c2af99a. It preserves the landed metric-test inclusion while removing only the coretag exclusion. Independent source review confirms the same original operation and unchanged remaining source; GitHub verifies this exact head mergeable. Current-head CI and existing maintainer review requests remain separate. No new review or runtime execution is claimed.\n\nEarlier evidence:\n\nCore-tagging selector correction rebased, preserving the landed trace-test inclusion. Exact head 6b39c8e12c is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe authorized Gazelle rebase is complete at 3f8833c521. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 3f8833c521759f8982130e180115a67af426c52b on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nRoot published the independently reviewed rebase as exact signed b1bcc69621 on current upstream 82396309. Its only remaining change removes the coretag unit-test exclusion; the complete Make hunk is identical to approved b210. Upstream d838 already supplies the valid support probe, so BUILD/test/production remain unchanged from upstream. The title and body now describe the selector-only change. No new comment, reviewer request or runtime qualification was needed. Exact new-head Gazelle job118816302756 reports only the unused //pkg/zip dependency in tools/nogo/check/BUILD, already owned by #16031; the selector itself has no new demonstrated failure.\n\nThe 18:30 source observation reports the contributor-approved core-tagging PR b210a0034 as conflicting with current base 9e9495997. Existing strict-SMT guest/analyzer evidence and native unsupported-worker limitations remain preserved. Root owns the bounded rebase and compatibility review in the released gvisor-15049 checkout; no new human feedback or source mutation is implied.\n\nSkip only Linux ENODEV when active SMT is unavailable and restore the coretag unit selector. Both strict SMT guests execute and pass the unchanged functional assertions, with actual CONFIG_SCHED_CORE and thread topology enforced. Both raw native owners skip and retain an incomplete qualification verdict. The published PR is contributor-approved; no contributor decision is pending. The context-only Make rebase is published at 6be1abc48d, preserving the intervening tracereplay landing and the entire reviewed topic change. Independent source review accepted it; no new workload or public review request was needed.",
+      "status": "merged",
+      "updatedAt": "2026-10-25T17:45:37.300367+00:00",
+      "summary": "Merged on 2026-10-25 at 09:22:05 UTC as 52027a756a517868e137f4cc4bb6974e0289c44c. The final coretag exclusion is removed. On current public 7bffefa9185a, all five #10045 labels are selected and accepted as cached PASS by each of the three passing Buildkite 52327 unit jobs. Per-case capability skips remain unknown in those public logs; historical strict SMT guest coverage is separate. No delivery or contributor decision remains.\n\nHistorical delivery and qualification record:\n\nEtienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nCurrent conflict repair is published at 9da6f49c82 on master 491c2af99a. It preserves the landed metric-test inclusion while removing only the coretag exclusion. Independent source review confirms the same original operation and unchanged remaining source; GitHub verifies this exact head mergeable. Current-head CI and existing maintainer review requests remain separate. No new review or runtime execution is claimed.\n\nEarlier evidence:\n\nCore-tagging selector correction rebased, preserving the landed trace-test inclusion. Exact head 6b39c8e12c is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe authorized Gazelle rebase is complete at 3f8833c521. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 3f8833c521759f8982130e180115a67af426c52b on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nRoot published the independently reviewed rebase as exact signed b1bcc69621 on current upstream 82396309. Its only remaining change removes the coretag unit-test exclusion; the complete Make hunk is identical to approved b210. Upstream d838 already supplies the valid support probe, so BUILD/test/production remain unchanged from upstream. The title and body now describe the selector-only change. No new comment, reviewer request or runtime qualification was needed. Exact new-head Gazelle job118816302756 reports only the unused //pkg/zip dependency in tools/nogo/check/BUILD, already owned by #16031; the selector itself has no new demonstrated failure.\n\nThe 18:30 source observation reports the contributor-approved core-tagging PR b210a0034 as conflicting with current base 9e9495997. Existing strict-SMT guest/analyzer evidence and native unsupported-worker limitations remain preserved. Root owns the bounded rebase and compatibility review in the released gvisor-15049 checkout; no new human feedback or source mutation is implied.\n\nSkip only Linux ENODEV when active SMT is unavailable and restore the coretag unit selector. Both strict SMT guests execute and pass the unchanged functional assertions, with actual CONFIG_SCHED_CORE and thread topology enforced. Both raw native owners skip and retain an incomplete qualification verdict. The published PR is contributor-approved; no contributor decision is pending. The context-only Make rebase is published at 6be1abc48d, preserving the intervening tracereplay landing and the entire reviewed topic change. Independent source review accepted it; no new workload or public review request was needed.",
       "evidence": [
+        {
+          "label": "Merged final coretag selector #15937",
+          "url": "https://github.com/google/gvisor/commit/52027a756a517868e137f4cc4bb6974e0289c44c"
+        },
+        {
+          "label": "Public amd64 cgroupv1 unit job: five cached PASS targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfce-45b1-a33f-2dcaacd1fd4a"
+        },
+        {
+          "label": "Public amd64 default unit job: five cached PASS targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfd0-4d52-ae4d-7fda5a99bc9e"
+        },
+        {
+          "label": "Public arm64 arm64 unit job: five cached PASS targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfd1-404a-a47a-a35568df24f4"
+        },
         {
           "label": "Strict guest and analyzer qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/39071568433"
@@ -14006,9 +14022,9 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "9da6f49c82abc45876590cffb68f38ece09ef76a",
-        "observedAt": "2026-10-24T06:24:54.773472+00:00",
-        "disposition": "Exact head approved; public validation passed; import pending",
-        "nextAction": "Follow the approved exact head and matching import through the existing watcher. No source amendment, acknowledgement or repeat reviewer request is needed.",
+        "observedAt": "2026-10-25T17:45:37.300367+00:00",
+        "disposition": "Merged; final #10045 selector restored",
+        "nextAction": "Delivery is complete. Preserve the cached-public-result and capability-skip limits in the linked investigation; #15936 is independent assertion strengthening, not a restoration gate.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/39477252830/job/118816302756",
           "https://github.com/google/gvisor/pull/16048",
@@ -34423,15 +34439,48 @@
       "id": "investigation:buildkite-excluded-unit-tests",
       "title": "Restore excluded Buildkite unit tests (#10045)",
       "status": "concluded",
-      "owner": "Codex \u2014 findings complete; upstream PR follow-through",
-      "updatedAt": "2026-10-24T10:26:21.679505+00:00",
-      "summary": "The investigation and qualification are complete. #15930, #15934 and #15935 have merged; #15936 remains open and #15937 is approved but unmerged. On public d15d5319c3, the unit-test target excludes only //pkg/coretag:coretag_test. The full-unit trace failure was a fixture assertion applied to unrelated libc reads; its approved amendment is published and both full architecture owners plus analyzers pass. Strict coretag and KVM pinring adapters provide positive coverage on both architectures; unsupported raw-worker results remain explicit.",
+      "owner": "Codex \u2014 selection restoration complete; independent trace assertions remain under review",
+      "updatedAt": "2026-10-25T17:45:37.300367+00:00",
+      "summary": "All five unit-test exclusions named in #10045 are removed on public master 7bffefa9185a. #15937 merged on 2026-10-25 at 09:22:05 UTC as 52027a756a51, restoring the final coretag selector. Public Buildkite 52327 runs make unit-tests in AMD64 cgroup v1, AMD64 cgroup v2 and ARM64 jobs; each job passes and lists all five targets as cached PASS. These logs establish restored selection and accepted cached results, not fresh execution or per-case coretag coverage. #15936 remains independent assertion-strengthening work and does not gate restoration.",
       "findings": [
         {
-          "text": "At upstream master 9e9495997, Makefile retains the issue #10045 TODO and four explicit target exclusions. This confirms the remaining coverage gap; it does not establish that all of the original failures still reproduce.",
+          "text": "The exact unchanged labels //pkg/metric:metric_test, //pkg/coretag:coretag_test, //runsc/config:config_test, //tools/tracereplay:tracereplay_test and //test/trace:trace_test are included by the current public unit-tests target at 7bffefa9185a. In Buildkite 52327, all three unit jobs exit zero and report 343 tests passed, with one test executed and the remaining results cached. Each of the five named targets is explicitly cached PASS in each job. The overall pipeline is failed, separately from these passing unit jobs. The jobs advertise no per-test XML artifacts, so TestEnable's executed-versus-skipped status remains unknown; current source permits capability skips for EINVAL and ENODEV. Earlier strict SMT guest positives remain separate evidence. #15936 at 06a73ca10996 changes trace assertions only, not selection; trace inclusion already landed in 40e83675f642. No replay or upstream issue closure was performed.",
           "evidence": [
             {
-              "label": "Current unit-test selection",
+              "label": "Merged final coretag selector #15937",
+              "url": "https://github.com/google/gvisor/commit/52027a756a517868e137f4cc4bb6974e0289c44c"
+            },
+            {
+              "label": "Current public unit-test selection includes all five labels",
+              "url": "https://github.com/google/gvisor/blob/7bffefa9185aa55ba377e8a5534210a7f0cbf266/Makefile#L266"
+            },
+            {
+              "label": "Public amd64 cgroupv1 unit job: five cached PASS targets",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfce-45b1-a33f-2dcaacd1fd4a"
+            },
+            {
+              "label": "Public amd64 default unit job: five cached PASS targets",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfd0-4d52-ae4d-7fda5a99bc9e"
+            },
+            {
+              "label": "Public arm64 arm64 unit job: five cached PASS targets",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfd1-404a-a47a-a35568df24f4"
+            },
+            {
+              "label": "Coretag TestEnable capability skip conditions",
+              "url": "https://github.com/google/gvisor/blob/7bffefa9185aa55ba377e8a5534210a7f0cbf266/pkg/coretag/coretag_test.go#L86"
+            },
+            {
+              "label": "Independent trace assertion strengthening #15936",
+              "url": "https://github.com/google/gvisor/pull/15936"
+            }
+          ]
+        },
+        {
+          "text": "At historical upstream master 9e9495997, Makefile retains the issue #10045 TODO and four explicit target exclusions. This recorded the selection gap at that source; it does not establish that all of the original failures still reproduce.",
+          "evidence": [
+            {
+              "label": "Historical unit-test selection",
               "url": "https://github.com/google/gvisor/blob/9e9495997/Makefile#L259-L261"
             }
           ]
@@ -34596,8 +34645,36 @@
           ]
         }
       ],
-      "nextStep": "Follow the remaining #15936 review/import and approved #15937 delivery. Verify that the final coretag exclusion is removed upstream and the resulting public CI passes before treating issue #10045 as resolved. Preserve the historical full-unit results, original failure and skipped native capability owners alongside the corrected and capability-specific results.",
+      "nextStep": "Selection restoration is complete. Follow #15936 independently through its existing review and CI; it is not a prerequisite for restoring the five labels. The Makefile still contains an obsolete #10045 FIXME. Keep the historical failed runs, unsupported-worker skips and strict SMT guest positives source-specific. Current public logs do not establish whether TestEnable executed or capability-skipped; no new workload or upstream issue closure is claimed.",
       "evidence": [
+        {
+          "label": "Merged final coretag selector #15937",
+          "url": "https://github.com/google/gvisor/commit/52027a756a517868e137f4cc4bb6974e0289c44c"
+        },
+        {
+          "label": "Current public unit-test selection includes all five labels",
+          "url": "https://github.com/google/gvisor/blob/7bffefa9185aa55ba377e8a5534210a7f0cbf266/Makefile#L266"
+        },
+        {
+          "label": "Public amd64 cgroupv1 unit job: five cached PASS targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfce-45b1-a33f-2dcaacd1fd4a"
+        },
+        {
+          "label": "Public amd64 default unit job: five cached PASS targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfd0-4d52-ae4d-7fda5a99bc9e"
+        },
+        {
+          "label": "Public arm64 arm64 unit job: five cached PASS targets",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52327#01a172ee-dfd1-404a-a47a-a35568df24f4"
+        },
+        {
+          "label": "Coretag TestEnable capability skip conditions",
+          "url": "https://github.com/google/gvisor/blob/7bffefa9185aa55ba377e8a5534210a7f0cbf266/pkg/coretag/coretag_test.go#L86"
+        },
+        {
+          "label": "Independent trace assertion strengthening #15936",
+          "url": "https://github.com/google/gvisor/pull/15936"
+        },
         {
           "label": "Issue #10045 and reported failures",
           "url": "https://github.com/google/gvisor/issues/10045"
@@ -34611,7 +34688,7 @@
           "url": "https://github.com/google/gvisor/blob/9e9495997/Makefile#L259-L261"
         },
         {
-          "label": "Current public unit-test target retains only the coretag exclusion",
+          "label": "Historical d15d unit-test selection retained only coretag exclusion",
           "url": "https://github.com/google/gvisor/blob/d15d5319c3c758a6f18ccb59c607dc75300bce90/Makefile#L269"
         }
       ]
