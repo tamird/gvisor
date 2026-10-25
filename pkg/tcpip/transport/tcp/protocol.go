@@ -107,6 +107,8 @@ type protocol struct {
 	congestionControl string
 	// availableCongestionControl is immutable after construction.
 	availableCongestionControl []string
+	// hyStartPlus selects the experimental CUBIC startup for probe stacks only.
+	hyStartPlus bool
 	// +checklocks:mu
 	moderateReceiveBuffer bool
 	// +checklocks:mu
@@ -577,6 +579,16 @@ func NewProtocolProbe(probe TCPProbeFunc) func(*stack.Stack) stack.TransportProt
 	}
 }
 
+// NewProtocolProbeHyStartPlus returns a probe stack that uses the RFC 9406
+// prototype when CUBIC is selected. Normal TCP constructors remain unchanged.
+func NewProtocolProbeHyStartPlus(probe TCPProbeFunc) func(*stack.Stack) stack.TransportProtocol {
+	return func(s *stack.Stack) stack.TransportProtocol {
+		p := newProtocol(s, ccReno, probe)
+		p.hyStartPlus = true
+		return p
+	}
+}
+
 // NewProtocolCUBIC returns a TCP transport protocol with CUBIC congestion
 // control.
 //
@@ -585,7 +597,7 @@ func NewProtocolCUBIC(s *stack.Stack) stack.TransportProtocol {
 	return newProtocol(s, ccCubic, nil)
 }
 
-func newProtocol(s *stack.Stack, cc string, probe TCPProbeFunc) stack.TransportProtocol {
+func newProtocol(s *stack.Stack, cc string, probe TCPProbeFunc) *protocol {
 	rng := s.SecureRNG()
 	var seqnumSecret [16]byte
 	var tsOffsetSecret [16]byte

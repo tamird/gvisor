@@ -1,4 +1,4 @@
-"""Measure real CUBIC startup under one ordered, transient ACK delay."""
+"""Compare classic and RFC 9406 startup on the same corrected CUBIC sender."""
 import hashlib
 import json
 import os
@@ -8,58 +8,95 @@ import xml.etree.ElementTree as ET
 
 
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-ROOT = "TestVirtualTCPHyStartTransientDelay"
-CASES = {f"{ROOT}/control", f"{ROOT}/pulse"}
+UNIT = "//pkg/tcpip/transport/tcp:tcp_test"
+ROOT = "TestVirtualTCPHyStartComparison"
+CASES = {f"{ROOT}/{scheme}_{path}" for scheme in ("classic", "plus") for path in ("control", "pulse", "fifo")}
+UNIT_ROOT = "TestCubicHyStartPlus"
+UNIT_CASES = {f"{UNIT_ROOT}/{case}" for case in ("byte_credit", "relief", "persistent", "loss", "timeout")}
 
 
-def measure_startup(samples: dict) -> dict:
+def measure_startup(samples: dict, scheme: str) -> dict:
     """Check the wire input independently of which detector fires, if any."""
     result = {}
     prefixes = {}
     for name, delay in (("control", 0), ("pulse", 25_000_000)):
-        sample = samples[f"{ROOT}/{name}"]
+        sample = samples[f"{ROOT}/{scheme}_{name}"]
         startup = sample["Startup"]
         mss, first = startup["MSS"], startup["DataSequence"]
         deadline = startup["Deadline"]
         if (sample["Algorithm"] != "cubic" or startup["DelayNS"] != delay or mss != 1420
+                or sample["RateBytesPerSecond"] != 12_500_000 or sample["OneWayDelayNS"] != 50_000_000
+                or sample.get("ForwardQueue") or not startup["Transitions"]
+                or any(ack["Plus"] != (scheme == "plus") for ack in startup["ACKs"])
                 or sample["Bytes"] != 16 << 20 or sample["Retransmits"] or sample["RTOs"]
                 or deadline["MSS"] != mss or deadline["AtNS"] != startup["FirstPayloadNS"] + 1_000_000_000
-                or deadline["AppRemainingBytes"] <= 0 or deadline["Probe"]["BufferedBytes"] <= 0
-                or deadline["Probe"]["SndWnd"] <= deadline["Cwnd"] * mss):
+                or deadline["AppRemainingBytes"] <= 0 or deadline["Probe"]["BufferedBytes"] <= 0):
             raise ValueError(f"{name}: workload, deadline, demand or advertised window differs: {deadline}")
         wire = [p for p in sample["Trace"] if p["From"] == 1 and p["Flags"] == 16
                 and 0 < (p["Acknowledgment"] - first) % 2**32 <= 160 * mss]
-        early, pulse_rtt, after_rtt = [], [], []
+        early, pulse_rtt, after_rtt, missing_echo = [], [], [], []
+        selected_count = after_count = 0
         previous_offset = previous_at = 0
         for packet, ack in zip(wire, startup["ACKs"], strict=True):
             offset = (packet["Acknowledgment"] - first) % 2**32
             affected = 30 * mss < offset <= 70 * mss
             expected = max(previous_at, packet["NominalAtNS"] + (delay if affected else 0))
             if (offset <= previous_offset or packet["AtNS"] != expected or ack["AtNS"] != expected
-                    or ack["SndUna"] != packet["Acknowledgment"] or not packet.get("TSEcr")):
+                    or ack["SndUna"] != packet["Acknowledgment"]):
                 raise ValueError(f"{name}: scheduled ACK or sender identity differs at byte {offset}")
             previous_offset, previous_at = offset, expected
-            rtt = (ack["TSNow"] - packet["TSEcr"]) % 2**32
+            echo = packet.get("TSEcr")
+            if not echo:
+                missing_echo.append(offset)
             if affected:
-                pulse_rtt.append(rtt)
+                selected_count += 1
+                if echo:
+                    pulse_rtt.append((ack["TSNow"] - echo) % 2**32)
             elif offset > 70 * mss:
-                after_rtt.append(rtt)
+                after_count += 1
+                if echo:
+                    after_rtt.append((ack["TSNow"] - echo) % 2**32)
             else:
                 early.append((packet, ack))
-        if not early or not pulse_rtt or not after_rtt:
+        if not early or not selected_count or not after_count:
             raise ValueError(f"{name}: incomplete ACK history across the selected flight")
         prefixes[name] = (first, mss, startup["FirstPayloadNS"], sample["PayloadSHA256"], early)
         initial = startup["ACKs"][0]["Ssthresh"]
         exit_ack = next((a for a in startup["ACKs"] if a["Ssthresh"] != initial), None)
         result[name] = {
             "first_exit_in_trace": exit_ack,
-            "affected_ack_count": len(pulse_rtt), "affected_min_rtt_ms": min(pulse_rtt),
-            "after_ack_count": len(after_rtt), "after_min_rtt_ms": min(after_rtt),
-            "deadline": deadline, "transfer_finished_ns": sample["VirtualNS"],
+            "affected_ack_count": selected_count, "affected_min_rtt_ms": min(pulse_rtt, default=None),
+            "after_ack_count": after_count, "after_min_rtt_ms": min(after_rtt, default=None),
+            "missing_or_zero_echo_offsets": missing_echo,
+            "deadline": deadline, "rwnd_headroom_bytes": deadline["Probe"]["SndWnd"] - deadline["Cwnd"] * mss,
+            "transfer_finished_ns": sample["VirtualNS"],
         }
     if prefixes["control"] != prefixes["pulse"]:
         raise ValueError("The trials differ before the first pulse ACK or in the delivered payload")
     return result
+
+
+def measure_fifo(sample: dict, scheme: str) -> dict:
+    startup, queue = sample["Startup"], sample["ForwardQueue"]
+    mark = startup["Deadline"]
+    if (sample["Algorithm"] != "cubic" or sample["RecoveryClass"] != "finite_fifo"
+            or sample["Bytes"] != 16 << 20 or mark["MSS"] != 1420
+            or mark["AtNS"] != startup["FirstPayloadNS"] + 1_000_000_000
+            or mark["AppRemainingBytes"] <= 0 or mark["Probe"]["BufferedBytes"] <= 0
+            or sample["RateBytesPerSecond"] != queue["Rate"] or queue["Rate"] != 1_250_000
+            or sample["OneWayDelayNS"] != 50_000_000 or sample["BDPBytes"] != queue["Capacity"]
+            or queue["Capacity"] != 125_000 or startup["DelayNS"] or not startup["Transitions"]
+            or any(ack["Plus"] != (scheme == "plus") for ack in startup["ACKs"])
+            or queue["AdmittedPackets"] + queue["DroppedPackets"] != queue["OfferedPackets"]
+            or queue["AdmittedBytes"] + queue["DroppedBytes"] != queue["OfferedBytes"]
+            or not 0 < queue["FirstSecondPeakNS"] <= queue["PeakBacklogNS"] <= 100_000_000
+            or not 0 <= queue["FirstSecondAbove25msNS"] <= min(1_000_000_000, queue["Above25msNS"])
+            or not 0 <= queue["LongestAbove25msNS"] <= queue["Above25msNS"] <= sample["VirtualNS"]):
+        raise ValueError(f"{scheme}: FIFO exposure, accounting or demand differs: {queue}")
+    return {"queue": queue, "deadline": mark, "transfer_finished_ns": sample["VirtualNS"],
+            "peak_cwnd": startup["PeakCwnd"], "first_second_peak_cwnd": startup["FirstSecondPeakCwnd"],
+            "peak_flight_bytes": sample["MaxOutstandingBeforeBurst"],
+            "sustained_above_25ms_for_one_base_rtt": queue["LongestAbove25msNS"] >= 100_000_000}
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:
@@ -85,7 +122,8 @@ def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[
     return manifest, native
 
 
-def observations(evidence: Path, phase: str, runs: int) -> dict:
+def observations(evidence: Path, phase: str, runs: int, owner: str = OWNER) -> dict:
+    root, leaves = (ROOT, CASES) if owner == OWNER else (UNIT_ROOT, UNIT_CASES)
     directory = evidence / ("invocation-" + phase)
     verdict = json.loads((directory / "verdict.json").read_text())
     executed = verdict["executed"]
@@ -94,10 +132,10 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
     if {row["run"] for row in executed} != set(range(1, runs + 1)):
         raise ValueError(f"{phase}: incomplete run census")
     for row in executed:
-        if (row["owner"]["label"] != OWNER or row["status"] != "PASSED"
+        if (row["owner"]["label"] != owner or row["status"] != "PASSED"
                 or row["cached_locally"] or row["attempt"] != 1 or row["shard"] != 1):
             raise ValueError(f"{phase}: unexpected attempt identity: {row}")
-    manifest, native = native_results(directory, phase, OWNER, runs)
+    manifest, native = native_results(directory, phase, owner, runs)
     samples = {}
     xml_runs = set()
     references = []
@@ -125,14 +163,15 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
         if row["name"] == "test.xml":
             cases = ET.fromstring(body).findall(".//testcase")
             names = [case.attrib["name"] for case in cases]
-            if (set(names) != CASES | {ROOT} or len(names) != len(CASES) + 1
+            if (set(names) != leaves | {root} or len(names) != len(leaves) + 1
                     or any(list(case) for case in cases) or run in xml_runs):
                 raise ValueError(f"{phase}: unexpected XML cases {names}")
             xml_runs.add(run)
         elif row["name"] == "test.log":
             values = [json.loads(line.split("VIRTUAL_TCP ", 1)[1])
                       for line in body.decode().splitlines() if "VIRTUAL_TCP " in line]
-            if {value["Case"] for value in values} != CASES or len(values) != len(CASES) or run in samples:
+            expected = leaves if owner == OWNER else set()
+            if {value["Case"] for value in values} != expected or len(values) != len(expected) or run in samples:
                 raise ValueError(f"{phase}: missing or duplicate virtual transfers")
             samples[run] = {value["Case"]: value for value in values}
         else:
@@ -144,13 +183,18 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
     for run, sample in samples.items():
         if sample != baseline:
             raise ValueError(f"{phase}: virtual packet observations differ in run {run}")
-    return {"attempts": runs, "reference_sample": baseline, "reports": references,
-            "startup": measure_startup(baseline)}
+    result = {"attempts": runs, "reference_sample": baseline, "reports": references}
+    if owner == OWNER:
+        result["startup"] = {scheme: measure_startup(baseline, scheme) for scheme in ("classic", "plus")}
+        result["fifo"] = {scheme: measure_fifo(baseline[f"{ROOT}/{scheme}_fifo"], scheme) for scheme in ("classic", "plus")}
+        if len({sample["PayloadSHA256"] for sample in baseline.values()}) != 1:
+            raise ValueError("The six arms did not deliver the same payload")
+    return result
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    owners = [OWNER, OWNER + "_nogo"]
+    owners = [OWNER, OWNER + "_nogo", UNIT, UNIT + "_nogo"]
     if config["targets"] != owners:
         raise ValueError("Unexpected virtual TCP owners")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
@@ -166,6 +210,11 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                 "--test_env=GO_TEST_WRAP_TESTV=1"]
     result = {"status": "INCOMPLETE", "source": config["source"], "phases": {}}
     try:
+        unit = invoke("startup-unit", ["test", *options, *selected, "--runs_per_test=1",
+                                      f"--test_arg=-test.run=^{UNIT_ROOT}$", UNIT], "test", targets=[UNIT])
+        if unit["status"] != "PASS":
+            raise RuntimeError("Slow-start unit owner did not pass")
+        result["phases"]["startup-unit"] = observations(evidence, "startup-unit", 1, UNIT)
         for phase, count, extra in (("virtual-normal", 2, []), ("virtual-race", 1, ["--config=race"])):
             checked = invoke(phase, ["test", *options, *extra, *selected,
                                      f"--runs_per_test={count}", f"--test_arg=-test.run=^{ROOT}$", OWNER], "test", targets=[OWNER])
@@ -175,11 +224,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         if (result["phases"]["virtual-normal"]["reference_sample"]
                 != result["phases"]["virtual-race"]["reference_sample"]):
             raise ValueError("Normal and race virtual packet observations differ")
-        analyzed = invoke("virtual-nogo", ["test", *options, *selected, "--runs_per_test=1",
-                                           OWNER + "_nogo"], "test", targets=[OWNER + "_nogo"])
-        if analyzed["status"] != "PASS":
-            raise RuntimeError("Both-architecture analyzer owner did not pass")
-        native_results(evidence / "invocation-virtual-nogo", "virtual-nogo", OWNER + "_nogo", 1)
+        for phase, analyzer in (("virtual-nogo", OWNER + "_nogo"), ("startup-nogo", UNIT + "_nogo")):
+            analyzed = invoke(phase, ["test", *options, *selected, "--runs_per_test=1",
+                                      analyzer], "test", targets=[analyzer])
+            if analyzed["status"] != "PASS":
+                raise RuntimeError(f"{phase}: analyzer owner did not pass")
+            native_results(evidence / f"invocation-{phase}", phase, analyzer, 1)
         result["status"] = "PASS"
     except (OSError, ValueError, RuntimeError) as error:
         result.update(status="FAIL", error=str(error))

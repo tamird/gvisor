@@ -48,6 +48,119 @@ func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) 
 	return c
 }
 
+// +checklocks:c.s.ep.mu
+func (c *cubicState) ackHyStartPlus(acked int, sample time.Duration) {
+	c.s.SndUna.UpdateForward(seqnum.Size(acked))
+	c.Update(0, acked, sample, c.s.ep.stack.Clock().NowMonotonic())
+}
+
+func TestCubicHyStartPlus(t *testing.T) {
+	const mss = 1000
+	const rtt = 100 * time.Millisecond
+	newSender := func(t *testing.T) *cubicState {
+		clock := faketime.NewManualClock()
+		c := newTestCubic(t, clock, rtt)
+		c.s.ep.mu.Lock()
+		defer c.s.ep.mu.Unlock()
+		c.s.MaxPayloadSize = mss
+		c.HyStartPlus = true
+		return c
+	}
+	t.Run("byte_credit", func(t *testing.T) {
+		c := newSender(t)
+		c.s.ep.mu.Lock()
+		defer c.s.ep.mu.Unlock()
+		c.s.SndNxt = 100 * mss
+		c.ackHyStartPlus(mss/2, unknownRTT)
+		c.ackHyStartPlus(mss/2, unknownRTT)
+		c.ackHyStartPlus(10*mss, unknownRTT)
+		if c.s.SndCwnd != InitialCwnd+9 || c.StartupCredit != 0 || c.SampleCount != 0 {
+			t.Fatalf("half segments and one ACK of 10 MSS: cwnd=%d credit=%d samples=%d", c.s.SndCwnd, c.StartupCredit, c.SampleCount)
+		}
+		c.CSS, c.CSSBaseline = true, rtt
+		for range 3 {
+			c.ackHyStartPlus(mss, unknownRTT)
+		}
+		if c.s.SndCwnd != InitialCwnd+9 || c.StartupCredit != 3*mss {
+			t.Fatalf("three CSS ACKs: cwnd=%d credit=%d", c.s.SndCwnd, c.StartupCredit)
+		}
+		c.ackHyStartPlus(mss, unknownRTT)
+		c.ackHyStartPlus(10*mss, unknownRTT)
+		if c.s.SndCwnd != InitialCwnd+12 || c.StartupCredit != 0 {
+			t.Fatalf("fourth CSS ACK and capped ACK of 10 MSS: cwnd=%d credit=%d", c.s.SndCwnd, c.StartupCredit)
+		}
+	})
+	for _, path := range []string{"relief", "persistent", "loss", "timeout"} {
+		t.Run(path, func(t *testing.T) {
+			c := newSender(t)
+			c.s.ep.mu.Lock()
+			defer c.s.ep.mu.Unlock()
+			const high = rtt + rtt/minRTTDivisor
+			const flight = 10 * mss
+			// Freeze the initial flight at ten MSS on the first ACK.
+			c.s.SndNxt = flight
+			c.ackHyStartPlus(mss, rtt)
+			c.s.SndNxt = 2 * flight
+			for range 9 {
+				c.ackHyStartPlus(mss, rtt)
+			}
+			for range 7 {
+				c.ackHyStartPlus(mss, high)
+			}
+			if c.CSS {
+				t.Fatal("entered CSS before the eighth sample")
+			}
+			before := c.s.SndCwnd
+			c.ackHyStartPlus(mss, high)
+			if !c.CSS || c.CSSRounds != 0 || c.CSSBaseline != high || c.s.SndCwnd != before+1 {
+				t.Fatalf("trigger ACK: CSS=%t rounds=%d baseline=%v cwnd=%d", c.CSS, c.CSSRounds, c.CSSBaseline, c.s.SndCwnd)
+			}
+			c.s.SndNxt = 3 * flight
+			c.ackHyStartPlus(mss, high)
+			c.ackHyStartPlus(mss, unknownRTT)
+			if c.CSSRounds != 1 || c.SampleCount != 9 || c.LastRTT != rtt || c.CurrRTT != high {
+				t.Fatalf("partial entry round did not end on unsampled ACK: rounds=%d samples=%d last=%v current=%v", c.CSSRounds, c.SampleCount, c.LastRTT, c.CurrRTT)
+			}
+			switch path {
+			case "loss", "timeout":
+				if path == "loss" {
+					c.HandleLossDetected()
+				} else {
+					c.HandleRTOExpired()
+				}
+				if c.CSS || c.StartupCredit != 0 || c.s.Ssthresh == InitialSsthresh {
+					t.Fatalf("after %s: CSS=%t credit=%d ssthresh=%d", path, c.CSS, c.StartupCredit, c.s.Ssthresh)
+				}
+			case "relief":
+				for range 7 {
+					c.ackHyStartPlus(mss, rtt)
+				}
+				if !c.CSS {
+					t.Fatal("resumed before eight samples")
+				}
+				c.ackHyStartPlus(mss, rtt)
+				if c.CSS || c.s.Ssthresh != InitialSsthresh || c.CSSRounds != 0 {
+					t.Fatalf("recovered RTT: CSS=%t ssthresh=%d rounds=%d", c.CSS, c.s.Ssthresh, c.CSSRounds)
+				}
+			case "persistent":
+				for round := 1; round < cssMaxRounds; round++ {
+					c.s.SndNxt.UpdateForward(flight)
+					for range 9 {
+						c.ackHyStartPlus(mss, high)
+					}
+					if !c.CSS || c.CSSRounds != uint(round) {
+						t.Fatalf("before end of round %d: CSS=%t rounds=%d", round+1, c.CSS, c.CSSRounds)
+					}
+					c.ackHyStartPlus(mss, high)
+				}
+				if c.CSS || c.CSSRounds != cssMaxRounds || c.s.Ssthresh != c.s.SndCwnd || c.WMax != float64(c.s.SndCwnd) || c.WEst != c.WMax {
+					t.Fatalf("exit to shared CUBIC epoch: CSS=%t rounds=%d ssthresh=%d cwnd=%d WMax=%v WEst=%v", c.CSS, c.CSSRounds, c.s.Ssthresh, c.s.SndCwnd, c.WMax, c.WEst)
+				}
+			}
+		})
+	}
+}
+
 func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 	for _, test := range []struct {
 		name            string
@@ -72,13 +185,13 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 			// could buy two segments, so they distinguish a stale-credit burst
 			// from the permitted one-segment increase.
 			clock.Advance(rtt)
-			c.Update(test.pendingSegments, rtt, clock.NowMonotonic())
+			c.Update(test.pendingSegments, 0, rtt, clock.NowMonotonic())
 			// Make the time-based target much larger than the actual window.
 			// Two newly acknowledged segments may add at most one segment
 			// (RFC 9438 section 4.2). Earlier credit may add one more segment,
 			// but must not all become immediately spendable at the new rate.
 			clock.Advance(time.Minute)
-			c.Update(2, rtt, clock.NowMonotonic())
+			c.Update(2, 0, rtt, clock.NowMonotonic())
 			if got, want := c.s.SndCwnd, windowAfterLoss+test.maxGrowth; got > want {
 				t.Fatalf("2 newly acknowledged segments with %d pending credits grew cwnd from %d to %d, want <= %d", test.pendingSegments, windowAfterLoss, got, want)
 			}
@@ -95,7 +208,7 @@ func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
 	clock.Advance(rtt)
-	c.Update(3, rtt, clock.NowMonotonic())
+	c.Update(3, 0, rtt, clock.NowMonotonic())
 	windowBeforeZeroACK := c.s.SndCwnd
 	creditBeforeZeroACK := c.s.SndCAAckCount
 	estimateBeforeZeroACK := c.WEst
@@ -103,7 +216,7 @@ func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	// Advancing time raises the target, but without new ACKs neither the
 	// actual window nor the saved credit may change.
 	clock.Advance(time.Minute)
-	c.Update(0, rtt, clock.NowMonotonic())
+	c.Update(0, 0, rtt, clock.NowMonotonic())
 	if got, want := c.s.SndCwnd, windowBeforeZeroACK; got != want {
 		t.Errorf("no newly acknowledged segments: cwnd=%d, want unchanged %d", got, want)
 	}
@@ -124,7 +237,7 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
 	clock.Advance(rtt)
-	c.Update(3, rtt, clock.NowMonotonic())
+	c.Update(3, 0, rtt, clock.NowMonotonic())
 	if got, want := c.s.SndCAAckCount, 0; got <= want {
 		t.Fatalf("cubic growth credit = %d, want > %d", got, want)
 	}
@@ -135,7 +248,7 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	clock.Advance(time.Minute)
 	// One newly acknowledged segment cannot buy a segment even at the maximum growth rate.
 	// Retaining the three pre-recovery credits would incorrectly allow growth.
-	c.Update(1, rtt, clock.NowMonotonic())
+	c.Update(1, 0, rtt, clock.NowMonotonic())
 	if got, want := c.s.SndCwnd, windowAfterSecondLoss; got != want {
 		t.Fatalf("first acknowledged segment after recovery grew cwnd from %d to %d", want, got)
 	}
@@ -153,7 +266,7 @@ func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
 	c.CurrRTT = 2 * rtt
 	c.SampleCount = nRTTSample - 1
 	clock.Advance(rtt)
-	c.Update(1, 2*rtt, clock.NowMonotonic())
+	c.Update(1, 0, 2*rtt, clock.NowMonotonic())
 	if got, want := c.s.Ssthresh, c.s.SndCwnd; got != want {
 		t.Fatalf("HyStart threshold = %d, want current window %d", got, want)
 	}
@@ -175,7 +288,7 @@ func TestCubicFriendlyEstimateUsesACKs(t *testing.T) {
 		c.HandleLossDetected()
 		c.s.leaveRecovery()
 		clock.Advance(elapsed)
-		c.Update(packetsAcked, rtt, clock.NowMonotonic())
+		c.Update(packetsAcked, 0, rtt, clock.NowMonotonic())
 		return c.WEst
 	}
 	first := estimate(0, 1)
@@ -199,13 +312,13 @@ func TestCubicFriendlyEstimateAbovePriorWindow(t *testing.T) {
 	// Loss reduced the window from 10 to 7. Six acknowledged windows
 	// regain the three lost segments at the initial Reno-friendly rate.
 	for range 6 {
-		c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+		c.Update(c.s.SndCwnd, 0, rtt, clock.NowMonotonic())
 	}
 	if got, want := c.WEst, c.WLastMax; got < want {
 		t.Fatalf("Reno estimate = %f, want >= pre-loss window %f", got, want)
 	}
 	previous := c.WEst
-	c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+	c.Update(c.s.SndCwnd, 0, rtt, clock.NowMonotonic())
 	if got, want := c.WEst-previous, float64(1); got != want {
 		t.Fatalf("estimate increase above the prior window = %f, want %f", got, want)
 	}
@@ -222,17 +335,17 @@ func TestCubicFriendlyRegionConsumesOldCredit(t *testing.T) {
 	// Raise the cubic curve above the estimate so these ACKs first earn
 	// cubic credit. A full window of ACKs then crosses into the friendly region.
 	clock.Advance(100 * time.Millisecond)
-	c.Update(3, rtt, clock.NowMonotonic())
+	c.Update(3, 0, rtt, clock.NowMonotonic())
 	if got, want := c.s.SndCAAckCount, 0; got <= want {
 		t.Fatalf("cubic growth credit = %d, want > %d", got, want)
 	}
-	c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+	c.Update(c.s.SndCwnd, 0, rtt, clock.NowMonotonic())
 	if got, want := c.WC, c.WEst; got >= want {
 		t.Fatalf("cubic window = %f, want < Reno-friendly estimate %f", got, want)
 	}
 	initial := c.s.SndCwnd
 	clock.Advance(time.Minute)
-	c.Update(1, rtt, clock.NowMonotonic())
+	c.Update(1, 0, rtt, clock.NowMonotonic())
 	if got, want := c.s.SndCwnd, initial; got != want {
 		t.Fatalf("returning to the cubic region reused ACK credit: window=%d, want %d", got, want)
 	}
@@ -266,7 +379,7 @@ func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
 		defer c.s.ep.mu.Unlock()
 		c.s.Ssthresh = c.s.SndCwnd + 1
 		for _, n := range acks {
-			c.Update(n, rtt, clock.NowMonotonic())
+			c.Update(n, 0, rtt, clock.NowMonotonic())
 		}
 		return c.s.SndCwnd, c.WEst
 	}
@@ -292,7 +405,7 @@ func TestCubicRTOPreservesPriorWindow(t *testing.T) {
 	c.s.leaveRecovery()
 	prior := float64(c.s.SndCwnd)
 	c.HandleRTOExpired()
-	c.Update(c.s.Ssthresh-c.s.SndCwnd, rtt, clock.NowMonotonic())
+	c.Update(c.s.Ssthresh-c.s.SndCwnd, 0, rtt, clock.NowMonotonic())
 	if got, want := c.WLastMax, prior; got != want {
 		t.Fatalf("prior window after RTO slow start = %f, want %f", got, want)
 	}
@@ -314,7 +427,7 @@ func TestCubicWindowRestartPreservesPeak(t *testing.T) {
 			c.s.SndCwnd = 7
 			if recovery == "timeout" {
 				c.HandleRTOExpired()
-				c.Update(c.s.Ssthresh-c.s.SndCwnd, rtt, clock.NowMonotonic())
+				c.Update(c.s.Ssthresh-c.s.SndCwnd, 0, rtt, clock.NowMonotonic())
 			} else {
 				c.HandleLossDetected()
 				c.s.leaveRecovery()
@@ -322,7 +435,7 @@ func TestCubicWindowRestartPreservesPeak(t *testing.T) {
 			peak := c.WMax
 			clock.Advance(time.Minute)
 			for range 3 {
-				c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+				c.Update(c.s.SndCwnd, 0, rtt, clock.NowMonotonic())
 			}
 			if got, want := c.s.SndCwnd, InitialCwnd; got <= want {
 				t.Fatalf("grown window = %d, want > restart window %d", got, want)

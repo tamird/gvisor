@@ -49,6 +49,10 @@ const (
 	// ackDelta is the maximum time between ACKs for them to be considered part
 	// of the same ACK Train during HyStart
 	ackDelta = 2 * time.Millisecond
+
+	cssGrowthDivisor = 4
+	cssMaxRounds     = 5
+	nonpacedACKLimit = 8
 )
 
 // cubicState stores the variables related to TCP CUBIC congestion
@@ -68,6 +72,11 @@ type cubicState struct {
 	// RTO.
 	numCongestionEvents int
 
+	// The ACK covering EndSeq belongs to the ending round. Keep its sample
+	// visible until the following ACK opens the new round.
+	plusRoundStarted bool
+	plusRoundEnded   bool
+
 	s *sender
 }
 
@@ -84,9 +93,11 @@ func newCubicCC(s *sender) *cubicState {
 			C:    0.4,
 			// By this point, the sender has initialized it's initial sequence
 			// number.
-			EndSeq:  s.SndNxt,
-			LastRTT: effectivelyInfinity,
-			CurrRTT: effectivelyInfinity,
+			EndSeq:      s.SndNxt,
+			LastRTT:     effectivelyInfinity,
+			CurrRTT:     effectivelyInfinity,
+			CSSBaseline: effectivelyInfinity,
+			ACKRTT:      unknownRTT,
 			// LastAck/RoundStart are seeded here from processing time, but the
 			// HyStart ACK-train comparator that reads them is gated on
 			// LastRTT < effectivelyInfinity, which only becomes true after the
@@ -180,6 +191,64 @@ func (c *cubicState) beginHyStartRound(now tcpip.MonotonicTime) {
 	c.RoundStart = now
 }
 
+// updateHyStartPlus applies RFC 9406 sections 4.2 and 4.3 only in initial
+// slow start. The sender has no pacer. Its window is in whole segments, so
+// retain fractional byte credit rather than rounding each CSS ACK down.
+//
+// +checklocks:c.s.ep.mu
+func (c *cubicState) updateHyStartPlus(bytesAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime) {
+	if !c.plusRoundStarted || c.plusRoundEnded {
+		if !c.plusRoundStarted || c.EndSeq.LessThan(c.s.SndUna) {
+			// No flight existed at creation (or at the previous boundary).
+			c.EndSeq = c.s.SndNxt
+		}
+		c.plusRoundStarted, c.plusRoundEnded = true, false
+		c.LastRTT, c.CurrRTT = c.CurrRTT, effectivelyInfinity
+		c.SampleCount = 0
+		c.RoundStart = ackTime
+	}
+	mss := c.s.MaxPayloadSize
+	if mss > 0 {
+		credit := min(bytesAcked, nonpacedACKLimit*mss)
+		if !c.CSS {
+			credit *= cssGrowthDivisor
+		}
+		c.StartupCredit += credit
+		c.s.SndCwnd += c.StartupCredit / (cssGrowthDivisor * mss)
+		c.StartupCredit %= cssGrowthDivisor * mss
+	}
+	if rtt >= 0 {
+		c.CurrRTT = min(c.CurrRTT, rtt)
+		c.SampleCount++
+		if c.SampleCount >= nRTTSample {
+			if c.CSS {
+				if c.CurrRTT < c.CSSBaseline {
+					c.CSS, c.CSSRounds, c.CSSBaseline = false, 0, effectivelyInfinity
+				}
+			} else if c.LastRTT != effectivelyInfinity {
+				thresh := max(minRTTThresh, min(maxRTTThresh, c.LastRTT/minRTTDivisor))
+				if c.CurrRTT >= c.LastRTT+thresh {
+					c.CSS, c.CSSBaseline = true, c.CurrRTT
+				}
+			}
+		}
+	}
+	if !c.s.SndUna.LessThan(c.EndSeq) {
+		c.plusRoundEnded = true
+		c.EndSeq = c.s.SndNxt
+		if c.CSS {
+			c.CSSRounds++
+			if c.CSSRounds == cssMaxRounds {
+				c.CSS = false
+				c.StartupCredit = 0
+				c.s.Ssthresh = c.s.SndCwnd
+				c.WMax = float64(c.s.SndCwnd)
+				c.enterCongestionAvoidance()
+			}
+		}
+	}
+}
+
 // updateSlowStart will update the congestion window as per the slow-start
 // algorithm used by NewReno. If after adjusting the congestion window we cross
 // the ssThresh then it will return the number of packets that must be consumed
@@ -213,9 +282,14 @@ func (c *cubicState) updateSlowStart(packetsAcked int) int {
 //
 // +checklocks:c.s.ep.mu
 // +checklocksexclude:c.s.rtt.rttMutex
-func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime) {
+func (c *cubicState) Update(packetsAcked, bytesAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime) {
+	c.ACKRTT = rtt
 	slowStart := c.s.SndCwnd < c.s.Ssthresh
 	if c.s.Ssthresh == InitialSsthresh && slowStart {
+		if c.HyStartPlus {
+			c.updateHyStartPlus(bytesAcked, rtt, ackTime)
+			return // This ACK already spent its byte credit in slow start or CSS.
+		}
 		c.updateHyStart(rtt, ackTime)
 	}
 	if slowStart {
@@ -300,6 +374,7 @@ func (c *cubicState) getCwnd(packetsAcked, sndCwnd int, srtt time.Duration) int 
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) HandleLossDetected() {
+	c.CSS, c.CSSRounds, c.StartupCredit = false, 0, 0
 	// See: https://tools.ietf.org/html/rfc8312#section-4.5
 	c.numCongestionEvents++
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
@@ -314,6 +389,7 @@ func (c *cubicState) HandleLossDetected() {
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) HandleRTOExpired() {
+	c.CSS, c.CSSRounds, c.StartupCredit = false, 0, 0
 	// See: https://tools.ietf.org/html/rfc8312#section-4.6
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
 	c.numCongestionEvents = 0

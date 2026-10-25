@@ -140,6 +140,8 @@ type virtualScenario struct {
 	burstSegments int
 	streaming     bool
 	startup       *startupPulse
+	hyStartPlus   bool
+	forwardQueue  *startupQueue
 }
 
 // The pulse applies to cumulative data ACKs (30 MSS, 70 MSS]. Capture the
@@ -147,12 +149,14 @@ type virtualScenario struct {
 const startupTraceMSS = 160
 
 type startupPulse struct {
-	DelayNS        time.Duration
-	MSS            uint32
-	DataSequence   uint32
-	FirstPayloadNS int64
-	ACKs           []startupACK
-	Deadline       *streamRound
+	DelayNS                       time.Duration
+	MSS                           uint32
+	DataSequence                  uint32
+	FirstPayloadNS                int64
+	ACKs                          []startupACK
+	Deadline                      *streamRound
+	Transitions                   []startupTransition
+	PeakCwnd, FirstSecondPeakCwnd int
 }
 
 type startupACK struct {
@@ -161,6 +165,89 @@ type startupACK struct {
 	Cwnd, Ssthresh                int
 	LastRTT, CurrRTT              time.Duration
 	SampleCount                   uint
+	SndNxt                        uint32
+	Plus, CSS                     bool
+	CSSRounds                     uint
+	CSSBaseline, ActualRTT        time.Duration
+	Credit                        int
+	EpochNS                       int64
+	WMax, WEst                    float64
+}
+
+type startupTransition struct{ Before, After startupACK }
+
+// A byte-capacity FIFO on the forward wire. Backlog is residual service
+// (including any partially transmitted packet), never propagation time.
+type startupQueue struct {
+	Rate, Capacity                                  int64
+	OfferedPackets, AdmittedPackets, DroppedPackets int
+	OfferedBytes, AdmittedBytes, DroppedBytes       int64
+	PeakBacklogNS, Above25msNS, LongestAbove25msNS  time.Duration
+	FirstSecondAbove25msNS, FirstSecondPeakNS       time.Duration
+	FirstSecondDrops                                int
+	last, streak                                    time.Duration
+}
+
+func (q *startupQueue) account(now, serviceEnd, first time.Duration) {
+	// Between admissions the residual service drains linearly.
+	stop := min(now, serviceEnd-25*time.Millisecond)
+	above := max(time.Duration(0), stop-q.last)
+	q.Above25msNS += above
+	q.streak += above
+	q.LongestAbove25msNS = max(q.LongestAbove25msNS, q.streak)
+	if stop < now {
+		q.streak = 0
+	}
+	q.FirstSecondAbove25msNS += max(time.Duration(0), min(stop, first+time.Second)-max(q.last, first))
+	q.last = now
+}
+
+func (q *startupQueue) admit(now, serviceEnd, cost, first time.Duration, bytes int) bool {
+	q.account(now, serviceEnd, first)
+	q.OfferedPackets++
+	q.OfferedBytes += int64(bytes)
+	backlog := max(time.Duration(0), serviceEnd-now) + cost
+	if backlog > time.Duration(q.Capacity*int64(time.Second)/q.Rate) {
+		q.DroppedPackets++
+		q.DroppedBytes += int64(bytes)
+		if first > 0 && now <= first+time.Second {
+			q.FirstSecondDrops++
+		}
+		return false
+	}
+	q.AdmittedPackets++
+	q.AdmittedBytes += int64(bytes)
+	q.PeakBacklogNS = max(q.PeakBacklogNS, backlog)
+	if first > 0 && now <= first+time.Second {
+		q.FirstSecondPeakNS = max(q.FirstSecondPeakNS, backlog)
+	}
+	return true
+}
+
+func TestVirtualTCPHyStartComparison(t *testing.T) {
+	if got := runtime.GOMAXPROCS(0); got != 1 {
+		t.Fatalf("GOMAXPROCS = %d, want 1", got)
+	}
+	for _, startup := range []string{"classic", "plus"} {
+		for _, path := range []string{"control", "pulse", "fifo"} {
+			t.Run(startup+"_"+path, func(t *testing.T) {
+				scenario := virtualScenario{
+					delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second,
+					bytes: 16 << 20, dropOffset: -1, burstSegments: 1, streaming: true,
+					startup: &startupPulse{}, hyStartPlus: startup == "plus",
+				}
+				switch path {
+				case "pulse":
+					scenario.startup.DelayNS = 25 * time.Millisecond
+				case "fifo":
+					// 10 Mbit/s and one nominal BDP of finite forward service.
+					// The reverse path retains the open-link rate.
+					scenario.forwardQueue = &startupQueue{Rate: 1250000, Capacity: 125000}
+				}
+				runVirtualTCP(t, "cubic", nil, scenario)
+			})
+		}
+	}
 }
 
 func TestVirtualTCPHyStartTransientDelay(t *testing.T) {
@@ -258,9 +345,20 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	var latestProbe senderObservation
 	var latestACK startupACK
 	startup := scenario.startup
+	queue := scenario.forwardQueue
+	forwardRate := rate
+	if queue != nil {
+		forwardRate = queue.Rate
+	}
+	var previousStartup *startupACK
+	var startupEnded bool
 	var lastReverseArrival time.Duration
 	if scenario.streaming {
-		protocol = tcp.NewProtocolProbe(func(state *tcp.TCPEndpointState) {
+		newProbe := tcp.NewProtocolProbe
+		if scenario.hyStartPlus {
+			newProbe = tcp.NewProtocolProbeHyStartPlus
+		}
+		protocol = newProbe(func(state *tcp.TCPEndpointState) {
 			if state.ID.LocalPort != 40000 || state.ID.RemotePort != 8080 {
 				return
 			}
@@ -279,6 +377,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 					AtNS: observation.AtNS, RoundStartNS: int64(c.RoundStart.Sub(tcpip.MonotonicTime{})),
 					LastAckNS: int64(c.LastAck.Sub(tcpip.MonotonicTime{})), SndUna: observation.SndUna, EndSeq: uint32(c.EndSeq), TSNow: state.TSOffset.TSVal(state.SegTime),
 					Cwnd: observation.Cwnd, Ssthresh: state.Sender.Ssthresh, LastRTT: c.LastRTT, CurrRTT: c.CurrRTT, SampleCount: c.SampleCount,
+					SndNxt: observation.SndNxt, Plus: c.HyStartPlus, CSS: c.CSS, CSSRounds: c.CSSRounds,
+					CSSBaseline: c.CSSBaseline, ActualRTT: c.ACKRTT, Credit: c.StartupCredit,
+					EpochNS: int64(c.T.Sub(tcpip.MonotonicTime{})), WMax: c.WMax, WEst: c.WEst,
 				}
 			}
 			probeMu.Unlock()
@@ -422,6 +523,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			HolesAcknowledgedDeliveredBytes int
 			MaxOutstandingBeforeBurst       uint32
 			Startup                         *startupPulse `json:",omitempty"`
+			ForwardQueue                    *startupQueue `json:",omitempty"`
 		}{
 			Case:      t.Name(),
 			Algorithm: string(senderAlgorithm), DropOffset: dropOffset, LostSequence: lostSequence, LostEnd: lostEnd, RecoveryTrace: progress,
@@ -435,13 +537,14 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			TraceSHA256:  fmt.Sprintf("%x", sha256.Sum256(encodedTrace)),
 			Trace:        trace,
 			OfferedBytes: scenario.bytes, AcceptedBytes: acceptedBytes,
-			BDPBytes: rate * int64(2*delay) / int64(time.Second), RateBytesPerSecond: rate, OneWayDelayNS: int64(delay),
+			BDPBytes: forwardRate * int64(2*delay) / int64(time.Second), RateBytesPerSecond: forwardRate, OneWayDelayNS: int64(delay),
 			AllPacketsSHA256: fmt.Sprintf("%x", allPackets.Sum(nil)), PacketCount: packetCount,
 			PreBurst: preBurst, Rounds: rounds, Holes: holes,
 			HolesAcknowledgedNS: holesAcknowledgedNS, DemandEndedNS: demandEndedNS,
 			DemandEndedDeliveredBytes: demandEndedDeliveredBytes, HolesAcknowledgedDeliveredBytes: holesAcknowledgedDeliveredBytes,
 			MaxOutstandingBeforeBurst: maxOutstandingBeforeBurst,
 			Startup:                   startup,
+			ForwardQueue:              queue,
 		}
 		encoded, err := json.Marshal(result)
 		if err != nil {
@@ -549,9 +652,20 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 							sackPermitted = header.ParseSynOptions(segment.Options(), segment.Flags().Contains(header.TCPFlagAck)).SACKPermitted
 						}
 
-						// Dropped packets still consume their serialization time.
-						nextTX[side] = max(nextTX[side], now()) + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
-						at := nextTX[side] + delay
+						linkRate := rate
+						if side == 0 {
+							linkRate = forwardRate
+						}
+						cost := time.Duration((int64(packet.Size())*int64(time.Second) + linkRate - 1) / linkRate)
+						at := now()
+						if side == 0 && queue != nil && !queue.admit(now(), nextTX[side], cost, time.Duration(startup.FirstPayloadNS), packet.Size()) {
+							// Overflow is rejected at enqueue and consumes no service.
+							isLoss = true
+						} else {
+							// The separate scripted loss injector drops after serialization.
+							nextTX[side] = max(nextTX[side], now()) + cost
+							at = nextTX[side] + delay
+						}
 						nominal := at
 						if startup != nil && side == 1 {
 							offset := segment.AckNumber() - dataSequence
@@ -576,7 +690,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 								row.TSEcr = header.ParseTCPOptions(segment.Options()).TSEcr
 							}
 						}
-						if isLoss {
+						if isLoss && dropOffset >= 0 {
 							holes = append(holes, row)
 						}
 						if retransmitted {
@@ -638,6 +752,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		// schedule models that explicit 1 ms resolution, not exact emission.
 		fence()
 		var startupACKPacket *packetObservation
+		var dataACK, trackStartup bool
 		if index != -1 {
 			packet := pending[index]
 			pending = append(pending[:index], pending[index+1:]...)
@@ -649,12 +764,16 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			}
 			allPackets.Write(encoded)
 			allPackets.Write([]byte{'\n'})
-			retain := !scenario.streaming || packet.row.Dropped || packet.row.Retransmitted || header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagSyn) || header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagFin)
+			retain := !scenario.streaming || (packet.row.Dropped || packet.row.Retransmitted) && (queue == nil || len(trace) < 400) || header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagSyn) || header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagFin)
 			if startup != nil && dataStarted {
 				if packet.from == 0 && packet.row.PayloadBytes != 0 && packet.row.Sequence-dataSequence < startupTraceMSS*startup.MSS {
 					retain = true
 				}
 				offset := packet.row.Acknowledgment - dataSequence
+				if packet.from == 1 && packet.row.Flags == uint8(header.TCPFlagAck) && offset > 0 && offset <= highestSent {
+					dataACK = true
+					trackStartup = !startupEnded
+				}
 				if packet.from == 1 && packet.row.Flags == uint8(header.TCPFlagAck) && offset > 0 && offset <= startupTraceMSS*startup.MSS {
 					startupACKPacket = &packet.row
 					retain = true
@@ -689,14 +808,37 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			packet.packet.DecRef()
 		}
 		fence()
-		if startupACKPacket != nil {
+		if dataACK || startupACKPacket != nil {
 			probeMu.Lock()
 			ack := latestACK
 			probeMu.Unlock()
-			if ack.AtNS != startupACKPacket.AtNS || ack.SndUna != startupACKPacket.Acknowledgment {
-				t.Fatalf("sender probe at %d ack %d, want wire arrival %d ack %d", ack.AtNS, ack.SndUna, startupACKPacket.AtNS, startupACKPacket.Acknowledgment)
+			if ack.AtNS != int64(now()) {
+				t.Fatalf("sender probe at %d, want ACK ingress %d", ack.AtNS, now())
 			}
-			startup.ACKs = append(startup.ACKs, ack)
+			startup.PeakCwnd = max(startup.PeakCwnd, ack.Cwnd)
+			if int64(now()) <= startup.FirstPayloadNS+int64(time.Second) {
+				startup.FirstSecondPeakCwnd = max(startup.FirstSecondPeakCwnd, ack.Cwnd)
+			}
+			if startupACKPacket != nil {
+				if ack.SndUna != startupACKPacket.Acknowledgment {
+					t.Fatalf("sender ACK %d, want wire ACK %d", ack.SndUna, startupACKPacket.Acknowledgment)
+				}
+				startup.ACKs = append(startup.ACKs, ack)
+			}
+			if trackStartup {
+				before := previousStartup
+				if before == nil {
+					before = &ack
+				}
+				if previousStartup == nil || before.RoundStartNS != ack.RoundStartNS || before.CSS != ack.CSS || before.CSSRounds != ack.CSSRounds || before.Ssthresh != ack.Ssthresh || before.EndSeq != ack.EndSeq {
+					if len(startup.Transitions) == 256 {
+						t.Fatal("startup exceeded 256 round or phase transitions")
+					}
+					startup.Transitions = append(startup.Transitions, startupTransition{Before: *before, After: ack})
+				}
+				startupEnded = ack.Ssthresh != tcp.InitialSsthresh
+				previousStartup = &ack
+			}
 		}
 	}
 	newEndpoint := func(side int) tcpip.Endpoint {
@@ -879,11 +1021,14 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		if !dropped || !recovered || retransmits == 0 {
 			t.Fatalf("loss recovery: dropped=%t, retransmitted exact payload=%t, retransmits=%d", dropped, recovered, retransmits)
 		}
-	} else if retransmits != 0 {
+	} else if queue == nil && retransmits != 0 {
 		t.Fatalf("no-loss retransmits = %d, want 0", retransmits)
 	}
 	stats := stacks[0].Stats().TCP
-	if dropOffset < 0 {
+	if queue != nil {
+		queue.account(now(), nextTX[0], time.Duration(startup.FirstPayloadNS))
+		classification = "finite_fifo"
+	} else if dropOffset < 0 {
 		classification = "no_loss"
 	} else if scenario.streaming {
 		classification = "burst_recovered"

@@ -88,6 +88,20 @@ type TCPCubicState struct {
 
 	// RoundStart is the time we started the most recent HyStart round.
 	RoundStart tcpip.MonotonicTime
+
+	// HyStartPlus marks an experimental RFC 9406 sender. CSSBaseline is the
+	// triggering minimum RTT; CSSRounds counts completed conservative rounds.
+	HyStartPlus bool
+	CSS         bool
+	CSSBaseline time.Duration
+	CSSRounds   uint
+
+	// StartupCredit counts quarter-bytes toward the next segment of cwnd.
+	StartupCredit int
+
+	// ACKRTT is the last sample passed to congestion control; a negative
+	// value denotes an ACK without a valid sample.
+	ACKRTT time.Duration
 }
 
 // TCPRACKState is used to hold a copy of the internal RACK state when the

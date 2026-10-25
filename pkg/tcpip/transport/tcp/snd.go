@@ -76,13 +76,13 @@ type congestionControl interface {
 	HandleWindowRestart()
 
 	// Update is invoked when processing inbound acks. It's passed the
-	// number of packet's that were acked by the most recent cumulative
-	// acknowledgement.  rtt is the round-trip time, or is set to unknownRTT
-	// (above) to indicate the time is unknown. ackTime is the time the
+	// packet count and newly cumulatively acknowledged payload bytes (no FIN).
+	// The counts need not agree on partial segments. rtt is the round-trip
+	// time, or unknownRTT if no sample was obtained. ackTime is the time the
 	// processed ACK arrived at the stack (its ingress timestamp), used for
 	// arrival-anchored timing such as CUBIC HyStart's ACK-train detection so
 	// that an ACK delayed inside the stack does not distort it.
-	Update(packetsAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime)
+	Update(packetsAcked, bytesAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime)
 
 	// PostRecovery is invoked when the sender is exiting a fast retransmit/
 	// recovery phase. This provides congestion control algorithms a way
@@ -352,7 +352,9 @@ func (s *sender) initCongestionControl(congestionControlName tcpip.CongestionCon
 
 	switch congestionControlName {
 	case ccCubic:
-		return newCubicCC(s)
+		c := newCubicCC(s)
+		c.HyStartPlus = s.ep.protocol != nil && s.ep.protocol.hyStartPlus
+		return c
 	case ccReno:
 		fallthrough
 	default:
@@ -1697,6 +1699,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		acked := s.SndUna.Size(ack)
 		s.SndUna = ack
 		ackLeft := acked
+		payloadAcked := 0
 		originalOutstanding := s.Outstanding
 		for ackLeft > 0 {
 			// We use logicalLen here because we can have FIN
@@ -1709,6 +1712,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			}
 
 			datalen := seg.logicalLen()
+			payloadAcked += min(int(ackLeft), seg.payloadSize())
 			if datalen > ackLeft {
 				prevCount := s.pCount(seg, s.MaxPayloadSize)
 				seg.TrimFront(ackLeft)
@@ -1752,7 +1756,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		// If we are not in fast recovery then update the congestion
 		// window based on the number of acknowledged packets.
 		if !s.FastRecovery.Active {
-			s.cc.Update(originalOutstanding-s.Outstanding, bestRTT, rcvdSeg.rcvdTime)
+			s.cc.Update(originalOutstanding-s.Outstanding, payloadAcked, bestRTT, rcvdSeg.rcvdTime)
 			if s.FastRecovery.Last.LessThan(s.SndUna) {
 				s.state = tcpip.Open
 				// Update RACK when we are exiting fast or RTO
