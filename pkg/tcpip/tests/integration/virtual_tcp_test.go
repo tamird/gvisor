@@ -61,6 +61,8 @@ func (zeroReader) Read(b []byte) (int, error) {
 
 type packetObservation struct {
 	AtNS           int64
+	NominalAtNS    int64  `json:",omitempty"`
+	TSEcr          uint32 `json:",omitempty"`
 	CapturedAtNS   int64
 	From           int
 	Sequence       uint32
@@ -137,6 +139,46 @@ type virtualScenario struct {
 	dropOffset    int
 	burstSegments int
 	streaming     bool
+	startup       *startupPulse
+}
+
+// The pulse applies to cumulative data ACKs (30 MSS, 70 MSS]. Capture the
+// following flight too, so the timestamp echoes can establish RTT relief.
+const startupTraceMSS = 160
+
+type startupPulse struct {
+	DelayNS        time.Duration
+	MSS            uint32
+	DataSequence   uint32
+	FirstPayloadNS int64
+	ACKs           []startupACK
+	Deadline       *streamRound
+}
+
+type startupACK struct {
+	AtNS, RoundStartNS, LastAckNS int64
+	SndUna, EndSeq, TSNow         uint32
+	Cwnd, Ssthresh                int
+	LastRTT, CurrRTT              time.Duration
+	SampleCount                   uint
+}
+
+func TestVirtualTCPHyStartTransientDelay(t *testing.T) {
+	if got := runtime.GOMAXPROCS(0); got != 1 {
+		t.Fatalf("GOMAXPROCS = %d, want 1", got)
+	}
+	for _, tc := range []struct {
+		name  string
+		delay time.Duration
+	}{{"control", 0}, {"pulse", 25 * time.Millisecond}} {
+		t.Run(tc.name, func(t *testing.T) {
+			runVirtualTCP(t, "cubic", nil, virtualScenario{
+				delay: 50 * time.Millisecond, rate: 12500000,
+				maxTime: 30 * time.Second, bytes: 16 << 20,
+				dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{DelayNS: tc.delay},
+			})
+		})
+	}
 }
 
 type senderObservation struct {
@@ -214,6 +256,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	var client tcpip.Endpoint
 	var probeMu sync.Mutex
 	var latestProbe senderObservation
+	var latestACK startupACK
+	startup := scenario.startup
+	var lastReverseArrival time.Duration
 	if scenario.streaming {
 		protocol = tcp.NewProtocolProbe(func(state *tcp.TCPEndpointState) {
 			if state.ID.LocalPort != 40000 || state.ID.RemotePort != 8080 {
@@ -228,6 +273,14 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			}
 			probeMu.Lock()
 			latestProbe = observation
+			if startup != nil {
+				c := state.Sender.Cubic
+				latestACK = startupACK{
+					AtNS: observation.AtNS, RoundStartNS: int64(c.RoundStart.Sub(tcpip.MonotonicTime{})),
+					LastAckNS: int64(c.LastAck.Sub(tcpip.MonotonicTime{})), SndUna: observation.SndUna, EndSeq: uint32(c.EndSeq), TSNow: state.TSOffset.TSVal(state.SegTime),
+					Cwnd: observation.Cwnd, Ssthresh: state.Sender.Ssthresh, LastRTT: c.LastRTT, CurrRTT: c.CurrRTT, SampleCount: c.SampleCount,
+				}
+			}
 			probeMu.Unlock()
 		})
 	}
@@ -368,6 +421,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			DemandEndedDeliveredBytes       int
 			HolesAcknowledgedDeliveredBytes int
 			MaxOutstandingBeforeBurst       uint32
+			Startup                         *startupPulse `json:",omitempty"`
 		}{
 			Case:      t.Name(),
 			Algorithm: string(senderAlgorithm), DropOffset: dropOffset, LostSequence: lostSequence, LostEnd: lostEnd, RecoveryTrace: progress,
@@ -387,6 +441,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			HolesAcknowledgedNS: holesAcknowledgedNS, DemandEndedNS: demandEndedNS,
 			DemandEndedDeliveredBytes: demandEndedDeliveredBytes, HolesAcknowledgedDeliveredBytes: holesAcknowledgedDeliveredBytes,
 			MaxOutstandingBeforeBurst: maxOutstandingBeforeBurst,
+			Startup:                   startup,
 		}
 		encoded, err := json.Marshal(result)
 		if err != nil {
@@ -457,6 +512,10 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						if side == 0 && len(payload) != 0 {
 							if !dataStarted {
 								dataSequence, dataStarted = segment.SequenceNumber(), true
+								if startup != nil {
+									startup.DataSequence = dataSequence
+									startup.FirstPayloadNS = int64(now())
+								}
 							}
 							offset := segment.SequenceNumber() - dataSequence
 							retransmitted = offset < highestSent
@@ -493,6 +552,16 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						// Dropped packets still consume their serialization time.
 						nextTX[side] = max(nextTX[side], now()) + time.Duration((int64(packet.Size())*int64(time.Second)+rate-1)/rate)
 						at := nextTX[side] + delay
+						nominal := at
+						if startup != nil && side == 1 {
+							offset := segment.AckNumber() - dataSequence
+							if dataStarted && segment.Flags() == header.TCPFlagAck && len(payload) == 0 && offset > 30*startup.MSS && offset <= 70*startup.MSS {
+								at += startup.DelayNS
+							}
+							// A following ACK cannot pass an earlier one on this reverse path.
+							at = max(at, lastReverseArrival)
+							lastReverseArrival = at
+						}
 						row := packetObservation{
 							AtNS: int64(at), CapturedAtNS: int64(now()), From: side,
 							Sequence: segment.SequenceNumber(), EndSequence: segment.SequenceNumber() + uint32(len(payload)),
@@ -500,6 +569,12 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 							PacketSHA256: fmt.Sprintf("%x", sha256.Sum256(view.AsSlice())), PayloadSHA256: payloadHash,
 							OptionsHex: fmt.Sprintf("%x", segment.Options()), SACKBlocks: header.ParseTCPOptions(segment.Options()).SACKBlocks,
 							SACKPermitted: sackPermitted, Retransmitted: retransmitted, Dropped: isLoss,
+						}
+						if startup != nil {
+							row.NominalAtNS = int64(nominal)
+							if side == 1 && segment.Flags() == header.TCPFlagAck {
+								row.TSEcr = header.ParseTCPOptions(segment.Options()).TSEcr
+							}
 						}
 						if isLoss {
 							holes = append(holes, row)
@@ -536,6 +611,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("transfer exceeded %v virtual time; queued=%d", maxTime, len(pending))
 		}
 		next := now() + quantum
+		if startup != nil && dataStarted && startup.Deadline == nil {
+			next = min(next, time.Duration(startup.FirstPayloadNS)+time.Second)
+		}
 		index := -1
 		for i, packet := range pending {
 			if packet.at < next || (packet.at == next && index == -1) {
@@ -559,6 +637,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		// Timer-generated output is observed at this tick's end. The link
 		// schedule models that explicit 1 ms resolution, not exact emission.
 		fence()
+		var startupACKPacket *packetObservation
 		if index != -1 {
 			packet := pending[index]
 			pending = append(pending[:index], pending[index+1:]...)
@@ -571,6 +650,16 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			allPackets.Write(encoded)
 			allPackets.Write([]byte{'\n'})
 			retain := !scenario.streaming || packet.row.Dropped || packet.row.Retransmitted || header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagSyn) || header.TCPFlags(packet.row.Flags).Contains(header.TCPFlagFin)
+			if startup != nil && dataStarted {
+				if packet.from == 0 && packet.row.PayloadBytes != 0 && packet.row.Sequence-dataSequence < startupTraceMSS*startup.MSS {
+					retain = true
+				}
+				offset := packet.row.Acknowledgment - dataSequence
+				if packet.from == 1 && packet.row.Flags == uint8(header.TCPFlagAck) && offset > 0 && offset <= startupTraceMSS*startup.MSS {
+					startupACKPacket = &packet.row
+					retain = true
+				}
+			}
 			if scenario.streaming && len(packet.row.SACKBlocks) != 0 && retainedSACKs < 32 {
 				retainedSACKs++
 				retain = true
@@ -600,6 +689,15 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			packet.packet.DecRef()
 		}
 		fence()
+		if startupACKPacket != nil {
+			probeMu.Lock()
+			ack := latestACK
+			probeMu.Unlock()
+			if ack.AtNS != startupACKPacket.AtNS || ack.SndUna != startupACKPacket.Acknowledgment {
+				t.Fatalf("sender probe at %d ack %d, want wire arrival %d ack %d", ack.AtNS, ack.SndUna, startupACKPacket.AtNS, startupACKPacket.Acknowledgment)
+			}
+			startup.ACKs = append(startup.ACKs, ack)
+		}
 	}
 	newEndpoint := func(side int) tcpip.Endpoint {
 		t.Helper()
@@ -662,6 +760,12 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		}
 	}
 	checkAlgorithm()
+	if startup != nil {
+		startup.MSS = sample().MSS
+		if startup.MSS == 0 {
+			t.Fatal("established sender has zero MSS")
+		}
+	}
 	var syns [2]int
 	for _, packet := range trace {
 		if header.TCPFlags(packet.Flags).Contains(header.TCPFlagSyn) {
@@ -737,6 +841,10 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("Read: %s", err)
 		}
 		fence()
+		if startup != nil && dataStarted && startup.Deadline == nil && now() == time.Duration(startup.FirstPayloadNS)+time.Second {
+			row := sample()
+			startup.Deadline = &row
+		}
 		if scenario.streaming && now() >= nextRound {
 			rounds = append(rounds, sample())
 			nextRound += 100 * time.Millisecond
