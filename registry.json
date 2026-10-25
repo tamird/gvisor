@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T18:57:26.719270+00:00",
+    "updatedAt": "2026-10-25T19:08:19.746088+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4888,13 +4888,13 @@
       "url": "https://github.com/google/gvisor/pull/15318",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T18:57:26.719270+00:00",
-      "summary": "The current source f4190d8782e7 reports failing internal Copybara feedback, and its matching import #16000 at 06be71da95a2 reports public Buildkite 52330 failing. These newly observed failures need their own diagnosis; neither is assigned the unrelated 52329 INET cause. Existing source-review and prerequisite limits remain.\n\nThe patch approved by nybidari on 2026-10-16T22:08:06Z at 86a99a4cb3 is independently verified unchanged at f4190d8782. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at f4190d8782e7 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nGitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
+      "updatedAt": "2026-10-25T19:04:28.020696+00:00",
+      "summary": "The earlier matching import #16000 at 06be71da95a2 ran Buildkite 52330, then was superseded and cancelled. Three completed native AMD64 shard-11 attempts failed AddCompatRule/Inet with ENOENT using the exact public-master nftables fixture; the separate NodeJS shard passed on retry. Current import progression is reported in the live snapshot. The private Copybara feedback status remains separate: these public logs do not identify its cause or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nThe patch approved by nybidari on 2026-10-16T22:08:06Z at 86a99a4cb3 is independently verified unchanged at f4190d8782. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at f4190d8782e7 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nGitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
       "number": 15318,
       "followup": {
-        "disposition": "Current internal feedback and matching public Buildkite failure need diagnosis",
+        "disposition": "Superseded public build diagnosed as unchanged INET fixture failure; private feedback separate",
         "owner": "work_map_current",
-        "nextAction": "Root assigns diagnosis of new public Buildkite 52330 and the distinct internal feedback failure. Preserve the exact source/import pairing and existing review/prerequisite limits; no source regression, replay or rebase is inferred.",
+        "nextAction": "Follow the replacement matching import and its new checks. Preserve 52330\u2019s three native INET failures and successful Node retry as historical to 06be; do not transfer them to the replacement or to private feedback. The existing INET setup proposal remains the one contributor decision.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15318#issuecomment-6019188859",
@@ -4905,12 +4905,16 @@
         "sourceHead": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-25T18:57:26.719270+00:00"
+        "observedAt": "2026-10-25T19:04:28.020696+00:00"
       },
       "head": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
       "evidence": [
         {
-          "label": "Current matching import public Buildkite52330",
+          "label": "Superseded52330: third native INET failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52330#01a17459-1aa6-477c-8515-52afe517980d"
+        },
+        {
+          "label": "Historical matching import public Buildkite 52330",
           "url": "https://buildkite.com/gvisor/pipeline/builds/52330"
         },
         {
@@ -14740,9 +14744,13 @@
       "url": "https://github.com/google/gvisor/pull/15958",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-25T18:57:26.719270+00:00",
-      "summary": "The second matching import #16369 now reports a distinct internal Buildkite 34040 failure at 134a61b1b17f for source 77360cb73e3f. Its diagnostic is not public here; do not assign the public 52329 INET cause to it.\n\nThe matching import #16383 at 0c596564c0f5 for source 77360cb73e3f has two distinct public failures. Its generate job stopped before Go-test execution when proxy.golang.org timed out during TLS while fetching mountinfo v0.7.2 metadata; the downstream go tests status is propagated from that setup failure. Separately, Buildkite 52329 failed three completed AMD64 syscall attempts at AddCompatRule/Inet with ENOENT, using the exact nftables fixture blob on public master 7bffefa. One of the four attempts was cancelled before a case result. This source and import change only exec.cc; the unrelated Docker case passed on retry. The logs do not establish an exec regression or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nEarlier source and import record:\n\nThe `AT_SYMLINK_NOFOLLOW` success tests assumed `/bin/echo` was a\nregular executable. It is a symlink on Ubuntu 26.04 systems using Rust\ncoreutils, so following that test setup correctly fails with `ELOOP`.\n\nCopy the existing declared basic workload into regular temporary files.\nOne case still exercises a symlink ancestor; the other still exercises a\nregular final component relative to a directory descriptor. Both verify\nthe workload's argument output.\n\nThe exact standalone commit was approved by the contributor and published. Review and CI remain upstream obligations.",
+      "updatedAt": "2026-10-25T19:04:28.020696+00:00",
+      "summary": "The other matching import #16369 at 134a61b1b17f has public Buildkite 52333 failing after three completed native AMD64 shard-11 attempts hit AddCompatRule/Inet with ENOENT on the identical public-master fixture. Its separate internal 34040 failure remains undiagnosed here; no private cause or original worker module state is inferred.\n\nThe matching import #16383 at 0c596564c0f5 for source 77360cb73e3f has two distinct public failures. Its generate job stopped before Go-test execution when proxy.golang.org timed out during TLS while fetching mountinfo v0.7.2 metadata; the downstream go tests status is propagated from that setup failure. Separately, Buildkite 52329 failed three completed AMD64 syscall attempts at AddCompatRule/Inet with ENOENT, using the exact nftables fixture blob on public master 7bffefa. One of the four attempts was cancelled before a case result. This source and import change only exec.cc; the unrelated Docker case passed on retry. The logs do not establish an exec regression or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nEarlier source and import record:\n\nThe `AT_SYMLINK_NOFOLLOW` success tests assumed `/bin/echo` was a\nregular executable. It is a symlink on Ubuntu 26.04 systems using Rust\ncoreutils, so following that test setup correctly fails with `ELOOP`.\n\nCopy the existing declared basic workload into regular temporary files.\nOne case still exercises a symlink ancestor; the other still exercises a\nregular final component relative to a directory descriptor. Both verify\nthe workload's argument output.\n\nThe exact standalone commit was approved by the contributor and published. Review and CI remain upstream obligations.",
       "evidence": [
+        {
+          "label": "Matching import52333: third native INET failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52333#01a17466-b0cf-412f-9bab-0db0e0c00fb2"
+        },
         {
           "label": "Current matching import: internal34040 failure, cause unassigned",
           "url": "https://buildkite.com/gvisor/internal/builds/34040"
@@ -14776,8 +14784,8 @@
         "owner": "work_map_current \u2014 import/check intake; tcp_fin_review \u2014 completed Buildkite diagnosis; root \u2014 INET contributor decision",
         "disposition": "Matching import has separate TLS setup and diagnosed native INET failures",
         "sourceHead": "77360cb73e3f5c8a882de1538cedc569a5abc450",
-        "observedAt": "2026-10-25T18:57:26.719270+00:00",
-        "nextAction": "Follow the matching import and CI operator disposition. Keep the generate TLS timeout and propagated go tests status separate from the three completed native INET failures in Buildkite 52329. The standalone INET setup proposal is already pending contributor review; no exec source repair or duplicate contributor request follows from this diagnosis. Preserve the historical internal34024 failure and the Docker case\u2019s successful retry. Separately retain current internal 34040 as an undiagnosed internal check failure; do not conflate it with historical 34024 or public 52329.",
+        "observedAt": "2026-10-25T19:04:28.020696+00:00",
+        "nextAction": "Follow both exact-source imports and their current checks. Public 52329 and 52333 each have three native INET failures on the unchanged master fixture; generate TLS and its propagated go tests status remain separate. Keep private 34040 and historical 34024 distinct; their causes are not established by public logs. The one INET contributor decision is already registered.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15958"
         ]
@@ -18594,14 +18602,14 @@
       "url": "https://github.com/google/gvisor/pull/16376",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-25T18:57:26.719270+00:00",
-      "summary": "Etienne requested changes on exact 08d531c47119 at 18:42:10 UTC: keep syscallbench in its original directory and add BUILD there. Hostinet owns the revision and package-boundary review; the thread remains unresolved until delivery. The current public head has not changed. No new contributor decision or runtime result is inferred.\n\nEarlier delivery and source-specific validation:\n\nThe approved source-built syscall benchmark image is delivered on public 7bffefa. The original packaging and AMD64 mapping are preserved, with explicit source exports across the new benchmarks package boundary. Current upstream C is moved byte-for-byte, including its newly landed fork/exit/wait mode. Earlier runtime receipts cover their historical modes, not this newly landed mode. No new image pull or shared-registry prerequisite is added. Published as #16376, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nThe contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
+      "updatedAt": "2026-10-25T19:08:19.746088+00:00",
+      "summary": "A concrete amendment is available at 8a346ca8790e on the separate review/syscallbench-original-directory-20261025 fork branch. It retains the original syscallbench directory and adds BUILD there, addressing Etienne\u2019s exact review request. The complete BUILD and current C bytes are unchanged; only the parent sources edge and Make context label change. Independent source review passed. Focused qualification c5b9d3e7 failed in remote CppLink under the request\u2019s explicit LLVM override because static pthread, dl, stdc++, m and c libraries were unavailable. Preparation, canonical formatting and source_contexts passed. Hostinet is checking the normal public toolchain; this is not a demonstrated layout regression or a successful overall qualification. Public #16376 is still 08d531c47119, with no upstream edit or reply. Contributor approval is pending for this amendment.\n\nEtienne requested changes on exact 08d531c47119 at 18:42:10 UTC: keep syscallbench in its original directory and add BUILD there. Hostinet owns the revision and package-boundary review; the thread remains unresolved until delivery. The current public head has not changed. The separate amendment above is the current contributor decision; no new runtime result is inferred.\n\nEarlier delivery and source-specific validation:\n\nThe approved source-built syscall benchmark image is delivered on public 7bffefa. The original packaging and AMD64 mapping are preserved, with explicit source exports across the new benchmarks package boundary. Current upstream C is moved byte-for-byte, including its newly landed fork/exit/wait mode. Earlier runtime receipts cover their historical modes, not this newly landed mode. No new image pull or shared-registry prerequisite is added. Published as #16376, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nThe contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Maintainer requested the original syscallbench directory with a BUILD file",
+        "owner": "root \u2014 contributor decision; hostinet_delivery \u2014 focused qualification and authorized delivery",
+        "disposition": "Exact original-directory amendment published separately for contributor review",
         "sourceHead": "08d531c471191b1233f4721fed9c5b0475a302e4",
-        "observedAt": "2026-10-25T18:57:26.719270+00:00",
-        "nextAction": "Prepare and independently review the original-directory BUILD layout, preserving current binary/image rules and consumer behavior. Root owns any required reviewer interaction. Keep the unresolved thread and historical runtime scope explicit; no courtesy acknowledgement or repeated runtime is implied.",
+        "observedAt": "2026-10-25T19:08:19.746088+00:00",
+        "nextAction": "Review exact 8a346 against still-published 08d531 with the copyable range-diff. Hostinet owns the failed qualification\u2019s public-toolchain applicability check; do not claim overall qualification or a layout regression. Root owns the contributor decision before any upstream amendment or reply. No runtime replay.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16097",
           "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be",
@@ -18615,6 +18623,18 @@
       },
       "evidence": [
         {
+          "label": "Proposed original-directory amendment",
+          "url": "https://github.com/tamird/gvisor/commit/8a346ca8790e383b3a083658c59f7c7362ed0a2a"
+        },
+        {
+          "label": "Complete amendment against the current public head",
+          "url": "https://github.com/tamird/gvisor/compare/08d531c471191b1233f4721fed9c5b0475a302e4..8a346ca8790e383b3a083658c59f7c7362ed0a2a"
+        },
+        {
+          "label": "Focused qualification failed in the explicit LLVM link toolchain",
+          "url": "https://app.buildbuddy.io/invocation/c5b9d3e7-2891-4c76-bb93-0ac3e7a5d365"
+        },
+        {
           "label": "Current maintainer request: retain the original directory",
           "url": "https://github.com/google/gvisor/pull/16376#discussion_r4371945225"
         },
@@ -18627,11 +18647,11 @@
           "url": "https://github.com/tamird/gvisor/commit/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
         },
         {
-          "label": "Current focused validation",
+          "label": "Historical focused validation",
           "url": "https://app.buildbuddy.io/invocation/0e6cb2c6-df03-462c-b0e6-499f16780fe6"
         },
         {
-          "label": "Accepted final combined layout validation",
+          "label": "Historical combined layout validation",
           "url": "https://app.buildbuddy.io/invocation/0022d4bc-12fc-4f9a-8280-0ea96a312d6d"
         }
       ],
@@ -18643,7 +18663,17 @@
           "head": "5ac1aa8e95f98b7499c2bbe828a230f35e39a2be"
         }
       },
-      "number": 16376
+      "number": 16376,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "08d531c471191b1233f4721fed9c5b0475a302e4",
+        "head": "8a346ca8790e383b3a083658c59f7c7362ed0a2a",
+        "url": "https://github.com/tamird/gvisor/commit/8a346ca8790e383b3a083658c59f7c7362ed0a2a",
+        "title": "Keep syscallbench in its original directory",
+        "summary": "Reviewer-requested layout amendment on a separate fork branch; public #16376 remains at 08d531. Focused qualification currently fails in the request\u2019s explicit LLVM toolchain.",
+        "body": "Etienne asked why syscallbench could not stay in its original directory with a BUILD file there. This amendment does that: the complete BUILD and current C bytes are unchanged, while the parent source export and Make context label point to the narrower package. Sibling benchmark contexts remain visible to the parent glob. Binary, image and AMD64-only behavior are unchanged.\n\nIndependent source and package-boundary review passed. Focused qualification c5b9d3e7 failed in remote CppLink under the request\u2019s explicit LLVM override because static pthread, dl, stdc++, m and c libraries were unavailable. Preparation, canonical formatting and source_contexts passed. Hostinet is checking the normal public toolchain; this is not a demonstrated layout regression or a successful overall qualification. Historical runtime results retain their original source scope. The amendment is published only at tamird:review/syscallbench-original-directory-20261025. The upstream PR remains unchanged pending contributor approval."
+      }
     },
     {
       "id": "pr:golang/tools:702",
@@ -22800,14 +22830,14 @@
       "title": "Share the Docker Hub mirror policy",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-25T18:57:26.719270+00:00",
-      "summary": "Exact approved source c3174eb917aa now has matching Copybara import #16384 at bff00b5e086d, open with checks pending. Neither source nor import has landed; approved image children remain gated.\n\nEtienne approved exact c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4 at 18:28:14 UTC on October 25, with no additional source request. The source PR remains open; approved image successors still wait for its actual landing.\n\nExact shared policy c3174eb917aa passed remote qualification: both repositories record mirror.gcr.io before index.docker.io with the pinned image identities, and all four architecture archives pass inspection. The contributor approved this exact source and it is delivered as open, non-draft #16379. No contributor decision remains pending. Defines a single registry list and reuses it for Alpine and BusyBox, with brief README guidance. Pinned rules_img 0.3.23 prepends singular registry before plural registries, so child amendments remove the singular attribute. Existing image-proposal grants and historical runtime scope remain separate.",
+      "updatedAt": "2026-10-25T19:08:19.746088+00:00",
+      "summary": "Exact approved source c3174eb917aa has matching Copybara import #16384 at bff00b5e086d, still open. Public Buildkite 52334 failed AddCompatRule/Inet with ENOENT in all three completed AMD64 shard-11 attempts on the unchanged master fixture. Its separate Overlay TestDockerWithVFS failure is under root investigation; Java passed on retry. No registry-source cause is established for either public failure. Neither source nor import has landed, so approved image children remain gated.\n\nEtienne approved exact c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4 at 18:28:14 UTC on October 25, with no additional source request. The source PR remains open; approved image successors still wait for its actual landing.\n\nExact shared policy c3174eb917aa passed remote qualification: both repositories record mirror.gcr.io before index.docker.io with the pinned image identities, and all four architecture archives pass inspection. The contributor approved this exact source and it is delivered as open, non-draft #16379. No contributor decision remains pending. Defines a single registry list and reuses it for Alpine and BusyBox, with brief README guidance. Pinned rules_img 0.3.23 prepends singular registry before plural registries, so child amendments remove the singular attribute. Existing image-proposal grants and historical runtime scope remain separate.",
       "followup": {
         "owner": "root",
         "sourceHead": "c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "observedAt": "2026-10-25T18:57:26.719270+00:00",
+        "observedAt": "2026-10-25T19:08:19.746088+00:00",
         "disposition": "Exact-head maintainer approval received; actual landing remains the image release gate",
-        "nextAction": "Follow the matching import and actual landing through the existing watcher. Approval does not clear child source prerequisites, and no source change or public reply was requested.",
+        "nextAction": "Root owns the separate Overlay failure diagnosis. Follow the matching import and actual landing through the existing watcher; the INET setup proposal is already independently qualified and awaiting its own contributor decision. Keep the SSL generate failure separate. Approval does not clear child source prerequisites, and no public reply is requested.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
           "https://github.com/bazel-contrib/rules_img/blob/v0.3.23/img/private/repository_rules/registry.bzl#L3-L25",
@@ -22821,6 +22851,10 @@
         {
           "label": "Matching import for the approved registry policy",
           "url": "https://github.com/google/gvisor/pull/16384"
+        },
+        {
+          "label": "Matching import: public INET failure and separate Overlay diagnosis",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52334"
         },
         {
           "label": "Delivered shared policy",
@@ -22989,12 +23023,12 @@
       "url": "https://github.com/google/gvisor/pull/16382",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T18:57:26.719270+00:00",
-      "summary": "Etienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
+      "updatedAt": "2026-10-25T19:08:19.746088+00:00",
+      "summary": "Matching Copybara import #16385 at 7089c937472a is open with checks pending. The source PR and import have not landed; the source generate TLS failure remains separate.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "68bb9a238540e16c5784dc0153e9d15a7d94a3a7",
-        "observedAt": "2026-10-25T18:57:26.719270+00:00",
+        "observedAt": "2026-10-25T19:08:19.746088+00:00",
         "disposition": "Exact-head maintainer approval received; upstream TLS setup failure still requires maintainer rerun",
         "nextAction": "The upstream Go/generate job stopped fetching protobuf v1.36.11 metadata from proxy.golang.org because of a TLS handshake timeout. Retrying that job returned HTTP 403 for the contributor account, so the upstream check requires a maintainer rerun; no request has been posted. Root is checking equivalent CI on the approved fork head. Preserve the failed attempt and follow exact-head checks and review; no source repair or repeated contributor decision follows from this setup error.",
         "evidence": [
@@ -23004,6 +23038,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Matching import of the approved advertised-window correction",
+          "url": "https://github.com/google/gvisor/pull/16385"
+        },
         {
           "label": "Exact-head maintainer approval",
           "url": "https://github.com/google/gvisor/pull/16382#pullrequestreview-5644687073"
@@ -23095,18 +23133,19 @@
       "url": "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
       "group": "runtime",
       "status": "Contributor approved; waiting for #16377",
-      "updatedAt": "2026-10-25T18:24:09.103154+00:00",
-      "summary": "The contributor approved exact closing-window correction 7ae55f4cc07eb541c8d63442a343a3c2564dfd6f for upstream opening after #16377 lands. That fixture landing is the sole remaining delivery gate; no contributor decision remains pending. After a peer FIN, payload crossing the advertised right edge receives the current cumulative ACK while FIN or queued data remains unread. Peeking preserves the unread state. A consuming EOF read, or reading the final queued byte before a separate EOF read, ends these probe responses. The test keeps CLOSE_WAIT and observes absence of ACKs for one second. This does not generalize established-connection window handling or assume that separately delivered Linux FIN and data occupy distinct buffers.\n\nFinal remote comparison 2bcab414 tests FINOnly and DataAndFIN on native Linux and netstack. Control Linux passes both; unpatched netstack times out waiting for the first unread ACK in both, and that arm exits 3. Corrected Linux and netstack pass both, and that arm exits 0. Four target attempts produce nine positive and three failed XML records, including parents; the aggregate remains FAIL for the negative control. Earlier 96284b02 at fcd913 covers the same production behavior with the initial wire test, three focused e2e cases on AMD64 and ARM64, TCP Nogo and goimports. Both runs apply source-verified patches to the hosted qualification base; neither is a direct build of the public fork tree.\n\nLand after #16377 so its three existing closing-state fixtures consume EOF before asserting empty-queue behavior. This is a fixture landing-order requirement, not source ancestry or a code dependency. The branches merge cleanly, but the combined tree has not run. #16378 and receiver DSACK are separate changes. No upstream PR exists for this proposal.",
+      "updatedAt": "2026-10-25T19:04:28.020696+00:00",
+      "summary": "The contributor approved exact closing-window correction 7ae55f4cc07eb541c8d63442a343a3c2564dfd6f for upstream opening after #16377 lands. That fixture landing is the sole remaining delivery gate; no contributor decision remains pending. After a peer FIN, payload crossing the advertised right edge receives the current cumulative ACK while FIN or queued data remains unread. Peeking preserves the unread state. A consuming EOF read, or reading the final queued byte before a separate EOF read, ends these probe responses. The test keeps CLOSE_WAIT and observes absence of ACKs for one second. This does not generalize established-connection window handling or assume that separately delivered Linux FIN and data occupy distinct buffers.\n\nFinal remote comparison 2bcab414 tests FINOnly and DataAndFIN on native Linux and netstack. Control Linux passes both; unpatched netstack times out waiting for the first unread ACK in both, and that arm exits 3. Corrected Linux and netstack pass both, and that arm exits 0. Four target attempts produce nine positive and three failed XML records, including parents; the aggregate remains FAIL for the negative control. Earlier 96284b02 at fcd913 covers the same production behavior with the initial wire test, three focused e2e cases on AMD64 and ARM64, TCP Nogo and goimports. Both runs apply source-verified patches to the hosted qualification base; neither is a direct build of the public fork tree.\n\nLand after #16377 so its three existing closing-state fixtures consume EOF before asserting empty-queue behavior. This is a fixture landing-order requirement, not source ancestry or a code dependency. The branches merge cleanly. Combined qualification of ca4f51e3 and 7ae55f4c now passes: all 66 required XML rows on native Linux and netstack, four uncached target owners, no skips. Execution ended at 19:02:52.537 UTC and automatic verification completed at 19:02:59.245 (+6.71 seconds), with no manual collection. #16378 and receiver DSACK are separate changes. No upstream PR exists for this proposal.",
       "followup": {
         "owner": "root",
         "sourceHead": "7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
-        "observedAt": "2026-10-25T18:24:09.103154+00:00",
+        "observedAt": "2026-10-25T19:04:28.020696+00:00",
         "disposition": "Exact proposal approved; sole remaining gate is #16377 fixture landing",
-        "nextAction": "Root owns upstream opening after #16377 actually lands. Preserve approval of exact 7ae55f4cc07eb541c8d63442a343a3c2564dfd6f; do not repeat the contributor question. This is fixture landing order only, not source ancestry. Keep expected control FAIL, corrected PASS and combined-tree-unrun limits.",
+        "nextAction": "Root owns upstream opening after #16377 actually lands. Preserve approval of exact 7ae55f4cc07eb541c8d63442a343a3c2564dfd6f; do not repeat the contributor question. This is fixture landing order only, not source ancestry. Keep expected control FAIL and corrected PASS distinct; the separate combined qualification now passes. Actual #16377 landing remains the sole gate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f",
           "https://app.buildbuddy.io/invocation/2bcab414-3410-443c-b089-9121beeb043f",
-          "https://github.com/google/gvisor/pull/16377"
+          "https://github.com/google/gvisor/pull/16377",
+          "https://app.buildbuddy.io/invocation/9c0aca85-ffdb-4c19-9f01-c1b07cfee0d5"
         ]
       },
       "evidence": [
@@ -23121,6 +23160,10 @@
         {
           "label": "Final wire comparison: control FAIL, corrected PASS",
           "url": "https://app.buildbuddy.io/invocation/2bcab414-3410-443c-b089-9121beeb043f"
+        },
+        {
+          "label": "Combined EOF-fixture and closing-window qualification: all 66 required records PASS",
+          "url": "https://app.buildbuddy.io/invocation/9c0aca85-ffdb-4c19-9f01-c1b07cfee0d5"
         },
         {
           "label": "Earlier initial-revision wire/e2e/analyzer qualification",
@@ -35447,7 +35490,7 @@
       "title": "Native Linux nftables comment-rule installation",
       "status": "active",
       "owner": "root \u2014 contributor decision; tcp_fin_review \u2014 source and experiments",
-      "updatedAt": "2026-10-25T18:55:09.549449+00:00",
+      "updatedAt": "2026-10-25T19:08:19.746088+00:00",
       "summary": "The independently reviewed standalone fix f1305131246efe3874ba4a7231a20d3076ff5e44 is ready for contributor review. It queries a supported IPv4 revision before installing an INET match rule, allowing Linux to load the required xtables match. Setup uses a supported revision even when the test deliberately checks rejection of an unsupported revision.\n\nThe unchanged native control remains failed. The fixed independent native run passes, and the selected native and systrap runs each pass all four cases with no skips. A separate same-guest diagnostic provides observable control evidence. These are distinct source-bound runs, not a rerun of the original public worker. Its module state remains unknown, so the result does not establish the cause of Buildkite 52327.\n\nExact fork source is on public master 7bffefa, with no prerequisite PR and no upstream PR. This is a test setup correction, separate from the TCP receiver and closing-window proposals.",
       "findings": [
         {
@@ -35476,6 +35519,32 @@
             {
               "label": "Observable same-guest diagnostic",
               "url": "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
+            }
+          ]
+        },
+        {
+          "text": "Matching registry-policy import #16384 also reproduced AddCompatRule/Inet ENOENT in all three completed exit-2 AMD64 shard-11 attempts of public build 52334, on the unchanged master fixture. The separate Overlay TestDockerWithVFS failure remains under root investigation; Java passed on retry. Neither the original worker module state nor a registry-source cause is established. SSL generate failures remain separate.",
+          "evidence": [
+            {
+              "label": "Public build 52334 for matching registry-policy import",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/52334"
+            },
+            {
+              "label": "Matching policy import #16384",
+              "url": "https://github.com/google/gvisor/pull/16384"
+            }
+          ]
+        },
+        {
+          "text": "Public imports also reproduced the unchanged fixture failure in builds 52330 and 52333: three completed AMD64 shard-11 attempts in each returned ENOENT at AddCompatRule/Inet, with byte-identical public-master fixture 8f1860007f6e. Build 52330 was superseded/cancelled, and its NodeJS shard passed retry; 52333 was still failing at the recorded read. These observations do not establish either private internal-check causes or the original workers\u2019 module state.",
+          "evidence": [
+            {
+              "label": "Superseded public build52330",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/52330"
+            },
+            {
+              "label": "Public build52333",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/52333"
             }
           ]
         },
