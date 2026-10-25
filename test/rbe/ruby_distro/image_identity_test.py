@@ -96,7 +96,9 @@ def main() -> None:
                 if fields["Architecture"] not in (arch, "all") or fields["Package"] in installed:
                     raise ValueError(f"Wrong architecture or duplicate package: {fields}")
                 installed[fields["Package"]] = {key: fields[key] for key in ("Version", "Architecture")}
-            expected_versions = {"ruby3.3": "3.3.8-2", "puma": "6.6.0-4", "ruby-nio4r": "2.7.3-1+b2", "ruby-sinatra": "4.1.1-5", "ruby-rackup": "2.1.0-4"}
+            expected_versions = {"base-files": "13.8+deb13u7", "ruby3.3": "3.3.8-2", "puma": "6.6.0-4", "ruby-sinatra": "4.1.1-5", "ruby-rackup": "2.1.0-4"}
+            if set(installed) != set(expected_versions):
+                raise ValueError(f"Generated dpkg roots differ: {installed}")
             for name, version in expected_versions.items():
                 if installed[name]["Version"] != version:
                     raise ValueError(f"Unexpected installed version: {name}: {installed[name]}")

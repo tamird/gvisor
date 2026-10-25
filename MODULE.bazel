@@ -2861,11 +2861,10 @@ ruby_http_apt.install(
     packages = [
         # Package copyrights reference /usr/share/common-licenses.
         "base-files",
-        "puma (= 6.6.0-4)",
-        "ruby-nio4r (= 2.7.3-1+b2)",
-        "ruby-rackup (= 2.1.0-4)",
-        "ruby-sinatra (= 4.1.1-5)",
-        "ruby3.3 (= 3.3.8-2)",
+        "puma",
+        "ruby-rackup",
+        "ruby-sinatra",
+        "ruby3.3",
     ],
 )
 use_repo(ruby_http_apt, "ruby_http_packages")
