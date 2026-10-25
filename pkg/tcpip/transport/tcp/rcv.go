@@ -158,6 +158,15 @@ func (r *receiver) getSendParams() (RcvNxt seqnum.Value, rcvWnd seqnum.Size) {
 		newWnd = curWnd
 	}
 
+	// Encoding a scaled window must not withdraw bytes already offered to the
+	// peer. Round up the preserved space when truncation would move the right
+	// edge backward, including when the newly selected window grew slightly.
+	scaleMask := seqnum.Size(1<<r.RcvWndScale) - 1
+	if newWnd&^scaleMask < curWnd {
+		newWnd = (curWnd + scaleMask) &^ scaleMask
+		r.RcvAcc = r.RcvNxt.Add(newWnd)
+	}
+
 	// Apply silly-window avoidance when recovering from zero-window situation.
 	// Keep advertising zero receive window up until the new window reaches a
 	// threshold.
