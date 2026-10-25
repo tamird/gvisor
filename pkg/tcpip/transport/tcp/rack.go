@@ -247,6 +247,9 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 	// Whether or not the probe was sent, the sender must arm the resend timer,
 	// not the probe timer. This ensures that the sender does not send repeated,
 	// back-to-back tail loss probes.
+	if dataSent {
+		s.traceRecovery("tlp_sent")
+	}
 	s.postXmit(dataSent, false /* shouldScheduleProbe */)
 	return nil
 }
@@ -283,6 +286,7 @@ func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
 			// Step 2. Either the original packet or the retransmission (in the
 			// form of a probe) was lost. Invoke a congestion control response
 			// equivalent to fast recovery.
+			s.traceRecovery("tlp_recovery")
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
 			s.leaveRecovery()
@@ -399,6 +403,9 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
+				if !seg.lost {
+					rc.snd.traceRecoveryRange("rack_mark_lost", seg)
+				}
 				seg.lost = true
 				numLost++
 			} else {
@@ -450,6 +457,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 
 	fastRetransmit := false
 	if !rc.snd.FastRecovery.Active {
+		rc.snd.traceRecovery("rack_reordering_timer")
 		rc.snd.cc.HandleLossDetected()
 		rc.snd.enterRecovery()
 		fastRetransmit = true

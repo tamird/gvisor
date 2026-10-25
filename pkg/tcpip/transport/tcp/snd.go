@@ -90,6 +90,39 @@ type congestionControl interface {
 	PostRecovery()
 }
 
+// TCPRecoveryDecision identifies a recovery path actually taken by this
+// sender, before its congestion control responds to loss.
+type TCPRecoveryDecision struct {
+	Path                                 string
+	AtNS                                 int64
+	LocalPort                            uint16
+	Una, Nxt, Window                     uint32
+	HasRange                             bool
+	Start, End                           uint32
+	Cwnd, Ssthresh, Outstanding, DupACKs int
+	Mode                                 tcpip.TCPRecovery
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) traceRecovery(path string) { s.traceRecoveryRange(path, nil) }
+
+// +checklocks:s.ep.mu
+func (s *sender) traceRecoveryRange(path string, seg *segment) {
+	if p := s.ep.protocol; p != nil && p.recoveryProbe != nil {
+		d := TCPRecoveryDecision{
+			Path: path, AtNS: int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{})),
+			LocalPort: s.ep.TransportEndpointInfo.ID.LocalPort, Una: uint32(s.SndUna), Nxt: uint32(s.SndNxt), Window: uint32(s.SndWnd),
+			Cwnd: s.SndCwnd, Ssthresh: s.Ssthresh, Outstanding: s.Outstanding, DupACKs: s.DupAckCount, Mode: s.ep.tcpRecovery,
+		}
+		if seg != nil {
+			d.HasRange = true
+			d.Start = uint32(seg.sequenceNumber)
+			d.End = d.Start + uint32(seg.payloadSize())
+		}
+		p.recoveryProbe(d)
+	}
+}
+
 // lossRecovery is an interface that must be implemented by any supported
 // loss recovery algorithm.
 type lossRecovery interface {
@@ -649,6 +682,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	s.recordRetransmitTS()
 
 	s.state = tcpip.RTORecovery
+	s.traceRecovery("rto")
 	s.cc.HandleRTOExpired()
 
 	// Mark the next segment to be sent as the first unacknowledged one and
@@ -1334,6 +1368,11 @@ func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 		s.DupAckCount = 0
 		return false
 	}
+	if s.DupAckCount >= nDupAckThreshold {
+		s.traceRecovery("three_duplicate_acks")
+	} else {
+		s.traceRecovery("sack_scoreboard")
+	}
 	s.cc.HandleLossDetected()
 	s.enterRecovery()
 	return true
@@ -1560,6 +1599,11 @@ func (s *sender) inRecovery() bool {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
+	// Bound actual decisions by the same incoming ACK in both modes.
+	if p := s.ep.protocol; p != nil && p.recoveryProbe != nil && (len(rcvdSeg.parsedOptions.SACKBlocks) != 0 || s.inRecovery() || rcvdSeg.ackNumber == s.SndUna) {
+		s.traceRecovery("ack_begin")
+		defer s.traceRecovery("ack_end")
+	}
 	bestRTT := unknownRTT
 
 	// Check if we can extract an RTT measurement from this ack. Measure against
@@ -1806,6 +1850,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.
+			s.traceRecovery("rack_on_ack")
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
 			fastRetransmit = true
@@ -1839,6 +1884,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 // +checklocks:s.ep.mu
 func (s *sender) sendSegment(seg *segment) tcpip.Error {
 	if seg.xmitCount > 0 {
+		s.traceRecoveryRange("retransmit", seg)
 		s.ep.stack.Stats().TCP.Retransmits.Increment()
 		s.ep.stats.SendErrors.Retransmits.Increment()
 		if s.SndCwnd < s.Ssthresh {

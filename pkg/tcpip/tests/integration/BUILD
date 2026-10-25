@@ -8,7 +8,10 @@ package(
 go_test(
     name = "virtual_tcp_test",
     size = "small",
-    srcs = ["virtual_tcp_test.go"],
+    srcs = [
+        "recovery_flight_test.go",
+        "virtual_tcp_test.go",
+    ],
     env = {"GOMAXPROCS": "1"},
     tags = ["manual"],
     deps = [

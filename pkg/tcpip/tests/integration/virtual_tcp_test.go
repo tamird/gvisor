@@ -63,6 +63,8 @@ type packetObservation struct {
 	AtNS           int64
 	NominalAtNS    int64  `json:",omitempty"`
 	TSEcr          uint32 `json:",omitempty"`
+	WireWindow     uint16 `json:",omitempty"`
+	WireTSVal      uint32 `json:",omitempty"`
 	CapturedAtNS   int64
 	From           int
 	Sequence       uint32
@@ -142,6 +144,7 @@ type virtualScenario struct {
 	startup       *startupPulse
 	hyStartPlus   bool
 	forwardQueue  *startupQueue
+	flight        *flightRecorder
 }
 
 // Capture both 40-MSS pulses and the following flight, so the timestamp
@@ -355,10 +358,14 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	var latestProbe senderObservation
 	var latestACK startupACK
 	startup := scenario.startup
+	flight := scenario.flight
 	queue := scenario.forwardQueue
 	forwardRate := rate
 	if queue != nil {
 		forwardRate = queue.Rate
+		if flight != nil {
+			flight.result.ForwardRate, flight.result.QueueCapacity = queue.Rate, queue.Capacity
+		}
 	}
 	var previousStartup *startupACK
 	var startupEnded bool
@@ -368,7 +375,15 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		if scenario.hyStartPlus {
 			newProbe = tcp.NewProtocolProbeHyStartPlus
 		}
+		if flight != nil {
+			newProbe = func(p tcp.TCPProbeFunc) func(*stack.Stack) stack.TransportProtocol {
+				return tcp.NewProtocolProbeHyStartPlusRecovery(p, flight.decision)
+			}
+		}
 		protocol = newProbe(func(state *tcp.TCPEndpointState) {
+			if flight != nil {
+				flight.endpoint(state)
+			}
 			if state.ID.LocalPort != 40000 || state.ID.RemotePort != 8080 {
 				return
 			}
@@ -420,6 +435,13 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			SecureRNG:          zeroReader{},
 		})
 		stacks[side] = s
+		wantRecovery := tcpip.TCPRACKLossDetection
+		if flight != nil && side == 0 {
+			wantRecovery = flight.result.SenderMode
+			if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &wantRecovery); err != nil {
+				t.Fatal(err)
+			}
+		}
 		if scenario.streaming {
 			cc := tcpip.CongestionControlOption(algorithm)
 			if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &cc); err != nil {
@@ -439,7 +461,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("side %d SACK = %t, error = %v", side, sack, err)
 		}
 		var recovery tcpip.TCPRecovery
-		if err := s.TransportProtocolOption(tcp.ProtocolNumber, &recovery); err != nil || recovery != tcpip.TCPRACKLossDetection {
+		if err := s.TransportProtocolOption(tcp.ProtocolNumber, &recovery); err != nil || recovery != wantRecovery {
 			t.Fatalf("side %d recovery = %d, error = %v", side, recovery, err)
 		}
 		capacity := 1024
@@ -534,6 +556,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			MaxOutstandingBeforeBurst       uint32
 			Startup                         *startupPulse `json:",omitempty"`
 			ForwardQueue                    *startupQueue `json:",omitempty"`
+			Flight                          *flightResult `json:",omitempty"`
 		}{
 			Case:      t.Name(),
 			Algorithm: string(senderAlgorithm), DropOffset: dropOffset, LostSequence: lostSequence, LostEnd: lostEnd, RecoveryTrace: progress,
@@ -556,9 +579,27 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			Startup:                   startup,
 			ForwardQueue:              queue,
 		}
+		if flight != nil {
+			result.Flight = &flight.result
+			// Replay reports the frozen exposure and any protected ingress
+			// waiting. Only the reference uses the original drop-tail counters.
+			if flight.ref != nil {
+				result.ForwardQueue = nil
+			}
+		}
 		encoded, err := json.Marshal(result)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if flight != nil {
+			// Full bidirectional traces can be many MB. Keep individual
+			// native test log lines bounded while retaining all raw events.
+			const limit = 8192
+			count := (len(encoded) + limit - 1) / limit
+			for n := 0; n < count; n++ {
+				t.Logf("VIRTUAL_TCP_PART %s %d/%d %s", t.Name(), n, count, encoded[n*limit:min(len(encoded), (n+1)*limit)])
+			}
+			return
 		}
 		t.Logf("VIRTUAL_TCP %s", encoded)
 	}()
@@ -620,6 +661,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						}
 						segment := header.TCP(ip.Payload())
 						payload := segment.Payload()
+						if flight != nil {
+							flight.header(side, segment.Flags(), segment.SequenceNumber(), len(payload), int64(now()))
+						}
 						payloadHash := fmt.Sprintf("%x", sha256.Sum256(payload))
 						var retransmitted, isLoss bool
 						if side == 0 && len(payload) != 0 {
@@ -668,7 +712,15 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						}
 						cost := time.Duration((int64(packet.Size())*int64(time.Second) + linkRate - 1) / linkRate)
 						at := now()
-						if side == 0 && queue != nil && !queue.admit(now(), nextTX[side], cost, time.Duration(startup.FirstPayloadNS), packet.Size()) {
+						var refused bool
+						if side == 0 && queue != nil {
+							if flight != nil && flight.ref != nil && len(payload) > 0 {
+								refused = flight.replayDrop(segment.SequenceNumber()-dataSequence, len(payload), retransmitted, now(), nextTX[side], cost, time.Duration(queue.Capacity*int64(time.Second)/queue.Rate))
+							} else {
+								refused = !queue.admit(now(), nextTX[side], cost, time.Duration(startup.FirstPayloadNS), packet.Size())
+							}
+						}
+						if refused {
 							// Overflow is rejected at enqueue and consumes no service.
 							isLoss = true
 						} else {
@@ -699,6 +751,11 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 							if side == 1 && segment.Flags() == header.TCPFlagAck {
 								row.TSEcr = header.ParseTCPOptions(segment.Options()).TSEcr
 							}
+						}
+						if flight != nil {
+							opt := header.ParseTCPOptions(segment.Options())
+							row.WireWindow, row.WireTSVal, row.TSEcr = segment.WindowSize(), opt.TSVal, opt.TSEcr
+							flight.offer(row)
 						}
 						if isLoss && dropOffset >= 0 {
 							holes = append(holes, row)
@@ -735,6 +792,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("transfer exceeded %v virtual time; queued=%d", maxTime, len(pending))
 		}
 		next := now() + quantum
+		if flight != nil {
+			next = min(next, maxTime)
+		}
 		if startup != nil && dataStarted && startup.Deadline == nil {
 			next = min(next, time.Duration(startup.FirstPayloadNS)+time.Second)
 		}
@@ -767,6 +827,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		if index != -1 {
 			packet := pending[index]
 			pending = append(pending[:index], pending[index+1:]...)
+			if flight != nil {
+				flight.ingress(packet.row)
+			}
 			packetCount++
 			encoded, err := json.Marshal(packet.row)
 			if err != nil {
@@ -819,6 +882,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			packet.packet.DecRef()
 		}
 		fence()
+		if flight != nil {
+			flight.endInput()
+		}
 		if dataACK != nil || startupACKPacket != nil {
 			probeMu.Lock()
 			ack := latestACK
@@ -998,6 +1064,15 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			t.Fatalf("Read: %s", err)
 		}
 		fence()
+		if flight != nil && flight.stop(int64(now()), acknowledged, int64(maxTime)) {
+			if received.Len() > len(data) || !bytes.Equal(received.Bytes(), data[:received.Len()]) {
+				t.Fatalf("received bytes do not match the offered prefix")
+			}
+			checkAlgorithm()
+			rounds = append(rounds, sample())
+			classification = flight.result.End
+			return
+		}
 		if startup != nil && dataStarted && startup.Deadline == nil && now() == time.Duration(startup.FirstPayloadNS)+time.Second {
 			row := sample()
 			startup.Deadline = &row

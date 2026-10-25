@@ -132,7 +132,8 @@ type protocol struct {
 	// TCP segment.
 	//
 	// This is immutable after creation.
-	probe TCPProbeFunc `state:"nosave"`
+	probe         TCPProbeFunc              `state:"nosave"`
+	recoveryProbe func(TCPRecoveryDecision) `state:"nosave"`
 
 	// The following secrets are used for ISN and timestamp-offset
 	// generation. They are not serialized into checkpoint state and are
@@ -582,9 +583,16 @@ func NewProtocolProbe(probe TCPProbeFunc) func(*stack.Stack) stack.TransportProt
 // NewProtocolProbeHyStartPlus returns a probe stack that uses the RFC 9406
 // prototype when CUBIC is selected. Normal TCP constructors remain unchanged.
 func NewProtocolProbeHyStartPlus(probe TCPProbeFunc) func(*stack.Stack) stack.TransportProtocol {
+	return NewProtocolProbeHyStartPlusRecovery(probe, nil)
+}
+
+// NewProtocolProbeHyStartPlusRecovery also records actual recovery choices in
+// the isolated diagnostic stack. Neither callback is used by normal stacks.
+func NewProtocolProbeHyStartPlusRecovery(probe TCPProbeFunc, recovery func(TCPRecoveryDecision)) func(*stack.Stack) stack.TransportProtocol {
 	return func(s *stack.Stack) stack.TransportProtocol {
 		p := newProtocol(s, ccReno, probe)
 		p.hyStartPlus = true
+		p.recoveryProbe = recovery
 		return p
 	}
 }
