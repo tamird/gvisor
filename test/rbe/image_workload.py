@@ -77,12 +77,12 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
               "scope": "Uncached GNU RSEQ compilation on AMD64 and ARM64; no runtime test claim.",
               "architectures": []}
     try:
-        formatted = invoke("rseq-clang-format", ["run", "--lockfile_mode=error", "--noannounce_rc",
+        lint = invoke("rseq-cxx-lint", ["run", "--lockfile_mode=error", "--noannounce_rc",
                            "@rules_python//python/bin:python", "--", "-c",
-                           'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "clang-format"]).returncode)'],
+                           'import os, subprocess, sys; os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"]); sys.exit(subprocess.run(["bash", "tools/lint.sh", "clang-format", "cpplint"]).returncode)'],
                            "command", targets=[])
-        if formatted["status"] != "PASS":
-            raise RuntimeError("Canonical clang-format failed")
+        if lint["status"] != "PASS":
+            raise RuntimeError("Canonical C++ lint failed")
         for architecture in ("x86_64", "aarch64"):
             current = {"architecture": architecture, "status": "INCOMPLETE"}
             record["architectures"].append(current)

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "test/syscalls/linux/rseq/types.h"
+#include <stddef.h>
 
-// asm/signal.h needs size_t from the standalone helper's type definitions.
+// asm/signal.h needs size_t from stddef.h.
 #include <asm/signal.h>
 #include <asm/unistd.h>
 #include <linux/time.h>
@@ -22,6 +22,7 @@
 #include "test/syscalls/linux/rseq/critical.h"
 #include "test/syscalls/linux/rseq/syscalls.h"
 #include "test/syscalls/linux/rseq/test.h"
+#include "test/syscalls/linux/rseq/types.h"
 #include "test/syscalls/linux/rseq/uapi.h"
 
 namespace gvisor {
