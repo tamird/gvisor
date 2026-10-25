@@ -31,6 +31,7 @@
 #include <linux/capability.h>
 #include <linux/netfilter/nfnetlink.h>
 #include <linux/netfilter/nfnetlink_compat.h>
+#include <unistd.h>
 // clang-format on
 
 #include <cerrno>
@@ -6027,15 +6028,36 @@ TEST_P(NetlinkNetfilterCompatTest, AddCompatRule) {
       // Linux has IPv4 and IPv6 module aliases for these matches, but no
       // INET alias. Query a supported IPv4 revision to load the match.
       uint32_t revision = match.autoload_revision.value_or(*match.rev);
+      if (*match.name == "comment") {
+        ASSERT_THAT(access("/sys/module/xt_comment", F_OK),
+                    SyscallFailsWithErrno(ENOENT));
+        FileDescriptor cold_fd =
+            ASSERT_NO_ERRNO_AND_VALUE(NetfilterBoundSocket());
+        ASSERT_THAT(
+            NetlinkNetfilterBatchRequestAckOrError(
+                cold_fd, kSeq, kSeq + 4, batch_req.data(), batch_req.size()),
+            PosixErrorIs(ENOENT, _));
+        ASSERT_THAT(access("/sys/module/xt_comment", F_OK),
+                    SyscallFailsWithErrno(ENOENT));
+        RecordProperty("cold_inet_rule", "ENOENT; xt_comment remains unloaded");
+      }
       ASSERT_THAT(
           GetCompatMatchRevision(fd, NFPROTO_IPV4, *match.name, revision),
           IsPosixErrorOkAndHolds(::testing::Ge(revision)));
+      if (*match.name == "comment") {
+        ASSERT_THAT(access("/sys/module/xt_comment", F_OK), SyscallSucceeds());
+        RecordProperty("ipv4_revision", "xt_comment loaded");
+      }
     }
   }
 
   if (param.expected_error == 0) {
     ASSERT_NO_ERRNO(NetlinkNetfilterBatchRequestAckOrError(
         fd, kSeq, kSeq + 4, batch_req.data(), batch_req.size()));
+    if (param.family == NFPROTO_INET && param.match_opts &&
+        param.match_opts->name == "comment") {
+      RecordProperty("warm_inet_rule", "same batch succeeded");
+    }
   } else {
     ASSERT_THAT(NetlinkNetfilterBatchRequestAckOrError(
                     fd, kSeq, kSeq + 4, batch_req.data(), batch_req.size()),
