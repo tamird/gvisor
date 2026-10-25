@@ -123,6 +123,74 @@ type TCPRecoverySegment struct {
 	Lost, Acked, ScoreboardSacked, ScoreboardLost bool
 }
 
+// TCPRecoveryCredit reports both the native gate and the deliberately
+// conservative copy bound for a single preselected, advancing diagnostic ACK.
+// Sizes are bytes; Cwnd, Outstanding and Ssthresh are segments.
+type TCPRecoveryCredit struct {
+	AtNS                                                   int64
+	PreviousUna, Una, Nxt                                  uint32
+	SackBefore, SackAfter                                  uint32
+	Delivered, Span, Sacked, MarkedOriginal, PossibleBytes int64
+	Cwnd, Outstanding, Ssthresh, MSS                       int
+	Eligible                                               bool
+}
+
+// tryOneRepair runs only with the experimental callback installed. Never
+// delete a previously retransmitted copy from the bound: for unsacked data
+// other than a marked, never-retried original charge all attempted copies.
+// Refuse partial segments in this one-MSS fixture. No cwnd or timer override.
+// +checklocks:s.ep.mu
+// +checklocksexclude:s.rtt.rttMutex
+func (s *sender) tryOneRepair(prevUna seqnum.Value, prevSACK seqnum.Size, fastRetransmit bool) {
+	p := s.ep.protocol
+	if p.recoveryWatch == nil {
+		return
+	}
+	now := int64(s.ep.stack.Clock().NowMonotonic().Sub(tcpip.MonotonicTime{}))
+	focus, ok := p.recoveryWatch(s.ep.TransportEndpointInfo.ID.LocalPort, now)
+	if !ok || uint32(s.SndUna) != focus || !prevUna.LessThan(s.SndUna) {
+		return
+	}
+	mss := int(s.ep.scoreboard.SMSS())
+	c := TCPRecoveryCredit{AtNS: now, PreviousUna: uint32(prevUna), Una: uint32(s.SndUna), Nxt: uint32(s.SndNxt),
+		SackBefore: uint32(prevSACK), SackAfter: uint32(s.ep.scoreboard.Sacked()),
+		Cwnd: s.SndCwnd, Ssthresh: s.Ssthresh, Outstanding: s.Outstanding, MSS: mss}
+	c.Delivered = int64(prevUna.Size(s.SndUna)) + int64(c.SackAfter) - int64(c.SackBefore)
+	full := true
+	next := s.SndUna
+	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0 && seg.sequenceNumber.LessThan(s.SndNxt); seg = seg.Next() {
+		b := seg.sackBlock()
+		if seg.sequenceNumber != next || seg.payloadSize() != mss || s.SndNxt.LessThan(b.End) {
+			full = false
+			break
+		}
+		next = b.End
+		c.Span += int64(mss)
+		switch {
+		case s.ep.scoreboard.IsSACKED(b):
+			c.Sacked += int64(mss)
+		case seg.lost && seg.xmitCount == 1:
+			c.MarkedOriginal += int64(mss)
+		default:
+			c.PossibleBytes += int64(mss) * int64(seg.xmitCount)
+		}
+	}
+	head := s.writeList.Front()
+	c.Eligible = full && next == s.SndNxt && c.Sacked == int64(c.SackAfter) && !fastRetransmit &&
+		s.FastRecovery.Active && s.Outstanding >= s.SndCwnd && c.Delivered >= int64(mss) &&
+		c.PossibleBytes+int64(mss) <= int64(s.Ssthresh)*int64(mss) &&
+		head != nil && head.sequenceNumber == s.SndUna && head != s.writeNext && head.lost &&
+		head.xmitCount == 1 && !s.ep.scoreboard.IsSACKED(head.sackBlock()) && int64(s.SndWnd) >= int64(mss)
+	if !p.oneRepair(c) || !c.Eligible {
+		return
+	}
+	s.traceRecoveryRange("one_credit_granted", head)
+	if s.maybeSendSegment(head, mss, s.SndUna.Add(s.SndWnd)) {
+		s.Outstanding += s.pCount(head, s.MaxPayloadSize)
+		s.postXmit(true, true /* shouldScheduleProbe */)
+	}
+}
+
 // +checklocks:s.ep.mu
 func (s *sender) traceRecovery(path string) { s.traceRecoveryRange(path, nil) }
 
@@ -1688,6 +1756,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 		defer s.traceRecovery("ack_end")
 	}
 	bestRTT := unknownRTT
+	var prevUna seqnum.Value
+	var prevSACK seqnum.Size
+	if p := s.ep.protocol; p != nil && p.oneRepair != nil {
+		prevUna, prevSACK = s.SndUna, s.ep.scoreboard.Sacked()
+	}
 
 	// Check if we can extract an RTT measurement from this ack. Measure against
 	// the ACK's ingress time (rcvdSeg.rcvdTime), not the current clock: if the
@@ -1943,6 +2016,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 		if s.FastRecovery.Active {
 			s.rc.DoRecovery(nil, fastRetransmit)
+			if p := s.ep.protocol; p != nil && p.oneRepair != nil {
+				s.tryOneRepair(prevUna, prevSACK, fastRetransmit)
+			}
 		}
 	}
 

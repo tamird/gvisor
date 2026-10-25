@@ -1,4 +1,4 @@
-"""Trace the first true RTO on the unchanged, continuously dropping original FIFO."""
+"""Compare one ACK-earned repair against its authenticated physical-FIFO control."""
 from collections import Counter
 import hashlib
 import json
@@ -27,7 +27,7 @@ def covered(intervals: list[tuple[int, int]], first: int = 0) -> int:
     return edge
 
 
-def measure(samples: dict) -> dict:
+def measure_original(samples: dict) -> dict:
     key = f"{ROOT}/{ROLE}"
     if set(samples) != {key}:
         raise ValueError("Expected exactly the original finite-FIFO diagnostic")
@@ -147,6 +147,102 @@ def measure(samples: dict) -> dict:
             "wire_edge_at_rto": wire_edge, "last_wire_high_ack": first_ack,
             "drop_original_vs_retry": dict(Counter("retry" if p["Retransmit"] else "original" for p in losses)),
             "watch_scan_gates_lost_sacked_ordered_timeeligible_cwndblocked": scans}
+
+
+def measure(samples: dict) -> dict:
+    names = [f"{ROOT}/{n}" for n in (ROLE, "one_repair")]
+    if set(samples) != set(names):
+        raise ValueError("Expected exactly the native control and single-repair treatment")
+    control, treatment = (samples[n] for n in names)
+    cf, tf = control["Flight"], treatment["Flight"]
+    # Restore the exact authenticated, old observation layout to bind the
+    # complete native control. Keep the new, read-only witness separately.
+    historical = dict(control, Flight={k: v for k, v in cf.items() if k != "OneCredit"})
+    if digest(historical) != "897ce4715dd6372700b9b717bf8ea17b33b272df2d5d1a76f34adf9a452d980b":
+        raise ValueError("Complete native control changed relative to the retained original")
+    reference = measure_original({names[0]: historical})
+    rows = [cf["Events"], tf["Events"]]
+    base = control["Startup"]["DataSequence"]
+    first = control["Startup"]["FirstPayloadNS"]
+    original_deadline = reference["first_true_rto"]["At"]
+    cut = 6433
+    prefix_hash = "0dbbbb00b4a5110c269c8bfa0547cf6c0333f547ba4612c57b1d91cf3f658105"
+    def totals(row):
+        q = row["ForwardQueue"]
+        return {"delivered": row["Bytes"], "accepted": row["AcceptedBytes"], "offered": row["OfferedBytes"],
+                "payload_sha256": row["PayloadSHA256"], "all_wire_sha256": row["AllPacketsSHA256"],
+                "rtos": row["RTOs"], "retransmits": row["Retransmits"], "virtual_ns": row["VirtualNS"],
+                "queue": q, "finished": row["Bytes"] == row["OfferedBytes"]}
+    result = {"control": totals(control), "treatment": totals(treatment), "old_rto_ns": original_deadline,
+              "historical_full_control_sha256": digest(historical), "cut": cut, "prefix_sha256": prefix_hash,
+              "control_witness": cf.get("OneCredit"), "treatment_witness": tf.get("OneCredit")}
+    for case in (control, treatment):
+        q = case["ForwardQueue"]
+        f = case["Flight"]
+        if (case["Algorithm"] != "cubic" or case["Startup"]["MSS"] != 1420 or case["OfferedBytes"] != 16 << 20
+                or not all(a["Plus"] for a in case["Startup"]["ACKs"])
+                or q["Rate"] != 1_250_000 or q["Capacity"] != 125_000 or case["OneWayDelayNS"] != 50_000_000
+                or f["SenderMode"] != 1 or f["ReceiverMode"] != 1 or f["SenderLatchedMode"] != 1
+                or f["StagedPackets"] or f["MaxProtectedWaitNS"] or not all(
+                    e["Endpoint"]["SACKEnabled"] and e["Endpoint"]["Timestamps"] for e in f["Events"] if "Endpoint" in e)
+                or case["Bytes"] < case["OfferedBytes"] and not 30_000_000_000 <= case["VirtualNS"] <= 30_001_000_000):
+            raise ValueError("The offered finite path, negotiated sender, or absolute deadline changed")
+    if digest(rows[0][:cut]) != prefix_hash:
+        raise ValueError("Control first-flight and full packet/endpoint prefix do not match historical events")
+    split = next((i for i, (left, right) in enumerate(zip(*rows)) if left != right), min(map(len, rows)))
+    result["first_event_difference"] = {"index": split, "control": rows[0][split:split+1], "treatment": rows[1][split:split+1]}
+    witness = cf.get("OneCredit")
+    if (not witness or witness != tf.get("OneCredit") or witness["Index"] != cut or witness["Requests"] != 1
+            or split < cut or digest(rows[1][:cut]) != prefix_hash):
+        return dict(result, adjudication="unmatched_prefix_or_witness")
+    c = witness["Decision"]
+    trigger = rows[0][cut-1]["Action"]
+    if (rows[0][cut-1]["At"] != 1_540_661_760 or trigger["Path"] != "rack_recovery_scan" or
+            trigger["Trigger"]["Ack"] != 651*1420 or c["AtNS"]-first != 1_540_661_760 or
+            c["PreviousUna"]-base != 650*1420 or c["Una"]-base != 651*1420 or c["Nxt"]-base != 853*1420 or
+            c["MSS"] != 1420 or c["Delivered"] != 1420 or c["SackBefore"] != 1420 or c["SackAfter"] != 1420 or
+            c["Span"] != 202*1420 or c["Sacked"] != 1420 or c["MarkedOriginal"] != 201*1420 or
+            c["PossibleBytes"] or c["Outstanding"] != 201 or c["Cwnd"] != 151 or c["Ssthresh"] != 148 or not c["Eligible"]):
+        return dict(result, adjudication="historical_one_credit_preconditions_not_met")
+    if any(e.get("Action", {}).get("Path") == "one_credit_granted" for e in rows[0]):
+        raise ValueError("Control granted a diagnostic repair")
+    # This split must be an actual sender grant between the shared native
+    # RACK scan and the control's ACK exit. Independently retain wire effect.
+    treatment_grants = [e for e in rows[1] if e.get("Action", {}).get("Path") == "one_credit_granted"]
+    wanted = {"Start": 651*1420, "End": 652*1420}
+    if (split != cut or rows[0][split].get("Action", {}).get("Path") != "ack_end" or
+            len(treatment_grants) != 1 or rows[1][split] != treatment_grants[0] or
+            treatment_grants[0]["Action"]["Trigger"] != trigger["Trigger"] or
+            treatment_grants[0]["Action"]["Range"] != wanted):
+        return dict(result, adjudication="missing_or_different_first_intervention")
+    def effect(events):
+        suffix = events[cut:]
+        overlaps = lambda w: w["Side"] == 0 and w["Payload"] and w["Seq"] < wanted["End"] and wanted["Start"] < w["End"]
+        offers = [e["Wire"] for e in suffix if e["Kind"] == "offer" and overlaps(e["Wire"])]
+        inputs = [e["Wire"] for e in suffix if e["Kind"] == "input" and overlaps(e["Wire"])]
+        discards = [e["Wire"] for e in suffix if e["Kind"] == "discard" and overlaps(e["Wire"])]
+        if any(w not in offers for w in inputs+discards) or any(
+                w["Arrival"] <= 2_100_000_000 and w not in (discards if w["Dropped"] else inputs) for w in offers):
+            raise ValueError("Cannot join target offer to its actual acceptance/discard or peer ingress")
+        advances = [e for e in suffix if e["Kind"] == "input" and e["Wire"]["Side"] == 1 and e["Wire"]["Ack"] >= wanted["End"]]
+        peer_ack = [e for e in suffix if e.get("Endpoint", {}).get("Side") == 0 and e["Endpoint"]["Una"] >= wanted["End"]]
+        rtos = [e for e in suffix if e.get("Action", {}).get("Path") == "rto_expiry_pre_backoff"]
+        retries = [e for e in suffix if e.get("Action", {}).get("Range") == wanted
+                   and e["Action"]["Path"] in ("retransmit", "retry_stack_accepted", "retry_stack_error")]
+        return {"offers": offers, "arrivals": inputs, "discards": discards, "sender_attempts": retries,
+                "first_advance": advances[:1], "sender_advance": peer_ack[:1], "first_true_rto_in_window": rtos[:1],
+                "acked_before_old_deadline": bool(advances and peer_ack and advances[0]["At"] < original_deadline and peer_ack[0]["At"] < original_deadline)}
+    before = rows[0][:cut]
+    result["before_credit"] = {"forward_offers": sum(e["Kind"] == "offer" and e["Wire"]["Side"] == 0 and bool(e["Wire"]["Payload"]) for e in before),
+                               "drops": sum(e["Kind"] == "discard" for e in before),
+                               "received_prefix": covered([(e["Wire"]["Seq"], e["Wire"]["End"]) for e in before
+                                                         if e["Kind"] == "input" and e["Wire"]["Side"] == 0 and e["Wire"]["Payload"]]),
+                               "rtos": sum(e.get("Action", {}).get("Path") == "rto" for e in before)}
+    result["target_range"] = wanted
+    result["control_effect"], result["treatment_effect"] = map(effect, rows)
+    result["adjudication"] = ("matched_advance_before_old_rto" if result["treatment_effect"]["acked_before_old_deadline"]
+                              else "matched_no_certified_advance_before_old_rto")
+    return result
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:

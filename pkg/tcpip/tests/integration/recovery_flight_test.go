@@ -91,6 +91,13 @@ type flightResult struct {
 	MaxProtectedWaitNS         int64
 	StagedPackets              int
 	ForwardRate, QueueCapacity int64
+	OneCredit                  *creditWitness `json:",omitempty"`
+}
+
+type creditWitness struct {
+	Decision tcp.TCPRecoveryCredit
+	Index    int
+	Requests int
 }
 
 type flightRecorder struct {
@@ -111,7 +118,26 @@ func newFlight(role string, mode tcpip.TCPRecovery, ref, cmp *flightResult) *fli
 }
 
 const originalRole = "original_fifo"
+const oneRepairRole = "one_repair"
 const originalTraceWindow = 2100 * time.Millisecond
+
+func (f *flightRecorder) finiteFIFO() bool {
+	return f.result.Role == originalRole || f.result.Role == oneRepairRole
+}
+
+// Only this predetermined cumulative ACK can consume credit. Earlier ACKs
+// remain under native recovery even if the alternative would have sent there.
+func (f *flightRecorder) credit(c tcp.TCPRecoveryCredit) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.result.OneCredit != nil {
+		f.result.OneCredit.Requests++
+		return false
+	}
+	f.result.OneCredit = &creditWitness{Decision: c, Index: len(f.result.Events), Requests: 1}
+	return f.result.Role == oneRepairRole && c.Eligible && c.PreviousUna-f.base[0] == 650*1420 &&
+		c.Una-f.base[0] == 651*1420 && c.Delivered == int64(c.MSS)
+}
 
 // The retained original freezes a 651-MSS cumulative ACK for three 100ms
 // samples preceding its first RTO. Watch that byte; do not choose it again
@@ -157,7 +183,7 @@ func (f *flightRecorder) wire(p packetObservation) flightWire {
 // unexplained input/state difference terminates the comparison.
 func (f *flightRecorder) event(e flightEvent) {
 	r := &f.result
-	if r.Role == originalRole && e.At > int64(originalTraceWindow) {
+	if f.finiteFIFO() && e.At > int64(originalTraceWindow) {
 		return
 	}
 	if f.first == 0 || r.End != "" || r.Match == "unmatched_prefix" || (f.ref == nil && r.ReferenceCut != 0) {
@@ -318,7 +344,7 @@ func (f *flightRecorder) offer(p packetObservation) {
 		return
 	}
 	w := f.wire(p)
-	if f.result.Role == originalRole && w.Captured > int64(originalTraceWindow) {
+	if f.finiteFIFO() && w.Captured > int64(originalTraceWindow) {
 		return
 	}
 	if w.Side == 0 && w.Payload != 0 && !w.Retransmit && (f.ref == nil || w.Seq < int32(f.ref.Fence)) {
@@ -464,9 +490,11 @@ func TestVirtualTCPOriginalFIFORTO(t *testing.T) {
 	if runtime.GOMAXPROCS(0) != 1 {
 		t.Fatal("the manual clock fixture requires one TCP processor per stack")
 	}
-	t.Run(originalRole, func(t *testing.T) {
-		f := newFlight(originalRole, tcpip.TCPRACKLossDetection, nil, nil)
-		runVirtualTCP(t, "cubic", nil, virtualScenario{delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second, bytes: 16 << 20,
-			dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{LowerMSS: 30}, hyStartPlus: true, forwardQueue: &startupQueue{Rate: 1250000, Capacity: 125000}, flight: f})
-	})
+	for _, role := range []string{originalRole, oneRepairRole} {
+		t.Run(role, func(t *testing.T) {
+			f := newFlight(role, tcpip.TCPRACKLossDetection, nil, nil)
+			runVirtualTCP(t, "cubic", nil, virtualScenario{delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second, bytes: 16 << 20,
+				dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{LowerMSS: 30}, hyStartPlus: true, forwardQueue: &startupQueue{Rate: 1250000, Capacity: 125000}, flight: f})
+		})
+	}
 }

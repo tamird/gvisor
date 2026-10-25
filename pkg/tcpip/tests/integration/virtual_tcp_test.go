@@ -359,7 +359,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	var latestACK startupACK
 	startup := scenario.startup
 	flight := scenario.flight
-	originalFIFO := flight != nil && flight.result.Role == originalRole
+	originalFIFO := flight != nil && flight.finiteFIFO()
 	queue := scenario.forwardQueue
 	forwardRate := rate
 	if queue != nil {
@@ -379,7 +379,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		if flight != nil {
 			newProbe = func(p tcp.TCPProbeFunc) func(*stack.Stack) stack.TransportProtocol {
 				if originalFIFO {
-					return tcp.NewProtocolProbeHyStartPlusWatch(p, flight.decision, flight.watch)
+					return tcp.NewProtocolProbeOneRepair(p, flight.decision, flight.watch, flight.credit)
 				}
 				return tcp.NewProtocolProbeHyStartPlusRecovery(p, flight.decision)
 			}
@@ -806,6 +806,10 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 				originalDone = true
 				flight.result.Match = "original_deadline_incomplete"
 				flight.result.End = "original_deadline_incomplete"
+				if flight.result.Role == oneRepairRole {
+					flight.result.Match = "one_credit_deadline_incomplete"
+					flight.result.End = flight.result.Match
+				}
 				flight.result.EndNS, flight.result.EndAck = int64(now())-flight.first, acknowledged
 				flight.mu.Unlock()
 				return
@@ -1088,8 +1092,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		if originalDone {
 			// The archived transfer was incomplete at this exact virtual
 			// instant with the same full wire digest and delivered bytes.
-			if now() != 30000331840*time.Nanosecond || received.Len() != 1121800 || acceptedBytes != 9510408 ||
-				!bytes.Equal(received.Bytes(), data[:received.Len()]) || fmt.Sprintf("%x", allPackets.Sum(nil)) != "98c0724b98db9f9590c94924f489f1d35e4dddd72895caea4aa06bf22211827b" {
+			if !bytes.Equal(received.Bytes(), data[:received.Len()]) ||
+				(flight.result.Role == originalRole && (now() != 30000331840*time.Nanosecond || received.Len() != 1121800 || acceptedBytes != 9510408 ||
+					fmt.Sprintf("%x", allPackets.Sum(nil)) != "98c0724b98db9f9590c94924f489f1d35e4dddd72895caea4aa06bf22211827b")) {
 				t.Fatalf("original deadline/delivered payload/packet digest changed: t=%v delivered=%d accepted=%d digest=%x", now(), received.Len(), acceptedBytes, allPackets.Sum(nil))
 			}
 			classification = flight.result.End

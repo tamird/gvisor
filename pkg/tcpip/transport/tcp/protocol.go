@@ -135,6 +135,7 @@ type protocol struct {
 	probe         TCPProbeFunc                       `state:"nosave"`
 	recoveryProbe func(TCPRecoveryDecision)          `state:"nosave"`
 	recoveryWatch func(uint16, int64) (uint32, bool) `state:"nosave"`
+	oneRepair     func(TCPRecoveryCredit) bool       `state:"nosave"`
 
 	// The following secrets are used for ISN and timestamp-offset
 	// generation. They are not serialized into checkpoint state and are
@@ -597,11 +598,18 @@ func NewProtocolProbeHyStartPlusRecovery(probe TCPProbeFunc, recovery func(TCPRe
 // sequence range to the diagnostic sender. The predicate receives the local
 // port and absolute monotonic clock in ns.
 func NewProtocolProbeHyStartPlusWatch(probe TCPProbeFunc, recovery func(TCPRecoveryDecision), watch func(uint16, int64) (uint32, bool)) func(*stack.Stack) stack.TransportProtocol {
+	return NewProtocolProbeOneRepair(probe, recovery, watch, nil)
+}
+
+// NewProtocolProbeOneRepair installs the finite-FIFO diagnostic's one-ACK
+// decision. Normal protocols do not install this callback.
+func NewProtocolProbeOneRepair(probe TCPProbeFunc, recovery func(TCPRecoveryDecision), watch func(uint16, int64) (uint32, bool), repair func(TCPRecoveryCredit) bool) func(*stack.Stack) stack.TransportProtocol {
 	return func(s *stack.Stack) stack.TransportProtocol {
 		p := newProtocol(s, ccReno, probe)
 		p.hyStartPlus = true
 		p.recoveryProbe = recovery
 		p.recoveryWatch = watch
+		p.oneRepair = repair
 		return p
 	}
 }
