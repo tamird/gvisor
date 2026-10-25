@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T15:59:58.851816+00:00",
+    "updatedAt": "2026-10-25T16:32:16.360768+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -16958,23 +16958,26 @@
       "repo": "google/gvisor",
       "number": 16052,
       "ref": "fix/rseq-periodic-interrupt",
-      "head": "f91284fb893862890de56ab09be5c6caa241396d",
+      "head": "8c172c3496665452df16e8a345b9c47ca35d92b8",
       "title": "Interrupt RSEQ abort tests with a timer",
       "url": "https://github.com/google/gvisor/pull/16052",
       "group": "runtime",
       "status": "open",
-      "summary": "The contributor-approved header-order correction is published at f91284fb89, patch-identical to proposal 0e079c726. The public reply asks both prior approvers to review the changed head. Native review-request API calls returned HTTP 404, so no formally saved re-request is claimed and no duplicate comment is needed.\n\nThe old import failed rseq_binary compilation on both CPUs because asm/signal.h saw size_t before its declaring header. The approved correction passed both-CPU GNU compilation and canonical formatting with four uncached compile actions. Existing periodic-signal runtime evidence is unchanged; these compile checks do not claim a new runtime test.",
+      "summary": "The published PR remains at 8c172c349666. Its current lint failure is three cpplint include-order errors in the standalone RSEQ helper. The ready amendment 3a7fe444c216 uses <stddef.h> to declare size_t before asm/signal.h and returns the project types header to its normal group. It changes only these includes and their explanatory comment relative to the published source; the periodic-signal behavior is unchanged.\n\nRemote validation df56642b passes C++ lint and uncached GNU compilation for AMD64 and ARM64. Native completion was 16:28:28.850 UTC and verification 16:28:35.128 UTC. This is compile/lint evidence, not a new RSEQ runtime qualification. The contributor decision covers this exact amendment; the public PR has not been updated and no new reapproval comment has been posted. Earlier approver decisions and the prior reapproval comment retain their original sources.\n\nPreserved earlier delivery and failure history:\n\nThe contributor-approved header-order correction is published at f91284fb89, patch-identical to proposal 0e079c726. The public reply asks both prior approvers to review the changed head. Native review-request API calls returned HTTP 404, so no formally saved re-request is claimed and no duplicate comment is needed.\n\nThe old import failed rseq_binary compilation on both CPUs because asm/signal.h saw size_t before its declaring header. The approved correction passed both-CPU GNU compilation and canonical formatting with four uncached compile actions. Existing periodic-signal runtime evidence is unchanged; these compile checks do not claim a new runtime test.",
       "followup": {
         "owner": "root",
-        "sourceHead": "f91284fb893862890de56ab09be5c6caa241396d",
-        "observedAt": "2026-10-24T11:35:59.115042+00:00",
-        "disposition": "Approved amendment published; human reapproval requested by comment",
-        "nextAction": "Follow the existing comment to both prior approvers and fresh import/checks. Preserve API 404; do not repeat comments or claim a saved native re-request.",
+        "sourceHead": "8c172c3496665452df16e8a345b9c47ca35d92b8",
+        "observedAt": "2026-10-25T16:32:16.360768+00:00",
+        "disposition": "Current source lint failure diagnosed; exact validated amendment awaits contributor decision",
+        "nextAction": "Root owns the single contributor decision for 3a7fe444. Keep the public PR at 8c172c until authorized; then publish the exact amendment and handle any required substantive reapproval once. Preserve the current lint failure and earlier import/compile evidence.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685"
+          "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685",
+          "https://github.com/google/gvisor/actions/runs/40194282965/job/121171678126",
+          "https://github.com/tamird/gvisor/commit/3a7fe444c2169cf136de4305d4670ea45f4e869b",
+          "https://app.buildbuddy.io/invocation/df56642b-3c98-4505-aea6-d72156cdf831"
         ]
       },
-      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "updatedAt": "2026-10-25T16:32:16.360768+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -17003,6 +17006,18 @@
         {
           "label": "Fresh reapproval requested by comment",
           "url": "https://github.com/google/gvisor/pull/16052#issuecomment-6383656685"
+        },
+        {
+          "label": "Current source cpplint failure",
+          "url": "https://github.com/google/gvisor/actions/runs/40194282965/job/121171678126"
+        },
+        {
+          "label": "Ready header-order amendment",
+          "url": "https://github.com/tamird/gvisor/commit/3a7fe444c2169cf136de4305d4670ea45f4e869b"
+        },
+        {
+          "label": "C++ lint and both uncached GNU architectures",
+          "url": "https://app.buildbuddy.io/invocation/df56642b-3c98-4505-aea6-d72156cdf831"
         }
       ],
       "ciRecovery": {
@@ -17027,11 +17042,21 @@
       },
       "refinement": {
         "before": {
-          "head": "fd6376945efa93664fec28669cc18e29c89b8648"
+          "head": "8c172c3496665452df16e8a345b9c47ca35d92b8"
         },
         "after": {
-          "head": "0e079c726ea847f2198aa3a433cd67308f4e3a90"
+          "head": "3a7fe444c2169cf136de4305d4670ea45f4e869b"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "8c172c3496665452df16e8a345b9c47ca35d92b8",
+        "head": "3a7fe444c2169cf136de4305d4670ea45f4e869b",
+        "url": "https://github.com/tamird/gvisor/commit/3a7fe444c2169cf136de4305d4670ea45f4e869b",
+        "title": "Apply the RSEQ header-order amendment",
+        "summary": "Replace the standalone helper\u2019s include workaround with <stddef.h>; C++ lint and both GNU target architectures pass remotely. The public PR remains unchanged.",
+        "body": "Apply 3a7fe444c2169cf136de4305d4670ea45f4e869b to the existing #16052? It introduces <stddef.h> before asm/signal.h and restores the project types header to its normal include group, fixing the three current cpplint errors without changing the timer behavior. Remote C++ lint and uncached GNU compilation pass on AMD64 and ARM64: https://app.buildbuddy.io/invocation/df56642b-3c98-4505-aea6-d72156cdf831. This does not claim a new runtime test.\n\nReview comparison: git range-diff --creation-factor=999 8c172c3496665452df16e8a345b9c47ca35d92b8^! 3a7fe444c2169cf136de4305d4670ea45f4e869b^!"
       }
     },
     {

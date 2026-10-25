@@ -259,6 +259,16 @@ the original conflict observation time; a new refresh does not make it new.
 The existing collector and its ten-minute fallback own this intake; no separate
 poller or automatic public acknowledgement is needed.
 
+Then drain `checkFailures`, retained from the existing check report in the same
+snapshot. An empty `changedChecks` list means no transition, not no remaining
+work. Check each current source or matching import failure against its exact
+head and failing check ID/URL; a named owner or an older free-text disposition
+does not establish that this failure has been diagnosed. Keep its concrete
+next action in the owner handoff until repaired or explicitly transferred.
+Older-source imports, approval-gated checks and internal-only failures retain
+their distinct scopes. Do not repeat notifications for an owner already acting
+on the same evidence, or publish an empty update merely to acknowledge a sweep.
+
 An assigned top-level comment can be recorded in the existing PR `followup` as
 `actionableComment: {head, commentId, url}`, with its assigned `owner`. The exact
 head and comment ID/URL must match the complete public feedback snapshot before

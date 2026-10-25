@@ -1164,6 +1164,11 @@ function drawTable(nodes) {
   }
 }
 function refinementComparison(node) {
+  const decision = contributorDecision(node);
+  if (decision?.kind === "amendment" && node.github?.head === decision.baseHead) return {
+    command: `git range-diff --creation-factor=999 ${decision.baseHead}^! ${decision.head}^!`,
+    description: `Published revision ${decision.baseHead.slice(0, 9)} → proposed revision ${decision.head.slice(0, 9)}`,
+  };
   const revision = node.refinement;
   if (!revision || revision.after.head !== node.head ||
       node.github && node.github.head !== revision.after.head) return null;

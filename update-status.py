@@ -753,6 +753,7 @@ def main() -> None:
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
                 "reviewerHandoff": reviewer_handoff(prs, previous),
                 "mergeabilityHandoff": mergeability_handoff(report, previous),
+                "checkFailures": report["checkFailures"],
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
                            "nestedPageSize": 100, "maxOpenPRs": 200, "repositories": inventories,

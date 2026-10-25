@@ -226,10 +226,13 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), false);
+  assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
+    `git range-diff --creation-factor=999 ${node.github.head}^! ${head}^!`);
   const groups = vm.runInContext('attentionGroups([nodeInput], "tamird", false, new Set(["author-proposal"]))', context);
   assert.equal(groups[0].entries[0].copyURL, `https://tamird.github.io/gvisor/?view=table&reason=author-proposal#${encodeURIComponent(node.id)}`);
   node.github.head = 'd'.repeat(40);
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), true);
+  assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
   assert.equal(vm.runInContext('stateRecords(snapshotInput, nodeInput)["contributor-review"].scope', context), head);
   for (const change of [{ baseHead: head }, { baseHead: 'unknown' }, { body: '' },
     { url: `https://github.com/tamird/other/commit/${head}` },

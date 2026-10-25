@@ -225,6 +225,7 @@ class CollectorHistoryTest(unittest.TestCase):
         events = [json.loads(line) for line in lines if line.startswith("{")]
         self.assertEqual([item for event in events for item in event.get("checkFailures", [])],
                          report["checkFailures"])
+        self.assertEqual(current["checkFailures"], report["checkFailures"])
         self.assertIn({"changedChecks": []}, events)
         feedback = [item for event in events for item in event.get("feedback", [])]
         self.assertEqual([item["id"] for item in feedback], [comment["id"]])
