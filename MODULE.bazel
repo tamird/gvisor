@@ -2835,45 +2835,6 @@ DOCKER_HUB_REGISTRIES = [
 img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
 
 img_pull(
-    name = "ruby_http_debian",
-    digest = "sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad",
-    layer_handling = "eager",
-    platforms = [
-        "linux/amd64",
-        "linux/arm64",
-    ],
-    registries = DOCKER_HUB_REGISTRIES,
-    repository = "library/debian",
-    tag = "trixie-slim",
-)
-
-# Debian builds the native Puma and nio4r extensions against its Ruby 3.3 ABI
-# on each architecture. Keep their complete runtime closure at one snapshot.
-ruby_http_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt", isolate = True)
-ruby_http_apt.sources_list(
-    architectures = [
-        "amd64",
-        "arm64",
-    ],
-    components = ["main"],
-    suites = ["trixie"],
-    types = ["deb"],
-    uris = ["https://snapshot.debian.org/archive/debian/20261024T000000Z"],
-)
-ruby_http_apt.install(
-    dependency_set = "ruby_http_packages",
-    packages = [
-        # Package copyrights reference /usr/share/common-licenses.
-        "base-files",
-        "puma",
-        "ruby-rackup",
-        "ruby-sinatra",
-        "ruby3.3",
-    ],
-)
-use_repo(ruby_http_apt, "ruby_http_packages")
-
-img_pull(
     name = "ruby_http_official",
     digest = "sha256:bceec7582aaa80630bb51a04e2df3af658e64c0640c174371776928ad3bd57b4",
     layer_handling = "eager",
