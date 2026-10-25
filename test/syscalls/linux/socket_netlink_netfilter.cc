@@ -5799,47 +5799,61 @@ TEST(NetlinkNetfilterTest, ErrUpdateBindingChain) {
   ASSERT_NO_ERRNO(NetfilterFlushRuleset(fd));
 }
 
+PosixErrorOr<uint32_t> GetCompatMatchRevision(const FileDescriptor& fd,
+                                              uint8_t family,
+                                              const std::string& match,
+                                              uint32_t revision) {
+  std::vector<char> attrs = NlNestedAttr()
+                                .StrAttr(NFTA_COMPAT_NAME, match)
+                                .U32Attr(NFTA_COMPAT_REV, revision)
+                                .U32Attr(NFTA_COMPAT_TYPE, 0)
+                                .Build();
+  std::vector<char> request(NLMSG_LENGTH(sizeof(nfgenmsg)) + attrs.size());
+  auto* hdr = reinterpret_cast<nlmsghdr*>(request.data());
+  InitNetlinkHdr(
+      hdr, request.size(),
+      MakeNetlinkMsgType(NFNL_SUBSYS_NFT_COMPAT, NFNL_MSG_COMPAT_GET), kSeq,
+      NLM_F_REQUEST);
+  InitNetfilterGenmsg(reinterpret_cast<nfgenmsg*>(NLMSG_DATA(hdr)), family,
+                      NFNETLINK_V0, 0);
+  memcpy(request.data() + NLMSG_LENGTH(sizeof(nfgenmsg)), attrs.data(),
+         attrs.size());
+
+  PosixErrorOr<uint32_t> result = PosixError(EIO, "Missing match revision");
+  RETURN_IF_ERRNO(NetlinkRequestResponseSingle(
+      fd, request.data(), request.size(), [&](const nlmsghdr* response) {
+        ASSERT_EQ(response->nlmsg_seq, kSeq);
+        if (response->nlmsg_type == NLMSG_ERROR) {
+          ASSERT_GE(response->nlmsg_len, NLMSG_LENGTH(sizeof(nlmsgerr)));
+          const auto* error =
+              static_cast<const nlmsgerr*>(NLMSG_DATA(response));
+          ASSERT_LT(error->error, 0);
+          result = PosixError(-error->error);
+          return;
+        }
+        ASSERT_EQ(response->nlmsg_type, hdr->nlmsg_type);
+        const nfattr* name = FindNfAttr(response, nullptr, NFTA_COMPAT_NAME);
+        const nfattr* rev = FindNfAttr(response, nullptr, NFTA_COMPAT_REV);
+        ASSERT_NE(name, nullptr);
+        ASSERT_NE(rev, nullptr);
+        EXPECT_EQ(GetNfAttrString(name), match);
+        result = GetNfAttrU32(rev);
+      }));
+  return result;
+}
+
 TEST(NetlinkNetfilterTest, CommentMatchRevision) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCaps()));
   for (uint8_t family : {NFPROTO_IPV4, NFPROTO_IPV6}) {
     for (uint32_t revision : {0, 1}) {
       SCOPED_TRACE(absl::StrCat("family=", family, " revision=", revision));
       FileDescriptor fd = ASSERT_NO_ERRNO_AND_VALUE(NetfilterBoundSocket());
-      std::vector<char> attrs = NlNestedAttr()
-                                    .StrAttr(NFTA_COMPAT_NAME, "comment")
-                                    .U32Attr(NFTA_COMPAT_REV, revision)
-                                    .U32Attr(NFTA_COMPAT_TYPE, 0)
-                                    .Build();
-      std::vector<char> request(NLMSG_LENGTH(sizeof(nfgenmsg)) + attrs.size());
-      auto* hdr = reinterpret_cast<nlmsghdr*>(request.data());
-      InitNetlinkHdr(
-          hdr, request.size(),
-          MakeNetlinkMsgType(NFNL_SUBSYS_NFT_COMPAT, NFNL_MSG_COMPAT_GET), kSeq,
-          NLM_F_REQUEST | (revision == 0 ? 0 : NLM_F_ACK));
-      InitNetfilterGenmsg(reinterpret_cast<nfgenmsg*>(NLMSG_DATA(hdr)), family,
-                          NFNETLINK_V0, 0);
-      memcpy(request.data() + NLMSG_LENGTH(sizeof(nfgenmsg)), attrs.data(),
-             attrs.size());
-      if (revision != 0) {
-        ASSERT_THAT(
-            NetlinkRequestAckOrError(fd, kSeq, request.data(), request.size()),
-            PosixErrorIs(EPROTONOSUPPORT, _));
-        continue;
+      auto result = GetCompatMatchRevision(fd, family, "comment", revision);
+      if (revision == 0) {
+        EXPECT_THAT(result, IsPosixErrorOkAndHolds(0));
+      } else {
+        EXPECT_THAT(result, PosixErrorIs(EPROTONOSUPPORT, _));
       }
-      bool received = false;
-      ASSERT_NO_ERRNO(NetlinkRequestResponseSingle(
-          fd, request.data(), request.size(), [&](const nlmsghdr* response) {
-            received = true;
-            EXPECT_EQ(response->nlmsg_type, hdr->nlmsg_type);
-            const nfattr* name =
-                FindNfAttr(response, nullptr, NFTA_COMPAT_NAME);
-            const nfattr* rev = FindNfAttr(response, nullptr, NFTA_COMPAT_REV);
-            ASSERT_NE(name, nullptr);
-            ASSERT_NE(rev, nullptr);
-            EXPECT_EQ(GetNfAttrString(name), "comment");
-            EXPECT_EQ(GetNfAttrU32(rev), 0);
-          }));
-      EXPECT_TRUE(received);
     }
   }
 }
@@ -5848,6 +5862,8 @@ struct CompatMatchOptions {
   std::optional<std::string> name;
   std::optional<uint32_t> rev;
   std::optional<std::vector<char>> info_data;
+  // A supported revision to query when testing an unsupported one.
+  std::optional<uint32_t> autoload_revision;
 };
 
 static std::vector<char> BuildRawCompatMatchExpr(
@@ -6004,6 +6020,18 @@ TEST_P(NetlinkNetfilterCompatTest, AddCompatRule) {
                                     .Req(rule_req.Build())
                                     .SeqEnd(kSeq + 4)
                                     .Build();
+
+  if (param.family == NFPROTO_INET && param.match_opts) {
+    const CompatMatchOptions& match = *param.match_opts;
+    if (match.name && match.rev) {
+      // Linux has IPv4 and IPv6 module aliases for these matches, but no
+      // INET alias. Query a supported IPv4 revision to load the match.
+      uint32_t revision = match.autoload_revision.value_or(*match.rev);
+      ASSERT_THAT(
+          GetCompatMatchRevision(fd, NFPROTO_IPV4, *match.name, revision),
+          IsPosixErrorOkAndHolds(::testing::Ge(revision)));
+    }
+  }
 
   if (param.expected_error == 0) {
     ASSERT_NO_ERRNO(NetlinkNetfilterBatchRequestAckOrError(
@@ -6379,6 +6407,7 @@ INSTANTIATE_TEST_SUITE_P(
                     .name = "conntrack",
                     .rev = 4,
                     .info_data = StructToBytes(xt_conntrack_mtinfo3{}),
+                    .autoload_revision = 3,
                 },
             .expected_error = ENOENT,
         },
