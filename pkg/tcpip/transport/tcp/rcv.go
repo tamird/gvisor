@@ -459,6 +459,13 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 	segLen := seqnum.Size(s.payloadSize())
 	segSeq := s.sequenceNumber
 
+	var duplicate header.SACKBlock
+	if segSeq.LessThan(r.RcvNxt) && state == StateEstablished && r.ep.SACKPermitted && segLen != 0 && !s.flags.Contains(header.TCPFlagFin) {
+		// Report only payload below the cumulative ACK. The segment may
+		// extend across RcvNxt and deliver new data as well (RFC 2883 §4).
+		duplicate = header.SACKBlock{Start: segSeq, End: segSeq.Add(min(segLen, segSeq.Size(r.RcvNxt)))}
+	}
+
 	// If the sequence number range is outside the acceptable range, just
 	// send an ACK and stop further processing of the segment.
 	// This is according to RFC 793, page 68.
@@ -469,7 +476,11 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 		if segSeq == r.RcvNxt && r.ep.SendTSOk && s.parsedOptions.TS {
 			r.ep.updateRecentTimestamp(s.parsedOptions.TSVal, r.ep.snd.MaxSentAck, segSeq)
 		}
-		r.ep.snd.maybeSendOutOfWindowAck(s)
+		if duplicate.Start != duplicate.End {
+			r.ep.snd.sendDSACK(duplicate)
+		} else {
+			r.ep.snd.maybeSendOutOfWindowAck(s)
+		}
 		return true, nil
 	}
 
@@ -548,6 +559,11 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 		r.PendingBufUsed -= s.segMemSize()
 		r.ep.rcvQueueMu.Unlock()
 		s.DecRef()
+	}
+	if duplicate.Start != duplicate.End && !r.closed {
+		// The new suffix may have filled a gap. Report the duplicate prefix
+		// with the cumulative ACK after draining queued data (RFC 2883, §4.2).
+		r.ep.snd.sendDSACK(duplicate)
 	}
 	return false, nil
 }

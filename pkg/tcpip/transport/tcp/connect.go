@@ -1036,23 +1036,27 @@ func (e *Endpoint) makeOptions(sackBlocks []header.SACKBlock) []byte {
 // sendEmptyRaw sends a TCP segment with no payload to the endpoint's peer.
 //
 // +checklocks:e.mu
-func (e *Endpoint) sendEmptyRaw(flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size) tcpip.Error {
+func (e *Endpoint) sendEmptyRaw(flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size, sackBlocks ...header.SACKBlock) tcpip.Error {
 	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 		Mark: e.ops.GetMark(),
 	})
 	defer pkt.DecRef()
-	return e.sendRaw(pkt, flags, seq, ack, rcvWnd)
+	return e.sendRaw(pkt, flags, seq, ack, rcvWnd, sackBlocks)
+}
+
+// +checklocks:e.mu
+func (e *Endpoint) sackBlocks(flags header.TCPFlags) []header.SACKBlock {
+	if e.EndpointState() == StateEstablished && e.rcv.pendingRcvdSegments.Len() > 0 && flags.Contains(header.TCPFlagAck) {
+		return e.sack.Blocks[:e.sack.NumBlocks]
+	}
+	return nil
 }
 
 // sendRaw sends a TCP segment to the endpoint's peer. This method takes
 // ownership of pkt. pkt must not have any headers set.
 //
 // +checklocks:e.mu
-func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size) tcpip.Error {
-	var sackBlocks []header.SACKBlock
-	if e.EndpointState() == StateEstablished && e.rcv.pendingRcvdSegments.Len() > 0 && (flags&header.TCPFlagAck != 0) {
-		sackBlocks = e.sack.Blocks[:e.sack.NumBlocks]
-	}
+func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, ack seqnum.Value, rcvWnd seqnum.Size, sackBlocks []header.SACKBlock) tcpip.Error {
 	options := e.makeOptions(sackBlocks)
 	defer putOptions(options)
 	hdrSize := header.TCPMinimumSize + int(e.route.MaxHeaderLength()) + len(options)
@@ -1128,7 +1132,8 @@ func (e *Endpoint) resetConnectionLocked(err tcpip.Error) {
 		if e.rcv != nil {
 			ackNum = e.rcv.RcvNxt
 		}
-		e.sendEmptyRaw(header.TCPFlagAck|header.TCPFlagRst, resetSeqNum, ackNum, 0)
+		const flags = header.TCPFlagAck | header.TCPFlagRst
+		e.sendEmptyRaw(flags, resetSeqNum, ackNum, 0, e.sackBlocks(flags)...)
 	}
 	// Don't purge read queues here. If there's buffered data, it's still allowed
 	// to be read.
@@ -1430,7 +1435,7 @@ func (e *Endpoint) keepaliveTimerExpired() tcpip.Error {
 	// seg.seq = snd.nxt-1.
 	e.keepalive.unacked++
 	e.keepalive.Unlock()
-	e.snd.sendEmptySegment(header.TCPFlagAck, e.snd.SndNxt-1)
+	e.snd.sendEmptyAck(e.snd.SndNxt-1, e.sackBlocks(header.TCPFlagAck))
 	e.resetKeepaliveTimer(false)
 	return nil
 }

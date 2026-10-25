@@ -440,7 +440,17 @@ func (s *sender) updateMaxPayloadSize(mtu, count int) {
 // sendAck sends an ACK segment.
 // +checklocks:s.ep.mu
 func (s *sender) sendAck() {
-	s.sendEmptySegment(header.TCPFlagAck, s.SndNxt)
+	s.sendEmptyAck(s.SndNxt, s.ep.sackBlocks(header.TCPFlagAck))
+}
+
+// sendDSACK reports duplicate payload in the first SACK block of this ACK
+// only. The receiver's ordinary SACK history remains unchanged (RFC 2883 §4).
+// +checklocks:s.ep.mu
+func (s *sender) sendDSACK(duplicate header.SACKBlock) {
+	var blocks [1 + MaxSACKBlocks]header.SACKBlock
+	blocks[0] = duplicate
+	n := copy(blocks[1:], s.ep.sackBlocks(header.TCPFlagAck))
+	s.sendEmptyAck(s.SndNxt, blocks[:1+n])
 }
 
 // updateRTO updates the retransmit timeout when a new roud-trip time is
@@ -1878,12 +1888,12 @@ func (s *sender) sendSegmentFromPacketBuffer(pkt *stack.PacketBuffer, flags head
 	pkt = pkt.Clone()
 	defer pkt.DecRef()
 
-	return s.ep.sendRaw(pkt, flags, seq, rcvNxt, rcvWnd)
+	return s.ep.sendRaw(pkt, flags, seq, rcvNxt, rcvWnd, s.ep.sackBlocks(flags))
 }
 
-// sendEmptySegment sends a new empty segment, flags and sequence number.
+// sendEmptyAck sends an ACK with the given sequence number and SACK blocks.
 // +checklocks:s.ep.mu
-func (s *sender) sendEmptySegment(flags header.TCPFlags, seq seqnum.Value) tcpip.Error {
+func (s *sender) sendEmptyAck(seq seqnum.Value, sackBlocks []header.SACKBlock) tcpip.Error {
 	s.LastSendTime = s.ep.stack.Clock().NowMonotonic()
 	if seq == s.RTTMeasureSeqNum {
 		s.RTTMeasureTime = s.LastSendTime
@@ -1894,7 +1904,7 @@ func (s *sender) sendEmptySegment(flags header.TCPFlags, seq seqnum.Value) tcpip
 	// Remember the max sent ack.
 	s.MaxSentAck = rcvNxt
 
-	return s.ep.sendEmptyRaw(flags, seq, rcvNxt, rcvWnd)
+	return s.ep.sendEmptyRaw(header.TCPFlagAck, seq, rcvNxt, rcvWnd, sackBlocks...)
 }
 
 // maybeSendOutOfWindowAck sends an ACK if we are not being rate limited
