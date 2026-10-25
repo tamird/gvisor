@@ -178,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         global runner_exit, capture_exit
         record = {"architecture": architecture, "phase": phase, "status": "INCOMPLETE", "runner_counts": {},
                   "image_actions": [], "expected_properties": REMOTE_PROPERTIES,
-                  "scope": "Selected image build actions; mnemonics distinguish compilation and assembly"}
+                  "scope": "Execution log capture; the image inspection verifies each required program's producing action."}
         prefix = architecture + "-" + phase
         destination = evidence / (prefix + "-image-execution.json")
         compressed = artifacts / (prefix + "-execution.json.gz")
@@ -243,8 +243,8 @@ with tempfile.TemporaryDirectory(prefix="image-qualification-") as temporary:
         # Resolve the configured image graph, without evaluating unrelated
         # module extensions as `mod deps` does. All subsequent phases freeze
         # this canonical lock; the separate license audit covers the full graph.
-        for architecture in ("x86_64", "aarch64"):
-            graphs = [("images", CONFIG["image_targets"][architecture], [])]
+        for architecture, targets in CONFIG["image_targets"].items():
+            graphs = [("images", targets, [])]
             if runtime_targets := CONFIG.get("preparation_targets", {}).get(architecture):
                 graphs.append(("runtime", runtime_targets, []))
             for name, preparation_targets, configuration_options in graphs:

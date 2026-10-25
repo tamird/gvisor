@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 import json
+import re
 from typing import TextIO
 
 
@@ -43,3 +44,39 @@ def execution_records(stream: TextIO, max_record_chars: int = 64 * 1024 * 1024) 
         yield pending[:end], value
         pending = pending[end:]
         read_size = min(65536, max_record_chars + 1)
+
+
+def program_producer(capture: dict, architecture: str, phase: str, owner: str,
+                     mnemonic: str, *, path: str, size: int, sha256: str) -> dict:
+    """Match one configured program to its successful remote action or cache hit."""
+    match capture:
+        case {"architecture": cpu, "phase": name, "status": "PASS", "image_actions": list(actions)} if (cpu, name) == (architecture, phase):
+            pass
+        case _:
+            raise ValueError(f"Incomplete or mismatched {architecture} {phase} execution log")
+
+    matches = [(action, output) for action in actions
+               if action.get("targetLabel") == owner and action.get("mnemonic") == mnemonic
+               for output in action.get("actualOutputs", ()) if output.get("path") == path]
+    match matches:
+        case [(action, {"digest": {"hash": str(output_hash), "sizeBytes": str(output_size), "hashFunctionName": "SHA-256" | "SHA256"}})]:
+            if (output_hash, output_size) != (sha256, str(size)) or not re.fullmatch("[0-9a-f]{64}", sha256):
+                raise ValueError(f"{owner} output {path} differs from the installed program")
+        case _:
+            raise ValueError(f"Expected one {owner} {mnemonic} output with a digest for {path}; found {len(matches)}")
+
+    match action:
+        case {"exitCode": 0, "status": "", "remotable": True, "runner": str(runner),
+              "cacheHit": cached, "digest": {"hash": str(action_hash), "hashFunctionName": "SHA256" | "SHA-256"}, "full_record_sha256": str(record_hash)}:
+            pass
+        case _:
+            raise ValueError(f"{owner} did not produce {path} successfully")
+    match runner, cached:
+        case ("remote", False) | ("remote cache hit", True):
+            pass
+        case _:
+            raise ValueError(f"{owner} output {path} has no remote producer or remote cache hit")
+    if not all(re.fullmatch("[0-9a-f]{64}", value) for value in (action_hash, record_hash)):
+        raise ValueError(f"{owner} output {path} lacks a complete action or record digest")
+    return {"owner": owner, "mnemonic": mnemonic, "output": {"path": path, "bytes": size, "sha256": sha256},
+            "runner": runner, "cache_hit": cached, "action_sha256": action_hash, "full_record_sha256": record_hash}

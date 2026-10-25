@@ -1,0 +1,478 @@
+{
+  "source": "a3315a4a1d4f8a16f2163188d5c7c90ea96b8d01",
+  "invocation": "f4134e3b-0247-4138-bf79-3acfe08fa66d",
+  "bundle": {
+    "sha256": "b9393e8c58bdf0d29c7a29632d10288039e4ed8be484eca0a734a6cc629d4a12",
+    "bytes": 1856685
+  },
+  "architectures": {
+    "x86_64": {
+      "capture": {
+        "architecture": "x86_64",
+        "phase": "busybox",
+        "status": "PASS",
+        "image_actions": [
+          {
+            "actualOutputs": [
+              {
+                "digest": {
+                  "hash": "7bab470dd0182057ec802eeb4e91507e03808a95228eba6432adaec241d44c03",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "267696"
+                },
+                "isTool": false,
+                "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build/bin/busybox",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "a3a06fb1da50f780b60ccfbee2c6802f6fc86eef1ad25b58af8507dcae44fab3",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "38754"
+                },
+                "isTool": false,
+                "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build/busybox.config",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "7bab470dd0182057ec802eeb4e91507e03808a95228eba6432adaec241d44c03",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "267696"
+                },
+                "isTool": false,
+                "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/copy_busybox_build/busybox_build/bin/busybox",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "a3a06fb1da50f780b60ccfbee2c6802f6fc86eef1ad25b58af8507dcae44fab3",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "38754"
+                },
+                "isTool": false,
+                "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/copy_busybox_build/busybox_build/busybox.config",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "e3788864c808e08d365f96e35800ab8ad74b47c1228e5da844b5c5760e8b0e8e",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "180183"
+                },
+                "isTool": false,
+                "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build_foreign_cc/Make.log",
+                "symlinkTargetPath": ""
+              }
+            ],
+            "cacheHit": false,
+            "cacheable": true,
+            "commandArgs": [
+              "/bin/bash",
+              "-c",
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build_foreign_cc/wrapper_build_script.sh"
+            ],
+            "digest": {
+              "hash": "54ab055e2fdba97c65f2aa960e6717bdca54c12526ed85f7abf6e3fe7116e692",
+              "hashFunctionName": "SHA256",
+              "sizeBytes": "346"
+            },
+            "environmentVariables": [
+              {
+                "name": "PATH",
+                "value": "/root/workspace/.home/.cache/bazelisk/downloads/sha256/5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160/bin:/root/workspace/wrappers:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              }
+            ],
+            "exitCode": 0,
+            "full_record_sha256": "139208aa1fa57af9eacf3f1ec1c3498673dc0ae72184e75c5e0d3b6d5872706c",
+            "input_count": 19471,
+            "listedOutputs": [
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build/bin/busybox",
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build/busybox.config",
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build/include",
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build_foreign_cc/Make.log",
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/copy_busybox_build/busybox_build"
+            ],
+            "metrics": {
+              "executionWallTime": "12.359s",
+              "fetchTime": "0.001s",
+              "inputBytes": "8452417031",
+              "inputBytesLimit": "0",
+              "inputFiles": "19471",
+              "inputFilesLimit": "0",
+              "memoryBytesLimit": "0",
+              "memoryEstimateBytes": "0",
+              "networkTime": "0.289s",
+              "outputBytesLimit": "0",
+              "outputFilesLimit": "0",
+              "parseTime": "0.051s",
+              "processOutputsTime": "0.338s",
+              "queueTime": "0.058s",
+              "setupTime": "0.859s",
+              "startTime": "2026-10-25T23:21:07.073Z",
+              "totalTime": "14.214s",
+              "uploadTime": "0.177s"
+            },
+            "mnemonic": "CcMakeMakeRule",
+            "platform": {
+              "properties": [
+                {
+                  "name": "Arch",
+                  "value": "amd64"
+                },
+                {
+                  "name": "OSFamily",
+                  "value": "linux"
+                },
+                {
+                  "name": "container-image",
+                  "value": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+                },
+                {
+                  "name": "workload-isolation-type",
+                  "value": "oci"
+                }
+              ]
+            },
+            "remotable": true,
+            "remoteCacheable": true,
+            "runner": "remote",
+            "status": "",
+            "targetLabel": "//images:busybox_build",
+            "timeoutMillis": "0"
+          },
+          {
+            "actualOutputs": [
+              {
+                "digest": {
+                  "hash": "322bc8d65b13f114f95f4662b641403580b7d2250549a541cf3bbb37a8c5ef0b",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "120440"
+                },
+                "isTool": false,
+                "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/external/+_repo_rules+ltp/fsstress",
+                "symlinkTargetPath": ""
+              }
+            ],
+            "cacheHit": true,
+            "cacheable": true,
+            "commandArgs": [
+              "external/llvm++llvm_toolchain_minimal+llvm-toolchain-minimal-linux-amd64/bin/clang++",
+              "@bazel-out/k8-opt-ST-ab3920cb6ebb/bin/external/+_repo_rules+ltp/fsstress-0.params"
+            ],
+            "digest": {
+              "hash": "053cb76cbbf9e01c9fe4aba83efbd6cb45e0be489ed4bbafb90b564ccdd864f5",
+              "hashFunctionName": "SHA256",
+              "sizeBytes": "346"
+            },
+            "environmentVariables": [
+              {
+                "name": "PATH",
+                "value": "/root/workspace/.home/.cache/bazelisk/downloads/sha256/5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160/bin:/root/workspace/wrappers:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              },
+              {
+                "name": "PWD",
+                "value": "/proc/self/cwd"
+              }
+            ],
+            "exitCode": 0,
+            "full_record_sha256": "be95c36b94f42c404ff624213358da0ea1d7af157b6ff573e341a64b69d5d8c2",
+            "input_count": 344,
+            "listedOutputs": [
+              "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/external/+_repo_rules+ltp/fsstress"
+            ],
+            "metrics": {
+              "inputBytes": "1547485412",
+              "inputBytesLimit": "0",
+              "inputFiles": "344",
+              "inputFilesLimit": "0",
+              "memoryBytesLimit": "0",
+              "memoryEstimateBytes": "0",
+              "networkTime": "0.087s",
+              "outputBytesLimit": "0",
+              "outputFilesLimit": "0",
+              "startTime": "2026-10-23T03:16:49.747Z",
+              "totalTime": "0.089s"
+            },
+            "mnemonic": "CppLink",
+            "platform": {
+              "properties": [
+                {
+                  "name": "Arch",
+                  "value": "amd64"
+                },
+                {
+                  "name": "OSFamily",
+                  "value": "linux"
+                },
+                {
+                  "name": "container-image",
+                  "value": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+                },
+                {
+                  "name": "workload-isolation-type",
+                  "value": "oci"
+                }
+              ]
+            },
+            "remotable": true,
+            "remoteCacheable": true,
+            "runner": "remote cache hit",
+            "status": "",
+            "targetLabel": "@@+_repo_rules+ltp//:fsstress",
+            "timeoutMillis": "0"
+          }
+        ]
+      },
+      "programs": [
+        {
+          "installed_path": "bin/busybox",
+          "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/images/busybox_build/bin/busybox",
+          "size": 267696,
+          "sha256": "7bab470dd0182057ec802eeb4e91507e03808a95228eba6432adaec241d44c03"
+        },
+        {
+          "installed_path": "usr/bin/fsstress",
+          "path": "bazel-out/k8-opt-ST-ab3920cb6ebb/bin/external/+_repo_rules+ltp/fsstress",
+          "size": 120440,
+          "sha256": "322bc8d65b13f114f95f4662b641403580b7d2250549a541cf3bbb37a8c5ef0b"
+        }
+      ]
+    },
+    "aarch64": {
+      "capture": {
+        "architecture": "aarch64",
+        "phase": "busybox",
+        "status": "PASS",
+        "image_actions": [
+          {
+            "actualOutputs": [
+              {
+                "digest": {
+                  "hash": "23dd1ba6d47c7f82bc08e139c35b388490b69d9dbd743178635d6808eebb3006",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "309216"
+                },
+                "isTool": false,
+                "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build/bin/busybox",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "a3a06fb1da50f780b60ccfbee2c6802f6fc86eef1ad25b58af8507dcae44fab3",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "38754"
+                },
+                "isTool": false,
+                "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build/busybox.config",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "23dd1ba6d47c7f82bc08e139c35b388490b69d9dbd743178635d6808eebb3006",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "309216"
+                },
+                "isTool": false,
+                "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/copy_busybox_build/busybox_build/bin/busybox",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "a3a06fb1da50f780b60ccfbee2c6802f6fc86eef1ad25b58af8507dcae44fab3",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "38754"
+                },
+                "isTool": false,
+                "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/copy_busybox_build/busybox_build/busybox.config",
+                "symlinkTargetPath": ""
+              },
+              {
+                "digest": {
+                  "hash": "121ef1c6ca03d76ecfd90c33c370d48480da424a116e8f562ded24ab5b953497",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "180430"
+                },
+                "isTool": false,
+                "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build_foreign_cc/Make.log",
+                "symlinkTargetPath": ""
+              }
+            ],
+            "cacheHit": false,
+            "cacheable": true,
+            "commandArgs": [
+              "/bin/bash",
+              "-c",
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build_foreign_cc/wrapper_build_script.sh"
+            ],
+            "digest": {
+              "hash": "0cff13074f1a8fad2211f0a4d921a4598f0da74b6ebb82415102d95dfa033e11",
+              "hashFunctionName": "SHA256",
+              "sizeBytes": "346"
+            },
+            "environmentVariables": [
+              {
+                "name": "PATH",
+                "value": "/root/workspace/.home/.cache/bazelisk/downloads/sha256/5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160/bin:/root/workspace/wrappers:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              }
+            ],
+            "exitCode": 0,
+            "full_record_sha256": "c58e382f53a922c2de4dc5b8c2504f624ad2f2d7245d0bf81435063676f0d8f6",
+            "input_count": 19355,
+            "listedOutputs": [
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build/bin/busybox",
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build/busybox.config",
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build/include",
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build_foreign_cc/Make.log",
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/copy_busybox_build/busybox_build"
+            ],
+            "metrics": {
+              "executionWallTime": "19.442s",
+              "fetchTime": "0.002s",
+              "inputBytes": "8452419452",
+              "inputBytesLimit": "0",
+              "inputFiles": "19355",
+              "inputFilesLimit": "0",
+              "memoryBytesLimit": "0",
+              "memoryEstimateBytes": "0",
+              "networkTime": "0.177s",
+              "outputBytesLimit": "0",
+              "outputFilesLimit": "0",
+              "parseTime": "0.109s",
+              "processOutputsTime": "0.146s",
+              "queueTime": "0.058s",
+              "setupTime": "3.134s",
+              "startTime": "2026-10-25T23:23:33.473Z",
+              "totalTime": "23.311s",
+              "uploadTime": "0.169s"
+            },
+            "mnemonic": "CcMakeMakeRule",
+            "platform": {
+              "properties": [
+                {
+                  "name": "Arch",
+                  "value": "amd64"
+                },
+                {
+                  "name": "OSFamily",
+                  "value": "linux"
+                },
+                {
+                  "name": "container-image",
+                  "value": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+                },
+                {
+                  "name": "workload-isolation-type",
+                  "value": "oci"
+                }
+              ]
+            },
+            "remotable": true,
+            "remoteCacheable": true,
+            "runner": "remote",
+            "status": "",
+            "targetLabel": "//images:busybox_build",
+            "timeoutMillis": "0"
+          },
+          {
+            "actualOutputs": [
+              {
+                "digest": {
+                  "hash": "cb23d9841f4fdc1cc3cd875b368854623f089b2e76d39bb927312e1d49cac2bf",
+                  "hashFunctionName": "SHA-256",
+                  "sizeBytes": "140144"
+                },
+                "isTool": false,
+                "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/external/+_repo_rules+ltp/fsstress",
+                "symlinkTargetPath": ""
+              }
+            ],
+            "cacheHit": true,
+            "cacheable": true,
+            "commandArgs": [
+              "external/llvm++llvm_toolchain_minimal+llvm-toolchain-minimal-linux-amd64/bin/clang++",
+              "@bazel-out/aarch64-opt-ST-c7b6929f6094/bin/external/+_repo_rules+ltp/fsstress-0.params"
+            ],
+            "digest": {
+              "hash": "e6320f208a4b8b2805436c966aabb4b2c3e60b066fd55b6e6005f9cff81622ec",
+              "hashFunctionName": "SHA256",
+              "sizeBytes": "346"
+            },
+            "environmentVariables": [
+              {
+                "name": "PATH",
+                "value": "/root/workspace/.home/.cache/bazelisk/downloads/sha256/5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160/bin:/root/workspace/wrappers:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+              },
+              {
+                "name": "PWD",
+                "value": "/proc/self/cwd"
+              }
+            ],
+            "exitCode": 0,
+            "full_record_sha256": "ba0f3792046998f6d6d8ef2cc7bfad8b67000c33699d9cbde9a1b5fe300390f4",
+            "input_count": 344,
+            "listedOutputs": [
+              "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/external/+_repo_rules+ltp/fsstress"
+            ],
+            "metrics": {
+              "fetchTime": "0.001s",
+              "inputBytes": "1547741704",
+              "inputBytesLimit": "0",
+              "inputFiles": "344",
+              "inputFilesLimit": "0",
+              "memoryBytesLimit": "0",
+              "memoryEstimateBytes": "0",
+              "networkTime": "0.168s",
+              "outputBytesLimit": "0",
+              "outputFilesLimit": "0",
+              "parseTime": "0.002s",
+              "startTime": "2026-10-23T03:19:03.623Z",
+              "totalTime": "0.171s"
+            },
+            "mnemonic": "CppLink",
+            "platform": {
+              "properties": [
+                {
+                  "name": "Arch",
+                  "value": "amd64"
+                },
+                {
+                  "name": "OSFamily",
+                  "value": "linux"
+                },
+                {
+                  "name": "container-image",
+                  "value": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+                },
+                {
+                  "name": "workload-isolation-type",
+                  "value": "oci"
+                }
+              ]
+            },
+            "remotable": true,
+            "remoteCacheable": true,
+            "runner": "remote cache hit",
+            "status": "",
+            "targetLabel": "@@+_repo_rules+ltp//:fsstress",
+            "timeoutMillis": "0"
+          }
+        ]
+      },
+      "programs": [
+        {
+          "installed_path": "bin/busybox",
+          "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/images/busybox_build/bin/busybox",
+          "size": 309216,
+          "sha256": "23dd1ba6d47c7f82bc08e139c35b388490b69d9dbd743178635d6808eebb3006"
+        },
+        {
+          "installed_path": "usr/bin/fsstress",
+          "path": "bazel-out/aarch64-opt-ST-c7b6929f6094/bin/external/+_repo_rules+ltp/fsstress",
+          "size": 140144,
+          "sha256": "cb23d9841f4fdc1cc3cd875b368854623f089b2e76d39bb927312e1d49cac2bf"
+        }
+      ]
+    }
+  }
+}

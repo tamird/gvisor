@@ -12,12 +12,16 @@ import time
 credential = os.environ["BUILDBUDDY_API_KEY"].encode()
 if not credential or re.search(rb"[\s'\"]", credential):
     raise RuntimeError("Expected a nonempty single-token hosted-runner credential")
-source = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])["source"]
+config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+source = config["source"]
 if subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() != source:
     raise RuntimeError("Unexpected bootstrap source")
 if subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"]):
     raise RuntimeError("Tracked bootstrap source is dirty")
-deadline = time.monotonic() + 2100
+work_seconds = config.get("work_seconds", 2100)
+if type(work_seconds) is not int or not 0 < work_seconds <= 2100:
+    raise ValueError("Expected a positive work deadline of at most 2100 seconds")
+deadline = time.monotonic() + work_seconds
 os.environ["APPLICABILITY_WORK_DEADLINE"] = str(deadline)
 artifacts = Path(os.environ["BUILDBUDDY_ARTIFACTS_DIRECTORY"])
 artifacts.mkdir(parents=True, exist_ok=True)

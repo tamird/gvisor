@@ -11,6 +11,7 @@ import tempfile
 import time
 
 from image_archive import archive, identity, resolve
+from image_execution import program_producer
 
 os.chdir(os.environ["BUILD_WORKSPACE_DIRECTORY"])
 evidence = Path(sys.argv[1])
@@ -97,6 +98,10 @@ try:
             raise ValueError("Configured LTP input/output set differs")
         records.setdefault("ltp_inputs", {})[architecture] = ltp_rows
         outputs["@ltp//:fsstress"] = ltp_outputs["fsstress"]
+        ltp_repository, = repositories
+        producers = {"//images:busybox_binary": ("//images:busybox_build", "CcMakeMakeRule"),
+                     "@ltp//:fsstress": (ltp_repository + "//:fsstress", "CppLink")}
+        execution = json.loads((evidence / (cpu + "-busybox-image-execution.json")).read_text())
         build_inputs = json.loads((evidence / "busybox-build-inputs.json").read_text())
         input_row = next(row for row in build_inputs["architectures"] if row["architecture"] == cpu)
         match input_row["outputs"]["config"]:
@@ -172,6 +177,9 @@ try:
                     actual = identity(outputs[target])
                     if files[installed]["mode"] != 0o755 or (len(payload), hashlib.sha256(payload).hexdigest()) != (actual["bytes"], actual["sha256"]):
                         raise ValueError("Installed executable differs from configured output: " + installed)
+                    producer = program_producer(execution, cpu, "busybox", *producers[target],
+                                                path=str(outputs[target].relative_to(root)),
+                                                size=actual["bytes"], sha256=actual["sha256"])
                     path = Path(temporary) / Path(installed).name
                     path.write_bytes(payload)
                     header = run(["readelf", "--file-header", str(path)])
@@ -179,7 +187,7 @@ try:
                     dynamic = run(["readelf", "--dynamic", str(path)])
                     if machine not in header or "INTERP" in segments or "(NEEDED)" in dynamic:
                         raise ValueError("Scratch executable is not static for its target")
-                    row["static_programs"].append({"installed_path": installed, "owner": target, "output": actual,
+                    row["static_programs"].append({"installed_path": installed, "owner": target, "output": actual, "producer": producer,
                                                    "file_header": header, "program_headers": segments, "dynamic": dynamic})
             for installed, source in {"usr/share/licenses/busybox/NOTICE": "images/busybox/NOTICE",
                                       "usr/share/licenses/musl/NOTICE": "images/musl/NOTICE"}.items():

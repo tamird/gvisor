@@ -12,6 +12,26 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
                "--remote_download_outputs=all", "--noannounce_rc",
                "--build_event_json_file_path_conversion=false"]
+    if config.get("producer_controls"):
+        target = "//test/rbe:image_execution_test"
+        if config["runtime"] or config["targets"] != [target]:
+            raise ValueError("Producer controls select only the retained Bazel test")
+        selected = [*options, "--config=x86_64", "--nocache_test_results",
+                    "--flaky_test_attempts=1", "--runs_per_test=1", "--strategy=TestRunner=remote"]
+        analysis = invoke("producer-controls-analysis", ["test", *selected, "--nobuild", target],
+                          "analysis", targets=[target])
+        if analysis["status"] != "PASS":
+            raise RuntimeError("Producer control analysis failed")
+        execution_log = private / "producer-controls-execution.json"
+        try:
+            result = invoke("producer-controls",
+                            ["test", *selected, "--execution_log_json_file=" + str(execution_log), target],
+                            "test", (evidence / "invocation-producer-controls-analysis/events.jsonl",), targets=[target])
+        finally:
+            record_execution(execution_log, "x86_64", "producer-controls")
+        if result["status"] != "PASS" or result["case_counts"].get("passed", 0) == 0 or result["case_counts"].get("skipped", 0):
+            raise RuntimeError("Retained producer controls failed or skipped")
+        return
     root_name = "canonical-execution-root"
     result = invoke(root_name, ["info", *options, "execution_root"], "command", targets=[])
     if result["status"] != "PASS":
