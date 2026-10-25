@@ -144,12 +144,13 @@ type virtualScenario struct {
 	forwardQueue  *startupQueue
 }
 
-// The pulse applies to cumulative data ACKs (30 MSS, 70 MSS]. Capture the
-// following flight too, so the timestamp echoes can establish RTT relief.
+// Capture both 40-MSS pulses and the following flight, so the timestamp
+// echoes can establish RTT relief.
 const startupTraceMSS = 160
 
 type startupPulse struct {
 	DelayNS                       time.Duration
+	LowerMSS                      uint32
 	MSS                           uint32
 	DataSequence                  uint32
 	FirstPayloadNS                int64
@@ -174,7 +175,11 @@ type startupACK struct {
 	WMax, WEst                    float64
 }
 
-type startupTransition struct{ Before, After startupACK }
+type startupTransition struct {
+	Before, After      startupACK
+	WireAtNS           int64
+	WireACK, WireTSEcr uint32
+}
 
 // A byte-capacity FIFO on the forward wire. Backlog is residual service
 // (including any partially transmitted packet), never propagation time.
@@ -229,15 +234,20 @@ func TestVirtualTCPHyStartComparison(t *testing.T) {
 		t.Fatalf("GOMAXPROCS = %d, want 1", got)
 	}
 	for _, startup := range []string{"classic", "plus"} {
-		for _, path := range []string{"control", "pulse", "fifo"} {
+		for _, path := range []string{"control", "pulse", "shifted_pulse", "fifo"} {
 			t.Run(startup+"_"+path, func(t *testing.T) {
 				scenario := virtualScenario{
 					delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second,
 					bytes: 16 << 20, dropOffset: -1, burstSegments: 1, streaming: true,
-					startup: &startupPulse{}, hyStartPlus: startup == "plus",
+					startup: &startupPulse{LowerMSS: 30}, hyStartPlus: startup == "plus",
 				}
 				switch path {
 				case "pulse":
+					scenario.startup.DelayNS = 25 * time.Millisecond
+				case "shifted_pulse":
+					// The ACK covering a flight's end belongs to that flight
+					// in RFC 9406. Cover the expected next round from ACK 29.
+					scenario.startup.LowerMSS = 28
 					scenario.startup.DelayNS = 25 * time.Millisecond
 				case "fifo":
 					// 10 Mbit/s and one nominal BDP of finite forward service.
@@ -262,7 +272,7 @@ func TestVirtualTCPHyStartTransientDelay(t *testing.T) {
 			runVirtualTCP(t, "cubic", nil, virtualScenario{
 				delay: 50 * time.Millisecond, rate: 12500000,
 				maxTime: 30 * time.Second, bytes: 16 << 20,
-				dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{DelayNS: tc.delay},
+				dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{DelayNS: tc.delay, LowerMSS: 30},
 			})
 		})
 	}
@@ -669,7 +679,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 						nominal := at
 						if startup != nil && side == 1 {
 							offset := segment.AckNumber() - dataSequence
-							if dataStarted && segment.Flags() == header.TCPFlagAck && len(payload) == 0 && offset > 30*startup.MSS && offset <= 70*startup.MSS {
+							if dataStarted && segment.Flags() == header.TCPFlagAck && len(payload) == 0 && offset > startup.LowerMSS*startup.MSS && offset <= (startup.LowerMSS+40)*startup.MSS {
 								at += startup.DelayNS
 							}
 							// A following ACK cannot pass an earlier one on this reverse path.
@@ -752,7 +762,8 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		// schedule models that explicit 1 ms resolution, not exact emission.
 		fence()
 		var startupACKPacket *packetObservation
-		var dataACK, trackStartup bool
+		var dataACK *packetObservation
+		var trackStartup bool
 		if index != -1 {
 			packet := pending[index]
 			pending = append(pending[:index], pending[index+1:]...)
@@ -771,7 +782,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 				}
 				offset := packet.row.Acknowledgment - dataSequence
 				if packet.from == 1 && packet.row.Flags == uint8(header.TCPFlagAck) && offset > 0 && offset <= highestSent {
-					dataACK = true
+					dataACK = &packet.row
 					trackStartup = !startupEnded
 				}
 				if packet.from == 1 && packet.row.Flags == uint8(header.TCPFlagAck) && offset > 0 && offset <= startupTraceMSS*startup.MSS {
@@ -808,7 +819,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			packet.packet.DecRef()
 		}
 		fence()
-		if dataACK || startupACKPacket != nil {
+		if dataACK != nil || startupACKPacket != nil {
 			probeMu.Lock()
 			ack := latestACK
 			probeMu.Unlock()
@@ -834,7 +845,11 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 					if len(startup.Transitions) == 256 {
 						t.Fatal("startup exceeded 256 round or phase transitions")
 					}
-					startup.Transitions = append(startup.Transitions, startupTransition{Before: *before, After: ack})
+					if before.SndUna != ack.SndUna && dataACK.Acknowledgment != ack.SndUna {
+						t.Fatalf("advancing transition probe ACK %d, want wire ACK %d", ack.SndUna, dataACK.Acknowledgment)
+					}
+					startup.Transitions = append(startup.Transitions, startupTransition{Before: *before, After: ack,
+						WireAtNS: dataACK.AtNS, WireACK: dataACK.Acknowledgment, WireTSEcr: dataACK.TSEcr})
 				}
 				startupEnded = ack.Ssthresh != tcp.InitialSsthresh
 				previousStartup = &ack

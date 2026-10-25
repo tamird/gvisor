@@ -10,7 +10,8 @@ import xml.etree.ElementTree as ET
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
 UNIT = "//pkg/tcpip/transport/tcp:tcp_test"
 ROOT = "TestVirtualTCPHyStartComparison"
-CASES = {f"{ROOT}/{scheme}_{path}" for scheme in ("classic", "plus") for path in ("control", "pulse", "fifo")}
+CASES = {f"{ROOT}/{scheme}_{path}" for scheme in ("classic", "plus")
+         for path in ("control", "pulse", "shifted_pulse", "fifo")}
 UNIT_ROOT = "TestCubicHyStartPlus"
 UNIT_CASES = {f"{UNIT_ROOT}/{case}" for case in ("byte_credit", "relief", "persistent", "loss", "timeout")}
 
@@ -19,12 +20,12 @@ def measure_startup(samples: dict, scheme: str) -> dict:
     """Check the wire input independently of which detector fires, if any."""
     result = {}
     prefixes = {}
-    for name, delay in (("control", 0), ("pulse", 25_000_000)):
+    for name, delay, lower in (("control", 0, 30), ("pulse", 25_000_000, 30), ("shifted_pulse", 25_000_000, 28)):
         sample = samples[f"{ROOT}/{scheme}_{name}"]
         startup = sample["Startup"]
         mss, first = startup["MSS"], startup["DataSequence"]
         deadline = startup["Deadline"]
-        if (sample["Algorithm"] != "cubic" or startup["DelayNS"] != delay or mss != 1420
+        if (sample["Algorithm"] != "cubic" or startup["DelayNS"] != delay or startup["LowerMSS"] != lower or mss != 1420
                 or sample["RateBytesPerSecond"] != 12_500_000 or sample["OneWayDelayNS"] != 50_000_000
                 or sample.get("ForwardQueue") or not startup["Transitions"]
                 or any(ack["Plus"] != (scheme == "plus") for ack in startup["ACKs"])
@@ -35,11 +36,12 @@ def measure_startup(samples: dict, scheme: str) -> dict:
         wire = [p for p in sample["Trace"] if p["From"] == 1 and p["Flags"] == 16
                 and 0 < (p["Acknowledgment"] - first) % 2**32 <= 160 * mss]
         early, pulse_rtt, after_rtt, missing_echo = [], [], [], []
+        spill, after_echo = [], []
         selected_count = after_count = 0
         previous_offset = previous_at = 0
         for packet, ack in zip(wire, startup["ACKs"], strict=True):
             offset = (packet["Acknowledgment"] - first) % 2**32
-            affected = 30 * mss < offset <= 70 * mss
+            affected = lower * mss < offset <= (lower + 40) * mss
             expected = max(previous_at, packet["NominalAtNS"] + (delay if affected else 0))
             if (offset <= previous_offset or packet["AtNS"] != expected or ack["AtNS"] != expected
                     or ack["SndUna"] != packet["Acknowledgment"]):
@@ -52,27 +54,37 @@ def measure_startup(samples: dict, scheme: str) -> dict:
                 selected_count += 1
                 if echo:
                     pulse_rtt.append((ack["TSNow"] - echo) % 2**32)
-            elif offset > 70 * mss:
+            elif offset > (lower + 40) * mss:
                 after_count += 1
+                if packet["AtNS"] > packet["NominalAtNS"]:
+                    spill.append({"ack_bytes": offset, "extra_ns": packet["AtNS"] - packet["NominalAtNS"]})
                 if echo:
                     after_rtt.append((ack["TSNow"] - echo) % 2**32)
+                    after_echo.append((offset, after_rtt[-1]))
             else:
                 early.append((packet, ack))
         if not early or not selected_count or not after_count:
             raise ValueError(f"{name}: incomplete ACK history across the selected flight")
         prefixes[name] = (first, mss, startup["FirstPayloadNS"], sample["PayloadSHA256"], early)
         initial = startup["ACKs"][0]["Ssthresh"]
-        exit_ack = next((a for a in startup["ACKs"] if a["Ssthresh"] != initial), None)
+        phase_changes = [event for event in startup["Transitions"] if
+                         event["Before"]["CSS"] != event["After"]["CSS"] or
+                         event["Before"]["Ssthresh"] != event["After"]["Ssthresh"]]
+        exit_ack = next((e["After"] for e in phase_changes if e["After"]["Ssthresh"] != initial), None)
         result[name] = {
-            "first_exit_in_trace": exit_ack,
+            "first_terminal_exit": exit_ack, "phase_changes": phase_changes,
             "affected_ack_count": selected_count, "affected_min_rtt_ms": min(pulse_rtt, default=None),
             "after_ack_count": after_count, "after_min_rtt_ms": min(after_rtt, default=None),
             "missing_or_zero_echo_offsets": missing_echo,
+            "unselected_ack_fifo_delay": spill,
+            "first_after_with_echo_at_most_101ms": next((row for row in after_echo if row[1] <= 101), None),
             "deadline": deadline, "rwnd_headroom_bytes": deadline["Probe"]["SndWnd"] - deadline["Cwnd"] * mss,
             "transfer_finished_ns": sample["VirtualNS"],
         }
-    if prefixes["control"] != prefixes["pulse"]:
-        raise ValueError("The trials differ before the first pulse ACK or in the delivered payload")
+    for name in ("pulse", "shifted_pulse"):
+        if (prefixes[name][:-1] != prefixes["control"][:-1]
+                or prefixes[name][-1] != prefixes["control"][-1][:len(prefixes[name][-1])]):
+            raise ValueError(f"{name}: trials differ before the first pulse ACK or in the delivered payload")
     return result
 
 
@@ -188,7 +200,7 @@ def observations(evidence: Path, phase: str, runs: int, owner: str = OWNER) -> d
         result["startup"] = {scheme: measure_startup(baseline, scheme) for scheme in ("classic", "plus")}
         result["fifo"] = {scheme: measure_fifo(baseline[f"{ROOT}/{scheme}_fifo"], scheme) for scheme in ("classic", "plus")}
         if len({sample["PayloadSHA256"] for sample in baseline.values()}) != 1:
-            raise ValueError("The six arms did not deliver the same payload")
+            raise ValueError("The eight arms did not deliver the same payload")
     return result
 
 
