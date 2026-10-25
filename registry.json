@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T19:37:42.647519+00:00",
+    "updatedAt": "2026-10-25T19:59:37.513818+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4888,13 +4888,13 @@
       "url": "https://github.com/google/gvisor/pull/15318",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T19:37:42.647519+00:00",
-      "summary": "The replacement matching import #16000 at f5aeab9baffa ran Buildkite 52335. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the netlink batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing. This is independently read from the replacement\u2019s own public logs, with no new NDP-specific failure in those failed-step logs. A canceled smoke-race attempt passed on retry; the C++ lint retry was canceling when read. The build moved from failing to canceling during inspection. Original worker module state and the separate private Copybara failure remain unknown.\n\nEarlier import evidence:\n\nThe earlier matching import #16000 at 06be71da95a2 ran Buildkite 52330, then was superseded and cancelled. Three completed native AMD64 shard-11 attempts failed AddCompatRule/Inet with ENOENT using the exact public-master nftables fixture; the separate NodeJS shard passed on retry. Current import progression is reported in the live snapshot. The private Copybara feedback status remains separate: these public logs do not identify its cause or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nThe patch approved by nybidari on 2026-10-16T22:08:06Z at 86a99a4cb3 is independently verified unchanged at f4190d8782. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at f4190d8782e7 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nGitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
+      "updatedAt": "2026-10-25T19:57:46.761150+00:00",
+      "summary": "Matching import #16000 has advanced to 82f3d8222c8c. In the 19:52 UTC snapshot, public Buildkite 52341 and internal 34052 are pending; the source remains f4190d8782e7. No failure cause is assigned to the new import. The earlier 52335 and 52330 findings below remain bound to their superseded import heads.\n\nSuperseded import evidence:\n\nThe replacement matching import #16000 at f5aeab9baffa ran Buildkite 52335. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the netlink batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing. This is independently read from the replacement\u2019s own public logs, with no new NDP-specific failure in those failed-step logs. A canceled smoke-race attempt passed on retry; the C++ lint retry was canceling when read. The build moved from failing to canceling during inspection. Original worker module state and the separate private Copybara failure remain unknown.\n\nEarlier import evidence:\n\nThe earlier matching import #16000 at 06be71da95a2 ran Buildkite 52330, then was superseded and cancelled. Three completed native AMD64 shard-11 attempts failed AddCompatRule/Inet with ENOENT using the exact public-master nftables fixture; the separate NodeJS shard passed on retry. Current import progression is reported in the live snapshot. The private Copybara feedback status remains separate: these public logs do not identify its cause or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nThe patch approved by nybidari on 2026-10-16T22:08:06Z at 86a99a4cb3 is independently verified unchanged at f4190d8782. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at f4190d8782e7 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nGitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
       "number": 15318,
       "followup": {
-        "disposition": "Replacement public import reproduces INET ENOENT; private feedback remains opaque",
+        "disposition": "Replacement import pending; prior public INET diagnosis remains historical",
         "owner": "root \u2014 import diagnosis; work_map_current \u2014 existing intake",
-        "nextAction": "Follow the current matching import and any replacement through the existing watcher. The replacement 52335 public failure is independently diagnosed as the same INET assertion in all three completed attempts; the existing INET setup proposal remains its contributor decision. Do not infer the private failure cause or original module state, or retry public CI without authorization.",
+        "nextAction": "Follow current import 82f3d8222c8c and public Buildkite 52341 through the existing watcher. Escalate any distinct current failure or human request. Earlier public INET failures do not establish the new import outcome or any private failure cause.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15318#issuecomment-6019188859",
@@ -4906,10 +4906,14 @@
         "sourceHead": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-25T19:37:42.647519+00:00"
+        "observedAt": "2026-10-25T19:57:46.761150+00:00"
       },
       "head": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
       "evidence": [
+        {
+          "label": "Current replacement import public Buildkite 52341",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52341"
+        },
         {
           "label": "Replacement52335: third completed native INET ENOENT attempt",
           "url": "https://buildkite.com/gvisor/pipeline/builds/52335#01a17481-35e2-4041-bd3b-46b1f02ccac5"
@@ -19277,25 +19281,30 @@
       "url": "https://github.com/google/gvisor/pull/16168",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
-      "summary": "The October 25 rebase request is delivered at 328b51265674 on public master 7bffefa9185a. Provider readback is mergeable. The complete changed file is byte-identical to the approved source, with the same stable patch identity. Only variants binding host cgroupfs select the host cgroup namespace. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe contributor approved the standalone three-line fixture correction, now delivered as ready PR #16168. Published 8b47 is a message-only amendment of reviewed 25ac with an identical source tree. Variants that intentionally bind host cgroupfs also select the host cgroup namespace, so membership paths and the mounted hierarchy agree. A same-worker comparison reproduces clone3 ENOENT before the correction and passes afterward with identical image/runtime files and host nsdelegate unchanged. The complete six-variant parent also passes. Source CI and maintainer review are now pending; no new contributor decision is needed.",
+      "updatedAt": "2026-10-25T19:57:46.761150+00:00",
+      "summary": "Matching import #16375 at 165e9b110a27 failed public Buildkite 52337. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing, with socket_netlink_netfilter_test_native the sole failed target. This matches the public signature already tracked by the independent INET setup proposal. The original worker module state remains unknown; these logs do not establish a private-check cause or a new cgroup-namespace regression.\n\nSource and earlier validation:\n\nThe October 25 rebase request is delivered at 328b51265674 on public master 7bffefa9185a. Provider readback is mergeable. The complete changed file is byte-identical to the approved source, with the same stable patch identity. Only variants binding host cgroupfs select the host cgroup namespace. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe contributor approved the standalone three-line fixture correction, now delivered as ready PR #16168. Published 8b47 is a message-only amendment of reviewed 25ac with an identical source tree. Variants that intentionally bind host cgroupfs also select the host cgroup namespace, so membership paths and the mounted hierarchy agree. A same-worker comparison reproduces clone3 ENOENT before the correction and passes afterward with identical image/runtime files and host nsdelegate unchanged. The complete six-variant parent also passes. Source CI and maintainer review are now pending; no new contributor decision is needed.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "328b512656744bb12ce870146f4d3aa23f7ffb15",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "disposition": "Requested rebase delivered; follow exact-head checks and review",
-        "nextAction": "Follow checks, matching imports and any required maintainer reapproval on the delivered head through the existing watcher. The human rebase request is handled; no acknowledgement, repeated contributor decision or runtime replay is needed.",
+        "observedAt": "2026-10-25T19:57:46.761150+00:00",
+        "disposition": "Public matching import reproduces known INET ENOENT",
+        "nextAction": "Follow the current import and human review through the existing watcher. The three public failed attempts match the pending INET setup proposal; no new cgroup source edit, CI retry or repeated contributor decision is inferred. Keep private statuses and original module state separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb",
           "https://app.buildbuddy.io/invocation/d34c2337-c216-4b83-a69c-93cb7801707f",
           "https://app.buildbuddy.io/invocation/0bccee95-c3ba-442d-abc7-5bdee79d5dee",
           "https://github.com/google/gvisor/pull/16168",
           "https://github.com/google/gvisor/pull/16168#issuecomment-6393577704",
-          "https://github.com/tamird/gvisor/commit/328b512656744bb12ce870146f4d3aa23f7ffb15"
+          "https://github.com/tamird/gvisor/commit/328b512656744bb12ce870146f4d3aa23f7ffb15",
+          "https://buildkite.com/gvisor/pipeline/builds/52337#01a17499-45c8-4b26-aa26-74893c475417"
         ],
         "reviewedHead": "25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb"
       },
       "evidence": [
+        {
+          "label": "52337 final completed attempt: native INET ENOENT",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52337#01a17499-45c8-4b26-aa26-74893c475417"
+        },
         {
           "label": "Separate fixture source",
           "url": "https://github.com/tamird/gvisor/commit/25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb"
@@ -20654,62 +20663,91 @@
       }
     },
     {
-      "id": "branch:source-built-nginx-image",
+      "id": "branch:portforward-stock-images",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/rules-img-nginx-upstream-mirrors",
-      "head": "0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
-      "title": "Layer netstat onto the pinned Nginx image",
-      "url": "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
+      "ref": "review/portforward-stock-images",
+      "head": "97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
+      "title": "Use official Nginx and Redis images in port-forward tests",
+      "url": "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
       "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-25T14:15:31.420374+00:00",
-      "summary": "The fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.",
+      "status": "Agent work",
+      "updatedAt": "2026-10-25T19:59:37.513818+00:00",
+      "summary": "The port-forward tests can use the official Nginx and Redis images unchanged: their existing clients wait for HTTP 200 and PONG, eliminating the net-tools installation. The combined proposal remains in agent validation at exact 97c92ed7353d. This replaces the two separate basic-image proposals; their earlier grants and source-specific evidence remain historical below. The combined change has not been presented for a contributor decision.\n\nAll eight AMD64/ARM64 archive and Make-context artifacts were built from combined source 97c92ed7353d in invocation caea451c and were byte-identical to the independent builds. Four selected runtime cases also passed in the original 94558fe7 run, but that run remains FAIL/producer INCOMPLETE because the required-case manifest used unqualified names. A separate retained-only recovery uses the exact configured Go helper and canonical reporter; it reproduces all four original misses and then verifies four classname/name positives from the same authenticated CAS outputs. The recovery did not rerun the runtime cases. Catalog verification and final proposal readiness remain agent work. Delivery requires actual landing of #16250 and #16379.\n\nCompare the earlier proposals with the combined source:\nNginx: git -C ~/code/gvisor range-diff --creation-factor=999 0d29bd346^! 97c92ed735^!\nRedis: git -C ~/code/gvisor range-diff --creation-factor=999 e3f204357^! 97c92ed735^!\n\nEarlier Nginx proposal and validation:\n\nThe fork-only mirror amendment is 0d29bd34650d, replacing proposal source e2b318ab2eec. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved the revised e2b318ab2e proposal: use the pinned official Nginx 1.31.7 multi-platform image and add only static netstat and its notices. Both target-CPU archive/context outputs and appended executable identities passed; four uncached AMD64 consumer cases passed. The selected netstat build actions were cache hits, and no ARM runtime or comparative performance is claimed. Hostinet owns delivery after the shared utility/compiler prerequisites. Preserve the separate PR #16058 version grant. The user also requested continued reassessment of other image ports that duplicate upstream packaging.\n\nEarlier source-specific proposal and revision request:\n\nThe contributor did not approve 7c5f96976 and requested reconsidering a pinned maintained upstream Nginx image with a small Bazel layer, extending that packaging review to other third-party images. Hostinet owns the bounded image audit. Prior source-build qualification remains historical evidence, not approval of this approach.\n\nEarlier source-specific record:\n\nBuild pinned Nginx 1.31.7 with declared LLVM/musl inputs and package its static executable in scratch. Both target-CPU image/context outputs and 22 program joins passed; five uncached AMD64 consumer cases and the canonical 252-record Fetch/Verify audit passed. The nested PIDFD kcmp skip remains; no ARM runtime is claimed. The contributor question is now pending for this expanded source migration. Preserve the separate existing PR #16058 image-version grant and history. Benchmark Nginx is unchanged by this proposal.\n\nEarlier Redis proposal and validation:\n\nThe fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
       "followup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
+        "owner": "root \u2014 source and catalog; work_map_current \u2014 retained reporting recovery",
+        "sourceHead": "97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
+        "observedAt": "2026-10-25T19:59:37.513818+00:00",
+        "disposition": "Combined proposal; validation before contributor review",
+        "nextAction": "Complete the catalog check and final evidence review, then present the combined source once. Preserve original 94558 FAIL and the separate canonical retained PASS. Opening waits for #16250 and #16379; no netstat/compiler prerequisite remains.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7c5f96976d1aaf76483834c41dd091700f4141a8",
-          "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163",
-          "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d",
-          "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
-          "https://github.com/tamird/gvisor/compare/e2b318ab2eec75d29ab9b91ef242c43bf9804163...0d29bd34650da0996c0e919e8d9efebf6d8ea4f6",
-          "https://github.com/google/gvisor/pull/16379"
+          "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a",
+          "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94",
+          "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         ]
       },
       "links": [
         {
-          "label": "Existing image-version PR and separate grant",
+          "label": "Historical Nginx proposal",
+          "url": "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
+        },
+        {
+          "label": "Historical: Existing image-version PR and separate grant",
           "url": "https://github.com/google/gvisor/pull/16058"
         },
         {
-          "label": "Shared source utilities prerequisite",
+          "label": "Historical: Shared source utilities prerequisite",
           "url": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
-        }
-      ],
-      "refinement": {
-        "before": {
-          "head": "7c5f96976d1aaf76483834c41dd091700f4141a8"
         },
-        "after": {
-          "head": "e2b318ab2eec75d29ab9b91ef242c43bf9804163"
-        }
-      },
-      "evidence": [
         {
-          "label": "Reviewed mirror amendment and prior source comparison",
+          "label": "Historical: Reviewed mirror amendment and prior source comparison",
           "url": "https://github.com/tamird/gvisor/compare/e2b318ab2eec75d29ab9b91ef242c43bf9804163...0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
         },
         {
-          "label": "Approved maintained-upstream revision",
+          "label": "Historical: Approved maintained-upstream revision",
           "url": "https://github.com/tamird/gvisor/commit/e2b318ab2eec75d29ab9b91ef242c43bf9804163"
         },
         {
-          "label": "Qualified image layers and existing consumers",
+          "label": "Historical: Qualified image layers and existing consumers",
           "url": "https://app.buildbuddy.io/invocation/7822d280-5261-49ce-b613-d898095a447d"
+        },
+        {
+          "label": "Historical Redis proposal",
+          "url": "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21"
+        },
+        {
+          "label": "Historical: Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/d16b540dc2e98d32f818df666c651e7cecc169b2...e3f204357353f305f932098b7651591f8c242a21"
+        },
+        {
+          "label": "Nginx previous proposal to combined source",
+          "url": "https://github.com/tamird/gvisor/compare/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6..97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        {
+          "label": "Redis previous proposal to combined source",
+          "url": "https://github.com/tamird/gvisor/compare/e3f204357353f305f932098b7651591f8c242a21..97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Complete combined change on the composed prerequisites",
+          "url": "https://github.com/tamird/gvisor/compare/0928e1b2d818db7372038896ea78e10b336bcc67...97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        {
+          "label": "Combined source: eight archive/context outputs passed",
+          "url": "https://app.buildbuddy.io/invocation/caea451c-40ef-49b4-9c83-493c741629ba"
+        },
+        {
+          "label": "Exact combined source under agent validation",
+          "url": "https://github.com/tamird/gvisor/commit/97c92ed7353dc4c304c7682c8b2a33453e8ea82a"
+        },
+        {
+          "label": "Original four positive runtime records; incomplete manifest preserved",
+          "url": "https://app.buildbuddy.io/invocation/94558fe7-29bb-4541-802f-26229e15ef94"
+        },
+        {
+          "label": "Remote configured-case lookup; audit command failure preserved",
+          "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
       ]
     },
@@ -21273,49 +21311,6 @@
       }
     },
     {
-      "id": "branch:rules-img-redis-upstream",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "review/rules-img-redis-upstream-mirrors",
-      "head": "e3f204357353f305f932098b7651591f8c242a21",
-      "title": "Use pinned official Redis images and Redis readiness checks",
-      "url": "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21",
-      "group": "bazel",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-25T14:15:31.420374+00:00",
-      "summary": "The fork-only mirror amendment is e3f204357353, replacing proposal source d16b540dc2e9. Independent source review passed: only the shared registry selection and its README guidance change; image digest, repository, tag, platform and other product files are preserved. The original refs and qualification remain retained; no new runtime is claimed. Existing contributor grants remain in force. Delivery also requires the shared Docker Hub mirror policy, now delivered as #16379 at c3174eb917aa. Its actual landing remains a prerequisite.\n\nHistorical proposal and validation:\n\nThe contributor approved exact d16b540dc2 for delivery after #16097. Its only change from qualified b6c753270a is deleting one extra import-group separator; executable source and the existing qualification remain applicable. The proposal uses official Redis 7.0.12 images without an added utility layer, and readiness requires the existing redis-cli to return PONG successfully. Both CPU image assembly checks, two uncached AMD64 port-forward modes (netstack and host networking), and the owning Nogo analysis for both CPUs passed and were independently reviewed. This is functional coverage, with no ARM runtime or performance claim. Only the image_outputs/Make context prerequisite remains; no shared BusyBox/compiler source dependency is required.",
-      "followup": {
-        "owner": "hostinet_delivery",
-        "sourceHead": "e3f204357353f305f932098b7651591f8c242a21",
-        "observedAt": "2026-10-25T12:46:43.341670+00:00",
-        "disposition": "Mirror-only amendment source reviewed; existing contributor disposition retained",
-        "nextAction": "Preserve the recorded contributor grant or pending decision. Deliver only after actual remaining prerequisites, including the shared Docker Hub mirror policy, are integrated; root coordinates publication. Earlier runtime qualification keeps its original source identity.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
-          "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad",
-          "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/04dda148-db97-42f6-939f-c1516a51ae30",
-          "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21",
-          "https://github.com/tamird/gvisor/compare/d16b540dc2e98d32f818df666c651e7cecc169b2...e3f204357353f305f932098b7651591f8c242a21",
-          "https://github.com/google/gvisor/pull/16379"
-        ]
-      },
-      "refinement": {
-        "before": {
-          "head": "b6c753270a60ef3d626304cc4bae873cb942eaad"
-        },
-        "after": {
-          "head": "d16b540dc2e98d32f818df666c651e7cecc169b2"
-        }
-      },
-      "evidence": [
-        {
-          "label": "Reviewed mirror amendment and prior source comparison",
-          "url": "https://github.com/tamird/gvisor/compare/d16b540dc2e98d32f818df666c651e7cecc169b2...e3f204357353f305f932098b7651591f8c242a21"
-        }
-      ]
-    },
-    {
       "id": "branch:review/pr15730-route-validation-20261024",
       "type": "branch",
       "repo": "tamird/gvisor",
@@ -21406,15 +21401,15 @@
       "title": "Use the pinned official Redis image for benchmarks",
       "url": "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
       "group": "bazel",
-      "status": "Contributor approved; waiting for basic Redis d16b540dc2 after #16097",
-      "updatedAt": "2026-10-24T10:40:26.158094+00:00",
-      "summary": "The contributor approved exact 2b507a7bac for delivery after basic Redis d16b540dc2 after #16097. Deliver after the approved basic Redis prerequisite lands; basic Redis itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image uses the existing pinned Redis 7.0.12 declaration and adds both architecture archives and Make contexts. It removes the one-line Dockerfile without changing Go consumers, Redis binaries or runtime configuration. Native validation passed nine phases, both CPU image/context identities and one uncached AMD64 benchmark owner with SET, LPUSH and LRANGE_100 at 10,000 iterations each. All three raw rows carry eight metrics; cleanup passed. The two image configurations match the qualified basic image, with six upstream layers and no appended layer. This is functional benchmark coverage, not a measured migration speedup or ARM runtime result. The benchmark proposal has its own contributor decision; the existing basic Redis approval remains unchanged.",
+      "status": "Contributor approved; waiting for combined basic-image proposal",
+      "updatedAt": "2026-10-25T19:59:37.513818+00:00",
+      "summary": "The existing benchmark approval remains recorded. Its basic Redis declaration is now owned by the combined official Nginx/Redis proposal 97c92ed7353d, currently in agent validation and gated by #16250 and #16379. No repeated benchmark contributor decision is needed.\n\nHistorical prerequisite and qualification:\n\nThe contributor approved exact 2b507a7bac for delivery after basic Redis d16b540dc2 after #16097. Deliver after the approved basic Redis prerequisite lands; basic Redis itself waits for #16097.\n\nValidation and prior decision record:\n\nThe benchmark image uses the existing pinned Redis 7.0.12 declaration and adds both architecture archives and Make contexts. It removes the one-line Dockerfile without changing Go consumers, Redis binaries or runtime configuration. Native validation passed nine phases, both CPU image/context identities and one uncached AMD64 benchmark owner with SET, LPUSH and LRANGE_100 at 10,000 iterations each. All three raw rows carry eight metrics; cleanup passed. The two image configurations match the qualified basic image, with six upstream layers and no appended layer. This is functional benchmark coverage, not a measured migration speedup or ARM runtime result. The benchmark proposal has its own contributor decision; the existing basic Redis approval remains unchanged.",
       "followup": {
         "owner": "hostinet_delivery",
         "sourceHead": "2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
-        "observedAt": "2026-10-24T10:40:26.158094+00:00",
-        "disposition": "Contributor approved; waiting for basic Redis d16b540dc2 after #16097",
-        "nextAction": "Deliver after the approved basic Redis prerequisite lands; basic Redis itself waits for #16097. Do not repeat the completed contributor question.",
+        "observedAt": "2026-10-25T19:59:37.513818+00:00",
+        "disposition": "Contributor approved; waiting for combined basic-image proposal",
+        "nextAction": "Deliver after the combined basic Redis declaration lands; follow its validation, contributor decision and #16250/#16379 gates. Preserve this benchmark grant and historical runtime evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49",
           "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
@@ -23045,14 +23040,14 @@
       "url": "https://github.com/google/gvisor/pull/16382",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T19:08:19.746088+00:00",
-      "summary": "Matching Copybara import #16385 at 7089c937472a is open with checks pending. The source PR and import have not landed; the source generate TLS failure remains separate.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
+      "updatedAt": "2026-10-25T19:57:46.761150+00:00",
+      "summary": "Matching Copybara import #16385 at 7089c937472a is open with both public Buildkite 52336 and internal 34045 reporting SUCCESS in the 19:52 UTC snapshot. This records the two service outcomes, without inferring internal test details. Neither source PR nor import has landed. The separate source generate TLS failure remains preserved.\n\nEtienne approved exact 68bb9a238540 at 18:40:23 UTC with no additional source request. The previously diagnosed upstream generate TLS failure still requires a maintainer rerun; approval does not turn that failed check into a pass.\n\nThe contributor-approved advertised-window correction is published as open, non-draft #16382 at exact head 68bb9a238540e16c5784dc0153e9d15a7d94a3a7. After a zero-window advertisement and a partial application read, the test-only baseline answered a probe with a 50,016-byte window on both AMD64 and ARM64. The corrected source kept the probe response at zero and reopened to 100,000 bytes only after the remaining read. The proposal stores the decoded window actually sent after scaling and capping; it does not add the separate pressure-zero policy or change the receive-window acceptance rules.\n\nThe focused remote comparison f23723c1 preserves both baseline failures. The corrected arm passes both architecture tests, four owning Nogo wrappers and goimports: seven positive records, with no failures or skips. There are nine uncached remote attempts across both arms, and the aggregate remains FAIL because the baseline is intentionally negative. Final proposal polish only names the existing segment size constant and explains the remaining read; its source equivalence is reviewed without claiming another run. This is focused validation, not the earlier combined private full-suite result, a performance measurement or qualification of the deferred pressure policy.\n\nThis independent change has no prerequisite PR; contributor approval and upstream publication are complete. The earlier 41cf6335 comparison remains failed because its discarded synthetic test accessed a lock-protected field without the lock.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "68bb9a238540e16c5784dc0153e9d15a7d94a3a7",
-        "observedAt": "2026-10-25T19:08:19.746088+00:00",
-        "disposition": "Exact-head maintainer approval received; upstream TLS setup failure still requires maintainer rerun",
-        "nextAction": "The upstream Go/generate job stopped fetching protobuf v1.36.11 metadata from proxy.golang.org because of a TLS handshake timeout. Retrying that job returned HTTP 403 for the contributor account, so the upstream check requires a maintainer rerun; no request has been posted. Root is checking equivalent CI on the approved fork head. Preserve the failed attempt and follow exact-head checks and review; no source repair or repeated contributor decision follows from this setup error.",
+        "observedAt": "2026-10-25T19:57:46.761150+00:00",
+        "disposition": "Matching import public and internal checks passed; awaiting maintainer landing",
+        "nextAction": "Follow maintainer landing of the approved source and current green import. Preserve the source generate TLS timeout and HTTP 403 author-rerun limitation separately; no new contributor decision or unsolicited rerun request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16382",
           "https://app.buildbuddy.io/invocation/f23723c1-bd5e-4b96-a8fb-fab3aefee749",
@@ -23060,6 +23055,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Current matching import public Buildkite passed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52336"
+        },
         {
           "label": "Matching import of the approved advertised-window correction",
           "url": "https://github.com/google/gvisor/pull/16385"
@@ -25535,13 +25534,6 @@
     },
     {
       "from": "branch:source-image-utilities",
-      "to": "branch:source-built-nginx-image",
-      "type": "depends_on",
-      "reason": "The added static netstat uses the shared BusyBox utility/compiler inputs and notices. The official Nginx server and its packaging come from the pinned upstream image.",
-      "evidence": "https://github.com/tamird/gvisor/commit/e12e8a3570314e8dc7aeb6a8e5c0e38747adda3c"
-    },
-    {
-      "from": "branch:source-image-utilities",
       "to": "branch:source-built-profile-helper",
       "type": "depends_on",
       "reason": "Reuses the declared shared Coreutils source/generator and musl image-platform foundation; inherited compiler, image and license prerequisites remain.",
@@ -25606,17 +25598,6 @@
       "evidence": "https://github.com/bazelbuild/bazel-central-registry/pull/11314"
     },
     {
-      "from": "pr:16097",
-      "to": "branch:rules-img-redis-upstream",
-      "type": "depends_on",
-      "reason": "Requires image_outputs and the Make image-context interface from #16097; no shared utility/compiler dependency.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/16097",
-        "https://github.com/tamird/gvisor/commit/b6c753270a60ef3d626304cc4bae873cb942eaad",
-        "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2"
-      ]
-    },
-    {
       "from": "branch:review/pr15730-route-validation-20261024",
       "to": "pr:15730",
       "type": "includes",
@@ -25625,10 +25606,10 @@
       "evidence": "https://github.com/tamird/gvisor/commit/c8ac4368c94fae12e844bf1b4364d78c5e1636f2"
     },
     {
-      "from": "branch:rules-img-redis-upstream",
+      "from": "branch:portforward-stock-images",
       "to": "branch:rules-img-redis-benchmark-upstream",
       "type": "depends_on",
-      "reason": "Reuses the @test_redis declaration owned by the approved basic Redis change, which separately waits for #16097.",
+      "reason": "Reuses the basic Redis image declaration now owned by the combined official-image proposal; preserve the separate benchmark approval and its historical evidence.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/d16b540dc2e98d32f818df666c651e7cecc169b2",
         "https://github.com/tamird/gvisor/commit/2b507a7bac7c7d715cb0da41f22fa09abbea6f49"
@@ -25888,16 +25869,6 @@
     },
     {
       "from": "pr:16379",
-      "to": "branch:source-built-nginx-image",
-      "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/0d29bd34650da0996c0e919e8d9efebf6d8ea4f6"
-      ]
-    },
-    {
-      "from": "pr:16379",
       "to": "branch:rules-img-httpd-upstream",
       "type": "depends_on",
       "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
@@ -25914,16 +25885,6 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
         "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73"
-      ]
-    },
-    {
-      "from": "pr:16379",
-      "to": "branch:rules-img-redis-upstream",
-      "type": "depends_on",
-      "reason": "Uses the shared Docker Hub registries list; preserve existing source dependencies and contributor disposition.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/c3174eb917aad21e2d5b2e8cedf81bf21bceb9d4",
-        "https://github.com/tamird/gvisor/commit/e3f204357353f305f932098b7651591f8c242a21"
       ]
     },
     {
@@ -26023,6 +25984,20 @@
         "https://github.com/google/gvisor/pull/16377",
         "https://github.com/tamird/gvisor/commit/7ae55f4cc07eb541c8d63442a343a3c2564dfd6f"
       ]
+    },
+    {
+      "from": "pr:16250",
+      "to": "branch:portforward-stock-images",
+      "type": "depends_on",
+      "reason": "The combined proposal requires this actual prerequisite landing before upstream opening.",
+      "evidence": "https://github.com/google/gvisor/pull/16250"
+    },
+    {
+      "from": "pr:16379",
+      "to": "branch:portforward-stock-images",
+      "type": "depends_on",
+      "reason": "The combined proposal requires this actual prerequisite landing before upstream opening.",
+      "evidence": "https://github.com/google/gvisor/pull/16379"
     }
   ],
   "investigations": [
