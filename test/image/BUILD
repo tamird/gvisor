@@ -69,7 +69,10 @@ docker_command_test(
         "//test/docker:images_image_test_ruby_amd64_tar",
     ],
     docker_config = ":qualification_ruby_native_config",
-    exec_properties = docker_test_exec_properties(free_disk = "30GB", memory = "8GB"),
+    exec_properties = docker_test_exec_properties(
+        free_disk = "30GB",
+        memory = "8GB",
+    ),
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
 )
@@ -99,7 +102,10 @@ docker_command_test(
         "//test/docker:images_image_test_ruby_amd64_tar",
     ],
     docker_config = ":qualification_ruby_systrap_config",
-    exec_properties = docker_test_exec_properties(free_disk = "30GB", memory = "8GB"),
+    exec_properties = docker_test_exec_properties(
+        free_disk = "30GB",
+        memory = "8GB",
+    ),
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
 )
