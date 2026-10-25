@@ -2827,7 +2827,11 @@ http_archive(
 # END generated NVIDIA driver sources
 
 # Same product declarations; this carrier keeps unrelated fork dependencies.
-DOCKER_HUB_REGISTRIES = ["mirror.gcr.io", "index.docker.io"]
+DOCKER_HUB_REGISTRIES = [
+    "mirror.gcr.io",
+    "index.docker.io",
+]
+
 img_pull = use_repo_rule("@rules_img//img:pull.bzl", "pull")
 
 img_pull(
