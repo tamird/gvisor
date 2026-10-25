@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import datetime
-import errno
 import hashlib
 from http.client import RemoteDisconnected
 import io
@@ -28,6 +27,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -48,6 +48,50 @@ LIFECYCLE_MANIFEST = Path(__file__).parent.parent / "benchmarks" / "lifecycle.js
 
 
 class QualificationReportTest(unittest.TestCase):
+    def test_hosted_run_preflight_compact_request_and_budget_boundary(self) -> None:
+        request = {"steps": [{"run": "x" * 33814}]}
+        actual = report.hosted_run_preflight(request)
+        self.assertEqual(actual["largest_step_argument_bytes"], 33815)
+        self.assertEqual(actual, report.hosted_run_preflight({**request, "name": "remote run", "working_directory": "."}))
+        overhead = report.hosted_run_preflight({"steps": [{"run": ""}]})["action_budget_bytes"]
+        boundary = report.HOSTED_ACTION_BUDGET_BYTES - overhead
+        for delta in (-1, 0, 1):
+            with self.subTest(delta=delta):
+                request = {"steps": [{"run": "x" * (boundary + delta)}]}
+                if delta <= 0:
+                    self.assertEqual(report.hosted_run_preflight(request)["action_budget_bytes"],
+                                     report.HOSTED_ACTION_BUDGET_BYTES + delta)
+                else:
+                    with self.assertRaisesRegex(ValueError, "action budget"):
+                        report.hosted_run_preflight(request)
+
+    def test_hosted_run_preflight_counts_all_steps_and_encoding(self) -> None:
+        for steps in ([{"run": "x" * 205079}],
+                      [{"run": "x" * 24000}] * 2,
+                      [{"run": "echo ok\n"}] * 2000,
+                      [{"run": "\n" * 8000}],
+                      [{"run": "é" * 8000}]):
+            with self.subTest(steps=len(steps), first_bytes=len(steps[0]["run"].encode())):
+                with self.assertRaisesRegex(ValueError, "argument limit|action budget"):
+                    report.hosted_run_preflight({"steps": steps})
+
+    def test_hosted_run_preflight_step_boundary_is_utf8_including_nul(self) -> None:
+        # Isolate the kernel boundary from our stricter aggregate policy.
+        with mock.patch.object(report, "HOSTED_ACTION_BUDGET_BYTES", 1024 * 1024):
+            run = "é" * (report.HOSTED_ARGUMENT_BYTES // 2 - 1) + "x"
+            self.assertEqual(report.hosted_run_preflight({"steps": [{"run": run}]})["largest_step_argument_bytes"],
+                             report.HOSTED_ARGUMENT_BYTES)
+            for invalid in (run + "x", "echo\0bad"):
+                with self.assertRaisesRegex(ValueError, "argument limit"):
+                    report.hosted_run_preflight({"steps": [{"run": invalid}]})
+
+    def test_hosted_run_preflight_rejects_unmodeled_inputs(self) -> None:
+        for request in ({"steps": []}, {"steps": [{"run": "true", "extra": "x"}]},
+                        {"steps": [{"run": 1}]}, {"bazel_command": "test //..."},
+                        {"steps": [{"run": "true"}], "working_directory": "../other"}):
+            with self.subTest(request=request), self.assertRaises(ValueError):
+                report.hosted_run_preflight(request)
+
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -67,11 +111,10 @@ class QualificationReportTest(unittest.TestCase):
                               invocation, invocation / "reports", retain_outputs)
 
     def verdict(self, invocation: Path, *, analysis: Path | None = None, benchmarks: Path | None = None,
-                declared_benchmarks: Path | None = None, case_manifest: Path | None = None) -> dict[str, object]:
+                declared_benchmarks: Path | None = None) -> dict[str, object]:
         events = invocation / "captured.jsonl"
         value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
-                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks,
-                               declared_benchmarks, case_manifest)
+                               invocation / "expected.txt", (analysis,) if analysis else (), benchmarks, declared_benchmarks)
         report.write_json(invocation / "verdict.json", value)
         return value
 
@@ -111,22 +154,148 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(value["missing"], [])
         self.assertEqual(len(value["executed"]), 1)
 
-    def test_required_cases_must_pass_for_their_own_target(self) -> None:
-        invocation = self.mixed_fixture('<testsuite tests="1"><testcase name="Only"/></testsuite>')
-        self.assertEqual(self.capture(invocation)["errors"], [])
-        first, second = (invocation / "expected.txt").read_text().splitlines()
-        manifest = invocation / "required.json"
-        report.write_json(manifest, {first: ["ElfTest/Execute"], second: ["Only"]})
-        self.assertEqual(self.verdict(invocation, case_manifest=manifest)["status"], "PASS")
+    def external_fixture(self, name: str) -> Path:
+        invocation = self.evidence / ("invocation-" + name)
+        shutil.copytree(FIXTURES / "external-labels" / name, invocation)
+        context = report.read_json(invocation / "context.json")
+        context.pop("lock_before")
+        context.pop("lock_after")
+        report.write_json(invocation / "context.json", context)
+        return invocation
 
-        # The first case is skipped. The second passes, but on the wrong target.
-        report.write_json(manifest, {first: ["ElfTest/PIEOutOfOrderSegments"], second: ["ElfTest/Execute"]})
-        value = self.verdict(invocation, case_manifest=manifest)
-        self.assertEqual(value["status"], "INCOMPLETE")
-        self.assertEqual({(item["label"], item["name"]) for item in value["missing"]},
-                         {(first, "ElfTest/PIEOutOfOrderSegments"), (second, "ElfTest/Execute")})
-        (invocation / "native-exit").write_text("3\n")
-        self.assertEqual(self.verdict(invocation, case_manifest=manifest)["status"], "FAIL")
+    def external_verdict(self, invocation: Path, analysis: Path | None = None) -> dict[str, object]:
+        self.capture(invocation)
+        events = invocation / "captured.jsonl"
+        value = report.verdict(events, report.manifest_path(events), invocation / "context.json",
+                               invocation / "expected-targets.txt", (analysis,) if analysis else ())
+        report.write_json(invocation / "verdict.json", value)
+        return value
+
+    def test_retained_external_builds_resolve_canonical_repositories(self) -> None:
+        for name, repository, count in (("iperf", "@@iperf+//:iperf3", 3),
+                                         ("benchstat", "@@gazelle++go_deps+org_golang_x_perf//cmd/benchstat:benchstat", 1)):
+            with self.subTest(name=name):
+                invocation = self.external_fixture(name)
+                try:
+                    value = self.external_verdict(invocation)
+                    self.assertEqual((value["status"], value["native_exit"], value["errors"]), ("PASS", 0, []), value)
+                    self.assertEqual(len(value["expected"]), count)
+                    self.assertIn(repository, value["expected_labels"])
+                    self.assertEqual(value["case_counts"], {})
+                    archive = self.root / (name + ".tar.gz")
+                    combined = report.bundle(self.evidence, 0, 0, archive)
+                    self.assertEqual(combined["status"], "PASS", combined)
+                    receipt = report.receipt(archive, report.file_record(archive)["sha256"], value["source"])
+                    self.assertEqual(receipt["status"], "PASS", receipt)
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_external_selection_requires_complete_unambiguous_expansion(self) -> None:
+        for damage, status, diagnostic in (
+            ("missing", "INCOMPLETE", "Pattern expansion differs"),
+            ("duplicate", "INCOMPLETE", "Pattern expansion differs"),
+            ("extra-child", "INCOMPLETE", "ambiguous external pattern"),
+            ("changed-pattern", "INCOMPLETE", "Pattern expansion differs"),
+            ("changed-cli", "INCOMPLETE", "Executed literal targets differ"),
+            ("missing-owner", "INCOMPLETE", "Expected labels absent"),
+            ("extra-owner", "INCOMPLETE", "Configured owners differ"),
+            ("extra-config", "INCOMPLETE", "exactly one configured owner"),
+            ("missing-completion", "INCOMPLETE", None),
+            ("wrong-config", "INCOMPLETE", None),
+            ("analysis-changed", "INCOMPLETE", "changed between analysis and execution"),
+            ("analysis-missing", "INCOMPLETE", "Pattern expansion differs"),
+            ("invalid-expected", "INCOMPLETE", "distinct explicit owner labels"),
+            ("native-failure", "FAIL", "Pattern expansion differs"),
+        ):
+            with self.subTest(damage=damage):
+                invocation = self.external_fixture("benchstat")
+                try:
+                    events = self.events(invocation)
+                    expansion, = [event for event in events if "pattern" in event["id"]]
+                    configured, = [event for event in events if "configured" in event]
+                    completion, = [event for event in events if "completed" in event]
+                    analysis = None
+                    if damage in ("missing", "native-failure"):
+                        events.remove(expansion)
+                        if damage == "native-failure":
+                            (invocation / "native-exit").write_text("1\n")
+                    elif damage == "duplicate":
+                        events.append(expansion)
+                    elif damage == "extra-child":
+                        expansion["children"].append(expansion["children"][0])
+                    elif damage == "changed-pattern":
+                        expansion["id"]["pattern"]["pattern"] = ["@other//:tool"]
+                    elif damage == "changed-cli":
+                        (invocation / "arguments.txt").write_text("build\n@other//:tool\n")
+                    elif damage == "missing-owner":
+                        events.remove(configured)
+                    elif damage == "extra-owner":
+                        extra = json.loads(json.dumps(configured).replace("@@gazelle++go_deps+org_golang_x_perf", "@@other"))
+                        events.append(extra)
+                    elif damage == "extra-config":
+                        extra = json.loads(json.dumps(configured))
+                        extra["children"][0]["targetCompleted"]["configuration"]["id"] = "changed"
+                        events.append(extra)
+                    elif damage == "missing-completion":
+                        events.remove(completion)
+                    elif damage == "wrong-config":
+                        completion["id"]["targetCompleted"]["configuration"]["id"] = "changed"
+                    elif damage.startswith("analysis-"):
+                        analysis = invocation / "analysis.jsonl"
+                        independent = json.loads(json.dumps(events))
+                        if damage == "analysis-missing":
+                            independent = [event for event in independent if "pattern" not in event["id"]]
+                        else:
+                            independent = json.loads(json.dumps(independent).replace("@@gazelle++go_deps+org_golang_x_perf", "@@changed"))
+                        analysis.write_text("".join(json.dumps(event) + "\n" for event in independent))
+                    elif damage == "invalid-expected":
+                        (invocation / "expected-targets.txt").write_text("@org_golang_x_perf//...\n")
+                        (invocation / "arguments.txt").write_text("build\n@org_golang_x_perf//...\n")
+                    self.write_events(invocation, events)
+                    value = self.external_verdict(invocation, analysis)
+                    self.assertEqual(value["status"], status, value)
+                    if diagnostic is not None:
+                        self.assertTrue(any(diagnostic in error for error in value["errors"]), value)
+                finally:
+                    shutil.rmtree(invocation)
+
+    def test_external_analysis_keeps_exact_configurations(self) -> None:
+        invocation = self.external_fixture("benchstat")
+        analysis = invocation / "analysis.jsonl"
+        shutil.copyfile(invocation / "events.jsonl", analysis)
+        value = self.external_verdict(invocation, analysis)
+        self.assertEqual((value["status"], value["errors"]), ("PASS", []), value)
+        events = self.events(invocation)
+        for event in events:
+            event_text = json.dumps(event)
+            configured = value["expected"][0]["configuration"]
+            event.update(json.loads(event_text.replace(configured, "changed")))
+        self.write_events(invocation, events)
+        value = self.external_verdict(invocation, analysis)
+        self.assertEqual(value["status"], "INCOMPLETE", value)
+        self.assertEqual(value["expected"][0]["configuration"], configured)
+
+    def test_external_tests_preserve_failures_incomplete_and_zero_cases(self) -> None:
+        for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"), ("zero", "INCOMPLETE")):
+            with self.subTest(name=name):
+                invocation = self.fixture(name)
+                originals = (invocation / "expected.txt").read_text().splitlines()
+                literals = [f"@fixture//:test{index}" for index in range(len(originals))]
+                canonical = [literal.replace("@fixture", "@@fixture+") for literal in literals]
+                text = json.dumps(self.events(invocation))
+                for original, label in zip(originals, canonical, strict=True):
+                    text = text.replace(json.dumps(original), json.dumps(label))
+                events = json.loads(text)
+                events.insert(0, {"id": {"pattern": {"pattern": literals}},
+                                  "children": [{"targetConfigured": {"label": label}} for label in canonical]})
+                self.write_events(invocation, events)
+                (invocation / "expected.txt").write_text("\n".join(literals) + "\n")
+                (invocation / "executed-arguments.txt").write_text("test\n" + "\n".join(literals) + "\n")
+                self.capture(invocation)
+                value = self.verdict(invocation)
+                self.assertEqual(value["status"], status, value)
+                if name == "zero":
+                    self.assertEqual(len(value["zero_case_owners"]), 1)
 
     def source_image_fixture(self) -> Path:
         invocation = self.evidence / "source-images"
@@ -723,6 +892,18 @@ class QualificationReportTest(unittest.TestCase):
     def test_command_completion_preserves_streams_and_failure_evidence(self) -> None:
         for command, exit_code, damage, status in (
             ("query", 0, None, "PASS"),
+            ("cquery", 0, None, "PASS"),
+            ("cquery", 23, None, "FAIL"),
+            ("aquery", 0, None, "PASS"),
+            ("aquery", 23, None, "FAIL"),
+            ("aquery", 0, "arguments", "INCOMPLETE"),
+            ("", 0, None, "INCOMPLETE"),
+            ("cquery", 0, "source-after", "INCOMPLETE"),
+            ("info", 0, None, "PASS"),
+            ("info", 23, None, "FAIL"),
+            ("info", 0, "native-exit", "INCOMPLETE"),
+            ("build", 0, None, "INCOMPLETE"),
+            ("test", 0, None, "INCOMPLETE"),
             ("run", 0, "empty", "PASS"),
             ("run", 23, None, "FAIL"),
             ("query", 23, "stderr", "FAIL"),
@@ -791,6 +972,53 @@ class QualificationReportTest(unittest.TestCase):
                 finally:
                     shutil.rmtree(invocation)
 
+    def test_dependency_preparation_preserves_source_without_execution_credit(self) -> None:
+        for change, status in ((None, "FAIL"), ("collection-error", "FAIL"), ("success", "PASS"),
+                               ("missing-exit", "INCOMPLETE"), ("other-mod-command", "INCOMPLETE")):
+            with self.subTest(change=change):
+                invocation = self.evidence / "invocation-dependency-preparation"
+                shutil.copytree(FIXTURES / "dependency-preparation", invocation)
+                try:
+                    context = report.read_json(invocation / "context.json")
+                    if change in ("success", "other-mod-command"):
+                        (invocation / "native-exit").write_text("0\n")
+                    if change == "missing-exit":
+                        (invocation / "native-exit").unlink()
+                    elif change == "collection-error":
+                        (invocation / "capture-exit").write_text("1\n")
+                        (invocation / "stderr.log").unlink()
+                    elif change == "other-mod-command":
+                        arguments = json.loads((invocation / "arguments.json").read_text())
+                        arguments[arguments.index("deps")] = "graph"
+                        report.write_json(invocation / "arguments.json", arguments)
+                    value = report.command_verdict(invocation / "context.json")
+                    report.write_json(invocation / "verdict.json", value)
+                    self.assertEqual(value["status"], status, value)
+                    if change in (None, "success"):
+                        self.assertEqual(value["errors"], [])
+                    archive = self.root / "preparation.tar.gz"
+                    failed = change in (None, "collection-error")
+                    if failed:
+                        self.assertEqual(value["native_exit"], 2)
+                    combined = report.bundle(self.evidence, 2 if failed else 0, int(change == "collection-error"), archive)
+                    self.assertEqual(combined["status"], status, combined)
+                    self.assertEqual(combined["sources"], [context["expected_source"]])
+                    identity = report.file_record(archive)
+                    receipt = report.receipt(archive, identity["sha256"], context["expected_source"])
+                    self.assertEqual(receipt["status"], status, receipt)
+                    self.assertEqual((receipt["expected_owner_count"], receipt["executed_attempt_count"]), (0, 0))
+                    self.assertEqual(receipt["case_counts"], {})
+                    with self.assertRaisesRegex(ValueError, "Producer target labels differ"):
+                        report.receipt(archive, identity["sha256"], context["expected_source"], ["//:not-executed"])
+                    with tarfile.open(archive) as retained:
+                        for name in ("stdout.log", "stderr.log", "record.json"):
+                            if change == "collection-error" and name == "stderr.log":
+                                continue
+                            self.assertEqual(retained.extractfile("invocation-dependency-preparation/" + name).read(),
+                                             (invocation / name).read_bytes())
+                finally:
+                    shutil.rmtree(invocation)
+
     def test_missing_finish_time_preserves_retained_test_failure(self) -> None:
         invocation = self.fixture("fail")
         self.capture(invocation)
@@ -835,236 +1063,6 @@ class QualificationReportTest(unittest.TestCase):
         result["testActionOutput"].append({"name": name, "uri": path.as_uri()})
         self.write_events(invocation, events)
         return invocation
-
-    @staticmethod
-    def php_native_files(names: list[str], rows: list[tuple[str, str]], *, redirect: bool = False) -> dict[str, str]:
-        """A source-shaped -W/JUnit pair, including PHP's redirect remapping."""
-        cases = []
-        counts = {"failures": 0, "errors": 0, "skip": 0}
-        for state, name in rows:
-            if name.startswith("# "):
-                parent, child = name[2:].split(": ")
-                xml_name = str(Path(parent).parent / Path(child).name)
-            else:
-                xml_name = name
-            tag = {"FAILED": "failure", "BORKED": "error", "LEAKED": "error",
-                   "WARNED": "warning", "SKIPPED": "skipped"}.get(state)
-            if tag:
-                attribute = {"failure": "failures", "error": "errors", "skipped": "skip"}.get(tag)
-                if attribute:
-                    counts[attribute] += 1
-            cases.append(f'<testcase name="{xml_name} (description)">' +
-                         (f"<{tag}>native reason</{tag}>" if tag else "") + "</testcase>")
-        if any(name.startswith("# ") for _, name in rows):
-            cases.append(f'<testcase name="{names[0]} (redirect parent)"/>')
-        attributes = f'tests="{len(cases)}" ' + " ".join(f'{key}="{value}"' for key, value in counts.items())
-        native = "".join(state + "\t" + ("# /php/" + name[2:].replace(": ", ": /php/")
-                                         if name.startswith("# ") else "/php/" + name) + "\n"
-                         for state, name in rows)
-        return {"selection.txt": "".join(name + "\n" for name in names), "root.txt": "/php\n",
-                "redirect.txt": "true\n" if redirect else "false\n", "results.tsv": native,
-                "junit.xml": f'<testsuites name="php" {attributes}><testsuite name="php.ext.pdo.sqlite.tests" {attributes}>' +
-                             "".join(cases) + "</testsuite></testsuites>"}
-
-    def php_fixture(self, groups: dict[str, dict[str, str]], *, zipped: bool = True,
-                    names: str = "first.phpt,second.phpt", markers: list[str] | None = None) -> Path:
-        output = "".join("gvisor-php-report /proctor-artifacts/" + group + "\n"
-                         for group in (markers if markers is not None else groups))
-        invocation = self.runtime_fixture(output, zipped=zipped, names=names, tag="php-results")
-        if zipped:
-            with zipfile.ZipFile(invocation / "outputs.zip", "a") as archive:
-                for group, files in groups.items():
-                    for name, content in files.items():
-                        archive.writestr(group + "/" + name, content)
-        else:
-            events = self.events(invocation)
-            result = next(event["testResult"] for event in events if "testResult" in event)
-            for group, files in groups.items():
-                (invocation / group).mkdir()
-                for name, content in files.items():
-                    path = invocation / group / name
-                    path.write_text(content)
-                    result["testActionOutput"].append({"name": "test.outputs/" + group + "/" + name,
-                                                      "uri": path.as_uri()})
-            self.write_events(invocation, events)
-        return invocation
-
-    def test_php_native_states_and_retention(self) -> None:
-        for zipped, state in itertools.product((False, True), ("PASSED", "SKIPPED", "XFAILED", "XLEAKED",
-                                                              "FAILED", "WARNED", "LEAKED", "BORKED")):
-            with self.subTest(zipped=zipped, state=state):
-                files = self.php_native_files(["first.phpt", "second.phpt"],
-                                             [("PASSED", "first.phpt"), (state, "second.phpt")])
-                invocation = self.php_fixture({"php-results.first": files}, zipped=zipped)
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
-                self.assertEqual(value["status"], "FAIL" if state in ("FAILED", "WARNED", "LEAKED", "BORKED") else "PASS", value)
-                native = value["executed"][0]["php"]
-                self.assertEqual(native["results"]["php-results.first"]["second.phpt"], state)
-                self.assertEqual(native["passed"], 2 if state == "PASSED" else 1)
-                if state == "SKIPPED":
-                    self.assertEqual(native["skipped"], {"php-results.first/second.phpt": "native reason"})
-                if state in ("XFAILED", "XLEAKED"):
-                    self.assertEqual(native["expected_failures"], {"php-results.first/second.phpt": state})
-                shutil.rmtree(invocation)
-
-    def test_php_incomplete_native_reports_cannot_pass(self) -> None:
-        mutations = {
-            "missing XML": lambda files: files.pop("junit.xml"),
-            "partial XML": lambda files: files.update({"junit.xml": files["junit.xml"][:-12]}),
-            "whole-row truncation": lambda files: files.update({"results.tsv": "PASSED\t/php/first.phpt\n"}),
-            "partial-row truncation": lambda files: files.update({"results.tsv": files["results.tsv"].rstrip()}),
-            "duplicate row": lambda files: files.update({"results.tsv": files["results.tsv"] * 2}),
-            "native counter mismatch": lambda files: files.update({"junit.xml": files["junit.xml"].replace('tests="2"', 'tests="3"')}),
-            "foreign result": lambda files: files.update({"results.tsv": files["results.tsv"].replace("second.phpt", "other.phpt")}),
-        }
-        for name, mutate in mutations.items():
-            with self.subTest(name=name):
-                files = self.php_native_files(["first.phpt", "second.phpt"],
-                                             [("PASSED", "first.phpt"), ("PASSED", "second.phpt")])
-                mutate(files)
-                invocation = self.php_fixture({"php-results.first": files})
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
-                self.assertEqual(value["status"], "INCOMPLETE", value)
-                shutil.rmtree(invocation)
-
-    def test_php_failure_survives_later_incomplete_report(self) -> None:
-        files = self.php_native_files(["first.phpt", "second.phpt"],
-                                     [("FAILED", "first.phpt"), ("PASSED", "second.phpt")])
-        files["results.tsv"] += "invalid row\n"
-        invocation = self.php_fixture({"php-results.first": files})
-        self.assertEqual(self.capture(invocation)["errors"], [])
-        self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "FAIL")
-
-    def test_php_redirect_completion_keeps_context(self) -> None:
-        parent, child = "ext/pdo_sqlite/tests/common.phpt", "ext/pdo/tests/first.phpt"
-        for timed_parent in (False, True):
-            with self.subTest(timed_parent=timed_parent):
-                files = self.php_native_files([parent], [("PASSED", "# " + parent + ": " + child)], redirect=True)
-                if not timed_parent:
-                    # No SKIPIF timer means the completed parent increments
-                    # counters but has no entry in PHP's XML file registry.
-                    files["junit.xml"] = files["junit.xml"].replace(
-                        f'<testcase name="{parent} (redirect parent)"/>', "")
-                invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
-                self.assertEqual(value["status"], "PASS", value)
-                self.assertEqual(value["executed"][0]["php"]["redirects"],
-                                 {"php-results.redirect/" + parent: ["# " + parent + ": " + child]})
-                shutil.rmtree(invocation)
-        # A parent result alone cannot prove that its expansion completed.
-        files["results.tsv"] = ""
-        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
-        self.assertEqual(self.capture(invocation)["errors"], [])
-        self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "INCOMPLETE")
-
-    def test_php_redirect_rejects_incomplete_completion_and_colliding_children(self) -> None:
-        parent = "ext/pdo_sqlite/tests/common.phpt"
-        rows = [("PASSED", "# " + parent + ": ext/pdo/tests/first.phpt")]
-        for mutation in ("missing completion", "missing child", "wrong suite", "colliding children"):
-            with self.subTest(mutation=mutation):
-                files = self.php_native_files([parent], rows, redirect=True)
-                files["junit.xml"] = files["junit.xml"].replace(
-                    f'<testcase name="{parent} (redirect parent)"/>', "")
-                if mutation == "missing completion":
-                    files["junit.xml"] = files["junit.xml"].replace('tests="2"', 'tests="1"')
-                elif mutation == "missing child":
-                    files["junit.xml"] = files["junit.xml"].replace(
-                        '<testcase name="ext/pdo_sqlite/tests/first.phpt (description)"></testcase>', "")
-                elif mutation == "wrong suite":
-                    files["junit.xml"] = files["junit.xml"].replace('name="php.ext.pdo.sqlite.tests"', 'name="php.other"')
-                else:
-                    files["results.tsv"] += "PASSED\t# /php/" + parent + ": /php/other/first.phpt\n"
-                invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                self.assertEqual(self.verdict(invocation, analysis=self.analysis(invocation))["status"], "INCOMPLETE")
-                shutil.rmtree(invocation)
-
-    def test_php_redirect_early_skip_keeps_original_filename(self) -> None:
-        parent, child = "ext/pdo_sqlite/tests/common.phpt", "ext/pdo/tests/first.phpt"
-        files = self.php_native_files([parent], [("SKIPPED", "# " + parent + ": " + child)], redirect=True)
-        files["junit.xml"] = files["junit.xml"].replace("ext/pdo_sqlite/tests/first.phpt", child)
-        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
-        self.assertEqual(self.capture(invocation)["errors"], [])
-        value = self.verdict(invocation, analysis=self.analysis(invocation))
-        self.assertEqual(value["status"], "PASS", value)
-        self.assertEqual(value["executed"][0]["php"]["skipped"],
-                         {"php-results.redirect/# " + parent + ": " + child: "native reason"})
-
-        shutil.rmtree(invocation)
-        # Missing EXTENSIONS can skip after redirect remapping but before its
-        # timer. Both the child SKIP and parent completion then use counters.
-        files = self.php_native_files([parent], [("SKIPPED", "# " + parent + ": " + child)], redirect=True)
-        files["junit.xml"] = files["junit.xml"].replace(
-            '<testcase name="ext/pdo_sqlite/tests/first.phpt (description)"><skipped>native reason</skipped></testcase>', "").replace(
-            f'<testcase name="{parent} (redirect parent)"/>', "")
-        invocation = self.php_fixture({"php-results.redirect": files}, names=parent)
-        self.assertEqual(self.capture(invocation)["errors"], [])
-        value = self.verdict(invocation, analysis=self.analysis(invocation))
-        self.assertEqual(value["status"], "PASS", value)
-        self.assertEqual(value["executed"][0]["php"]["counter_only"], {
-            "php-results.redirect/" + parent: "REDIR",
-            "php-results.redirect/# " + parent + ": " + child: "SKIPPED",
-        })
-
-    def test_php_counter_only_early_skip(self) -> None:
-        name = "ext/ffi/tests/001.phpt"
-        for mutation, status in ((None, "PASS"), ("wrong suite", "INCOMPLETE"),
-                                 ("missing skip count", "INCOMPLETE"), ("missing pass", "INCOMPLETE")):
-            with self.subTest(mutation=mutation):
-                files = self.php_native_files([name], [("SKIPPED", name)])
-                files["junit.xml"] = files["junit.xml"].replace(
-                    'name="php.ext.pdo.sqlite.tests"', 'name="php.ext.ffi.tests"').replace(
-                    f'<testcase name="{name} (description)"><skipped>native reason</skipped></testcase>', "")
-                if mutation == "wrong suite":
-                    files["junit.xml"] = files["junit.xml"].replace('name="php.ext.ffi.tests"', 'name="php.other"')
-                elif mutation == "missing skip count":
-                    files["junit.xml"] = files["junit.xml"].replace('skip="1"', 'skip="0"')
-                elif mutation == "missing pass":
-                    files["results.tsv"] = files["results.tsv"].replace("SKIPPED", "PASSED")
-                invocation = self.php_fixture({"php-results.early": files}, names=name)
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
-                self.assertEqual(value["status"], status, value)
-                if status == "PASS":
-                    native = value["executed"][0]["php"]
-                    self.assertEqual(native["counter_only"], {"php-results.early/" + name: "SKIPPED"})
-                    self.assertEqual(native["skipped"], {"php-results.early/" + name: ""})
-                shutil.rmtree(invocation)
-
-    def test_php_counter_only_suite_depth(self) -> None:
-        # Pinned PHP normalizes shallow suite names, but its five-ancestor
-        # search falls back to the relative path for deeper directories.
-        for name, suite in (
-                ("ext/pdo_sqlite/tests/common.phpt", "php.ext.pdo.sqlite.tests"),
-                ("ext/standard/tests/file/windows_mb_path/test_long_path_0.phpt",
-                 "php.ext.standard.tests.file.windows_mb_path")):
-            with self.subTest(name=name):
-                files = self.php_native_files([name], [("SKIPPED", name)])
-                files["junit.xml"] = files["junit.xml"].replace(
-                    'name="php.ext.pdo.sqlite.tests"', f'name="{suite}"').replace(
-                    f'<testcase name="{name} (description)"><skipped>native reason</skipped></testcase>', "")
-                invocation = self.php_fixture({"php-results.depth": files}, names=name)
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
-                self.assertEqual(value["status"], "PASS", value)
-                self.assertEqual(value["executed"][0]["php"]["counter_only"],
-                                 {"php-results.depth/" + name: "SKIPPED"})
-                shutil.rmtree(invocation)
-
-    def test_php_unique_execution_groups_and_repetition(self) -> None:
-        groups = {f"php-results.{number}": self.php_native_files([name], [("PASSED", name)])
-                  for number, name in enumerate(["first.phpt", "first.phpt", "second.phpt", "second.phpt"])}
-        for markers, expected in ((None, "PASS"), (list(groups)[:-1], "INCOMPLETE"),
-                                  ([*groups, "php-results.0"], "INCOMPLETE")):
-            with self.subTest(markers=markers):
-                invocation = self.php_fixture(groups, markers=markers)
-                self.assertEqual(self.capture(invocation)["errors"], [])
-                value = self.verdict(invocation, analysis=self.analysis(invocation))
-                self.assertEqual(value["status"], expected, value)
-                shutil.rmtree(invocation)
 
     def test_jtreg_results_override_successful_wrapper(self) -> None:
         scenarios = (
@@ -2291,58 +2289,6 @@ class QualificationReportTest(unittest.TestCase):
         combined = report.bundle(self.evidence, 1, 0, self.root / "bundle.tar.gz")
         self.assertEqual((combined["status"], combined["native_exit"]), ("FAIL", 1))
 
-    def test_loading_failure_reaches_receipt_without_provider_secrets(self) -> None:
-        invocation = self.fixture()
-        analysis = invocation / "expected-analysis.jsonl"
-        description = (
-            'Repository fetch failed: Get "https://user:password@proxy.example/module?token=secret": '
-            "net/http: TLS handshake timeout\nAuthorization: Bearer private-token"
-        )
-        analysis.write_text("".join(json.dumps(event) + "\n" for event in [
-            {"id": {"targetCompleted": {"label": "//example:no_build", "configuration": {"id": "config"}}},
-             "aborted": {"reason": "NO_BUILD"}},
-            {"id": {"targetConfigured": {"label": "//example:dependent"}},
-             "aborted": {"reason": "ANALYSIS_FAILURE"}},
-            {"id": {"unconfiguredLabel": {"label": "@@repository//:package"}},
-             "aborted": {"reason": "LOADING_FAILURE", "description": description}},
-            {"id": {"targetConfigured": {"label": "//example:test"}},
-             "aborted": {"reason": "ANALYSIS_FAILURE"}},
-            {"id": {"buildFinished": {}}, "finished": {"exitCode": {"name": "BUILD_FAILURE", "code": 1}}},
-        ]))
-        self.write_events(invocation, [])
-        (invocation / "native-exit").write_text("1\n")
-        self.capture(invocation)
-        value = self.verdict(invocation, analysis=analysis)
-        self.assertEqual((value["status"], value["native_exit"], value["executed"]), ("FAIL", 1, []))
-        artifact = self.root / "bundle.tar.gz"
-        combined = report.bundle(self.evidence, 1, 0, artifact)
-        receipt = report.receipt(artifact, report.file_record(artifact)["sha256"], combined["sources"][0])
-        self.assertEqual((receipt["status"], receipt["executed_attempt_count"]), ("FAIL", 0))
-        error, = [error for error in receipt["invocations"][0]["errors"] if "Bazel analysis aborted" in error]
-        self.assertIn("LOADING_FAILURE", error)
-        self.assertEqual(error.count("ANALYSIS_FAILURE"), 1)
-        self.assertIn("reported net/http: TLS handshake timeout", error)
-        self.assertIn(hashlib.sha256(description.encode()).hexdigest(), error)
-        for secret in ("password", "proxy.example", "token=secret", "Authorization", "private-token"):
-            self.assertNotIn(secret, json.dumps(receipt))
-
-    def test_analysis_abort_keeps_unknown_description_private(self) -> None:
-        analysis = self.root / "analysis.jsonl"
-        for reason in ("ANALYSIS_FAILURE", "private-provider-reason", ["private-provider-reason"]):
-            with self.subTest(reason=reason):
-                description = "private description with a password"
-                analysis.write_text(json.dumps({
-                    "id": {"unconfiguredLabel": {"label": "private-label"}},
-                    "aborted": {"reason": reason, "description": description},
-                }) + "\n")
-                value = report.preflight(analysis, 1, "test")
-                self.assertEqual(value["status"], "INCOMPLETE")
-                error, = value["errors"]
-                self.assertIn("ANALYSIS_FAILURE" if reason == "ANALYSIS_FAILURE" else "UNKNOWN", error)
-                self.assertIn(hashlib.sha256(description.encode()).hexdigest(), error)
-                for secret in ("private-label", "private description", "private-provider-reason", "password"):
-                    self.assertNotIn(secret, error)
-
     def test_build_uses_independent_expected_configuration(self) -> None:
         invocation = self.fixture()
         events = [event for event in self.events(invocation) if "configured" in event or "finished" in event]
@@ -2673,6 +2619,13 @@ import os
 from pathlib import Path
 import signal
 import sys
+
+def interrupted(signum, _frame):
+    Path(os.environ['TEST_WORK_SIGNAL']).write_text(str(signum))
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, interrupted)
+Path(os.environ['TEST_WORK_STATUS']).write_text(Path('/proc/self/status').read_text())
 with Path(os.environ['TEST_BAZEL_ARGUMENTS']).open('a') as stream:
     stream.write(json.dumps({
         'arguments': sys.argv[1:],
@@ -2712,6 +2665,7 @@ signal.pause()
                 runner_temp = workspace / "temporary"
                 runner_temp.mkdir()
                 started = workspace / "work-started"
+                interrupted = workspace / "work-signal"
                 analysis = [json.loads(line) for line in (FIXTURES / "analysis-no-build/events.jsonl").read_text().splitlines()]
                 configured = next(event for event in analysis if "configured" in event)
                 configured["configured"].setdefault("tag", []).append("jtreg-results")
@@ -2752,6 +2706,8 @@ signal.pause()
                     "TEST_COMMIT_FILE": str(FIXTURES / "pass/commit.txt"),
                     "TEST_ANALYSIS": str(analysis_path),
                     "TEST_WORK_STARTED": str(started),
+                    "TEST_WORK_SIGNAL": str(interrupted),
+                    "TEST_WORK_STATUS": str(workspace / "work-status"),
                     "TEST_BAZEL_ARGUMENTS": str(workspace / "bazel-arguments.jsonl"),
                 }
                 environment.pop("RUNTIME_TESTS_FILTER", None)
@@ -2762,8 +2718,27 @@ signal.pause()
                     ["bash", "test/rbe/actions.sh", *options],
                     cwd=workspace, env=environment, capture_output=True, text=True, timeout=45, check=False,
                 )
-                self.assertEqual(result.returncode == 0, phase == "command-pass", result.stdout + result.stderr)
-                self.assertEqual(started.exists(), phase != "preflight", result.stdout + result.stderr)
+                timeout = (runner_temp / "qualification/timeout-path.txt").read_text().strip()
+                timeout_version = (runner_temp / "qualification/timeout-version.txt").read_text()
+                status_path = workspace / "work-status"
+                verdict_path = runner_temp / "qualification/verdict.json"
+                diagnostic = {
+                    "phase": phase, "architecture": architecture, "runtime_filter": runtime_filter,
+                    "timeout": timeout, "timeout_resolved": str(Path(timeout).resolve()),
+                    "timeout_version": timeout_version,
+                    "returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr,
+                    "child_status": status_path.read_text() if status_path.exists() else None,
+                    "verdict": report.read_json(verdict_path) if verdict_path.exists() else None,
+                    "received_signal": interrupted.read_text() if interrupted.exists() else None,
+                }
+                if output := os.environ.get("TEST_UNDECLARED_OUTPUTS_DIR"):
+                    report.write_json(Path(output) / f"deadline-{index}.json", diagnostic)
+                self.assertEqual(result.returncode == 0, phase == "command-pass", diagnostic)
+                self.assertEqual(started.exists(), phase != "preflight", diagnostic)
+                if phase in ("preflight", "command-pass", "command-fail"):
+                    self.assertFalse(interrupted.exists(), result.stdout + result.stderr)
+                else:
+                    self.assertEqual(diagnostic["received_signal"], str(signal.SIGINT), diagnostic)
                 if phase.endswith("-selection"):
                     observations = [json.loads(line) for line in (workspace / "bazel-arguments.jsonl").read_text().splitlines()]
                     commands = [row["arguments"] for row in observations if "test" in row["arguments"]]
@@ -2978,6 +2953,73 @@ signal.pause()
         self.assertEqual(report.bundle(self.evidence, 0, 0, output)["status"], "PASS")
         (self.evidence / "invocation-missing").mkdir()
         self.assertEqual(report.bundle(self.evidence, 0, 0, output)["status"], "INCOMPLETE")
+
+    def test_explicit_source_set_preserves_retained_failure(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        expected = producer["sources"]
+        rows = producer["invocations"]
+        value = report.summarize_verdicts(rows, producer["runner_exit"], producer["capture_exit"], [],
+                                          expected_sources=expected)
+        self.assertEqual((value["status"], value["native_exit"], value["errors"]), ("FAIL", 3, []))
+        for key in ("sources", "native_exits", "case_counts", "failures", "executed"):
+            self.assertEqual(value[key], producer[key], key)
+        for declared in (expected[:-1], [*expected, "0" * 40]):
+            with self.subTest(declared=declared):
+                rejected = report.summarize_verdicts(rows, 0, 0, [], expected_sources=declared)
+                self.assertEqual(rejected["status"], "FAIL")
+                self.assertTrue(any("Invocation sources differ" in item for item in rejected["errors"]))
+        passing = [row for row in rows if row["path"] in (
+            "invocation-parent-death-nogo/verdict.json", "invocation-exit-status-nogo/verdict.json")]
+        declared = [row["verdict"]["source"] for row in passing]
+        self.assertEqual(len(passing), 2)
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [], expected_sources=declared)["status"], "PASS")
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [], expected_sources=declared[:1])["status"], "INCOMPLETE")
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [])["status"], "INCOMPLETE")
+        empty = report.summarize_verdicts([], 0, 0, [], expected_sources=expected)
+        self.assertEqual((empty["status"], empty["native_exit"]), ("INCOMPLETE", None))
+
+    def test_explicit_source_set_receipt_requires_exact_sources(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        artifact = self.root / "multi-source.tar.gz"
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        digest = report.file_record(artifact)["sha256"]
+        source = producer["sources"][0]
+        with self.assertRaisesRegex(ValueError, "Producer sources"):
+            report.receipt(artifact, digest, source)
+        result = report.receipt(artifact, digest, source, expected_sources=producer["sources"])
+        self.assertEqual((result["status"], result["native_exit"]), ("FAIL", 3))
+        self.assertEqual(result["errors"], producer["errors"])
+        self.assertEqual(result["expected_sources"], producer["sources"])
+        with self.assertRaisesRegex(ValueError, "Producer sources"):
+            report.receipt(artifact, digest, source, expected_sources=producer["sources"][:-1])
+        with self.assertRaisesRegex(ValueError, "Submitted source"):
+            report.receipt(artifact, digest, "0" * 40, expected_sources=producer["sources"])
+        output = self.root / "multi-source-receipt.json"
+        command = subprocess.run([sys.executable, report.__file__, "receipt", "--artifact", str(artifact),
+                                  "--sha256", digest, "--expected-source", source, "--output", str(output),
+                                  *[arg for commit in producer["sources"] for arg in ("--invocation-source", commit)]],
+                                 capture_output=True, text=True, check=False)
+        self.assertEqual(command.returncode, 1, command.stderr)
+        self.assertEqual(report.read_json(output)["status"], "FAIL")
+        producer["invocations"][0]["verdict"]["source"] = "0" * 40
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        with self.assertRaisesRegex(ValueError, "Producer invocation"):
+            report.receipt(artifact, report.file_record(artifact)["sha256"], source,
+                           expected_sources=producer["sources"])
+
+
+    def test_explicit_source_set_rejects_invalid_contracts(self) -> None:
+        for sources in ([], [""], ["a" * 39], ["a" * 40, "a" * 40]):
+            with self.subTest(sources=sources), self.assertRaisesRegex(ValueError, "unique full commit"):
+                report.summarize_verdicts([], 0, 0, [], expected_sources=sources)
 
     def test_empty_bundle_never_passes(self) -> None:
         value = report.bundle(self.evidence, 19, 0, self.root / "bundle.tar.gz")
@@ -3624,6 +3666,9 @@ signal.pause()
                             "all_skipped_owners", "native_exits", "verdict_available_at"):
                     self.assertEqual(value[key], producer[key], key)
                 self.assertEqual(value["invocations"][0]["errors"], producer["invocations"][0]["verdict"]["errors"])
+                explicit = report.receipt(artifact, digest, producer["sources"][0], expected_sources=producer["sources"])
+                self.assertEqual(explicit["status"], status)
+                self.assertEqual(explicit["case_counts"], producer["case_counts"])
                 self.assertEqual(value["expected_owner_count"], len(producer["expected"]))
                 self.assertEqual(value["executed_attempt_count"], len(producer["executed"]))
                 phase = producer["invocations"][0]["verdict"]
@@ -3863,6 +3908,99 @@ signal.pause()
         self.assertEqual(value["actions_artifact"], {"id": 3, "name": current["name"], "digest": digest})
         self.assertEqual(value["case_counts"], producer["case_counts"])
 
+    def lifecycle_artifact(self, name: str, *, coordinator_source: str | None = None) -> tuple[Path, dict[str, object]]:
+        artifact, producer = self.artifact(self.fixture(name), native=True)
+        source = producer["sources"][0]
+        receipt = report.receipt(artifact, report.file_record(artifact)["sha256"], source)
+        results = self.root / "lifecycle-results"
+        results.mkdir()
+        for side in ("before", "after", "statistics", "preflight"):
+            shutil.copytree(self.evidence, results / side)
+        status = "PASS" if receipt["status"] == "PASS" else "FAIL"
+        collect_actions.publish_lifecycle(results, dict.fromkeys(("before", "after", "statistics", "preflight"), source), {
+            "status": status, "sources": {"before": source, "after": source},
+            "statistics_source": source,
+        }, producer["runner_exit"], producer["capture_exit"],
+            coordinator_source=coordinator_source)
+        compact = results / "compact" / "qualification"
+        result = self.root / "lifecycle.zip"
+        with zipfile.ZipFile(result, "w") as archive:
+            for path in compact.iterdir():
+                archive.write(path, "qualification/" + path.name)
+        return result, receipt
+
+    def test_lifecycle_compact_preserves_retained_outcomes(self) -> None:
+        for name in ("pass", "fail", "incomplete", "zero"):
+            with self.subTest(name=name):
+                artifact, receipt = self.lifecycle_artifact(name, coordinator_source=os.environ.get("LIFECYCLE_REPLAY_SOURCE"))
+                value = collect_actions.lifecycle_receipt(artifact, report.file_record(artifact)["sha256"],
+                                                         os.environ.get("LIFECYCLE_REPLAY_SOURCE", receipt["sources"][0]))
+                self.assertEqual(value["status"], "PASS" if receipt["status"] == "PASS" else "FAIL")
+                self.assertEqual(value["downloaded_bytes"], artifact.stat().st_size)
+                for retained in value["bundle_receipts"].values():
+                    for key in ("status", "case_counts", "native_exits", "zero_case_owners", "errors"):
+                        self.assertEqual(retained[key], receipt[key])
+                if os.environ.get("LIFECYCLE_REPLAY_SOURCE"):
+                    # A qualification-only replay can upload these exact
+                    # outputs without executing the original workloads again.
+                    destination = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / ("lifecycle-" + name)
+                    shutil.copytree(self.root / "lifecycle-results", destination)
+                shutil.rmtree(self.root / "lifecycle-results")
+                shutil.rmtree(self.evidence)
+                self.evidence.mkdir()
+
+    def test_lifecycle_compact_rejects_tampered_receipts(self) -> None:
+        artifact, receipt = self.lifecycle_artifact("pass")
+        for damage, error in (("source", "manifest schema or source differs"),
+                              ("receipt", "Retained audit input differs"),
+                              ("status", "receipt and bundle statuses differ"),
+                              ("bundle", "receipt source or audit identity differs"),
+                              ("missing", "qualification.tar.gz")):
+            with self.subTest(damage=damage):
+                with zipfile.ZipFile(artifact) as original:
+                    members = {name: original.read(name) for name in original.namelist()}
+                manifest = json.loads(members["qualification/manifest.json"])
+                if damage == "source":
+                    manifest["source"] = "0" * 40
+                elif damage == "receipt":
+                    members["qualification/before-receipt.json"] = b"{}"
+                elif damage == "status":
+                    manifest["bundles"]["before"]["status"] = "FAIL"
+                elif damage == "bundle":
+                    manifest["bundles"]["before"]["sha256"] = "0" * 64
+                else:
+                    del members["qualification/before-receipt.json"]
+                members["qualification/manifest.json"] = json.dumps(manifest).encode()
+                changed = self.root / "changed.zip"
+                with zipfile.ZipFile(changed, "w") as output:
+                    for name, data in members.items():
+                        output.writestr(name, data)
+                with self.assertRaisesRegex((ValueError, KeyError), error):
+                    collect_actions.lifecycle_receipt(changed, report.file_record(changed)["sha256"], receipt["sources"][0])
+
+    def test_actions_lifecycle_downloads_only_compact_result(self) -> None:
+        artifact, receipt = self.lifecycle_artifact("pass")
+        retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
+        digest = "sha256:" + report.file_record(artifact)["sha256"]
+        current = {"id": 3, "name": "state-lifecycle-result-attempt-2", "expired": False, "digest": digest}
+        audit = {"id": 4, "name": "state-lifecycle-audit-attempt-2", "expired": False, "digest": "sha256:" + "a" * 64}
+        for conclusion, audits, status in (("success", [audit], "PASS"), ("failure", [audit], "FAIL"),
+                                           ("success", [], "INCOMPLETE")):
+            with self.subTest(conclusion=conclusion, audits=audits):
+                metadata = {**retained, "head_sha": receipt["sources"][0], "run_attempt": 2, "conclusion": conclusion}
+                responses = [json.dumps(value).encode() for value in (metadata, {"artifacts": [current, *audits]})]
+                def download(command: list[str], *, stdout: BinaryIO, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                    self.assertEqual(command[-1], "repos/tamird/gvisor/actions/artifacts/3/zip")
+                    stdout.write(artifact.read_bytes())
+                    return subprocess.CompletedProcess(command, 0)
+                with (mock.patch.object(collect_actions.subprocess, "check_output", side_effect=responses),
+                      mock.patch.object(collect_actions.subprocess, "run", side_effect=download) as downloads):
+                    value = collect_actions.collect_actions(metadata["id"], metadata["head_sha"], "amd64",
+                                                            self.root / "lifecycle", run_attempt=2, lifecycle=True)
+                self.assertEqual((value["status"], value["producer_status"]), (status, "PASS"))
+                self.assertEqual(downloads.call_count, 1)
+                self.assertEqual(value["audit_upload_status"], "RETAINED" if audits else "INCOMPLETE")
+
     def test_actions_collection_rejects_changed_or_invalid_attempt(self) -> None:
         retained = report.read_json(FIXTURES / "actions-no-artifact.json")["workflow"]
         for first, last, requested, error in (
@@ -3915,6 +4053,72 @@ signal.pause()
     def metadata_response(self, metadata: dict[str, object]) -> mock.MagicMock:
         return self.native_response(json.dumps({"invocation": [metadata]}).encode())
 
+    def test_native_collection_separates_hosted_and_executed_sources(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        artifact = self.root / "private-source.tar.gz"
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        metadata = self.native_metadata(artifact, producer)
+        metadata["commitSha"] = "9" * 40
+        key = self.root / "api-key"
+        key.write_text("test-secret")
+        with mock.patch.object(report, "HTTPSConnection") as connection:
+            connection.return_value.getresponse.side_effect = [
+                self.metadata_response(metadata), self.native_response(artifact.read_bytes())]
+            value = report.native_receipt(
+                metadata["id"]["invocationId"], key, self.root / "download.tar.gz",
+                self.root / "native-receipt.json", producer["sources"][0], None, 30,
+                expected_sources=producer["sources"], hosted_source="9" * 40)
+        self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
+                         ("FAIL", "FAIL", "COMPLETE"))
+        self.assertEqual(value["submitted_source"], metadata["commitSha"])
+        self.assertEqual(value["expected_source"], producer["sources"][0])
+        self.assertEqual(value["native_invocation"]["commitSha"], metadata["commitSha"])
+        self.assertEqual(value["expected_sources"], producer["sources"])
+        self.assertEqual(value["native_exit"], producer["native_exit"])
+        self.assertNotIn("test-secret", json.dumps(value))
+
+    def test_native_collection_rejects_private_source_identity_mismatches(self) -> None:
+        for defect, message in (
+            ("wrong-hosted", "invocation source differs"),
+            ("missing-executed", "Producer sources"),
+            ("swapped-executed", "Producer invocation"),
+            ("invalid-hosted", "full hosted checkout commit SHA"),
+        ):
+            with self.subTest(defect=defect):
+                producer = report.read_json(FIXTURES / "five-source-fail.json")
+                expected = producer["sources"][:]
+                hosted_source = "9" * 40
+                if defect == "missing-executed":
+                    expected.pop()
+                elif defect == "swapped-executed":
+                    producer["invocations"][0]["verdict"]["source"] = "8" * 40
+                elif defect == "invalid-hosted":
+                    hosted_source = "invalid"
+                artifact = self.root / (defect + ".tar.gz")
+                raw = json.dumps(producer).encode()
+                with tarfile.open(artifact, "w:gz") as archive:
+                    member = tarfile.TarInfo("verdict.json")
+                    member.size = len(raw)
+                    archive.addfile(member, io.BytesIO(raw))
+                metadata = self.native_metadata(artifact, producer)
+                metadata["commitSha"] = "7" * 40 if defect == "wrong-hosted" else "9" * 40
+                key = self.root / "api-key"
+                key.write_text("test-secret")
+                with mock.patch.object(report, "HTTPSConnection") as connection:
+                    connection.return_value.getresponse.side_effect = [
+                        self.metadata_response(metadata), self.native_response(artifact.read_bytes())]
+                    value = report.native_receipt(
+                        metadata["id"]["invocationId"], key, self.root / (defect + "-download.tar.gz"),
+                        self.root / (defect + "-receipt.json"), expected[0], None, 30,
+                        expected_sources=expected, hosted_source=hosted_source)
+                self.assertEqual(value["collection_status"], "ERROR")
+                self.assertIn(message, value["collection_error"])
+                self.assertNotIn("test-secret", json.dumps(value))
+
     def test_native_collection_preserves_retained_outcomes(self) -> None:
         for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"),
                              ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):
@@ -3932,13 +4136,12 @@ signal.pause()
                 with mock.patch.object(report.time, "sleep"):
                     value = self.native_collect(metadata, [self.metadata_response(pending),
                                                            TimeoutError("timed out"),
-                                                           OSError(errno.EADDRNOTAVAIL, "no local address"),
                                                            ConnectionResetError("connection reset"),
                                                            RemoteDisconnected("connection closed"),
                                                            self.metadata_response(metadata),
                                                            self.native_response(artifact.read_bytes())])
                 self.assertEqual([retry["error"] for retry in value["observation_retries"]],
-                                 ["TimeoutError", "EADDRNOTAVAIL", "ConnectionResetError", "RemoteDisconnected"])
+                                 ["TimeoutError", "ConnectionResetError", "RemoteDisconnected"])
                 self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
                                  (status, status, "COMPLETE"))
                 for field in ("case_counts", "failures", "missing", "skips", "zero_case_owners",
@@ -3952,6 +4155,53 @@ signal.pause()
                 self.assertEqual((resumed["status"], resumed["collection_status"]), (status, "COMPLETE"))
                 (self.root / "download.tar.gz").unlink()
                 shutil.rmtree(invocation)
+
+    def test_bundle_preserves_outcome_when_remote_audit_metadata_is_malformed(self) -> None:
+        for name, expected in (("pass", "INCOMPLETE"), ("fail", "FAIL")):
+            with self.subTest(name=name):
+                invocation = self.fixture(name)
+                (self.evidence / "remote-audits.json").write_text('{"unfinished":')
+                artifact, producer = self.artifact(invocation, native=True)
+                value = report.receipt(artifact, report.file_record(artifact)["sha256"], producer["sources"][0])
+                self.assertEqual(value["status"], expected)
+                self.assertTrue(any("Remote audit metadata" in error for error in value["errors"]), value)
+                self.assertEqual(value["case_counts"], producer["case_counts"])
+                shutil.rmtree(invocation)
+
+    def test_native_collection_verifies_remote_audits_without_downloading(self) -> None:
+        invocation = self.fixture()
+        audit = self.root / "execution.json.gz"
+        audit.write_bytes(b"full execution evidence retained by the provider")
+        identity = report.retain_audit(audit, self.evidence)
+        with self.assertRaisesRegex(ValueError, "Duplicate remote audit"):
+            report.retain_audit(audit, self.evidence)
+        artifact, producer = self.artifact(invocation, native=True)
+        self.assertEqual(producer["remote_audits"], {audit.name: report.file_record(audit)})
+        with tarfile.open(artifact) as archive:
+            self.assertNotIn(audit.name, archive.getnames())
+        metadata = self.native_metadata(artifact, producer)
+        advertised = {"name": audit.name, "uri": (
+            f"bytestream://remote.buildbuddy.io/blobs/{identity['sha256']}/{identity['bytes']}")}
+        for fault in (None, "missing", "duplicate", "digest"):
+            with self.subTest(fault=fault):
+                current = {**metadata, "artifacts": [*metadata["artifacts"], advertised]}
+                if fault == "missing":
+                    current["artifacts"].pop()
+                elif fault == "duplicate":
+                    current["artifacts"].append(advertised)
+                elif fault == "digest":
+                    current["artifacts"][-1] = {**advertised, "uri": advertised["uri"].replace(
+                        identity["sha256"], "0" * 64)}
+                # Only the ordinary bundle has a GetFile response. An audit
+                # download would exhaust these responses and fail this test.
+                value = self.native_collect(current, [self.metadata_response(current),
+                                                       self.native_response(artifact.read_bytes())])
+                status = "INCOMPLETE" if fault else "PASS"
+                self.assertEqual((value["status"], value["producer_status"], value["audit_upload_status"]),
+                                 (status, "PASS", status))
+                self.assertEqual(value["downloaded_bytes"], artifact.stat().st_size)
+                self.assertEqual(value["case_counts"], producer["case_counts"])
+                (self.root / "download.tar.gz").unlink()
 
     def test_native_collection_retains_failure_when_bundle_is_missing_or_invalid(self) -> None:
         artifact, producer = self.artifact(self.fixture("fail"), native=True)

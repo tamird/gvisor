@@ -33,13 +33,13 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 import datetime
-import errno
 import hashlib
 from http.client import HTTPException, HTTPResponse, HTTPSConnection
 import json
 import math
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+import posixpath
 import re
 import shutil
 import subprocess
@@ -57,13 +57,17 @@ import unit_matrix
 
 MAX_REPORT_BYTES = 512 * 1024 * 1024
 MAX_TOTAL_REPORT_BYTES = 2 * 1024 * 1024 * 1024
+# Hosted Run encodes the complete action in one base64 YAML argv, then executes
+# each step with bash -c. Keep requests compact without pretending that Python
+# JSON serialization measures Go's YAML output. The aggregate policy reserves
+# room for quoting, indentation, defaults and base64 expansion.
+HOSTED_ACTION_BUDGET_BYTES = 44 * 1024
+HOSTED_ARGUMENT_BYTES = 128 * 1024  # Linux MAX_ARG_STRLEN with 4 KiB pages.
 RUNTIME_OUTPUT_NAME = r"batch-\d+(?:-sentry-stacks)?\.log"
 NODE_RESULT_TAGS = {"nodejs-results", "nodejs-exact-results"}
-RUNTIME_RESULT_TAGS = {"jtreg-results", "php-results"} | NODE_RESULT_TAGS
-PHP_OUTPUT_NAME = r"php-results\.[A-Za-z0-9]+/(?:selection\.txt|root\.txt|redirect\.txt|results\.tsv|junit\.xml)"
+RUNTIME_RESULT_TAGS = {"jtreg-results"} | NODE_RESULT_TAGS
 RESULT_OUTPUT_PATTERNS = {
     **dict.fromkeys(RUNTIME_RESULT_TAGS, RUNTIME_OUTPUT_NAME),
-    "php-results": "(?:" + RUNTIME_OUTPUT_NAME + "|" + PHP_OUTPUT_NAME + ")",
     "source-image-results": (r"source-images/(?:selection\.json|[A-Za-z0-9][A-Za-z0-9_.-]*/"
                              r"(?:request\.json|build-exit-code|inspect\.json|exit-code))"),
 }
@@ -100,6 +104,39 @@ def number(value: object) -> int:
 
 def read_json(path: Path) -> dict[str, object]:
     return mapping(json.loads(path.read_text()))
+
+
+def hosted_run_preflight(request: dict[str, object]) -> dict[str, int]:
+    """Reject oversized supported Run requests before submission side effects."""
+    if request.get("bazel_command"):
+        raise ValueError("Hosted qualification requires explicit run steps")
+    directory = posixpath.normpath(string(request.get("working_directory", "")))
+    if posixpath.isabs(directory) or ".." in directory:
+        raise ValueError("Hosted working directory must stay within the repository")
+    directory = "" if directory == "." else directory
+    name = string(request.get("name", "")) or "remote run"
+    steps = sequence(request.get("steps"))
+    if not steps:
+        raise ValueError("Hosted qualification requires at least one run step")
+    runs: list[str] = []
+    for step in steps:
+        fields = mapping(step)
+        if set(fields) != {"run"}:
+            raise ValueError("Hosted qualification supports only the run step field")
+        run = string(fields["run"])
+        if "\0" in run or len(run.encode()) + 1 > HOSTED_ARGUMENT_BYTES:
+            raise ValueError("Hosted step exceeds the Linux argument limit or contains NUL; use an artifact input")
+        runs.append(run)
+    action = {"name": name, "bazel_workspace_dir": directory,
+              "steps": [{"run": run} for run in runs]}
+    # Include all steps and charge for block indentation on actual newlines.
+    # This is a conservative request policy, not an exact YAML-size prediction.
+    budget = len(json.dumps(action, ensure_ascii=True).encode())
+    budget += 4 * sum(value.count("\n") for value in (name, directory, *runs))
+    if budget > HOSTED_ACTION_BUDGET_BYTES:
+        raise ValueError(f"Hosted action budget {budget} exceeds {HOSTED_ACTION_BUDGET_BYTES} bytes; use artifact inputs")
+    return {"action_budget_bytes": budget, "action_budget_limit": HOSTED_ACTION_BUDGET_BYTES,
+            "largest_step_argument_bytes": max(len(run.encode()) + 1 for run in runs)}
 
 
 def write_json(path: Path, value: object) -> None:
@@ -448,14 +485,13 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     return result
 
 
-def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, object]:
+def xml_cases(path: Path) -> dict[str, object]:
     """Count actual entries, retaining skips/notrun separately from passes."""
     root = ET.parse(path).getroot()
     if root.tag not in ("testsuites", "testsuite"):
         raise ValueError(f"Unexpected XML root: {root.tag}")
     counts: Counter[str] = Counter()
     failures, skips = [], []
-    matched = set()
     for case in root.iter("testcase"):
         name = "/".join(filter(None, (case.get("classname"), case.get("name"))))
         if case.find("failure") is not None or case.find("error") is not None:
@@ -466,8 +502,6 @@ def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, o
             skips.append({"name": name, "status": case.get("status"), "reason": "".join(case.find("skipped").itertext()) if case.find("skipped") is not None else case.get("result", "notrun")})
         else:
             counts["passed"] += 1
-            if name in required:
-                matched.add(name)
     # Suite failures can exist without a corresponding named testcase.
     suite_errors = sum(number(suite.get(key, 0)) for suite in root.iter("testsuite") for key in ("failures", "errors"))
     if suite_errors and not counts["failed"]:
@@ -475,38 +509,7 @@ def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, o
     declared = root.get("tests")
     if declared is not None and number(declared) != sum(counts.values()):
         raise ValueError(f"XML declares {declared} tests but contains {sum(counts.values())}")
-    return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"],
-            "failures": failures, "skips": skips, **({"required_passed": sorted(matched)} if required else {})}
-
-
-def runtime_outputs(attempt: Attempt, reports: dict[tuple[Attempt, str], Path],
-                    pattern: str) -> Iterator[tuple[str, bytes]]:
-    """Read selected native artifacts from either BEP output representation."""
-    total = 0
-    seen: set[str] = set()
-
-    def check(name: str, size: int) -> None:
-        nonlocal total
-        total += size
-        if name in seen:
-            raise ValueError(f"Duplicate runtime artifact: {name}")
-        seen.add(name)
-        if size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
-            raise ValueError("Runtime output exceeds retention bounds")
-
-    if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
-        with zipfile.ZipFile(archive_path) as archive:
-            for item in archive.infolist():
-                if re.fullmatch(pattern, item.filename):
-                    check(item.filename, item.file_size)
-                    yield item.filename, archive.read(item)
-    else:
-        for (owner, name), path in reports.items():
-            if owner == attempt and name.startswith("test.outputs/"):
-                name = name.removeprefix("test.outputs/")
-                if re.fullmatch(pattern, name):
-                    check(name, path.stat().st_size)
-                    yield name, path.read_bytes()
+    return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"], "failures": failures, "skips": skips}
 
 
 def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]
@@ -519,12 +522,28 @@ def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, st
     if not expected or len(expected) != len(set(expected)):
         raise ValueError("Runtime selection is empty or contains duplicate names")
 
+    def outputs() -> Iterator[str]:
+        total = 0
+        if archive_path := reports.get((attempt, "test.outputs__outputs.zip")):
+            with zipfile.ZipFile(archive_path) as archive:
+                names = [item for item in archive.infolist() if re.fullmatch(r"batch-\d+\.log", item.filename)]
+                if len(names) != len({item.filename for item in names}):
+                    raise ValueError("Duplicate runtime batch artifacts")
+                for item in names:
+                    total += item.file_size
+                    if item.file_size > MAX_REPORT_BYTES or total > MAX_TOTAL_REPORT_BYTES:
+                        raise ValueError("Runtime batch output exceeds retention bounds")
+                    yield archive.read(item).decode()
+        else:
+            for (owner, name), path in reports.items():
+                if owner == attempt and re.fullmatch(r"test.outputs/batch-\d+\.log", name):
+                    yield path.read_text()
+
     found_batches = []
     retained = []
     errors = []
     try:
-        for _, raw in runtime_outputs(attempt, reports, r"batch-\d+\.log"):
-            output = raw.decode()
+        for output in outputs():
             selection, separator, body = output.partition("\nOutput:\n")
             if not separator or not selection.startswith("Batch:\n"):
                 errors.append("Invalid runtime batch artifact header")
@@ -537,215 +556,6 @@ def runtime_batches(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, st
     if Counter(map(tuple, batches)) != Counter(map(tuple, found_batches)):
         errors.append("Retained runtime batches differ from the selected batches")
     return expected, retained, errors
-
-
-def php_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
-    """Join PHP's native -W states and complete JUnit to each actual command.
-
-    -W retains expected-failure states that JUnit folds into passes, but has no
-    completion footer. JUnit is written after the top-level run returns. A
-    redirect parent has no -W row; its isolated XML parent and contextual child
-    rows establish completion of PHP's enumerated expansion, not discovery of
-    every potentially eligible test in the source archive.
-    """
-    expected, batches, errors = runtime_batches(log, attempt, reports)
-    groups: dict[str, dict[str, bytes]] = {}
-    for name, content in runtime_outputs(attempt, reports, PHP_OUTPUT_NAME):
-        group, name = name.split("/", 1)
-        groups.setdefault(group, {})[name] = content
-    results: dict[str, dict[str, str]] = {}
-    skipped: dict[str, str] = {}
-    failures: set[str] = set()
-    expected_failures: dict[str, str] = {}
-    redirects: dict[str, list[str]] = {}
-    completed: set[str] = set()
-    counter_only: dict[str, str] = {}
-    referenced: list[str] = []
-    states = {"PASSED", "SKIPPED", "XFAILED", "XLEAKED", "FAILED", "WARNED", "LEAKED", "BORKED"}
-
-    for selected, body in batches:
-        markers = re.findall(r"^gvisor-php-report /proctor-artifacts/(php-results\.[A-Za-z0-9]+)\r?$", body, re.M)
-        referenced.extend(markers)
-        selections: Counter[str] = Counter()
-        for group in markers:
-            native: dict[str, str] = {}
-            results[group] = native
-            try:
-                files = groups[group]
-                names = files["selection.txt"].decode().splitlines()
-                if not names or len(names) != len(set(names)) or not set(names) <= set(selected):
-                    raise ValueError("PHP command selection differs from its batch")
-                positions = [selected.index(name) for name in names]
-                if positions != list(range(positions[0], positions[0] + len(names))):
-                    raise ValueError("PHP command selection is not an ordered batch group")
-                selections.update(names)
-                source_root = files["root.txt"].decode().removesuffix("\n")
-                if not source_root.startswith("/") or str(PurePosixPath(source_root)) != source_root:
-                    raise ValueError("Invalid PHP source root")
-                redirect = files["redirect.txt"]
-                if redirect not in (b"true\n", b"false\n") or redirect == b"true\n" and len(names) != 1:
-                    raise ValueError("Invalid PHP redirect group")
-
-                def relative(name: str) -> str:
-                    prefix = source_root + "/"
-                    if not name.startswith(prefix):
-                        raise ValueError(f"PHP result outside source root: {name}")
-                    name = name.removeprefix(prefix)
-                    if (not name.endswith(".phpt") or str(PurePosixPath(name)) != name
-                            or ".." in PurePosixPath(name).parts):
-                        raise ValueError(f"Invalid PHP result path: {name}")
-                    return name
-
-                def suite_name(name: str) -> str:
-                    directory = PurePosixPath(name).parent
-                    # PHP searches at most five ancestors for its source-root
-                    # header. Deeper paths use its relative-path fallback,
-                    # which preserves underscores and other punctuation.
-                    if len(directory.parts) >= 5:
-                        return "php." + str(directory).replace("/", ".").replace("-", ".")
-                    return "php" + "".join("." + re.sub(r"[^a-z0-9]+", ".", part, flags=re.I)
-                                            for part in directory.parts)
-
-                xml_names: dict[str, str] = {}
-                redirected: list[str] = []
-                text = files["results.tsv"].decode()
-                if not text.endswith("\n"):
-                    raise ValueError("PHP state output is empty or truncated")
-                for line in text.splitlines():
-                    match line.split("\t"):
-                        case [state, identity] if state in states:
-                            if identity.startswith("# "):
-                                parent, separator, child = identity[2:].partition(": ")
-                                if not separator or redirect != b"true\n" or relative(parent) != names[0]:
-                                    raise ValueError("Unexpected PHP redirect context")
-                                child = relative(child)
-                                identity = "# " + names[0] + ": " + child
-                                # PHP runs redirected children in the parent's
-                                # directory and keys native JUnit by that path.
-                                xml_name = str(PurePosixPath(names[0]).parent / PurePosixPath(child).name)
-                                redirected.append(identity)
-                            else:
-                                identity = relative(identity)
-                                if identity not in names:
-                                    raise ValueError(f"Unselected PHP result: {identity}")
-                                xml_name = identity
-                            if identity in native or xml_name in xml_names:
-                                raise ValueError(f"Duplicate PHP result identity: {identity}")
-                            native[identity] = state
-                            xml_names[xml_name] = identity
-                            # Early SKIP/BORK paths precede PHP's redirect
-                            # filename remapping. Either native path is valid,
-                            # but exactly one XML case must own this identity.
-                            if identity.startswith("# ") and state in ("SKIPPED", "BORKED") and child != xml_name:
-                                if child in xml_names:
-                                    raise ValueError("Ambiguous PHP redirect XML identity")
-                                xml_names[child] = identity
-                            key = group + "/" + identity
-                            if state in ("FAILED", "WARNED", "LEAKED", "BORKED"):
-                                failures.add(key)
-                            elif state in ("XFAILED", "XLEAKED"):
-                                expected_failures[key] = state
-                        case _:
-                            raise ValueError("Invalid PHP native state row")
-                if redirected:
-                    if names[0] in native or names[0] in xml_names:
-                        raise ValueError("PHP redirect also has a direct result")
-                    xml_names[names[0]] = names[0]
-                elif set(native) != set(names):
-                    raise ValueError("PHP command is missing native results")
-                root = ET.fromstring(files["junit.xml"])
-                suites = list(root)
-                if root.tag != "testsuites" or any(suite.tag != "testsuite" for suite in suites):
-                    raise ValueError("Invalid PHP native JUnit root")
-                cases = [case for suite in suites for case in suite]
-                if any(case.tag != "testcase" for case in cases):
-                    raise ValueError("Invalid PHP native JUnit testcase")
-                observed: set[str] = set()
-                for case in cases:
-                    matches = [name for name in xml_names if case.get("name", "").startswith(name + " (")
-                               and case.get("name", "").endswith(")")]
-                    if len(matches) != 1 or xml_names[matches[0]] in observed:
-                        raise ValueError("Unexpected or duplicate PHP JUnit identity")
-                    identity = xml_names[matches[0]]
-                    observed.add(identity)
-                    state = native.get(identity, "REDIR")
-                    tags = [item.tag for item in case]
-                    key = group + "/" + identity
-                    if any(tag not in ("failure", "error", "skipped", "warning") for tag in tags):
-                        raise ValueError("Unknown PHP JUnit result")
-                    if any(tag in ("failure", "error", "warning") for tag in tags):
-                        failures.add(key)
-                    if state == "SKIPPED":
-                        if tags != ["skipped"]:
-                            raise ValueError("PHP skipped state disagrees with JUnit")
-                        skipped[key] = case[0].text or ""
-                    elif state in ("PASSED", "XFAILED", "XLEAKED", "REDIR") and tags:
-                        raise ValueError("PHP positive state disagrees with JUnit")
-                # PHP registers XML files only in startTimer. An early skip
-                # or a redirect without SKIPIF can increment native counters
-                # without registering a testcase. Bind every such named state
-                # to its exact per-suite deficit; all other missing rows fail.
-                suite_names = [suite.get("name", "") for suite in suites]
-                if len(suite_names) != len(set(suite_names)):
-                    raise ValueError("Duplicate PHP native JUnit suite")
-                extra_tests = {suite.get("name", ""): int(suite.get("tests", "-1")) - len(suite) for suite in suites}
-                extra_skips = {suite.get("name", ""): int(suite.get("skip", "-1"))
-                               - sum(case.find("skipped") is not None for case in suite) for suite in suites}
-                missing_rows: list[tuple[str, str, tuple[str, ...]]] = []
-                for identity in set(xml_names.values()) - observed:
-                    state = native.get(identity, "REDIR")
-                    if state != "SKIPPED" and not (redirected and identity == names[0]):
-                        raise ValueError("PHP native JUnit is missing results")
-                    original = identity.partition(": ")[2] if identity.startswith("# ") else identity
-                    paths = [original]
-                    if identity.startswith("# "):
-                        # Some early skips precede redirect remapping; missing
-                        # EXTENSIONS/ENV skips follow it but still have no timer.
-                        paths.append(str(PurePosixPath(names[0]).parent / PurePosixPath(original).name))
-                    candidates = tuple(dict.fromkeys(suite_name(path) for path in paths))
-                    missing_rows.append((identity, state, candidates))
-                # Every two-suite choice shares this isolated redirect's parent
-                # suite. Consume fixed rows first, then original child deficits
-                # before the shared parent deficit; no identity is discarded.
-                for identity, state, candidates in sorted(missing_rows, key=lambda row: len(row[2])):
-                    suite = next((name for name in candidates if extra_tests.get(name, 0) > 0
-                                  and (state != "SKIPPED" or extra_skips.get(name, 0) > 0)), None)
-                    if suite is None:
-                        raise ValueError("PHP counter-only state has no matching source-suite counters")
-                    extra_tests[suite] -= 1
-                    key = group + "/" + identity
-                    counter_only[key] = state
-                    if state == "SKIPPED":
-                        extra_skips[suite] -= 1
-                        # -W records the state, but an unregistered JUnit row
-                        # cannot supply the native skip reason.
-                        skipped[key] = ""
-                if (any(extra_tests.values()) or any(extra_skips.values())
-                        or int(root.get("tests", "-1")) != len(cases) + len(missing_rows)):
-                    raise ValueError("PHP JUnit testcase count differs from native counters")
-                for container in [root, *suites]:
-                    descendants = list(container.iter("testcase"))
-                    for attribute, tag in (("failures", "failure"), ("errors", "error"), ("skip", "skipped")):
-                        if attribute == "skip" and container is not root:
-                            continue  # Exact per-suite deficits were consumed above.
-                        extra = sum(state == "SKIPPED" for _, state, _ in missing_rows) if attribute == "skip" else 0
-                        if int(container.get(attribute, "-1")) != extra + sum(case.find(tag) is not None for case in descendants):
-                            raise ValueError("PHP JUnit result counters disagree with testcases")
-                if redirected:
-                    redirects[group + "/" + names[0]] = redirected
-                completed.update(names)
-            except (ValueError, KeyError, ET.ParseError) as error:
-                errors.append(f"{group}: {error}")
-        # Each command may run repeatedly. All groups must cover the original
-        # batch equally, and every execution marker must own distinct files.
-        if set(selections) != set(selected) or len(set(selections.values())) != 1:
-            errors.append("PHP command groups do not cover their original batch equally")
-    if len(referenced) != len(set(referenced)) or set(referenced) != groups.keys():
-        errors.append("PHP execution markers differ from retained native report groups")
-    return {"expected": expected, "results": results, "redirects": redirects, "counter_only": counter_only,
-            "errors": errors, "passed": sum(state == "PASSED" for group in results.values() for state in group.values()),
-            "expected_failures": expected_failures, "skipped": skipped, "failures": sorted(failures),
-            "missing": sorted(set(expected) - completed)}
 
 
 def jtreg_results(log: Path, attempt: Attempt, reports: dict[tuple[Attempt, str], Path]) -> dict[str, object]:
@@ -1941,9 +1751,11 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     if kind not in ("test", "benchmark", "build", "analysis", "command") or kind != "command" and (kind == "analysis") != analysis:
         errors.append("Command kind does not match original analysis/execution arguments")
     command = next((arg for arg in arguments if not arg.startswith("-")), None)
-    allowed_commands = ("run", "query") if kind == "command" else ("test", "build")
+    allowed_commands = ("run", "query", "cquery", "aquery", "info", "mod") if kind == "command" else ("test", "build")
     if command not in allowed_commands or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
+    if command == "mod" and arguments[arguments.index(command):arguments.index(command) + 2] != ["mod", "deps"]:
+        errors.append("Dependency preparation requires the original Bazel mod deps command")
     if kind == "benchmark" and command != "test":
         errors.append("Benchmark evidence requires a Bazel test command")
     if kind == "command" and command == "run" and analysis:
@@ -1970,11 +1782,11 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
 
 
 def command_verdict(context: Path) -> dict[str, object]:
-    """Retain run/query completion without inventing build or test owners."""
+    """Retain native command results without inventing test or build owners."""
     started = time.monotonic()
     info, errors = source_context(context)
     if info["command_kind"] != "command":
-        errors.append("Command evidence requires a run/query source context")
+        errors.append("Command evidence requires a command source context")
     outputs = {}
     for name in ("stdout", "stderr"):
         path = context.parent / (name + ".log")
@@ -1999,21 +1811,7 @@ def command_verdict(context: Path) -> dict[str, object]:
             if info["execution_finished_at"] is not None else None}
 
 
-def required_cases(path: Path, labels: set[str]) -> dict[str, frozenset[str]]:
-    """Read the XML classname/name pairs that must pass for each selected owner."""
-    raw = read_json(path)
-    if not raw or raw.keys() - labels:
-        raise ValueError(f"Required cases must name selected test owners: {sorted(raw.keys() - labels)}")
-    owners = {}
-    for label, values in raw.items():
-        names = [string(value) for value in sequence(values)]
-        if not names or any(not name.strip() for name in names) or len(set(names)) != len(names):
-            raise ValueError(f"Expected distinct, nonempty required case names for {label}")
-        owners[label] = frozenset(names)
-    return owners
-
-
-def preflight(events: Path, native_exit: int, kind: str, case_manifest: Path | None = None) -> dict[str, object]:
+def preflight(events: Path, native_exit: int, kind: str) -> dict[str, object]:
     """Validate analysis before allowing the caller to start expensive actions."""
     errors: list[str] = []
     targets: dict[str, unit_matrix.ConfiguredTarget] = {}
@@ -2025,10 +1823,6 @@ def preflight(events: Path, native_exit: int, kind: str, case_manifest: Path | N
             str(events), tests=True if kind == "test" else None,
             allow_test_no_build=kind == "test", expected_exit=native_exit,
         )
-        if case_manifest is not None:
-            if kind != "test":
-                raise ValueError("Required cases apply only to test invocations")
-            required_cases(case_manifest, set(targets))
         groups = declared_output_groups(targets)
         if groups:
             output_options = ["--output_groups=+" + ",+".join(sorted({group for _, group in groups})),
@@ -2079,9 +1873,34 @@ def marshal_test_contract(log: Path) -> dict[str, object]:
     return value
 
 
+def expanded_owner_labels(expansions: list[dict[str, object]], literals: list[str]) -> set[str]:
+    """Resolve explicit external selections through Bazel's pattern graph."""
+    def explicit(label: str) -> bool:
+        return (re.fullmatch(r"(?:@{1,2}[^/\s]+)?//[^:\s]*:[^:\s]+", label) is not None
+                and "..." not in label and label.rsplit(":", 1)[1] not in ("*", "all", "all-targets"))
+
+    if not literals or len(literals) != len(set(literals)) or not all(map(explicit, literals)):
+        raise ValueError("External selection requires distinct explicit owner labels")
+    requested: list[str] = []
+    resolved: list[str] = []
+    for event in expansions:
+        patterns = [string(value) for value in sequence(mapping(mapping(event.get("id")).get("pattern")).get("pattern"))]
+        children = [string(mapping(mapping(child).get("targetConfigured")).get("label"))
+                    for child in sequence(event.get("children", []))]
+        if ("aborted" in event or not patterns or len(patterns) != len(children)
+                or not all(map(explicit, children))):
+            raise ValueError("Missing or ambiguous external pattern expansion")
+        requested.extend(patterns)
+        resolved.extend(children)
+    if (sorted(requested) != sorted(literals) or len(resolved) != len(set(resolved))
+            or not set(label for label in literals if not label.startswith("@") or label.startswith("@@")) <= set(resolved)):
+        raise ValueError("Pattern expansion differs from the explicit expected selection")
+    return set(resolved)
+
+
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
             expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None,
-            declared_benchmarks: Path | None = None, case_manifest: Path | None = None) -> dict[str, object]:
+            declared_benchmarks: Path | None = None) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
     started = time.monotonic()
     errors: list[str] = []
@@ -2138,15 +1957,17 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     finished: dict[str, object] = {}
     skipped_owners: set[Owner] = set()
     jtreg_tests: set[Owner] = set()
-    php_tests: set[Owner] = set()
     nodejs_tests: set[Owner] = set()
     exact_nodejs_tests: set[Owner] = set()
+    expansions: list[dict[str, object]] = []
     with events.open() as stream:
         for line_number, line in enumerate(stream, 1):
             try:
                 event = mapping(json.loads(line))
                 identity = mapping(event.get("id"))
                 children = [mapping(child) for child in sequence(event.get("children", []))]
+                if "pattern" in identity:
+                    expansions.append(event)
                 if "configured" in event:
                     details = mapping(event["configured"])
                     if details.get("targetKind") != "test_suite rule" and (not testing or "testSize" in details):
@@ -2155,9 +1976,6 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     if "jtreg-results" in details.get("tag", []):
                         jtreg_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
-                    if "php-results" in details.get("tag", []):
-                        php_tests.update(Owner.parse(child["targetCompleted"]) for child in children
-                                         if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
                     if NODE_RESULT_TAGS.intersection(details.get("tag", [])):
                         nodejs_tests.update(Owner.parse(child["targetCompleted"]) for child in children
                                            if "targetCompleted" in child and not mapping(child["targetCompleted"]).get("aspect"))
@@ -2198,7 +2016,25 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             except (ValueError, TypeError) as error:
                 errors.append(f"BEP line {line_number}: {error}")
     configured -= skipped_owners
-    labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
+    labels: set[str] = set()
+    external_literals: list[str] = []
+    if expected_targets is not None:
+        try:
+            literals = expected_targets.read_text().splitlines()
+            if any(label.startswith("@") for label in literals):
+                external_literals = literals
+                # Explicit external selections use --option=value arguments;
+                # do not guess whether a positional word is an option value.
+                arguments = info["arguments"]
+                command = arguments.index(info["bazel_command"])
+                actual = [argument for argument in arguments[command + 1:] if not argument.startswith("--")]
+                if sorted(actual) != sorted(literals):
+                    raise ValueError("Executed literal targets differ from the expected external selection")
+                labels = expanded_owner_labels(expansions, literals)
+            else:
+                labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True))
+        except (OSError, ValueError) as error:
+            errors.append(f"Expected targets: {error}")
     expected: set[Owner] = set()
     expected_aspects: set[Aspect] = set()
     negative_tests: set[Owner] = set()
@@ -2229,6 +2065,11 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                                 if "go-benchmark-contract" in target.tags)
             expected_aspects.update(Aspect(Owner(label, target.configuration), name)
                                     for label, target in targets.items() for name in target.aspects)
+            if external_literals:
+                with analysis.open() as stream:
+                    analysis_expansions = [event for line in stream if "pattern" in mapping((event := mapping(json.loads(line))).get("id"))]
+                if expanded_owner_labels(analysis_expansions, external_literals) != labels:
+                    raise ValueError("External pattern expansion changed between analysis and execution")
         except (OSError, ValueError) as error:
             errors.append(f"Expected analysis: {error}")
     build_outputs = []
@@ -2260,20 +2101,14 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append("Expected labels absent from configured invocation")
     if not expected:
         errors.append("No expected configured owners")
+    if external_literals and len(configured) != len(labels):
+        errors.append("External selection requires exactly one configured owner per expanded label")
     # A test command may also build test rules excluded by its execution
     # filters. Independent test-only analysis owns selection; results and
     # summaries below must still belong to that exact set of configurations.
     different = expected - configured if testing else configured ^ expected
     if different:
         errors.append(f"Configured owners differ from expected: {sorted(different)}")
-    named_cases: dict[str, frozenset[str]] = {}
-    if case_manifest is not None:
-        try:
-            if info["command_kind"] != "test":
-                raise ValueError("Required cases apply only to ordinary test invocations")
-            named_cases = required_cases(case_manifest, {owner.label for owner in expected})
-        except (OSError, ValueError) as error:
-            errors.append(f"Required cases: {error}")
     if benchmark_mode and set(benchmark_expected) != {owner.label for owner in expected}:
         errors.append("Benchmark manifest must cover every selected owner, and no others")
     selected_declared = set(declared_expected) & {owner.label for owner in expected}
@@ -2315,7 +2150,6 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     observations: list[dict[str, object]] = []
     owner_cases: Counter[Owner] = Counter()
     owner_executed: Counter[Owner] = Counter()
-    passed_by_run: dict[tuple[Owner, int], set[str]] = {}
     skips: list[dict[str, object]] = []
     expected_failures: list[dict[str, object]] = []
     marshal_contracts: dict[Attempt, dict[str, object]] = {}
@@ -2334,8 +2168,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                                             "cached_locally": result.get("cachedLocally", False),
                                             "execution_info": result.get("executionInfo", {})}
             for contract, owners, parser in (("jtreg", jtreg_tests, jtreg_results),
-                                             ("nodejs", nodejs_tests, nodejs_results),
-                                             ("php", php_tests, php_results)):
+                                             ("nodejs", nodejs_tests, nodejs_results)):
                 if attempt.owner not in owners:
                     continue
                 try:
@@ -2361,13 +2194,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 log = reports[(attempt, "test.log")]
                 if not log.stat().st_size:
                     raise ValueError(f"Empty original test log: {attempt}")
-                required = named_cases.get(attempt.owner.label, frozenset())
-                counts = xml_cases(xml, required)
-                if required:
-                    # Shards divide a suite; another run or configuration
-                    # cannot supply a case missing from this one.
-                    passed = passed_by_run.setdefault((attempt.owner, attempt.run), set())
-                    passed.update(string(name) for name in sequence(counts["required_passed"]))
+                counts = xml_cases(xml)
                 observation["xml"] = counts
                 cases.update({key: number(counts[key]) for key in ("passed", "failed", "skipped")})
                 owner_cases[attempt.owner] += sum(number(counts[key]) for key in ("passed", "failed", "skipped"))
@@ -2438,9 +2265,6 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if result.get("status") != "PASSED":
                 failures.append({**asdict(attempt), "reason": "test result", "status": result.get("status")})
             observations.append(observation)
-        for (owner, run), passed in sorted(passed_by_run.items()):
-            missing.extend({**asdict(owner), "run": run, "name": name, "reason": "required case did not pass"}
-                           for name in sorted(named_cases[owner.label] - passed))
         for owner, summary in sorted(summaries.items()):
             attempts = [attempt for attempt in results if attempt.owner == owner]
             if number(summary.get("totalRunCount", 0)) != len(attempts):
@@ -2500,13 +2324,25 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if info["execution_finished_at"] is not None else None}
 
 
+def source_set(sources: list[str]) -> set[str]:
+    """Validate the explicitly supplied full commit identities."""
+    if not sources or any(not isinstance(source, str) or re.fullmatch(r"[0-9a-f]{40}", source) is None
+                          for source in sources) or len(set(sources)) != len(sources):
+        raise ValueError("Expected source set must contain unique full commit SHAs")
+    return set(sources)
+
+
 def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_exit: int,
-                       errors: list[str]) -> dict[str, object]:
+                       errors: list[str], *, expected_sources: list[str] | None = None) -> dict[str, object]:
     """Keep original command exits distinct from the enclosing runner's exit."""
     if not rows:
         errors.append("No invocation verdicts were retained")
     sources = {string(mapping(row["verdict"]).get("source")) for row in rows}
-    if len(sources) != 1:
+    if expected_sources is not None:
+        expected = source_set(expected_sources)
+        if sources != expected:
+            errors.append(f"Invocation sources differ: missing {sorted(expected - sources)}, unexpected {sorted(sources - expected)}")
+    elif len(sources) != 1:
         errors.append("Invocation sources are absent or inconsistent")
     verdicts = [mapping(row["verdict"]) for row in rows]
     cases: Counter[str] = Counter()
@@ -2532,6 +2368,7 @@ def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_
     else:
         status = "PASS"
     return {"schema_version": 1, "status": status, "sources": sorted(sources), "native_exit": native_exit,
+              **({"expected_sources": sorted(expected_sources)} if expected_sources is not None else {}),
               "native_exits": native_exits, "runner_exit": runner_exit, "coordinator_failed": coordinator_failed,
               "capture_exit": capture_exit, "invocations": rows, "errors": errors,
               "expected": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("expected", []))],
@@ -2569,7 +2406,32 @@ def archive_evidence(directory: Path, output: Path) -> None:
                 archive.add(path, arcname=str(path.relative_to(directory)), recursive=False)
 
 
-def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
+def retain_audit(path: Path, directory: Path) -> dict[str, object]:
+    """Bind a separately uploaded audit file without copying it into the bundle."""
+    if path.resolve().is_relative_to(directory.resolve()):
+        raise ValueError("Remote audit must be outside the ordinary evidence directory")
+    if path.name == "qualification.tar.gz":
+        raise ValueError("Remote audit must not replace the qualification bundle")
+    destination = directory / "remote-audits.json"
+    audits = read_json(destination) if destination.exists() else {}
+    if path.name in audits:
+        raise ValueError(f"Duplicate remote audit: {path.name}")
+    identity = file_record(path)
+    audits[path.name] = identity
+    write_json(destination, audits)
+    return {"name": path.name, **identity}
+
+
+def execution_summary(action: dict[str, object]) -> dict[str, object]:
+    """Keep execution proof fields while binding the full input-heavy record."""
+    encoded = json.dumps(action, sort_keys=True, separators=(",", ":")).encode()
+    return {**{key: value for key, value in action.items() if key != "inputs"},
+            "input_count": len(sequence(action["inputs"])),
+            "full_record_sha256": hashlib.sha256(encoded).hexdigest()}
+
+
+def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path, *,
+           expected_sources: list[str] | None = None) -> dict[str, object]:
     rows = []
     errors = []
     for invocation in sorted(directory.rglob("invocation-*")):
@@ -2580,7 +2442,7 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
             rows.append({"path": str(path.relative_to(directory)), "verdict": read_json(path), **file_record(path)})
         except (OSError, ValueError) as error:
             errors.append(str(error))
-    result = summarize_verdicts(rows, runner_exit, capture_exit, errors)
+    result = summarize_verdicts(rows, runner_exit, capture_exit, errors, expected_sources=expected_sources)
     metadata = directory / "matrix-row.json"
     if metadata.exists():
         try:
@@ -2606,6 +2468,15 @@ def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -
             result["matrix_audit_evidence"] = file_record(audits)
         except (OSError, ValueError) as error:
             errors.append(f"Matrix audit metadata: {error}")
+            if result["status"] != "FAIL":
+                result["status"] = "INCOMPLETE"
+    remote_audits = directory / "remote-audits.json"
+    if remote_audits.exists():
+        try:
+            result["remote_audits"] = read_json(remote_audits)
+            result["remote_audits_evidence"] = file_record(remote_audits)
+        except (OSError, ValueError) as error:
+            errors.append(f"Remote audit metadata: {error}")
             if result["status"] != "FAIL":
                 result["status"] = "INCOMPLETE"
     write_json(directory / "verdict.json", result)
@@ -2701,7 +2572,8 @@ def producer_verdict(artifact: Path, *, deadline: float | None = None) -> dict[s
 
 
 def receipt(artifact: Path, sha256: str, expected_source: str,
-            targets: list[str] | None = None, *, deadline: float | None = None) -> dict[str, object]:
+            targets: list[str] | None = None, *, deadline: float | None = None,
+            expected_sources: list[str] | None = None) -> dict[str, object]:
     """Authenticate a downloaded artifact and retain its producer verdict."""
     identity = file_record(artifact, deadline=deadline)
     if identity["sha256"] != sha256.removeprefix("sha256:"):
@@ -2709,8 +2581,16 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
     producer = producer_verdict(artifact, deadline=deadline)
     if producer.get("schema_version") != 1 or producer.get("status") not in ("PASS", "FAIL", "INCOMPLETE"):
         raise ValueError("Unsupported producer verdict")
-    if producer.get("sources") != [expected_source]:
-        raise ValueError(f"Producer sources {producer.get('sources')} differ from {expected_source}")
+    expected_commits = source_set(expected_sources) if expected_sources is not None else {expected_source}
+    if expected_source not in expected_commits:
+        raise ValueError("Submitted source is absent from the expected source set")
+    if producer.get("sources") != sorted(expected_commits):
+        raise ValueError(f"Producer sources {producer.get('sources')} differ from {sorted(expected_commits)}")
+    if expected_sources is not None:
+        observed = {string(mapping(mapping(row)["verdict"]).get("source"))
+                    for row in sequence(producer["invocations"])}
+        if observed != expected_commits or producer.get("expected_sources", sorted(expected_commits)) != sorted(expected_commits):
+            raise ValueError("Producer invocation or declared sources differ from the expected source set")
     expected = sequence(producer["expected"])
     labels = sorted({string(mapping(owner)["label"]) for owner in expected})
     if targets is not None and set(targets) != set(labels):
@@ -2735,6 +2615,7 @@ def receipt(artifact: Path, sha256: str, expected_source: str,
     check_deadline(deadline)
     return {**result, "artifact": {"path": str(artifact), **identity},
             "expected_labels": labels, "expected_owner_count": len(expected),
+            **({"expected_sources": sorted(expected_sources)} if expected_sources is not None else {}),
             "executed_attempt_count": len(sequence(producer["executed"])), "invocations": invocations,
             "consumer_verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 
@@ -3123,13 +3004,20 @@ def compose(plan_path: Path, results_path: Path, directory: Path, output: Path) 
 
 
 def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, output: Path,
-                   expected_source: str, targets: list[str] | None, timeout_seconds: float) -> dict[str, object]:
-    """Wait for one native invocation and authenticate its qualification bundle."""
+                   expected_source: str, targets: list[str] | None, timeout_seconds: float, *,
+                   expected_sources: list[str] | None = None,
+                   hosted_source: str | None = None) -> dict[str, object]:
+    """Authenticate the hosted invocation and its exact executed source set.
+
+    A private workspace may start at hosted_source before materializing the
+    executed revisions. Omitting it preserves the single-identity contract.
+    """
     partial = artifact.with_name(artifact.name + ".partial")
     if output.resolve() in (artifact.resolve(), partial.resolve()):
         raise ValueError("Artifact, partial download and receipt paths must differ")
     execution: dict[str, object] = {"invocationId": invocation_id}
     observation_retries: list[dict[str, str]] = []
+    downloaded = 0
     result: dict[str, object]
     deadline = time.monotonic() + timeout_seconds
 
@@ -3161,6 +3049,11 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
             raise ValueError("Expected a canonical invocation UUID")
         if re.fullmatch(r"[0-9a-f]{40}", expected_source) is None:
             raise ValueError("Expected a full source commit SHA")
+        if expected_sources is not None and expected_source not in source_set(expected_sources):
+            raise ValueError("Submitted source is absent from the expected source set")
+        if hosted_source is not None and re.fullmatch(r"[0-9a-f]{40}", hosted_source) is None:
+            raise ValueError("Expected a full hosted checkout commit SHA")
+        checkout_source = expected_source if hosted_source is None else hosted_source
         api_key = api_key_file.read_text().strip()
         if not api_key or any(not 33 <= ord(character) <= 126 for character in api_key):
             raise ValueError("BuildBuddy API key file must contain one nonempty ASCII token")
@@ -3178,19 +3071,13 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
                         raw.extend(chunk)
                         if len(raw) > 4 * 1024 * 1024:
                             raise ValueError("BuildBuddy invocation metadata exceeds 4 MiB")
-            except OSError as error:
-                if isinstance(error, (TimeoutError, ConnectionResetError)):
-                    reason = type(error).__name__
-                elif error.errno == errno.EADDRNOTAVAIL:
-                    reason = "EADDRNOTAVAIL"
-                else:
-                    raise
+            except (TimeoutError, ConnectionResetError) as error:
                 # A failed status read says nothing about the running build.
                 # Retry that read within the original collection deadline.
                 remaining()
                 observation_retries.append({
                     "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                    "error": reason,
+                    "error": type(error).__name__,
                 })
                 time.sleep(min(5, remaining()))
                 continue
@@ -3204,7 +3091,7 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
                         "invocationStatus", "success", "bazelExitCode", "commitSha", "createdAtUsec",
                         "updatedAtUsec", "durationUsec",
                     ) if key in invocation}}
-                    if invocation.get("commitSha") and invocation["commitSha"] != expected_source:
+                    if invocation.get("commitSha") and invocation["commitSha"] != checkout_source:
                         raise ValueError("BuildBuddy invocation source differs from the submitted source")
                 case _:
                     raise ValueError("BuildBuddy returned multiple or malformed invocations")
@@ -3215,7 +3102,7 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
                 break
             time.sleep(min(5, remaining()))
         execution["terminal_observed_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        if invocation.get("commitSha") != expected_source:
+        if invocation.get("commitSha") != checkout_source:
             raise ValueError("Terminal invocation is missing the submitted source")
         matches = [mapping(item) for item in sequence(invocation.get("artifacts", []))
                    if mapping(item).get("name") == "qualification.tar.gz"]
@@ -3254,21 +3141,42 @@ def native_receipt(invocation_id: str, api_key_file: Path, artifact: Path, outpu
         if artifact.stat().st_size != size:
             raise ValueError("Existing artifact differs from its advertised size")
         remaining()
-        result = receipt(artifact, sha256, expected_source, targets, deadline=deadline)
+        result = receipt(artifact, sha256, expected_source, targets, deadline=deadline, expected_sources=expected_sources)
         result["producer_status"] = result["status"]
+        result["audit_artifacts"] = []
+        result["audit_upload_errors"] = []
+        for name, raw_identity in mapping(result.get("remote_audits", {})).items():
+            expected_audit = mapping(raw_identity)
+            advertised = [mapping(item) for item in sequence(invocation.get("artifacts", []))
+                          if mapping(item).get("name") == name]
+            expected_tail = f"/blobs/{expected_audit['sha256']}/{expected_audit['bytes']}"
+            if (len(advertised) != 1 or
+                    urlsplit(string(advertised[0].get("uri"))).scheme != "bytestream" or
+                    not urlsplit(string(advertised[0].get("uri"))).netloc or
+                    not urlsplit(string(advertised[0].get("uri"))).path.endswith(expected_tail)):
+                result["audit_upload_errors"].append(f"Remote audit missing or identity differs: {name}")
+            else:
+                result["audit_artifacts"].append({**advertised[0], **expected_audit})
+        result["audit_upload_status"] = "INCOMPLETE" if result["audit_upload_errors"] else "PASS"
+        if result["audit_upload_errors"] and result["status"] == "PASS":
+            result["status"] = "INCOMPLETE"
         if execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False:
             result["status"] = "FAIL"
         elif execution.get("invocationStatus") != "COMPLETE_INVOCATION_STATUS" and result["status"] != "FAIL":
             result["status"] = "INCOMPLETE"
         remaining()
         result["collection_status"] = "COMPLETE"
+        result["consumer_verified_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     except (OSError, HTTPException, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
         failed = execution.get("invocationStatus") == "COMPLETE_INVOCATION_STATUS" and execution.get("success", False) is False
         result = {"schema_version": 1, "status": "FAIL" if failed else "INCOMPLETE",
                   "collection_status": "ERROR", "collection_error": str(error)}
     result["native_invocation"] = execution
+    result["downloaded_bytes"] = downloaded
     result["observation_retries"] = observation_retries
-    result["submitted_source"] = expected_source
+    result["submitted_source"] = expected_source if hosted_source is None else hosted_source
+    if hosted_source is not None:
+        result["expected_source"] = expected_source
     result["collection_finished_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     write_json(output, result)
     return result
@@ -3289,7 +3197,6 @@ def main() -> int:
     analyze.add_argument("--native-exit", type=int, required=True)
     analyze.add_argument("--kind", choices=("test", "build"), required=True)
     analyze.add_argument("--output-options", type=Path)
-    analyze.add_argument("--required-cases", type=Path)
     check = commands.add_parser("verdict")
     for name in ("events", "context", "output"):
         check.add_argument("--" + name, type=Path, required=True)
@@ -3298,7 +3205,6 @@ def main() -> int:
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
     check.add_argument("--expected-benchmarks", type=Path)
     check.add_argument("--declared-benchmarks", type=Path)
-    check.add_argument("--required-cases", type=Path)
     images = commands.add_parser("source-images", help="Audit declared source/archive/load obligations in one authenticated invocation")
     for name in ("execution-log", "decoder", "verdict", "manifest", "expectations", "output"):
         images.add_argument("--" + name, type=Path, required=True)
@@ -3337,6 +3243,9 @@ def main() -> int:
         native.add_argument("--" + name, required=True)
     native.add_argument("--target", action="append")
     native.add_argument("--timeout-seconds", type=float, required=True)
+    for command in (pack, consume, native):
+        command.add_argument("--invocation-source", action="append", dest="expected_sources",
+                             help="Exact allowed invocation commit; repeat for every expected source")
     args = parser.parse_args()
     if args.command == "source-image-expectations":
         try:
@@ -3364,14 +3273,14 @@ def main() -> int:
     if args.command == "native-receipt":
         try:
             result = native_receipt(args.invocation_id, args.api_key_file, args.artifact, args.output,
-                                    args.expected_source, args.target, args.timeout_seconds)
+                                    args.expected_source, args.target, args.timeout_seconds, expected_sources=args.expected_sources)
         except (OSError, ValueError) as error:
             parser.error(str(error))
         print(f"{result['status']}: {args.output}")
         return int(result["status"] != "PASS")
     if args.command == "receipt":
         try:
-            result = receipt(args.artifact, args.sha256, args.expected_source, args.target)
+            result = receipt(args.artifact, args.sha256, args.expected_source, args.target, expected_sources=args.expected_sources)
         except (OSError, ValueError, KeyError, EOFError, zipfile.BadZipFile, tarfile.TarError) as error:
             parser.error(str(error))
         write_json(args.output, result)
@@ -3395,7 +3304,7 @@ def main() -> int:
                          tuple(args.expected_analysis), args.expected_kind)
         return int(bool(result["errors"]))
     if args.command == "preflight":
-        result = preflight(args.events, args.native_exit, args.kind, args.required_cases)
+        result = preflight(args.events, args.native_exit, args.kind)
         write_json(args.output, result)
         if args.output_options is not None and result["status"] == "PASS":
             args.output_options.write_text("".join(option + "\n" for option in result["output_options"]))
@@ -3403,14 +3312,14 @@ def main() -> int:
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
                          args.expected_targets, tuple(args.expected_analysis), args.expected_benchmarks,
-                         args.declared_benchmarks, args.required_cases)
+                         args.declared_benchmarks)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     if args.command == "command-verdict":
         result = command_verdict(args.context)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else result["native_exit"] or 1
-    result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
+    result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output, expected_sources=args.expected_sources)
     exit_code = number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
     # The coordinator can upload the archive and then lose its build-event
     # stream. Retain its CAS identity in the execution log for recovery.

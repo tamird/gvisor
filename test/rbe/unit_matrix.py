@@ -413,7 +413,7 @@ def configured_targets(
     skipped: set[tuple[str, str]] = set()
     no_build: set[tuple[str, str]] = set()
     all_configured: set[tuple[str, str]] = set()
-    abort_diagnostics: dict[tuple[str, str | None], str] = {}
+    invalid_abort = False
     executed = False
     finish: dict[str, object] | None = None
     succeeded = False
@@ -441,26 +441,7 @@ def configured_targets(
                 if not completed.get("aspect"):
                     no_build.add((label, checksum))
             elif aborted.get("reason") != "SKIPPED":
-                # Loading failures may have unconfiguredLabel identities. Keep
-                # each distinct abort; BEP order does not establish causation.
-                reason = aborted.get("reason")
-                if not isinstance(reason, str) or reason not in {
-                    "UNKNOWN", "USER_INTERRUPTED", "NO_ANALYZE", "TIME_OUT",
-                    "REMOTE_ENVIRONMENT_FAILURE", "INTERNAL", "LOADING_FAILURE",
-                    "ANALYSIS_FAILURE", "INCOMPLETE", "OUT_OF_MEMORY",
-                }:
-                    reason = "UNKNOWN"
-                diagnostic = f"Bazel analysis aborted ({reason}) at {events_path}:{line_number}"
-                description_digest = None
-                if isinstance(description := aborted.get("description"), str) and description:
-                    # Provider descriptions may contain credentials. Keep the
-                    # original in BEP and emit only a known public error phrase.
-                    if "net/http: TLS handshake timeout" in description:
-                        diagnostic += ": reported net/http: TLS handshake timeout"
-                    description_digest = hashlib.sha256(description.encode()).hexdigest()
-                    diagnostic += f" [description sha256={description_digest}]"
-                abort_diagnostics.setdefault((reason, description_digest), diagnostic)
-                continue
+                invalid_abort = True
         if isinstance(aborted := event.get("aborted"), dict) and aborted.get("reason") == "SKIPPED":
             if not (
                 isinstance(completed := event_id.get("targetCompleted"), dict)
@@ -514,8 +495,6 @@ def configured_targets(
         if tests is not None and ("testSize" in configured) != tests:
             continue
         targets[label] = ConfiguredTarget(tags, configurations[0])
-    if abort_diagnostics:
-        raise ValueError("; ".join(abort_diagnostics.values()))
     if orphaned := aspects.keys() - all_configured:
         raise ValueError(f"Configured aspects have no matching ordinary root: {sorted(orphaned)}")
     for label, checksum in sorted(skipped):
@@ -530,13 +509,14 @@ def configured_targets(
         raise ValueError(f"Invalid analysis exit: {events_path}")
     if expected_exit is not None and finish_exit.get("code", 0) != expected_exit:
         raise ValueError(f"Native exit differs from analysis finish: {events_path}")
-    if expected_exit is not None and executed:
+    if expected_exit is not None and (invalid_abort or executed):
         raise ValueError(f"Preflight contains a failure or test execution: {events_path}")
     if allow_test_no_build and tests is True and not succeeded:
         succeeded = (
             finish_exit == {"name": "BUILD_FAILURE", "code": 1}
             and bool(all_configured - skipped)
             and all_configured - skipped == no_build
+            and not invalid_abort
             and not executed
         )
     if not succeeded or not targets:
