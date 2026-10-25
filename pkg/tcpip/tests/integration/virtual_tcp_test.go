@@ -790,9 +790,25 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		t.Fatal("TCP callbacks did not reach the bounded same-instant fence")
 	}
 	originalDone := false
+	// Observe the last native fence before the common cap and the actual
+	// stop. Copy the FIFO before accounting its residual service so this
+	// readout cannot alter the authenticated control or either schedule.
+	captureCreditTotals := func() *creditTotals {
+		q := *queue
+		q.account(now(), nextTX[0], time.Duration(startup.FirstPayloadNS))
+		stats := stacks[0].Stats().TCP
+		return &creditTotals{NS: int64(now()), Delivered: received.Len(), Accepted: acceptedBytes, Ack: acknowledged,
+			RTOs: stats.Timeouts.Value(), Retransmissions: stats.Retransmits.Value(), Queue: q}
+	}
 	step := func() {
 		t.Helper()
 		fence()
+		if originalFIFO && now() <= maxTime && now()+quantum >= maxTime {
+			if flight.result.Horizon == nil {
+				flight.result.Horizon = &creditHorizon{}
+			}
+			flight.result.Horizon.Before = captureCreditTotals()
+		}
 		if now() >= maxTime {
 			if originalFIFO {
 				// This is the original failure boundary: the application has
@@ -804,6 +820,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 					t.Fatalf("original observer ended before deadline: %s", previous)
 				}
 				originalDone = true
+				flight.result.Horizon.Stop = captureCreditTotals()
 				flight.result.Match = "original_deadline_incomplete"
 				flight.result.End = "original_deadline_incomplete"
 				if flight.result.Role == oneRepairRole {
@@ -1163,6 +1180,12 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 	if queue != nil {
 		queue.account(now(), nextTX[0], time.Duration(startup.FirstPayloadNS))
 		classification = "finite_fifo"
+		if originalFIFO {
+			if flight.result.Horizon == nil {
+				flight.result.Horizon = &creditHorizon{}
+			}
+			flight.result.Horizon.Stop = captureCreditTotals()
+		}
 	} else if dropOffset < 0 {
 		classification = "no_loss"
 	} else if scenario.streaming {

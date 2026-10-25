@@ -157,7 +157,7 @@ def measure(samples: dict) -> dict:
     cf, tf = control["Flight"], treatment["Flight"]
     # Restore the exact authenticated, old observation layout to bind the
     # complete native control. Keep the new, read-only witness separately.
-    historical = dict(control, Flight={k: v for k, v in cf.items() if k != "OneCredit"})
+    historical = dict(control, Flight={k: v for k, v in cf.items() if k not in ("OneCredit", "Horizon")})
     if digest(historical) != "897ce4715dd6372700b9b717bf8ea17b33b272df2d5d1a76f34adf9a452d980b":
         raise ValueError("Complete native control changed relative to the retained original")
     reference = measure_original({names[0]: historical})
@@ -168,11 +168,32 @@ def measure(samples: dict) -> dict:
     cut = 6433
     prefix_hash = "0dbbbb00b4a5110c269c8bfa0547cf6c0333f547ba4612c57b1d91cf3f658105"
     def totals(row):
-        q = row["ForwardQueue"]
+        cap = 30_000_000_000
+        h = row["Flight"]["Horizon"]
+        stop = h["Stop"]
+        fin = row["RecoveryClass"] == "finite_fifo"
+        if stop["NS"] != row["VirtualNS"] or not 0 <= stop["NS"] <= cap + 1_000_000:
+            raise ValueError("Terminal snapshot or native cap/tick changed")
+        before = h["Before"]
+        if stop["NS"] > cap and (not before or not cap-1_000_000 <= before["NS"] <= cap):
+            raise ValueError("No pre-cap monotone snapshot for a post-cap terminal tick")
+        if not fin:
+            if (row["RecoveryClass"] not in ("original_deadline_incomplete", "one_credit_deadline_incomplete") or
+                    not before or not cap-1_000_000 <= before["NS"] <= cap <= stop["NS"]):
+                raise ValueError("No native snapshots bracket the common 30-second cap")
+        elif row["Bytes"] != row["OfferedBytes"]:
+            raise ValueError("FIN completion was classified without full application delivery")
+        keys = ("Delivered", "Accepted", "Ack", "RTOs", "Retransmissions")
+        qkeys = ("DroppedPackets", "DroppedBytes", "OfferedPackets", "AdmittedPackets")
+        def counts(sample):
+            return {**{k: sample[k] for k in keys}, **{k: sample["Queue"][k] for k in qkeys}}
+        limits = [counts(before or stop), counts(stop)]
         return {"delivered": row["Bytes"], "accepted": row["AcceptedBytes"], "offered": row["OfferedBytes"],
                 "payload_sha256": row["PayloadSHA256"], "all_wire_sha256": row["AllPacketsSHA256"],
                 "rtos": row["RTOs"], "retransmits": row["Retransmits"], "virtual_ns": row["VirtualNS"],
-                "queue": q, "finished": row["Bytes"] == row["OfferedBytes"]}
+                "queue": stop["Queue"], "data_complete": row["Bytes"] == row["OfferedBytes"], "fin_complete": fin,
+                "fin_by_cap": fin and row["VirtualNS"] <= cap, "recovery_class": row["RecoveryClass"],
+                "horizon": h, "common_30s_monotone_bounds": limits}
     result = {"control": totals(control), "treatment": totals(treatment), "old_rto_ns": original_deadline,
               "historical_full_control_sha256": digest(historical), "cut": cut, "prefix_sha256": prefix_hash,
               "control_witness": cf.get("OneCredit"), "treatment_witness": tf.get("OneCredit")}
@@ -240,8 +261,54 @@ def measure(samples: dict) -> dict:
                                "rtos": sum(e.get("Action", {}).get("Path") == "rto" for e in before)}
     result["target_range"] = wanted
     result["control_effect"], result["treatment_effect"] = map(effect, rows)
-    result["adjudication"] = ("matched_advance_before_old_rto" if result["treatment_effect"]["acked_before_old_deadline"]
-                              else "matched_no_certified_advance_before_old_rto")
+    if result["control_effect"]["acked_before_old_deadline"]:
+        raise ValueError("Historical control already acknowledged the target before its verified first RTO")
+    if not result["treatment_effect"]["acked_before_old_deadline"]:
+        return dict(result, adjudication="matched_no_certified_advance_before_old_rto")
+    # A cumulative ACK is not evidence that the granted attempt repaired
+    # this hole: bind the exact copy, payload, endpoints and ordering.
+    wire_advance = result["treatment_effect"]["first_advance"][0]
+    sender_advance = result["treatment_effect"]["sender_advance"][0]
+    suffix = rows[1][cut:rows[1].index(sender_advance)+1]
+    selected = []
+    def one(predicate):
+        positions = [i for i,e in enumerate(suffix) if predicate(e)]
+        if len(positions) != 1 or selected and positions[0] <= selected[-1]:
+            return None
+        selected.append(positions[0])
+        return suffix[positions[0]]
+    def target_send(e):
+        r=e.get("Action", {}).get("Range")
+        return r and r["Start"] < wanted["End"] and wanted["Start"] < r["End"]
+    def target_wire(e):
+        w=e.get("Wire", {})
+        return (w.get("Side") == 0 and w["Payload"] and w["Seq"] < wanted["End"] and wanted["Start"] < w["End"])
+    originals = [e["Wire"] for e in before if e["Kind"] == "offer" and target_wire(e)]
+    if len(originals) != 1 or not originals[0]["Dropped"] or originals[0]["Retransmit"]:
+        raise ValueError("The historic prefix does not contain only the lost target original")
+    ambiguous = "matched_advance_without_unique_granted_copy"
+    if (not one(lambda e: e.get("Action", {}).get("Path") == "one_credit_granted") or
+            not (attempt := one(lambda e: target_send(e) and e["Action"]["Path"] == "retransmit")) or
+            not (accepted := one(lambda e: target_send(e) and e["Action"]["Path"] in ("retry_stack_accepted", "retry_stack_error"))) or
+            accepted["Action"]["Path"] != "retry_stack_accepted" or
+            any(e["At"] != treatment_grants[0]["At"] or e["Action"]["Range"] != wanted or
+                e["Action"]["Trigger"] != trigger["Trigger"] for e in (attempt, accepted))):
+        return dict(result, adjudication=ambiguous)
+    offer = one(lambda e: e["Kind"] == "offer" and target_wire(e))
+    ingress = one(lambda e: e["Kind"] == "input" and target_wire(e))
+    if (not offer or not ingress or offer["Wire"] != ingress["Wire"] or
+            (offer["Wire"]["Seq"], offer["Wire"]["End"], offer["Wire"]["Payload"]) != (wanted["Start"], wanted["End"], 1420) or
+            offer["Wire"]["Dropped"] or not offer["Wire"]["Retransmit"] or
+            offer["Wire"]["PayloadHash"] != originals[0]["PayloadHash"] or
+            not one(lambda e: e.get("Endpoint", {}).get("Side") == 1 and e["At"] == ingress["At"] and e["Endpoint"]["RcvNxt"] >= wanted["End"]) or
+            not one(lambda e: e["Kind"] == "offer" and e["Wire"] == wire_advance["Wire"]) or
+            not one(lambda e: e == wire_advance) or
+            not one(lambda e: e.get("Action", {}).get("Path") == "ack_end" and e["Action"]["Trigger"] == wire_advance["Wire"] and
+                    e["Action"]["Una"] >= wanted["End"]) or not one(lambda e: e == sender_advance) or
+            any(e.get("Action", {}).get("Path") == "rto_expiry_pre_backoff" for e in suffix)):
+        return dict(result, adjudication=ambiguous)
+    result["bound_copy_events"] = [suffix[i] for i in selected]
+    result["adjudication"] = "matched_granted_copy_acknowledged_before_old_rto"
     return result
 
 

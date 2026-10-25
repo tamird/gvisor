@@ -92,6 +92,7 @@ type flightResult struct {
 	StagedPackets              int
 	ForwardRate, QueueCapacity int64
 	OneCredit                  *creditWitness `json:",omitempty"`
+	Horizon                    *creditHorizon `json:",omitempty"`
 }
 
 type creditWitness struct {
@@ -100,6 +101,17 @@ type creditWitness struct {
 	Requests int
 }
 
+type creditHorizon struct {
+	Before, Stop *creditTotals
+}
+
+type creditTotals struct {
+	NS                    int64
+	Delivered, Accepted   int
+	Ack                   uint32
+	RTOs, Retransmissions uint64
+	Queue                 startupQueue
+}
 type flightRecorder struct {
 	mu           sync.Mutex
 	result       flightResult
