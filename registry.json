@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-25T20:03:08.024980+00:00",
+    "updatedAt": "2026-10-25T20:34:20.258001+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4888,25 +4888,29 @@
       "url": "https://github.com/google/gvisor/pull/15318",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-25T19:57:46.761150+00:00",
-      "summary": "Matching import #16000 has advanced to 82f3d8222c8c. In the 20:02 UTC snapshot, public Buildkite 52341 reports FAILURE and internal 34052 reports SUCCESS; the source remains f4190d8782e7. The new public failure requires its own diagnostic read; no cause is assigned from earlier import failures. The earlier 52335 and 52330 findings below remain bound to their superseded import heads.\n\nSuperseded import evidence:\n\nThe replacement matching import #16000 at f5aeab9baffa ran Buildkite 52335. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the netlink batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing. This is independently read from the replacement\u2019s own public logs, with no new NDP-specific failure in those failed-step logs. A canceled smoke-race attempt passed on retry; the C++ lint retry was canceling when read. The build moved from failing to canceling during inspection. Original worker module state and the separate private Copybara failure remain unknown.\n\nEarlier import evidence:\n\nThe earlier matching import #16000 at 06be71da95a2 ran Buildkite 52330, then was superseded and cancelled. Three completed native AMD64 shard-11 attempts failed AddCompatRule/Inet with ENOENT using the exact public-master nftables fixture; the separate NodeJS shard passed on retry. Current import progression is reported in the live snapshot. The private Copybara feedback status remains separate: these public logs do not identify its cause or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nThe patch approved by nybidari on 2026-10-16T22:08:06Z at 86a99a4cb3 is independently verified unchanged at f4190d8782. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at f4190d8782e7 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nGitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
+      "updatedAt": "2026-10-25T20:34:20.258001+00:00",
+      "summary": "Matching import #16000 has advanced to 1b4b2f31bad291998dd212d0a0db51bdb16fbdfb. At 20:33 UTC, public Buildkite 52344 and internal 34056 are pending; the source remains f4190d8782e7. No failure cause is assigned to this new import. Source feedback/copybara remains a separate failure with no public cause.\n\nSuperseded 52341 evidence:\n\nImport 82f3d8222c8c ran Buildkite 52341, canceled at 20:16 UTC. Its native AMD64 syscall step was terminally failed: all three completed attempts returned ENOENT in CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet, using the same fixture bytes as its parent. This matches the separately qualified INET setup proposal and does not identify the original worker module state or the private feedback failure. The cgroup-v2 TestSystemdSimpleDaemon attempt lacked the journal greeting and passed on retry; the independently qualified systemd readiness proposal is now a separate contributor item, not an NDP source amendment. C++ lint encountered worker shutdown and clone interruption before cancellation. These outcomes remain bound to the superseded 82f3 import and are not transferred to 1b4b/52344.\n\nEarlier superseded import evidence:\n\nThe replacement matching import #16000 at f5aeab9baffa ran Buildkite 52335. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the netlink batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing. This is independently read from the replacement\u2019s own public logs, with no new NDP-specific failure in those failed-step logs. A canceled smoke-race attempt passed on retry; the C++ lint retry was canceling when read. The build moved from failing to canceling during inspection. Original worker module state and the separate private Copybara failure remain unknown.\n\nEarlier import evidence:\n\nThe earlier matching import #16000 at 06be71da95a2 ran Buildkite 52330, then was superseded and cancelled. Three completed native AMD64 shard-11 attempts failed AddCompatRule/Inet with ENOENT using the exact public-master nftables fixture; the separate NodeJS shard passed on retry. Current import progression is reported in the live snapshot. The private Copybara feedback status remains separate: these public logs do not identify its cause or the original workers\u2019 module state. The independently validated INET setup proposal is already pending contributor review.\n\nThe patch approved by nybidari on 2026-10-16T22:08:06Z at 86a99a4cb3 is independently verified unchanged at f4190d8782. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at f4190d8782e7 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nGitHub reports MERGEABLE in the October 8, 18:46 UTC snapshot. This mechanical status does not itself establish that the required upstream NIC/restore interfaces have returned. The existing source prerequisite and maintainer-requested hold remain pending a current-source comparison by root.\n\nEarlier observations:\n\nThe code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
       "number": 15318,
       "followup": {
-        "disposition": "Current public import failed; internal check passed; diagnosis assigned",
+        "disposition": "Replacement matching import is pending; prior public signatures are source-specific",
         "owner": "root \u2014 import diagnosis; work_map_current \u2014 existing intake",
-        "nextAction": "Root owns the new public 52341 failure diagnosis. Follow current import 82f3d8222c8c and human feedback through the existing watcher; earlier INET failures do not establish this failure cause. Internal 34052 reports success without public test detail.",
+        "nextAction": "Follow exact import 1b4b2f31 and public 52344 through the existing intake. Root owns any new public failure diagnosis. Keep the historical INET and recovered systemd failures separate from source feedback/copybara, whose cause remains unknown; the standalone systemd readiness proposal has its own contributor decision.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15318#issuecomment-6019188859",
           "https://github.com/tamird/gvisor/commit/f4190d8782e72897c6a429b9b7795ec5104a6a57",
           "https://github.com/google/gvisor/pull/15318#issuecomment-6274671330",
-          "https://buildkite.com/gvisor/pipeline/builds/52335#01a17481-35e2-4041-bd3b-46b1f02ccac5"
+          "https://buildkite.com/gvisor/pipeline/builds/52335#01a17481-35e2-4041-bd3b-46b1f02ccac5",
+          "https://github.com/google/gvisor/pull/16000",
+          "https://buildkite.com/gvisor/pipeline/builds/52344",
+          "https://buildkite.com/gvisor/pipeline/builds/52341#01a174a1-23ee-4659-a454-4dbd16a867c5",
+          "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85"
         ],
         "reviewedAt": "2026-10-08T18:48:51.862003+00:00",
         "sourceHead": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN",
-        "observedAt": "2026-10-25T19:57:46.761150+00:00"
+        "observedAt": "2026-10-25T20:34:20.258001+00:00"
       },
       "head": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
       "evidence": [
@@ -4933,6 +4937,22 @@
         {
           "label": "Rebase review notice",
           "url": "https://github.com/google/gvisor/pull/15318#issuecomment-6274671330"
+        },
+        {
+          "label": "Current matching import #16000",
+          "url": "https://github.com/google/gvisor/pull/16000"
+        },
+        {
+          "label": "Current public import build 52344",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52344"
+        },
+        {
+          "label": "Historical 52341 native INET failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52341#01a174a1-23ee-4659-a454-4dbd16a867c5"
+        },
+        {
+          "label": "Independent systemd journal readiness proposal",
+          "url": "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85"
         }
       ],
       "approvedPatch": {
@@ -19281,14 +19301,14 @@
       "url": "https://github.com/google/gvisor/pull/16168",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-25T19:57:46.761150+00:00",
-      "summary": "Matching import #16375 at 165e9b110a27 failed public Buildkite 52337. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing, with socket_netlink_netfilter_test_native the sole failed target. This matches the public signature already tracked by the independent INET setup proposal. The source feedback/copybara check also reports FAILURE in the 20:02 UTC snapshot without a public diagnostic URL. The original worker module state remains unknown; these public logs do not establish that private-check cause or a new cgroup-namespace regression.\n\nSource and earlier validation:\n\nThe October 25 rebase request is delivered at 328b51265674 on public master 7bffefa9185a. Provider readback is mergeable. The complete changed file is byte-identical to the approved source, with the same stable patch identity. Only variants binding host cgroupfs select the host cgroup namespace. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe contributor approved the standalone three-line fixture correction, now delivered as ready PR #16168. Published 8b47 is a message-only amendment of reviewed 25ac with an identical source tree. Variants that intentionally bind host cgroupfs also select the host cgroup namespace, so membership paths and the mounted hierarchy agree. A same-worker comparison reproduces clone3 ENOENT before the correction and passes afterward with identical image/runtime files and host nsdelegate unchanged. The complete six-variant parent also passes. Source CI and maintainer review are now pending; no new contributor decision is needed.",
+      "updatedAt": "2026-10-25T20:34:20.258001+00:00",
+      "summary": "Matching import #16375 has advanced to 3602b55c8c203a7a90eb3961656ecf516cefff22. At 20:33 UTC, public Buildkite 52343 is pending and internal 34055 reports SUCCESS. The source remains 328b51265674; the previous public failure below is not attributed to this new import.\n\nHistorical import 165e9b / 52337:\n\nMatching import #16375 at 165e9b110a27 failed public Buildkite 52337. All three completed AMD64 syscall shard-11 attempts exit 2 on CompatCommentTests/NetlinkNetfilterCompatTest.AddCompatRule/Inet: the batch request returns ENOENT at socket_netlink_netfilter.cc:5992. Each reports 1428 of 1429 targets passing, with socket_netlink_netfilter_test_native the sole failed target. This matches the public signature already tracked by the independent INET setup proposal. The source feedback/copybara check also reports FAILURE in the 20:02 UTC snapshot without a public diagnostic URL. The original worker module state remains unknown; these public logs do not establish that private-check cause or a new cgroup-namespace regression.\n\nSource and earlier validation:\n\nThe October 25 rebase request is delivered at 328b51265674 on public master 7bffefa9185a. Provider readback is mergeable. The complete changed file is byte-identical to the approved source, with the same stable patch identity. Only variants binding host cgroupfs select the host cgroup namespace. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nThe contributor approved the standalone three-line fixture correction, now delivered as ready PR #16168. Published 8b47 is a message-only amendment of reviewed 25ac with an identical source tree. Variants that intentionally bind host cgroupfs also select the host cgroup namespace, so membership paths and the mounted hierarchy agree. A same-worker comparison reproduces clone3 ENOENT before the correction and passes afterward with identical image/runtime files and host nsdelegate unchanged. The complete six-variant parent also passes. Source CI and maintainer review are now pending; no new contributor decision is needed.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "328b512656744bb12ce870146f4d3aa23f7ffb15",
-        "observedAt": "2026-10-25T19:57:46.761150+00:00",
-        "disposition": "Public matching import reproduces known INET ENOENT",
-        "nextAction": "Follow the current import and human review through the existing watcher. The three public failed attempts match the pending INET setup proposal; no new cgroup source edit, CI retry or repeated contributor decision is inferred. Keep private statuses and original module state separate.",
+        "observedAt": "2026-10-25T20:34:20.258001+00:00",
+        "disposition": "Replacement import is pending; historical INET diagnosis preserved",
+        "nextAction": "Follow exact import 3602b55c and public 52343 through the existing intake. Keep the older 52337 INET failure source-specific, and keep the private source feedback cause unknown. No source edit, retry or repeated contributor decision is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/25ac4ad4ade74eb7e4a19bcd542a6a53e9b038fb",
           "https://app.buildbuddy.io/invocation/d34c2337-c216-4b83-a69c-93cb7801707f",
@@ -19316,6 +19336,10 @@
         {
           "label": "Approved standalone fixture PR",
           "url": "https://github.com/google/gvisor/pull/16168"
+        },
+        {
+          "label": "Current matching import public build 52343",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52343"
         }
       ],
       "number": 16168
@@ -23285,6 +23309,63 @@
           "url": "https://app.buildbuddy.io/invocation/8deef048-5dec-4f01-b4f7-85e8f8026679"
         }
       ]
+    },
+    {
+      "id": "branch:systemd-daemon-journal-readiness",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/systemd-daemon-journal-readiness",
+      "head": "056d21cee8bc662737520aca579c2bc5d5936e85",
+      "title": "Wait for the systemd test daemon's journal entry",
+      "url": "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85",
+      "group": "tests",
+      "status": "Contributor review",
+      "summary": "The systemd tests now wait for their daemon's greeting in the journal instead of assuming an active service and main PID mean the record is already available. Both system and user service tests continue to read their own journals and fail if the greeting never appears. Exact independently reviewed proposal 056d21cee8bc662737520aca579c2bc5d5936e85 is ready for contributor review, with no prerequisite PR and no upstream PR yet.\n\nThe public Buildkite 52341 cgroup-v2 attempt missed the greeting and its retry passed. That log does not establish whether the process had written the record or journald had processed it. Private validation held the system service's write until its first real journal query returned: the original assertion failed and the correction passed. The ungated packaged user-service case passed in both. Each run used one uncached remote AMD64 test action and the same source-built systemd image, with no skips or missing cases. The original native exit 3 and FAIL verdict are retained; the corrected native exit 0 and PASS verdict are separate. The corrected result contains three positive XML records: the two named cases and their Go parent. No whole-systemd-suite or other-CPU coverage is claimed.\n\nOriginal execution finished at 20:29:23.885 UTC, with its FAIL verdict after 0.54 seconds and local verification after 4.60 seconds. Corrected execution finished at 20:29:03.961 UTC, with its PASS verdict after 0.42 seconds and local verification after 6.41 seconds. Neither run needed manual recovery. The artificial write gate exists only in private validation; the proposed public change is confined to test readiness.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "056d21cee8bc662737520aca579c2bc5d5936e85",
+        "url": "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85",
+        "title": "Publish the systemd journal readiness correction",
+        "summary": "Wait for the actual journal greeting in both daemon tests. The controlled original fails, the correction passes, and the packaged user case passes in both. No prerequisite PR.",
+        "body": "systemd can report a simple service as active before its process writes\nto stdout. In the [system service test][1], the daemon had a main PID,\nbut its first journal read contained no greeting.\n\nWait for the daemon's greeting in both the system and user service\ntests. Each still reads its own journal and fails if the greeting never\nappears.\n\n[1]: https://buildkite.com/gvisor/pipeline/builds/52341#01a17492-9cc8-4ed6-8f60-ef24b99b87ec\n\nOpen this standalone change at 056d21cee8bc662737520aca579c2bc5d5936e85?\n\nControlled original: https://app.buildbuddy.io/invocation/4767a761-bc41-4ca1-b344-02040a49f9c8\nCorrected: https://app.buildbuddy.io/invocation/d79a9983-7ee7-4b90-8afd-f5ff261a5f36\n\nThe original system-service case fails after its first real journal query; the correction passes. The packaged user-service case passes in both. Each run uses one uncached remote AMD64 test action with the same systemd image and no skipped or missing cases. Independent source review is complete. No prerequisite PR. The private write gate is validation-only; public timing cause remains unknown."
+      },
+      "followup": {
+        "owner": "root",
+        "sourceHead": "056d21cee8bc662737520aca579c2bc5d5936e85",
+        "disposition": "Independently reviewed and qualified; contributor decision pending",
+        "nextAction": "Root owns the single contributor decision for exact 056d21cee8bc662737520aca579c2bc5d5936e85 before upstream opening. Preserve the controlled original failure, corrected success and unknown timing cause of the public failure; no whole-suite or other-CPU claim.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85",
+          "https://app.buildbuddy.io/invocation/4767a761-bc41-4ca1-b344-02040a49f9c8",
+          "https://app.buildbuddy.io/invocation/d79a9983-7ee7-4b90-8afd-f5ff261a5f36",
+          "https://buildkite.com/gvisor/pipeline/builds/52341#01a17492-9cc8-4ed6-8f60-ef24b99b87ec",
+          "https://buildkite.com/gvisor/pipeline/builds/52341#01a1749c-730b-4a0b-a7c2-fcfb0ed0a8f7"
+        ],
+        "observedAt": "2026-10-25T20:34:20.258001+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Exact independently reviewed systemd readiness proposal",
+          "url": "https://github.com/tamird/gvisor/commit/056d21cee8bc662737520aca579c2bc5d5936e85"
+        },
+        {
+          "label": "Original controlled case: native exit 3, expected FAIL",
+          "url": "https://app.buildbuddy.io/invocation/4767a761-bc41-4ca1-b344-02040a49f9c8"
+        },
+        {
+          "label": "Corrected journal cases: native exit 0, PASS",
+          "url": "https://app.buildbuddy.io/invocation/d79a9983-7ee7-4b90-8afd-f5ff261a5f36"
+        },
+        {
+          "label": "Public cgroup-v2 missing-greeting failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52341#01a17492-9cc8-4ed6-8f60-ef24b99b87ec"
+        },
+        {
+          "label": "Public cgroup-v2 retry passed",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/52341#01a1749c-730b-4a0b-a7c2-fcfb0ed0a8f7"
+        }
+      ],
+      "updatedAt": "2026-10-25T20:34:20.258001+00:00"
     }
   ],
   "edges": [
