@@ -1,4 +1,4 @@
-"""Run the unchanged HTTP fixture against the assembled official Ruby image."""
+"""Inspect the assembled official Ruby images; retain the prior HTTP results."""
 
 import json
 import xml.etree.ElementTree as ET
@@ -8,8 +8,6 @@ import qualification_report as report
 
 def run(invoke, record_execution, evidence, private, output_root):
     names = {
-        "//test/image:qualification_ruby_native_test": "image/TestRuby",
-        "//test/image:qualification_ruby_systrap_test": "image/TestRuby",
         "//test/rbe/ruby_official:image_identity_test": "test/rbe/ruby_official/image_identity_test",
     }
     result = invoke("ruby-official-http", [

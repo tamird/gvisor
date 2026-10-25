@@ -64,7 +64,8 @@ def main() -> None:
             if len(row["layers"]) != len(inherited) + 2 or config["config"]["Cmd"] != ["/usr/local/bin/ruby", "/server.rb"]:
                 raise ValueError(f"{arch} image layers/command differ")
             for key, value in original["config"].items():
-                if key not in ("Cmd", "Env") and config["config"].get(key) != value:
+                # ArgsEscaped is deprecated Docker metadata for Windows commands.
+                if key not in ("Cmd", "Env", "ArgsEscaped") and config["config"].get(key) != value:
                     raise ValueError(f"{arch} inherited config changed: {key}")
             expected_env = dict(value.split("=", 1) for value in original["config"]["Env"])
             expected_env.update(GEM_HOME="/opt/gems", GEM_PATH="/opt/gems")
