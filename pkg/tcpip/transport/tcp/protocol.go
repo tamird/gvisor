@@ -590,16 +590,15 @@ func NewProtocolProbeHyStartPlus(probe TCPProbeFunc) func(*stack.Stack) stack.Tr
 // NewProtocolProbeHyStartPlusRecovery also records actual recovery choices in
 // the isolated diagnostic stack. Neither callback is used by normal stacks.
 func NewProtocolProbeHyStartPlusRecovery(probe TCPProbeFunc, recovery func(TCPRecoveryDecision)) func(*stack.Stack) stack.TransportProtocol {
-	return NewProtocolProbeHyStartPlusWatch(probe, recovery, nil)
+	return NewProtocolProbeRecoveryWatch(true, probe, recovery, nil)
 }
 
-// NewProtocolProbeHyStartPlusWatch adds a bounded, read-only view of one
-// sequence range to the diagnostic sender. The predicate receives the local
-// port and absolute monotonic clock in ns.
-func NewProtocolProbeHyStartPlusWatch(probe TCPProbeFunc, recovery func(TCPRecoveryDecision), watch func(uint16, int64) (uint32, bool)) func(*stack.Stack) stack.TransportProtocol {
+// NewProtocolProbeRecoveryWatch observes one sequence range under either
+// CUBIC startup. The predicate receives the local port and absolute clock in ns.
+func NewProtocolProbeRecoveryWatch(plus bool, probe TCPProbeFunc, recovery func(TCPRecoveryDecision), watch func(uint16, int64) (uint32, bool)) func(*stack.Stack) stack.TransportProtocol {
 	return func(s *stack.Stack) stack.TransportProtocol {
 		p := newProtocol(s, ccReno, probe)
-		p.hyStartPlus = true
+		p.hyStartPlus = plus
 		p.recoveryProbe = recovery
 		p.recoveryWatch = watch
 		return p

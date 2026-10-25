@@ -499,6 +499,7 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 		}
 
 		// Check the congestion window after entering recovery.
+		snd.traceRecoveryRange("rack_recovery_gate", seg)
 		if snd.Outstanding >= snd.SndCwnd {
 			break
 		}

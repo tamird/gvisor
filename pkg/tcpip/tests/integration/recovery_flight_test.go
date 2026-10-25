@@ -85,9 +85,12 @@ type flightResult struct {
 	Expected, Actual           *flightEvent `json:",omitempty"`
 	Originals, Holes           []flightWire
 	Events                     []flightEvent
+	FirstRTO                   *flightEvent `json:",omitempty"`
 	End                        string
 	EndNS                      int64
 	EndAck                     uint32
+	EOF, FINAcknowledged       bool
+	PendingPackets             int
 	MaxProtectedWaitNS         int64
 	StagedPackets              int
 	ForwardRate, QueueCapacity int64
@@ -163,7 +166,7 @@ func (f *flightRecorder) event(e flightEvent) {
 	if f.first == 0 || r.End != "" || r.Match == "unmatched_prefix" || (f.ref == nil && r.ReferenceCut != 0) {
 		return
 	}
-	if len(r.Events) >= 20000 {
+	if len(r.Events) >= 64000 || (r.Role != originalRole && len(r.Events) >= 20000) {
 		r.Match = "unmatched_prefix"
 		r.End = "event_bound"
 		return
@@ -304,7 +307,11 @@ func (f *flightRecorder) decision(d tcp.TCPRecoveryDecision) {
 	if d.HasRange {
 		a.Range = &flightRange{int32(d.Start - f.base[0]), int32(d.End - f.base[0])}
 	}
-	f.event(flightEvent{Kind: "decision", At: d.AtNS - f.first, Action: &a})
+	e := flightEvent{Kind: "decision", At: d.AtNS - f.first, Action: &a}
+	if f.result.Role == originalRole && d.Path == "rto" && f.result.FirstRTO == nil {
+		f.result.FirstRTO = &e
+	}
+	f.event(e)
 	if f.result.Role == "reference" && f.result.ReferenceCut == 0 && (d.Path == "three_duplicate_acks" || d.Path == "sack_scoreboard" || d.Path == "rack_on_ack" || d.Path == "rack_reordering_timer" || d.Path == "tlp_recovery" || d.Path == "rto") {
 		f.result.ReferenceCut = len(f.result.Events)
 		f.result.Fence = uint32(a.Nxt)
@@ -457,16 +464,17 @@ func TestVirtualTCPFrozenRecoveryFlight(t *testing.T) {
 	run("sack_replay", 0, ref, rack)
 }
 
-// TestVirtualTCPOriginalFIFORTO preserves the original finite-FIFO transfers,
-// deadline and recovery mode. It qualifies reproduction of the known incomplete
-// transfer, not its completion. The original comparison test remains unchanged.
+// TestVirtualTCPOriginalFIFORTO observes each original finite-FIFO transfer
+// through payload/FIN drain or the original deadline.
 func TestVirtualTCPOriginalFIFORTO(t *testing.T) {
 	if runtime.GOMAXPROCS(0) != 1 {
 		t.Fatal("the manual clock fixture requires one TCP processor per stack")
 	}
-	t.Run(originalRole, func(t *testing.T) {
-		f := newFlight(originalRole, tcpip.TCPRACKLossDetection, nil, nil)
-		runVirtualTCP(t, "cubic", nil, virtualScenario{delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second, bytes: 16 << 20,
-			dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{LowerMSS: 30}, hyStartPlus: true, forwardQueue: &startupQueue{Rate: 1250000, Capacity: 125000}, flight: f})
-	})
+	for _, startup := range []string{"classic", "plus"} {
+		t.Run(startup, func(t *testing.T) {
+			f := newFlight(originalRole, tcpip.TCPRACKLossDetection, nil, nil)
+			runVirtualTCP(t, "cubic", nil, virtualScenario{delay: 50 * time.Millisecond, rate: 12500000, maxTime: 30 * time.Second, bytes: 16 << 20,
+				dropOffset: -1, burstSegments: 1, streaming: true, startup: &startupPulse{LowerMSS: 30}, hyStartPlus: startup == "plus", forwardQueue: &startupQueue{Rate: 1250000, Capacity: 125000}, flight: f})
+		})
+	}
 }

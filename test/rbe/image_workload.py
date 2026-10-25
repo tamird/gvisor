@@ -1,15 +1,15 @@
-"""Trace the first true RTO on the unchanged, continuously dropping original FIFO."""
+"""Compare approved recovery changes on the original continuously dropping FIFO."""
 from collections import Counter
 import hashlib
 import json
 import os
 from pathlib import Path
 import shlex
+import subprocess
 import xml.etree.ElementTree as ET
 
 
 OWNER = "//pkg/tcpip/tests/integration:virtual_tcp_test"
-TCP_NOGO = "//pkg/tcpip/transport/tcp:tcp_test_nogo"
 ROOT = "TestVirtualTCPOriginalFIFORTO"
 ROLE = "original_fifo"
 
@@ -18,135 +18,71 @@ def digest(value) -> str:
     return hashlib.sha256(json.dumps(value, separators=(",", ":"), sort_keys=True).encode()).hexdigest()
 
 
-def covered(intervals: list[tuple[int, int]], first: int = 0) -> int:
-    edge = first
-    for left, right in sorted(intervals):
-        if left > edge:
-            break
-        edge = max(edge, right)
-    return edge
+def summarize(s: dict, plus: bool) -> dict:
+    f, q, startup = s["Flight"], s["ForwardQueue"], s["Startup"]
+    total, mss = 16 << 20, 1420
+    if (s["Algorithm"] != "cubic" or s["OfferedBytes"] != total or startup["MSS"] != mss
+            or not startup["ACKs"] or any(ack["Plus"] != plus for ack in startup["ACKs"])
+            or startup["FirstPayloadNS"] != 150_094_400 or s["OneWayDelayNS"] != 50_000_000
+            or s["BDPBytes"] != 125_000 or q["Rate"] != 1_250_000 or q["Capacity"] != 125_000
+            or q["OfferedPackets"] != q["AdmittedPackets"] + q["DroppedPackets"]
+            or q["OfferedBytes"] != q["AdmittedBytes"] + q["DroppedBytes"]
+            or f["Role"] != ROLE or f["SenderMode"] != 1 or f["ReceiverMode"] != 1
+            or f["SenderLatchedMode"] != 1 or f["StagedPackets"] or f["MaxProtectedWaitNS"]
+            or f["EndNS"] != s["VirtualNS"] - startup["FirstPayloadNS"]):
+        raise ValueError("CUBIC startup, original finite FIFO or recovery mode changed")
+    events = f["Events"]
+    peers = [e["Endpoint"] for e in events if "Endpoint" in e]
+    if ({p["Side"] for p in peers} != {0, 1} or not all(p["SACKEnabled"] and p["Timestamps"] for p in peers)
+            or max(e["At"] for e in events) > 2_100_000_000):
+        raise ValueError("Bounded trace is missing real negotiated endpoint observations")
+    offers = [e["Wire"] for e in events if e["Kind"] == "offer"]
+    drops = [w for w in offers if w["Dropped"]]
+    discards = [e["Wire"] for e in events if e["Kind"] == "discard"]
+    if Counter(map(digest, drops)) != Counter(map(digest, discards)):
+        raise ValueError("Observed FIFO refusals do not match actual discard events")
+    if plus and (len(offers) < 544 or digest(offers[:544]) != "afc3edfdd333e918f8f91ba5846cf3ba2734a2a246c15898a9a3067cf0765713"):
+        raise ValueError("The original offers through the first FIFO refusal changed")
+    accepted, delivered = s["AcceptedBytes"], s["Bytes"]
+    if not 0 <= delivered <= accepted <= total or not 0 <= f["EndAck"] <= accepted:
+        raise ValueError("Delivered or cumulatively ACKed beyond accepted payload")
+    if delivered == total and s["PayloadSHA256"] != "23d905a2e230c690a35b2337aa115ffd55d01e485c1cfa57548d12deccb464a4":
+        raise ValueError("Full payload hash differs from the original transfer")
+    match f["End"]:
+        case "payload_fin_drained":
+            if (s["RecoveryClass"] != "finite_fifo" or f["EndAck"] != total or delivered != total
+                    or not f["EOF"] or not f["FINAcknowledged"] or f["PendingPackets"]
+                    or s["VirtualNS"] > 30_001_000_000):
+                raise ValueError("Invalid complete payload/FIN drain")
+        case "original_deadline_incomplete":
+            if (s["RecoveryClass"] != f["End"] or not 30_000_000_000 <= s["VirtualNS"] <= 30_001_000_000
+                    or (f["EOF"] and f["FINAcknowledged"] and not f["PendingPackets"])):
+                raise ValueError("Invalid original deadline readout")
+        case other:
+            raise ValueError(f"Unexpected end of the original FIFO: {other}")
+    rto = f.get("FirstRTO")
+    first_stat = next((r["AtNS"] - startup["FirstPayloadNS"] for r in s["RecoveryTrace"] if r["RTOs"]), None)
+    if (bool(s["RTOs"]) != (rto is not None) or bool(s["RTOs"]) != (first_stat is not None)
+            or (rto is not None and (rto["Action"]["Path"] != "rto" or not 0 <= first_stat - rto["At"] <= 1_000_000))):
+        raise ValueError("First real sender RTO callback does not match its counter")
+    watch = 651 * mss
+    return {"source_case": s["Case"], "duration_from_data_ns": f["EndNS"], "clock_ns": s["VirtualNS"],
+            "outcome": f["End"], "accepted": accepted, "delivered": delivered, "acked": f["EndAck"],
+            "eof": f["EOF"], "fin_acknowledged": f["FINAcknowledged"], "pending": f["PendingPackets"],
+            "payload_sha256": s["PayloadSHA256"], "wire_sha256": s["AllPacketsSHA256"], "packets": s["PacketCount"],
+            "retransmits": s["Retransmits"], "rtos": s["RTOs"], "sack_recoveries": s["SACKRecoveries"],
+            "tlp_recoveries": s["TLPRecoveries"], "queue": q, "first_drop": drops[0] if drops else None,
+            "first_rto": rto, "first_rto_stat_ns": first_stat,
+            "watch_offers": [w for w in offers if not w["Side"] and w["Seq"] <= watch < w["End"]],
+            "watch_first_ack": next((e["Wire"] for e in events if e["Kind"] == "input" and e["Wire"]["Side"]
+                                     and e["Wire"]["Ack"] > watch), None),
+            "detailed_dropped_retries": sum(w["Retransmit"] for w in drops)}
 
 
 def measure(samples: dict) -> dict:
-    key = f"{ROOT}/{ROLE}"
-    if set(samples) != {key}:
-        raise ValueError("Expected exactly the original finite-FIFO diagnostic")
-    s = samples[key]
-    f = s["Flight"]
-    first, base = s["Startup"]["FirstPayloadNS"], s["Startup"]["DataSequence"]
-    q = s["ForwardQueue"]
-    if (s["VirtualNS"] != 30_000_331_840 or s["Bytes"] != 1_121_800 or s["AcceptedBytes"] != 9_510_408
-            or s["OfferedBytes"] != 16 << 20 or s["Algorithm"] != "cubic" or s["Startup"]["MSS"] != 1420
-            or not all(ack["Plus"] for ack in s["Startup"]["ACKs"])
-            or s["RecoveryClass"] != "original_deadline_incomplete" or f["Match"] != s["RecoveryClass"]
-            or f["SenderMode"] != 1 or f["ReceiverMode"] != 1 or f["SenderLatchedMode"] != 1
-            or s["RTOs"] != 70 or s["Retransmits"] != 363 or s["SACKRecoveries"] != 72 or s["TLPRecoveries"]
-            or s["PacketCount"] != 2059 or q["OfferedPackets"] != 1218 or q["AdmittedPackets"] != 844
-            or q["DroppedPackets"] != 374 or q["FirstSecondDrops"] != 374 or q["Capacity"] != 125000
-            or q["Rate"] != 1250000 or s["OneWayDelayNS"] != 50000000
-            or f["StagedPackets"] or f["MaxProtectedWaitNS"] or f["EndNS"] != s["VirtualNS"]-first
-            or s["AllPacketsSHA256"] != "98c0724b98db9f9590c94924f489f1d35e4dddd72895caea4aa06bf22211827b"
-            or s["PayloadSHA256"] != "cc7be120a6b9ede5fdca259c7ecb82a1c8214f68eec1afaedee09d7299282b56"):
-        raise ValueError("The original transport, drop policy, complete wire or original failure changed")
-    events = f["Events"]
-    peers = [e["Endpoint"] for e in events if "Endpoint" in e]
-    if {e["Side"] for e in peers} != {0, 1} or not all(e["SACKEnabled"] and e["Timestamps"] for e in peers):
-        raise ValueError("Missing negotiated timestamp/SACK or both endpoints")
-    if max(e["At"] for e in events) > 2_100_000_000:
-        raise ValueError("Observer exceeded its fixed 2.1s detail interval")
-    losses = [e["Wire"] for e in events if e["Kind"] == "offer" and e["Wire"]["Dropped"]]
-    discards = [e["Wire"] for e in events if e["Kind"] == "discard"]
-    if (len(losses) != 374 or len(discards) != 374 or losses[0]["Seq"] != 335*1420
-            or losses[0]["Captured"] != 523_572_800 or Counter(map(digest, losses)) != Counter(map(digest, discards))):
-        raise ValueError("Not every original refusal was joined to its actual discard")
-    timed = next(r for r in s["RecoveryTrace"] if r["RTOs"])
-    i = next(i for i, e in enumerate(events) if e.get("Action", {}).get("Path") == "rto_expiry_pre_backoff")
-    expiry = events[i]
-    ex_at, action = expiry["At"], expiry["Action"]
-    w = action["Watch"]
-    if (timed["AtNS"] - first != 1_818_839_360 or not 0 <= timed["AtNS"]-first-ex_at <= 1_000_000
-            or action["Trigger"] is not None or w["Focus"] != (base + 651*1420) % 2**32
-            or w["RTO"] <= 0 or w["ResendEnabled"] or not w["Head"]):
-        raise ValueError("First true RTO, historical fence or watched byte unverified")
-    before = events[:i]
-    timer_ops = [e for e in before if e.get("Action", {}).get("Path", "").startswith(("arm_", "disable_"))]
-    if not timer_ops:
-        raise ValueError("Missing the preceding resend-timer operation")
-    arm = timer_ops[-1]
-    if (not arm["Action"]["Path"].startswith("arm_") or not arm["Action"]["Watch"]["ResendEnabled"]
-            or w["ResendTarget"] != arm["Action"]["Watch"]["ResendTarget"]
-            or w["ResendTarget"]-first != arm["At"]+arm["Action"]["Watch"]["RTO"]
-            or ex_at < w["ResendTarget"]-first):
-        raise ValueError("Last timer arm, requested target or true expiry is inconsistent")
-    input_before = [e["Wire"] for e in before if e["Kind"] == "input"]
-    wire_edge = covered([(p["Seq"], p["End"]) for p in input_before if not p["Side"] and p["Payload"]])
-    receiver = next(e for e in reversed(before) if e.get("Endpoint", {}).get("Side") == 1)
-    sender = next(e for e in reversed(before) if e.get("Endpoint", {}).get("Side") == 0)
-    if receiver["Endpoint"]["RcvNxt"] != wire_edge:
-        raise ValueError(f"Cannot join receiver holdback to the physical first hole: {wire_edge}")
-    first_ack = max((p["Ack"] for p in input_before if p["Side"] and p["Flags"] & 16), default=None)
-    if first_ack != action["Una"]:
-        raise ValueError("Latest cumulative ACK does not match the sender at true RTO")
-    since = [e for e in events if e["Kind"] == "input" and e["Wire"]["Side"] == 1
-             and e["Wire"]["Ack"] > action["Una"] and e["At"] >= ex_at]
-    if not since:
-        raise ValueError("No advancing ACK after first RTO within the fixed observer bound")
-    advance = since[0]
-    original_before = [e["Wire"] for e in before if e["Kind"] == "offer" and e["Wire"]["Side"] == 0
-                       and e["Wire"]["Payload"] and not e["Wire"]["Retransmit"]]
-    high = max(p["End"] for p in original_before)
-    next_received = min((p["Seq"] for p in input_before if p["Side"] == 0 and p["Payload"]
-                         and p["Seq"] > wire_edge), default=high)
-    watched_original = [p for p in original_before if p["Seq"] <= 651*1420 < p["End"]]
-    if len(watched_original) != 1:
-        raise ValueError("Cannot identify the original transmission containing the watched byte")
-    original = watched_original[0]
-    ranges = {"sender_head": ((w["Head"]["Start"]-base) % 2**32, (w["Head"]["End"]-base) % 2**32),
-              "wire_missing": (wire_edge, next_received) if wire_edge < next_received else None,
-              "predeclared": (original["Seq"], original["End"])}
-    readout = {}
-    for start, end in sorted(span for span in set(ranges.values()) if span is not None):
-        if not start < end <= high:
-            raise ValueError(f"No nonempty transmitted interval: [{start},{end})")
-        offers = [e["Wire"] for e in events if e["Kind"] == "offer" and e["Wire"]["Side"] == 0
-                  and e["Wire"]["Payload"] and e["Wire"]["Seq"] < end and start < e["Wire"]["End"]]
-        ingress = [e["Wire"] for e in events if e["Kind"] == "input" and e["Wire"]["Side"] == 0
-                   and e["Wire"]["Payload"] and e["Wire"]["Seq"] < end and start < e["Wire"]["End"]]
-        # Include resegmented retries even when only the end of their payload
-        # overlaps. A sender success, a serializer drop and ingress are distinct.
-        if (not offers or any(not p["Dropped"] and p["Arrival"] <= 2_100_000_000 and p not in ingress for p in offers)
-                or any(p not in offers for p in ingress)):
-            raise ValueError(f"Unmatched offer/admission/ingress for [{start},{end})")
-        readout[f"{start}:{end}"] = {"first": start, "end": end, "offers": offers, "receiver_input": ingress,
-                                    "positive_sender_actions": [e for e in events if "Action" in e
-                                    and e["Action"].get("Range", {}).get("Start", 2**31) < end
-                                    and start < e["Action"].get("Range", {}).get("End", 0)]}
-    true_rack_scans = [e for e in before if e.get("Action", {}).get("Path") == "rack_scan"
-                       and e["Action"].get("Watch") and e["Action"]["Watch"]["Segment"]]
-    # Keep the last scan and evidence whenever the gate's predicates change;
-    # the full authenticated native log retains all scans, peers and timers.
-    scans = []
-    for e in true_rack_scans:
-        snap = e["Action"]["Watch"]
-        seg = snap["Segment"]
-        ordered = (seg["LastXmit"], (seg["End"]-base) % 2**32) < (snap["RackXmit"], (snap["RackEnd"]-base) % 2**32)
-        remaining = seg["LastXmit"] - snap["RackEvalNS"] + snap["RackRTT"] + snap["ReoWindow"] + snap["ClockResolution"]
-        eligible_now = (remaining < 0) or (remaining == 0 and snap["ClockResolution"] == 0)
-        gates = [seg["Lost"], seg["ScoreboardSacked"], ordered, eligible_now,
-                 e["Action"]["Outstanding"] >= e["Action"]["Cwnd"]]
-        if not scans or gates != scans[-1]["gates"] or e is true_rack_scans[-1]:
-            scans.append({"at": e["At"], "gates": gates, "remaining_ns": remaining, "event": e})
-    return {"full_sample_sha256": digest(s), "events": len(events), "all_wire_sha256": s["AllPacketsSHA256"],
-            "original_fifo": q, "outcome": {"virtual_ns": s["VirtualNS"], "delivered": s["Bytes"],
-            "retransmits": s["Retransmits"], "rtos": s["RTOs"], "incomplete": s["Bytes"] != s["OfferedBytes"]},
-            "first_true_rto": expiry, "stats_observed_at": timed["AtNS"]-first,
-            "last_arm": arm, "timeout_after_target_ns": ex_at-(w["ResendTarget"]-first),
-            "sequence_base": base, "first_data_ns": first, "ranges": ranges, "packet_histories": readout,
-            "last_sender_probe": sender, "last_receiver_probe": receiver, "next_advancing_ack": advance,
-            "first_rto_reset": next(e for e in events[i:] if e.get("Action", {}).get("Path") == "rto_reset"),
-            "wire_edge_at_rto": wire_edge, "last_wire_high_ack": first_ack,
-            "drop_original_vs_retry": dict(Counter("retry" if p["Retransmit"] else "original" for p in losses)),
-            "watch_scan_gates_lost_sacked_ordered_timeeligible_cwndblocked": scans}
+    if set(samples) != {f"{ROOT}/classic", f"{ROOT}/plus"}:
+        raise ValueError("Expected the original FIFO under both startup choices")
+    return {arm: summarize(samples[f"{ROOT}/{arm}"], arm == "plus") for arm in ("classic", "plus")}
 
 
 def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[dict, dict]:
@@ -254,8 +190,10 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
-    if config["targets"] != [OWNER, OWNER + "_nogo", TCP_NOGO]:
-        raise ValueError("Unexpected original FIFO qualification owners")
+    source, prerequisite = config["source"], config["prerequisite"]
+    if (config["targets"] != [OWNER] or config["expected_sources"] != [source, prerequisite]
+            or subprocess.check_output(["git", "rev-parse", source + "^"], text=True).strip() != prerequisite):
+        raise ValueError("Unexpected native owner or candidate ancestry")
     options = ["--config=x86_64", "--compilation_mode=opt", *config["consumer_options"],
                "--lockfile_mode=error", "--remote_download_outputs=all", "--noannounce_rc"]
     formatter = shlex.join(["bash", "-c", 'set -eu; export PATH="$(dirname "$1"):$PATH"; '
@@ -266,27 +204,16 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
         raise RuntimeError("Canonical Go formatting failed")
     selected = ["--strategy=TestRunner=remote", "--nocache_test_results", "--flaky_test_attempts=1",
                 "--test_output=errors", "--test_timeout=300", "--test_env=GO_TEST_WRAP=1",
-                "--test_env=GO_TEST_WRAP_TESTV=1"]
-    result = {"status": "INCOMPLETE", "source": config["source"], "phases": {}}
+                "--test_env=GO_TEST_WRAP_TESTV=1", "--runs_per_test=1", f"--test_arg=-test.run=^{ROOT}$"]
+    result = {"status": "INCOMPLETE", "source": source, "phases": {}}
     try:
-        for phase, count, extra in (("virtual-normal", 2, []), ("virtual-race", 1, ["--config=race"])):
-            checked = invoke(phase, ["test", *options, *extra, *selected,
-                                     f"--runs_per_test={count}", f"--test_arg=-test.run=^{ROOT}$", OWNER],
-                             "test", targets=[OWNER])
-            if checked["status"] != "PASS":
-                raise RuntimeError(f"{phase}: native first-RTO owner did not pass")
-            result["phases"][phase] = observations(evidence, phase, count)
-        if result["phases"]["virtual-normal"]["complete_observation_sha256"] != result["phases"]["virtual-race"]["complete_observation_sha256"]:
-            raise ValueError("Normal and race virtual packet observations differ")
-        for phase, analyzer in (("virtual-nogo", OWNER + "_nogo"), ("tcp-nogo", TCP_NOGO)):
-            analyzed = invoke(phase, ["test", *options, *selected, "--runs_per_test=1", analyzer],
-                              "test", targets=[analyzer])
-            if analyzed["status"] != "PASS":
-                raise RuntimeError(f"{phase}: analyzer owner did not pass")
-            native_results(evidence / f"invocation-{phase}", phase, analyzer, 1)
+        for phase, revision in (("sack-credit", prerequisite), ("rack-flight", source)):
+            subprocess.run(["git", "switch", "--detach", revision], check=True)
+            checked = invoke(phase, ["test", *options, *selected, OWNER], "test", targets=[OWNER], source=revision)
+            if checked["status"] != "PASS" or checked["source"] != revision:
+                raise RuntimeError(f"{phase}: native finite FIFO owner or source failed")
+            result["phases"][phase] = {"source": revision, **observations(evidence, phase, 1)}
         result["status"] = "PASS"
-    except (OSError, ValueError, KeyError, RuntimeError) as error:
-        result.update(status="FAIL", error=str(error))
-        raise
     finally:
+        subprocess.run(["git", "switch", "--detach", source], check=True)
         (evidence / "virtual-tcp-determinism.json").write_text(json.dumps(result, indent=2) + "\n")

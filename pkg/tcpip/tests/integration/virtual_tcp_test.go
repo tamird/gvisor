@@ -379,7 +379,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		if flight != nil {
 			newProbe = func(p tcp.TCPProbeFunc) func(*stack.Stack) stack.TransportProtocol {
 				if originalFIFO {
-					return tcp.NewProtocolProbeHyStartPlusWatch(p, flight.decision, flight.watch)
+					return tcp.NewProtocolProbeRecoveryWatch(scenario.hyStartPlus, p, flight.decision, flight.watch)
 				}
 				return tcp.NewProtocolProbeHyStartPlusRecovery(p, flight.decision)
 			}
@@ -649,8 +649,8 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 					changed = previous != observation
 				}
 				if changed {
-					if scenario.streaming && len(progress) == 512 {
-						t.Fatal("recovery events exceeded512 records")
+					if scenario.streaming && ((!originalFIFO && len(progress) == 512) || len(progress) == 4096) {
+						t.Fatal("bounded recovery trace filled")
 					}
 					progress = append(progress, observation)
 				}
@@ -797,17 +797,7 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 			if originalFIFO {
 				// This is the original failure boundary: the application has
 				// performed its final Write, but no more clock time is allowed.
-				flight.mu.Lock()
-				if flight.result.End != "" {
-					previous := flight.result.End
-					flight.mu.Unlock()
-					t.Fatalf("original observer ended before deadline: %s", previous)
-				}
 				originalDone = true
-				flight.result.Match = "original_deadline_incomplete"
-				flight.result.End = "original_deadline_incomplete"
-				flight.result.EndNS, flight.result.EndAck = int64(now())-flight.first, acknowledged
-				flight.mu.Unlock()
 				return
 			}
 			t.Fatalf("transfer exceeded %v virtual time; queued=%d", maxTime, len(pending))
@@ -1066,6 +1056,18 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		writeClosed = true
 	}
 	var eof bool
+	endFIFO := func(outcome string) {
+		flight.mu.Lock()
+		defer flight.mu.Unlock()
+		if flight.result.End != "" {
+			t.Fatalf("original observer stopped early: %s", flight.result.End)
+		}
+		flight.result.End, flight.result.Match = outcome, outcome
+		flight.result.EndNS, flight.result.EndAck = int64(now())-flight.first, acknowledged
+		flight.result.EOF = eof
+		flight.result.FINAcknowledged = tcp.EndpointState(client.State()) == tcp.StateFinWait2
+		flight.result.PendingPackets = len(pending)
+	}
 	for {
 		if scenario.streaming && acceptedBytes < len(data) {
 			n, err := client.Write(bytes.NewReader(data[acceptedBytes:]), tcpip.WriteOptions{})
@@ -1086,13 +1088,11 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		}
 		step()
 		if originalDone {
-			// The archived transfer was incomplete at this exact virtual
-			// instant with the same full wire digest and delivered bytes.
-			if now() != 30000331840*time.Nanosecond || received.Len() != 1121800 || acceptedBytes != 9510408 ||
-				!bytes.Equal(received.Bytes(), data[:received.Len()]) || fmt.Sprintf("%x", allPackets.Sum(nil)) != "98c0724b98db9f9590c94924f489f1d35e4dddd72895caea4aa06bf22211827b" {
-				t.Fatalf("original deadline/delivered payload/packet digest changed: t=%v delivered=%d accepted=%d digest=%x", now(), received.Len(), acceptedBytes, allPackets.Sum(nil))
+			if received.Len() > acceptedBytes || !bytes.Equal(received.Bytes(), data[:received.Len()]) {
+				t.Fatalf("delivered payload differs from the offered prefix: %d/%d", received.Len(), acceptedBytes)
 			}
-			classification = flight.result.End
+			classification = "original_deadline_incomplete"
+			endFIFO(classification)
 			return
 		}
 		_, err := server.Read(&received, tcpip.ReadOptions{})
@@ -1131,6 +1131,9 @@ func runVirtualTCP(t *testing.T, algorithm string, protocol stack.TransportProto
 		t.Fatalf("received %d bytes with SHA256 %x, want %d bytes with SHA256 %x", received.Len(), sha256.Sum256(received.Bytes()), len(data), sha256.Sum256(data))
 	}
 	checkAlgorithm()
+	if originalFIFO {
+		endFIFO("payload_fin_drained")
+	}
 	if scenario.streaming {
 		rounds = append(rounds, sample())
 		if dropOffset >= 0 {
