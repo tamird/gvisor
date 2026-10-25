@@ -92,22 +92,35 @@ def measure(samples: dict) -> dict:
     if not since:
         raise ValueError("No advancing ACK after first RTO within the fixed observer bound")
     advance = since[0]
-    ranges = {"sender_head": (w["Head"]["Start"]-base) % 2**32, "wire_missing": wire_edge, "predeclared": 651*1420}
+    original_before = [e["Wire"] for e in before if e["Kind"] == "offer" and e["Wire"]["Side"] == 0
+                       and e["Wire"]["Payload"] and not e["Wire"]["Retransmit"]]
+    high = max(p["End"] for p in original_before)
+    next_received = min((p["Seq"] for p in input_before if p["Side"] == 0 and p["Payload"]
+                         and p["Seq"] > wire_edge), default=high)
+    watched_original = [p for p in original_before if p["Seq"] <= 651*1420 < p["End"]]
+    if len(watched_original) != 1:
+        raise ValueError("Cannot identify the original transmission containing the watched byte")
+    original = watched_original[0]
+    ranges = {"sender_head": ((w["Head"]["Start"]-base) % 2**32, (w["Head"]["End"]-base) % 2**32),
+              "wire_missing": (wire_edge, next_received) if wire_edge < next_received else None,
+              "predeclared": (original["Seq"], original["End"])}
     readout = {}
-    for start in set(ranges.values()):
+    for start, end in sorted(span for span in set(ranges.values()) if span is not None):
+        if not start < end <= high:
+            raise ValueError(f"No nonempty transmitted interval: [{start},{end})")
         offers = [e["Wire"] for e in events if e["Kind"] == "offer" and e["Wire"]["Side"] == 0
-                  and e["Wire"]["Seq"] <= start < e["Wire"]["End"]]
+                  and e["Wire"]["Payload"] and e["Wire"]["Seq"] < end and start < e["Wire"]["End"]]
         ingress = [e["Wire"] for e in events if e["Kind"] == "input" and e["Wire"]["Side"] == 0
-                   and e["Wire"]["Seq"] <= start < e["Wire"]["End"]]
-        # Distinguish physical delivery, sender stack acceptance, and a
-        # serializer drop: these can differ for the same retransmission.
+                   and e["Wire"]["Payload"] and e["Wire"]["Seq"] < end and start < e["Wire"]["End"]]
+        # Include resegmented retries even when only the end of their payload
+        # overlaps. A sender success, a serializer drop and ingress are distinct.
         if (not offers or any(not p["Dropped"] and p["Arrival"] <= 2_100_000_000 and p not in ingress for p in offers)
                 or any(p not in offers for p in ingress)):
-            raise ValueError(f"Unmatched offer/admission/ingress for byte {start}")
-        readout[str(start)] = {"offers": offers, "receiver_input": ingress,
-                              "positive_sender_actions": [e for e in events if "Action" in e and
-                               e["Action"].get("Range", {}).get("Start", 2**31) <= start <
-                               e["Action"].get("Range", {}).get("End", 0)]}
+            raise ValueError(f"Unmatched offer/admission/ingress for [{start},{end})")
+        readout[f"{start}:{end}"] = {"first": start, "end": end, "offers": offers, "receiver_input": ingress,
+                                    "positive_sender_actions": [e for e in events if "Action" in e
+                                    and e["Action"].get("Range", {}).get("Start", 2**31) < end
+                                    and start < e["Action"].get("Range", {}).get("End", 0)]}
     true_rack_scans = [e for e in before if e.get("Action", {}).get("Path") == "rack_scan"
                        and e["Action"].get("Watch") and e["Action"]["Watch"]["Segment"]]
     # Keep the last scan and evidence whenever the gate's predicates change;
