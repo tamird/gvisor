@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-25T21:34:49.542422+00:00",
-  "registryDate": "2026-10-25T21:35:51.497626+00:00",
+  "registryDate": "2026-10-25T21:51:05.302144+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -50640,7 +50640,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
-          "mergeabilityCheckedAt": "2026-10-25T21:34:35.843819+00:00",
+          "mergeabilityCheckedAt": "2026-10-25T21:50:35.053965+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -50656,7 +50656,7 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 15,
             "reportedTotal": 15,
             "supersededContexts": [],
@@ -50828,21 +50828,21 @@
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANUmbkYg",
+                "id": "SC_kwDOB9IlXs8AAAANUnhrDQ",
                 "name": "buildkite/internal",
-                "state": "PENDING",
+                "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/34058",
-                "description": "Build #34058 started",
+                "description": "Build #34058 passed (36 minutes, 26 seconds)",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANUmbmgg",
+                "id": "SC_kwDOB9IlXs8AAAANUnrj-g",
                 "name": "buildkite/pipeline",
-                "state": "PENDING",
+                "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/52347",
-                "description": "Build #52347 started",
+                "description": "Build #52347 passed (41 minutes, 53 seconds)",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
@@ -50877,16 +50877,16 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-25T21:34:37.717619+00:00",
+          "checkedAt": "2026-10-25T21:50:35.053965+00:00",
+          "sourceHead": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/16000",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "1f68c50249e52ac1cb0c1eea932d41859cee6d71",
             "base": "b36c8aa5ecca7e018c3155edd496d369b67385e7",
-            "checkedAt": "2026-10-25T21:34:35.843819+00:00"
-          },
-          "sourceHead": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
-          "matchesSourceHead": true,
-          "relationshipEvidence": "https://github.com/google/gvisor/pull/16000"
+            "checkedAt": "2026-10-25T21:50:35.053965+00:00"
+          }
         }
       ]
     },
@@ -178996,8 +178996,8 @@
       "followup": {
         "owner": "root — import diagnosis; work_map_current — existing intake",
         "sourceHead": "f4190d8782e72897c6a429b9b7795ec5104a6a57",
-        "disposition": "Replacement matching import is pending; prior public signatures are source-specific",
-        "nextAction": "Follow exact import 1f68c502 and public 52347 through the existing intake. Root owns any new public failure diagnosis. Keep earlier import outcomes and the separate opaque source feedback/copybara failure distinct; the standalone systemd and INET corrections are delivered separately as #16391 and #16392."
+        "disposition": "Exact matching import checks passed; awaiting maintainer landing",
+        "nextAction": "Follow maintainer landing of exact matching import 1f68c502 after its successful Go, public 52347 and internal 34058 checks. Keep historical failed import signatures and the source’s separate feedback/copybara status distinct. No source amendment, rerun or unsolicited reminder is required by this green result."
       }
     },
     {
@@ -180319,18 +180319,11 @@
       }
     },
     "pr:15318": {
-      "checks-pending": {
-        "scope": "16000:1f68c50249e52ac1cb0c1eea932d41859cee6d71",
-        "since": "2026-10-25T21:08:03.003335+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-25T21:34:37.717619+00:00"
-      },
       "importing": {
         "scope": "16000:1f68c50249e52ac1cb0c1eea932d41859cee6d71",
         "since": "2026-10-25T21:08:03.003335+00:00",
         "basis": "observed",
-        "qualifier": "#16000: open, checks pending, no reported conflict",
+        "qualifier": "#16000: open, validation checks passed, no reported conflict",
         "observedAt": "2026-10-25T21:34:37.717619+00:00"
       }
     },
@@ -182495,7 +182488,7 @@
         "since": "2026-10-25T17:18:41.123958+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-25T21:35:51.497626+00:00"
+        "observedAt": "2026-10-25T21:51:05.302144+00:00"
       }
     }
   },
