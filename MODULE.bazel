@@ -2873,6 +2873,19 @@ ruby_http_apt.install(
 )
 use_repo(ruby_http_apt, "ruby_http_packages")
 
+img_pull(
+    name = "ruby_http_official",
+    digest = "sha256:bceec7582aaa80630bb51a04e2df3af658e64c0640c174371776928ad3bd57b4",
+    layer_handling = "eager",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+    registries = DOCKER_HUB_REGISTRIES,
+    repository = "library/ruby",
+    tag = "3.3.5",
+)
+
 # Source gems from the retained official-Ruby Bundler lock.
 
 http_file(

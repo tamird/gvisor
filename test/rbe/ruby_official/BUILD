@@ -1,5 +1,8 @@
 # Private dependency preparation for the official Ruby HTTP experiment.
 
+load("@rules_python//python:defs.bzl", "py_test")
+load("//tools:arch.bzl", "arch_genrule")
+
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
@@ -102,4 +105,53 @@ genrule(
     },
     tags = ["manual"],
     visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "gems_tar",
+    srcs = select({
+        "@platforms//cpu:aarch64": [":gems_arm64.tar"],
+        "@platforms//cpu:x86_64": [":gems_amd64.tar"],
+    }),
+    visibility = ["//images/image-test/ruby:__pkg__"],
+)
+
+filegroup(
+    name = "gems_profile",
+    srcs = select({
+        "@platforms//cpu:aarch64": [":gems_arm64.json"],
+        "@platforms//cpu:x86_64": [":gems_amd64.json"],
+    }),
+)
+
+arch_genrule(
+    name = "qualification_gems",
+    src = ":gems_tar",
+    template = "qualification_gems_%s.tar",
+)
+
+arch_genrule(
+    name = "qualification_profiles",
+    src = ":gems_profile",
+    template = "qualification_profile_%s.json",
+)
+
+py_test(
+    name = "image_identity_test",
+    size = "large",
+    srcs = ["image_identity_test.py"],
+    args = [
+        "$(locations //images/image-test/ruby:qualification_ruby_archives)",
+        "$(locations //images/image-test/ruby:qualification_ruby_contexts)",
+        "$(locations :qualification_gems)",
+        "$(locations :qualification_profiles)",
+    ],
+    data = glob(["inputs/*.json"]) + [
+        ":qualification_gems",
+        ":qualification_profiles",
+        "//images/image-test/ruby:qualification_ruby_archives",
+        "//images/image-test/ruby:qualification_ruby_contexts",
+    ],
+    tags = ["manual"],
+    deps = ["//test/rbe/ruby_distro:image_archive"],
 )

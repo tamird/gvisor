@@ -1,0 +1,118 @@
+{
+  "ruby": "3.3.5",
+  "platform": "x86_64-linux",
+  "bundler": "2.5.16",
+  "compiler_target": "x86_64-linux-gnu",
+  "gems": [
+    {
+      "name": "base64",
+      "version": "0.3.0",
+      "file": "base64-0.3.0.gem",
+      "bytes": 11776,
+      "sha256": "27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b",
+      "url": "https://rubygems.org/downloads/base64-0.3.0.gem"
+    },
+    {
+      "name": "logger",
+      "version": "1.7.0",
+      "file": "logger-1.7.0.gem",
+      "bytes": 16896,
+      "sha256": "196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203",
+      "url": "https://rubygems.org/downloads/logger-1.7.0.gem"
+    },
+    {
+      "name": "mustermann",
+      "version": "3.1.1",
+      "file": "mustermann-3.1.1.gem",
+      "bytes": 40448,
+      "sha256": "4c6170c7234d5499c345562ba7c7dfe73e1754286dcc1abb053064d66a127198",
+      "url": "https://rubygems.org/downloads/mustermann-3.1.1.gem"
+    },
+    {
+      "name": "nio4r",
+      "version": "2.7.3",
+      "file": "nio4r-2.7.3.gem",
+      "bytes": 116736,
+      "sha256": "54b94cdd4b8f9dc39aaad5f699e97afae13efb44f2b180a6e724df76105ff604",
+      "url": "https://rubygems.org/downloads/nio4r-2.7.3.gem"
+    },
+    {
+      "name": "puma",
+      "version": "6.6.0",
+      "file": "puma-6.6.0.gem",
+      "bytes": 238080,
+      "sha256": "f25c06873eb3d5de5f0a4ebc783acc81a4ccfe580c760cfe323497798018ad87",
+      "url": "https://rubygems.org/downloads/puma-6.6.0.gem"
+    },
+    {
+      "name": "rack",
+      "version": "3.2.7",
+      "file": "rack-3.2.7.gem",
+      "bytes": 121344,
+      "sha256": "93e13e1c24f93556671d85d2d79fa228c3485815c50d7e2f265b5330c6528fb7",
+      "url": "https://rubygems.org/downloads/rack-3.2.7.gem"
+    },
+    {
+      "name": "rack-protection",
+      "version": "4.1.1",
+      "file": "rack-protection-4.1.1.gem",
+      "bytes": 18432,
+      "sha256": "51a254a5d574a7f0ca4f0672025ce2a5ef7c8c3bd09c431349d683e825d7d16a",
+      "url": "https://rubygems.org/downloads/rack-protection-4.1.1.gem"
+    },
+    {
+      "name": "rack-session",
+      "version": "2.1.2",
+      "file": "rack-session-2.1.2.gem",
+      "bytes": 16896,
+      "sha256": "595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8",
+      "url": "https://rubygems.org/downloads/rack-session-2.1.2.gem"
+    },
+    {
+      "name": "rackup",
+      "version": "2.1.0",
+      "file": "rackup-2.1.0.gem",
+      "bytes": 15872,
+      "sha256": "6ecb884a581990332e45ee17bdfdc14ccbee46c2f710ae1566019907869a6c4d",
+      "url": "https://rubygems.org/downloads/rackup-2.1.0.gem"
+    },
+    {
+      "name": "sinatra",
+      "version": "4.1.1",
+      "file": "sinatra-4.1.1.gem",
+      "bytes": 135680,
+      "sha256": "4e997b859aa1b5d2e624f85d5b0fd0f0b3abc0da44daa6cbdf10f7c0da9f4d00",
+      "url": "https://rubygems.org/downloads/sinatra-4.1.1.gem"
+    },
+    {
+      "name": "tilt",
+      "version": "2.9.0",
+      "file": "tilt-2.9.0.gem",
+      "bytes": 31744,
+      "sha256": "da5735d0280bba96e9a91041bb14aee435ccad5c17b0fa519249ae543d9aa3a5",
+      "url": "https://rubygems.org/downloads/tilt-2.9.0.gem"
+    },
+    {
+      "name": "webrick",
+      "version": "1.9.2",
+      "file": "webrick-1.9.2.gem",
+      "bytes": 71168,
+      "sha256": "beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131",
+      "url": "https://rubygems.org/downloads/webrick-1.9.2.gem"
+    }
+  ],
+  "tools": {
+    "/usr/local/bin/ruby": {
+      "resolved": "/usr/local/bin/ruby",
+      "sha256": "27b3899821ff20884c4a4fb016cd11759e6fbc67c7a7c433de7a6cf857e0d743"
+    },
+    "/usr/bin/gcc": {
+      "resolved": "/usr/bin/x86_64-linux-gnu-gcc-12",
+      "sha256": "000991b4aae03aed6179cee7e5df081190f403e172ac7fc7e66c76bbde563a16"
+    },
+    "/usr/bin/make": {
+      "resolved": "/usr/bin/make",
+      "sha256": "00b2c2071bf57aa52559a91bf8a4ddcd0fcfd4718da2f83100593a45896c1fec"
+    }
+  }
+}

@@ -1,36 +1,49 @@
-"""Retain the two native offline gem builds and their ABI profiles."""
+"""Run the unchanged HTTP fixture against the assembled official Ruby image."""
 
-import hashlib
 import json
-from pathlib import Path
-import shutil
+import xml.etree.ElementTree as ET
+
+import qualification_report as report
 
 
 def run(invoke, record_execution, evidence, private, output_root):
-    targets = ["//test/rbe/ruby_official:gems_" + arch for arch in ("amd64", "arm64")]
-    result = invoke("ruby-native-gems", [
-        "build", "--config=rbe-matrix", "--config=x86_64", "--compilation_mode=opt",
-        "--lockfile_mode=error", "--noannounce_rc",
-        "--keep_going",
-        "--remote_download_outputs=all",
+    names = {
+        "//test/image:qualification_ruby_native_test": "image/TestRuby",
+        "//test/image:qualification_ruby_systrap_test": "image/TestRuby",
+        "//test/rbe/ruby_official:image_identity_test": "test/rbe/ruby_official/image_identity_test",
+    }
+    result = invoke("ruby-official-http", [
+        "test", "--config=rbe-matrix", "--config=x86_64", "--compilation_mode=opt",
+        "--lockfile_mode=error", "--noannounce_rc", "--keep_going",
+        "--build_tag_filters=", "--test_tag_filters=",
+        "--strategy=TestRunner=remote", "--nocache_test_results",
+        "--runs_per_test=1", "--flaky_test_attempts=1", "--test_sharding_strategy=disabled",
+        "--test_timeout=900", "--test_output=all", "--remote_download_outputs=all",
         "--execution_log_compact_file=" + str(evidence / "native-execution.binpb"),
-        *targets,
-    ], "build", targets=targets, retain_outputs=True)
+        *names,
+    ], "test", targets=list(names))
     if result["status"] != "PASS":
-        raise RuntimeError("Official Ruby native gem build failed")
-    records = []
-    for arch in ("amd64", "arm64"):
-        for suffix in ("json", "tar"):
-            archive = Path(f"bazel-bin/test/rbe/ruby_official/gems_{arch}.{suffix}")
-            size = archive.stat().st_size
-            if size > 32 * 1024 * 1024:
-                raise ValueError(f"Native gem output exceeds the 32 MiB retention bound: {archive}: {size}")
-            destination = evidence / archive.name
-            shutil.copyfile(archive, destination)
-            records.append({
-                "target": "//test/rbe/ruby_official:gems_" + arch,
-                "output": str(archive),
-                "bytes": size,
-                "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
-            })
-    (evidence / "native-gems-record.json").write_text(json.dumps(records, indent=2) + "\n")
+        raise RuntimeError("Official Ruby HTTP/identity qualification failed")
+    attempts = result["executed"]
+    if len(attempts) != len(names) or {row["owner"]["label"] for row in attempts} != set(names):
+        raise ValueError("Actual Ruby owner set differs")
+    for row in attempts:
+        execution = row["execution_info"]
+        if (row["status"] != "PASSED" or row["cached_locally"] or execution.get("cachedRemotely", False)
+                or execution.get("strategy") != "remote" or (row["run"], row["shard"], row["attempt"]) != (1, 1, 1)
+                or (row["xml"]["passed"], row["xml"]["failed"], row["xml"]["skipped"]) != (1, 0, 0)):
+            raise ValueError("Expected one uncached remote positive case per owner")
+    directory = evidence / "invocation-ruby-official-http"
+    _, reports, errors = report.retained_reports(directory / "events.jsonl.manifest.json")
+    if errors:
+        raise ValueError(errors)
+    observed = {}
+    for (attempt, kind), path in reports.items():
+        if kind == "test.xml":
+            actual = ["/".join(filter(None, (case.get("classname"), case.get("name")))) for case in ET.parse(path).getroot().iter("testcase")]
+            if actual != [names[attempt.owner.label]] or attempt.owner.label in observed:
+                raise ValueError(f"Unexpected actual case: {attempt}: {actual}")
+            observed[attempt.owner.label] = {"case": actual[0], **report.file_record(path)}
+    if set(observed) != set(names):
+        raise ValueError("Missing original XML")
+    (evidence / "ruby-http-required-cases.json").write_text(json.dumps(observed, indent=2) + "\n")

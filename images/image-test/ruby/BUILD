@@ -23,13 +23,17 @@ image_layer(
 
 image_manifest(
     name = "ruby",
-    base = "@ruby_http_debian",
+    base = "@ruby_http_official",
     cmd = [
-        "/usr/bin/ruby3.3",
+        "/usr/local/bin/ruby",
         "/server.rb",
     ],
+    env = {
+        "GEM_HOME": "/opt/gems",
+        "GEM_PATH": "/opt/gems",
+    },
     layers = [
-        "@ruby_http_packages//:flat",
+        "//test/rbe/ruby_official:gems_tar",
         ":server_layer",
     ],
     tags = ["manual"],
@@ -46,12 +50,12 @@ arch_genrule(
     name = "qualification_ruby_archives",
     src = ":ruby_archive",
     template = "qualification_ruby_archive_%s.tar",
-    visibility = ["//test/rbe/ruby_distro:__pkg__"],
+    visibility = ["//test/rbe/ruby_official:__pkg__"],
 )
 
 arch_genrule(
     name = "qualification_ruby_contexts",
     src = ":ruby_context",
     template = "qualification_ruby_context_%s.tar",
-    visibility = ["//test/rbe/ruby_distro:__pkg__"],
+    visibility = ["//test/rbe/ruby_official:__pkg__"],
 )

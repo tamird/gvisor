@@ -1,0 +1,2026 @@
+[
+  {
+    "architecture": "amd64",
+    "manifest_sha256": "b2a0f4f8d2c02122da0b252c272558b75a7a29943ca33597dcc5744cba62c305",
+    "ruby_layer_sha256": "sha256:d96dcbed7df695c2e87d912c6f5efb26d351466a6d63cd0e4d8e48fdca5c9637",
+    "files": [
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/assert.h",
+        "bytes": 7732,
+        "sha256": "63db2b0b018544818bd5e951ce7880f75af9c2b6118f7092847cb2a689906bfa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/atomic.h",
+        "bytes": 28104,
+        "sha256": "555dfdc144ed7415d529d0fcf2f8c92d2e0cec1874a675b6d8cdebc96fd9ce11"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/assume.h",
+        "bytes": 2565,
+        "sha256": "89049221c7af4d87c385d4706787c1cb134af8aea4d1010328e35b92b08e36db"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/attributes.h",
+        "bytes": 5518,
+        "sha256": "edd5c87e43c8dce692b8b9bd54391649518f80d479cbc127c1fe6c747de90cb6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/bool.h",
+        "bytes": 1577,
+        "sha256": "b80b27251e0837040505ebdbedf5aec785fcfde6c8edfc052524767b014ab759"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/gcc_version_since.h",
+        "bytes": 1901,
+        "sha256": "a62f98ff628a5e5e89f7ea1d4edc25910d5d41fd9503da22ad9d134aae6b261f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/inttypes.h",
+        "bytes": 4134,
+        "sha256": "926b7589aa856c3265613d2b648e5f32d0f9da082047d0c9a0ffe6bfc810b74e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/limits.h",
+        "bytes": 3059,
+        "sha256": "2058c9b35ee04cfcadab29140a2bc9881eef51227c82b4921f88e437d50092cc"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/long_long.h",
+        "bytes": 3024,
+        "sha256": "15d68e2442e7af43b3e5f4e81612e3f8b99654e959f9d1018adb7c7de887c3c1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/r_cast.h",
+        "bytes": 1656,
+        "sha256": "4961d626b8ca6791ab53ab17896963508d2084829372a02ebfb2acfe2d091552"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/rmodule.h",
+        "bytes": 1945,
+        "sha256": "9c903733a81d10c95fa9d85661a261e9bef25e1a8e081cff45e32213409e3837"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/stdalign.h",
+        "bytes": 1623,
+        "sha256": "32c10f54bb26a98c8f842975178208853697bd325a67d8b3776be6652da1a781"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/stdarg.h",
+        "bytes": 2438,
+        "sha256": "fd395d56d552c003d986e0610f47f1423ecfa01ba231bf2385d9e3f1095af1c4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/cxxanyargs.hpp",
+        "bytes": 30765,
+        "sha256": "680bbcb4fed111b258a8adb82c8e76b02a660b0e601bb395978d5d29d99a5e4e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward.h",
+        "bytes": 1142,
+        "sha256": "5bd680425f6e7d89ea01534a6b5beb2b0baa7eb68961204725e4396462082d84"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/debug.h",
+        "bytes": 29987,
+        "sha256": "9b911f9ca9aa844c0bc40fbcc4249091dbbdd9fa77efbf62c0f92acf9663d566"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/defines.h",
+        "bytes": 2822,
+        "sha256": "c9e71e90218408bd1017ecab38fd9089fc3d719cf56853e6d79e8cd00e3120d9"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/digest.h",
+        "bytes": 1823,
+        "sha256": "f1e6e0b9839247fefdf31433277084b27e5289e7d2f7cb27db34d6fc1c1c4251"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/encoding.h",
+        "bytes": 1312,
+        "sha256": "c95693756923b9c21ce5b83397c9b751698c48a2c8b7051e0713677175ce14cd"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/fiber/scheduler.h",
+        "bytes": 15837,
+        "sha256": "0d4e92283223768584a0877afeac42a1d459cba27e0124e16a9593a275b8313f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/intern.h",
+        "bytes": 2357,
+        "sha256": "0e5d6de0371a3f4d5acbf28403de1a1beff5e37441486ed7ead6e866749e57a4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/abi.h",
+        "bytes": 1555,
+        "sha256": "4c3af13dc64ebef8f1beb863d09f09b19b7d41acdcb6010f3e44d1fc87c5d316"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/anyargs.h",
+        "bytes": 37255,
+        "sha256": "f02eef3c3fca6ed8e72657a14ddd2a79b3891352fb61c79332398c19b89f6667"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/char.h",
+        "bytes": 3371,
+        "sha256": "30fe1447215c0071cd1b6f6e03bd0bdcb9645d6fefa0389a8606f0e61772e312"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/double.h",
+        "bytes": 2806,
+        "sha256": "db205374759e5cd168f55964d47e8b18bb2ecdcb0f45c6b4ae1dbf41040a41c1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/fixnum.h",
+        "bytes": 2939,
+        "sha256": "2de3c7997ab8b1ebaf4021345100112948e53c262947ca96fe23fae1bbc8cc25"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/gid_t.h",
+        "bytes": 1886,
+        "sha256": "1a2b5e86121b403cc36866acb54cba1e39b16ac7fdd0c2d6c999c879cf78d8ab"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/int.h",
+        "bytes": 8242,
+        "sha256": "7ca910b301ce54adaf79385b5b14bb4cbf2942a499bb4e90b00d8cfcab6731b8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/intptr_t.h",
+        "bytes": 2833,
+        "sha256": "d307e73c8533991b3834fb3e993ca7dafdb8bf75882eabbf11fdfe691f8fb9c4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/long.h",
+        "bytes": 11451,
+        "sha256": "a2de3bc79df9eab6449b4d18093d4a0606107bb6511ba8e9f1f538d1360e0ff7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/long_long.h",
+        "bytes": 4915,
+        "sha256": "fcf8ea2e5382b5b2fca87ed127421980203dacccba09a06dcb8430100bcbbd7a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/mode_t.h",
+        "bytes": 1894,
+        "sha256": "29f5b839b866d27a8eb392dfe951c49b0e1f76f2970766aef342fea2c102bc65"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/off_t.h",
+        "bytes": 2500,
+        "sha256": "ed62205f984a20cbdcc8502e90b239a7889d2d87d9390e2c5a50ed88a91b7419"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/pid_t.h",
+        "bytes": 1886,
+        "sha256": "cb947aa7a1823527ac0a546d3d9a0771ecefbcb02c92a19a0a929e62d96c8099"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/short.h",
+        "bytes": 4435,
+        "sha256": "353925f6f1508deb74ca76d8246491849285420a2c235358bb70fed238d0e443"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/size_t.h",
+        "bytes": 2900,
+        "sha256": "14d23113d7995a94eeebdc9b8b9ff218bb188b9bcfa605459cc196cef3462e12"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/st_data_t.h",
+        "bytes": 2995,
+        "sha256": "7de110884a31680fb835587244d2d9ec88d39c8ad50234269d644db4817aed1c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/uid_t.h",
+        "bytes": 1886,
+        "sha256": "d5c142402c44f109b99a776d9d2138d2e35bbd81a053000e276c8f98b5a92ecb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic.h",
+        "bytes": 2117,
+        "sha256": "06fdf5758afddd2672ac78ca5442871652ce41a744d737a4832a78cae9a3b9f5"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/assume.h",
+        "bytes": 3245,
+        "sha256": "c063a72720e098330c1fa4d6eadd45d6851402ba1c2208a0372ae6611f39085b"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/alloc_size.h",
+        "bytes": 1680,
+        "sha256": "d265f53d8d08a8e5a952cbd4a3b2ab970e9e8b9e10c6c8a9e779b500572f88a8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/artificial.h",
+        "bytes": 2461,
+        "sha256": "703dd3f2db4028778e3e14037c85d0a41c5b26b3573ceb9d1c77e71975c7b322"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/cold.h",
+        "bytes": 1860,
+        "sha256": "158ad34ee6835cdc3512c93bdc63058d7d2983e5dde790fc28e6f3dcdec66b7e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/const.h",
+        "bytes": 2207,
+        "sha256": "dec07796c27ce71ebd8d0511195b1eb10bc551d43d97add0095c836b4db688bb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/constexpr.h",
+        "bytes": 3520,
+        "sha256": "7188adc90bb9e73ff77512dc184b80f640d6bfd9124439062f6a79371a2465f6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/deprecated.h",
+        "bytes": 3388,
+        "sha256": "e7467e4add1fb3524bc78c5ebfcc6d37ae2ea1c23950548826c8196a6f01cc71"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/diagnose_if.h",
+        "bytes": 2003,
+        "sha256": "5636727b5a573cd9442819e8c92b8a3952bfaaf746f380440673f47a6a875d99"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/enum_extensibility.h",
+        "bytes": 1725,
+        "sha256": "0ea20dab69d3bb91e4f3f3e0e8bd17f2c1dd4c64b8d4af3d86a5ad6516c88919"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/error.h",
+        "bytes": 1634,
+        "sha256": "c80decdc74eab7eddec7220464fcae5c0d3ad23c99e7b4f42280bdeaf9a1a14a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/flag_enum.h",
+        "bytes": 1731,
+        "sha256": "6a425e4ca6e3cd0dc9766a598973f66f239b9fd8bca30d305a06ff3f6a3ff400"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/forceinline.h",
+        "bytes": 2026,
+        "sha256": "ec4eb83ce7ec3ee3f2c6ef127d63809e7d590090eb2ec7e9e372e6d5eac39fb4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/format.h",
+        "bytes": 1797,
+        "sha256": "e12626b7aaa031c3fc657245cfa4c242d897d135db0b1c9e9494eae3459abed0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/maybe_unused.h",
+        "bytes": 1937,
+        "sha256": "bcb47f63377123c737f1382454b2f4f69a6c8bd8efaad02e326edbdb38b1f7be"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noalias.h",
+        "bytes": 3548,
+        "sha256": "83e580426a21479c9c60b7d3fb32168b7e433e9782b57e5907d350f7c32fd708"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/nodiscard.h",
+        "bytes": 2218,
+        "sha256": "f72adbd9e6550d957c0c3268da2234a84b31cb2d637fcbbc4116833b0402bed7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noexcept.h",
+        "bytes": 4270,
+        "sha256": "eaef258a4773043fc1ee3a66f0974c8a30c3d7a2ad22505b04622e48f9ce5fe2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noinline.h",
+        "bytes": 1792,
+        "sha256": "5884e6d0e60666729ad4718d3fe2f7c315cdb096b0f285e9049d01d106a51bdb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/nonnull.h",
+        "bytes": 1758,
+        "sha256": "0d87841a4c952b189f01cca133dad1ebca07676c1530c613b84b8292845fd14f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noreturn.h",
+        "bytes": 2137,
+        "sha256": "7c370445f98d3f7763367f867610e01718b15aa8837709dfa7ff64403928f35e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/packed_struct.h",
+        "bytes": 2119,
+        "sha256": "2f2839f0c35c264d6fea62aac40944f0d5ec52636a33b5edfcac49c50e727994"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/pure.h",
+        "bytes": 2001,
+        "sha256": "c9e3d48a12b8cbb1788e04ff5df23d93954b435b2077dd297cc24cd8700d30bb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/restrict.h",
+        "bytes": 2124,
+        "sha256": "ce4d7128b1d505873ef99ce5cc8fc037575a2d5a97f98f4d75b9e429aced7758"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/returns_nonnull.h",
+        "bytes": 1817,
+        "sha256": "ec3de3643c2d5c784062d16fbb352c3b402dac028cf2ad7241fb88f0516a93bb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/warning.h",
+        "bytes": 1650,
+        "sha256": "67fe3a5f3b10aece33e8fa3f01612bf79d1d12de028c8a1209a91abb7a39f793"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/weakref.h",
+        "bytes": 1653,
+        "sha256": "b9eb39590e8b0c9775da94dc8ed161bb2ee2fee3b9437bc4fb61fb607a154224"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/cast.h",
+        "bytes": 2330,
+        "sha256": "5763f41df7e78876de1b017614b2df42e54c066ad7ec986b7e24b06a783157ba"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/apple.h",
+        "bytes": 2010,
+        "sha256": "cadd1dcb919f3b0657c940342746cbfd99868dcc078b331627bbd8f7444c0998"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/clang.h",
+        "bytes": 1795,
+        "sha256": "4bc9c512b4a3d4ec0fa6a8b2b332521728b9fa84a6b9ba88286818b5d753d439"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/gcc.h",
+        "bytes": 1997,
+        "sha256": "10b3314ce6e4619f8b7d90987f692cd153e2e805c57c62978b1104b95b66f75a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/intel.h",
+        "bytes": 2057,
+        "sha256": "b9bee7e9de440ca09ad0da70798af0f8dbb253071e0406064cbe96ee4a568a51"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/msvc.h",
+        "bytes": 2526,
+        "sha256": "a953d7fbede0359669bf13c7c816c1a5b63e96b4c1eed4f22d900cf42982eba2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/sunpro.h",
+        "bytes": 2707,
+        "sha256": "51ef27ad4e4af2ddae991f4734082ca3574df759329b24048790d245cc7ddaa2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is.h",
+        "bytes": 2105,
+        "sha256": "33db323861bf5ae2daf58bc480e995e4c0c67dfa2916c7ec6dcd6d6df94635e0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_since.h",
+        "bytes": 2783,
+        "sha256": "e51e4b276c9f055506959323c4336410cfd57218868ba88c7daa10cf3ed1ea7a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/config.h",
+        "bytes": 4889,
+        "sha256": "ae93b63dcfb15130072516947f9af20bf7f1458584393d335a4b2d0df55cc069"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/constant_p.h",
+        "bytes": 1895,
+        "sha256": "4f3d040a8145c897c7701e538809f311cc445ed08ac072d4fcb411abefe8179a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rarray.h",
+        "bytes": 13540,
+        "sha256": "8357d9dd8b68d825383d17625cd382eff4829e765113862d891325b1cccde018"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rbasic.h",
+        "bytes": 5431,
+        "sha256": "34229f4e3f7a54868dea8da8904c72bdac94b16fc625b7ead5acdc0925fd8ae1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rbignum.h",
+        "bytes": 2949,
+        "sha256": "a4631bd6b2450321c91fe32f23499938cbe9be2e2f59fa8ba5e874a7f3215a67"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rclass.h",
+        "bytes": 3534,
+        "sha256": "c6f0c69fbe8c5527bfe6b22d69008b9b5be7570b1f04bd671b8f17b76314507a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rdata.h",
+        "bytes": 14201,
+        "sha256": "2077a34c067091d4a68b03888221f9ae56c3c1cf028509fccfb87589d12673a7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rfile.h",
+        "bytes": 2134,
+        "sha256": "fa98e4fc1deb7d372fc4316ad5e69a53c63e3804acc9f3cf80edd8195a075c37"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rhash.h",
+        "bytes": 4536,
+        "sha256": "a95f33123b7a59add2d89892d80818abee853948f7f24913bd035b9db3dde5c4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rmatch.h",
+        "bytes": 5442,
+        "sha256": "2e4fa885b0b5416a21d77e1affa28285bfb19a325de4c919a8eecd51d87dc903"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/robject.h",
+        "bytes": 5156,
+        "sha256": "0143b1aae467990c9c9d609e32cbcfa40bee41d21d0175377d01fd0ca0048b1c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rregexp.h",
+        "bytes": 5634,
+        "sha256": "131d4bcd47e8d8be9ce28d22e6d266569540c00b7dbf2ae7ff17d59ac81b73a4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rstring.h",
+        "bytes": 17023,
+        "sha256": "8efd26e1898669544be7013f12ba71c42d78f5ac0ab1b65d2f5a4d576ffcd0af"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rstruct.h",
+        "bytes": 4203,
+        "sha256": "b1caf3c74045c451f9cb8b4f9900c48042c376282714b290d440deb2467de2e0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rtypeddata.h",
+        "bytes": 23337,
+        "sha256": "ff1ad2896871d9fcfc97c67bd5a0d7915cf19a257c88cc3e6b2c8816090b407f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core.h",
+        "bytes": 1874,
+        "sha256": "a9404fc6d41eb46238602f81a012726ab41ca68f247d237b3f6cb77d10294070"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/ctype.h",
+        "bytes": 23097,
+        "sha256": "e9449743df6ac01e8edda7900d7bab41a9e9b672dd31f1e41ac1e9e98c2c57f7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/dllexport.h",
+        "bytes": 3118,
+        "sha256": "7e01c395b156f64702bd1c68043d0f2ce0de95b2bec2d6ae8072d867f7f36287"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/dosish.h",
+        "bytes": 3240,
+        "sha256": "3f3bd2fe027f2f3fa792682bade93f88ae209f8f7f51f58c0ccfb0d61797578e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/coderange.h",
+        "bytes": 8078,
+        "sha256": "ef6dd32cf33267591ac6d35757b18ef86ebd009fd98c807a9df87a27a3a7d556"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/ctype.h",
+        "bytes": 8023,
+        "sha256": "d990dcae8e394c2133f34231e8deeab3c3d96cac520ca00c62064b400a91c158"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/encoding.h",
+        "bytes": 36702,
+        "sha256": "c86ce1cace80a85f012fe38db8fa1a9382b4bf88b3d8dde6cf79db6307b8edcb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/pathname.h",
+        "bytes": 6928,
+        "sha256": "5163d755ed8022449ccf43643639f08c017c9794a1d6c4ce71f4b274c7bd1fe4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/re.h",
+        "bytes": 2286,
+        "sha256": "07c7f409aa73af90e2ba793f095e0c6b3dd0a17cbfc4445ac87c6f2a5dc9ccf8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/sprintf.h",
+        "bytes": 3456,
+        "sha256": "2a057e06c7960f46dd585815fa2846dd38f2acca6f3a1cebdee34afd34b09dbd"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/string.h",
+        "bytes": 15609,
+        "sha256": "eeee41cea87dbd1d69c4f771ed9981395f1c91058c540d2ae86e472d24be1cac"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/symbol.h",
+        "bytes": 4520,
+        "sha256": "f92f205ff4b6ac6b778ecd71efbd9d491e7277116b2a36f3252835ff8c9aa9c8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/transcode.h",
+        "bytes": 25725,
+        "sha256": "f893e7b1a8b66fb8c2f54ef77f28cc07abbd154224d8b6b406406f72c0b834ed"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/error.h",
+        "bytes": 21270,
+        "sha256": "796a18769d6eb6f86e77789cf2337c2c7ae70507f4dd01dd8b7955f0248528df"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/eval.h",
+        "bytes": 18637,
+        "sha256": "137840c12674b64e632b5d78224182f140535a68af24f0178b6536f09f100218"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/event.h",
+        "bytes": 6358,
+        "sha256": "5421b4983a6399688c716b68b102fa5f2041f02cbee8658ec10228beceb5e519"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/fl_type.h",
+        "bytes": 33348,
+        "sha256": "5d98ad5a08c26ac42004f5df2e4a32e6c53ae3e276d34991c160f3d40da93414"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/gc.h",
+        "bytes": 29338,
+        "sha256": "1d5da4b8500c8ec27452ae735a6f27cb24c846f25b8633d9a3f8f33ef8a13afe"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/glob.h",
+        "bytes": 5102,
+        "sha256": "54004fc7fbf360ca82d69f7ac72592a433827b0b8f33a50ab5b51bb7c1c1f658"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/globals.h",
+        "bytes": 10008,
+        "sha256": "bd0497b595908d98fb97872d77b8eb69be5957f114e5be5f57987f0080a47d47"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/attribute.h",
+        "bytes": 8520,
+        "sha256": "90e2d24a2c5f51b31138cd1b283da00699a72161a95a77d0886dff9766c9362a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/builtin.h",
+        "bytes": 7282,
+        "sha256": "d6cbd662a6fbc19102f739aeede90e8ca089750da83c39ea02b4cfa750de8306"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/c_attribute.h",
+        "bytes": 2288,
+        "sha256": "33e8148ee9acf3bf892536caad70a171fe90480b8619394e979ff6c2c66a5a04"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/cpp_attribute.h",
+        "bytes": 4545,
+        "sha256": "8bdd91b183bd15beac3f68bd59aefa3f6b7cc2e9322fc765e6829ef34fe1a9f5"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/declspec_attribute.h",
+        "bytes": 2809,
+        "sha256": "0b5193d3ff80838a49dca68ebe004877d7908d65b14f1087021d7ebd76b69e25"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/extension.h",
+        "bytes": 1698,
+        "sha256": "06596cd9aa6cd062c922a3045992117a315292e4c3876b7aaeca2cc4aa8112ed"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/feature.h",
+        "bytes": 1558,
+        "sha256": "045e295f62df1655953f6f5655659b4a8def717f6270623d66112f84dcc940b2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/warning.h",
+        "bytes": 1558,
+        "sha256": "12c2d916fd118666a444e6d4a7934fad6ec2de3d2c69cd7d1bc86709b3ea5101"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/array.h",
+        "bytes": 25755,
+        "sha256": "15c691082e1ae52a4f77f77b5321805799719233f7128a1c11641c35f6567b70"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/bignum.h",
+        "bytes": 30764,
+        "sha256": "425abcd9b6d1d7a75a69a937894559a0fe95a64e7d83a9a0fe7a1d4f638809fa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/class.h",
+        "bytes": 16051,
+        "sha256": "6f0ae027d016204b7e583d6eedf1a426abc140463e83aab9f09d55575a4f1e3e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/compar.h",
+        "bytes": 2573,
+        "sha256": "e5f70ab16e699ff4c81c0f9e2b8c3e46da809aed44f255918ac92fb57e6ca786"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/complex.h",
+        "bytes": 8406,
+        "sha256": "8a695e3167404b8426cc161059cdaaa6986d1fb7edb265de8b9a9c2350fa28b0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/cont.h",
+        "bytes": 11701,
+        "sha256": "597f7eaa42905763d2c9fa81f932e626a8f5e285cde9eb101a33a628ba7f47de"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/dir.h",
+        "bytes": 1942,
+        "sha256": "8cee9f3c351b2bf19d4529089c14720f9bdad4ee5c38f15d5cba1820b452d3cd"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/enum.h",
+        "bytes": 2891,
+        "sha256": "fdf7122ac808c1d750cd9e6b0c36e392da510f761da4c7be6e11189933380e27"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/enumerator.h",
+        "bytes": 12422,
+        "sha256": "1ca41bf6ac4f4fb42db781ea2fbc2bb3f8b3c2edf212bf50ae4494c084ac3f9d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/error.h",
+        "bytes": 9821,
+        "sha256": "78c636a5650c35141bb9b17e38774ede3956073d10b947f20742c283015e4c3d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/eval.h",
+        "bytes": 8696,
+        "sha256": "aeae01a0707d9c73f52620f07de80f44639560671dcc32daf37a010428c94f16"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/file.h",
+        "bytes": 9598,
+        "sha256": "90c0a3660b1be578e8da7a1695813cf191a3d38bc0e38765b453a4e981baf464"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/hash.h",
+        "bytes": 11896,
+        "sha256": "5b06cf67f698a4929d8a403511346a010e099b0c141e5e3ce5f6957434968185"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/io.h",
+        "bytes": 26868,
+        "sha256": "6786aa4636fa61675c58ad61b2bbed1cd8f8b33aa821a319d1f261cd77991dd6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/load.h",
+        "bytes": 10670,
+        "sha256": "57a3e4ad58819dcc67dc62af4d8547b1bb209c3a1260514eed487783862870b4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/marshal.h",
+        "bytes": 5578,
+        "sha256": "ae5a4b0e965f71c8af8206bce25df4e742bcf123e2b9bfa56a4f0c31c965751d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/numeric.h",
+        "bytes": 7672,
+        "sha256": "dcc09b7b11e8044440fb131ad704c067420bf30236aa3ee8ec5537005744d2f6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/object.h",
+        "bytes": 19585,
+        "sha256": "fb7582589f70913f06ef5824f1310aba59924161e8cc2ce75456d4db6eeab62e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/parse.h",
+        "bytes": 6326,
+        "sha256": "065be0d9f074d333ce62c24ece465e5744c01435b3a543b7e68d983b8f428216"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/proc.h",
+        "bytes": 13860,
+        "sha256": "456a0d65cc850c3ce951fb0202f5dce122125bfaa9e1592d541d682d82ee7959"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/process.h",
+        "bytes": 11569,
+        "sha256": "431da933ff7edb1a073f89223362d993cdf4be4ac0f8773623250149fef47244"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/random.h",
+        "bytes": 4400,
+        "sha256": "d398e1c8196326dfaa4e2fe08ad01cbe695e13679bc1b82c50821179c6cd25f9"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/range.h",
+        "bytes": 4071,
+        "sha256": "0c92416cd58a2e80e3d143fee5065695bfb5ed9737edec1f337555543321d08e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/rational.h",
+        "bytes": 6491,
+        "sha256": "dea07760b727a29095b4333c19cbe28ac5feba0a68222d51c26f2fe4b7d20863"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/re.h",
+        "bytes": 8728,
+        "sha256": "0986ccd7ca8e69a20cd3dac76ce875c5ffff771c109e547b500051fa15da13dc"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/ruby.h",
+        "bytes": 2848,
+        "sha256": "96ffec59f219726e9ce770f552f732b8c231b864693e9334de7d109cd915c2b7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/select/largesize.h",
+        "bytes": 7144,
+        "sha256": "1a5daec7e4fe20da42ca5afea268f0d8d6eebbb6f257043488b658a8bf97f73f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/select/posix.h",
+        "bytes": 4317,
+        "sha256": "3ef7596626abe660173c4219df7ae52980a9ee06d24457ba765bd2093885f395"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/select.h",
+        "bytes": 3946,
+        "sha256": "a61da6ae09d2c74880e3fb20c307f4699c83311d47649c26a2fbc725fdee7fc8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/signal.h",
+        "bytes": 6547,
+        "sha256": "4e4febcdfc9ad0207d81f9c01bb5925f53b4d0170df5be5c8821ba65c090a4fb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/sprintf.h",
+        "bytes": 6468,
+        "sha256": "4a18eb949ace72cdd3f1c1620e7da807534eaad47ed07298fcc9f9f437c9e63d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/string.h",
+        "bytes": 68985,
+        "sha256": "7a5af1ae3cd6d4dbc4a90f711239e0e25715950a001972c5e26080510a67a7fa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/struct.h",
+        "bytes": 8946,
+        "sha256": "9082cc6caed7968d88130582f078d5e70688a536caf0d57fee397e4940bfc563"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/thread.h",
+        "bytes": 18460,
+        "sha256": "0114f5a4f7fd544f2be58a020f7b05792bf46929dd8df5bfe1895b80f881cbe9"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/time.h",
+        "bytes": 6486,
+        "sha256": "4b2ae5abc81dceed835ae9d12a39de5acb161490ca5619a001b40304a8579156"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/variable.h",
+        "bytes": 21308,
+        "sha256": "60051eba9864cb94bea38ad01ade8df8c94f4b3865320a3a80568bd12ba56516"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/vm.h",
+        "bytes": 16872,
+        "sha256": "7ea99c8fa664a80dc99f710e6691b5c52e3864b935b2ccf4d2cfdc71c7c3d51e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/interpreter.h",
+        "bytes": 9683,
+        "sha256": "40f180451d0c1a544fb21bdeef4e6230511a26284888da6bfa0beb7a4ef48a61"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/iterator.h",
+        "bytes": 18627,
+        "sha256": "565a801ee3e445495ad3e86bbbed98d12792d38c81e577283d97021c8a6066ff"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/memory.h",
+        "bytes": 23595,
+        "sha256": "b7279da2ecdad9023698518b5ad45cadf15e57eb84b2b5243a7786e2e363002c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/method.h",
+        "bytes": 7249,
+        "sha256": "cd187ed3be2c722b0cea47677097138556cfed8d8bccca06a53513d58c6d9f01"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/module.h",
+        "bytes": 7235,
+        "sha256": "ae5bf1a502482b3868bbe8b82297510d5eb1b5da897e7dec2b65ecacbb699570"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/newobj.h",
+        "bytes": 7894,
+        "sha256": "89fb8a3583e3ebe1967a0c4f8eaf8e160f34a8b5abd699ab9f11a35a6afbd6a7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/scan_args.h",
+        "bytes": 18921,
+        "sha256": "7689e8a9304781d8376052c185997eb61768908192725eb8889294effac85212"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/special_consts.h",
+        "bytes": 12183,
+        "sha256": "979ab6b5d750a8671883d1bbf3a81a9f9b7c22232cf5dca121e07ac6fd35beb4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/static_assert.h",
+        "bytes": 3215,
+        "sha256": "09e87464674948bb5ba0ec01908a713bacc73898acdd784fb55297683bbbf551"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/stdalign.h",
+        "bytes": 4693,
+        "sha256": "0498fd31b954a4fe361eda85b6c85ad2bfb5f84db3348dc2a886bcf4d90d9773"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/stdbool.h",
+        "bytes": 2055,
+        "sha256": "acfae92d408a30e402f138dabd44e402f071a4bf2d6797465a782cabbfd31e7d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/symbol.h",
+        "bytes": 13082,
+        "sha256": "ae337f8a3202f0850b90829c139b1907991f8a9dc57b9add7b1bc19c8e2eba62"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/value.h",
+        "bytes": 4360,
+        "sha256": "8063e3f2306d5b910452450a2f7df68faef8f56d518c64029477d6642b14dd5e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/value_type.h",
+        "bytes": 14457,
+        "sha256": "a4176bafd3aaec73f77e887b7d313bf7e105c26d0e0b15504fc917d72075b68d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/variable.h",
+        "bytes": 12091,
+        "sha256": "4ba29a7e1ed428df28b0571efc204fc60d767a4ba3ceff9446ebf7ff966b1f5c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/warning_push.h",
+        "bytes": 5028,
+        "sha256": "4a88662a88568bca08da769e68a0cf399263416490cdd6624ef2181a65feda9c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/xmalloc.h",
+        "bytes": 17485,
+        "sha256": "20a84bf716b36ea7eecf8def1e8f34193e225f394449ae6028995fc8a4eb3903"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/io/buffer.h",
+        "bytes": 4068,
+        "sha256": "68a56c4452a176a89a2c2f68ebf05c2aec6b0ff634be668e15e2c6e62854efe8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/io.h",
+        "bytes": 37330,
+        "sha256": "949e6284f3f7d670dd3c7b6407b9770e924de29d758678b7d1d4a371a63646d1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/memory_view.h",
+        "bytes": 11038,
+        "sha256": "cd9895db40dde9e7afa215cb586678676f71043e991b15fd8a7d58fd0d122ffa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/missing.h",
+        "bytes": 6833,
+        "sha256": "098b9e93a5ffd21d41897a7000fa9f6d76ec8cbd96fb6e4cd44ef90a9c6a3a83"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/onigmo.h",
+        "bytes": 44951,
+        "sha256": "e00264947e29b44fd77f303a718bc1b52bc0c4ba519a556dadcd11a00e7039ef"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/oniguruma.h",
+        "bytes": 262,
+        "sha256": "38686a1351e873bf3f9cddf936fca35e5ea086c4dacdf0de4c9cf860486ee513"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/ractor.h",
+        "bytes": 8922,
+        "sha256": "e8d777561ccc6327319a520071cf67cf5700b640ba4e23cffcf638ac0bb591e7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/random.h",
+        "bytes": 11782,
+        "sha256": "0647c758f617a45e3f51fb57ad5c649e2c0505e4bd53c85c18bb9bac87de9d38"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/re.h",
+        "bytes": 6802,
+        "sha256": "34d9262ba050d682fbc8e6f1c410ca82ba82a08879e10d90c360b40939870554"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/regex.h",
+        "bytes": 1011,
+        "sha256": "0017247f2638f5203a61a0c8de21dfc2361caea48979c9c3474351be62f03ed4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/ruby.h",
+        "bytes": 15096,
+        "sha256": "03997421eaae253a91a7383a3d15869937ee508aa67d2eb6bab79c4fd100f21e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/st.h",
+        "bytes": 7942,
+        "sha256": "85e04fb74a3fc5a347aba426fbac3b01cd13743c8abbcda0d9c8e07b185fa10d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/subst.h",
+        "bytes": 806,
+        "sha256": "99c200ae82cf0db697ba84a47547084963a0a3408e2a935a13681575b537f6af"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/thread.h",
+        "bytes": 11544,
+        "sha256": "d76b1d2694c566cf4ac4af5182011f5661c09b5ee6cc985ed69247b27ce95ea5"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/thread_native.h",
+        "bytes": 6834,
+        "sha256": "d694b4868fbb79f60cee9506065a9ea0b19520bc3c9ad615112580b594509673"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/util.h",
+        "bytes": 8777,
+        "sha256": "fe18f0c9b600c8da72a8087ba1189d3c9d7456061262f9f858bd554b4629e155"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/version.h",
+        "bytes": 4875,
+        "sha256": "fa6e242a0e76bb8abf8a8afcc0b5e42099224f54d0e5a67db3b83f7ce5a8891a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/vm.h",
+        "bytes": 2134,
+        "sha256": "1020bcddfb57a2ed62b74f42a0e952622a0a5f824a896ec638b7ad4fd48ece87"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby.h",
+        "bytes": 1379,
+        "sha256": "04af8803affdcd5301e83d49078f64b10eb263823198913a6d7cd949a632d0a0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/x86_64-linux/ruby/config.h",
+        "bytes": 14764,
+        "sha256": "7c3f1ade4be2a5869bb8043767c4d20fdda5e9b994f34952673f2f24251a21f7"
+      },
+      {
+        "path": "usr/local/lib/libruby.so",
+        "link": "libruby.so.3.3.5",
+        "type": "symlink"
+      },
+      {
+        "path": "usr/local/lib/libruby.so.3.3",
+        "link": "libruby.so.3.3.5",
+        "type": "symlink"
+      },
+      {
+        "path": "usr/local/lib/libruby.so.3.3.5",
+        "bytes": 18676888,
+        "sha256": "7702b3f811373ba7313c3e9a8808fa17bab2d999b1e8672b6148a90dd41a00b5"
+      },
+      {
+        "path": "usr/local/lib/ruby/3.3.0/x86_64-linux/rbconfig.rb",
+        "bytes": 14136,
+        "sha256": "5ca30c1b285f06a8ca45625ae43b07b32ccf492c31ab2799669ecc0c8cc14ca7"
+      }
+    ],
+    "ruby_libraries": [
+      {
+        "path": "usr/local/lib/libruby.so.3.3.5",
+        "bytes": 18676888,
+        "sha256": "7702b3f811373ba7313c3e9a8808fa17bab2d999b1e8672b6148a90dd41a00b5",
+        "elf": [
+          "Machine:                           Advanced Micro Devices X86-64",
+          "0x0000000000000001 (NEEDED)       Shared library: [libz.so.1]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libgmp.so.10]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libcrypt.so.1]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libm.so.6]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libgcc_s.so.1]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc.so.6]",
+          "0x0000000000000001 (NEEDED)       Shared library: [ld-linux-x86-64.so.2]",
+          "0x000000000000000e (SONAME)       Library soname: [libruby.so.3.3]"
+        ]
+      }
+    ],
+    "rbconfig": [
+      "CONFIG[\"RUBY_SO_NAME\"] = \"$(RUBY_BASE_NAME)\"",
+      "CONFIG[\"rubyarchhdrdir\"] = \"$(rubyhdrdir)/$(arch)\"",
+      "CONFIG[\"rubyhdrdir\"] = \"$(includedir)/$(RUBY_VERSION_NAME)\"",
+      "CONFIG[\"configure_args\"] = \" '--build=x86_64-linux-gnu' '--disable-install-doc' '--enable-shared' '--enable-yjit' 'build_alias=x86_64-linux-gnu'\"",
+      "CONFIG[\"arch\"] = \"x86_64-linux\"",
+      "CONFIG[\"LIBRUBY_SO\"] = \"lib$(RUBY_SO_NAME).$(SOEXT).$(RUBY_PROGRAM_VERSION)\"",
+      "CONFIG[\"LDSHARED\"] = \"$(CC) -shared\"",
+      "CONFIG[\"CXX\"] = \"g++\"",
+      "CONFIG[\"CC\"] = \"gcc\"",
+      "CONFIG[\"libdir\"] = \"$(exec_prefix)/lib\""
+    ]
+  },
+  {
+    "architecture": "arm64",
+    "manifest_sha256": "9b49dd3f66ec99f1b7b45195e7624a6705cae6b29c4ed94c8028f723f6175a04",
+    "ruby_layer_sha256": "sha256:fb997acfe815eb1132f421888044a1897d13d34efdfc216376a552bd23425e62",
+    "files": [
+      {
+        "path": "usr/local/include/ruby-3.3.0/aarch64-linux/ruby/config.h",
+        "bytes": 14708,
+        "sha256": "9e7835368142a3fbd11a14d2e94a28651eadbd79bb49e5efd383b053f72283f6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/assert.h",
+        "bytes": 7732,
+        "sha256": "63db2b0b018544818bd5e951ce7880f75af9c2b6118f7092847cb2a689906bfa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/atomic.h",
+        "bytes": 28104,
+        "sha256": "555dfdc144ed7415d529d0fcf2f8c92d2e0cec1874a675b6d8cdebc96fd9ce11"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/assume.h",
+        "bytes": 2565,
+        "sha256": "89049221c7af4d87c385d4706787c1cb134af8aea4d1010328e35b92b08e36db"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/attributes.h",
+        "bytes": 5518,
+        "sha256": "edd5c87e43c8dce692b8b9bd54391649518f80d479cbc127c1fe6c747de90cb6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/bool.h",
+        "bytes": 1577,
+        "sha256": "b80b27251e0837040505ebdbedf5aec785fcfde6c8edfc052524767b014ab759"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/gcc_version_since.h",
+        "bytes": 1901,
+        "sha256": "a62f98ff628a5e5e89f7ea1d4edc25910d5d41fd9503da22ad9d134aae6b261f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/inttypes.h",
+        "bytes": 4134,
+        "sha256": "926b7589aa856c3265613d2b648e5f32d0f9da082047d0c9a0ffe6bfc810b74e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/limits.h",
+        "bytes": 3059,
+        "sha256": "2058c9b35ee04cfcadab29140a2bc9881eef51227c82b4921f88e437d50092cc"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/long_long.h",
+        "bytes": 3024,
+        "sha256": "15d68e2442e7af43b3e5f4e81612e3f8b99654e959f9d1018adb7c7de887c3c1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/r_cast.h",
+        "bytes": 1656,
+        "sha256": "4961d626b8ca6791ab53ab17896963508d2084829372a02ebfb2acfe2d091552"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/rmodule.h",
+        "bytes": 1945,
+        "sha256": "9c903733a81d10c95fa9d85661a261e9bef25e1a8e081cff45e32213409e3837"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/stdalign.h",
+        "bytes": 1623,
+        "sha256": "32c10f54bb26a98c8f842975178208853697bd325a67d8b3776be6652da1a781"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/2/stdarg.h",
+        "bytes": 2438,
+        "sha256": "fd395d56d552c003d986e0610f47f1423ecfa01ba231bf2385d9e3f1095af1c4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward/cxxanyargs.hpp",
+        "bytes": 30765,
+        "sha256": "680bbcb4fed111b258a8adb82c8e76b02a660b0e601bb395978d5d29d99a5e4e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/backward.h",
+        "bytes": 1142,
+        "sha256": "5bd680425f6e7d89ea01534a6b5beb2b0baa7eb68961204725e4396462082d84"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/debug.h",
+        "bytes": 29987,
+        "sha256": "9b911f9ca9aa844c0bc40fbcc4249091dbbdd9fa77efbf62c0f92acf9663d566"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/defines.h",
+        "bytes": 2822,
+        "sha256": "c9e71e90218408bd1017ecab38fd9089fc3d719cf56853e6d79e8cd00e3120d9"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/digest.h",
+        "bytes": 1823,
+        "sha256": "f1e6e0b9839247fefdf31433277084b27e5289e7d2f7cb27db34d6fc1c1c4251"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/encoding.h",
+        "bytes": 1312,
+        "sha256": "c95693756923b9c21ce5b83397c9b751698c48a2c8b7051e0713677175ce14cd"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/fiber/scheduler.h",
+        "bytes": 15837,
+        "sha256": "0d4e92283223768584a0877afeac42a1d459cba27e0124e16a9593a275b8313f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/intern.h",
+        "bytes": 2357,
+        "sha256": "0e5d6de0371a3f4d5acbf28403de1a1beff5e37441486ed7ead6e866749e57a4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/abi.h",
+        "bytes": 1555,
+        "sha256": "4c3af13dc64ebef8f1beb863d09f09b19b7d41acdcb6010f3e44d1fc87c5d316"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/anyargs.h",
+        "bytes": 37255,
+        "sha256": "f02eef3c3fca6ed8e72657a14ddd2a79b3891352fb61c79332398c19b89f6667"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/char.h",
+        "bytes": 3371,
+        "sha256": "30fe1447215c0071cd1b6f6e03bd0bdcb9645d6fefa0389a8606f0e61772e312"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/double.h",
+        "bytes": 2806,
+        "sha256": "db205374759e5cd168f55964d47e8b18bb2ecdcb0f45c6b4ae1dbf41040a41c1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/fixnum.h",
+        "bytes": 2939,
+        "sha256": "2de3c7997ab8b1ebaf4021345100112948e53c262947ca96fe23fae1bbc8cc25"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/gid_t.h",
+        "bytes": 1886,
+        "sha256": "1a2b5e86121b403cc36866acb54cba1e39b16ac7fdd0c2d6c999c879cf78d8ab"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/int.h",
+        "bytes": 8242,
+        "sha256": "7ca910b301ce54adaf79385b5b14bb4cbf2942a499bb4e90b00d8cfcab6731b8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/intptr_t.h",
+        "bytes": 2833,
+        "sha256": "d307e73c8533991b3834fb3e993ca7dafdb8bf75882eabbf11fdfe691f8fb9c4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/long.h",
+        "bytes": 11451,
+        "sha256": "a2de3bc79df9eab6449b4d18093d4a0606107bb6511ba8e9f1f538d1360e0ff7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/long_long.h",
+        "bytes": 4915,
+        "sha256": "fcf8ea2e5382b5b2fca87ed127421980203dacccba09a06dcb8430100bcbbd7a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/mode_t.h",
+        "bytes": 1894,
+        "sha256": "29f5b839b866d27a8eb392dfe951c49b0e1f76f2970766aef342fea2c102bc65"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/off_t.h",
+        "bytes": 2500,
+        "sha256": "ed62205f984a20cbdcc8502e90b239a7889d2d87d9390e2c5a50ed88a91b7419"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/pid_t.h",
+        "bytes": 1886,
+        "sha256": "cb947aa7a1823527ac0a546d3d9a0771ecefbcb02c92a19a0a929e62d96c8099"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/short.h",
+        "bytes": 4435,
+        "sha256": "353925f6f1508deb74ca76d8246491849285420a2c235358bb70fed238d0e443"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/size_t.h",
+        "bytes": 2900,
+        "sha256": "14d23113d7995a94eeebdc9b8b9ff218bb188b9bcfa605459cc196cef3462e12"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/st_data_t.h",
+        "bytes": 2995,
+        "sha256": "7de110884a31680fb835587244d2d9ec88d39c8ad50234269d644db4817aed1c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic/uid_t.h",
+        "bytes": 1886,
+        "sha256": "d5c142402c44f109b99a776d9d2138d2e35bbd81a053000e276c8f98b5a92ecb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/arithmetic.h",
+        "bytes": 2117,
+        "sha256": "06fdf5758afddd2672ac78ca5442871652ce41a744d737a4832a78cae9a3b9f5"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/assume.h",
+        "bytes": 3245,
+        "sha256": "c063a72720e098330c1fa4d6eadd45d6851402ba1c2208a0372ae6611f39085b"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/alloc_size.h",
+        "bytes": 1680,
+        "sha256": "d265f53d8d08a8e5a952cbd4a3b2ab970e9e8b9e10c6c8a9e779b500572f88a8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/artificial.h",
+        "bytes": 2461,
+        "sha256": "703dd3f2db4028778e3e14037c85d0a41c5b26b3573ceb9d1c77e71975c7b322"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/cold.h",
+        "bytes": 1860,
+        "sha256": "158ad34ee6835cdc3512c93bdc63058d7d2983e5dde790fc28e6f3dcdec66b7e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/const.h",
+        "bytes": 2207,
+        "sha256": "dec07796c27ce71ebd8d0511195b1eb10bc551d43d97add0095c836b4db688bb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/constexpr.h",
+        "bytes": 3520,
+        "sha256": "7188adc90bb9e73ff77512dc184b80f640d6bfd9124439062f6a79371a2465f6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/deprecated.h",
+        "bytes": 3388,
+        "sha256": "e7467e4add1fb3524bc78c5ebfcc6d37ae2ea1c23950548826c8196a6f01cc71"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/diagnose_if.h",
+        "bytes": 2003,
+        "sha256": "5636727b5a573cd9442819e8c92b8a3952bfaaf746f380440673f47a6a875d99"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/enum_extensibility.h",
+        "bytes": 1725,
+        "sha256": "0ea20dab69d3bb91e4f3f3e0e8bd17f2c1dd4c64b8d4af3d86a5ad6516c88919"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/error.h",
+        "bytes": 1634,
+        "sha256": "c80decdc74eab7eddec7220464fcae5c0d3ad23c99e7b4f42280bdeaf9a1a14a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/flag_enum.h",
+        "bytes": 1731,
+        "sha256": "6a425e4ca6e3cd0dc9766a598973f66f239b9fd8bca30d305a06ff3f6a3ff400"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/forceinline.h",
+        "bytes": 2026,
+        "sha256": "ec4eb83ce7ec3ee3f2c6ef127d63809e7d590090eb2ec7e9e372e6d5eac39fb4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/format.h",
+        "bytes": 1797,
+        "sha256": "e12626b7aaa031c3fc657245cfa4c242d897d135db0b1c9e9494eae3459abed0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/maybe_unused.h",
+        "bytes": 1937,
+        "sha256": "bcb47f63377123c737f1382454b2f4f69a6c8bd8efaad02e326edbdb38b1f7be"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noalias.h",
+        "bytes": 3548,
+        "sha256": "83e580426a21479c9c60b7d3fb32168b7e433e9782b57e5907d350f7c32fd708"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/nodiscard.h",
+        "bytes": 2218,
+        "sha256": "f72adbd9e6550d957c0c3268da2234a84b31cb2d637fcbbc4116833b0402bed7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noexcept.h",
+        "bytes": 4270,
+        "sha256": "eaef258a4773043fc1ee3a66f0974c8a30c3d7a2ad22505b04622e48f9ce5fe2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noinline.h",
+        "bytes": 1792,
+        "sha256": "5884e6d0e60666729ad4718d3fe2f7c315cdb096b0f285e9049d01d106a51bdb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/nonnull.h",
+        "bytes": 1758,
+        "sha256": "0d87841a4c952b189f01cca133dad1ebca07676c1530c613b84b8292845fd14f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/noreturn.h",
+        "bytes": 2137,
+        "sha256": "7c370445f98d3f7763367f867610e01718b15aa8837709dfa7ff64403928f35e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/packed_struct.h",
+        "bytes": 2119,
+        "sha256": "2f2839f0c35c264d6fea62aac40944f0d5ec52636a33b5edfcac49c50e727994"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/pure.h",
+        "bytes": 2001,
+        "sha256": "c9e3d48a12b8cbb1788e04ff5df23d93954b435b2077dd297cc24cd8700d30bb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/restrict.h",
+        "bytes": 2124,
+        "sha256": "ce4d7128b1d505873ef99ce5cc8fc037575a2d5a97f98f4d75b9e429aced7758"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/returns_nonnull.h",
+        "bytes": 1817,
+        "sha256": "ec3de3643c2d5c784062d16fbb352c3b402dac028cf2ad7241fb88f0516a93bb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/warning.h",
+        "bytes": 1650,
+        "sha256": "67fe3a5f3b10aece33e8fa3f01612bf79d1d12de028c8a1209a91abb7a39f793"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/attr/weakref.h",
+        "bytes": 1653,
+        "sha256": "b9eb39590e8b0c9775da94dc8ed161bb2ee2fee3b9437bc4fb61fb607a154224"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/cast.h",
+        "bytes": 2330,
+        "sha256": "5763f41df7e78876de1b017614b2df42e54c066ad7ec986b7e24b06a783157ba"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/apple.h",
+        "bytes": 2010,
+        "sha256": "cadd1dcb919f3b0657c940342746cbfd99868dcc078b331627bbd8f7444c0998"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/clang.h",
+        "bytes": 1795,
+        "sha256": "4bc9c512b4a3d4ec0fa6a8b2b332521728b9fa84a6b9ba88286818b5d753d439"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/gcc.h",
+        "bytes": 1997,
+        "sha256": "10b3314ce6e4619f8b7d90987f692cd153e2e805c57c62978b1104b95b66f75a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/intel.h",
+        "bytes": 2057,
+        "sha256": "b9bee7e9de440ca09ad0da70798af0f8dbb253071e0406064cbe96ee4a568a51"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/msvc.h",
+        "bytes": 2526,
+        "sha256": "a953d7fbede0359669bf13c7c816c1a5b63e96b4c1eed4f22d900cf42982eba2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is/sunpro.h",
+        "bytes": 2707,
+        "sha256": "51ef27ad4e4af2ddae991f4734082ca3574df759329b24048790d245cc7ddaa2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_is.h",
+        "bytes": 2105,
+        "sha256": "33db323861bf5ae2daf58bc480e995e4c0c67dfa2916c7ec6dcd6d6df94635e0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/compiler_since.h",
+        "bytes": 2783,
+        "sha256": "e51e4b276c9f055506959323c4336410cfd57218868ba88c7daa10cf3ed1ea7a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/config.h",
+        "bytes": 4889,
+        "sha256": "ae93b63dcfb15130072516947f9af20bf7f1458584393d335a4b2d0df55cc069"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/constant_p.h",
+        "bytes": 1895,
+        "sha256": "4f3d040a8145c897c7701e538809f311cc445ed08ac072d4fcb411abefe8179a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rarray.h",
+        "bytes": 13540,
+        "sha256": "8357d9dd8b68d825383d17625cd382eff4829e765113862d891325b1cccde018"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rbasic.h",
+        "bytes": 5431,
+        "sha256": "34229f4e3f7a54868dea8da8904c72bdac94b16fc625b7ead5acdc0925fd8ae1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rbignum.h",
+        "bytes": 2949,
+        "sha256": "a4631bd6b2450321c91fe32f23499938cbe9be2e2f59fa8ba5e874a7f3215a67"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rclass.h",
+        "bytes": 3534,
+        "sha256": "c6f0c69fbe8c5527bfe6b22d69008b9b5be7570b1f04bd671b8f17b76314507a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rdata.h",
+        "bytes": 14201,
+        "sha256": "2077a34c067091d4a68b03888221f9ae56c3c1cf028509fccfb87589d12673a7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rfile.h",
+        "bytes": 2134,
+        "sha256": "fa98e4fc1deb7d372fc4316ad5e69a53c63e3804acc9f3cf80edd8195a075c37"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rhash.h",
+        "bytes": 4536,
+        "sha256": "a95f33123b7a59add2d89892d80818abee853948f7f24913bd035b9db3dde5c4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rmatch.h",
+        "bytes": 5442,
+        "sha256": "2e4fa885b0b5416a21d77e1affa28285bfb19a325de4c919a8eecd51d87dc903"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/robject.h",
+        "bytes": 5156,
+        "sha256": "0143b1aae467990c9c9d609e32cbcfa40bee41d21d0175377d01fd0ca0048b1c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rregexp.h",
+        "bytes": 5634,
+        "sha256": "131d4bcd47e8d8be9ce28d22e6d266569540c00b7dbf2ae7ff17d59ac81b73a4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rstring.h",
+        "bytes": 17023,
+        "sha256": "8efd26e1898669544be7013f12ba71c42d78f5ac0ab1b65d2f5a4d576ffcd0af"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rstruct.h",
+        "bytes": 4203,
+        "sha256": "b1caf3c74045c451f9cb8b4f9900c48042c376282714b290d440deb2467de2e0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core/rtypeddata.h",
+        "bytes": 23337,
+        "sha256": "ff1ad2896871d9fcfc97c67bd5a0d7915cf19a257c88cc3e6b2c8816090b407f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/core.h",
+        "bytes": 1874,
+        "sha256": "a9404fc6d41eb46238602f81a012726ab41ca68f247d237b3f6cb77d10294070"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/ctype.h",
+        "bytes": 23097,
+        "sha256": "e9449743df6ac01e8edda7900d7bab41a9e9b672dd31f1e41ac1e9e98c2c57f7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/dllexport.h",
+        "bytes": 3118,
+        "sha256": "7e01c395b156f64702bd1c68043d0f2ce0de95b2bec2d6ae8072d867f7f36287"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/dosish.h",
+        "bytes": 3240,
+        "sha256": "3f3bd2fe027f2f3fa792682bade93f88ae209f8f7f51f58c0ccfb0d61797578e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/coderange.h",
+        "bytes": 8078,
+        "sha256": "ef6dd32cf33267591ac6d35757b18ef86ebd009fd98c807a9df87a27a3a7d556"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/ctype.h",
+        "bytes": 8023,
+        "sha256": "d990dcae8e394c2133f34231e8deeab3c3d96cac520ca00c62064b400a91c158"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/encoding.h",
+        "bytes": 36702,
+        "sha256": "c86ce1cace80a85f012fe38db8fa1a9382b4bf88b3d8dde6cf79db6307b8edcb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/pathname.h",
+        "bytes": 6928,
+        "sha256": "5163d755ed8022449ccf43643639f08c017c9794a1d6c4ce71f4b274c7bd1fe4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/re.h",
+        "bytes": 2286,
+        "sha256": "07c7f409aa73af90e2ba793f095e0c6b3dd0a17cbfc4445ac87c6f2a5dc9ccf8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/sprintf.h",
+        "bytes": 3456,
+        "sha256": "2a057e06c7960f46dd585815fa2846dd38f2acca6f3a1cebdee34afd34b09dbd"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/string.h",
+        "bytes": 15609,
+        "sha256": "eeee41cea87dbd1d69c4f771ed9981395f1c91058c540d2ae86e472d24be1cac"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/symbol.h",
+        "bytes": 4520,
+        "sha256": "f92f205ff4b6ac6b778ecd71efbd9d491e7277116b2a36f3252835ff8c9aa9c8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/encoding/transcode.h",
+        "bytes": 25725,
+        "sha256": "f893e7b1a8b66fb8c2f54ef77f28cc07abbd154224d8b6b406406f72c0b834ed"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/error.h",
+        "bytes": 21270,
+        "sha256": "796a18769d6eb6f86e77789cf2337c2c7ae70507f4dd01dd8b7955f0248528df"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/eval.h",
+        "bytes": 18637,
+        "sha256": "137840c12674b64e632b5d78224182f140535a68af24f0178b6536f09f100218"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/event.h",
+        "bytes": 6358,
+        "sha256": "5421b4983a6399688c716b68b102fa5f2041f02cbee8658ec10228beceb5e519"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/fl_type.h",
+        "bytes": 33348,
+        "sha256": "5d98ad5a08c26ac42004f5df2e4a32e6c53ae3e276d34991c160f3d40da93414"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/gc.h",
+        "bytes": 29338,
+        "sha256": "1d5da4b8500c8ec27452ae735a6f27cb24c846f25b8633d9a3f8f33ef8a13afe"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/glob.h",
+        "bytes": 5102,
+        "sha256": "54004fc7fbf360ca82d69f7ac72592a433827b0b8f33a50ab5b51bb7c1c1f658"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/globals.h",
+        "bytes": 10008,
+        "sha256": "bd0497b595908d98fb97872d77b8eb69be5957f114e5be5f57987f0080a47d47"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/attribute.h",
+        "bytes": 8520,
+        "sha256": "90e2d24a2c5f51b31138cd1b283da00699a72161a95a77d0886dff9766c9362a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/builtin.h",
+        "bytes": 7282,
+        "sha256": "d6cbd662a6fbc19102f739aeede90e8ca089750da83c39ea02b4cfa750de8306"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/c_attribute.h",
+        "bytes": 2288,
+        "sha256": "33e8148ee9acf3bf892536caad70a171fe90480b8619394e979ff6c2c66a5a04"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/cpp_attribute.h",
+        "bytes": 4545,
+        "sha256": "8bdd91b183bd15beac3f68bd59aefa3f6b7cc2e9322fc765e6829ef34fe1a9f5"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/declspec_attribute.h",
+        "bytes": 2809,
+        "sha256": "0b5193d3ff80838a49dca68ebe004877d7908d65b14f1087021d7ebd76b69e25"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/extension.h",
+        "bytes": 1698,
+        "sha256": "06596cd9aa6cd062c922a3045992117a315292e4c3876b7aaeca2cc4aa8112ed"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/feature.h",
+        "bytes": 1558,
+        "sha256": "045e295f62df1655953f6f5655659b4a8def717f6270623d66112f84dcc940b2"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/has/warning.h",
+        "bytes": 1558,
+        "sha256": "12c2d916fd118666a444e6d4a7934fad6ec2de3d2c69cd7d1bc86709b3ea5101"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/array.h",
+        "bytes": 25755,
+        "sha256": "15c691082e1ae52a4f77f77b5321805799719233f7128a1c11641c35f6567b70"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/bignum.h",
+        "bytes": 30764,
+        "sha256": "425abcd9b6d1d7a75a69a937894559a0fe95a64e7d83a9a0fe7a1d4f638809fa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/class.h",
+        "bytes": 16051,
+        "sha256": "6f0ae027d016204b7e583d6eedf1a426abc140463e83aab9f09d55575a4f1e3e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/compar.h",
+        "bytes": 2573,
+        "sha256": "e5f70ab16e699ff4c81c0f9e2b8c3e46da809aed44f255918ac92fb57e6ca786"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/complex.h",
+        "bytes": 8406,
+        "sha256": "8a695e3167404b8426cc161059cdaaa6986d1fb7edb265de8b9a9c2350fa28b0"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/cont.h",
+        "bytes": 11701,
+        "sha256": "597f7eaa42905763d2c9fa81f932e626a8f5e285cde9eb101a33a628ba7f47de"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/dir.h",
+        "bytes": 1942,
+        "sha256": "8cee9f3c351b2bf19d4529089c14720f9bdad4ee5c38f15d5cba1820b452d3cd"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/enum.h",
+        "bytes": 2891,
+        "sha256": "fdf7122ac808c1d750cd9e6b0c36e392da510f761da4c7be6e11189933380e27"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/enumerator.h",
+        "bytes": 12422,
+        "sha256": "1ca41bf6ac4f4fb42db781ea2fbc2bb3f8b3c2edf212bf50ae4494c084ac3f9d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/error.h",
+        "bytes": 9821,
+        "sha256": "78c636a5650c35141bb9b17e38774ede3956073d10b947f20742c283015e4c3d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/eval.h",
+        "bytes": 8696,
+        "sha256": "aeae01a0707d9c73f52620f07de80f44639560671dcc32daf37a010428c94f16"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/file.h",
+        "bytes": 9598,
+        "sha256": "90c0a3660b1be578e8da7a1695813cf191a3d38bc0e38765b453a4e981baf464"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/hash.h",
+        "bytes": 11896,
+        "sha256": "5b06cf67f698a4929d8a403511346a010e099b0c141e5e3ce5f6957434968185"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/io.h",
+        "bytes": 26868,
+        "sha256": "6786aa4636fa61675c58ad61b2bbed1cd8f8b33aa821a319d1f261cd77991dd6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/load.h",
+        "bytes": 10670,
+        "sha256": "57a3e4ad58819dcc67dc62af4d8547b1bb209c3a1260514eed487783862870b4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/marshal.h",
+        "bytes": 5578,
+        "sha256": "ae5a4b0e965f71c8af8206bce25df4e742bcf123e2b9bfa56a4f0c31c965751d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/numeric.h",
+        "bytes": 7672,
+        "sha256": "dcc09b7b11e8044440fb131ad704c067420bf30236aa3ee8ec5537005744d2f6"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/object.h",
+        "bytes": 19585,
+        "sha256": "fb7582589f70913f06ef5824f1310aba59924161e8cc2ce75456d4db6eeab62e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/parse.h",
+        "bytes": 6326,
+        "sha256": "065be0d9f074d333ce62c24ece465e5744c01435b3a543b7e68d983b8f428216"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/proc.h",
+        "bytes": 13860,
+        "sha256": "456a0d65cc850c3ce951fb0202f5dce122125bfaa9e1592d541d682d82ee7959"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/process.h",
+        "bytes": 11569,
+        "sha256": "431da933ff7edb1a073f89223362d993cdf4be4ac0f8773623250149fef47244"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/random.h",
+        "bytes": 4400,
+        "sha256": "d398e1c8196326dfaa4e2fe08ad01cbe695e13679bc1b82c50821179c6cd25f9"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/range.h",
+        "bytes": 4071,
+        "sha256": "0c92416cd58a2e80e3d143fee5065695bfb5ed9737edec1f337555543321d08e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/rational.h",
+        "bytes": 6491,
+        "sha256": "dea07760b727a29095b4333c19cbe28ac5feba0a68222d51c26f2fe4b7d20863"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/re.h",
+        "bytes": 8728,
+        "sha256": "0986ccd7ca8e69a20cd3dac76ce875c5ffff771c109e547b500051fa15da13dc"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/ruby.h",
+        "bytes": 2848,
+        "sha256": "96ffec59f219726e9ce770f552f732b8c231b864693e9334de7d109cd915c2b7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/select/largesize.h",
+        "bytes": 7144,
+        "sha256": "1a5daec7e4fe20da42ca5afea268f0d8d6eebbb6f257043488b658a8bf97f73f"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/select/posix.h",
+        "bytes": 4317,
+        "sha256": "3ef7596626abe660173c4219df7ae52980a9ee06d24457ba765bd2093885f395"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/select.h",
+        "bytes": 3946,
+        "sha256": "a61da6ae09d2c74880e3fb20c307f4699c83311d47649c26a2fbc725fdee7fc8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/signal.h",
+        "bytes": 6547,
+        "sha256": "4e4febcdfc9ad0207d81f9c01bb5925f53b4d0170df5be5c8821ba65c090a4fb"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/sprintf.h",
+        "bytes": 6468,
+        "sha256": "4a18eb949ace72cdd3f1c1620e7da807534eaad47ed07298fcc9f9f437c9e63d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/string.h",
+        "bytes": 68985,
+        "sha256": "7a5af1ae3cd6d4dbc4a90f711239e0e25715950a001972c5e26080510a67a7fa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/struct.h",
+        "bytes": 8946,
+        "sha256": "9082cc6caed7968d88130582f078d5e70688a536caf0d57fee397e4940bfc563"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/thread.h",
+        "bytes": 18460,
+        "sha256": "0114f5a4f7fd544f2be58a020f7b05792bf46929dd8df5bfe1895b80f881cbe9"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/time.h",
+        "bytes": 6486,
+        "sha256": "4b2ae5abc81dceed835ae9d12a39de5acb161490ca5619a001b40304a8579156"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/variable.h",
+        "bytes": 21308,
+        "sha256": "60051eba9864cb94bea38ad01ade8df8c94f4b3865320a3a80568bd12ba56516"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/intern/vm.h",
+        "bytes": 16872,
+        "sha256": "7ea99c8fa664a80dc99f710e6691b5c52e3864b935b2ccf4d2cfdc71c7c3d51e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/interpreter.h",
+        "bytes": 9683,
+        "sha256": "40f180451d0c1a544fb21bdeef4e6230511a26284888da6bfa0beb7a4ef48a61"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/iterator.h",
+        "bytes": 18627,
+        "sha256": "565a801ee3e445495ad3e86bbbed98d12792d38c81e577283d97021c8a6066ff"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/memory.h",
+        "bytes": 23595,
+        "sha256": "b7279da2ecdad9023698518b5ad45cadf15e57eb84b2b5243a7786e2e363002c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/method.h",
+        "bytes": 7249,
+        "sha256": "cd187ed3be2c722b0cea47677097138556cfed8d8bccca06a53513d58c6d9f01"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/module.h",
+        "bytes": 7235,
+        "sha256": "ae5bf1a502482b3868bbe8b82297510d5eb1b5da897e7dec2b65ecacbb699570"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/newobj.h",
+        "bytes": 7894,
+        "sha256": "89fb8a3583e3ebe1967a0c4f8eaf8e160f34a8b5abd699ab9f11a35a6afbd6a7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/scan_args.h",
+        "bytes": 18921,
+        "sha256": "7689e8a9304781d8376052c185997eb61768908192725eb8889294effac85212"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/special_consts.h",
+        "bytes": 12183,
+        "sha256": "979ab6b5d750a8671883d1bbf3a81a9f9b7c22232cf5dca121e07ac6fd35beb4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/static_assert.h",
+        "bytes": 3215,
+        "sha256": "09e87464674948bb5ba0ec01908a713bacc73898acdd784fb55297683bbbf551"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/stdalign.h",
+        "bytes": 4693,
+        "sha256": "0498fd31b954a4fe361eda85b6c85ad2bfb5f84db3348dc2a886bcf4d90d9773"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/stdbool.h",
+        "bytes": 2055,
+        "sha256": "acfae92d408a30e402f138dabd44e402f071a4bf2d6797465a782cabbfd31e7d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/symbol.h",
+        "bytes": 13082,
+        "sha256": "ae337f8a3202f0850b90829c139b1907991f8a9dc57b9add7b1bc19c8e2eba62"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/value.h",
+        "bytes": 4360,
+        "sha256": "8063e3f2306d5b910452450a2f7df68faef8f56d518c64029477d6642b14dd5e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/value_type.h",
+        "bytes": 14457,
+        "sha256": "a4176bafd3aaec73f77e887b7d313bf7e105c26d0e0b15504fc917d72075b68d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/variable.h",
+        "bytes": 12091,
+        "sha256": "4ba29a7e1ed428df28b0571efc204fc60d767a4ba3ceff9446ebf7ff966b1f5c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/warning_push.h",
+        "bytes": 5028,
+        "sha256": "4a88662a88568bca08da769e68a0cf399263416490cdd6624ef2181a65feda9c"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/internal/xmalloc.h",
+        "bytes": 17485,
+        "sha256": "20a84bf716b36ea7eecf8def1e8f34193e225f394449ae6028995fc8a4eb3903"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/io/buffer.h",
+        "bytes": 4068,
+        "sha256": "68a56c4452a176a89a2c2f68ebf05c2aec6b0ff634be668e15e2c6e62854efe8"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/io.h",
+        "bytes": 37330,
+        "sha256": "949e6284f3f7d670dd3c7b6407b9770e924de29d758678b7d1d4a371a63646d1"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/memory_view.h",
+        "bytes": 11038,
+        "sha256": "cd9895db40dde9e7afa215cb586678676f71043e991b15fd8a7d58fd0d122ffa"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/missing.h",
+        "bytes": 6833,
+        "sha256": "098b9e93a5ffd21d41897a7000fa9f6d76ec8cbd96fb6e4cd44ef90a9c6a3a83"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/onigmo.h",
+        "bytes": 44951,
+        "sha256": "e00264947e29b44fd77f303a718bc1b52bc0c4ba519a556dadcd11a00e7039ef"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/oniguruma.h",
+        "bytes": 262,
+        "sha256": "38686a1351e873bf3f9cddf936fca35e5ea086c4dacdf0de4c9cf860486ee513"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/ractor.h",
+        "bytes": 8922,
+        "sha256": "e8d777561ccc6327319a520071cf67cf5700b640ba4e23cffcf638ac0bb591e7"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/random.h",
+        "bytes": 11782,
+        "sha256": "0647c758f617a45e3f51fb57ad5c649e2c0505e4bd53c85c18bb9bac87de9d38"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/re.h",
+        "bytes": 6802,
+        "sha256": "34d9262ba050d682fbc8e6f1c410ca82ba82a08879e10d90c360b40939870554"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/regex.h",
+        "bytes": 1011,
+        "sha256": "0017247f2638f5203a61a0c8de21dfc2361caea48979c9c3474351be62f03ed4"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/ruby.h",
+        "bytes": 15096,
+        "sha256": "03997421eaae253a91a7383a3d15869937ee508aa67d2eb6bab79c4fd100f21e"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/st.h",
+        "bytes": 7942,
+        "sha256": "85e04fb74a3fc5a347aba426fbac3b01cd13743c8abbcda0d9c8e07b185fa10d"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/subst.h",
+        "bytes": 806,
+        "sha256": "99c200ae82cf0db697ba84a47547084963a0a3408e2a935a13681575b537f6af"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/thread.h",
+        "bytes": 11544,
+        "sha256": "d76b1d2694c566cf4ac4af5182011f5661c09b5ee6cc985ed69247b27ce95ea5"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/thread_native.h",
+        "bytes": 6834,
+        "sha256": "d694b4868fbb79f60cee9506065a9ea0b19520bc3c9ad615112580b594509673"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/util.h",
+        "bytes": 8777,
+        "sha256": "fe18f0c9b600c8da72a8087ba1189d3c9d7456061262f9f858bd554b4629e155"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/version.h",
+        "bytes": 4875,
+        "sha256": "fa6e242a0e76bb8abf8a8afcc0b5e42099224f54d0e5a67db3b83f7ce5a8891a"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby/vm.h",
+        "bytes": 2134,
+        "sha256": "1020bcddfb57a2ed62b74f42a0e952622a0a5f824a896ec638b7ad4fd48ece87"
+      },
+      {
+        "path": "usr/local/include/ruby-3.3.0/ruby.h",
+        "bytes": 1379,
+        "sha256": "04af8803affdcd5301e83d49078f64b10eb263823198913a6d7cd949a632d0a0"
+      },
+      {
+        "path": "usr/local/lib/libruby.so",
+        "link": "libruby.so.3.3.5",
+        "type": "symlink"
+      },
+      {
+        "path": "usr/local/lib/libruby.so.3.3",
+        "link": "libruby.so.3.3.5",
+        "type": "symlink"
+      },
+      {
+        "path": "usr/local/lib/libruby.so.3.3.5",
+        "bytes": 18765728,
+        "sha256": "24c9551f8afdc493b69c140783a6cba56ca6d445856664cf5404a123ad605bcd"
+      },
+      {
+        "path": "usr/local/lib/ruby/3.3.0/aarch64-linux/rbconfig.rb",
+        "bytes": 14186,
+        "sha256": "6dd1bdc2f321f88a4994fbbba0bb66a3d7f1444daae0ca2ced9dd05a3e0b95cf"
+      }
+    ],
+    "ruby_libraries": [
+      {
+        "path": "usr/local/lib/libruby.so.3.3.5",
+        "bytes": 18765728,
+        "sha256": "24c9551f8afdc493b69c140783a6cba56ca6d445856664cf5404a123ad605bcd",
+        "elf": [
+          "Machine:                           AArch64",
+          "0x0000000000000001 (NEEDED)       Shared library: [libz.so.1]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libgmp.so.10]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libcrypt.so.1]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libm.so.6]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libgcc_s.so.1]",
+          "0x0000000000000001 (NEEDED)       Shared library: [libc.so.6]",
+          "0x0000000000000001 (NEEDED)       Shared library: [ld-linux-aarch64.so.1]",
+          "0x000000000000000e (SONAME)       Library soname: [libruby.so.3.3]"
+        ]
+      }
+    ],
+    "rbconfig": [
+      "CONFIG[\"RUBY_SO_NAME\"] = \"$(RUBY_BASE_NAME)\"",
+      "CONFIG[\"rubyarchhdrdir\"] = \"$(rubyhdrdir)/$(arch)\"",
+      "CONFIG[\"rubyhdrdir\"] = \"$(includedir)/$(RUBY_VERSION_NAME)\"",
+      "CONFIG[\"configure_args\"] = \" '--build=aarch64-linux-gnu' '--disable-install-doc' '--enable-shared' '--enable-yjit' 'build_alias=aarch64-linux-gnu'\"",
+      "CONFIG[\"arch\"] = \"aarch64-linux\"",
+      "CONFIG[\"LIBRUBY_SO\"] = \"lib$(RUBY_SO_NAME).$(SOEXT).$(RUBY_PROGRAM_VERSION)\"",
+      "CONFIG[\"LDSHARED\"] = \"$(CC) -shared\"",
+      "CONFIG[\"CXX\"] = \"g++\"",
+      "CONFIG[\"CC\"] = \"gcc\"",
+      "CONFIG[\"libdir\"] = \"$(exec_prefix)/lib\""
+    ]
+  }
+]
