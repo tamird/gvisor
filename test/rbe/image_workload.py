@@ -36,13 +36,20 @@ def run(invoke, record_execution, evidence, private, output_root):
                 digest = hashlib.sha256(destination.read_bytes()).hexdigest()
                 records.append({"architecture": arch, "configured": configured, "output": str(archive), "bytes": size, "sha256": digest})
                 if suffix == "json":
-                    profiles[arch, configured] = json.loads(destination.read_text())
+                    profiles[arch, configured] = (size, digest)
                 else:
                     payloads[arch, configured] = (size, digest)
     (evidence / "native-gems-record.json").write_text(json.dumps(records, indent=2) + "\n")
     for arch in ("amd64", "arm64"):
-        if profiles[arch, False]["build_directory"] == profiles[arch, True]["build_directory"]:
-            raise ValueError(f"{arch} did not use two distinct temporary directories")
+        if profiles[arch, False] != profiles[arch, True]:
+            raise ValueError(f"{arch} native gem profile differs across configurations")
         if payloads[arch, False] != payloads[arch, True]:
             raise ValueError(f"{arch} native gem tar bytes differ across configurations")
+    directory = evidence / "invocation-ruby-native-repeatability"
+    paths = [json.loads(line.removeprefix("NATIVE_GEM_BUILD_DIRECTORY "))
+             for name in ("stdout.log", "stderr.log")
+             for line in (directory / name).read_text().splitlines()
+             if line.startswith("NATIVE_GEM_BUILD_DIRECTORY ")]
+    if len(paths) != 4 or len({row["directory"] for row in paths}) != 4 or len({row["output"] for row in paths}) != 4:
+        raise ValueError("Expected four actual distinct native build paths in action output")
     (evidence / "native-repeatability.json").write_text(json.dumps({"status": "PASS", "payloads": {arch: payloads[arch, False] for arch in ("amd64", "arm64")}}, indent=2) + "\n")

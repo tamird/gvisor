@@ -42,6 +42,7 @@ Dir.mktmpdir("ruby-http-build-") do |work|
   ENV["GEM_PATH"] = home
   ENV["SOURCE_DATE_EPOCH"] = "0"
   cflags = RbConfig::CONFIG.fetch("CFLAGS") + " -ffile-prefix-map=#{work}=/usr/src/ruby-http"
+  puts "NATIVE_GEM_BUILD_DIRECTORY #{JSON.generate({directory: work, output: output, compiler_flags: cflags})}"
   specs = inputs.map { |path| Gem::Package.new(path).spec }
   native = specs.select { |spec| !spec.extensions.empty? }.map(&:name).sort
   abort "Unexpected native extensions #{native}" unless native == ["nio4r", "puma"]
@@ -72,14 +73,13 @@ Dir.mktmpdir("ruby-http-build-") do |work|
   end
   logs = Dir.glob(File.join(home, "extensions/**/gem_make.out")).sort
   abort "Expected two native build logs" unless logs.length == 2
-  log_records = logs.map do |path|
+  logs.each do |path|
     record = {path: path.delete_prefix(work + "/"), bytes: File.size(path), sha256: Digest::SHA256.file(path).hexdigest}
     puts "NATIVE_GEM_BUILD_LOG #{JSON.generate(record)}"
     print File.binread(path)
     puts "NATIVE_GEM_BUILD_LOG_END"
-    record
   end
-  profile = {build_directory: work, compiler_flags: cflags, build_logs: log_records, ruby: RUBY_VERSION, platform: RUBY_PLATFORM, compiler_target: compiler.strip,
+  profile = {ruby: RUBY_VERSION, platform: RUBY_PLATFORM, compiler_target: compiler.strip,
              sources: inputs.map { |path| {file: File.basename(path), sha256: Digest::SHA256.file(path).hexdigest} },
              gems: specs.sort_by(&:name).map { |spec| {name: spec.name, version: spec.version.to_s} },
              extensions: files,
