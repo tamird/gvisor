@@ -29,4 +29,7 @@ elif lane == "license-check":
     os.environ.pop("QUALIFICATION_REQUIRED_CASES", None)
 else:
     raise ValueError(f"Unexpected Ruby qualification lane: {lane}")
-os.execvp("bash", ['bash', 'test/rbe/actions.sh', '--bazel-option=--config=rbe', '--bazel-option=--strategy=TestRunner=remote', '--bazel-option=--nocache_test_results', '--bazel-option=--runs_per_test=1', '--bazel-option=--test_sharding_strategy=disabled', '--bazel-option=--flaky_test_attempts=1', '--bazel-option=--remote_download_outputs=minimal', '--bazel-option=--nozip_undeclared_test_outputs'])
+command = ['bash', 'test/rbe/actions.sh']
+if lane == 'test':
+    command += ['--bazel-option=--config=rbe', '--bazel-option=--strategy=TestRunner=remote', '--bazel-option=--nocache_test_results', '--bazel-option=--runs_per_test=1', '--bazel-option=--test_sharding_strategy=disabled', '--bazel-option=--flaky_test_attempts=1', '--bazel-option=--remote_download_outputs=minimal', '--bazel-option=--nozip_undeclared_test_outputs']
+os.execvp("bash", command)
