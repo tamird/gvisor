@@ -531,9 +531,17 @@ import os
 from pathlib import Path
 import sys
 
-(Path(sys.argv[1]) / "preparation-failure.json").write_text(json.dumps({
+directory = Path(sys.argv[1])
+arguments = (directory / "arguments.txt").read_text().splitlines()
+pattern_files = [argument.split("=", 1)[1] for argument in arguments
+                 if argument.startswith("--target_pattern_file=")]
+if len(pattern_files) > 1:
+    raise ValueError("Expected at most one target pattern file")
+if pattern_files:
+    (directory / "target-patterns.txt").write_bytes(Path(pattern_files[0]).read_bytes())
+(directory / "preparation-failure.json").write_text(json.dumps({
     "source": os.environ["QUALIFICATION_COMMIT"],
-    "requested_labels": os.environ["QUALIFICATION_TARGETS"].split(),
+    "target_pattern_files": pattern_files,
 }) + "\n")
 PREPARATION
       return "$result"

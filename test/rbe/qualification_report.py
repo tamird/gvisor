@@ -2514,11 +2514,19 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
 def go_case_failure(directory: Path) -> dict[str, object]:
     """Authenticate an authoring abort without fabricating a native invocation."""
     record = read_json(directory / "preparation-failure.json")
-    if record.keys() != {"source", "requested_labels"}:
+    if record.keys() != {"source", "target_pattern_files"}:
         raise ValueError("Malformed Go case preparation failure")
     source = string(record.get("source"))
-    labels = [string(value) for value in sequence(record.get("requested_labels"))]
-    if (not labels or len(labels) != len(set(labels))
+    arguments = (directory / "arguments.txt").read_text().splitlines()
+    pattern_files = [argument.split("=", 1)[1] for argument in arguments
+                     if argument.startswith("--target_pattern_file=")]
+    if len(pattern_files) > 1 or record["target_pattern_files"] != pattern_files:
+        raise ValueError("Preparation target pattern files differ from test arguments")
+    labels = [argument for argument in arguments
+              if argument.startswith("//") or argument.startswith("@") and "//" in argument]
+    if pattern_files:
+        labels.extend((directory / "target-patterns.txt").read_text().splitlines())
+    if (not arguments or arguments[0] != "test" or not labels or len(labels) != len(set(labels))
             or any(not (label.startswith("//") or label.startswith("@") and "//" in label)
                    or any(c.isspace() for c in label) for label in labels)):
         raise ValueError("Preparation failure requires distinct requested target labels")
@@ -2528,6 +2536,17 @@ def go_case_failure(directory: Path) -> dict[str, object]:
         "go-case-stdout.log", "go-case-stderr.log",
     )}
     paths["go-cases.json"] = directory.parent / "go-cases.json"
+    paths["go-cases.sha256"] = directory.parent / "go-cases.sha256"
+    if pattern_files:
+        paths["target-patterns.txt"] = directory / "target-patterns.txt"
+    checksum = paths["go-cases.sha256"].read_text().rstrip("\n").split("  ", 1)
+    match checksum:
+        case [digest, filename] if (re.fullmatch(r"[0-9a-f]{64}", digest)
+                                   and Path(filename).name == "go-cases.json"):
+            if hashlib.sha256(paths["go-cases.json"].read_bytes()).hexdigest() != digest:
+                raise ValueError("Go case input differs from its pre-run checksum")
+        case _:
+            raise ValueError("Malformed pre-run Go case input checksum")
     if any((directory / name).exists() for name in ("native-exit.txt", "events.jsonl", "execution.binpb")):
         raise ValueError("Preparation failure unexpectedly contains native execution records")
     evidence = {name: {"path": str(path.relative_to(directory.parent)), **file_record(path)}

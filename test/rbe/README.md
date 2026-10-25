@@ -199,8 +199,8 @@ joins, query options, resolved XML manifest and authoring exit status. Analysis
 errors stop before the native test. Their source-bound preparation failure
 retains the helper exit, diagnostics and requested labels separately from the
 unresolved configured owners and unstarted native tests. Missing or skipped
-cases fail the ordinary required-case verdict. Use either this input or `QUALIFICATION_REQUIRED_CASES`,
-not both. The helper remains available directly for other callers that already
+cases fail the ordinary required-case verdict. Use either this input or
+`QUALIFICATION_REQUIRED_CASES`, not both. The helper remains available directly for other callers that already
 have the exact configured Bazel options.
 
 Build targets can tag small report groups with

@@ -3004,6 +3004,57 @@ signal.pause()
         (self.evidence / "invocation-missing").mkdir()
         self.assertEqual(report.bundle(self.evidence, 0, 0, output)["status"], "INCOMPLETE")
 
+    def test_go_case_preparation_failure(self) -> None:
+        invocation = self.evidence / "invocation-aborted"
+        invocation.mkdir()
+        source = report.read_json(FIXTURES / "pass" / "context.json")["expected_source"]
+        shutil.copyfile(FIXTURES / "pass" / "commit.txt", invocation / "commit.txt")
+        labels = ["//pkg/aio:aio_test_amd64", "//pkg/aio:aio_test_arm64"]
+        (invocation / "arguments.txt").write_text("test\n--config=rbe-matrix\n--target_pattern_file=/tmp/targets\n")
+        (invocation / "target-patterns.txt").write_text("\n".join(labels) + "\n")
+        for name in ("source-before.txt", "source-after.txt", "go-case-stdout.log"):
+            (invocation / name).write_text("")
+        (invocation / "final-head.txt").write_text(source + "\n")
+        (invocation / "go-case-options.txt").write_text("--config=rbe-matrix\n")
+        (invocation / "go-case-exit.txt").write_text("1\n")
+        diagnostic = "Expected a case-name array for //pkg/aio:aio_test_amd64\n"
+        (invocation / "go-case-stderr.log").write_text(diagnostic)
+        original_input = json.dumps({labels[0]: "NotAnArray"}) + "\n"
+        (self.evidence / "go-cases.json").write_text(original_input)
+        checksum = hashlib.sha256(original_input.encode()).hexdigest()
+        (self.evidence / "go-cases.sha256").write_text(checksum + "  /tmp/go-cases.json\n")
+        record = {"source": source, "target_pattern_files": ["/tmp/targets"]}
+        report.write_json(invocation / "preparation-failure.json", record)
+        archive = self.root / "aborted.tar.gz"
+        value = report.bundle(self.evidence, 1, 0, archive)
+        self.assertEqual((value["status"], value["native_exit"], value["runner_exit"]),
+                         ("INCOMPLETE", None, 1))
+        self.assertEqual((value["sources"], value["requested_labels"], value["expected"], value["executed"]),
+                         ([source], labels, [], []))
+        self.assertEqual(value["missing"], [{"label": label,
+            "reason": "native execution did not start: Go case analysis failed"} for label in labels])
+        preparation, = value["preparation_failures"]
+        self.assertEqual((preparation["native_execution_started"], preparation["exit"]), (False, 1))
+        receipt = report.receipt(archive, report.file_record(archive)["sha256"], source)
+        self.assertEqual((receipt["status"], receipt["invocations"]), ("INCOMPLETE", []))
+        with tarfile.open(archive) as retained:
+            with retained.extractfile("invocation-aborted/go-case-stderr.log") as stream:
+                self.assertEqual(stream.read(), diagnostic.encode())
+
+        for damage, expected in (("input", "pre-run checksum"), ("selection", "differ from test arguments")):
+            with self.subTest(damage=damage):
+                if damage == "input":
+                    (self.evidence / "go-cases.json").write_text("{}\n")
+                else:
+                    report.write_json(invocation / "preparation-failure.json",
+                                      {**record, "target_pattern_files": ["/tmp/other-targets"]})
+                damaged = report.bundle(self.evidence, 1, 0, archive)
+                self.assertEqual((damaged["status"], damaged["sources"], damaged["native_exit"]),
+                                 ("INCOMPLETE", [], None))
+                self.assertIn(expected, "\n".join(damaged["errors"]))
+                (self.evidence / "go-cases.json").write_text(original_input)
+                report.write_json(invocation / "preparation-failure.json", record)
+
     def test_empty_bundle_never_passes(self) -> None:
         value = report.bundle(self.evidence, 19, 0, self.root / "bundle.tar.gz")
         self.assertEqual(value["status"], "INCOMPLETE")
