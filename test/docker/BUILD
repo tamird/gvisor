@@ -88,6 +88,7 @@ docker_image_archives(
     extra_images = CONTAINERD_IMAGES,
     source_archives = {
         "basic/nginx": {"amd64": ":nginx_source_amd64"},
+        "basic/redis": {"amd64": ":redis_source_amd64"},
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
         "moby": {"amd64": ":moby_source_amd64"},
     },
@@ -109,6 +110,25 @@ source_image_archive(
         start_daemon = True,
     ),
     image = "basic/nginx",
+    tags = ["manual"],
+)
+
+source_image_archive(
+    name = "redis_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+        start_daemon = True,
+    ),
+    image = "basic/redis",
     tags = ["manual"],
 )
 
