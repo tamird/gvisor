@@ -2511,14 +2511,52 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if info["execution_finished_at"] is not None else None}
 
 
+def go_case_failure(directory: Path) -> dict[str, object]:
+    """Authenticate an authoring abort without fabricating a native invocation."""
+    record = read_json(directory / "preparation-failure.json")
+    if record.keys() != {"source", "requested_labels"}:
+        raise ValueError("Malformed Go case preparation failure")
+    source = string(record.get("source"))
+    labels = [string(value) for value in sequence(record.get("requested_labels"))]
+    if (not labels or len(labels) != len(set(labels))
+            or any(not (label.startswith("//") or label.startswith("@") and "//" in label)
+                   or any(c.isspace() for c in label) for label in labels)):
+        raise ValueError("Preparation failure requires distinct requested target labels")
+    paths = {name: directory / name for name in (
+        "preparation-failure.json", "commit.txt", "source-before.txt", "source-after.txt",
+        "final-head.txt", "arguments.txt", "go-case-options.txt", "go-case-exit.txt",
+        "go-case-stdout.log", "go-case-stderr.log",
+    )}
+    paths["go-cases.json"] = directory.parent / "go-cases.json"
+    if any((directory / name).exists() for name in ("native-exit.txt", "events.jsonl", "execution.binpb")):
+        raise ValueError("Preparation failure unexpectedly contains native execution records")
+    evidence = {name: {"path": str(path.relative_to(directory.parent)), **file_record(path)}
+                for name, path in paths.items()}
+    body = paths["commit.txt"].read_bytes()
+    actual = hashlib.sha1(b"commit " + str(len(body)).encode() + b"\0" + body).hexdigest()
+    if actual != source or paths["final-head.txt"].read_text().strip() != source:
+        raise ValueError("Preparation source commit or final HEAD differs")
+    if any(paths[name].read_text().strip() for name in ("source-before.txt", "source-after.txt")):
+        raise ValueError("Preparation changed tracked source")
+    exit_code = int(paths["go-case-exit.txt"].read_text())
+    if not 1 <= exit_code <= 255:
+        raise ValueError("Preparation failure requires a nonzero authoring exit")
+    return {"source": source, "stage": "go-case-analysis", "exit": exit_code,
+            "native_execution_started": False, "requested_labels": labels,
+            "evidence": evidence}
+
+
 def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_exit: int,
-                       errors: list[str]) -> dict[str, object]:
+                       errors: list[str], preparations: tuple[dict[str, object], ...] = ()) -> dict[str, object]:
     """Keep original command exits distinct from the enclosing runner's exit."""
-    if not rows:
+    if not rows and not preparations:
         errors.append("No invocation verdicts were retained")
-    sources = {string(mapping(row["verdict"]).get("source")) for row in rows}
+    sources = ({string(mapping(row["verdict"]).get("source")) for row in rows}
+               | {string(record["source"]) for record in preparations})
     if len(sources) != 1:
         errors.append("Invocation sources are absent or inconsistent")
+    for record in preparations:
+        errors.append(f"Go case analysis exited {record['exit']}; native execution did not start")
     verdicts = [mapping(row["verdict"]) for row in rows]
     cases: Counter[str] = Counter()
     for row in verdicts:
@@ -2558,7 +2596,13 @@ def summarize_verdicts(rows: list[dict[str, object]], runner_exit: int, capture_
               "build_outputs": [{"invocation": row["path"], **mapping(item)} for row in rows
                                 for item in sequence(mapping(row["verdict"]).get("build_outputs", []))],
               "expected_failures": [item for row in verdicts for item in sequence(row.get("expected_failures", []))],
-              "missing": [item for row in verdicts for item in sequence(row.get("missing", []))],
+              "missing": ([item for row in verdicts for item in sequence(row.get("missing", []))]
+                          + [{"label": label, "reason": "native execution did not start: Go case analysis failed"}
+                             for record in preparations for label in sequence(record["requested_labels"])]),
+              **({"preparation_failures": list(preparations),
+                  "requested_labels": sorted({string(label) for record in preparations
+                                              for label in sequence(record["requested_labels"])})}
+                 if preparations else {}),
               "unpassed_required_cases": [{"invocation": row["path"], **mapping(item)} for row in rows
                                          for item in sequence(mapping(row["verdict"]).get("unpassed_required_cases", []))],
               "skips": [item for row in verdicts for item in sequence(row.get("skips", []))],
@@ -2585,15 +2629,19 @@ def archive_evidence(directory: Path, output: Path) -> None:
 def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
     rows = []
     errors = []
+    preparations = []
     for invocation in sorted(directory.rglob("invocation-*")):
         if not invocation.is_dir():
             continue
         path = invocation / "verdict.json"
         try:
-            rows.append({"path": str(path.relative_to(directory)), "verdict": read_json(path), **file_record(path)})
+            if not path.exists() and (invocation / "preparation-failure.json").exists():
+                preparations.append(go_case_failure(invocation))
+            else:
+                rows.append({"path": str(path.relative_to(directory)), "verdict": read_json(path), **file_record(path)})
         except (OSError, ValueError) as error:
             errors.append(str(error))
-    result = summarize_verdicts(rows, runner_exit, capture_exit, errors)
+    result = summarize_verdicts(rows, runner_exit, capture_exit, errors, tuple(preparations))
     metadata = directory / "matrix-row.json"
     if metadata.exists():
         try:

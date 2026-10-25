@@ -520,9 +520,24 @@ bazel() {
     printf '%s\n' "$result" > "$directory/go-case-exit.txt" || return 1
     cat -- "$directory/go-case-stdout.log" || return 1
     cat -- "$directory/go-case-stderr.log" >&2 || return 1
-    # An authoring failure is not a native test result. Leave the incomplete
-    # invocation and original diagnostic in the bundle, without starting tests.
-    if (( result != 0 )); then return "$result"; fi
+    # An authoring failure is not a native test result. Bind the aborted
+    # preparation to its source and requested labels without inventing owners.
+    if (( result != 0 )); then
+      git rev-parse HEAD > "$directory/final-head.txt" || return 1
+      git status --porcelain --untracked-files=no > "$directory/source-after.txt" || return 1
+      python3 - "$directory" <<'PREPARATION' || return 1
+import json
+import os
+from pathlib import Path
+import sys
+
+(Path(sys.argv[1]) / "preparation-failure.json").write_text(json.dumps({
+    "source": os.environ["QUALIFICATION_COMMIT"],
+    "requested_labels": os.environ["QUALIFICATION_TARGETS"].split(),
+}) + "\n")
+PREPARATION
+      return "$result"
+    fi
     sha256sum --check "$qualification_artifacts/go-cases.sha256" >&2 || return 1
     case_checksum=$directory/required-cases.sha256
     sha256sum "$directory/required-cases.json" > "$case_checksum" || return 1
