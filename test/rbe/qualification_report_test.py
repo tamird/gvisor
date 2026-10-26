@@ -729,6 +729,10 @@ class QualificationReportTest(unittest.TestCase):
     def test_command_completion_preserves_streams_and_failure_evidence(self) -> None:
         for command, exit_code, damage, status in (
             ("query", 0, None, "PASS"),
+            ("aquery", 0, None, "PASS"),
+            ("aquery", 23, None, "FAIL"),
+            ("aquery", 0, "arguments", "INCOMPLETE"),
+            ("build", 0, None, "INCOMPLETE"),
             ("run", 0, "empty", "PASS"),
             ("run", 23, None, "FAIL"),
             ("query", 23, "stderr", "FAIL"),
@@ -763,7 +767,7 @@ class QualificationReportTest(unittest.TestCase):
                         (invocation / "stdout.log").write_bytes(b"")
                         (invocation / "stderr.log").write_bytes(b"")
                     elif damage == "arguments":
-                        report.write_json(invocation / "arguments.json", ["query", 7])
+                        report.write_json(invocation / "arguments.json", [command, 7])
                     elif damage == "source-after":
                         (invocation / "source-after.txt").write_text(" M changed.go\n")
                     elif damage == "native-exit":
