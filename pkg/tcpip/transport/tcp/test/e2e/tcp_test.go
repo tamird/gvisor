@@ -3488,9 +3488,6 @@ func TestNonScaledWindowAccept(t *testing.T) {
 }
 
 func TestZeroScaledWindowReceive(t *testing.T) {
-	// This test ensures that the endpoint sends a non-zero window size
-	// advertisement when the scaled window transitions from 0 to non-zero,
-	// but the actual window (not scaled) hasn't gotten to zero.
 	c := context.New(t, e2e.DefaultMTU)
 	defer c.Cleanup()
 
@@ -3502,14 +3499,12 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 		header.TCPOptionWS, 3, 0, header.TCPOptionNOP,
 	})
 
-	// Write full segments until the remaining window is smaller.
-	remain := 0
 	sent := 0
 	data := make([]byte, segmentSize)
 	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	// Keep writing till the window drops below len(data).
-	for {
-		c.SendPacket(data, &context.Headers{
+	send := func(n int) int {
+		t.Helper()
+		c.SendPacket(data[:n], &context.Headers{
 			SrcPort: context.TestPort,
 			DstPort: c.Port,
 			Flags:   header.TCPFlagAck,
@@ -3517,7 +3512,7 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 			AckNum:  c.IRS.Add(1),
 			RcvWnd:  30000,
 		})
-		sent += len(data)
+		sent += n
 		pkt := c.GetPacket()
 		defer pkt.Release()
 		checker.IPv4(t, pkt,
@@ -3529,45 +3524,31 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 				checker.TCPFlags(header.TCPFlagAck),
 			),
 		)
-		// Don't reduce window to zero here.
-		if wnd := int(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize()); wnd<<ws < len(data) {
-			remain = wnd << ws
-			break
-		}
+		return int(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize()) << ws
 	}
 
-	// Make the window non-zero, but the scaled window zero.
-	for remain >= 16 {
-		data = data[:remain-15]
-		c.SendPacket(data, &context.Headers{
-			SrcPort: context.TestPort,
-			DstPort: c.Port,
-			Flags:   header.TCPFlagAck,
-			SeqNum:  iss.Add(seqnum.Size(sent)),
-			AckNum:  c.IRS.Add(1),
-			RcvWnd:  30000,
-		})
-		sent += len(data)
-		pkt := c.GetPacket()
-		defer pkt.Release()
-		checker.IPv4(t, pkt,
-			checker.PayloadLen(header.TCPMinimumSize),
-			checker.TCP(
-				checker.DstPort(context.TestPort),
-				checker.TCPSeqNum(uint32(c.IRS)+1),
-				checker.TCPAckNum(uint32(iss)+uint32(sent)),
-				checker.TCPFlags(header.TCPFlagAck),
-			),
-		)
-		// Since the receive buffer is split between window advertisement and
-		// application data buffer the window does not always reflect the space
-		// available and actual space available can be a bit more than what is
-		// advertised in the window.
-		wnd := int(header.TCP(header.IPv4(pkt.AsSlice()).Payload()).WindowSize())
-		if wnd == 0 {
-			break
+	// Leave one window unit unconsumed. Every ACK must still cover the
+	// bytes the peer was entitled to send under the previous advertisement.
+	const unit = 1 << ws
+	remain := send(segmentSize)
+	for remain > unit {
+		n := min(segmentSize, remain-unit)
+		next := send(n)
+		if left := remain - n; next < left {
+			t.Fatalf("window after sending %d bytes = %d, want at least %d", n, next, left)
 		}
-		remain = wnd << ws
+		remain = next
+	}
+	if got, want := remain, unit; got != want {
+		t.Fatalf("remaining window = %d, want %d", got, want)
+	}
+	// A one-byte ACK advances RCV.NXT by less than one window unit.
+	remain = send(1)
+	if remain < unit-1 {
+		t.Fatalf("window after sending one byte = %d, want at least %d", remain, unit-1)
+	}
+	for remain != 0 {
+		remain = send(min(segmentSize, remain))
 	}
 
 	read := func(size int64) {
@@ -3581,8 +3562,7 @@ func TestZeroScaledWindowReceive(t *testing.T) {
 	}
 
 	// Releasing one segment leaves the available window below the reopening
-	// threshold. A probe must still see zero, even if the previous non-scaled
-	// window had low bits that were discarded for its wire advertisement.
+	// threshold. A probe must still see a zero window.
 	read(segmentSize)
 	if pkt := c.GetPacketNonBlocking(); pkt != nil {
 		pkt.Release()
