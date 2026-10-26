@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T16:55:32.685515+00:00",
+    "updatedAt": "2026-10-26T17:44:12.952781+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1696,14 +1696,14 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The public PR remains open at a3818d179. The separately linked GNU-only fork 414e26abe reduces its DPDK patch burden and is agent-owned until the original GNU build validation passes. The LLVM unwind experiment has focused cgo/static positives but is a distinct follow-up. No fork refinement has amended this upstream PR.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
+      "summary": "The public PR remains open at a3818d179. Its separately linked unpublished GNU-only amendment is now 7d549676b, with a 203-record license audit passed on identical license inputs. Exact-source GNU build validation is still in progress after removing the inadequate forced parallelism setting. This is agent-owned work, with no contributor decision pending; no fork revision has amended this upstream PR.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
       "followup": {
-        "disposition": "Open upstream PR; GNU-only refinement under agent validation",
+        "disposition": "Public PR unchanged; GNU amendment awaits exact build checks",
         "owner": "root",
-        "nextAction": "Validate and review the separately linked GNU-only refinement before any upstream amendment; keep provider checks and human review on the current public head distinct.",
+        "nextAction": "Finish the exact GNU build checks for the separately linked 7d549676b amendment before presenting a contributor decision. Keep the LLVM/musl experiment separate and preserve public-head review state.",
         "sourceHead": "a3818d1793b919df1feeeb1c028cc40158754a7e",
         "reviewedAt": "2026-10-16T08:57:33Z",
         "reviewDecision": null,
@@ -1721,7 +1721,7 @@
           "https://github.com/tamird/gvisor/commit/596535e6b16e321e4864432daa25f43f518b94ac",
           "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
         ],
-        "observedAt": "2026-10-26T16:54:01.358925+00:00",
+        "observedAt": "2026-10-26T17:44:12.952781+00:00",
         "providerHead": "a3818d1793b919df1feeeb1c028cc40158754a7e"
       },
       "head": "a3818d1793b919df1feeeb1c028cc40158754a7e",
@@ -1735,8 +1735,8 @@
       },
       "evidence": [
         {
-          "label": "Separate GNU-only refinement",
-          "url": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
+          "label": "Current unpublished GNU-only amendment",
+          "url": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0"
         },
         {
           "label": "Published mechanical rebase",
@@ -14657,8 +14657,8 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15940",
       "status": "open",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
-      "summary": "The open backend-reduction PR and its import #16324 remain active. The separately linked supplier proposal fc158be46 now demonstrates a same-release reduction of 479 configured LLVM C++ compile actions per CPU. It is not yet delivered and does not supersede this PR; preserve the existing approval history and current provider review signals.\n\nPreserved earlier source-specific record:\n\nThe related parser-target reduction remains an open gVisor PR at 786caf36a with open Copybara import #16324. Preserve Etienne\u2019s approval on prior head 1e4bf6e0d and the current provider review signals; the standalone source migration does not retire or supersede this live PR. Continue its existing import/review path.\n\nPreserved earlier source-specific record:\n\nEtienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nThe requested post-#16046 rebase is published at 1e4bf6e0d617 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier without changing dependency versions or license records. All four focused parser/ABI owners pass at integration c5ec864087: 52 cases pass, with 18 existing unavailable-source skips and no failures or missing results. Validation used the integrated LLVM 23.1.2 supplier; upstream retains the older pin with the same source-verified target-selection API. Published as ready PR #15940 after contributor approval. The public buildifier requested multiline list formatting; that formatting-only amendment is published at 297d9b6582 with unchanged executable behavior and description. Exact head, master base and single-commit scope are verified. No contributor decision remains. This does not replace the separate compiler migration.",
+      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
+      "summary": "The open backend-reduction PR and its import #16324 remain active. The separately linked supplier proposal 72f8e4c22 now demonstrates a same-release reduction of 479 configured LLVM C++ compile actions per CPU. It is not yet delivered and does not supersede this PR; preserve the existing approval history and current provider review signals.\n\nPreserved earlier source-specific record:\n\nThe related parser-target reduction remains an open gVisor PR at 786caf36a with open Copybara import #16324. Preserve Etienne\u2019s approval on prior head 1e4bf6e0d and the current provider review signals; the standalone source migration does not retire or supersede this live PR. Continue its existing import/review path.\n\nPreserved earlier source-specific record:\n\nEtienne approved the exact current head on 2026-10-24; public validation passes and no matching import is present in the 06:22 UTC snapshot. The review requests no changes or reply. Continue ordinary import tracking.\n\nPreserved prior delivery history:\n\nThe requested post-#16046 rebase is published at 1e4bf6e0d617 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe independent MODULE.bazel change selects AArch64 and X86 in the existing LLVM supplier without changing dependency versions or license records. All four focused parser/ABI owners pass at integration c5ec864087: 52 cases pass, with 18 existing unavailable-source skips and no failures or missing results. Validation used the integrated LLVM 23.1.2 supplier; upstream retains the older pin with the same source-verified target-selection API. Published as ready PR #15940 after contributor approval. The public buildifier requested multiline list formatting; that formatting-only amendment is published at 297d9b6582 with unchanged executable behavior and description. Exact head, master base and single-commit scope are verified. No contributor decision remains. This does not replace the separate compiler migration.",
       "followup": {
         "owner": "root",
         "disposition": "Open source/import; prior approval retained as history",
@@ -14721,7 +14721,7 @@
       "evidence": [
         {
           "label": "Separate supplier backend proposal",
-          "url": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...fc158be46c4408324e1924ae2489f9c01565e775"
+          "url": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         },
         {
           "label": "Public buildifier formatting failure",
@@ -24480,8 +24480,8 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
-      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier proposal fc158be46 restores root backend selection. On the same hermetic-llvm v0.8.24 / LLVM 23.1.2 release, it removes 479 configured LLVM C++ compile actions per CPU. Those are graph counts, not measured build-time savings. Preserve open #15940 and its import until the replacement is delivered; the supplier proposal and the compiler switch remain separately reviewable.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
+      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
+      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nThe separate supplier proposal 72f8e4c22 restores root backend selection. On the same hermetic-llvm v0.8.24 / LLVM 23.1.2 release, it removes 479 configured LLVM C++ compile actions per CPU. Those are graph counts, not measured build-time savings. Preserve open #15940 and its import until the replacement is delivered; the supplier proposal and the compiler switch remain separately reviewable.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940\u2019s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm\u2019s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier\u2019s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
@@ -24592,27 +24592,27 @@
       "type": "branch",
       "repo": "tamird/hermetic-llvm",
       "ref": "qualify/root-llvm-default-targets-main",
-      "head": "fc158be46c4408324e1924ae2489f9c01565e775",
+      "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
       "title": "Honor root module LLVM backend selection",
-      "url": "https://github.com/tamird/hermetic-llvm/commit/fc158be46c4408324e1924ae2489f9c01565e775",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T16:55:32.685515+00:00",
-      "summary": "The supplier proposal restores root-module backend selection and clarifies which modules supply default backends. It is a fork proposal on upstream main, with no upstream PR or contact. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until this supplier replacement is delivered. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
+      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
+      "summary": "The supplier proposal is now one commit, 72f8e4c22, directly on upstream main 3dd710dd9. Its tree is identical to reviewed fc158be46; that earlier head remains preserved on qualify/root-llvm-default-targets-main-reviewed. The tested v0.8.24 backport b6ed0f573 is unchanged. This is a squash-only record cleanup, with no new product behavior or qualification claim.\n\nThe supplier proposal restores root-module backend selection and clarifies which modules supply default backends. It is a fork proposal on upstream main, with no upstream PR or contact. A same-release backport on hermetic-llvm v0.8.24 / LLVM 23.1.2 removes 479 configured LLVM C++ compile actions per architecture: AMD64 3,184 to 2,705 and ARM64 3,181 to 2,702. Total configured parser actions fall by 1,105 per architecture. Every removed LLVM compile belongs to one of seven excluded backend families. These graph measurements do not establish elapsed build-time savings.\n\nThe older #15940 LLVM pin differs: its 2,521 / 2,518 LLVM compile counts are not the same-release control. Keep #15940 and its open import active until this supplier replacement is delivered. The candidate product checks also passed on AMD64 and native ARM64: TestParser and TestStructDefinitionParity/570.195.03 ran with zero skips. The parser and run_differ ELF outputs were byte-identical to the stock same-release outputs on each architecture. AMD64 detached run_differ parsed the real 570.195.03 driver twice and compared records, aliases and constants. These product checks remain distinct from the configured-action counts.",
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "fc158be46c4408324e1924ae2489f9c01565e775",
-        "observedAt": "2026-10-26T16:55:32.685515+00:00",
+        "sourceHead": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250",
+        "observedAt": "2026-10-26T17:44:12.952781+00:00",
         "disposition": "Graph and product qualification passed; supplier proposal remains agent-owned",
         "nextAction": "Prepare the final supplier proposal for the normal contributor decision before upstream submission; preserve #15940 until delivery.",
         "evidence": [
-          "https://github.com/tamird/hermetic-llvm/commit/fc158be46c4408324e1924ae2489f9c01565e775"
+          "https://github.com/tamird/hermetic-llvm/commit/72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         ]
       },
       "evidence": [
         {
           "label": "Complete proposal on supplier main",
-          "url": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...fc158be46c4408324e1924ae2489f9c01565e775"
+          "url": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         },
         {
           "label": "Same-release tested backport",
@@ -24633,6 +24633,10 @@
         {
           "label": "Native ARM64 candidate parser parity and output identity",
           "url": "https://app.buildbuddy.io/invocation/f1578511-0c75-4276-bde7-a9fa27257c85"
+        },
+        {
+          "label": "Reviewed pre-squash source (identical tree)",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/fc158be46c4408324e1924ae2489f9c01565e775"
         }
       ],
       "refinement": {
@@ -24642,7 +24646,7 @@
         },
         "after": {
           "base": "3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc",
-          "head": "fc158be46c4408324e1924ae2489f9c01565e775"
+          "head": "72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
         }
       }
     },
@@ -24651,34 +24655,43 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/plugin-gnu-source",
-      "head": "414e26abefc363780f489ead2625df02fa5541d2",
+      "head": "7d549676be357bd0829fa863a174091953e34be0",
       "title": "Simplify the GNU plugin build inputs",
-      "url": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2",
+      "url": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
-      "summary": "Preliminary GNU-only refinement of open #15153. DPDK patches shrink from 380 to 31 lines and total patches from 616 to 132 lines. The published source PR remains a3818d179; this fork has not amended it. Original GNU builds must pass before the refinement is ready for contributor review. Keep the later LLVM unwind experiment separate.",
+      "updatedAt": "2026-10-26T17:44:12.952781+00:00",
+      "summary": "GNU-only amendment candidate 7d549676b is published on qualification/plugin-gnu-source; public PR #15153 remains at a3818d179. The candidate removes the inadequate forced parallelism setting, with exact-source GNU build validation still in progress. It remains agent work, not ready for a contributor decision, and makes no GNU runtime traffic claim.\n\nThe 203-record license Fetch/Verify audit passed on preceding product 807910cbb. Its only difference from the current candidate is the removed resource_size line; license inputs are identical. The earlier build attempt did not qualify the source because the builder\u2019s ENTRYPOINT prevented the intended command. The LLVM/musl follow-up remains separate.\n\nPreserved preliminary source record:\n\nPreliminary GNU-only refinement of open #15153. DPDK patches shrink from 380 to 31 lines and total patches from 616 to 132 lines. The published source PR remains a3818d179; this fork has not amended it. Original GNU builds must pass before the refinement is ready for contributor review. Keep the later LLVM unwind experiment separate.",
       "followup": {
         "owner": "root",
-        "sourceHead": "414e26abefc363780f489ead2625df02fa5541d2",
-        "observedAt": "2026-10-26T16:54:01.358925+00:00",
-        "disposition": "Agent work; no contributor decision pending",
-        "nextAction": "Finish the original GNU build validation and any narrowly scoped cleanup, then compare the final candidate with published #15153 before presenting a decision.",
+        "sourceHead": "7d549676be357bd0829fa863a174091953e34be0",
+        "observedAt": "2026-10-26T17:44:12.952781+00:00",
+        "disposition": "License audit passed; exact GNU builds pending",
+        "nextAction": "Authenticate the final exact-source GNU build checks before marking this amendment ready for contributor review. Public #15153 stays unchanged; no runtime traffic claim.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
+          "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0",
+          "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a"
         ]
       },
       "evidence": [
         {
-          "label": "Preliminary GNU-only candidate",
+          "label": "Current unpublished GNU amendment",
+          "url": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0"
+        },
+        {
+          "label": "Amendment against published #15153",
+          "url": "https://github.com/tamird/gvisor/compare/a3818d1793b919df1feeeb1c028cc40158754a7e..7d549676be357bd0829fa863a174091953e34be0"
+        },
+        {
+          "label": "203-record license audit on 807910cbb; license inputs unchanged",
+          "url": "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a"
+        },
+        {
+          "label": "Earlier GNU candidate",
           "url": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
         },
         {
-          "label": "Direct amendment against the published source",
-          "url": "https://github.com/tamird/gvisor/compare/a3818d1793b919df1feeeb1c028cc40158754a7e..414e26abefc363780f489ead2625df02fa5541d2"
-        },
-        {
-          "label": "Existing upstream PR",
+          "label": "Current public PR",
           "url": "https://github.com/google/gvisor/pull/15153"
         }
       ],
@@ -24687,7 +24700,7 @@
           "head": "a3818d1793b919df1feeeb1c028cc40158754a7e"
         },
         "after": {
-          "head": "414e26abefc363780f489ead2625df02fa5541d2"
+          "head": "7d549676be357bd0829fa863a174091953e34be0"
         }
       }
     },
@@ -27562,14 +27575,14 @@
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
       "reason": "Preserve root backend selection when delivering the standalone source migration; the supplier proposal remains separate from the compiler switch.",
-      "evidence": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...fc158be46c4408324e1924ae2489f9c01565e775"
+      "evidence": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
     },
     {
       "from": "pr:15153",
       "to": "branch:plugin-gnu-source",
       "type": "includes",
       "reason": "This candidate refines the existing open plugin-build proposal; it has not replaced the public head.",
-      "evidence": "https://github.com/tamird/gvisor/commit/414e26abefc363780f489ead2625df02fa5541d2"
+      "evidence": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0"
     }
   ],
   "investigations": [
