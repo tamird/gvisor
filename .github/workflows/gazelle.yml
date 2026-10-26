@@ -29,6 +29,11 @@ jobs:
     # The runner's bazel is bazelisk, which honors .bazelversion.
     - run: |
         if ! bazel run //:gazelle_check; then
-          echo "::error::BUILD files are out of date. Run 'make gazelle-fix' and commit the result."
+          echo "::error::BUILD files are out of date. Run 'bazel run //:gazelle_fix' and commit the result."
           exit 1
         fi
+
+    - name: Check declared Go analysis roots
+      run: |
+        bazel query 'attr("tags", "codeql-go-owner:", //...)' --output=xml > "$RUNNER_TEMP/codeql-roots.xml"
+        bazel run //tools/codeql:update_go_roots -- --input "$RUNNER_TEMP/codeql-roots.xml" --check

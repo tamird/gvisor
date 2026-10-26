@@ -18,14 +18,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/google/subcommands"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"gvisor.dev/gvisor/pkg/cpuid"
 	"gvisor.dev/gvisor/pkg/state/pretty"
 	"gvisor.dev/gvisor/pkg/state/statefile"
-	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/cmd/util"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
@@ -33,12 +30,11 @@ import (
 
 // Statefile implements subcommands.Command for the "statefile" command.
 type Statefile struct {
-	list    bool
-	get     string
-	bitmask bool
-	key     string
-	output  string
-	html    bool
+	list   bool
+	get    string
+	key    string
+	output string
+	html   bool
 }
 
 // Name implements subcommands.Command.
@@ -60,7 +56,6 @@ func (*Statefile) Usage() string {
 func (s *Statefile) SetFlags(f *flag.FlagSet) {
 	f.BoolVar(&s.list, "list", false, "lists the metadata in the statefile.")
 	f.StringVar(&s.get, "get", "", "extracts the given metadata key.")
-	f.BoolVar(&s.bitmask, "bitmask", false, fmt.Sprintf("when used with -get %s, outputs CPU features as comma-separated hex uint32 block bitmasks.", sentryapi.CPUFeaturesKey))
 	f.StringVar(&s.key, "key", "", "the integrity key for the file.")
 	f.StringVar(&s.output, "output", "", "target to write the result.")
 	f.BoolVar(&s.html, "html", false, "outputs in HTML format.")
@@ -77,9 +72,6 @@ func (s *Statefile) Execute(_ context.Context, f *flag.FlagSet, args ...any) sub
 	// Check arguments.
 	if s.list && s.get != "" {
 		util.Fatalf("error: can't specify -list and -get simultaneously.")
-	}
-	if s.bitmask && s.get != sentryapi.CPUFeaturesKey {
-		util.Fatalf("error: -bitmask requires -get %s.", sentryapi.CPUFeaturesKey)
 	}
 
 	// Setup output.
@@ -146,13 +138,6 @@ func (s *Statefile) Execute(_ context.Context, f *flag.FlagSet, args ...any) sub
 		val, ok := metadata[s.get]
 		if !ok {
 			util.Fatalf("metadata key %s: not found", s.get)
-		}
-		if s.bitmask {
-			mask, err := cpuid.FeatureMaskStringFromNames(strings.Split(val, ","))
-			if err != nil {
-				util.Fatalf("error converting %s to bitmask: %v", s.get, err)
-			}
-			val = mask
 		}
 		fmt.Fprintf(output, "%s\n", val)
 		return subcommands.ExitSuccess

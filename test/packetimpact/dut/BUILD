@@ -23,6 +23,7 @@ go_library(
     srcs = ["dut.go"],
     visibility = [
         "//test/packetimpact:__subpackages__",
+        "//tools/codeql:__pkg__",
         "//turquoise/connectivity/netstack/gvisor_tests/packetimpact:__subpackages__",
     ],
     deps = [

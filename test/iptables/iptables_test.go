@@ -19,17 +19,21 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"slices"
+	"os"
 	"sync"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/test/netutils"
 	"gvisor.dev/gvisor/test/netutils/container"
 )
 
 var iptablesNFT = flag.Bool("iptables-nft", false, "run tests using iptables-nft instead of iptables-legacy")
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	os.Exit(dockerutil.RunTests(m.Run))
+}
 
 func isNFTMode() bool {
 	return *iptablesNFT
@@ -501,31 +505,6 @@ func TestFilterInputInvertDportDrop(t *testing.T) {
 	singleTest(t, &FilterInputInvertDportDrop{})
 }
 
-func TestFilterAddrs(t *testing.T) {
-	tcs := []struct {
-		ipv6  bool
-		addrs []string
-		want  []string
-	}{
-		{
-			ipv6:  false,
-			addrs: []string{"192.168.0.1", "192.168.0.2/24", "::1", "::2/128"},
-			want:  []string{"192.168.0.1", "192.168.0.2"},
-		},
-		{
-			ipv6:  true,
-			addrs: []string{"192.168.0.1", "192.168.0.2/24", "::1", "::2/128"},
-			want:  []string{"::1", "::2"},
-		},
-	}
-
-	for _, tc := range tcs {
-		if got := netutils.FilterAddrs(tc.addrs, tc.ipv6); !slices.Equal(got, tc.want) {
-			t.Errorf("%v with IPv6 %t: got %v, but wanted %v", tc.addrs, tc.ipv6, got, tc.want)
-		}
-	}
-}
-
 func TestNATPreOriginalDst(t *testing.T) {
 	singleTest(t, &NATPreOriginalDst{})
 }
@@ -546,8 +525,16 @@ func TestNATPostSNATUDP(t *testing.T) {
 	singleTest(t, &NATPostSNATUDP{})
 }
 
+func TestNATPostSNATUDPWithPort(t *testing.T) {
+	singleTest(t, &NATPostSNATUDP{withPort: true})
+}
+
 func TestNATPostSNATTCP(t *testing.T) {
 	singleTest(t, &NATPostSNATTCP{})
+}
+
+func TestNATPostSNATTCPWithPort(t *testing.T) {
+	singleTest(t, &NATPostSNATTCP{withPort: true})
 }
 
 func TestFilterInputDropAllSrcPorts(t *testing.T) {

@@ -1,17 +1,43 @@
-load("//tools:defs.bzl", "go_binary")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//images:oci.bzl", "image_outputs")
+load("//tools:defs.bzl", "go_binary", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-filegroup(
-    name = "sources",
-    srcs = glob(["**"]),
-    visibility = ["//images:__pkg__"],
-)
-
 go_binary(
     name = "client",
     srcs = ["client.go"],
+    pure = True,
+    static = True,
+    visibility = ["//images:__pkg__"],
+)
+
+pkg_files(
+    name = "client_file",
+    srcs = [":client"],
+    attributes = pkg_attributes(mode = "0755"),
+    renames = {":client": "usr/bin/httpclient"},
+)
+
+pkg_tar(
+    name = "client_layer",
+    srcs = [":client_file"],
+)
+
+oci_image(
+    name = "image",
+    base = "@ollama_client_alpine",
+    cmd = ["/usr/bin/httpclient"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    tars = [":client_layer"],
+)
+
+image_outputs(
+    name = "image_archive",
+    image = ":image",
 )

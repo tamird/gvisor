@@ -1,9 +1,110 @@
-load("//tools:defs.bzl", "bzl_library", "target_emulators")
+load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
+load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag")
+load(":platforms.bzl", "docker_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
     default_visibility = ["//:sandbox"],
     licenses = ["notice"],
+)
+
+# Shared by ordinary and namespace-dependent remote test actions.
+_RBE_EXEC_PROPERTIES = {
+    "OSFamily": "linux",
+    "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    "workload-isolation-type": "oci",
+}
+
+# These also serve as host platforms. Preserve the Go cgo constraints while
+# adding worker routing for compilation and host-configured test actions.
+platform(
+    name = "rbe_linux_amd64",
+    exec_properties = dict(
+        _RBE_EXEC_PROPERTIES,
+        Arch = "amd64",
+    ),
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
+)
+
+# Only TestRunner actions need the privileged cgroup setup; compilation inherits
+# the ordinary OCI worker properties.
+platform(
+    name = "rbe_linux_amd64_cgroup_v1",
+    exec_properties = docker_exec_properties(free_disk = "20GB"),
+    parents = [":rbe_linux_amd64"],
+)
+
+platform(
+    name = "rbe_linux_arm64",
+    exec_properties = dict(
+        _RBE_EXEC_PROPERTIES,
+        Arch = "arm64",
+    ),
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_arm64_cgo"],
+)
+
+config_setting(
+    name = "rbe",
+    define_values = {"rbe": "true"},
+)
+
+string_flag(
+    name = "local_test_architecture",
+    build_setting_default = "",
+    values = [
+        "",
+        "amd64",
+        "arm64",
+    ],
+)
+
+string_flag(
+    name = "local_test_backend",
+    build_setting_default = "local",
+    values = [
+        "local",
+        "docker",
+    ],
+)
+
+# Requirements the caller's remote workers cannot provide. The default retains
+# the existing architecture-wide namespace fallback; callers with capable
+# workers can name only their demonstrated gaps, without changing test owners.
+string_list_flag(
+    name = "local_test_requirements",
+    build_setting_default = ["namespace"],
+)
+
+# Individual tests must be able to select the cgroup-v1 fixture. Bazel forbids
+# Starlark transitions from changing --define, so use a build setting instead.
+# https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/starlark/FunctionTransitionUtil.java#L305-L313
+bool_flag(
+    name = "cgroup_v1",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "rbe_cgroup_v1",
+    define_values = {"rbe": "true"},
+    flag_values = {":cgroup_v1": "true"},
+)
+
+# BPF uses the downloaded compiler and its matching resource directory.
+alias(
+    name = "bpf_clang",
+    actual = select({
+        "@llvm//platforms/config:{}_{}".format(os, cpu): platform_resource_dir(os, cpu).same_package_label("bin/clang.exe" if os == "windows" else "bin/clang")
+        for os, cpu in SUPPORTED_EXECS
+    }),
+)
+
+alias(
+    name = "clang_resource_dir",
+    actual = select({
+        "@llvm//platforms/config:{}_{}".format(os, cpu): platform_resource_dir(os, cpu)
+        for os, cpu in SUPPORTED_EXECS
+    }),
 )
 
 bzl_library(
@@ -23,8 +124,8 @@ bzl_library(
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
     deps = [
-        "@bazel_skylib//rules/directory:providers",
-        "@rules_cc//cc/common",
+        ":cgroup_test_bzl",
+        ":test_architectures_bzl",
     ],
 )
 
@@ -32,13 +133,41 @@ bzl_library(
     name = "go_bzl",
     srcs = ["go.bzl"],
     visibility = ["//visibility:private"],
-    deps = [":defs_bzl"],
+    deps = [
+        ":cgroup_test_bzl",
+        ":defs_bzl",
+        ":go_variants_bzl",
+        ":test_architectures_bzl",
+    ],
 )
 
 bzl_library(
-    name = "deb_data_bzl",
-    srcs = ["extensions/deb_data.bzl"],
+    name = "go_variants_bzl",
+    srcs = ["go_variants.bzl"],
     visibility = ["//visibility:private"],
+    deps = [
+        ":cgroup_test_bzl",
+        ":defs_bzl",
+        ":test_architectures_bzl",
+    ],
+)
+
+bzl_library(
+    name = "cgroup_test_bzl",
+    srcs = ["cgroup_test.bzl"],
+    visibility = ["//:sandbox"],
+    deps = ["@with_cfg.bzl//:with_cfg"],
+)
+
+bzl_library(
+    name = "test_architectures_bzl",
+    srcs = ["test_architectures.bzl"],
+    visibility = ["//:sandbox"],
+    deps = [
+        "@bazel_skylib//lib:shell",
+        "@bazel_skylib//rules:common_settings",
+        "@with_cfg.bzl//:with_cfg",
+    ],
 )
 
 # Keep Go's pure/cgo mode in its build settings, not the target platform:
@@ -82,10 +211,6 @@ config_setting(
     ],
 )
 
-# User-mode emulators for each target architecture (qemu_*).
-# See target_emulator in defs.bzl.
-target_emulators(name = "qemu")
-
 genrule(
     name = "version",
     outs = ["version.txt"],
@@ -97,4 +222,30 @@ genrule(
         "notap",
     ],
     visibility = ["//:sandbox"],
+)
+
+# A build setting lets individual test targets select their page size without
+# changing unrelated --define values in the same invocation.
+string_flag(
+    name = "page_size",
+    build_setting_default = "4k",
+    values = [
+        "4k",
+        "64k",
+    ],
+)
+
+# Page size configurations for ARM64
+config_setting(
+    name = "pagesize_64k",
+    flag_values = {":page_size": "64k"},
+)
+
+# Combined config: ARM64 with 64K page size
+config_setting(
+    name = "arm64_pagesize_64k",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+    ],
+    flag_values = {":page_size": "64k"},
 )

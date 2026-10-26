@@ -19,7 +19,6 @@ package shimutils
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -33,16 +32,19 @@ import (
 	"github.com/BurntSushi/toml"
 	eventtypes "github.com/containerd/containerd/api/events"
 	task "github.com/containerd/containerd/api/runtime/task/v2"
-	events "github.com/containerd/containerd/api/services/ttrpc/events/v1"
 	ttrpc "github.com/containerd/ttrpc"
 	typeurl "github.com/containerd/typeurl/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
 	"gvisor.dev/gvisor/pkg/shim/v1/runtimeoptions"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/specutils"
+
+	"context"
+
+	events "github.com/containerd/containerd/api/services/ttrpc/events/v1"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (

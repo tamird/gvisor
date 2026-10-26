@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -8,7 +8,6 @@ package(
 go_library(
     name = "sandbox",
     srcs = [
-        "cpulimits.go",
         "network.go",
         "network_unsafe.go",
         "no_xdp.go",
@@ -74,6 +73,8 @@ go_test(
         "sandbox_test.go",
     ],
     embed = [":sandbox"],
+    # The network fixtures create namespaces, interfaces, and IPv6 routes.
+    exec_properties = namespace_test_exec_properties(),
     deps = [
         "//pkg/control/server",
         "//pkg/prometheus",
@@ -82,7 +83,6 @@ go_test(
         "//runsc/cgroup",
         "//runsc/config",
         "//runsc/specutils",
-        "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
         "@com_github_vishvananda_netlink//:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],

@@ -85,7 +85,10 @@ int main(int argc, char** argv, char** envp) {
   if (getegid() != want_egid) {
     return 3;
   }
-  if (prctl(PR_GET_DUMPABLE) != want_dumpability) {
+  int dumpability = prctl(PR_GET_DUMPABLE);
+  if (dumpability != want_dumpability) {
+    std::cerr << "dumpability: got " << dumpability << ", want "
+              << want_dumpability << std::endl;
     return 4;
   }
   if (argc == 4) {

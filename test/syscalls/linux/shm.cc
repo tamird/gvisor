@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <errno.h>
-#include <linux/capability.h>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/mman.h>
@@ -32,7 +31,7 @@
 #include "absl/flags/flag.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "test/util/linux_capability_util.h"
+#include "test/util/capability_util.h"
 #include "test/util/logging.h"
 #include "test/util/multiprocess_util.h"
 #include "test/util/posix_error.h"
@@ -580,7 +579,7 @@ TEST(ShmTest, RmidOwnershipPermissionDenied) {
       EXPECT_THAT(Shmctl<void>(shm.id(), IPC_RMID, nullptr),
                   PosixErrorIs(EPERM, _));
     });
-  }).Join();
+  });
 
   // Verify that the segment was not destroyed and remains valid.
   struct shmid_ds attr;
@@ -594,9 +593,7 @@ TEST(ShmTest, RmidOwnershipPermissionDenied) {
 
   // In the same dropped-privilege thread (now the owner), IPC_RMID
   // should succeed.
-  ScopedThread([&] {
-    drop_privs([&] { EXPECT_NO_ERRNO(shm.Rmid()); });
-  }).Join();
+  ScopedThread([&] { drop_privs([&] { EXPECT_NO_ERRNO(shm.Rmid()); }); });
 }
 
 }  // namespace

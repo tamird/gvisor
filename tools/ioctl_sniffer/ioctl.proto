@@ -28,5 +28,10 @@ message Ioctl {
 
   // The data pointed to by `argp`. For UVM ioctl calls, the argument size is
   // not easily accessible, so `arg_data` will be empty in this case.
+  // A short copy contains only the readable prefix, not the missing bytes.
   bytes arg_data = 4;
+
+  // The errno from copying arg_data, or zero if no copy error was reported.
+  // This is independent of the intercepted ioctl's result.
+  int32 arg_data_errno = 5;
 }

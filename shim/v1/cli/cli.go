@@ -20,8 +20,9 @@ import (
 	"context"
 
 	containerdshim "github.com/containerd/containerd/v2/pkg/shim"
+	// This import registers the runsc plugin with containerd.
 	shim "gvisor.dev/gvisor/pkg/shim/v1"
-	_ "gvisor.dev/gvisor/pkg/shim/v1/plugin" // Register the runsc plugin with containerd.
+	_ "gvisor.dev/gvisor/pkg/shim/v1/plugin"
 )
 
 // Main is the main entrypoint.

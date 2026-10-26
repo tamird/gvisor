@@ -25,7 +25,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"slices"
 	"strconv"
 	"sync"
 
@@ -48,8 +47,6 @@ const (
 
 	// UNIX_PATH_MAX as defined in include/uapi/linux/un.h.
 	unixPathMax = 108
-
-	overflowGID = 65534
 )
 
 // Config holds configuration options for the fsgofer server.
@@ -79,14 +76,6 @@ type Config struct {
 
 	// Gofer process's EGID.
 	EGID int
-
-	// Gofer process's supplementary groups.
-	Groups []int
-
-	// Whether the gofer's user namespace allows setgroups(2) and, when host
-	// unix sockets are open, the gofer was permitted to drop its own
-	// supplementary groups.
-	CanSetGroups bool
 }
 
 var procSelfFD *rwfd.FD
@@ -130,6 +119,7 @@ var _ lisafs.ConnectionImpl = (*connectionImpl)(nil)
 //
 // +checklocksread:c.server.renameMu
 // +checklocksexclude:c.fdsMu
+// +checklocksexclude:mountNode.controlFDsMu
 func (i *connectionImpl) Mount(c *lisafs.Connection, mountNode *lisafs.Node) (*lisafs.ControlFD, lisafs.Statx, int, error) {
 	mountPath := mountNode.FilePath()
 	rootHostFD, err := tryOpen(func(flags int) (int, error) {
@@ -180,7 +170,7 @@ func (i *connectionImpl) MaxMessageSize() uint32 {
 // SupportedMessages implements lisafs.ConnectionImpl.SupportedMessages.
 func (i *connectionImpl) SupportedMessages() []lisafs.MID {
 	// Note that Flush is not supported.
-	msgs := []lisafs.MID{
+	return []lisafs.MID{
 		lisafs.Mount,
 		lisafs.Channel,
 		lisafs.FStat,
@@ -214,10 +204,6 @@ func (i *connectionImpl) SupportedMessages() []lisafs.MID {
 		lisafs.ConnectWithCreds,
 		lisafs.RenameAt2,
 	}
-	if i.config.CanSetGroups {
-		msgs = append(msgs, lisafs.ConnectWithGroups)
-	}
-	return msgs
 }
 
 // controlFDLisa implements lisafs.ControlFDImpl.
@@ -243,6 +229,7 @@ var _ lisafs.ControlFDImpl = (*controlFDLisa)(nil)
 //
 // +checklocksread:parent.ControlFD.conn.server.renameMu
 // +checklocksexclude:parent.ControlFD.conn.fdsMu
+// +checklocksexclude:parent.ControlFD.node.childrenMu
 func newControlFDLisa(hostFD int, parent *controlFDLisa, name string, mode linux.FileMode) *controlFDLisa {
 	var (
 		childFD    *controlFDLisa
@@ -250,7 +237,9 @@ func newControlFDLisa(hostFD int, parent *controlFDLisa, name string, mode linux
 		parentNode = parent.Node()
 	)
 	parentNode.WithChildrenMu(func() {
-		childNode = parentNode.LookupChildLocked(name)
+		// WithChildrenMu runs this callback synchronously under childrenMu;
+		// checklocks cannot propagate that lock through the callback.
+		childNode = parentNode.LookupChildLocked(name) // +checklocksignore
 		if childNode == nil {
 			// Common case. Performance hack which is used to allocate the node and
 			// its control FD together in the heap. For a well-behaving client, there
@@ -263,7 +252,7 @@ func newControlFDLisa(hostFD int, parent *controlFDLisa, name string, mode linux
 			}{}
 			childFD = &temp.fd
 			childNode = &temp.node
-			childNode.InitLocked(name, parentNode)
+			childNode.InitLocked(name, parentNode) // +checklocksignore
 		} else {
 			childNode.IncRef()
 			childFD = &controlFDLisa{}
@@ -453,6 +442,7 @@ func (fd *controlFDLisa) SetStat(stat lisafs.SetStatReq) (failureMask uint32, fa
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
+// +checklocksexclude:fd.ControlFD.node.childrenMu
 func (fd *controlFDLisa) Walk(name string) (*lisafs.ControlFD, lisafs.Statx, error) {
 	childHostFD, err := tryOpen(func(flags int) (int, error) {
 		return unix.Openat(fd.hostFD, name, flags, 0)
@@ -624,6 +614,7 @@ func (fd *controlFDLisa) Open(flags uint32) (*lisafs.OpenFD, int, error) {
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
+// +checklocksexclude:fd.ControlFD.node.childrenMu
 func (fd *controlFDLisa) OpenCreate(mode linux.FileMode, uid lisafs.UID, gid lisafs.GID, name string, flags uint32) (*lisafs.ControlFD, lisafs.Statx, *lisafs.OpenFD, int, error) {
 	createFlags := unix.O_CREAT | unix.O_EXCL | unix.O_RDONLY | unix.O_NONBLOCK | openFlags
 	childHostFD, err := unix.Openat(fd.hostFD, name, createFlags, uint32(mode&^linux.FileTypeMask))
@@ -678,6 +669,7 @@ func (fd *controlFDLisa) OpenCreate(mode linux.FileMode, uid lisafs.UID, gid lis
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
+// +checklocksexclude:fd.ControlFD.node.childrenMu
 func (fd *controlFDLisa) Mkdir(mode linux.FileMode, uid lisafs.UID, gid lisafs.GID, name string) (*lisafs.ControlFD, lisafs.Statx, error) {
 	if err := unix.Mkdirat(fd.hostFD, name, uint32(mode&^linux.FileTypeMask)); err != nil {
 		return nil, lisafs.Statx{}, err
@@ -717,6 +709,7 @@ func (fd *controlFDLisa) Mkdir(mode linux.FileMode, uid lisafs.UID, gid lisafs.G
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
+// +checklocksexclude:fd.ControlFD.node.childrenMu
 func (fd *controlFDLisa) Mknod(mode linux.FileMode, uid lisafs.UID, gid lisafs.GID, name string, minor uint32, major uint32) (*lisafs.ControlFD, lisafs.Statx, error) {
 	// Only allow creating regular files or overlayfs whiteouts. Linux's
 	// vfs_mknod() exempts whiteouts from the CAP_MKNOD check, so we do not need
@@ -773,6 +766,7 @@ func (fd *controlFDLisa) Mknod(mode linux.FileMode, uid lisafs.UID, gid lisafs.G
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
+// +checklocksexclude:fd.ControlFD.node.childrenMu
 func (fd *controlFDLisa) Symlink(name string, target string, uid lisafs.UID, gid lisafs.GID) (*lisafs.ControlFD, lisafs.Statx, error) {
 	if err := unix.Symlinkat(target, fd.hostFD, name); err != nil {
 		return nil, lisafs.Statx{}, err
@@ -805,6 +799,9 @@ func (fd *controlFDLisa) Symlink(name string, target string, uid lisafs.UID, gid
 }
 
 // Link implements lisafs.ControlFDImpl.Link.
+//
+// The destination node's childrenMu must not be held. The destination is
+// supplied through an interface, so checklocks cannot name its node owner.
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
@@ -989,101 +986,11 @@ func (fd *controlFDLisa) ConnectWithCreds(sockType uint32, uid lisafs.UID, gid l
 	return fd.Connect(sockType)
 }
 
-// ConnectWithGroups implements lisafs.ControlFDImpl.ConnectWithGroups.
-func (fd *controlFDLisa) ConnectWithGroups(sockType uint32, uid lisafs.UID, gid lisafs.GID, groups []lisafs.GID) (int, error) {
-	impl := fd.Conn().Impl().(*connectionImpl)
-	if !impl.config.HostUDS.AllowOpen() {
-		logRejectedUdsConnectOnce.Do(func() {
-			log.Warningf("Rejecting attempt to connect to unix domain socket from host filesystem: %q. If you want to allow this, set flag --host-uds=open", fd.ControlFD.Node().FilePath())
-		})
-		return -1, unix.EPERM
-	}
-	gids := make([]int, len(groups))
-	for i, group := range groups {
-		gids[i] = int(group)
-	}
-	if groupsAlreadySet(gids, impl.config.Groups) {
-		return fd.ConnectWithCreds(sockType, uid, gid)
-	}
-	// setgroups(2) needs CAP_SETGID in the effective set, which ConnectWithCreds
-	// clears while the euid is changed. So the supplementary groups are changed
-	// before it.
-	return connectWithGroups(gids, func() (int, error) {
-		return fd.ConnectWithCreds(sockType, uid, gid)
-	})
-}
-
-// connectWithGroups calls connect on a dedicated OS thread whose supplementary
-// groups are set to gids. unix.Setgroups changes only the calling thread, which
-// is what we want here (syscall.Setgroups would change every thread). The
-// thread is never reused: connectOnItsOwnThread returns while still locked to
-// it, so the runtime terminates it along with its groups. Threads the runtime
-// starts from a locked thread are created by its template thread instead (see
-// runtime.newm), so they don't inherit the groups either.
-func connectWithGroups(gids []int, connect func() (int, error)) (int, error) {
-	done := make(chan connectResult, 1)
-	go connectOnItsOwnThread(gids, connect, done)
-	res := <-done
-	if res.panicValue != nil {
-		panic(res.panicValue)
-	}
-	return res.sock, res.err
-}
-
-type connectResult struct {
-	sock       int
-	err        error
-	panicValue any
-}
-
-func connectOnItsOwnThread(gids []int, connect func() (int, error), done chan connectResult) {
-	runtime.LockOSThread()
-	if isThreadGroupLeader() {
-		// The runtime never terminates the thread group leader; it parks it for
-		// the life of the process instead, so its groups must not change. Stay
-		// locked to it so that the new goroutine runs on another thread.
-		defer runtime.UnlockOSThread()
-		mainless := make(chan connectResult, 1)
-		go connectOnItsOwnThread(gids, connect, mainless)
-		done <- <-mainless
-		return
-	}
-	defer func() {
-		if p := recover(); p != nil {
-			done <- connectResult{sock: -1, panicValue: p}
-		}
-	}()
-	if err := unix.Setgroups(gids); err != nil {
-		log.Warningf("Failed to set %d supplementary groups; err: %v", len(gids), err)
-		done <- connectResult{sock: -1, err: err}
-		return
-	}
-	log.Debugf("Successfully set supplementary groups to %v", gids)
-	sock, err := connect()
-	done <- connectResult{sock: sock, err: err}
-}
-
-// isThreadGroupLeader returns true if the calling thread is the thread group
-// leader, whose thread ID is the process ID.
-func isThreadGroupLeader() bool {
-	return unix.Gettid() == unix.Getpid()
-}
-
-func groupsAlreadySet(want, have []int) bool {
-	if slices.Contains(have, overflowGID) {
-		return false
-	}
-	x := slices.Clone(want)
-	y := slices.Clone(have)
-	slices.Sort(x)
-	slices.Sort(y)
-	return slices.Equal(slices.Compact(x), slices.Compact(y))
-}
-
 // BindAt implements lisafs.ControlFDImpl.BindAt.
 //
 // +checklocksread:fd.ControlFD.conn.server.renameMu
 // +checklocksexclude:fd.ControlFD.conn.fdsMu
+// +checklocksexclude:fd.ControlFD.node.childrenMu
 func (fd *controlFDLisa) BindAt(name string, sockType uint32, mode linux.FileMode, uid lisafs.UID, gid lisafs.GID) (*lisafs.ControlFD, lisafs.Statx, *lisafs.BoundSocketFD, int, error) {
 	if !fd.Conn().Impl().(*connectionImpl).config.HostUDS.AllowCreate() {
 		logRejectedUdsCreateOnce.Do(func() {
@@ -1199,33 +1106,30 @@ func (fd *controlFDLisa) GetXattr(name string, size uint32, getValueBuf func(uin
 		size = linux.XATTR_SIZE_MAX
 	}
 	data := getValueBuf(size)
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, fgetxattr(2) fails
-		// with EBADF for O_PATH FDs. Use lgetxattr(2) instead.
-		xattrSize, err := unix.Lgetxattr(fd.Node().FilePath(), name, data)
-		return uint16(xattrSize), err
-	}
 	xattrSize, err := unix.Fgetxattr(fd.hostFD, name, data)
+	if err == unix.EBADF {
+		// tryOpen also uses O_PATH for files that cannot be opened for reading.
+		// The fd-based xattr syscalls reject O_PATH, regardless of file type.
+		xattrSize, err = unix.Lgetxattr(fd.Node().FilePath(), name, data)
+	}
 	return uint16(xattrSize), err
 }
 
 // SetXattr implements lisafs.ControlFDImpl.SetXattr.
 func (fd *controlFDLisa) SetXattr(name string, value string, flags uint32) error {
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, fsetxattr(2) fails
-		// with EBADF for O_PATH FDs. Use lsetxattr(2) instead.
+	err := unix.Fsetxattr(fd.hostFD, name, []byte(value), int(flags))
+	if err == unix.EBADF {
 		return unix.Lsetxattr(fd.Node().FilePath(), name, []byte(value), int(flags))
 	}
-	return unix.Fsetxattr(fd.hostFD, name, []byte(value), int(flags))
+	return err
 }
 
 func (fd *controlFDLisa) listXattr(data []byte) (int, error) {
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, flistxattr(2) fails
-		// with EBADF for O_PATH FDs. Use llistxattr(2) instead.
+	n, err := unix.Flistxattr(fd.hostFD, data)
+	if err == unix.EBADF {
 		return unix.Llistxattr(fd.Node().FilePath(), data)
 	}
-	return unix.Flistxattr(fd.hostFD, data)
+	return n, err
 }
 
 var listXattrBufPool = sync.Pool{
@@ -1265,12 +1169,11 @@ func (fd *controlFDLisa) ListXattr(size uint64) (lisafs.StringArray, error) {
 
 // RemoveXattr implements lisafs.ControlFDImpl.RemoveXattr.
 func (fd *controlFDLisa) RemoveXattr(name string) error {
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, fremovexattr(2) fails
-		// with EBADF for O_PATH FDs. Use lremovexattr(2) instead.
+	err := unix.Fremovexattr(fd.hostFD, name)
+	if err == unix.EBADF {
 		return unix.Lremovexattr(fd.Node().FilePath(), name)
 	}
-	return unix.Fremovexattr(fd.hostFD, name)
+	return err
 }
 
 // openFDLisa implements lisafs.OpenFDImpl.
@@ -1450,7 +1353,7 @@ func tryOpen(open func(int) (int, error)) (hostFD int, err error) {
 	//   1. RDONLY | NONBLOCK: for all files, directories, ro mounts, FIFOs.
 	//      Use non-blocking to prevent getting stuck inside open(2) for
 	//      FIFOs. This option has no effect on regular files.
-	//   2. PATH: for symlinks, sockets.
+	//   2. PATH: for symlinks, sockets, and files without read permission.
 	flags := []int{
 		unix.O_RDONLY | unix.O_NONBLOCK,
 		unix.O_PATH,

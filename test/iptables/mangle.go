@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 
 	"gvisor.dev/gvisor/test/netutils"
 )
@@ -45,7 +45,7 @@ func (*MangleInputDrop) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*MangleInputDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*MangleInputDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := mangleTable(ipv6, "-A", "INPUT", "-p", "udp", "--destination-port", fmt.Sprintf("%d", dropPort), "-j", "DROP"); err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (*MangleInputDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 boo
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*MangleInputDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*MangleInputDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.SendUDPLoop(ctx, ip, dropPort, ipv6)
 }
 
@@ -78,7 +78,7 @@ func (*ManglePreroutingMarkContinue) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*ManglePreroutingMarkContinue) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*ManglePreroutingMarkContinue) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := mangleTable(ipv6, "-A", "PREROUTING", "-p", "udp", "--destination-port", fmt.Sprintf("%d", acceptPort), "-j", "MARK", "--set-mark", "0x42"); err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (*ManglePreroutingMarkContinue) ContainerAction(ctx context.Context, ip net
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*ManglePreroutingMarkContinue) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*ManglePreroutingMarkContinue) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.SendUDPLoop(ctx, ip, acceptPort, ipv6)
 }
 
@@ -106,7 +106,7 @@ func (*MangleOutputMark) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*MangleOutputMark) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*MangleOutputMark) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := mangleTable(ipv6, "-A", "OUTPUT", "-p", "udp", "--destination-port", fmt.Sprintf("%d", acceptPort), "-j", "MARK", "--set-mark", "0x20"); err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (*MangleOutputMark) ContainerAction(ctx context.Context, ip net.IP, ipv6 bo
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*MangleOutputMark) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*MangleOutputMark) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.ListenUDP(ctx, acceptPort, ipv6)
 }
 
@@ -133,7 +133,7 @@ func (*ManglePostroutingDrop) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (*ManglePostroutingDrop) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*ManglePostroutingDrop) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	if err := mangleTable(ipv6, "-A", "POSTROUTING", "-p", "udp", "--destination-port", fmt.Sprintf("%d", dropPort), "-j", "DROP"); err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (*ManglePostroutingDrop) ContainerAction(ctx context.Context, ip net.IP, ip
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (*ManglePostroutingDrop) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*ManglePostroutingDrop) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	timedCtx, cancel := context.WithTimeout(ctx, NegativeTimeout)
 	defer cancel()
 	if err := netutils.ListenUDP(timedCtx, dropPort, ipv6); err == nil {

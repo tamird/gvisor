@@ -1,0 +1,65 @@
+# Allow generated-source checks to use the same test environment frontends
+# as explicit tests. Based on bazel_lib 3.2.2; defaults preserve upstream behavior.
+# Remove when bazel_lib exposes equivalent generated-test factory hooks.
+diff --git a/lib/private/write_source_file.bzl b/lib/private/write_source_file.bzl
+--- a/lib/private/write_source_file.bzl
++++ b/lib/private/write_source_file.bzl
+@@ -27,6 +27,8 @@
+         diff_args = [],
+         check_that_out_file_exists = True,
+         verbosity = "full",
++        diff_test_rule = _diff_test,
++        missing_file_test_rule = fail_with_message_test,
+         **kwargs):
+     """Write a file or directory to the source tree.
+ 
+@@ -79,6 +81,8 @@
+ 
+         verbosity: Verbosity of message when the copy target is run. One of `full`, `short`, `quiet`.
+ 
++        diff_test_rule: Factory for generated file comparison tests.
++        missing_file_test_rule: Factory for generated missing-file tests.
+         **kwargs: Other common named parameters such as `tags` or `visibility`
+ 
+     Returns:
+@@ -149,7 +153,7 @@
+         # Stamp out a test that fails with a helpful message when the source file doesn't exist.
+         # Note that we cannot simply call fail() here since it will fail during the analysis
+         # phase and prevent the user from calling bazel run //update/the:file.
+-        fail_with_message_test(
++        missing_file_test_rule(
+             name = test_target_name,
+             message = message,
+             visibility = kwargs.get("visibility"),
+@@ -181,7 +185,7 @@
+         message = _do_diff_test_message_replacements(diff_test_failure_message, default_message, update_target_string, suggested_update_target_string)
+ 
+         # Stamp out a diff test the check that the source file is up to date
+-        _diff_test(
++        diff_test_rule(
+             name = test_target_name,
+             file1 = in_file,
+             file2 = out_file,
+diff --git a/lib/write_source_files.bzl b/lib/write_source_files.bzl
+--- a/lib/write_source_files.bzl
++++ b/lib/write_source_files.bzl
+@@ -98,6 +98,8 @@
+
+ """
+
++load("//lib/private:diff_test.bzl", _diff_test = "diff_test")
++load("//lib/private:fail_with_message_test.bzl", _fail_with_message_test = "fail_with_message_test")
+ load(
+     "//lib/private:write_source_file.bzl",
+     _WriteSourceFileInfo = "WriteSourceFileInfo",
+@@ -105,6 +107,10 @@
+ )
+
+ WriteSourceFileInfo = _WriteSourceFileInfo
++
++# Default factories for callers that add test environment frontends.
++diff_test = _diff_test
++fail_with_message_test = _fail_with_message_test
+
+ def write_source_files(
+         name,

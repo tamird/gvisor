@@ -43,7 +43,7 @@
 ##   To opt out of these wrappers, set DOCKER_BUILD=false.
 DOCKER_BUILD := true
 ifneq ($(MAKECMDGOALS),)
-ifeq ($(filter-out help,$(MAKECMDGOALS)),)
+ifeq ($(filter-out help lint lint-fix,$(MAKECMDGOALS)),)
 DOCKER_BUILD := false
 endif
 endif
@@ -355,32 +355,30 @@ ensure-bazel-server:
 endif
 .PHONY: ensure-bazel-server
 
-# target_query quotes target patterns as one cquery expression, preserving
-# build's ordered additions, exclusions and re-additions.
-target_query = "$$(query='set()'; \
-  for target in $(1); do \
-    case "$$target" in \
-      -*) query="$$query except"; target="$${target:1}" ;; \
-      *) query="$$query union" ;; \
-    esac; \
-    case "$$target" in \
-      *\"*) query="$$query '$$target'" ;; \
-      *) query="$$query \"$$target\"" ;; \
-    esac; \
-  done; \
-  printf '%s' "$$query")"
-
-# build_paths materializes selected outputs and passes cquery's path/destination
-# pairs to $(2). cquery also includes manual targets that build may exclude, so
-# filter missing paths before translating them from the build environment.
+# build_paths builds target patterns (1), then runs command (2) on their outputs.
+# Bazel options (3) are separate from target patterns for both build and cquery.
+# cquery needs one expression; union/except preserve ordered additions/removals.
+# cquery also includes manual targets that build may exclude, so filter missing
+# paths before translating them from the build environment.
 # https://github.com/bazelbuild/bazel/blob/61aa5a57c/src/main/java/com/google/devtools/build/lib/runtime/commands/CqueryCommand.java#L90-L94
-# Host filtering also permits builds whose Docker cache volume is not mounted
-# on the host; callers that consume printed paths still require local outputs.
-# Optional $(3) supplies cquery arguments separately from build arguments $(1).
+# Host filtering also permits Docker cache volumes not mounted on the host;
+# callers that consume printed paths still require local outputs.
 build_paths = \
   (set -euo pipefail; \
-  $(call wrapper,$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(1)) && \
-  $(call wrapper,$(BAZEL) cquery $(BASE_OPTIONS) $(BAZEL_OPTIONS) --output=starlark --starlark:file=tools/show_paths.bzl $(if $(3),$(3),$(1))) \
+  build_targets=($(1)); \
+  build_query='set()'; \
+  for build_target in "$${build_targets[@]}"; do \
+    case "$$build_target" in \
+      -*) build_query="$$build_query except"; build_target="$${build_target:1}" ;; \
+      *) build_query="$$build_query union" ;; \
+    esac; \
+    case "$$build_target" in \
+      *\"*) build_query="$$build_query '$$build_target'" ;; \
+      *) build_query="$$build_query \"$$build_target\"" ;; \
+    esac; \
+  done; \
+  $(call wrapper,$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(3) -- "$${build_targets[@]}") && \
+  $(call wrapper,$(BAZEL) cquery $(BASE_OPTIONS) $(BAZEL_OPTIONS) $(3) --output=starlark --starlark:file=tools/show_paths.bzl -- "$$build_query") \
   | $(call wrapper,xargs -r -n 2 bash -c 'set -euo pipefail; test -e "$$0" || exit 0; output_path="$$($(REALPATH_M) "$$0")"; printf "%s %s\n" "$$output_path" "$$1"') \
   | sed 's~^$(HOME)/\.cache/bazel/~$(patsubst %/,%,$(BAZEL_CACHE))/~' \
   | xargs -r -n 2 bash -c 'set -euo pipefail; test -e "$$0" || exit 0; output_path="$$($(REALPATH_M) "$$0")"; printf "%s %s\n" "$$output_path" "$$1"' \
@@ -389,8 +387,8 @@ build_paths = \
 clean = $(call header,CLEAN) && $(call wrapper,$(BAZEL) clean)
 build = $(call header,BUILD $(1)) && $(call build_paths,$(1),echo "$$0",$(2))
 copy  = $(call header,COPY $(1) $(2)) && $(call build_paths,$(1),if test -d "$(2)"; then dest="$(2)/$$1"; else dest="$(2)"; fi; mkdir -p -m 0755 "$$(dirname "$${dest}")" && chmod a+rx "$$(dirname "$${dest}")" && cp -fa "$$0" "$${dest}" && if test -d "$$0"; then chmod -R u+w "$${dest}"; fi,$(3))
-run   = $(call header,RUN $(1) $(2)) && $(call build_paths,$(1),"$$0" $(2))
-sudo  = $(call header,SUDO $(1) $(2)) && $(call build_paths,$(1),sudo -E "$$0" $(2))
+run   = $(call header,RUN $(1) $(2)) && $(call build_paths,$(1),"$$0" $(2),$(3))
+sudo  = $(call header,SUDO $(1) $(2)) && $(call build_paths,$(1),sudo -E "$$0" $(2),$(3))
 test  = $(call header,TEST $(1)) && $(call wrapper,$(BAZEL) test --strip=never $(BAZEL_OPTIONS) $(TEST_OPTIONS) $(1))
 query = $(call wrapper,$(BAZEL) query $(BAZEL_OPTIONS) $(1))
 mod   = $(call wrapper,$(BAZEL) mod $(BASE_OPTIONS) $(BAZEL_OPTIONS) $(1))
@@ -400,7 +398,7 @@ clean: ## Cleans the bazel cache.
 .PHONY: clean
 
 runsc-race:
-	@$(call build,--config=race runsc:runsc-race)
+	@$(call build,runsc:runsc-race,--config=race)
 
 testlogs: ## Returns the most recent set of test logs.
 	@if test -f .build_events.json; then \

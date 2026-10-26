@@ -225,6 +225,5 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 }
 
 func TestMain(m *testing.M) {
-	harness.Init()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(m.Run))
 }

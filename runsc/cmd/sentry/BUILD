@@ -6,6 +6,15 @@ package(
     licenses = ["notice"],
 )
 
+filegroup(
+    name = "go_export_sources",
+    srcs = glob(
+        ["*.go"],
+        exclude = ["*_test.go"],
+    ),
+    visibility = ["//:__pkg__"],
+)
+
 go_binary(
     name = "gvisor_sentry",
     srcs = ["sentry_main.go"],
@@ -37,40 +46,45 @@ go_binary(
     ],
 )
 
-COVERAGE_SRCS = [
-    "sentry_main.go",
-    "//:go.mod",
-    "//:go.sum",
-    "//:gopath",
-    "//tools:build_cover.sh",
-    "//tools:go-allow-internal.patch",
-]
-
-COVERAGE_CMD = (
-    "\"$(execpath //tools:build_cover.sh)\" " +
-    "\"$(execpath %s)\" " +
-    "\"$(execpath //:gopath)\" " +
-    "\"$(execpath //:go.mod)\" " +
-    "\"$(execpath //:go.sum)\" " +
-    "\"$(execpath sentry_main.go)\" " +
-    "\"$(execpath //tools:go-allow-internal.patch)\" " +
-    "\"%s\" "
-)
-
 go_cov(
     name = "gvisor_sentry_coverage",
-    srcs = COVERAGE_SRCS,
-    outs = ["gvisor_sentry_cov"],
-    cmd = COVERAGE_CMD % ("//runsc/cmd/sentry:gvisor_sentry_cov", "false"),
-    visibility = ["//debian:__pkg__"],
+    srcs = ["sentry_main.go"],
+    out = "gvisor_sentry_cov",
+    gotags = [
+        "kcov",
+        "opensource",
+    ],
+    pure = True,
+    race = "off",
+    visibility = [
+        "//:__pkg__",
+        "//debian:__pkg__",
+    ],
+    deps = [
+        "//runsc/cli/sentrycli",
+        "//runsc/gvisorbinaries",
+    ],
 )
 
 go_cov(
     name = "gvisor_sentry_race_coverage",
-    srcs = COVERAGE_SRCS,
-    outs = ["gvisor_sentry_race_cov"],
-    cmd = COVERAGE_CMD % ("//runsc/cmd/sentry:gvisor_sentry_race_cov", "true"),
-    visibility = ["//debian:__pkg__"],
+    srcs = ["sentry_main.go"],
+    out = "gvisor_sentry_race_cov",
+    gotags = [
+        "kcov",
+        "lockdep",
+        "opensource",
+    ],
+    race = "on",
+    static = True,
+    visibility = [
+        "//:__pkg__",
+        "//debian:__pkg__",
+    ],
+    deps = [
+        "//runsc/cli/sentrycli",
+        "//runsc/gvisorbinaries",
+    ],
 )
 
 go_binary(
@@ -98,7 +112,6 @@ deps_test(
     # The sentry binaries contain the sentry, and nothing else.
     # Keep this tight.
     allowed = [
-        "//runsc/autoplatform",
         "//runsc/cli",
         "//runsc/cli/sentrycli",
         "//runsc/cmd/nvproxy",

@@ -21,23 +21,16 @@ import (
 	"path/filepath"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
-	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy/nvconf"
 )
 
 // DriverSourceDir represents a directory containing the source code for a given driver version.
 type DriverSourceDir struct {
-	ParentDirectory string
-	Version         nvconf.DriverVersion
-}
-
-// Name returns the name of the driver source directory.
-func (d DriverSourceDir) Name() string {
-	return d.Version.String()
+	Directory string
 }
 
 // GlobDriverFiles returns all files in the given driver directory that match the given pattern.
 func (d *DriverSourceDir) GlobDriverFiles(pattern string) ([]string, error) {
-	files, err := filepath.Glob(fmt.Sprintf("%s/%s/%s", d.ParentDirectory, d.Name(), pattern))
+	files, err := filepath.Glob(filepath.Join(d.Directory, pattern))
 	if err != nil {
 		return nil, fmt.Errorf("failed to glob files: %w", err)
 	}
@@ -72,30 +65,30 @@ func (d *DriverSourceDir) GetNonUVMSourcePaths() ([]string, error) {
 // GetUVMSourcePaths returns the list of paths for uvm source files.
 func (d *DriverSourceDir) GetUVMSourcePaths() []string {
 	return []string{
-		fmt.Sprintf("%s/kernel-open/nvidia-uvm/uvm_ioctl.h", d.Name()),
-		fmt.Sprintf("%s/kernel-open/nvidia-uvm/uvm_linux_ioctl.h", d.Name()),
+		filepath.Join(d.Directory, "kernel-open/nvidia-uvm/uvm_ioctl.h"),
+		filepath.Join(d.Directory, "kernel-open/nvidia-uvm/uvm_linux_ioctl.h"),
 	}
 }
 
 // GetNonUVMIncludePaths returns the list of paths for non-uvm include files.
 func (d *DriverSourceDir) GetNonUVMIncludePaths() []string {
 	return []string{
-		fmt.Sprintf("%s/src/common/sdk/nvidia/inc", d.Name()),
-		fmt.Sprintf("%s/src/common/shared/inc", d.Name()),
-		fmt.Sprintf("%s/src/nvidia/arch/nvalloc/unix/include", d.Name()),
-		fmt.Sprintf("%s/kernel-open/common/inc", d.Name()),
+		filepath.Join(d.Directory, "src/common/sdk/nvidia/inc"),
+		filepath.Join(d.Directory, "src/common/shared/inc"),
+		filepath.Join(d.Directory, "src/nvidia/arch/nvalloc/unix/include"),
+		filepath.Join(d.Directory, "kernel-open/common/inc"),
 	}
 }
 
 // GetUVMIncludePaths returns the list of paths for uvm include files.
 func (d *DriverSourceDir) GetUVMIncludePaths() []string {
 	return []string{
-		fmt.Sprintf("%s/kernel-open/common/inc", d.Name()),
+		filepath.Join(d.Directory, "kernel-open/common/inc"),
 	}
 }
 
 // WriteIncludeFile writes an cc file at file that includes all the given sources.
-func WriteIncludeFile(sources []string, w io.Writer, ioctls []nvproxy.IoctlName, constants []string) error {
+func WriteIncludeFile(sources []string, w io.Writer, ioctls []nvproxy.IoctlName) error {
 	bufW := bufio.NewWriter(w)
 	for _, source := range sources {
 		if _, err := fmt.Fprintf(bufW, "#include \"%s\"\n", source); err != nil {
@@ -112,13 +105,6 @@ func WriteIncludeFile(sources []string, w io.Writer, ioctls []nvproxy.IoctlName,
 	// which are initialized with the ioctl macro.
 	for _, ioctl := range ioctls {
 		if _, err := fmt.Fprintf(bufW, "#ifdef %s\nconst uint64_t GVISOR_%s = %s;\n#endif\n", ioctl, ioctl, ioctl); err != nil {
-			return fmt.Errorf("failed to write to include file: %w", err)
-		}
-	}
-	// Other constants may be enumerators rather than macros, so they are
-	// defined unconditionally.
-	for _, constant := range constants {
-		if _, err := fmt.Fprintf(bufW, "const uint64_t GVISOR_%s = %s;\n", constant, constant); err != nil {
 			return fmt.Errorf("failed to write to include file: %w", err)
 		}
 	}

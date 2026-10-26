@@ -33,7 +33,6 @@
 #include <sys/syscall.h>
 #include <sys/sysmacros.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <sys/xattr.h>
@@ -788,20 +787,35 @@ TEST(ExecveatTest, SymlinkNoFollowAndEmptyPath) {
 }
 
 TEST(ExecveatTest, SymlinkNoFollowIgnoreSymlinkAncestor) {
+  // System executables may themselves be symlinks. Use a regular file so only
+  // the ancestor is a symlink.
+  TempPath parent = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  std::string contents =
+      ASSERT_NO_ERRNO_AND_VALUE(GetContents(RunfilePath(kBasicWorkload)));
+  TempPath executable = ASSERT_NO_ERRNO_AND_VALUE(
+      TempPath::CreateFileWith(parent.path(), contents, 0755));
   TempPath parent_link = ASSERT_NO_ERRNO_AND_VALUE(
-      TempPath::CreateSymlinkTo(GetAbsoluteTestTmpdir(), "/bin"));
-  std::string path_with_symlink = JoinPath(parent_link.path(), "echo");
+      TempPath::CreateSymlinkTo(GetAbsoluteTestTmpdir(), parent.path()));
+  std::string path_with_symlink =
+      JoinPath(parent_link.path(), Basename(executable.path()));
 
   CheckExecveat(AT_FDCWD, path_with_symlink, {path_with_symlink}, {},
-                AT_SYMLINK_NOFOLLOW, ArgEnvExitStatus(0, 0), "");
+                AT_SYMLINK_NOFOLLOW, ArgEnvExitStatus(0, 0),
+                absl::StrCat(path_with_symlink, "\n"));
 }
 
 TEST(ExecveatTest, SymlinkNoFollowWithNormalFile) {
+  TempPath parent = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
+  std::string contents =
+      ASSERT_NO_ERRNO_AND_VALUE(GetContents(RunfilePath(kBasicWorkload)));
+  TempPath executable = ASSERT_NO_ERRNO_AND_VALUE(
+      TempPath::CreateFileWith(parent.path(), contents, 0755));
   const FileDescriptor dirfd =
-      ASSERT_NO_ERRNO_AND_VALUE(Open("/bin", O_DIRECTORY));
+      ASSERT_NO_ERRNO_AND_VALUE(Open(parent.path(), O_DIRECTORY));
+  std::string name(Basename(executable.path()));
 
-  CheckExecveat(dirfd.get(), "echo", {"echo"}, {}, AT_SYMLINK_NOFOLLOW,
-                ArgEnvExitStatus(0, 0), "");
+  CheckExecveat(dirfd.get(), name, {name}, {}, AT_SYMLINK_NOFOLLOW,
+                ArgEnvExitStatus(0, 0), absl::StrCat(name, "\n"));
 }
 
 TEST(ExecveatTest, BasicWithCloexecFD) {
@@ -869,7 +883,6 @@ TEST(ExecTest, ExecveArgvE2BIG) {
 TEST(ExecTest, ExecveEnvvE2BIG) {
   std::string long_env(128 * 1024, 'B');
   std::vector<std::string> envv;
-  envv.reserve(17);
   for (int i = 0; i < 17; i++) {
     envv.push_back("VAR=" + long_env);
   }
@@ -981,8 +994,31 @@ PosixErrorOr<TempPath> CreateExecuteOnlyExecutable(std::string path) {
 constexpr int kUnprivilegedUid = 12345;
 constexpr int kUnprivilegedGid = 12345;
 
+PosixErrorOr<int> PrivilegedExecDumpability() {
+  if (IsRunningOnGvisor()) {
+    // gVisor does not implement fs.suid_dumpable and disables dumps after
+    // gaining privileges; see kernel/task_exec.go.
+    return SUID_DUMP_DISABLE;
+  }
+  ASSIGN_OR_RETURN_ERRNO(std::string value,
+                         GetContents("/proc/sys/fs/suid_dumpable"));
+  int dumpability;
+  if (!absl::SimpleAtoi(value, &dumpability) ||
+      dumpability < SUID_DUMP_DISABLE || dumpability > SUID_DUMP_ROOT) {
+    return PosixError(EINVAL,
+                      absl::StrCat("Invalid fs.suid_dumpable: ", value));
+  }
+  return dumpability;
+}
+
 TEST(ExecTest, SUIDExecGainsUID) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SETUID)));
+  const int expected_dumpability =
+      ASSERT_NO_ERRNO_AND_VALUE(PrivilegedExecDumpability());
+  // Make exec reset the mode even when the native policy is SUID_DUMP_USER.
+  const int initial_dumpability = expected_dumpability == SUID_DUMP_USER
+                                      ? SUID_DUMP_DISABLE
+                                      : SUID_DUMP_USER;
   TempPath suid_exe = ASSERT_NO_ERRNO_AND_VALUE(
       CreateSuidExecutable(RunfilePath(kCheckEuidProgram)));
 
@@ -996,15 +1032,15 @@ TEST(ExecTest, SUIDExecGainsUID) {
     ASSERT_EQ(geteuid(), kUnprivilegedUid);
 
     int dumpability;
-    ASSERT_THAT(prctl(PR_SET_DUMPABLE, SUID_DUMP_USER), SyscallSucceeds());
+    ASSERT_THAT(prctl(PR_SET_DUMPABLE, initial_dumpability), SyscallSucceeds());
     ASSERT_THAT(dumpability = prctl(PR_GET_DUMPABLE), SyscallSucceeds());
-    ASSERT_EQ(dumpability, SUID_DUMP_USER);
+    ASSERT_EQ(dumpability, initial_dumpability);
 
     const ExecveArray argv = {
         suid_exe.path(),
         /*want_euid=*/absl::StrCat(privilegedUid),  // gained back original euid
         /*want_egid=*/absl::StrCat(getegid()),
-        /*want_dumpability=*/absl::StrCat(SUID_DUMP_DISABLE)};  // but lost this
+        /*want_dumpability=*/absl::StrCat(expected_dumpability)};
     CheckExec(suid_exe.path(), argv, /*envv=*/{}, /*expect_status=*/0,
               /*expect_stderr=*/"");
   });
@@ -1012,6 +1048,12 @@ TEST(ExecTest, SUIDExecGainsUID) {
 
 TEST(ExecTest, SGIDExecGainsGID) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SETUID)));
+  const int expected_dumpability =
+      ASSERT_NO_ERRNO_AND_VALUE(PrivilegedExecDumpability());
+  // Make exec reset the mode even when the native policy is SUID_DUMP_USER.
+  const int initial_dumpability = expected_dumpability == SUID_DUMP_USER
+                                      ? SUID_DUMP_DISABLE
+                                      : SUID_DUMP_USER;
   TempPath suid_exe = ASSERT_NO_ERRNO_AND_VALUE(
       CreateSgidExecutable(RunfilePath(kCheckEuidProgram)));
 
@@ -1025,15 +1067,15 @@ TEST(ExecTest, SGIDExecGainsGID) {
     ASSERT_EQ(getegid(), kUnprivilegedGid);
 
     int dumpability;
-    ASSERT_THAT(prctl(PR_SET_DUMPABLE, SUID_DUMP_USER), SyscallSucceeds());
+    ASSERT_THAT(prctl(PR_SET_DUMPABLE, initial_dumpability), SyscallSucceeds());
     ASSERT_THAT(dumpability = prctl(PR_GET_DUMPABLE), SyscallSucceeds());
-    ASSERT_EQ(dumpability, SUID_DUMP_USER);
+    ASSERT_EQ(dumpability, initial_dumpability);
 
     const ExecveArray argv = {
         suid_exe.path(),
         /*want_euid=*/absl::StrCat(geteuid()),
         /*want_egid=*/absl::StrCat(privilegedGid),  // gained back original gid
-        /*want_dumpability=*/absl::StrCat(SUID_DUMP_DISABLE)};  // but lost this
+        /*want_dumpability=*/absl::StrCat(expected_dumpability)};
     CheckExec(suid_exe.path(), argv, /*envv=*/{}, /*expect_status=*/0,
               /*expect_stderr=*/"");
   });

@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_binary")
+load("//tools:defs.bzl", "go_binary", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -12,4 +12,12 @@ go_binary(
     deps = [
         "//tools/tpucheckpoint/tpucontrol",
     ],
+)
+
+go_test(
+    name = "tpucheckpoint_test",
+    size = "small",
+    srcs = ["tpucheckpoint_test.go"],
+    data = [":tpucheckpoint"],
+    deps = ["//pkg/test/testutil"],
 )

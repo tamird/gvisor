@@ -81,8 +81,7 @@ if [[ "${DUT_PLATFORM-}" == "netstack" ]]; then
   # Using array to pass multiple arguments; https://www.shellcheck.net/wiki/SC2086.
   declare -a RUNTIME_ARG=("--runtime" "${RUNTIME}")
 elif [[ "${DUT_PLATFORM-}" == "linux" ]]; then
-  # Declare an empty array.
-  declare -a RUNTIME_ARG
+  declare -a RUNTIME_ARG=("--runtime" "runc")
 else
   echo "FAIL: Bad or missing --dut_platform argument: ${DUT_PLATFORM-}"
   exit 2
@@ -190,7 +189,8 @@ fi
 
 # Create the test runner container and connect to network.
 TEST_RUNNER_TEST_NET_IP="${TEST_NET_PREFIX}${TEST_RUNNER_NET_SUFFIX}"
-TEST_RUNNER=$(docker create --privileged --rm \
+# The wire server always runs on Linux, regardless of the daemon's default.
+TEST_RUNNER=$(docker create --runtime=runc --privileged --rm \
   --stop-timeout "${TIMEOUT}" -it "${IMAGE_TAG}")
 docker network connect "${CTRL_NET}" \
   --ip "${CTRL_NET_PREFIX}${TEST_RUNNER_NET_SUFFIX}" "${TEST_RUNNER}" \

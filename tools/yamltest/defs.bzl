@@ -1,5 +1,8 @@
 """Tools for testing yaml files against schemas."""
 
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
+
 def _yaml_test_impl(ctx):
     """Implementation for yaml_test."""
     runner = ctx.actions.declare_file(ctx.label.name)
@@ -19,7 +22,7 @@ def _yaml_test_impl(ctx):
         executable = runner,
     )]
 
-yaml_test = rule(
+_yaml_test = rule(
     implementation = _yaml_test_impl,
     doc = "Tests a yaml file against a schema.",
     attrs = {
@@ -51,3 +54,34 @@ yaml_test = rule(
     },
     test = True,
 )
+
+def _compile_yaml_test(**kwargs):
+    _yaml_test(**kwargs)
+
+# with_cfg requires the returned transition rule to be exported at module scope.
+# buildifier: disable=unused-variable
+_yaml_amd64_test, _yaml_amd64_transition = with_test_architecture(_compile_yaml_test, "amd64").build()
+
+# buildifier: disable=unused-variable
+_yaml_arm64_test, _yaml_arm64_transition = with_test_architecture(_compile_yaml_test, "arm64").build()
+
+# buildifier: disable=unused-variable
+_yaml_test_cgroup_v1_test, _yaml_test_cgroup_v1_transition = with_cgroup_v1(_compile_yaml_test)
+
+def yaml_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original check and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    _yaml_test(name = name, **kwargs)
+    cgroup_v1_variant(name, _yaml_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": _yaml_amd64_test, "arm64": _yaml_arm64_test},
+        kwargs,
+    )

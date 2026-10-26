@@ -51,26 +51,20 @@ void ExitGroup32(const char instruction[2], int code) {
   // Copy in the actual instruction.
   memcpy(m.ptr(), instruction, 2);
 
-  // We're playing *extremely* fast-and-loose with the various syscall ABIs
-  // here, which we can more-or-less get away with since exit_group doesn't
-  // return.
+  // Linux fetches arg6 from 0(%ebp) for SYSENTER and 0(%esp) for
+  // compatibility-mode SYSCALL, even when the syscall ignores it. Both
+  // pointers must therefore reference readable memory.
   //
-  // SYSENTER expects the user stack in (%ebp) and arg6 in 0(%ebp). The kernel
-  // will unconditionally dereference %ebp for arg6, so we must pass a valid
-  // address or it will return EFAULT.
-  //
-  // SYSENTER also unconditionally returns to thread_info->sysenter_return which
-  // is ostensibly a stub in the 32-bit VDSO. But a 64-bit binary doesn't have
-  // the 32-bit VDSO mapped, so sysenter_return will simply be the value
-  // inherited from the most recent 32-bit ancestor, or NULL if there is none.
-  // As a result, return would not return from SYSENTER.
+  // These entry points return through the 32-bit VDSO, which this 64-bit
+  // binary does not map. Use exit_group so that a successful syscall does
+  // not return.
   asm volatile(
       "movl $252, %%eax\n"     // exit_group
       "movl %[code], %%ebx\n"  // code
       "movl %%edx, %%ebp\n"    // SYSENTER: user stack (use IP as a valid addr)
       "leaq -20(%%rsp), %%rsp\n"
       "movl $0x2b, 16(%%rsp)\n"  // SS = CPL3 data segment
-      "movl $0,12(%%rsp)\n"      // ESP = nullptr (unused)
+      "movl %%edx, 12(%%rsp)\n"  // SYSCALL: user stack (use IP as a valid addr)
       "movl $0, 8(%%rsp)\n"      // EFLAGS
       "movl $0x23, 4(%%rsp)\n"   // CS = CPL3 32-bit code segment
       "movl %%edx, 0(%%rsp)\n"   // EIP

@@ -22,11 +22,15 @@ import (
 	"strings"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/runtimes/runner/lib"
 )
 
 var (
+	proctorPath       = flag.String("proctor", "", "declared path to the language proctor executable")
+	proctorUser       = flag.String("proctor_user", "0", "container user for discovery and tests")
+	proctorPrivileged = flag.Bool("proctor_privileged", true, "enable privileged container execution for discovery and tests")
 	lang              = flag.String("lang", "", "language runtime to test")
 	image             = flag.String("image", "", "docker image with runtime tests")
 	excludeFile       = flag.String("exclude_file", "", "file containing list of tests to exclude, in CSV format with fields: test name, bug id, comment")
@@ -41,12 +45,20 @@ var (
 
 func main() {
 	flag.Parse()
-	if *lang == "" || *image == "" {
-		fmt.Fprintf(os.Stderr, "lang and image flags must not be empty\n")
-		os.Exit(1)
+	os.Exit(dockerutil.RunTests(run))
+}
+
+func run() int {
+	if *lang == "" || *image == "" || *proctorPath == "" {
+		fmt.Fprintf(os.Stderr, "lang, image and proctor flags must not be empty\n")
+		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
-		Runner:            "test/runtimes/proctor/proctor_bin",
+		Runner: *proctorPath,
+		ExecOpts: dockerutil.ExecOpts{
+			Privileged: *proctorPrivileged,
+			User:       *proctorUser,
+		},
 		PerTestTimeout:    *perTestTimeout,
 		RunsPerTest:       *runsPerTest,
 		FlakyIsError:      *flakyIsError,
@@ -57,7 +69,7 @@ func main() {
 		excludeFilter, err := lib.ExcludeFilter(*excludeFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting exclude list: %s\n", err.Error())
-			os.Exit(1)
+			return 1
 		}
 		filter = excludeFilter
 	}
@@ -70,5 +82,5 @@ func main() {
 			return tests[test]
 		}
 	}
-	os.Exit(lib.RunTests(*lang, fmt.Sprintf("runtimes/%s", *image), filter, *batchSize, *timeout, proctorSettings))
+	return lib.RunTests(*lang, fmt.Sprintf("runtimes/%s", *image), filter, *batchSize, *timeout, proctorSettings)
 }

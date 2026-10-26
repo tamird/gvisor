@@ -247,6 +247,10 @@ cc_test(
     name = "posix_error_test",
     size = "small",
     srcs = ["posix_error_test.cc"],
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
     deps = select_gtest() + [
         ":posix_error",
         ":test_main",
@@ -465,5 +469,16 @@ cc_library(
     testonly = 1,
     srcs = [
         "errno_safe_allocator.cc",
+    ],
+)
+
+cc_test(
+    name = "errno_safe_allocator_test",
+    size = "small",
+    srcs = ["errno_safe_allocator_test.cc"],
+    malloc = ":errno_safe_allocator",
+    deps = select_gtest() + [
+        ":cleanup",
+        ":test_main",
     ],
 )

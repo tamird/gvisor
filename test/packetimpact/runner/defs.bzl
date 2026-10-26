@@ -1,6 +1,7 @@
 """Defines rules for packetimpact test targets."""
 
 load("//tools:defs.bzl", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
 
 def _packetimpact_test_impl(ctx):
     test_runner = ctx.executable.test_runner
@@ -78,6 +79,8 @@ PACKETIMPACT_TAGS = [
     "packetimpact",
 ]
 
+# Negative variants also advertise expected-failure so report consumers can
+# distinguish a successful wrapper from its deliberately failing child.
 def packetimpact_native_test(
         name,
         testbench_binary,
@@ -92,13 +95,14 @@ def packetimpact_native_test(
         **kwargs: all the other args, forwarded to _packetimpact_test
     """
     expect_failure_flag = ["--expect_failure"] if expect_failure else []
+    kwargs.setdefault("exec_properties", namespace_test_exec_properties(image = RBE_NETWORK_TOOLS_IMAGE))
     _packetimpact_test(
         test_runner = "//test/packetimpact/runner:main",
         name = name + "_native_test",
         testbench_binary = testbench_binary,
         flags = expect_failure_flag + ["--variant", "native"],
         dut_binary = "//test/packetimpact/dut/native",
-        tags = PACKETIMPACT_TAGS,
+        tags = PACKETIMPACT_TAGS + (["expected-failure"] if expect_failure else []),
         **kwargs
     )
 
@@ -118,13 +122,14 @@ def packetimpact_netstack_test(
     expect_failure_flag = []
     if expect_failure:
         expect_failure_flag = ["--expect_failure"]
+    kwargs.setdefault("exec_properties", namespace_test_exec_properties(image = RBE_NETWORK_TOOLS_IMAGE))
     _packetimpact_test(
         test_runner = "//test/packetimpact/runner:main",
         name = name + "_netstack_test",
         testbench_binary = testbench_binary,
         flags = expect_failure_flag + ["--variant", "gvisor"],
         dut_binary = "//test/packetimpact/dut/runsc",
-        tags = PACKETIMPACT_TAGS,
+        tags = PACKETIMPACT_TAGS + (["expected-failure"] if expect_failure else []),
         **kwargs
     )
 

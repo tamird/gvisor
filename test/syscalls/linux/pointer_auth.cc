@@ -19,9 +19,7 @@
 
 #include <string>
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "test/util/logging.h"
 #include "test/util/multiprocess_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
@@ -90,10 +88,10 @@ bool PlatformSupported() {
          platform == Platform::kKVM;
 }
 
-// HostKernelSupported returns false for old host kernels that should not be
-// tested with PAC.
+// Systrap needs Linux 5.13's per-process PAC controls for save/restore.
+// Native tests need only the PAC support checked by HasFeatPAuth.
 bool HostKernelSupported(const KernelVersion& version) {
-  return IsRunningOnGvisor() &&
+  return !IsRunningOnGvisor() ||
          (version.major > 5 || (version.major == 5 && version.minor >= 13));
 }
 

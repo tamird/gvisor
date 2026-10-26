@@ -1,6 +1,17 @@
 """Rules assembling the gVisor release binaries in their installed layout."""
 
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:defs.bzl", "cov_available", "pkg_tar")
+
+# Match --config=race on the smoke test and its release dependencies without
+# instrumenting other targets in the same invocation. Extending the raw rule
+# keeps the executable beside its sidecars and resolves its environment select
+# in the instrumented configuration.
+race_smoke_test, _race_smoke_transition = with_cfg(native_test).set(
+    Label("@io_bazel_rules_go//go/config:race"),
+    True,
+).set(Label("@io_bazel_rules_go//go/config:pure"), False).build()
 
 # FLAVORS are the instrumentation flavors of gVisor binaries.
 FLAVORS = [
@@ -62,15 +73,18 @@ def sidecars(flavor):
 SIDECARS = sidecars("default")
 
 # RELEASE_RUNSC and RELEASE_SIDECARS are the runsc binary and the sidecars of
-# the flavor matching the build configuration: race under --config=race,
-# default otherwise.
+# the flavor matching the build's race and runtime coverage settings.
 RELEASE_RUNSC = select({
+    "//tools:gotsan_runtime_coverage": RUNSC["race-coverage"],
     "//tools:gotsan": RUNSC["race"],
+    "//tools:runtime_coverage_enabled": RUNSC["coverage"],
     "//conditions:default": RUNSC["default"],
 })
 
 RELEASE_SIDECARS = select({
+    "//tools:gotsan_runtime_coverage": sidecars("race-coverage"),
     "//tools:gotsan": sidecars("race"),
+    "//tools:runtime_coverage_enabled": sidecars("coverage"),
     "//conditions:default": sidecars("default"),
 })
 
@@ -86,11 +100,14 @@ def _release_files_impl(ctx):
     commands = []
 
     # Top-level binaries
-    bins = [(target, _single_file(target).basename) for target in ctx.attr.bins]
-    bins.append((ctx.attr.runsc, "runsc"))
-    for target, name in bins:
+    bins = [
+        (target, ctx.actions.declare_file("%s/%s" % (ctx.label.name, _single_file(target).basename)))
+        for target in ctx.attr.bins
+    ]
+    runsc = ctx.actions.declare_file("%s/runsc" % ctx.label.name)
+    bins.append((ctx.attr.runsc, runsc))
+    for target, out in bins:
         src = _single_file(target)
-        out = ctx.actions.declare_file("%s/%s" % (ctx.label.name, name))
         inputs.append(src)
         outputs.append(out)
         commands.append('cp -f "%s" "%s"' % (src.path, out.path))
@@ -112,6 +129,7 @@ def _release_files_impl(ctx):
 
     runfiles = ctx.runfiles(files = outputs)
     return [DefaultInfo(
+        executable = runsc,
         files = depset(outputs),
         default_runfiles = runfiles,
         data_runfiles = runfiles,
@@ -119,6 +137,7 @@ def _release_files_impl(ctx):
 
 release_files = rule(
     implementation = _release_files_impl,
+    executable = True,
     attrs = {
         "bins": attr.label_list(
             doc = "Binaries placed at the top level of the layout.",
@@ -140,7 +159,7 @@ release_files = rule(
     },
     doc = "Assembles release binaries in the layout they are installed in: " +
           "`runsc` and each of `bins` at the top level and `sidecars` under a " +
-          "`gvisor-bin/` directory.",
+          "`gvisor-bin/` directory. The executable is the staged `runsc`.",
 )
 
 def instrumented_release_tars(name, flavor, bins = [], visibility = None):

@@ -27,7 +27,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -444,6 +443,9 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
     strace = "true"
     file-access = "shared"
 `
+	if source, ok := testutil.RuntimeTestClockSource(); ok {
+		runscConfig += fmt.Sprintf("    clock-source = %q\n", source.String())
+	}
 	if err := os.WriteFile(runscConfigPath, []byte(runscConfig), 0644); err != nil {
 		return nil, nil, fmt.Errorf("failed to write runsc config file %q: %v", runscConfigPath, err)
 	}
@@ -542,34 +544,21 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 	cmd.Env = append(os.Environ(), "PATH="+modifiedPath)
 	cmd.Env = append(cmd.Env, extraEnv...)
 
-	// Include output in logs.
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		t.Fatalf("failed to create stderr pipe: %v", err)
-	}
-	cu.Add(func() { stderrPipe.Close() })
-	stdoutPipe, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatalf("failed to create stdout pipe: %v", err)
-	}
-	cu.Add(func() { stdoutPipe.Close() })
-	var (
-		wg     sync.WaitGroup
-		stderr bytes.Buffer
-		stdout bytes.Buffer
-	)
+	// Let os/exec copy output and join its writers when the process is reaped.
+	var stderr bytes.Buffer
+	var drainDone chan struct{}
 	startupR, startupW := io.Pipe()
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		io.Copy(io.MultiWriter(startupW, &stderr), stderrPipe)
-	}()
-	go func() {
-		defer wg.Done()
-		io.Copy(io.MultiWriter(startupW, &stdout), stdoutPipe)
-	}()
+	cmd.Stdout = startupW
+	cmd.Stderr = io.MultiWriter(startupW, &stderr)
 	cu.Add(func() {
-		wg.Wait()
+		startupW.Close()
+		if drainDone != nil {
+			<-drainDone
+		}
+		startupR.Close()
+		if t.Failed() {
+			t.Logf("containerd stderr:\n%s", stderr.Bytes())
+		}
 		_ = os.MkdirAll("/tmp/shim-logs", 0755)
 		logFile := fmt.Sprintf("/tmp/shim-logs/containerd-%s.log", strings.ReplaceAll(t.Name(), "/", "_"))
 		_ = os.WriteFile(logFile, stderr.Bytes(), 0644)
@@ -587,16 +576,28 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 	})
 
 	// Wait for containerd to boot.
-	if err := testutil.WaitUntilRead(startupR, "Start streaming server", 10*time.Second); err != nil {
+	err = testutil.WaitUntilRead(startupR, "Start streaming server", 10*time.Second)
+	// Keep draining on startup failure too, so the output copies can finish
+	// during cleanup. Closing the writer after those copies gives this drain EOF.
+	drainDone = make(chan struct{})
+	go func() {
+		defer close(drainDone)
+		io.Copy(io.Discard, startupR)
+	}()
+	if err != nil {
 		t.Fatalf("failed to start containerd: %v", err)
 	}
-
-	// Discard all subsequent data.
-	go io.Copy(io.Discard, startupR)
 
 	// Create the crictl interface.
 	cc := criutil.NewCrictl(t, sockAddr)
 	cu.Add(cc.CleanUp)
+	// Each fresh containerd needs its version's sandbox image before CRI can
+	// create pods. Declared harness inputs supply it through the ordinary import.
+	if image := os.Getenv(sandboxImageEnv); image != "" {
+		if err := cc.Import(image); err != nil {
+			t.Fatalf("importing sandbox image %q: %v", image, err)
+		}
+	}
 
 	return cc, cu.Release(), nil
 }
@@ -1141,7 +1142,6 @@ func TestCrictlSandboxPosture(t *testing.T) {
 		EnableRaw:            conf.EnableRaw,
 		RequiresCapSysPtrace: sandboxposture.PlatformCapSysPtrace[conf.Platform],
 		GoDebug:              sandboxposture.GoDebug(conf.Platform),
-		Cgroup:               true,
 		ExtraFDClasses:       extraFDs,
 		CgoEnabled:           config.CgoEnabled,
 		ChildOfRef:           true,

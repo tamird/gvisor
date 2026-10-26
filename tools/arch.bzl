@@ -3,6 +3,9 @@
 load("//tools/bazeldefs:defs.bzl", _amd64_config = "amd64_config", _arch_config = "arch_config", _arm64_config = "arm64_config", _select_arch = "select_arch", _transition_allowlist = "transition_allowlist")
 
 # Export arch rules.
+amd64_config = _amd64_config
+arch_config = _arch_config
+arm64_config = _arm64_config
 select_arch = _select_arch
 transition_allowlist = _transition_allowlist
 

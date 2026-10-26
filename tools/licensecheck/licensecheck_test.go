@@ -16,16 +16,134 @@ package licensecheck
 
 import (
 	"bytes"
+	"crypto/sha256"
 	_ "embed"
+	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/zip"
 )
+
+// Complete notices copied from the inputs that exposed classifier mistakes:
+// bsd.txt and openssl.txt: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt
+// llvm.txt: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT
+// bsd-omitted-noun.txt: https://github.com/fb55/entities/blob/9f7ca4c7b/LICENSE
+// python.txt: https://github.com/nodeca/argparse/blob/2.0.1/LICENSE
+var (
+	//go:embed testdata/bsd.txt
+	bsdText string
+	//go:embed testdata/openssl.txt
+	opensslText string
+	//go:embed testdata/llvm.txt
+	llvmText string
+	//go:embed testdata/python.txt
+	pythonText string
+	//go:embed testdata/bsd-omitted-noun.txt
+	bsdOmittedNounText string
+)
+
+func TestAuditedExtensionRepos(t *testing.T) {
+	// Bazel 8.8.1 JsonOutputFormatter uses ModuleExtensionId.toString() for
+	// these keys. The isolated apt key matches container_apt's lock record.
+	graph, err := parseModGraph(`{
+  "extensionUsages": [
+    {"key": "@@rules_distroless+//apt:extensions.bzl%apt", "used_repos": ["release_tools"]},
+    {"key": "@@rules_distroless+//apt:extensions.bzl%apt%<root>+container_apt", "used_repos": ["container_test_tools"]},
+    {"key": "@@gazelle+//:extensions.bzl%go_deps", "used_repos": ["go_dependency"]},
+    {"key": "@@rules_python+//python/extensions:pip.bzl%pip", "used_repos": ["python_packages"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules http_archive", "used_repos": ["archive"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules http_file", "used_repos": ["file"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules go_repository", "used_repos": ["go_archive"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules module_proxy", "used_repos": ["proxy"]},
+    {"key": "@@rules_go+//go:extensions.bzl%go_sdk", "used_repos": ["go_sdk"]},
+    {"key": "@@rules_go+//go:extensions.bzl%go_sdk%<root>+apt", "used_repos": ["isolated_sdk"]}
+  ]
+}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := graph.auditedRepos()
+	want := []string{"release_tools", "container_test_tools", "go_dependency", "python_packages", "archive", "file", "go_archive", "proxy"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("audited repositories = %v, want %v", got, want)
+	}
+}
+
+func TestParseGitRefs(t *testing.T) {
+	const (
+		first  = "1111111111111111111111111111111111111111"
+		second = "2222222222222222222222222222222222222222"
+		tag    = "refs/tags/v1"
+		branch = "refs/heads/v1"
+	)
+	for _, test := range []struct {
+		name, output, want string
+		refs               []string
+		wantErr            bool
+	}{
+		{
+			name: "lightweight tag", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n", want: first,
+		},
+		{
+			name: "peeled tag", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "^{}\n", want: second,
+		},
+		{
+			name: "branch", refs: []string{tag, branch},
+			output: first + "\t" + branch + "\n", want: first,
+		},
+		{
+			name: "same peeled tag and branch", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "^{}\n" + second + "\t" + branch + "\n", want: second,
+		},
+		{
+			name: "conflicting tag and branch", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + branch + "\n",
+		},
+		{
+			name: "qualified branch", refs: []string{branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + branch + "\n", want: second,
+		},
+		{
+			name: "ref tail is not exact", refs: []string{tag, branch},
+			output: first + "\trefs/tags/nested/" + tag + "\n",
+		},
+		{
+			name: "missing", refs: []string{tag, branch},
+		},
+		{
+			name: "invalid object ID", refs: []string{tag},
+			output: "1234\t" + tag + "\n", wantErr: true,
+		},
+		{
+			name: "missing separator", refs: []string{tag},
+			output: first + " " + tag + "\n", wantErr: true,
+		},
+		{
+			name: "duplicate ref", refs: []string{tag},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "\n", wantErr: true,
+		},
+		{
+			name: "missing tag record", refs: []string{tag},
+			output: first + "\t" + tag + "^{}\n", wantErr: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := parseGitRefs(test.output, test.refs)
+			if (err != nil) != test.wantErr || got != test.want {
+				t.Errorf("parseGitRefs = (%q, %v), want (%q, error=%t)", got, err, test.want, test.wantErr)
+			}
+		})
+	}
+}
 
 // Verbatim notices from the modules that exposed incomplete discovery:
 // https://github.com/JohnCGriffin/overflow/blob/46fa312c3/README.md
@@ -64,6 +182,310 @@ func TestParseGitHubCodeloadURL(t *testing.T) {
 			}
 			if got := [3]string{owner, repo, ref}; got != test.want {
 				t.Errorf("parseGitHubURL = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestFetchPreservesManualArtifact(t *testing.T) {
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact")))
+	for _, audit := range []struct {
+		name     string
+		licenses Licenses
+		manual   bool
+	}{
+		{"local reference", Licenses{"LicenseRef-CodeQL", "MIT"}, false},
+		{"standard terms", Licenses{"Apache-2.0", "BSD-3-Clause"}, true},
+	} {
+		t.Run(audit.name, func(t *testing.T) {
+			p := Paths{YAML: filepath.Join(t.TempDir(), "dependencies.yaml")}
+			original := Entry{
+				Dependency: "bundle", Version: "https://example.com/bundle-v1.tar.gz",
+				Retrieved: "2026-10-02", SHA256: hash,
+				License: audit.licenses, ManuallyAudited: audit.manual,
+			}
+			automatic := original
+			automatic.Dependency = "automatic"
+			automatic.License = Licenses{"BSD-3-Clause"}
+			automatic.ManuallyAudited = false
+			if err := writeEntries(p.YAML, []Entry{original, automatic}); err != nil {
+				t.Fatal(err)
+			}
+			deps := []dep{
+				{name: original.Dependency, kind: kindArchive, url: original.Version, sha256: hash},
+				{name: automatic.Dependency, kind: kindArchive, url: automatic.Version, sha256: hash},
+			}
+			// Successful discovery of the repository's MIT notice must not
+			// overwrite the artifact's complete manually audited terms.
+			retrieve := func(d dep, _ Entry) (*fetched, error) {
+				licenses, err := classify(udiffMIT)
+				return &fetched{sha256: d.sha256, license: licenses}, err
+			}
+			if err := fetch(p, deps, retrieve); err != nil {
+				t.Fatal(err)
+			}
+			entries, err := readEntries(p.YAML)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := len(entries), 2; got != want {
+				t.Fatalf("catalog has %d entries, want %d", got, want)
+			}
+			if got, want := entries[0], original; !reflect.DeepEqual(got, want) {
+				t.Errorf("manual entry = %+v, want unchanged %+v", got, want)
+			}
+			if got, want := entries[1].License, (Licenses{"MIT"}); !slices.Equal(got, want) {
+				t.Errorf("automatic licenses = %v, want %v", got, want)
+			}
+			// Recognizing or retaining terms does not approve their use.
+			policy := &Policy{AllowedLicenses: []License{"MIT"}}
+			want := []string{fmt.Sprintf("bundle uses disallowed licenses %v and has no exception in the policy", original.License)}
+			if got := CheckPolicy(entries, policy); !slices.Equal(got, want) {
+				t.Errorf("CheckPolicy = %v, want %v", got, want)
+			}
+			policy.Exceptions = []Exception{{Dependency: "bundle", License: original.License, ExceptionRationale: "reviewed artifact terms"}}
+			if got, want := CheckPolicy(entries, policy), []string(nil); !slices.Equal(got, want) {
+				t.Errorf("CheckPolicy with scoped exception = %v, want %v", got, want)
+			}
+		})
+	}
+}
+
+func TestFetchRejectsInvalidManualAudit(t *testing.T) {
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact v1")))
+	changedHash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact v2")))
+	const url = "https://example.com/bundle-v1.tar.gz"
+	for _, test := range []struct {
+		name, url, hash string
+		licenses        Licenses
+		manual          bool
+		source          string
+		duplicate       bool
+		wantErr         string
+	}{
+		{
+			name: "changed URL", url: "https://example.com/bundle-v2.tar.gz", hash: hash,
+			licenses: Licenses{"LicenseRef-CodeQL"},
+			wantErr:  `re-audit the license of bundle: bundle was audited at "` + url + `", but is now "https://example.com/bundle-v2.tar.gz"`,
+		},
+		{
+			name: "changed bytes", url: url, hash: changedHash,
+			licenses: Licenses{"LicenseRef-CodeQL"},
+			wantErr:  fmt.Sprintf("re-audit the license of bundle: bundle was audited with sha256 %q, but is now pinned to %q", hash, changedHash),
+		},
+		{
+			name: "removed pin", url: url,
+			licenses: Licenses{"Apache-2.0", "BSD-3-Clause"}, manual: true,
+			wantErr: "re-audit the license of bundle: bundle has manually audited terms without an artifact checksum pin",
+		},
+		{
+			name: "empty local identifier", url: url, hash: hash,
+			licenses: Licenses{"LicenseRef-"},
+			wantErr:  `re-audit the license of bundle: bundle has unknown license "LicenseRef-"`,
+		},
+		{
+			name: "invalid local identifier", url: url, hash: hash,
+			licenses: Licenses{"LicenseRef-Code_QL"},
+			wantErr:  `re-audit the license of bundle: bundle has unknown license "LicenseRef-Code_QL"`,
+		},
+		{
+			name: "duplicate entry", url: url, hash: hash,
+			licenses:  Licenses{"LicenseRef-CodeQL"},
+			duplicate: true,
+			wantErr:   "duplicate entry for bundle in %s",
+		},
+		{
+			name: "manual notice commit", url: url, hash: hash, manual: true,
+			licenses: Licenses{"MIT"},
+			source:   "https://raw.githubusercontent.com/example/upstream/0123456789abcdef0123456789abcdef01234567/LICENSE",
+			wantErr:  "re-audit the license of bundle: bundle: license_source commit does not match the audited commit",
+		},
+		{
+			name: "mutable manual notice", url: url, hash: hash,
+			licenses: Licenses{"LicenseRef-Tool"},
+			source:   "https://raw.githubusercontent.com/example/upstream/main/LICENSE",
+			wantErr:  "re-audit the license of bundle: bundle: license_source must identify a GitHub notice pinned to a full commit",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			p := Paths{YAML: filepath.Join(t.TempDir(), "dependencies.yaml")}
+			original := Entry{
+				Dependency: "bundle", Version: url, Retrieved: "2026-10-02",
+				SHA256: hash, License: test.licenses, ManuallyAudited: test.manual,
+				LicenseSource: test.source,
+			}
+			entries := []Entry{original}
+			wantErr := test.wantErr
+			if test.duplicate {
+				entries = append(entries, original)
+				wantErr = fmt.Sprintf(wantErr, p.YAML)
+			}
+			if err := writeEntries(p.YAML, entries); err != nil {
+				t.Fatal(err)
+			}
+			before, err := os.ReadFile(p.YAML)
+			if err != nil {
+				t.Fatal(err)
+			}
+			deps := []dep{{name: "bundle", kind: kindArchive, url: test.url, sha256: test.hash}}
+			err = fetch(p, deps, func(d dep, _ Entry) (*fetched, error) {
+				t.Error("retrieved a notice before rejecting the invalid manual audit")
+				return nil, fmt.Errorf("unexpected notice retrieval for %s", d.name)
+			})
+			if err == nil || err.Error() != wantErr {
+				t.Fatalf("fetch = %v, want %q", err, wantErr)
+			}
+			after, err := os.ReadFile(p.YAML)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(before, after) {
+				t.Error("fetch rewrote the invalid catalog")
+			}
+		})
+	}
+}
+
+func TestLicenseSourceIdentity(t *testing.T) {
+	const artifact = "https://github.com/example/builder/releases/download/v1/tool.tar.gz"
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact")))
+	changedHash := fmt.Sprintf("%x", sha256.Sum256([]byte("changed artifact")))
+	for _, test := range []struct {
+		name, url, hash, source string
+		kind                    depKind
+		wantCommit, wantErr     string
+	}{
+		{name: "pinned", kind: kindArchive, url: artifact, hash: hash, source: source, wantCommit: commit},
+		{name: "automatic", kind: kindArchive, url: artifact, hash: hash},
+		{
+			name: "changed URL", kind: kindArchive, url: artifact + "?changed", hash: hash, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "changed digest", kind: kindArchive, url: artifact, hash: changedHash, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "unpinned artifact", kind: kindArchive, url: artifact, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "Go module", kind: kindGoModule, url: artifact, hash: hash, source: source,
+			wantErr: "license_source artifact identity changed or is unpinned; audit the new artifact and refresh its notice source",
+		},
+		{
+			name: "mutable notice", kind: kindArchive, url: artifact, hash: hash, source: strings.ReplaceAll(source, commit, "main"),
+			wantErr: "license_source must identify a GitHub notice pinned to a full commit",
+		},
+		{
+			name: "HTML notice", kind: kindArchive, url: artifact, hash: hash, source: "https://github.com/example/upstream/blob/" + commit + "/COPYING",
+			wantErr: "license_source must identify a GitHub notice pinned to a full commit",
+		},
+		{
+			name: "notice traversal", kind: kindArchive, url: artifact, hash: hash, source: strings.ReplaceAll(source, "/COPYING", "/../main/COPYING"),
+			wantErr: "license_source must name a recognized raw GitHub root notice",
+		},
+		{
+			name: "encoded traversal", kind: kindArchive, url: artifact, hash: hash, source: strings.ReplaceAll(source, "/COPYING", "/%2e%2e/main/COPYING"),
+			wantErr: "license_source must name a recognized raw GitHub root notice",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			d := dep{name: "tool", kind: test.kind, url: test.url, sha256: test.hash}
+			e := Entry{Version: artifact, SHA256: hash, LicenseSource: test.source}
+			got, err := licenseSourceCommit(d, e)
+			if test.wantErr != "" {
+				if err == nil || err.Error() != test.wantErr {
+					t.Fatalf("licenseSourceCommit = %q, %v; want error %q", got, err, test.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if want := test.wantCommit; got != want {
+				t.Errorf("licenseSourceCommit = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestFetchLicenseSource(t *testing.T) {
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	const source = "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte("release artifact")))
+	for _, test := range []struct {
+		name        string
+		manual      bool
+		licenses    Licenses
+		retrieveErr error
+		wantErr     string
+	}{
+		{name: "automatic", licenses: Licenses{"BSD-3-Clause"}},
+		{
+			name: "unavailable notice", licenses: Licenses{"BSD-3-Clause"},
+			retrieveErr: errors.New("notice unavailable"),
+			wantErr:     "cannot fetch licenses for tool; fix the reported source or notice errors",
+		},
+		{name: "manual standard terms", manual: true, licenses: Licenses{"Apache-2.0", "BSD-3-Clause"}},
+		{name: "manual local reference", licenses: Licenses{"LicenseRef-Tool", "MIT"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			p := Paths{YAML: filepath.Join(t.TempDir(), "dependencies.yaml")}
+			d := dep{name: "tool", kind: kindArchive, url: "https://example.com/tool.tar.gz", sha256: hash}
+			original := Entry{
+				Dependency: d.name, Version: d.url, SHA256: hash,
+				Retrieved: "2026-10-02", Commit: commit, License: test.licenses,
+				ManuallyAudited: test.manual, LicenseSource: source,
+			}
+			if err := writeEntries(p.YAML, []Entry{original}); err != nil {
+				t.Fatal(err)
+			}
+			err := fetch(p, []dep{d}, func(d dep, _ Entry) (*fetched, error) {
+				if test.retrieveErr != nil {
+					return nil, test.retrieveErr
+				}
+				licenses, err := classify(udiffMIT)
+				return &fetched{commit: commit, sha256: d.sha256, license: licenses}, err
+			})
+			if test.wantErr != "" {
+				if err == nil || err.Error() != test.wantErr {
+					t.Fatalf("fetch = %v, want %q", err, test.wantErr)
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+			entries, err := readEntries(p.YAML)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := len(entries), 1; got != want {
+				t.Fatalf("catalog has %d entries, want %d", got, want)
+			}
+			if test.wantErr != "" || original.manuallyAudited() {
+				if got, want := entries[0], original; !reflect.DeepEqual(got, want) {
+					t.Errorf("retained entry = %+v, want unchanged %+v", got, want)
+				}
+			} else {
+				if got, want := entries[0].License, (Licenses{"MIT"}); !slices.Equal(got, want) {
+					t.Errorf("automatic licenses = %v, want %v", got, want)
+				}
+				if got, want := entries[0].LicenseSource, source; got != want {
+					t.Errorf("notice source = %q, want %q", got, want)
+				}
+			}
+			if got, want := verifyProblems([]dep{d}, entries), []string(nil); !slices.Equal(got, want) {
+				t.Errorf("verifyProblems = %v, want %v", got, want)
+			}
+			if original.manuallyAudited() || test.wantErr != "" {
+				return
+			}
+			entries[0].Commit = strings.Repeat("a", 40)
+			want := []string{"tool: license_source commit does not match the audited commit"}
+			if got := verifyProblems([]dep{d}, entries); !slices.Equal(got, want) {
+				t.Errorf("verifyProblems with mismatched commit = %v, want %v", got, want)
 			}
 		})
 	}
@@ -169,123 +591,97 @@ func TestModuleLicenses(t *testing.T) {
 }
 
 func TestClassify(t *testing.T) {
+	apache, _, ok := strings.Cut(llvmText, "---- LLVM Exceptions to the Apache 2.0 License ----")
+	if !ok {
+		t.Fatal("LLVM fixture has no exception boundary")
+	}
+	bsdWithoutDisclaimer, _, ok := strings.Cut(bsdOmittedNounText, "THIS IS PROVIDED")
+	if !ok {
+		t.Fatal("BSD fixture has no disclaimer boundary")
+	}
+	beforeCWI, cwi, ok := strings.Cut(pythonText, "CWI LICENSE AGREEMENT FOR PYTHON 0.9.0 THROUGH 1.2")
+	if !ok {
+		t.Fatal("Python fixture has no CWI boundary")
+	}
 	for _, test := range []struct {
 		name, text string
 		want       Licenses
-		wantErr    bool
 	}{
-		{
-			name: "apache",
-			text: "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/",
-			want: Licenses{apache2},
-		},
-		{
-			name: "apache-llvm",
-			text: "Apache License v2.0 with LLVM Exceptions\n\nApache License\nVersion 2.0, January 2004",
-			want: Licenses{apache2LLVM},
-		},
-		{
-			name: "mit",
-			text: "Permission is hereby granted, free of charge, to any person obtaining a copy of this software",
-			want: Licenses{mit},
-		},
-		{
-			name: "bsd3",
-			text: "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n3. Neither the name of the copyright holder...",
-			want: Licenses{bsd3},
-		},
-		{
-			// libbacktrace's license uses a different nonendorsement clause:
-			// https://github.com/ianlancetaylor/libbacktrace/blob/793921876/LICENSE
-			name: "bsd3 author name",
-			text: `# Copyright (C) 2012-2016 Free Software Foundation, Inc.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-
-#     (1) Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-
-#     (2) Redistributions in binary form must reproduce the above copyright
-#     notice, this list of conditions and the following disclaimer in
-#     the documentation and/or other materials provided with the
-#     distribution.
-
-#     (3) The name of the author may not be used to
-#     endorse or promote products derived from this software without
-#     specific prior written permission.`,
-			want: Licenses{bsd3},
-		},
-		{
-			name: "bsd2",
-			text: "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1... 2...",
-			want: Licenses{bsd2},
-		},
-		{
-			name: "cc0",
-			text: "Creative Commons Legal Code\nCC0 1.0 Universal",
-			want: Licenses{cc0},
-		},
-		{
-			name: "isc",
-			text: "Permission to use, copy, modify, and distribute this software for any purpose with or without fee is hereby granted",
-			want: Licenses{isc},
-		},
-		{
-			name: "lgpl21",
-			text: "GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
-			want: Licenses{lgpl21},
-		},
-		{
-			name: "dual sorted",
-			text: "Permission is hereby granted, free of charge, ...\n...\nApache License\nVersion 2.0",
-			want: Licenses{apache2, mit},
-		},
-		{
-			// MPL-2.0 mentions the GNU licenses in its "Secondary License"
-			// clause; that must not count as LGPL/GPL.
-			name: "mpl mentioning gnu",
-			text: "Mozilla Public License Version 2.0\n1.12. \"Secondary License\" means either the GNU General Public License, Version 2.0, the GNU Lesser General Public License, Version 2.1, the GNU Affero General Public License, Version 3.0, or any later versions of those licenses.",
-			want: Licenses{mpl2},
-		},
-		{
-			name:    "unknown",
-			text:    "All rights reserved. Do not redistribute.",
-			wantErr: true,
-		},
+		{"separate grants", opensslText + bsdText + opensslText, Licenses{"BSD-3-Clause", "OpenSSL"}},
+		{"llvm", llvmText, Licenses{"Apache-2.0 WITH LLVM-exception", "NCSA"}},
+		{"apache without exception", apache, Licenses{"Apache-2.0"}},
+		{"bsd omitted noun", bsdOmittedNounText, Licenses{"BSD-2-Clause"}},
+		{"bsd explicit noun", strings.ReplaceAll(bsdOmittedNounText, "THIS", "THIS SOFTWARE"), Licenses{"BSD-2-Clause"}},
+		{"bsd without disclaimer", bsdWithoutDisclaimer, nil},
+		{"python stack", pythonText, Licenses{"Python-2.0.1"}},
+		{"python CWI only", cwi, Licenses{"HPND"}},
+		{"python without CWI", beforeCWI, nil},
+		{"python altered CNRI terms", strings.Replace(pythonText,
+			"governed by the federal\nintellectual property law", "governed by imaginary law", 1), Licenses{"HPND"}},
+		{"unknown", "All rights reserved. Do not redistribute.", nil},
+		{"reference", "See https://opensource.org/licenses/MIT for background.", nil},
+		{"title", "GNU General Public License Version 2, June 1991", nil},
 	} {
-		got, err := classify(test.text)
-		if (err != nil) != test.wantErr {
-			t.Errorf("%s: err = %v, wantErr = %t", test.name, err, test.wantErr)
-			continue
-		}
-		if !slices.Equal(got, test.want) {
-			t.Errorf("%s: classify = %v, want %v", test.name, got, test.want)
-		}
-		for _, license := range got {
-			if !knownLicenses[license] {
-				t.Errorf("%s: classify returned unknown license %q", test.name, license)
+		t.Run(test.name, func(t *testing.T) {
+			got, err := classify(test.text)
+			if (err != nil) != (test.want == nil) {
+				t.Fatalf("classify error = %v, want licenses %v", err, test.want)
 			}
-		}
+			if !slices.Equal(got, test.want) {
+				t.Errorf("classify = %v, want %v", got, test.want)
+			}
+		})
 	}
 }
 
 func TestVerifyProblems(t *testing.T) {
 	deps := []dep{
-		{name: "example.com/mod", kind: kindGoModule, version: "v1.2.0"},
+		{name: "example.com/mod", kind: kindGoModule, version: "v1.2.0", modulePath: "example.com/mod"},
 		{name: "some-archive", kind: kindArchive, url: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", sha256: "cafe"},
 	}
 	entries := []Entry{
-		{Dependency: "example.com/mod", Version: "v1.2.0", Retrieved: "2026-08-26", Commit: "abc", SHA256: "beef", License: Licenses{mit}},
-		{Dependency: "some-archive", Version: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", Retrieved: "2026-08-26", Commit: "def", SHA256: "cafe", License: Licenses{apache2}},
+		{Dependency: "example.com/mod", Version: "v1.2.0", Retrieved: "2026-08-26", Commit: "abc", SHA256: "beef", License: Licenses{"MIT"}},
+		{Dependency: "some-archive", Version: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", Retrieved: "2026-08-26", Commit: "def", SHA256: "cafe", License: Licenses{"Apache-2.0"}},
 	}
 	if problems := verifyProblems(deps, entries); len(problems) != 0 {
 		t.Errorf("verifyProblems on up-to-date entries = %v, want none", problems)
 	}
+	// The same declared identity can retain reviewed metadata after a fetch
+	// failure. A Go entry's computed ZIP hash is not an enumerated archive pin.
+	for i, d := range deps {
+		if !d.canRetain(entries[i]) {
+			t.Errorf("cannot retain current entry for %s", d.name)
+		}
+		empty := entries[i]
+		empty.License = nil
+		if d.canRetain(empty) {
+			t.Errorf("retained entry without licenses for %s", d.name)
+		}
+	}
+	for _, id := range []License{"NOASSERTION", "Apache-2.0 WITH LLVM-exception", "Python-2.0.1", "GPL-2.0", "GPL-2.0-only", "GPL-2.0-or-later"} {
+		entries[0].License = Licenses{id}
+		if problems := verifyProblems(deps, entries); len(problems) != 0 {
+			t.Errorf("verifyProblems with explicit %s = %v", id, problems)
+		}
+	}
+	entries[0].License = Licenses{"MIT"}
+	for _, id := range []License{"LicenseRef-CodeQL", "LicenseRef-", "LicenseRef-Code_QL"} {
+		entries[1].License = Licenses{id}
+		problems := verifyProblems(deps, entries)
+		if (len(problems) == 0) != (id == "LicenseRef-CodeQL") {
+			t.Errorf("verifyProblems with explicit %s = %v", id, problems)
+		}
+	}
+	entries[1].License = Licenses{"Apache-2.0"}
+
 	// A version bump without re-fetching must be flagged, for both kinds.
 	deps[0].version = "v1.3.0"
 	deps[1].url = "https://github.com/a/b/archive/refs/tags/v4.tar.gz"
+	for i, d := range deps {
+		if d.canRetain(entries[i]) {
+			t.Errorf("retained stale source for %s", d.name)
+		}
+	}
 	problems := verifyProblems(deps, entries)
 	if len(problems) != 2 ||
 		!strings.Contains(problems[0], `example.com/mod was audited at "v1.2.0", but is now "v1.3.0"`) ||
@@ -296,6 +692,9 @@ func TestVerifyProblems(t *testing.T) {
 	deps[0].version = "v1.2.0"
 	deps[1].url = "https://github.com/a/b/archive/refs/tags/v3.tar.gz"
 	deps[1].sha256 = "d00d"
+	if deps[1].canRetain(entries[1]) {
+		t.Error("retained entry after archive pin changed")
+	}
 	problems = verifyProblems(deps, entries)
 	if len(problems) != 1 || !strings.Contains(problems[0], `some-archive was audited with sha256 "cafe", but is now pinned to "d00d"`) {
 		t.Errorf("verifyProblems after pin change = %v, want one sha256 problem", problems)
@@ -311,8 +710,6 @@ func TestVerifyProblems(t *testing.T) {
 	}
 }
 
-// repoRoot finds the directory containing both YAML files: the checkout root
-// under `go test`, or the runfiles root under Bazel.
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()
@@ -375,16 +772,16 @@ func TestLicensePolicy(t *testing.T) {
 
 func TestCheckPolicy(t *testing.T) {
 	entries := []Entry{
-		{Dependency: "a", License: Licenses{mit}},
-		{Dependency: "b", License: Licenses{mpl2}},
-		{Dependency: "c", License: Licenses{apache2, mpl2}},
-		{Dependency: "d", License: Licenses{gpl2}},
+		{Dependency: "a", License: Licenses{"MIT"}},
+		{Dependency: "b", License: Licenses{"MPL-2.0"}},
+		{Dependency: "c", License: Licenses{"Apache-2.0", "MPL-2.0"}},
+		{Dependency: "d", License: Licenses{"GPL-2.0-only"}},
 	}
 	policy := &Policy{
-		AllowedLicenses: []License{apache2, mit},
+		AllowedLicenses: []License{"Apache-2.0", "MIT"},
 		Exceptions: []Exception{
-			{Dependency: "b", License: Licenses{mpl2}, ExceptionRationale: "vendored"},
-			{Dependency: "c", License: Licenses{apache2, mpl2}, ExceptionRationale: "notices"},
+			{Dependency: "b", License: Licenses{"MPL-2.0"}, ExceptionRationale: "vendored"},
+			{Dependency: "c", License: Licenses{"Apache-2.0", "MPL-2.0"}, ExceptionRationale: "notices"},
 		},
 	}
 	if problems := CheckPolicy(entries, policy); len(problems) != 1 || !strings.Contains(problems[0], "d uses disallowed licenses") {
@@ -393,9 +790,9 @@ func TestCheckPolicy(t *testing.T) {
 	// A license mismatch, a stale exception, an unnecessary exception, and
 	// the now-uncovered c and d are all flagged.
 	policy.Exceptions = []Exception{
-		{Dependency: "a", License: Licenses{mit}, ExceptionRationale: "redundant"},
-		{Dependency: "b", License: Licenses{unlicense}, ExceptionRationale: "wrong license"},
-		{Dependency: "z", License: Licenses{mpl2}, ExceptionRationale: "no longer a dependency"},
+		{Dependency: "a", License: Licenses{"MIT"}, ExceptionRationale: "redundant"},
+		{Dependency: "b", License: Licenses{"Unlicense"}, ExceptionRationale: "wrong license"},
+		{Dependency: "z", License: Licenses{"MPL-2.0"}, ExceptionRationale: "no longer a dependency"},
 	}
 	problems := CheckPolicy(entries, policy)
 	for _, want := range []string{
@@ -411,5 +808,37 @@ func TestCheckPolicy(t *testing.T) {
 	}
 	if len(problems) != 5 {
 		t.Errorf("CheckPolicy returned %d problems, want 5: %v", len(problems), problems)
+	}
+}
+
+func TestQemuUserRepoRefs(t *testing.T) {
+	// A public hub maps indirect repos that the root module cannot import by
+	// apparent name. Firmware and system tools are outside this user-mode audit.
+	mapping := map[string]string{
+		"qemu_user_prebuilt_linux_amd64_aarch64": "rules_qemu++qemu+arm",
+		"qemu_user_prebuilt_linux_arm64_x86_64":  "rules_qemu++qemu+x86",
+		"qemu_user_toolchains":                   "rules_qemu++qemu+hub",
+		"qemu_system_data_prebuilt_linux_amd64":  "rules_qemu++qemu+firmware",
+		"qemu_img_prebuilt_linux_amd64":          "rules_qemu++qemu+img",
+	}
+	got, err := qemuUserRepoRefs(mapping)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []repoRef{
+		{"@@rules_qemu++qemu+arm", "qemu_user_prebuilt_linux_amd64_aarch64"},
+		{"@@rules_qemu++qemu+x86", "qemu_user_prebuilt_linux_arm64_x86_64"},
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("qemuUserRepoRefs() = %v, want %v", got, want)
+	}
+	for _, invalid := range []map[string]string{
+		{},
+		{"qemu_user_toolchains": "rules_qemu++qemu+hub"},
+		{"qemu_user_prebuilt_linux_amd64_aarch64": ""},
+	} {
+		if _, err := qemuUserRepoRefs(invalid); err == nil {
+			t.Errorf("qemuUserRepoRefs(%v) succeeded, want missing archive identity error", invalid)
+		}
 	}
 }

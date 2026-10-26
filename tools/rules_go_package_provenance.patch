@@ -1,0 +1,591 @@
+Preserve declared package directories and module facts through the existing
+JSON driver, including standard and external-test packages. The optional
+manifest path consumes prebuilt metadata without launching nested Bazel.
+Upstream source: https://github.com/bazel-contrib/rules_go/tree/v0.63.0
+
+diff --git a/go/tools/gopackagesdriver/flatpackage.go b/go/tools/gopackagesdriver/flatpackage.go
+--- a/go/tools/gopackagesdriver/flatpackage.go
++++ b/go/tools/gopackagesdriver/flatpackage.go
+@@ -57,6 +57,8 @@
+ // FlatPackage is the JSON form of Package
+ // It drops all the type and syntax fields, and transforms the Imports
+ type FlatPackage struct {
++	Dir             string           `json:",omitempty"`
++	Module          *packages.Module `json:",omitempty"`
+ 	ID              string
+ 	Name            string              `json:",omitempty"`
+ 	PkgPath         string              `json:",omitempty"`
+@@ -100,6 +102,17 @@
+ }
+ 
+ func ResolvePaths(pak *packages.Package, prf PathResolverFunc) error {
++	if pak.Dir != "" {
++		pak.Dir = prf(pak.Dir)
++	}
++	for m := pak.Module; m != nil; m = m.Replace {
++		if m.Dir != "" {
++			m.Dir = prf(m.Dir)
++		}
++		if m.GoMod != "" {
++			m.GoMod = prf(m.GoMod)
++		}
++	}
+ 	resolvePathsInPlace(prf, pak.CompiledGoFiles)
+ 	resolvePathsInPlace(prf, pak.GoFiles)
+ 	resolvePathsInPlace(prf, pak.OtherFiles)
+@@ -112,8 +125,30 @@
+-func FilterFilesForBuildTags(pak *packages.Package) {
+-	pak.CompiledGoFiles = filterSourceFilesForTags(pak.CompiledGoFiles)
++func FilterFilesForBuildTags(pak *packages.Package) error {
++	files, err := filterSourceFilesForTags(pak.CompiledGoFiles)
++	if err != nil {
++		return err
++	}
++	// pkgjson removes import-C originals before tag filtering, even when
++	// cgo is disabled. Account for those originals through the same matcher
++	// without changing GoFiles or inferring exclusion from their absence.
++	originals, err := filterSourceFilesForTags(pak.GoFiles)
++	if err != nil {
++		return err
++	}
++	included := make(map[string]bool, len(originals))
++	for _, path := range originals {
++		included[path] = true
++	}
++	pak.IgnoredFiles = nil
++	for _, path := range pak.GoFiles {
++		if !included[path] {
++			pak.IgnoredFiles = append(pak.IgnoredFiles, path)
++		}
++	}
++	pak.CompiledGoFiles = files
++	return nil
+ }
+ 
+ func filterTestSuffix(pkg *packages.Package, files []string) (err error, testFiles []string, xTestFiles, nonTestFiles []string) {
+ 	for _, filename := range files {
+ 		if strings.HasSuffix(filename, "_test.go") {
+ 			fset := token.NewFileSet()
+@@ -164,6 +181,9 @@
+ 	// Clone package, only xtgf files
+ 	return &packages.Package{
+ 		ID:              pkg.ID + "_xtest",
++		Dir:             pkg.Dir,
++		Module:          pkg.Module,
++		IgnoredFiles:    pkg.IgnoredFiles,
+ 		Name:            pkg.Name + "_test",
+ 		PkgPath:         pkg.PkgPath + "_test",
+ 		Imports:         newImports,
+diff --git a/go/tools/gopackagesdriver/packageregistry.go b/go/tools/gopackagesdriver/packageregistry.go
+--- a/go/tools/gopackagesdriver/packageregistry.go
++++ b/go/tools/gopackagesdriver/packageregistry.go
+@@ -48,6 +48,8 @@
+ 
+ 		pkg := &packages.Package{
+ 			ID:              flatPkg.ID,
++			Dir:             flatPkg.Dir,
++			Module:          flatPkg.Module,
+ 			Name:            flatPkg.Name,
+ 			PkgPath:         flatPkg.PkgPath,
+ 			GoFiles:         flatPkg.GoFiles,
+@@ -75,7 +77,9 @@
+ 		ResolvePaths(pkg, prf)
+-		FilterFilesForBuildTags(pkg)
++		if err := FilterFilesForBuildTags(pkg); err != nil {
++			return err
++		}
+ 	}
+ 	return nil
+ }
+ 
+ // ResolveImports adds stdlib imports to packages. This is required because
+diff --git a/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl b/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
+--- a/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
++++ b/go/tools/gopackagesdriver/pkgjson/pkg_json.bzl
+@@ -43,7 +43,12 @@
+         for src in archive.data.srcs
+         if src.path.endswith(".go")
+     ]
++    label = archive.source.label
++    directory = paths.join("__BAZEL_WORKSPACE__", label.package)
++    if label.workspace_root:
++        directory = paths.join("__BAZEL_OUTPUT_BASE__", label.workspace_root, label.package)
+     return struct(
++        Dir = directory,
+         ID = str(archive.data.label),
+         PkgPath = archive.data.importpath,
+         ExportFile = file_path(archive.data.export_file),
+diff --git a/go/tools/gopackagesdriver/pkgjson/main.go b/go/tools/gopackagesdriver/pkgjson/main.go
+--- a/go/tools/gopackagesdriver/pkgjson/main.go
++++ b/go/tools/gopackagesdriver/pkgjson/main.go
+@@ -33,6 +33,7 @@
+ }
+ 
+ type pkgJson struct {
++	Dir string `json:"Dir,omitempty"`
+ 	ID string `json:"ID"`
+ 	PkgPath string `json:"PkgPath"`
+ 	ExportFile string `json:"ExportFile"`
+@@ -75,6 +76,7 @@
+ 
+ 	data := pkgJson{
+ 		ID: pjson.ID,
++		Dir: pjson.Dir,
+ 		PkgPath: pjson.PkgPath,
+ 		ExportFile: pjson.ExportFile,
+ 		GoFiles: pjson.GoFiles,
+diff --git a/go/tools/gopackagesdriver/aspect.bzl b/go/tools/gopackagesdriver/aspect.bzl
+--- a/go/tools/gopackagesdriver/aspect.bzl
++++ b/go/tools/gopackagesdriver/aspect.bzl
+@@ -32,6 +32,8 @@
+ DEPS_ATTRS = [
+     "deps",
+     "embed",
++    "src",
++    "exports",
+ ]
+ 
+ PROTO_COMPILER_ATTRS = [
+@@ -82,7 +84,9 @@
+             deps = [deps]
+ 
+         for dep in deps:
+-            if GoPkgInfo in dep:
++            # Forwarding attributes can also be scalar strings on unrelated
++            # rules; only label dependencies can carry package providers.
++            if type(dep) == "Target" and GoPkgInfo in dep:
+                 pkg_info = dep[GoPkgInfo]
+                 transitive_json_files.append(pkg_info.pkg_json_files)
+                 transitive_compiled_go_files.append(pkg_info.compiled_go_files)
+@@ -97,6 +97,7 @@
+     if GoArchive in target:
+         archive = target[GoArchive]
+         compiled_go_files.extend(archive.source.srcs)
++        compiled_go_files.extend(archive.source.embedsrcs)
+         if archive.data.cgo_out_dir:
+             compiled_go_files.append(archive.data.cgo_out_dir)
+         export_files.append(archive.data.export_file)
+@@ -108,6 +109,7 @@
+                 if archive.data.label == dep_archive.data.label:
+                     pkg_json_files.append(make_pkg_json_with_archive(ctx, dep_archive.data.name, dep_archive))
+                     compiled_go_files.extend(dep_archive.source.srcs)
++                    compiled_go_files.extend(dep_archive.source.embedsrcs)
+                     if dep_archive.data.cgo_out_dir:
+                         compiled_go_files.append(dep_archive.data.cgo_out_dir)
+                     export_files.append(dep_archive.data.export_file)
+diff --git a/go/tools/gopackagesdriver/main.go b/go/tools/gopackagesdriver/main.go
+--- a/go/tools/gopackagesdriver/main.go
++++ b/go/tools/gopackagesdriver/main.go
+@@ -21,8 +21,11 @@
+ 	"io"
+ 	"log/slog"
+ 	"os"
++	"path/filepath"
+ 	"runtime"
+ 	"strings"
++
++	"golang.org/x/tools/go/packages"
+ )
+ 
+ type driverResponse struct {
+@@ -102,6 +105,10 @@
+ 		}
+ 	}()
+ 
++	if manifest := os.Getenv("GOPACKAGESDRIVER_JSON_MANIFEST"); manifest != "" {
++		return runJSONManifest(manifest, request, queries, out)
++	}
++
+ 	bazel, err := NewBazel(ctx, bazelBin, workspaceRoot, buildWorkingDirectory, bazelCommonFlags, bazelStartupFlags)
+ 	if err != nil {
+ 		return fmt.Errorf("unable to create bazel instance: %w", err)
+@@ -142,6 +149,83 @@
+ 	return nil
+ }
+ 
++// jsonManifest supplies the outputs of a completed, explicitly selected Bazel
++// analysis. Each call may request a subset of its declared roots because
++// packages.Load partitions long requests before invoking the external driver:
++// https://github.com/golang/tools/blob/ea2f152dc/go/packages/packages.go#L297-L318
++type jsonManifest struct {
++	JSONFiles    []string
++	Labels       []string
++	BazelVersion string
++	Workspace    string
++	ExecRoot     string
++	OutputBase   string
++	Arch         string
++	Tests        bool
++}
++
++func runJSONManifest(path string, request *packages.DriverRequest, queries []string, out io.Writer) error {
++	data, err := os.ReadFile(path)
++	if err != nil {
++		return err
++	}
++	var manifest jsonManifest
++	if err := json.Unmarshal(data, &manifest); err != nil {
++		return err
++	}
++	if request.Tests != manifest.Tests || len(queries) == 0 {
++		return fmt.Errorf("request differs from declared JSON package test mode or has no roots")
++	}
++	allowed := make(map[string]bool, len(manifest.Labels))
++	for _, label := range manifest.Labels {
++		if label == "" || allowed[label] {
++			return fmt.Errorf("empty or duplicate declared package root: %q", label)
++		}
++		allowed[label] = true
++	}
++	requested := make(map[string]bool, len(queries))
++	for _, label := range queries {
++		if !allowed[label] || requested[label] {
++			return fmt.Errorf("undeclared or duplicate requested package root: %q", label)
++		}
++		requested[label] = true
++	}
++	version, ok := parseBazelVersion(manifest.BazelVersion)
++	if !ok {
++		return fmt.Errorf("invalid manifest Bazel version %q", manifest.BazelVersion)
++	}
++	for _, root := range []string{manifest.Workspace, manifest.ExecRoot, manifest.OutputBase} {
++		if !filepath.IsAbs(root) {
++			return fmt.Errorf("manifest path is not absolute: %q", root)
++		}
++	}
++	if manifest.Arch == "" || len(manifest.JSONFiles) == 0 {
++		return fmt.Errorf("manifest lacks architecture or package JSON")
++	}
++	replacer := strings.NewReplacer(
++		"__BAZEL_WORKSPACE__", manifest.Workspace,
++		"__BAZEL_EXECROOT__", manifest.ExecRoot,
++		"__BAZEL_OUTPUT_BASE__", manifest.OutputBase,
++	)
++	driver, err := NewJSONPackagesDriver(manifest.JSONFiles, replacer.Replace, version, request.Overlay)
++	if err != nil {
++		return err
++	}
++	response := driver.GetResponse(queries)
++	response.Compiler = "gc"
++	response.Arch = manifest.Arch
++	if len(response.Roots) != len(requested) {
++		return fmt.Errorf("package metadata returned %d roots for %d requested roots", len(response.Roots), len(requested))
++	}
++	for _, label := range response.Roots {
++		if !requested[label] {
++			return fmt.Errorf("unexpected or duplicate package metadata root: %q", label)
++		}
++		delete(requested, label)
++	}
++	return json.NewEncoder(out).Encode(response)
++}
++
+ func main() {
+ 	ctx, cancel := signalContext(context.Background(), os.Interrupt)
+ 	defer cancel()
+@@ -151,6 +235,9 @@
+ 		// gopls will check the packages driver exit code, and if there is an
+ 		// error, it will fall back to go list. Obviously we don't want that,
+ 		// so force a 0 exit code.
++		if os.Getenv("GOPACKAGESDRIVER_JSON_MANIFEST") != "" {
++			os.Exit(1)
++		}
+ 		os.Exit(0)
+ 	}
+ }
+diff --git a/go/tools/builders/stdliblist.go b/go/tools/builders/stdliblist.go
+--- a/go/tools/builders/stdliblist.go
++++ b/go/tools/builders/stdliblist.go
+@@ -52,6 +52,7 @@
+ // flatPackage is the JSON form of Package
+ // It drops all the type and syntax fields, and transforms the Imports
+ type flatPackage struct {
++	Dir             string `json:",omitempty"`
+ 	ID              string
+ 	Name            string              `json:",omitempty"`
+ 	PkgPath         string              `json:",omitempty"`
+@@ -164,6 +165,7 @@
+ 
+ 	newPkg := &flatPackage{
+ 		ID:              stdlibPackageID(pkg.ImportPath),
++		Dir:             outputBasePath(cloneBase, pkg.Dir),
+ 		Name:            pkg.Name,
+ 		PkgPath:         pkg.ImportPath,
+ 		ExportFile:      pathReplaceFn(pkg.Export),
+diff --git a/go/tools/gopackagesdriver/BUILD.bazel b/go/tools/gopackagesdriver/BUILD.bazel
+--- a/go/tools/gopackagesdriver/BUILD.bazel
++++ b/go/tools/gopackagesdriver/BUILD.bazel
+@@ -1,4 +1,4 @@
+-load("//go:def.bzl", "go_binary", "go_library")
++load("//go:def.bzl", "go_binary", "go_library", "go_test")
+ load("//go/private:common.bzl", "RULES_GO_REPO_NAME")
+ load("//go/tools/bazel_testing:def.bzl", "go_bazel_test")
+ 
+@@ -33,6 +33,14 @@
+     },
+ )
+ 
++go_test(
++    name = "json_manifest_test",
++    srcs = ["json_manifest_test.go"],
++    embed = [":gopackagesdriver_lib"],
++    env = {"GOTAGS": ""},
++    deps = ["@org_golang_x_tools//go/packages"],
++)
++
+ go_bazel_test(
+     name = "gopackagesdriver_test",
+     size = "enormous",
+diff --git a/go/tools/gopackagesdriver/json_manifest_test.go b/go/tools/gopackagesdriver/json_manifest_test.go
+new file mode 100644
+--- /dev/null
++++ b/go/tools/gopackagesdriver/json_manifest_test.go
+@@ -0,0 +1,202 @@
++// Copyright 2026 The Bazel Authors. All rights reserved.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//    http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++package main
++
++import (
++	"bytes"
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"slices"
++	"testing"
++
++	"golang.org/x/tools/go/packages"
++)
++
++func TestJSONManifestRequests(t *testing.T) {
++	const a, b, missing = "@@//example:a", "@@//example:b", "@@//example:missing"
++	for _, tc := range []struct {
++		name      string
++		queries   []string
++		labels    []string
++		tests     bool
++		xTest     bool
++		wantError bool
++	}{
++		{name: "first batch", queries: []string{a}},
++		{name: "last batch", queries: []string{b}},
++		{name: "full request", queries: []string{a, b}},
++		{name: "reordered request", queries: []string{b, a}},
++		{name: "empty request", wantError: true},
++		{name: "unknown root", queries: []string{missing}, wantError: true},
++		{name: "duplicate request", queries: []string{a, a}, wantError: true},
++		{name: "test mode", queries: []string{a}, tests: true, wantError: true},
++		{name: "missing metadata", queries: []string{missing}, labels: []string{a, b, missing}, wantError: true},
++		{name: "unexpected xtest", queries: []string{a}, xTest: true, wantError: true},
++		{name: "duplicate manifest", queries: []string{a}, labels: []string{a, a}, wantError: true},
++		{name: "empty manifest root", queries: []string{a}, labels: []string{a, ""}, wantError: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			dir := t.TempDir()
++			jsonPath := filepath.Join(dir, "packages.json")
++			var metadata bytes.Buffer
++			encoder := json.NewEncoder(&metadata)
++			records := []FlatPackage{
++				{ID: a, Name: "a", PkgPath: "example/a"},
++				{ID: b, Name: "b", PkgPath: "example/b"},
++			}
++			if tc.xTest {
++				records = append(records, FlatPackage{ID: a + "_xtest", Name: "a_test", PkgPath: "example/a_test"})
++			}
++			for _, record := range records {
++				if err := encoder.Encode(record); err != nil {
++					t.Fatal(err)
++				}
++			}
++			if err := os.WriteFile(jsonPath, metadata.Bytes(), 0600); err != nil {
++				t.Fatal(err)
++			}
++			labels := tc.labels
++			if labels == nil {
++				labels = []string{a, b}
++			}
++			manifest := jsonManifest{
++				JSONFiles: []string{jsonPath}, Labels: labels, BazelVersion: "8.8.1",
++				Workspace: dir, ExecRoot: dir, OutputBase: dir, Arch: "amd64",
++			}
++			data, err := json.Marshal(manifest)
++			if err != nil {
++				t.Fatal(err)
++			}
++			manifestPath := filepath.Join(dir, "manifest.json")
++			if err := os.WriteFile(manifestPath, data, 0600); err != nil {
++				t.Fatal(err)
++			}
++			var output bytes.Buffer
++			err = runJSONManifest(manifestPath, &packages.DriverRequest{Tests: tc.tests}, tc.queries, &output)
++			if tc.wantError {
++				if err == nil || output.Len() != 0 {
++					t.Fatalf("invalid request returned error %v and output %q", err, output.String())
++				}
++				return
++			}
++			if err != nil {
++				t.Fatal(err)
++			}
++			var response packages.DriverResponse
++			if err := json.Unmarshal(output.Bytes(), &response); err != nil {
++				t.Fatal(err)
++			}
++			want := slices.Clone(tc.queries)
++			slices.Sort(want)
++			slices.Sort(response.Roots)
++			if !slices.Equal(response.Roots, want) || len(response.Packages) != len(want) {
++				t.Fatalf("response roots %v, packages %d; want only %v", response.Roots, len(response.Packages), want)
++			}
++			if response.NotHandled || response.Compiler != "gc" || response.Arch != "amd64" {
++				t.Fatalf("unexpected driver contract: %+v", response)
++			}
++		})
++	}
++}
++
++func TestJSONManifestSourceFiltering(t *testing.T) {
++	for _, tc := range []struct {
++		name, filename, source                                    string
++		missing, omitCompiled, wantError, wantSource, wantIgnored bool
++	}{
++		{name: "default fallback", filename: "fallback.go", source: "//go:build !custom\n\npackage p\n", wantSource: true},
++		{name: "tag excluded", filename: "tagged.go", source: "//go:build custom\n\npackage p\n", wantIgnored: true},
++		{name: "invalid constraint", filename: "invalid.go", source: "//go:build (\n\npackage p\n", wantError: true},
++		{name: "missing source", filename: "missing.go", missing: true, wantError: true},
++		{name: "cgo generated", filename: "_cgo_gotypes.go", source: "package p\n", wantSource: true},
++		{name: "ignored import-C original", filename: "tagged.go", source: "//go:build custom\n\npackage p\nimport \"C\"\n", omitCompiled: true, wantIgnored: true},
++		{name: "eligible import-C original", filename: "cgo.go", source: "package p\nimport \"C\"\n", omitCompiled: true},
++		{name: "invalid original-only constraint", filename: "invalid.go", source: "//go:build (\n\npackage p\n", omitCompiled: true, wantError: true},
++		{name: "missing original-only source", filename: "missing.go", missing: true, omitCompiled: true, wantError: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			dir := t.TempDir()
++			path := filepath.Join(dir, tc.filename)
++			if !tc.missing {
++				if err := os.WriteFile(path, []byte(tc.source), 0600); err != nil {
++					t.Fatal(err)
++				}
++			}
++			const label = "@@//example:p"
++			record := FlatPackage{ID: label, Name: "p", PkgPath: "example/p", Dir: dir, GoFiles: []string{path}, CompiledGoFiles: []string{path}}
++			var wantFiles []string
++			if tc.omitCompiled {
++				// Keep a nonempty compiled list so Add does not substitute GoFiles.
++				ordinary := filepath.Join(dir, "ordinary.go")
++				if err := os.WriteFile(ordinary, []byte("package p\n"), 0600); err != nil {
++					t.Fatal(err)
++				}
++				record.GoFiles = append(record.GoFiles, ordinary)
++				record.CompiledGoFiles = []string{ordinary}
++				wantFiles = append(wantFiles, ordinary)
++			}
++			if tc.wantSource {
++				wantFiles = append(wantFiles, path)
++			}
++			data, err := json.Marshal(record)
++			if err != nil {
++				t.Fatal(err)
++			}
++			metadata := filepath.Join(dir, "package.json")
++			if err := os.WriteFile(metadata, data, 0600); err != nil {
++				t.Fatal(err)
++			}
++			manifest := jsonManifest{JSONFiles: []string{metadata}, Labels: []string{label}, BazelVersion: "8.8.1", Workspace: dir, ExecRoot: dir, OutputBase: dir, Arch: "amd64"}
++			data, err = json.Marshal(manifest)
++			if err != nil {
++				t.Fatal(err)
++			}
++			manifestPath := filepath.Join(dir, "manifest.json")
++			if err := os.WriteFile(manifestPath, data, 0600); err != nil {
++				t.Fatal(err)
++			}
++			var output bytes.Buffer
++			err = runJSONManifest(manifestPath, &packages.DriverRequest{}, []string{label}, &output)
++			if tc.wantError {
++				if err == nil || output.Len() != 0 {
++					t.Fatalf("invalid source returned error %v and output %q", err, output.String())
++				}
++				return
++			}
++			if err != nil {
++				t.Fatal(err)
++			}
++			var response packages.DriverResponse
++			if err := json.Unmarshal(output.Bytes(), &response); err != nil {
++				t.Fatal(err)
++			}
++			if len(response.Roots) != 1 || response.Roots[0] != label || len(response.Packages) != 1 {
++				t.Fatalf("unexpected response: %+v", response)
++			}
++			files := response.Packages[0].CompiledGoFiles
++			if !slices.Equal(files, wantFiles) {
++				t.Fatalf("filtered files %v, want %v", files, wantFiles)
++			}
++			if !slices.Equal(response.Packages[0].GoFiles, record.GoFiles) {
++				t.Fatalf("original sources changed: %v", response.Packages[0].GoFiles)
++			}
++			ignored := response.Packages[0].IgnoredFiles
++			if tc.wantIgnored && !slices.Equal(ignored, []string{path}) || !tc.wantIgnored && len(ignored) != 0 {
++				t.Fatalf("ignored originals %v, want ignored %v", ignored, tc.wantIgnored)
++			}
++		})
++	}
++}
+diff --git a/go/tools/gopackagesdriver/build_context.go b/go/tools/gopackagesdriver/build_context.go
+--- a/go/tools/gopackagesdriver/build_context.go
++++ b/go/tools/gopackagesdriver/build_context.go
+@@ -1,6 +1,7 @@
+ package main
+ 
+ import (
++	"fmt"
+ 	"go/build"
+ 	"path/filepath"
+ 	"strings"
+@@ -15,23 +16,30 @@
+ 	return &bctx
+ }
+ 
+-func filterSourceFilesForTags(files []string) []string {
++func filterSourceFilesForTags(files []string) ([]string, error) {
+ 	ret := make([]string, 0, len(files))
+ 
+ 	for _, f := range files {
+ 		dir, filename := filepath.Split(f)
+ 		ext := filepath.Ext(f)
+ 
+-		match, _ := buildContext.MatchFile(dir, filename)
+ 		// MatchFile filters out anything without a file extension. In the
+ 		// case of CompiledGoFiles (in particular cgo processed files from
+ 		// the cache), we want them. We also want to keep cgo processed files
+ 		// with known naming conventions.
+-		if match || ext == "" || isCgoProcessed(filename) {
++		if ext == "" || isCgoProcessed(filename) {
++			ret = append(ret, f)
++			continue
++		}
++		match, err := buildContext.MatchFile(dir, filename)
++		if err != nil {
++			return nil, fmt.Errorf("match source %s: %w", f, err)
++		}
++		if match {
+ 			ret = append(ret, f)
+ 		}
+ 	}
+-	return ret
++	return ret, nil
+ }
+ 
+ // isCgoProcessed returns true if the file is a cgo processed file.

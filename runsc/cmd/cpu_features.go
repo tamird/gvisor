@@ -27,9 +27,7 @@ import (
 )
 
 // CPUFeatures implements subcommands.Command for the "cpu-features" command.
-type CPUFeatures struct {
-	bitmask bool
-}
+type CPUFeatures struct{}
 
 // Name implements subcommands.command.name.
 func (*CPUFeatures) Name() string {
@@ -43,13 +41,11 @@ func (*CPUFeatures) Synopsis() string {
 
 // Usage implements subcommands.Command.Usage.
 func (*CPUFeatures) Usage() string {
-	return "cpu-features [flags]\n"
+	return "cpu-features\n"
 }
 
 // SetFlags implements subcommands.Command.SetFlags.
-func (c *CPUFeatures) SetFlags(f *flag.FlagSet) {
-	f.BoolVar(&c.bitmask, "bitmask", false, "outputs CPU features as comma-separated hex uint32 block bitmasks.")
-}
+func (*CPUFeatures) SetFlags(*flag.FlagSet) {}
 
 // FetchSpec implements util.SubCommand.FetchSpec.
 func (*CPUFeatures) FetchSpec(_ *config.Config, _ *flag.FlagSet) (string, *specs.Spec, error) {
@@ -58,14 +54,18 @@ func (*CPUFeatures) FetchSpec(_ *config.Config, _ *flag.FlagSet) (string, *specs
 }
 
 // Execute implements subcommands.Command.Execute.
-func (c *CPUFeatures) Execute(_ context.Context, _ *flag.FlagSet, args ...any) subcommands.ExitStatus {
+func (*CPUFeatures) Execute(_ context.Context, _ *flag.FlagSet, args ...any) subcommands.ExitStatus {
 	cpuid.Initialize()
 	hfs := cpuid.HostFeatureSet().Fixed()
-	if c.bitmask {
-		fmt.Println(hfs.FeatureMaskString())
-		return subcommands.ExitSuccess
+	allFeatures := cpuid.AllFeatures()
+
+	features := []string{}
+	for _, v := range allFeatures {
+		if hfs.HasFeature(v) {
+			features = append(features, v.String())
+		}
 	}
-	fmt.Println(strings.Join(hfs.FeatureNames(), ","))
+	fmt.Println(strings.Join(features, ","))
 
 	return subcommands.ExitSuccess
 }

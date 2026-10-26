@@ -1,0 +1,52 @@
+Apply LIU Zhiwei's posted ARM RCsc store-release correction.
+https://www.mail-archive.com/qemu-devel%40nongnu.org/msg1218202.html
+Message-ID: 20260821064032.49556-3-zhiwei_liu@linux.alibaba.com
+
+The three barrier additions and comments are unchanged. Context is rebased
+onto QEMU 11.1.2. The ARM patch is not yet merged in the checked upstream
+master or released versions; remove this patch when a release contains it.
+
+--- a/target/arm/tcg/translate-a64.c
++++ b/target/arm/tcg/translate-a64.c
+@@ -3672,6 +3672,13 @@
+                                 true, a->rn != 31, memop);
+     do_gpr_st(s, cpu_reg(s, a->rt), clean_addr, memop, true, a->rt,
+               iss_sf, a->lasr);
++    /*
++     * STLR is an RCsc store-release: the Armv8 architecture orders it
++     * before any subsequent RCsc load-acquire, which is what forbids the
++     * store-buffering litmus test.  The barrier above only orders
++     * previous accesses before the store.
++     */
++    tcg_gen_mb(TCG_MO_ALL | TCG_BAR_SC);
+     return true;
+ }
+
+@@ -4415,6 +4422,12 @@
+     /* Store-Release semantics */
+     tcg_gen_mb(TCG_MO_ALL | TCG_BAR_STRL);
+     do_gpr_st(s, cpu_reg(s, a->rt), clean_addr, mop, true, a->rt, iss_sf, true);
++    /*
++     * Like STLR, STLPUR is an RCsc store-release and must be ordered
++     * before any subsequent RCsc load-acquire, so it needs a barrier
++     * after the store as well.
++     */
++    tcg_gen_mb(TCG_MO_ALL | TCG_BAR_SC);
+     return true;
+ }
+
+--- a/target/arm/tcg/translate.c
++++ b/target/arm/tcg/translate.c
+@@ -4278,6 +4278,12 @@
+     tmp = load_reg(s, a->rt);
+     tcg_gen_mb(TCG_MO_ALL | TCG_BAR_STRL);
+     gen_aa32_st_i32(s, tmp, addr, get_mem_index(s), mop | MO_ALIGN);
++    /*
++     * STL has the same RCsc store-release semantics as the AArch64 STLR
++     * and must be ordered before a subsequent RCsc load-acquire (LDA).
++     * The barrier above only orders previous accesses before the store.
++     */
++    tcg_gen_mb(TCG_MO_ALL | TCG_BAR_SC);
+     disas_set_da_iss(s, mop, a->rt | ISSIsAcqRel | ISSIsWrite);
+
+     return true;

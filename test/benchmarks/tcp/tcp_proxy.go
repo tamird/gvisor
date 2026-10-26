@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
+	"net/netip"
 	"os"
 	"os/signal"
 	"regexp"
@@ -50,8 +52,8 @@ import (
 var (
 	port    = flag.Int("port", 0, "bind port (all addresses)")
 	forward = flag.String("forward", "", "forwarding target")
-	client  = flag.Bool("client", false, "use netstack for listen")
-	server  = flag.Bool("server", false, "use netstack for dial")
+	client  = flag.Bool("client", false, "use netstack for dial")
+	server  = flag.Bool("server", false, "use netstack for listen")
 
 	// Netstack-specific options.
 	mtu                = flag.Int("mtu", 1280, "mtu for network stack")
@@ -79,7 +81,7 @@ var (
 
 type impl interface {
 	dial(address string) (net.Conn, error)
-	listen(port int) (net.Listener, error)
+	listen(port uint16) (net.Listener, error)
 	printStats()
 }
 
@@ -89,7 +91,7 @@ func (netImpl) dial(address string) (net.Conn, error) {
 	return net.Dial("tcp", address)
 }
 
-func (netImpl) listen(port int) (net.Listener, error) {
+func (netImpl) listen(port uint16) (net.Listener, error) {
 	return net.Listen("tcp", fmt.Sprintf(":%d", port))
 }
 
@@ -103,7 +105,7 @@ const (
 
 type netstackImpl struct {
 	s    *stack.Stack
-	addr tcpip.Address
+	addr netip.Addr
 	mode string
 }
 
@@ -161,36 +163,29 @@ func setupNetwork(ifaceName string, numChannels int) (fds []int, err error) {
 
 func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	// Parse details.
-	var parsedAddr tcpip.Address
-	if *useIpv6 {
-		parsedAddr = tcpip.AddrFrom16Slice(net.ParseIP(*addr).To16())
-	} else {
-		parsedAddr = tcpip.AddrFrom4Slice(net.ParseIP(*addr).To4())
+	parsedAddr, parseErr := netip.ParseAddr(*addr)
+	if parseErr != nil {
+		return nil, func() error { return nil }, parseErr
 	}
-	parsedBytes := parsedAddr.AsSlice()
-	var parsedDest tcpip.Address      // Filled in below.
-	var parsedMask tcpip.AddressMask  // Filled in below.
-	var parsedDest6 tcpip.Address     // Filled in below.
-	var parsedMask6 tcpip.AddressMask // Filled in below.
+	if parsedAddr.Zone() != "" {
+		return nil, func() error { return nil }, fmt.Errorf("unexpected IPv6 zone in %q", *addr)
+	}
+	if *useIpv6 {
+		parsedAddr = netip.AddrFrom16(parsedAddr.As16())
+	} else {
+		parsedAddr = parsedAddr.Unmap()
+		if !parsedAddr.Is4() {
+			return nil, func() error { return nil }, fmt.Errorf("expected IPv4 address, got %s", parsedAddr)
+		}
+	}
 	switch *mask {
-	case 8:
-		parsedDest = tcpip.AddrFrom4([4]byte{parsedBytes[0], 0, 0, 0})
-		parsedMask = tcpip.MaskFromBytes([]byte{0xff, 0, 0, 0})
-		parsedDest6 = tcpip.AddrFrom16Slice(append([]byte{parsedBytes[0]}, make([]byte, 15)...))
-		parsedMask6 = tcpip.MaskFromBytes(append([]byte{0xff}, make([]byte, 15)...))
-	case 16:
-		parsedDest = tcpip.AddrFrom4([4]byte{parsedBytes[0], parsedBytes[1], 0, 0})
-		parsedMask = tcpip.MaskFromBytes([]byte{0xff, 0xff, 0, 0})
-		parsedDest6 = tcpip.AddrFrom16Slice(append([]byte{parsedBytes[0], parsedBytes[1]}, make([]byte, 14)...))
-		parsedMask6 = tcpip.MaskFromBytes(append([]byte{0xff, 0xff}, make([]byte, 14)...))
-	case 24:
-		parsedDest = tcpip.AddrFrom4([4]byte{parsedBytes[0], parsedBytes[1], parsedBytes[2], 0})
-		parsedMask = tcpip.MaskFromBytes([]byte{0xff, 0xff, 0xff, 0})
-		parsedDest6 = tcpip.AddrFrom16Slice(append([]byte{parsedBytes[0], parsedBytes[1], parsedBytes[2]}, make([]byte, 13)...))
-		parsedMask6 = tcpip.MaskFromBytes(append([]byte{0xff, 0xff, 0xff}, make([]byte, 13)...))
+	case 8, 16, 24:
 	default:
-		// This is just laziness; we don't expect a different mask.
 		return nil, func() error { return nil }, fmt.Errorf("mask %d not supported", *mask)
+	}
+	subnet := netip.PrefixFrom(parsedAddr, *mask)
+	if !subnet.IsValid() {
+		return nil, func() error { return nil }, fmt.Errorf("invalid prefix length %d for %s", *mask, parsedAddr)
 	}
 
 	var probeFile *os.File
@@ -268,32 +263,14 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          proto,
-		AddressWithPrefix: parsedAddr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(parsedAddr),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		return nil, probeFile.Close, fmt.Errorf("error adding IP address %+v to %q: %s", protocolAddr, *iface, err)
 	}
 
-	subnet4, err := tcpip.NewSubnet(parsedDest, parsedMask)
-	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
-	}
-	subnet6, err := tcpip.NewSubnet(parsedDest6, parsedMask6)
-	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
-	}
-
-	// Add default route; we only support
-	s.SetRouteTable([]tcpip.Route{
-		{
-			Destination: subnet4,
-			NIC:         nicID,
-		},
-		{
-			Destination: subnet6,
-			NIC:         nicID,
-		},
-	})
+	// Route the configured network through the device.
+	s.SetRouteTable([]tcpip.Route{{Destination: subnet.Masked(), NIC: nicID}})
 
 	// Set protocol options.
 	{
@@ -334,23 +311,40 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	}, probeFile.Close, nil
 }
 
-func (n netstackImpl) dial(address string) (net.Conn, error) {
+func parseNetstackAddress(address string) (tcpip.FullAddress, error) {
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		return nil, err
+		return tcpip.FullAddress{}, err
 	}
 	if host == "" {
 		// A host must be provided for the dial.
-		return nil, fmt.Errorf("no host provided")
+		return tcpip.FullAddress{}, fmt.Errorf("no host provided")
 	}
-	portNumber, err := strconv.Atoi(port)
+	portNumber, err := strconv.ParseInt(port, 10, 64)
+	if err != nil {
+		return tcpip.FullAddress{}, err
+	}
+	if portNumber < 0 || portNumber > math.MaxUint16 {
+		return tcpip.FullAddress{}, fmt.Errorf("port %q: %w", port, strconv.ErrRange)
+	}
+	parsedAddr, err := netip.ParseAddr(host)
+	if err != nil {
+		return tcpip.FullAddress{}, err
+	}
+	if parsedAddr.Zone() != "" {
+		return tcpip.FullAddress{}, fmt.Errorf("unexpected IPv6 zone in %q", host)
+	}
+	return tcpip.FullAddress{
+		NIC:  nicID,
+		Addr: netip.AddrFrom16(parsedAddr.As16()),
+		Port: uint16(portNumber),
+	}, nil
+}
+
+func (n netstackImpl) dial(address string) (net.Conn, error) {
+	addr, err := parseNetstackAddress(address)
 	if err != nil {
 		return nil, err
-	}
-	addr := tcpip.FullAddress{
-		NIC:  nicID,
-		Addr: tcpip.AddrFromSlice(net.ParseIP(host)),
-		Port: uint16(portNumber),
 	}
 	proto := ipv4.ProtocolNumber
 	if *useIpv6 {
@@ -363,10 +357,10 @@ func (n netstackImpl) dial(address string) (net.Conn, error) {
 	return conn, nil
 }
 
-func (n netstackImpl) listen(port int) (net.Listener, error) {
+func (n netstackImpl) listen(port uint16) (net.Listener, error) {
 	addr := tcpip.FullAddress{
 		NIC:  nicID,
-		Port: uint16(port),
+		Port: port,
 	}
 	proto := ipv4.ProtocolNumber
 	if *useIpv6 {
@@ -392,8 +386,18 @@ func main() {
 	if *port == 0 {
 		log.Fatalf("no port provided")
 	}
+	if *port < 0 || *port > math.MaxUint16 {
+		log.Fatalf("invalid port %d: %v", *port, strconv.ErrRange)
+	}
 	if *forward == "" {
 		log.Fatalf("no forward provided")
+	}
+	if *client {
+		// Reject invalid numeric targets before opening network devices. The
+		// native dialer also accepts service names, so leave those to net.Dial.
+		if _, err := parseNetstackAddress(*forward); err != nil {
+			log.Fatalf("invalid forwarding target %q: %v", *forward, err)
+		}
 	}
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -478,7 +482,7 @@ func main() {
 	}
 
 	// Bind once to the server socket.
-	listener, err := in.listen(*port)
+	listener, err := in.listen(uint16(*port))
 	if err != nil {
 		// Should not happen, everything must be bound by this time
 		// this proxy is started.

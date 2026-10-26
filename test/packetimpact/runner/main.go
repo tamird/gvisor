@@ -342,8 +342,8 @@ func (d *dutProcess) bootstrap(ctx context.Context) (testbench.DUTInfo, func() e
 		return testbench.DUTInfo{}, nil, fmt.Errorf("failed to gather information about the testbench: %w", err)
 	}
 	dutInfo.Net.LocalMAC = testIface.Attrs().HardwareAddr
-	dutInfo.Net.LocalIPv4 = testIPv4.IP.To4()
-	dutInfo.Net.LocalIPv6 = testIPv6.IP
+	dutInfo.Net.LocalIPv4 = testIPv4.Addr()
+	dutInfo.Net.LocalIPv6 = testIPv6.Addr()
 	dutInfo.Net.LocalDevID = uint32(testIface.Attrs().Index)
 	dutInfo.Net.LocalDevName = testIface.Attrs().Name
 	return dutInfo, d.cmd.Wait, nil

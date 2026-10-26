@@ -20,8 +20,10 @@ import (
 	"os"
 
 	"gvisor.dev/gvisor/pkg/sentry/seccheck"
-	_ "gvisor.dev/gvisor/pkg/sentry/seccheck/sinks/null"   // Register the null sink.
-	_ "gvisor.dev/gvisor/pkg/sentry/seccheck/sinks/remote" // Register the remote sink.
+
+	// Register supported of sinks.
+	_ "gvisor.dev/gvisor/pkg/sentry/seccheck/sinks/null"
+	_ "gvisor.dev/gvisor/pkg/sentry/seccheck/sinks/remote"
 )
 
 // InitConfig represents the configuration to apply during pod creation. For

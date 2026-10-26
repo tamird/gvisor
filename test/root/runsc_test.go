@@ -78,6 +78,9 @@ func TestCreateFailureRemovesCgroup(t *testing.T) {
 
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
+	if err := testFlags.Parse(testutil.RuntimeTestFlags()); err != nil {
+		t.Fatal(err)
+	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		t.Fatal(err)
@@ -136,6 +139,9 @@ func TestCreateContainerHooksRootFS(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 			config.RegisterFlags(testFlags)
+			if err := testFlags.Parse(testutil.RuntimeTestFlags()); err != nil {
+				t.Fatal(err)
+			}
 			conf, err := config.NewFromFlags(testFlags)
 			if err != nil {
 				t.Fatal(err)
@@ -211,7 +217,8 @@ func TestDoKill(t *testing.T) {
 		t.Fatalf("prctl(PR_SET_CHILD_SUBREAPER): %v", err)
 	}
 
-	cmd := exec.Command(specutils.ExePath, "do", "sleep", "10000")
+	args := append(testutil.RuntimeTestFlags(), "do", "sleep", "10000")
+	cmd := exec.Command(specutils.ExePath, args...)
 	buf := &bytes.Buffer{}
 	cmd.Stdout = buf
 	cmd.Stderr = buf
@@ -346,7 +353,6 @@ func TestSandboxProcessEnv(t *testing.T) {
 	got = regexp.MustCompile("(^|\x00)TMPDIR=[^\x00]*\x00").ReplaceAll(got, []byte("$1"))
 	godebug := regexp.QuoteMeta("GODEBUG=" + sandboxposture.GoDebug(conf.Platform))
 	got = regexp.MustCompile("(^|\x00)"+godebug+"\x00").ReplaceAll(got, []byte("$1"))
-	got = regexp.MustCompile("(^|\x00)GOMAXPROCS=\\d+\x00").ReplaceAll(got, []byte("$1"))
 	if len(got) != 0 && string(got) != "GLIBC_TUNABLES=glibc.pthread.rseq=0\x00" {
 		t.Errorf("sandbox process's environment is not empty: got %s (%v)", string(got), got)
 	}

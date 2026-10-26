@@ -30,6 +30,7 @@ import (
 )
 
 var (
+	proctorPath = flag.String("proctor", "", "declared path to the Moby proctor executable")
 	testsFilter = flag.String("tests", testutil.StringFromEnv("RUNTIME_TESTS_FILTER", ""),
 		"if specified, runs only the given comma-separated list of test names")
 	batchSize = flag.Int("batch", 50, "number of test cases run in one command")
@@ -78,6 +79,14 @@ func dockerInGvisorCapabilities() []string {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
+	os.Exit(dockerutil.RunTests(run))
+}
+
+func run() int {
+	if *proctorPath == "" {
+		slog.Error("proctor flag must not be empty")
+		return 1
+	}
 	if dockerutil.Runtime() == "" {
 		slog.Warn("no runtime specified, defaulting to runsc")
 		dockerutil.SetRuntime("runsc")
@@ -87,10 +96,11 @@ func TestMain(m *testing.M) {
 	cancel()
 	if err != nil {
 		slog.Error("IsGVisorRuntime failed", "err", err)
-		os.Exit(1)
+		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
-		Runner: "test/moby/runner",
+		Runner:   *proctorPath,
+		ExecOpts: dockerutil.ExecOpts{Privileged: true, User: "0"},
 		// Docker in Docker requires privileged mode.
 		Privileged:        !isGVisor,
 		CapAdd:            dockerInGvisorCapabilities(),
@@ -111,7 +121,7 @@ func TestMain(m *testing.M) {
 			return tests[test]
 		}
 	}
-	os.Exit(lib.RunTests("moby", "moby", filter, *batchSize, *timeout, proctorSettings))
+	return lib.RunTests("moby", "moby", filter, *batchSize, *timeout, proctorSettings)
 }
 
 // TestMoby is a placeholder required by go_test main generation; actual test

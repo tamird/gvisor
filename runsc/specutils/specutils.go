@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,6 +35,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/runtime-spec/specs-go/features"
 	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
@@ -186,11 +186,6 @@ func ValidateSpec(spec *specs.Spec, conf *config.Config, noRootContainer bool) e
 			return err
 		}
 	}
-	if IsRootContainer(spec) {
-		if utsns, ok := GetNS(specs.UTSNamespace, spec); ok && utsns.Path != "" {
-			return fmt.Errorf("joining UTS namespace %q is not supported", utsns.Path)
-		}
-	}
 	for _, m := range spec.Mounts {
 		if err := validateMount(&m); err != nil {
 			return err
@@ -236,28 +231,10 @@ func absPath(base, rel string) string {
 	return filepath.Join(base, rel)
 }
 
-// CopySpec returns a sealed (read-only) copy of the given OCI runtime spec,
-// encoded as JSON. It can be passed around between processes to ensure they
-// all see the same spec as the caller.
-func CopySpec(spec *specs.Spec) (*os.File, error) {
-	data, err := json.Marshal(spec)
-	if err != nil {
-		return nil, fmt.Errorf("cannot encode spec: %w", err)
-	}
-	fd, err := unix.MemfdCreate("config.json", unix.MFD_CLOEXEC|unix.MFD_ALLOW_SEALING)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create memfd: %w", err)
-	}
-	f := os.NewFile(uintptr(fd), "config.json")
-	if _, err := f.WriteAt(data, 0); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("cannot write spec copy: %w", err)
-	}
-	if _, err := unix.FcntlInt(f.Fd(), unix.F_ADD_SEALS, unix.F_SEAL_SEAL|unix.F_SEAL_SHRINK|unix.F_SEAL_GROW|unix.F_SEAL_WRITE); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("cannot seal spec copy: %w", err)
-	}
-	return f, nil
+// OpenSpec opens an OCI runtime spec from the given bundle directory.
+func OpenSpec(bundleDir string) (*os.File, error) {
+	// The spec file must be named "config.json" inside the bundle directory.
+	return os.Open(filepath.Join(bundleDir, "config.json"))
 }
 
 // SpecOpts says how to read a spec.
@@ -272,7 +249,7 @@ type SpecOpts struct {
 // ReadSpec also normalizes all potential relative paths into absolute
 // path, e.g. spec.Root.Path, mount.Source.
 func ReadSpec(bundleDir string, opts SpecOpts) (*specs.Spec, error) {
-	specFile, err := os.Open(filepath.Join(bundleDir, "config.json"))
+	specFile, err := OpenSpec(bundleDir)
 	if err != nil {
 		return nil, fmt.Errorf("error opening spec file %q: %v", filepath.Join(bundleDir, "config.json"), err)
 	}
@@ -280,15 +257,17 @@ func ReadSpec(bundleDir string, opts SpecOpts) (*specs.Spec, error) {
 	return ReadSpecFromFile(bundleDir, specFile, opts)
 }
 
-// ReadSpecFromFile reads an OCI runtime spec from the given file, from its
-// beginning and without moving its offset. It also fixes up the spec so that
-// the rest of the code doesn't need to worry about it.
+// ReadSpecFromFile reads an OCI runtime spec from the given file. It also fixes
+// up the spec so that the rest of the code doesn't need to worry about it.
 //  1. Normalizes all relative paths into absolute by prepending the bundle
 //     dir to them.
 //  2. Looks for flag overrides and applies them if any.
 //  3. Removes seccomp rules if `RuntimeDefault` was used.
 func ReadSpecFromFile(bundleDir string, specFile *os.File, opts SpecOpts) (*specs.Spec, error) {
-	specBytes, err := io.ReadAll(io.NewSectionReader(specFile, 0, math.MaxInt64))
+	if _, err := specFile.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("error seeking to beginning of file %q: %v", specFile.Name(), err)
+	}
+	specBytes, err := io.ReadAll(specFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading spec from file %q: %v", specFile.Name(), err)
 	}
@@ -932,6 +911,14 @@ func GetOOMScoreAdj(pid int) (int, error) {
 		return 0, err
 	}
 	return strconv.Atoi(strings.TrimSpace(string(data)))
+}
+
+// IsGoCoverageEnv reports whether env configures filesystem-based Go coverage
+// collection. These collectors perform filesystem operations that violate the
+// Sentry and gofer's seccomp policies. Both variables must be excluded because
+// rules_go sets GOCOVERDIR when COVERAGE_DIR is set in each covered binary.
+func IsGoCoverageEnv(env string) bool {
+	return strings.HasPrefix(env, "COVERAGE_DIR=") || strings.HasPrefix(env, "GOCOVERDIR=")
 }
 
 // EnvVar looks for a variable value in the env slice assuming the following

@@ -1,19 +1,197 @@
 """Meta and miscellaneous rules."""
 
+load("@bazel_lib//lib:write_source_files.bzl", _diff_test = "diff_test", _missing_file_test = "fail_with_message_test", _write_source_files = "write_source_files")
 load("@bazel_skylib//:bzl_library.bzl", _bzl_library = "bzl_library")
 load("@bazel_skylib//rules:build_test.bzl", _build_test = "build_test")
-load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _string_flag = "string_flag")
+load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _string_flag = "string_flag", _string_list_flag = "string_list_flag")
 load("@bazel_skylib//rules:expand_template.bzl", _expand_template = "expand_template")
+load("@bazel_skylib//rules:native_binary.bzl", _native_test = "native_test")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 load("@com_google_protobuf//bazel:proto_library.bzl", _proto_library = "proto_library")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("@rules_python//python:py_test.bzl", _py_test = "py_test")
+load("@rules_shell//shell:sh_test.bzl", _sh_test = "sh_test")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_transition", "cgroup_v1_variant", "cgroup_v2_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:test_architectures.bzl", "routed_native_test", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 
-build_test = _build_test
 bzl_library = _bzl_library
 bool_flag = _bool_flag
 string_flag = _string_flag
+string_list_flag = _string_list_flag
 BuildSettingInfo = _BuildSettingInfo
 expand_template = _expand_template
+
+source_diff_cgroup_v1_test, _source_diff_cgroup_v1_transition = with_cgroup_v1(_diff_test)
+missing_source_cgroup_v1_test, _missing_source_cgroup_v1_transition = with_cgroup_v1(_missing_file_test)
+
+def _source_diff_test(name, **kwargs):
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags") or [])
+    _diff_test(name = name, **kwargs)
+    cgroup_v1_variant(name, source_diff_cgroup_v1_test, kwargs)
+
+def _missing_source_test(name, **kwargs):
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags") or [])
+    _missing_file_test(name = name, **kwargs)
+    cgroup_v1_variant(name, missing_source_cgroup_v1_test, kwargs)
+
+def write_source_files(name, **kwargs):
+    """Preserves generated-source checks and adds their cgroup-v1 frontends.
+
+    Args:
+        name: Original generated-source updater target name.
+        **kwargs: Attributes forwarded to the underlying writer macro.
+    """
+    _write_source_files(
+        name = name,
+        diff_test_rule = _source_diff_test,
+        missing_file_test_rule = _missing_source_test,
+        **kwargs
+    )
+
+build_amd64_test, _build_amd64_transition = with_test_architecture(_build_test, "amd64").build()
+build_arm64_test, _build_arm64_transition = with_test_architecture(_build_test, "arm64").build()
+build_test_cgroup_v1_test, _build_test_cgroup_v1_transition = with_cgroup_v1(_build_test)
+
+def build_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    _build_test(name = name, **kwargs)
+    cgroup_v1_variant(name, build_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": build_amd64_test, "arm64": build_arm64_test},
+        kwargs,
+    )
+
+def _native_architecture(architecture):
+    test_rule, _ = with_test_architecture(routed_native_test, architecture, test_frontend = None).build()
+    return test_rule
+
+_native_amd64_test = _native_architecture("amd64")
+_native_arm64_test = _native_architecture("arm64")
+_native_cgroup_v1_test = rule(
+    implementation = lambda ctx: ctx.super(),
+    parent = routed_native_test,
+    cfg = cgroup_v1_transition,
+)
+
+def _native_variant(name, test_rule, **kwargs):
+    # Keep sibling resources in the declared output directory, but distinguish
+    # owners even when the caller already selected the variant's configuration.
+    if kwargs.get("out"):
+        owner = name.replace("_", "__").replace("/", "_s").replace(".", "_d")
+
+        # Concatenation also preserves configurable out values without parsing
+        # select expressions. Keep .exe for native_test's executable convention.
+        kwargs["out"] = kwargs["out"] + "." + owner + ".exe"
+    test_rule(name = name, **kwargs)
+
+def native_amd64_test(name, **kwargs):
+    _native_variant(name, _native_amd64_test, **kwargs)
+
+def native_arm64_test(name, **kwargs):
+    _native_variant(name, _native_arm64_test, **kwargs)
+
+def native_test_cgroup_v1_test(name, **kwargs):
+    _native_variant(name, _native_cgroup_v1_test, **kwargs)
+
+def native_test(name, architectures = ["amd64", "arm64"], cgroup_v2 = False, **kwargs):
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        cgroup_v2: Whether to add a rule-owned cgroup-v2 variant.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    if cgroup_v2:
+        kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
+    _native_test(name = name, **kwargs)
+    if cgroup_v2:
+        cgroup_attributes = cgroup_v2_variant(name, _native_test, kwargs)
+        test_architecture_variants(
+            name + "_cgroup_v2",
+            architectures,
+            {"amd64": native_amd64_test, "arm64": native_arm64_test},
+            cgroup_attributes,
+        )
+    cgroup_v1_variant(name, native_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": native_amd64_test, "arm64": native_arm64_test},
+        kwargs,
+    )
+
+py_amd64_test, _py_amd64_transition = with_test_architecture(_py_test, "amd64").build()
+py_arm64_test, _py_arm64_transition = with_test_architecture(_py_test, "arm64").build()
+py_test_cgroup_v1_test, _py_test_cgroup_v1_transition = with_cgroup_v1(_py_test)
+
+def py_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    _py_test(name = name, **kwargs)
+    cgroup_v1_variant(name, py_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": py_amd64_test, "arm64": py_arm64_test},
+        kwargs,
+    )
+
+sh_amd64_test, _sh_amd64_transition = with_test_architecture(_sh_test, "amd64").build()
+sh_arm64_test, _sh_arm64_transition = with_test_architecture(_sh_test, "arm64").build()
+sh_test_cgroup_v1_test, _sh_test_cgroup_v1_transition = with_cgroup_v1(_sh_test)
+
+def sh_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    _sh_test(name = name, **kwargs)
+    cgroup_v1_variant(name, sh_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": sh_amd64_test, "arm64": sh_arm64_test},
+        kwargs,
+    )
+
+# Public language and Kubernetes qualification gives each test 1800 seconds.
+# Use an output-only transition: with_cfg also reads test_timeout, whose native
+# Map<TestTimeout, Duration> value is not readable by Starlark in Bazel 8.5.
+# https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/config/StarlarkDefinedConfigTransition.java#L416-L471
+runtime_test_timeout = transition(
+    implementation = lambda _settings, _attr: {"//command_line_option:test_timeout": "1800"},
+    inputs = [],
+    outputs = ["//command_line_option:test_timeout"],
+)
+
+runtime_native_test = rule(
+    doc = "A native test with the public runtime qualification timeout.",
+    implementation = lambda ctx: ctx.super(),
+    parent = _native_test,
+    cfg = runtime_test_timeout,
+)
+
 more_shards = 4
 most_shards = 8
 version = "//tools/bazeldefs:version"
@@ -41,11 +219,11 @@ def select_arch(amd64 = None, arm64 = None, riscv64 = None, default = None, **kw
       An appropriate select."""
     values = dict()
     if amd64 != None:
-        values["//tools/bazeldefs:amd64"] = amd64
+        values[Label("//tools/bazeldefs:amd64")] = amd64
     if arm64 != None:
-        values["//tools/bazeldefs:arm64"] = arm64
+        values[Label("//tools/bazeldefs:arm64")] = arm64
     if riscv64 != None:
-        values["//tools/bazeldefs:riscv64"] = riscv64
+        values[Label("//tools/bazeldefs:riscv64")] = riscv64
     if default != None:
         values["//conditions:default"] = default
     return select(values, **kwargs)
@@ -59,7 +237,6 @@ def select_system(linux = ["__linux__"], darwin = [], **_kwargs):
 arch_config = [
     "@io_bazel_rules_go//go/config:race",
     "//command_line_option:cpu",
-    "//command_line_option:crosstool_top",
     "//command_line_option:platforms",
 ]
 
@@ -69,7 +246,6 @@ def arm64_config(_settings, _attr):
         # Targets with an explicit race attribute still use instrumentation.
         "@io_bazel_rules_go//go/config:race": False,
         "//command_line_option:cpu": "aarch64",
-        "//command_line_option:crosstool_top": "@crosstool//:toolchains",
         # Permit targets that explicitly enable race instrumentation to use cgo.
         # Ordinary targets still inherit the pure build setting from .bazelrc.
         "//command_line_option:platforms": "//tools/bazeldefs:linux_arm64",
@@ -80,7 +256,6 @@ def amd64_config(_settings, _attr):
         # See above.
         "@io_bazel_rules_go//go/config:race": False,
         "//command_line_option:cpu": "k8",
-        "//command_line_option:crosstool_top": "@crosstool//:toolchains",
         # See above.
         "//command_line_option:platforms": "//tools/bazeldefs:linux_amd64",
     }
@@ -96,71 +271,6 @@ def default_net_util():
 def coreutil():
     return []  # Nothing needed.
 
-def target_emulator():
-    """Returns the user-mode emulator that runs target binaries at build time.
-
-    The emulators are pinned, statically-linked QEMU builds for the execution
-    platform's architecture (see target_emulators).
-
-    Returns:
-      A struct with:
-        tools: labels to add to the tools of a genrule.
-        cmd: the emulator command to run target binaries with when the
-          execution platform's architecture differs from the target's, or an
-          empty string if there is none. This may reference `tools` using make
-          variables.
-    """
-    return struct(
-        tools = select_arch(
-            amd64 = ["//tools/bazeldefs:qemu_x86_64"],
-            arm64 = ["//tools/bazeldefs:qemu_aarch64"],
-            riscv64 = ["//tools/bazeldefs:qemu_riscv64"],
-            default = [],
-        ),
-        cmd = select_arch(
-            amd64 = "$(execpath //tools/bazeldefs:qemu_x86_64)",
-            arm64 = "$(execpath //tools/bazeldefs:qemu_aarch64) -cpu neoverse-n1",
-            riscv64 = "$(execpath //tools/bazeldefs:qemu_riscv64)",
-            default = "",
-        ),
-    )
-
-def target_emulators(name):
-    """Defines the user-mode emulators used by target_emulator.
-
-    Each emulator is the pinned QEMU build for the execution platform's
-    architecture (see extensions/deb_data.bzl), or a stub that fails if there
-    is none. This must only be called from tools/bazeldefs/BUILD.
-
-    Args:
-      name: prefix of the emulator targets, which are named <name>_<arch>.
-    """
-    native.alias(
-        name = name + "_aarch64",
-        actual = select({
-            ":amd64": "@qemu_user_amd64_files//:usr/bin/qemu-aarch64",
-            "//conditions:default": ":no_emulator.sh",
-        }),
-        tags = ["manual"],
-    )
-    native.alias(
-        name = name + "_riscv64",
-        actual = select({
-            ":amd64": "@qemu_user_amd64_files//:usr/bin/qemu-riscv64",
-            ":arm64": "@qemu_user_arm64_files//:usr/bin/qemu-riscv64",
-            "//conditions:default": ":no_emulator.sh",
-        }),
-        tags = ["manual"],
-    )
-    native.alias(
-        name = name + "_x86_64",
-        actual = select({
-            ":arm64": "@qemu_user_arm64_files//:usr/bin/qemu-x86_64",
-            "//conditions:default": ":no_emulator.sh",
-        }),
-        tags = ["manual"],
-    )
-
 def _bpf_program_impl(ctx):
     resource_dir = ctx.attr._clang_resource_dir[DirectoryInfo]
     kernel_headers = ctx.attr._kernel_headers[DirectoryInfo]
@@ -170,7 +280,7 @@ def _bpf_program_impl(ctx):
     args.add_all(["-O2", "-Wall", "-Werror", "--target=bpfel"])
 
     # Keep the oldest BPF ISA instead of inheriting Clang's default (now v3):
-    # https://github.com/llvm/llvm-project/blob/85ac56026/llvm/lib/Target/BPF/BPFSubtarget.cpp#L75
+    # https://github.com/llvm/llvm-project/blob/llvmorg-23.1.0/llvm/lib/Target/BPF/BPFSubtarget.cpp#L75
     args.add("-mcpu=v1")
     args.add("-nostdinc")
     args.add("-resource-dir", resource_dir.path)
@@ -185,7 +295,7 @@ def _bpf_program_impl(ctx):
         executable = ctx.executable._clang,
         arguments = [args],
         inputs = depset(
-            [ctx.file.src] + ctx.files.hdrs,
+            [ctx.file.src],
             transitive = [
                 resource_dir.transitive_files,
                 kernel_headers.transitive_files,
@@ -203,16 +313,15 @@ bpf_program = rule(
     doc = "Compiles a BPF program with declared compiler and header inputs.",
     attrs = {
         "src": attr.label(allow_single_file = [".c"], mandatory = True),
-        "hdrs": attr.label_list(allow_files = [".h"]),
         "bpf_object": attr.output(mandatory = True),
         "_clang": attr.label(
-            default = "//tools/bazeldefs/llvm:bpf_clang",
+            default = "//tools/bazeldefs:bpf_clang",
             executable = True,
             allow_single_file = True,
             cfg = "exec",
         ),
         "_clang_resource_dir": attr.label(
-            default = "//tools/bazeldefs/llvm:clang_resource_dir",
+            default = "//tools/bazeldefs:clang_resource_dir",
             providers = [DirectoryInfo],
             cfg = "exec",
         ),
@@ -220,6 +329,6 @@ bpf_program = rule(
             default = "@kernel_headers//:kernel_headers_directory",
             providers = [DirectoryInfo],
         ),
-        "_libbpf": attr.label(default = "@libbpf//:bpf_headers", providers = [CcInfo]),
+        "_libbpf": attr.label(default = "@libbpf//:bpf", providers = [CcInfo]),
     },
 )

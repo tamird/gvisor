@@ -26,9 +26,6 @@ import (
 	"sort"
 	"strings"
 	"text/template"
-
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 // CompatibilityInfo is the collection of all information.
@@ -181,7 +178,7 @@ func main() {
 					URLs    []string
 				}
 			}{
-				Title:        cases.Title(language.Und, cases.NoLower).String(osName) + "/" + archName,
+				Title:        strings.Title(osName) + "/" + archName,
 				OS:           osName,
 				Arch:         archName,
 				Weight:       weight,

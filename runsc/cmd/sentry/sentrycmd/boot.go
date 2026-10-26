@@ -30,6 +30,7 @@ import (
 	"github.com/moby/sys/capability"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/coretag"
 	"gvisor.dev/gvisor/pkg/cpuid"
 	"gvisor.dev/gvisor/pkg/fd"
@@ -361,8 +362,8 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 	timer.ReachedAt("Go code running", starttime.GoStartTime())
 	timer.Reached("boot subcommand dispatched")
 
-	if hostPageSize := unix.Getpagesize(); !hostarch.IsSupportedPageSize(hostPageSize) || uintptr(hostPageSize) != hostarch.PageSize {
-		util.Fatalf("unsupported host page size %d (page size in use: %d)", hostPageSize, hostarch.PageSize)
+	if hostPageSize := unix.Getpagesize(); hostPageSize != hostarch.PageSize {
+		util.Fatalf("host page size (%d) does not match compiled page size (%d)", hostPageSize, hostarch.PageSize)
 	}
 
 	// Set traceback level
@@ -516,6 +517,10 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 				// Remove the args that have already been done before calling self.
 				args := sandboxsetup.PrepareArgs(b.Name(), f, argOverride)
 
+				// Note that we've already read the spec from the spec FD, and
+				// we will read it again after the exec call. This works
+				// because the ReadSpecFromFile function seeks to the beginning
+				// of the file before reading.
 				util.Fatalf("callSelfAsNobody(%v): %v", args, sandboxsetup.CallSelfAsNobody(args))
 
 				// This prevents the specFile finalizer from running and closed
@@ -583,6 +588,10 @@ func (b *Boot) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcomma
 			// Remove the args that have already been done before calling self.
 			args := sandboxsetup.PrepareArgs(b.Name(), f, argOverride)
 
+			// Note that we've already read the spec from the spec FD, and
+			// we will read it again after the exec call. This works
+			// because the ReadSpecFromFile function seeks to the beginning
+			// of the file before reading.
 			util.Fatalf("setCapsAndCallSelf(%v, %v): %v", args, caps, sandboxsetup.SetCapsAndCallSelf(args, caps))
 
 			// This prevents the specFile finalizer from running and closed

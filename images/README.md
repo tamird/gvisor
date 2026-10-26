@@ -31,35 +31,47 @@ The continuous integration system can either take fine-grained dependencies on
 single images via individual `load` targets, or pull all images via a single
 `load-all-test-images` invocation.
 
-## CUDA image helpers
+## Go image helpers
 
-Bazel builds the CUDA sample runners with the repository Go SDK and CGO
-disabled, and packages them with the image sources in
-`//images:source_contexts`. The CUDA `make` image commands stage that archive
-before computing the image hash, so changes to a helper or the SDK invalidate
-the image cache. The selected architecture controls both the helper binaries and
-the Docker build.
+The CUDA sample runners are built by Bazel with the repository Go SDK and
+CGO disabled, then included in the architecture-selected image context archive.
+This replaces their former Docker compilation with `golang:1.25`. The
+separately sourced ASCII image converter retains its own Docker build stage.
 
-Docker still builds the separate ASCII image converter using `golang:1.25`.
+The normal `make` image commands stage the declared context archive in a
+temporary directory before hashing or loading either CUDA image. Helper or
+SDK changes therefore change the image tag. Declared image-source actions
+consume that archive directly and never invoke Bazel inside a build action.
+
+## Declared image archives
+
+The Ollama client and benchmark profile-helper images are defined in their
+BUILD files using `rules_oci`. They combine Bazel-built static programs with
+pinned Alpine and Ubuntu bases for AMD64 or ARM64. The profile helper keeps
+Ubuntu because its Kubernetes caller also uses GNU coreutils. Building these
+images does not start a Docker daemon.
+
+Both the runtime tests and Make consume these images. The Make commands stage
+each `make_context` archive and hash the complete image to derive its cache tag.
+Rebuilding loads that archive before applying the local and registry tags;
+cached pull and manifest checks retain their existing behavior. The archive
+supplies the canonical `gvisor.dev/images/<path>:latest` tag, with custom Make
+prefixes applied after loading. CPU and GPU image checks acquire only their
+respective native image archive; individual Dockerfile builds acquire neither.
+
+The other source-image actions reuse the Dockerfiles and Make's pull/rebuild
+behavior. Their Linux execution worker must supply the Docker CLI and a
+running daemon. The RBE configuration requests BuildBuddy's managed daemon;
+a local Linux invocation requires an existing daemon. Runtime tests keep
+their separate private daemon so they can select runsc and isolate test state.
 
 ## Adding new images
 
-Images can be assembled with `rules_img`; see `basic/BUILD` for examples. Group
-related images in one Bazel package. Declare immutable base images in
-`MODULE.bazel` and expose each image with `image_outputs` from
-`//images:img.bzl`. Its `image_name` preserves the image's test-facing name
-independently of the Bazel package. Add the image's Make name and context target
-to `BAZEL_IMAGE_CONTEXTS` in `tools/images.mk`. Make hashes the assembled
-archive, including its transitive inputs, before checking the image cache. The
-image can also be built directly with Bazel, without a Docker daemon:
-
-```sh
-bazel build --config=x86_64 //images/basic:tmpfile_archive
-```
-
-For a Docker build, create a directory under `images` containing a Dockerfile
-and any other files that the image requires. You may choose to add to an
-existing subdirectory if applicable, or create a new one.
+To add a Dockerfile image, create a directory under `images` containing its
+Dockerfile and other required files. Images assembled directly by Bazel instead
+expose a `make_context` target containing `images/<path>/image.tar`, and are
+listed in `BAZEL_IMAGES` in `tools/images.mk`. Include their contexts in the
+corresponding declared image-source cohort.
 
 All images will be tagged and memoized using a hash of the directory contents.
 As a result, every image should be made completely reproducible if possible.

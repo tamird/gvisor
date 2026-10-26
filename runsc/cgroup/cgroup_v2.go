@@ -34,6 +34,7 @@ import (
 	"github.com/coreos/go-systemd/v22/dbus"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/log"
 )
@@ -45,12 +46,10 @@ const (
 	memoryLimitCgroup = "memory.max"
 	cpuLimitCgroup    = "cpu.max"
 	maxLimitStr       = "max"
-)
 
-// DefaultCPUPeriod is the CFS period used when the OCI spec sets none, in
-// microseconds.
-// https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
-const DefaultCPUPeriod = 100000
+	// https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+	defaultPeriod = 100000
+)
 
 var (
 	ErrInvalidFormat    = errors.New("cgroup: parsing file with invalid format failed")
@@ -102,27 +101,26 @@ func (c *cgroupV2) createCgroupPaths() (bool, error) {
 	//	* /sys/fs/cgroup/cgroup.subtree_control
 	//	* /sys/fs/cgroup/foo/cgroup.subtree_control
 	val := "+" + strings.Join(c.Controllers, " +")
-	elements := strings.Split(c.Path, "/")
 	current := c.Mountpoint
 	created := false
 
-	for i, e := range elements {
-		current = filepath.Join(current, e)
-		if i > 0 {
-			if err := os.Mkdir(current, 0o755); err != nil {
-				if !os.IsExist(err) {
-					return false, err
-				}
-			} else {
-				created = true
-				c.Own = append(c.Own, current)
-			}
+	for _, e := range strings.Split(c.Path, "/") {
+		if e == "" || e == "." {
+			continue
 		}
-		// enable all known controllers for subtree
-		if i < len(elements)-1 {
-			if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+		// Enable the parent before creating its child, regardless of whether
+		// Path has a leading slash. Never create or own the mount point itself.
+		if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+			return false, err
+		}
+		current = filepath.Join(current, e)
+		if err := os.Mkdir(current, 0o755); err != nil {
+			if !os.IsExist(err) {
 				return false, err
 			}
+		} else {
+			created = true
+			c.Own = append(c.Own, current)
 		}
 	}
 	return created, nil
@@ -296,7 +294,7 @@ func readCPUQuotaAndPeriod(path string) (int64, int64, error) {
 		}
 		return -1, -1, err
 	}
-	return ParseCPUMax(cpuMax)
+	return parseCPUQuotaAndPeriod(cpuMax)
 }
 
 // CPUQuota returns the raw CFS CPU quota in microseconds.
@@ -340,9 +338,7 @@ func (c *cgroupV2) CPUPeriod() (int64, error) {
 	return period, nil
 }
 
-// ParseCPUMax parses a cpu.max value into its quota and period.
-// The quota is -1 for "max".
-func ParseCPUMax(cpuMax string) (int64, int64, error) {
+func parseCPUQuotaAndPeriod(cpuMax string) (int64, int64, error) {
 	data := strings.SplitN(strings.TrimSpace(cpuMax), " ", 2)
 	if len(data) != 2 {
 		return -1, -1, fmt.Errorf("invalid cpu.max data %q", cpuMax)
@@ -477,7 +473,7 @@ func (*cpu2) generateProperties(spec *specs.LinuxResources) ([]dbus.Property, er
 		if quota > 0 {
 			if period == 0 {
 				// Assume the default.
-				period = DefaultCPUPeriod
+				period = defaultPeriod
 			}
 			// systemd converts CPUQuotaPerSecUSec (microseconds per CPU second) to
 			// CPUQuota (integer percentage of CPU) internally. This means that if a
@@ -508,26 +504,34 @@ func (*cpu2) set(spec *specs.LinuxResources, path string) error {
 		}
 	}
 
-	if spec.CPU.Period != nil || spec.CPU.Quota != nil {
-		v := maxLimitStr
-		if spec.CPU.Quota != nil && *spec.CPU.Quota > 0 {
-			v = strconv.FormatInt(*spec.CPU.Quota, 10)
-		}
-
-		var period uint64
-		if spec.CPU.Period != nil && *spec.CPU.Period != 0 {
-			period = *spec.CPU.Period
-		} else {
-			period = DefaultCPUPeriod
-		}
-
-		v += " " + strconv.FormatUint(period, 10)
-		if err := setValue(path, cpuLimitCgroup, v); err != nil {
+	// As with cgroup v1, zero fields leave existing limits unchanged. Both
+	// values share cpu.max in v2, so retain the other field on partial updates.
+	hasQuota := spec.CPU.Quota != nil && *spec.CPU.Quota != 0
+	hasPeriod := spec.CPU.Period != nil && *spec.CPU.Period != 0
+	if !hasQuota && !hasPeriod {
+		return nil
+	}
+	var quota int64
+	var period uint64
+	if !hasQuota || !hasPeriod {
+		oldQuota, oldPeriod, err := readCPUQuotaAndPeriod(path)
+		if err != nil {
 			return err
 		}
+		quota, period = oldQuota, uint64(oldPeriod)
 	}
-
-	return nil
+	if hasQuota {
+		quota = *spec.CPU.Quota
+	}
+	if hasPeriod {
+		period = *spec.CPU.Period
+	}
+	v := maxLimitStr
+	if quota > 0 {
+		v = strconv.FormatInt(quota, 10)
+	}
+	v += " " + strconv.FormatUint(period, 10)
+	return setValue(path, cpuLimitCgroup, v)
 }
 
 type cpuset2 struct {

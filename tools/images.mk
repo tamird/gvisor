@@ -39,23 +39,27 @@ endif
 
 DOCKER_BUILD_ARGS ?=
 
-# Prepared image contexts invoke this file directly after Bazel has built them.
+# This file also runs directly for the declared image-source check.
 SHELL = /bin/bash
 header ?= echo --- $(1) >&2
+CRANE ?= docker run --rm gcr.io/go-containerregistry/crane
 
 # Note that the image prefixes used here must match the image mangling in
 # runsc/testutil.MangleImage. Names are mangled in this way to ensure that all
 # tests are using locally-defined images (that are consistent and idempotent).
 REMOTE_IMAGE_PREFIX ?= us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images
 LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
-BAZEL_IMAGE_CONTEXTS := \
-  basic_alpine=//images/basic:alpine_context \
-  basic_busybox=//images/basic:busybox_context \
-  basic_tmpfile=//images/basic:tmpfile_context
-BAZEL_IMAGES        := $(foreach entry,$(BAZEL_IMAGE_CONTEXTS),$(word 1,$(subst =, ,$(entry))))
-ALL_IMAGES          := $(BAZEL_IMAGES) $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | sed 's,/[^/]*$$,,' | sort -u)))
-NON_TEST_IMAGES     := gpu/ollama/bench\|gpu/vllm\|gpu/triton\|tpu/vllm
-TEST_IMAGES         := $(BAZEL_IMAGES) $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | sed 's,/[^/]*$$,,' | sort -u | grep -v "$(NON_TEST_IMAGES)")))
+# These images expose //images/<path>:make_context instead of a Dockerfile.
+# Their contexts contain the complete Bazel-built image as image.tar.
+BAZEL_IMAGES        := benchmarks_profile-helper gpu_ollama_client
+# These server images have AMD64-only bases and must not receive ARM64 tags.
+ifeq ($(ARCH),x86_64)
+BAZEL_IMAGES        += gpu_ollama_bench gpu_triton
+endif
+DOCKER_IMAGES       := $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | sed 's,/[^/]*$$,,' | sort -u)))
+ALL_IMAGES          := $(sort $(DOCKER_IMAGES) $(BAZEL_IMAGES))
+NON_TEST_IMAGES     := gpu_ollama_bench% gpu_vllm% gpu_triton% tpu_vllm%
+TEST_IMAGES         := $(filter-out $(NON_TEST_IMAGES),$(ALL_IMAGES))
 GPU_TEST_IMAGES     := $(filter gpu_% tpu_%,$(TEST_IMAGES))
 CPU_TEST_IMAGES     := $(filter-out gpu_% tpu_%,$(TEST_IMAGES))
 
@@ -116,6 +120,14 @@ test-gpu-images: ## Test GPU/ML test images.
 test-gpu-images: $(patsubst %,test-%,$(SHARDED_GPU_IMAGES))
 .PHONY: test-gpu-images
 
+rebuild-cpu-images: ## Build CPU test images from source.
+rebuild-cpu-images: $(patsubst %,rebuild-%,$(SHARDED_CPU_IMAGES))
+.PHONY: rebuild-cpu-images
+
+rebuild-gpu-images: ## Build GPU/ML test images from source.
+rebuild-gpu-images: $(patsubst %,rebuild-%,$(SHARDED_GPU_IMAGES))
+.PHONY: rebuild-gpu-images
+
 test-all-test-images: ## Test all test images.
 test-all-test-images: $(patsubst %,test-%,$(SHARDED_ALL_IMAGES))
 .PHONY: test-all-test-images
@@ -157,7 +169,7 @@ tag-%: ## Tag a local image.
 	@$(call local_tag,$*) && $(call latest_tag,$*)
 
 image_manifest = \
-	docker run --rm gcr.io/go-containerregistry/crane manifest $(call remote_image,$(1)):$(call tag,$(1))
+	$(CRANE) manifest $(call remote_image,$(1)):$(call tag,$(1))
 
 # pull forces the image to be pulled.
 pull = \
@@ -179,18 +191,48 @@ rebuild = \
     docker tag "gvisor.dev/images/$(subst _,/,$(1)):latest" "$(call remote_image,$(1)):$(call tag,$(1))" >&2 && \
     docker tag "$(call remote_image,$(1)):$(call tag,$(1))" "$(call remote_image,$(1)):latest" >&2; \
   else \
-  (T=$$(mktemp -d) && cp -a $(call path,$(1))/* $$T && \
-  set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \
-    -f "$$T/$(call dockerfile,$(1))" \
-    -t "$(call remote_image,$(1)):$(call tag,$(1))" \
-    -t "$(call remote_image,$(1))":latest \
-    $$T >&2 && \
-  rm -rf $$T); \
+    T=$$(mktemp -d) && trap 'rm -rf "$$T"' EXIT && cp -a $(call path,$(1))/* "$$T" && \
+    (if [ -n "$(_IMAGE_OCI_OUTPUT)" ]; then \
+      $(OCI_BUILD) $(DOCKER_BUILD_ARGS) --platform="$(_IMAGE_OCI_PLATFORM)" \
+        --file "$$T/$(call dockerfile,$(1))" \
+        "$$T"; \
+    else \
+      set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \
+        -f "$$T/$(call dockerfile,$(1))" \
+        -t "$(call remote_image,$(1)):$(call tag,$(1))" \
+        -t "$(call remote_image,$(1))":latest \
+        $$T >&2; \
+    fi); \
   fi) && \
-  $(call local_tag,$(1)) && \
-  $(call latest_tag,$(1))
+  (if [ -z "$(_IMAGE_OCI_OUTPUT)" ]; then \
+    $(call local_tag,$(1)) && $(call latest_tag,$(1)); \
+  fi)
+# Qualification retains the build status separately from output inspection,
+# so a reporting error cannot replace the original build failure.
+rebuild_with_result = \
+  set -e; \
+  result="$(_IMAGE_RESULTS)/$(1)"; mkdir "$$result"; \
+  trap 'status=$$?; trap - EXIT; \
+    if ! printf "%s\n" "$$status" > "$$result/exit-code"; then \
+      if [ "$$status" -eq 0 ]; then status=1; fi; \
+    fi; exit "$$status"' EXIT; \
+  operation=docker-build; archive=null; \
+  if [ -f "$(call path,$(1))/image.tar" ]; then \
+    operation=archive-load; \
+    archive=$$(sha256sum "$(call path,$(1))/image.tar"); \
+    archive=\"$${archive%% *}\"; \
+  fi; \
+  reference="$(call local_image,$(1)):$(call tag,$(1))"; \
+  printf '{"schema_version":1,"image":"%s","architecture":"%s","operation":"%s","reference":"%s","archive_sha256":%s}\n' \
+    '$(1)' '$(ARCH)' "$$operation" "$$reference" "$$archive" > "$$result/request.json"; \
+  status=0; ($(call rebuild,$(1))) || status=$$?; \
+  if ! printf '%s\n' "$$status" > "$$result/build-exit-code"; then \
+    if [ "$$status" -eq 0 ]; then status=1; fi; \
+  fi; \
+  if [ "$$status" -ne 0 ]; then exit "$$status"; fi; \
+  docker image inspect "$$reference" > "$$result/inspect.json"
 rebuild-%: register-cross ## Force rebuild an image locally.
-	@$(call rebuild,$*)
+	@$(if $(_IMAGE_RESULTS),$(call rebuild_with_result,$*),$(call rebuild,$*))
 
 # load reuses a cached remote image or pulls/builds one, applying local hash and
 # latest tags. On a cache miss, SKIP_IMAGE_LOAD only checks the local hash tag.
@@ -218,6 +260,30 @@ test-%: register-cross ## Build an image locally if the remote doesn't exist.
 
 local-image-%: register-cross ## Print current 'image:tag' for a local image.
 	echo "$(call local_image,$*):$(call tag,$*)"
+
+# Archive producers use the same prepared-context hash and names as load.
+# Merely printing references must not register cross-emulation or load images.
+image-references-%:
+	@if [ ! -f "$(call path,$*)/$(call dockerfile,$*)" ]; then \
+	  printf 'Image %s is unavailable for %s.\n' "$*" "$(ARCH)" >&2; exit 1; \
+	fi
+	@image_tag="$(call tag,$*)"; \
+	printf '%s\n' "$(call remote_image,$*):$$image_tag" \
+	  "$(call local_image,$*):$$image_tag" "$(call local_image,$*):latest"
+
+# The declared source-image producer uses the same cache-or-rebuild decision,
+# exporting an OCI layout instead of loading an image into the local daemon.
+# It supplies a fresh output path and the pinned standard BuildKit launcher.
+export-oci-%:
+	@test -n "$(_IMAGE_OCI_OUTPUT)" && test ! -e "$(_IMAGE_OCI_OUTPUT)"
+	@test -n "$(_IMAGE_OCI_PLATFORM)" && test -n "$(OCI_BUILD)"
+	@test -f "$(call path,$*)/$(call dockerfile,$*)"
+	@if [ "$(SKIP_IMAGE_LOAD)" == true ]; then \
+	  echo 'Cannot export a fresh OCI layout with SKIP_IMAGE_LOAD set.' >&2; exit 1; \
+	fi
+	@($(CRANE) pull --format=oci --platform="$(_IMAGE_OCI_PLATFORM)" \
+	  "$(call remote_image,$*):$(call tag,$*)" "$(_IMAGE_OCI_OUTPUT)") || \
+	  (rm -rf "$(_IMAGE_OCI_OUTPUT)" && $(call rebuild,$*))
 
 # push pushes the remote image, after validating that the tag doesn't exist
 # yet. Note that this generic rule will match the fully-expanded remote image
@@ -247,19 +313,21 @@ endif
 else
 	@
 endif
-# Hash and cache the built archive, including its transitive inputs, rather
-# than only the BUILD file. The recursive Make operates on the prepared
-# context and never invokes Bazel again.
+
+# Raw-checkout callers first obtain the same context artifact used by Bazel
+# image actions. Prepared contexts are staged before any image hash or cache
+# decision and never invoke Bazel recursively.
 ifneq ($(_IMAGE_CONTEXT_PREPARED),1)
 _image_makefile := $(abspath $(lastword $(MAKEFILE_LIST)))
 _image_root_makefile := $(abspath $(dir $(_image_makefile))/../Makefile)
-_image_context_options = $(if $(filter x86_64 aarch64,$(ARCH)),--config=$(ARCH),$(error Unsupported image architecture $(ARCH)))
+_image_context_options = $(if $(filter x86_64 aarch64,$(ARCH)),--config=$(ARCH),$(error Unsupported image helper architecture $(ARCH))) --@io_bazel_rules_go//go/config:race=false
 _image_context_operations := tag pull rebuild load test local-image push
-_image_context_targets := $(foreach op,$(_image_context_operations),$(addprefix $(op)-,$(BAZEL_IMAGES)))
+_image_context_targets := $(foreach op,$(_image_context_operations),$(addprefix $(op)-,gpu_cuda-tests gpu_cuda-tests-12-8 $(BAZEL_IMAGES)))
+_image_context_target = //images:source_contexts
 define native_image_context =
-$(foreach op,$(_image_context_operations),$(op)-$(1)): _image_context_target := $(2)
+$(foreach op,$(_image_context_operations),$(op)-$(1)): _image_context_target := //images/$(subst _,/,$(1)):make_context
 endef
-$(foreach entry,$(BAZEL_IMAGE_CONTEXTS),$(eval $(call native_image_context,$(word 1,$(subst =, ,$(entry))),$(word 2,$(subst =, ,$(entry))))))
+$(foreach image,$(BAZEL_IMAGES),$(eval $(call native_image_context,$(image))))
 $(_image_context_targets):
 	@set -eu; image_context_dir=$$(mktemp -d); trap 'rm -rf "$$image_context_dir"' EXIT; \
 	$(MAKE) --no-print-directory -C "$(dir $(_image_root_makefile))" -f "$(_image_root_makefile)" copy \
@@ -269,16 +337,4 @@ $(_image_context_targets):
 	cd "$$image_context_dir" && \
 	$(MAKE) --no-print-directory -f "$(_image_makefile)" _IMAGE_CONTEXT_PREPARED=1 ARCH="$(ARCH)" "$@"
 .PHONY: $(_image_context_targets)
-
-_cuda_context_options = $(_image_context_options) --@io_bazel_rules_go//go/config:race=false
-_cuda_context_targets := $(foreach op,$(_image_context_operations),$(addprefix $(op)-,gpu_cuda-tests gpu_cuda-tests-12-8))
-$(_cuda_context_targets):
-	@set -eu; image_context_dir=$$(mktemp -d); trap 'rm -rf "$$image_context_dir"' EXIT; \
-	$(MAKE) --no-print-directory -C "$(dir $(_image_root_makefile))" -f "$(_image_root_makefile)" copy \
-	  TARGETS=//images:source_contexts DESTINATION="$$image_context_dir/contexts.tar" \
-	  OPTIONS="$(OPTIONS) $(_cuda_context_options)" && \
-	tar --extract --file "$$image_context_dir/contexts.tar" --directory "$$image_context_dir" --same-permissions --no-same-owner && \
-	cd "$$image_context_dir" && \
-	$(MAKE) --no-print-directory -f "$(_image_makefile)" _IMAGE_CONTEXT_PREPARED=1 ARCH="$(ARCH)" "$@"
-.PHONY: $(_cuda_context_targets)
 endif

@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"net/url"
@@ -34,10 +35,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/creack/pty"
 	"github.com/moby/sys/capability"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/hostos"
 	"gvisor.dev/gvisor/pkg/log"
@@ -49,21 +50,27 @@ import (
 	"gvisor.dev/gvisor/test/runner/gtest"
 	"gvisor.dev/gvisor/test/trace/config"
 	"gvisor.dev/gvisor/test/uds"
+
+	"github.com/creack/pty"
 )
 
 var (
 	debug              = flag.Bool("debug", false, "enable debug logs")
+	coverageReport     = flag.Bool("coverage-report", true, "collect a runtime coverage report (disables KCOV)")
 	hostNofile         = flag.Uint64("host-nofile", 0, "minimum host descriptor limit required by the test (zero preserves the inherited limit)")
 	oneSandbox         = flag.Bool("one-sandbox", false, "run all test cases in one sandbox")
 	strace             = flag.Bool("strace", false, "enable strace logs")
 	platform           = flag.String("platform", "ptrace", "platform to run on")
+	clockSource        = flag.String("clock-source", "", "runsc clock source (empty uses the runtime default)")
 	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
 	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
+	externalNetwork    = flag.Bool("external-network", false, "create a private addressed interface for broadcast and multicast tests")
+	limitPorts         = flag.Bool("limit-ephemeral-ports", false, "constrain the private network namespace's ephemeral port range for exhaustion tests")
 	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
 	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
 	overlay            = flag.Bool("overlay", false, "wrap filesystem mounts with writable tmpfs overlay")
-	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Implicitly enabled if network=host, or if using network namespaces")
+	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Native tests already run with isolated networking when permitted; this flag also remaps the current user to root")
 	setupContainerPath = flag.String("setup-container", "", "path to setup_container binary (for use with --container)")
 	trace              = flag.Bool("trace", false, "enables all trace points")
 	directfs           = flag.Bool("directfs", false, "enables directfs (for all gofer mounts)")
@@ -95,9 +102,6 @@ const (
 	// hostPTYHostFD is the FD number on the host that is passed to the sandbox.
 	// FDs passed via ExtraFiles start at 3.
 	hostPTYHostFD = 3
-
-	// uniqueXMLSuffix is the suffix for individual per-testcase XML outputs.
-	uniqueXMLSuffix = ".unique.xml"
 )
 
 // getSetupContainerPath returns the path to the setup_container binary.
@@ -110,6 +114,19 @@ func getSetupContainerPath() string {
 		fatalf("cannot find setup_container: %v", err)
 	}
 	return setupContainer
+}
+
+// wrapInSetupContainer configures the already-owned namespaces before exec.
+func wrapInSetupContainer(cmd *exec.Cmd) {
+	cmd.Path = getSetupContainerPath()
+	args := []string{cmd.Path}
+	if *externalNetwork {
+		args = append(args, "--external-network")
+	}
+	if *limitPorts {
+		args = append(args, "--limit-ephemeral-ports")
+	}
+	cmd.Args = append(args, cmd.Args...)
 }
 
 func removeShardAndXMLEnvVars(env []string, tc *gtest.TestCase) []string {
@@ -152,6 +169,11 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 		t.Fatalf("could not create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
+
+	// Tests that change users still need access to their scratch directory.
+	if err := os.Chmod(tmpDir, 0777); err != nil {
+		t.Fatalf("could not chmod temp dir: %v", err)
+	}
 
 	// Replace TEST_TMPDIR in the current environment with something
 	// unique.
@@ -235,7 +257,8 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 	cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &unix.SysProcAttr{}
 
-	if specutils.HasCapabilities(capability.CAP_SYS_ADMIN) {
+	hasSysAdmin := specutils.HasCapabilities(capability.CAP_SYS_ADMIN)
+	if hasSysAdmin {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUTS
 	}
 
@@ -245,20 +268,26 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 
 	if *container || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		// setup_container takes in its target argv as positional arguments.
-		cmd.Path = getSetupContainerPath()
-		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
-		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER | unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
-		// Set current user/group as root inside the namespace.
-		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getuid(), Size: 1},
-		}
-		cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getgid(), Size: 1},
-		}
-		cmd.SysProcAttr.GidMappingsEnableSetgroups = false
-		cmd.SysProcAttr.Credential = &syscall.Credential{
-			Uid: 0,
-			Gid: 0,
+		wrapInSetupContainer(cmd)
+		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
+		// Preserve privileged native tests' existing UID/GID mappings: mapping
+		// only the current user prevents tests from switching to another ID.
+		// Non-root callers still need a user namespace, since their effective
+		// capabilities may be lost when executing setup_container.
+		if *container || os.Geteuid() != 0 || !hasSysAdmin {
+			cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER
+			// Set current user/group as root inside the namespace.
+			cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getuid(), Size: 1},
+			}
+			cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getgid(), Size: 1},
+			}
+			cmd.SysProcAttr.GidMappingsEnableSetgroups = false
+			cmd.SysProcAttr.Credential = &syscall.Credential{
+				Uid: 0,
+				Gid: 0,
+			}
 		}
 	}
 
@@ -351,7 +380,7 @@ func deleteSandbox(args []string, id string) error {
 // runsc logs will be saved to a path in TEST_UNDECLARED_OUTPUTS_DIR.
 //
 // Returns an error if the sandboxed application exits non-zero.
-func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
+func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	var extraFiles []*os.File
 	var passFDArgs []string
 
@@ -381,6 +410,23 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 				return fmt.Errorf("creating XML report: %w", err)
 			}
 			defer xmlFile.Close()
+			defer func() {
+				// Shell tests may not write XML. Remove only the empty
+				// placeholder after execution so Bazel can create its report.
+				info, err := os.Stat(xmlPath)
+				if os.IsNotExist(err) {
+					return
+				}
+				if err != nil {
+					retErr = errors.Join(retErr, fmt.Errorf("stat XML report: %w", err))
+					return
+				}
+				if info.Size() == 0 {
+					if err := os.Remove(xmlPath); err != nil && !os.IsNotExist(err) {
+						retErr = errors.Join(retErr, fmt.Errorf("removing empty XML report: %w", err))
+					}
+				}
+			}()
 			// Use the first guest descriptor after stdio, before tests allocate
 			// their own descriptors (including close_range test ranges).
 			const xmlGuestFD = 3
@@ -427,13 +473,20 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		"-allow-suid",
 	}
 
+	args = append(args, testutil.RuntimeTestFlags()...)
+	if *clockSource != "" {
+		args = append(args, "-clock-source="+*clockSource)
+	}
+
 	if *network == "host" && !testutil.TestEnvSupportsNetAdmin {
 		log.Warningf("Testing with network=host but test environment does not support net admin or raw sockets. Raw sockets will not be enabled.")
 	} else {
 		args = append(args, "-net-raw")
 	}
 	if *overlay {
-		args = append(args, "-overlay2=all:dir=/tmp")
+		// Honor the test scratch directory: /tmp may share the gofer's root
+		// mount, whose read-only remount is blocked by writable backing files.
+		args = append(args, "-overlay2=all:dir="+testutil.TmpDir())
 	} else {
 		args = append(args, "-overlay2=none")
 	}
@@ -500,8 +553,10 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		// Pass a trailing slash to --debug-log flag to ensure that runscLogDir is
 		// populated with per-command log files. See specutils.DebugLogFile().
 		args = append(args, "-debug-log", runscLogDir+"/")
-		runscCoverageDir = filepath.Join(tmpDir, "coverage")
-		args = append(args, "-coverage-report", runscCoverageDir+"/")
+		if *coverageReport {
+			runscCoverageDir = filepath.Join(tmpDir, "coverage")
+			args = append(args, "-coverage-report", runscCoverageDir+"/")
+		}
 
 		// Default -log sends messages to stderr which makes reading the test log
 		// difficult. Instead, drop them when debug log is enabled given it's a
@@ -557,6 +612,10 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		createCmd := exec.Command(specutils.ExePath, createArgs...)
 		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
+		if *externalNetwork || *limitPorts {
+			createCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
+			wrapInSetupContainer(createCmd)
+		}
 		createCmd.Stdout = os.Stdout
 		createCmd.Stderr = os.Stderr
 		if err := createCmd.Run(); err != nil {
@@ -601,8 +660,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 	cmd.SysProcAttr = sysProcAttr
 	if *container || *network == "host" || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-		cmd.Path = getSetupContainerPath()
-		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
+		wrapInSetupContainer(cmd)
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -694,8 +752,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			restoreCmd.SysProcAttr = sysProcAttr
 			if *container || *network == "host" || (restoreCmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 				restoreCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET
-				restoreCmd.Path = getSetupContainerPath()
-				restoreCmd.Args = append([]string{restoreCmd.Path}, restoreCmd.Args...)
+				wrapInSetupContainer(restoreCmd)
 			}
 			restoreCmd.Stdout = os.Stdout
 			restoreCmd.Stderr = os.Stderr
@@ -800,7 +857,6 @@ func isWarning(line string) bool {
 	case strings.Contains(line, "is not permitted, dropping it."):
 	case strings.Contains(line, "sndPrepopulatedMsg failed"):
 	case strings.Contains(line, "TSC snapshot unavailable"):
-	case strings.Contains(line, "No TSC snapshot is available, unable to save TSC"):
 	case strings.Contains(line, "copy up failed to copy up contents"):
 	case strings.Contains(line, "populate failed for"):
 	case strings.Contains(line, "ASAN is enabled: syscall filters less restrictive"):
@@ -845,6 +901,13 @@ func isWarning(line string) bool {
 
 	// Caused by properties of the host that runsc doesn't necessarily control.
 	case strings.Contains(line, "Host limit is lower than recommended"):
+	// SO_RCVBUFFORCE/SO_SNDBUFFORCE require CAP_NET_ADMIN in the initial
+	// user namespace. The isolated network fixture uses the ordinary buffer
+	// fallback; its functional tests do not require high-throughput buffers.
+	case *externalNetwork && line[0] == 'W' &&
+		(strings.Contains(line, "Failed to increase rcv buffer to ") || strings.Contains(line, "Failed to increase snd buffer to ")) &&
+		strings.Contains(line, " on SOCK_RAW on eth0. Current buffer ") &&
+		strings.HasSuffix(line, ": operation not permitted"):
 
 	// TODO(gvisor.dev/issue/11649): Systrap needs to roll back created
 	// patches for traced procs.
@@ -987,6 +1050,16 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	// Mark the root as writeable, as some tests attempt to
 	// write to the rootfs, and expect EACCES, not EROFS.
 	spec.Root.Readonly = false
+	if *externalNetwork || *limitPorts {
+		// Join the namespace prepared by setup_container instead of creating
+		// another empty namespace when the sandbox starts.
+		spec.Linux = &specs.Linux{
+			Namespaces: []specs.LinuxNamespace{{
+				Type: specs.NetworkNamespace,
+				Path: "/proc/self/ns/net",
+			}},
+		}
+	}
 
 	// Test spec comes with pre-defined mounts that we don't want. Reset it.
 	spec.Mounts = nil
@@ -1133,6 +1206,9 @@ func matchString(a, b string) (bool, error) {
 
 func main() {
 	flag.Parse()
+	if *externalNetwork && (!*container || (*platform != "native" && *network == "none")) {
+		fatalf("external networking requires a private container and a sandbox or host network stack")
+	}
 	if flag.NArg() != 1 {
 		fatalf("test must be provided")
 	}
@@ -1256,45 +1332,6 @@ func main() {
 	}
 
 	testing.Main(matchString, tests, nil, nil)
-}
-
-func collateXMLs(origXML string) error {
-	matches, err := filepath.Glob(origXML + ".*" + uniqueXMLSuffix)
-	if err != nil {
-		return fmt.Errorf("failed to glob individual XML files: %v", err)
-	}
-	if len(matches) == 0 {
-		return nil
-	}
-
-	f, err := os.Create(origXML)
-	if err != nil {
-		return fmt.Errorf("failed to create collated XML file %s: %v", origXML, err)
-	}
-	defer f.Close()
-	fmt.Fprintln(f, `<?xml version="1.0" encoding="UTF-8"?><testsuites name="AllTests"><testsuite name="Collated">`)
-
-	for _, m := range matches {
-		data, err := os.ReadFile(m)
-		if err != nil {
-			return fmt.Errorf("failed to read unique XML file %s: %v", m, err)
-		}
-		s := string(data)
-		start := strings.Index(s, "<testcase")
-		end := strings.LastIndex(s, "</testcase>")
-
-		if start >= 0 && end >= 0 {
-			fmt.Fprintln(f, s[start:end+len("</testcase>")])
-		} else if start >= 0 {
-			end = strings.Index(s[start:], "/>")
-			if end >= 0 {
-				fmt.Fprintln(f, s[start:start+end+2])
-			}
-		}
-	}
-
-	fmt.Fprintln(f, `</testsuite></testsuites>`)
-	return nil
 }
 
 func enableAllTraces(dir string) (string, error) {

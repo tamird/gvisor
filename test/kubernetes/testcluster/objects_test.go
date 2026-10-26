@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	cspb "cloud.google.com/go/container/apiv1/containerpb"
+	cspb "google.golang.org/genproto/googleapis/container/v1"
 	v23 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )

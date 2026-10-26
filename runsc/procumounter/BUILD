@@ -1,8 +1,13 @@
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_linker", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+exports_files(
+    ["procumounter.c"],
+    visibility = ["//:__pkg__"],
 )
 
 # Tell build_cleaner not to create an unnecessary cc_library for
@@ -20,6 +25,7 @@ genrule(
     srcs = ["procumounter.c"],
     outs = ["gvisor-proc-umounter"],
     cmd = "$(CC) $(CC_FLAGS) " +
+          "--ld-path=$(execpath {}) ".format(cc_linker) +
           "-Os " +
           "-ffreestanding " +
           "-fno-sanitize=all " +
@@ -37,10 +43,8 @@ genrule(
           "$(execpath procumounter.c)",
     executable = True,
     features = ["-pie"],
-    toolchains = [
-        cc_toolchain,
-        ":no_pie_cc_flags",
-    ],
+    toolchains = [":no_pie_cc_flags"],
+    tools = [cc_linker],
     visibility = ["//visibility:public"],
 )
 
@@ -54,6 +58,7 @@ go_test(
     size = "small",
     srcs = ["procumounter_test.go"],
     data = [":procumounter_binary"],
+    exec_properties = namespace_test_exec_properties(),
     deps = [
         "//pkg/test/testutil",
         "@org_golang_x_sys//unix:go_default_library",

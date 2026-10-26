@@ -1,0 +1,154 @@
+#!/bin/bash
+
+# Copyright 2026 The gVisor Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -euo pipefail
+
+mode=$1
+arch=$2
+# Resolve action/runfiles paths before entering the extracted source tree.
+make=$(realpath "$3")
+crane=$(realpath "$4")
+makefile=$(realpath "$5")
+contexts=$(realpath "$6")
+selection=$7
+case "${mode}" in
+  test)
+    test "$#" -ge 7
+    results=$(realpath -m "${TEST_UNDECLARED_OUTPUTS_DIR:?}/source-images")
+    if [[ -n ${TEST_SHARD_STATUS_FILE:-} ]]; then
+      touch "${TEST_SHARD_STATUS_FILE}"
+    fi
+    ;;
+  layout)
+    test "$#" -eq 13
+    layout=$(realpath -m "$8")
+    tags=$(realpath -m "$9")
+    buildx=$(realpath "${10}")
+    buildkit_digest=$(realpath "${11}")
+    builder=$(realpath "${12}")
+    bsdtar=$(realpath "${13}")
+    ;;
+  *) echo "Unknown image source operation: ${mode}" >&2; exit 1 ;;
+esac
+work=$(mktemp -d "${TEST_TMPDIR:-${TMPDIR:-/tmp}}/image-sources.XXXXXX")
+trap 'rm -rf "${work}"' EXIT
+
+# The declared archive carries source modes that Bazel runfiles do not retain.
+tar --extract --file "${contexts}" --directory "${work}" \
+  --same-permissions --no-same-owner
+
+# CRANE is a shell command in images.mk, so quote the declared executable.
+printf -v crane_command '%q' "${crane}"
+export MAKE="${make}"
+cd "${work}"
+if [[ ${mode} == test ]]; then
+  # Capture the complete cohort before sharding: an image absent from every
+  # shard must not disappear from qualification's expected results.
+  available_images=$("${make}" --no-print-directory -s -f "${makefile}" \
+    ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 PARTITION=1 TOTAL_PARTITIONS=1 \
+    "list-${selection}-images")
+  mapfile -t cohort <<< "${available_images}"
+  for image in "${cohort[@]}"; do
+    # These names become result paths and JSON strings below.
+    if [[ ! ${image} =~ ^[[:alnum:]][[:alnum:]_.-]*$ ]]; then
+      printf 'Invalid canonical image name: %s\n' "${image}" >&2
+      exit 1
+    fi
+  done
+  selected=("${cohort[@]}")
+  selection_options=()
+  if (( $# > 7 )); then
+    shift 7
+    # Validate against Make's complete class before applying its partitioning.
+    # A missing or wrong-class image must not become an empty successful check.
+    for image in "$@"; do
+      if [[ -z ${image} || ${image} == *[[:space:]]* ]] || \
+          ! grep -Fxq -- "${image}" <<< "${available_images}"; then
+        printf 'Image %s is not in the %s image cohort for %s.\n' "${image}" "${selection}" "${arch}" >&2
+        exit 1
+      fi
+    done
+    selected=("$@")
+    selection_options=("${selection^^}_TEST_IMAGES=$*")
+  fi
+  # Bazel shards are zero-based; canonical Make partitions are one-based.
+  partition=$((${TEST_SHARD_INDEX:-0} + 1))
+  partitions=${TEST_TOTAL_SHARDS:-1}
+  image_options=(ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
+    PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
+    CRANE="${crane_command}" "${selection_options[@]}")
+  shard_images=$("${make}" --no-print-directory -s -f "${makefile}" \
+    "${image_options[@]}" "list-${selection}-images")
+  shard=()
+  if [[ -n ${shard_images} ]]; then
+    mapfile -t shard <<< "${shard_images}"
+  fi
+  image_array() {
+    local separator= image
+    printf '['
+    for image in "$@"; do
+      printf '%s"%s"' "${separator}" "${image}"
+      separator=,
+    done
+    printf ']'
+  }
+  mkdir "${results}"
+  {
+    printf '{"schema_version":1,"architecture":"%s","image_class":"%s",' "${arch}" "${selection}"
+    printf '"partition":%d,"partitions":%d,"cohort":' "${partition}" "${partitions}"
+    image_array "${cohort[@]}"
+    printf ',"selected":'
+    image_array "${selected[@]}"
+    printf ',"images":'
+    image_array "${shard[@]}"
+    printf '}\n'
+  } > "${results}/selection.json"
+  # A registry manifest does not establish that these sources still build.
+  # Keep Make's parallel scheduling and keep-going behavior; each recipe
+  # records its own output so failed or interrupted builds remain visible.
+  "${make}" --keep-going -f "${makefile}" "${image_options[@]}" \
+    _IMAGE_RESULTS="${results}" "rebuild-${selection}-images"
+else
+  target=${selection//\//_}
+  case "${arch}" in
+    x86_64) platform=linux/amd64 ;;
+    aarch64) platform=linux/arm64 ;;
+    *) echo "Unknown image architecture: ${arch}" >&2; exit 1 ;;
+  esac
+  "${make}" --no-print-directory -s -f "${makefile}" ARCH="${arch}" \
+    _IMAGE_CONTEXT_PREPARED=1 "image-references-${target}" > references
+  mapfile -t references < references
+  test "${#references[@]}" -eq 3
+
+  # Source archives use the canonical rebuild target and pinned BuildKit image.
+  # A published image with the same context hash is not source-build evidence.
+  printf -v build_command '/bin/bash %q %q %q %q %q' \
+    "${builder}" "${buildx}" "${buildkit_digest}" "${bsdtar}" "${layout}"
+  # Some executors create empty output directories before invoking the action.
+  # Require that any precreated directory is empty before taking ownership.
+  if [[ -e ${layout} ]]; then
+    rmdir "${layout}"
+  fi
+  "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
+    OCI_BUILD="${build_command}" \
+    _IMAGE_OCI_OUTPUT="${layout}" _IMAGE_OCI_PLATFORM="${platform}" \
+    "rebuild-${target}"
+
+  # The builder produces the declared layout before this action succeeds.
+  # Bazel then exposes it to downstream conversion.
+  printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
+  printf 'Source OCI tags: %s %s\n' "${references[1]}" "${references[2]}"
+fi

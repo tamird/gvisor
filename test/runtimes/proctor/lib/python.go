@@ -132,7 +132,7 @@ func (pythonRunner) ListTests() ([]string, error) {
 }
 
 // TestCmds implements TestRunner.TestCmds.
-func (pythonRunner) TestCmds(tests []string) []*exec.Cmd {
+func (pythonRunner) TestCmds(tests []string) ([]*exec.Cmd, error) {
 	var cmds []*exec.Cmd
 	var full []string
 	for _, testModule := range tests {
@@ -148,7 +148,7 @@ func (pythonRunner) TestCmds(tests []string) []*exec.Cmd {
 		args := append([]string{"-m", "test"}, full...)
 		cmds = append(cmds, exec.Command("./python", args...))
 	}
-	return cmds
+	return cmds, nil
 }
 
 func testCmdWithExclTCs(testModule string, excludeTCs []string) *exec.Cmd {

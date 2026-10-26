@@ -34,6 +34,7 @@ go_library(
     name = "abslbuild",
     testonly = True,
     srcs = ["abslbuild.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/abslbuild",
     nogo = False,
     deps = [
         "//test/kubernetes",
@@ -67,6 +68,7 @@ go_library(
     name = "startup",
     testonly = True,
     srcs = ["startup.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/startup",
     nogo = False,
     deps = [
         "//pkg/atomicbitops",
@@ -101,6 +103,7 @@ go_library(
     name = "openclaw",
     testonly = True,
     srcs = ["openclaw.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/openclaw",
     nogo = False,
     deps = [
         "//runsc/flag",
@@ -136,6 +139,7 @@ go_library(
     name = "redis",
     testonly = True,
     srcs = ["redis.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/redis",
     nogo = False,
     deps = [
         "//test/kubernetes",
@@ -169,6 +173,7 @@ go_library(
     name = "ffmpeg",
     testonly = True,
     srcs = ["ffmpeg.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/ffmpeg",
     nogo = False,
     deps = [
         "//test/kubernetes",
@@ -202,6 +207,7 @@ go_library(
     name = "grpc",
     testonly = True,
     srcs = ["grpc.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/grpc",
     nogo = False,
     deps = [
         "//test/kubernetes",
@@ -235,6 +241,7 @@ go_library(
     name = "nginx",
     testonly = True,
     srcs = ["nginx.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/nginx",
     nogo = False,
     deps = [
         "//test/kubernetes",
@@ -269,6 +276,7 @@ go_library(
     name = "postgresql",
     testonly = True,
     srcs = ["postgresql.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/postgresql",
     nogo = False,
     deps = [
         "//test/kubernetes/benchmarks/profiling",
@@ -301,6 +309,7 @@ go_library(
     name = "tensorflow",
     testonly = True,
     srcs = ["tensorflow.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/tensorflow",
     nogo = False,
     deps = [
         "//test/kubernetes",
@@ -334,6 +343,7 @@ go_library(
     name = "wordpress",
     testonly = True,
     srcs = ["wordpress.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/wordpress",
     nogo = False,
     deps = [
         "//test/kubernetes/benchmarks/httpbench",
@@ -370,6 +380,7 @@ go_library(
     embedsrcs = [
         "//test/kubernetes/benchmarks/resources:files",  # keep
     ],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/ollama",
     nogo = False,
     deps = [
         "//pkg/sync",
@@ -410,6 +421,7 @@ go_library(
     embedsrcs = [
         "//test/kubernetes/benchmarks/resources:files",  # keep
     ],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/triton",
     nogo = False,
     deps = [
         "//pkg/sync",
@@ -450,6 +462,7 @@ go_library(
     embedsrcs = [
         "//test/kubernetes/benchmarks/resources:files",  # keep
     ],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/sglang",
     nogo = False,
     deps = [
         "//pkg/sync",
@@ -487,6 +500,7 @@ go_library(
     name = "stablediffusion",
     testonly = True,
     srcs = ["stablediffusion.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/stablediffusion",
     nogo = False,
     deps = [
         "//test/gpu/stablediffusion",
@@ -521,6 +535,7 @@ go_library(
     name = "gsutil",
     testonly = True,
     srcs = ["gsutil.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/gsutil",
     nogo = False,
     deps = [
         "//test/kubernetes/benchmarks/profiling",
@@ -553,6 +568,7 @@ go_library(
     name = "rubydev",
     testonly = True,
     srcs = ["rubydev.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/rubydev",
     nogo = False,
     deps = [
         "//test/benchmarks/tools",
@@ -589,6 +605,7 @@ go_library(
     embedsrcs = [
         "//test/kubernetes/benchmarks/resources:files",  # keep
     ],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/benchmarks/vllm",
     nogo = False,
     deps = [
         "//pkg/sync",

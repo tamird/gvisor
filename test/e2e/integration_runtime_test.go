@@ -23,7 +23,6 @@ package integration
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -49,12 +48,6 @@ const (
 	nonRootGID = 1337
 	memInfoCmd = "cat /proc/meminfo | grep MemTotal: | awk '{print $2}'"
 )
-
-func TestMain(m *testing.M) {
-	flag.Parse()
-	dockerutil.EnsureSupportedDockerVersion()
-	os.Exit(m.Run())
-}
 
 func TestRlimitNoFile(t *testing.T) {
 	ctx := context.Background()
@@ -248,8 +241,8 @@ func TestOverlayCheckpointRestore(t *testing.T) {
 	if !testutil.IsCheckpointSupported() {
 		t.Skip("Checkpoint is not supported.")
 	}
-	dockerutil.EnsureDockerExperimentalEnabled()
-	if !dockerutil.IsRestoreSupported() {
+	dockerutil.EnsureDockerExperimentalEnabled(t)
+	if !dockerutil.IsRestoreSupported(t) {
 		t.Skip("Restore is not supported.")
 	}
 

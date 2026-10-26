@@ -1,12 +1,11 @@
 module gvisor.dev/gvisor
 
-go 1.27.3
+go 1.27.2
 
 require (
 	cloud.google.com/go/auth v0.20.0
 	cloud.google.com/go/auth/oauth2adapt v0.2.8
 	cloud.google.com/go/compute/metadata v0.9.0
-	cloud.google.com/go/firestore v1.22.0
 	cloud.google.com/go/storage v1.62.1
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c
 	github.com/cenkalti/backoff v2.2.1+incompatible
@@ -30,6 +29,7 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/btree v1.1.2
 	github.com/google/go-github/v84 v84.0.0
+	github.com/google/licensecheck v0.3.1
 	github.com/google/subcommands v1.0.2-0.20190508160503-636abe8753b8
 	github.com/googleapis/gax-go/v2 v2.21.0
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
@@ -56,7 +56,6 @@ require (
 	cel.dev/expr v0.25.1 // indirect
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/iam v1.7.0 // indirect
-	cloud.google.com/go/longrunning v0.9.0 // indirect
 	cloud.google.com/go/monitoring v1.24.3 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.31.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.55.0 // indirect

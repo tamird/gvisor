@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "cc_binary", "go_binary", "proto_library")
+load("//tools:defs.bzl", "cc_binary", "cc_test", "go_binary", "proto_library", "select_gtest")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -8,7 +8,10 @@ package(
 proto_library(
     name = "ioctl",
     srcs = ["ioctl.proto"],
-    visibility = ["//tools/ioctl_sniffer:__subpackages__"],
+    visibility = [
+        "//tools/codeql:__pkg__",
+        "//tools/ioctl_sniffer:__subpackages__",
+    ],
 )
 
 cc_binary(
@@ -30,6 +33,47 @@ cc_binary(
     ],
 )
 
+cc_test(
+    name = "ioctl_hook_test",
+    size = "small",
+    srcs = [
+        "ioctl_hook.h",
+        "ioctl_hook_test.cc",
+    ],
+    data = [":ioctl_hook"],
+    linkopts = ["-ldl"],
+    deps = select_gtest() + [
+        ":ioctl_cc_proto",
+        "//test/util:cleanup",
+        "//test/util:file_descriptor",
+        "//test/util:memory_util",
+        "//test/util:posix_error",
+        "//test/util:socket_util",
+        "//test/util:test_main",
+        "//test/util:test_util",
+    ],
+)
+
+cc_test(
+    name = "sniffer_bridge_test",
+    size = "small",
+    srcs = [
+        "sniffer_bridge.cc",
+        "sniffer_bridge.h",
+        "sniffer_bridge_test.cc",
+    ],
+    deps = select_gtest() + [
+        ":ioctl_cc_proto",
+        "//test/util:cleanup",
+        "//test/util:file_descriptor",
+        "//test/util:posix_error",
+        "//test/util:socket_util",
+        "//test/util:test_main",
+        "//test/util:test_util",
+        "//test/util:thread_util",
+    ],
+)
+
 go_binary(
     name = "run_sniffer",
     srcs = [
@@ -46,6 +90,7 @@ go_binary(
         ":ioctl_hook",  # keep
     ],
     features = ["fully_static_link"],
+    importpath = "gvisor.dev/gvisor/tools/ioctl_sniffer/run_sniffer",
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
     visibility = [

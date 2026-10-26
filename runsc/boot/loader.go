@@ -28,6 +28,7 @@ import (
 	"github.com/moby/sys/capability"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/context"
@@ -63,16 +64,8 @@ import (
 	_ "gvisor.dev/gvisor/pkg/sentry/platform/platforms" // register all platforms.
 	"gvisor.dev/gvisor/pkg/sentry/seccheck"
 	pb "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto"
-	"gvisor.dev/gvisor/pkg/sentry/socket/hostinet" // Top-level inet provider.
 	"gvisor.dev/gvisor/pkg/sentry/socket/netfilter"
-	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink" // Register supported socket providers.
-	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink/netfilter"
-	rdmanetlink "gvisor.dev/gvisor/pkg/sentry/socket/netlink/rdma"
-	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink/route"
-	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink/uevent"
-	"gvisor.dev/gvisor/pkg/sentry/socket/netstack" // Top-level inet provider.
 	"gvisor.dev/gvisor/pkg/sentry/socket/plugin"
-	_ "gvisor.dev/gvisor/pkg/sentry/socket/unix"
 	"gvisor.dev/gvisor/pkg/sentry/time"
 	"gvisor.dev/gvisor/pkg/sentry/uniqueid"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
@@ -97,10 +90,22 @@ import (
 	"gvisor.dev/gvisor/runsc/boot/filter"
 	pf "gvisor.dev/gvisor/runsc/boot/portforward"
 	"gvisor.dev/gvisor/runsc/boot/pprof"
-	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/profile"
 	"gvisor.dev/gvisor/runsc/specutils"
+
+	// Top-level inet providers.
+	"gvisor.dev/gvisor/pkg/sentry/socket/hostinet"
+	"gvisor.dev/gvisor/pkg/sentry/socket/netstack"
+
+	// Include other supported socket providers.
+	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink"
+	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink/netfilter"
+	rdmanetlink "gvisor.dev/gvisor/pkg/sentry/socket/netlink/rdma"
+	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink/route"
+	_ "gvisor.dev/gvisor/pkg/sentry/socket/netlink/uevent"
+	_ "gvisor.dev/gvisor/pkg/sentry/socket/unix"
+	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 )
 
 type containerInfo struct {
@@ -368,6 +373,10 @@ type Loader struct {
 
 	// hostinetNetSNMPFile is the pre-opened /proc/net/snmp file for hostinet restore.
 	hostinetNetSNMPFile *os.File
+
+	// hostinetPortRange is read before restore installs seccomp filters. A nil
+	// value means no destination host configuration is awaiting transfer.
+	hostinetPortRange *[2]uint16
 }
 
 // noRootContainer is the state of a sandbox with no root container.
@@ -627,6 +636,16 @@ func shouldEnableClockMonotonicRaw(spec *specs.Spec, conf *config.Config) bool {
 	return err == nil && caps&nvconf.CapProfiling != 0
 }
 
+// newClocks selects the clock source for both initial boot and restore.
+// Selection uses the destination runtime configuration, not saved calibration.
+func newClocks(spec *specs.Spec, conf *config.Config) time.Clocks {
+	rawEnabled := shouldEnableClockMonotonicRaw(spec, conf)
+	if conf.ClockSource == config.ClockSourceReference {
+		return time.NewReferenceClocks(rawEnabled)
+	}
+	return time.NewCalibratedClocks(rawEnabled)
+}
+
 // New initializes a new kernel loader configured by spec.
 // New also handles setting up a kernel for restoring a container.
 func New(args Args) (*Loader, error) {
@@ -698,7 +717,6 @@ func New(args Args) (*Loader, error) {
 		fsSaveFDs:             args.FSSaveFDs,
 		fsSaveCheckpointGofer: args.FSSaveCheckpointGofer,
 	}
-	l.restoreDone = sync.NewCond(&l.mu)
 
 	if args.NumCPU == 0 {
 		args.NumCPU = runtime.NumCPU()
@@ -831,7 +849,7 @@ func New(args Args) (*Loader, error) {
 	// Create timekeeper.
 	tk := kernel.NewTimekeeper()
 	params := kernel.NewVDSOParamPage(l.k.MemoryFile(), vdso.ParamPage.FileRange())
-	tk.SetClocks(time.NewCalibratedClocks(shouldEnableClockMonotonicRaw(args.Spec, args.Conf)), params)
+	tk.SetClocks(newClocks(args.Spec, args.Conf), params)
 	args.StartupTimer.Reached("timekeeper configured")
 
 	if err := enableStrace(args.Conf); err != nil {
@@ -1036,9 +1054,12 @@ func New(args Args) (*Loader, error) {
 // +checklocks:l.mu
 func (l *Loader) ConfigureNetwork(s inet.Stack) error {
 	if h, ok := s.(*hostinet.Stack); ok {
-		h.SetFiles(l.hostinetNetDevFile, l.hostinetNetSNMPFile)
-		l.hostinetNetDevFile = nil
-		l.hostinetNetSNMPFile = nil
+		if l.hostinetPortRange != nil {
+			h.SetHostConfig(l.hostinetNetDevFile, l.hostinetNetSNMPFile, *l.hostinetPortRange)
+			l.hostinetNetDevFile = nil
+			l.hostinetNetSNMPFile = nil
+			l.hostinetPortRange = nil
+		}
 		return nil
 	}
 
@@ -2686,6 +2707,29 @@ func unnamedContainerNumber(containerName string) (int, bool) {
 	}
 	n, err := strconv.Atoi(s)
 	return n, err == nil
+}
+
+// +checklocksexclude:l.mu
+func (l *Loader) getContainerSpec(containerName string) *specs.Spec {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.containerSpecs[containerName]
+}
+
+// SpecEnviron returns the environment variables for the given container from
+// the container spec it was created with.
+//
+// +checklocksexclude:l.mu
+func (l *Loader) SpecEnviron(containerName string) []string {
+	spec := l.getContainerSpec(containerName)
+	if spec == nil {
+		log.Warningf("Container spec not found for container %q", containerName)
+		return nil
+	}
+	if spec.Process == nil {
+		return nil
+	}
+	return spec.Process.Env
 }
 
 // +checklocksexclude:l.mu

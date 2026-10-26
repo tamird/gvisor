@@ -35,8 +35,9 @@ type TestRunner interface {
 	// TestCmds returns a slice of *exec.Cmd that will run the given tests.
 	// There is no correlation between the number of exec.Cmds returned and the
 	// number of tests. It could return one command to run all tests or a few
-	// commands that collectively run all.
-	TestCmds(tests []string) []*exec.Cmd
+	// commands that collectively run all. Preparation errors must be returned
+	// before running any command, rather than omitting selected tests.
+	TestCmds(tests []string) ([]*exec.Cmd, error)
 }
 
 // TestRunnerForRuntime returns a new TestRunner for the given runtime.

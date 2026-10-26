@@ -41,8 +41,8 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/platform"
+	"gvisor.dev/gvisor/pkg/sentry/socket/hostinet"
 	"gvisor.dev/gvisor/pkg/sentry/state"
-	"gvisor.dev/gvisor/pkg/sentry/time"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sentry/watchdog"
 	"gvisor.dev/gvisor/pkg/state/statefile"
@@ -269,8 +269,7 @@ type restorer struct {
 }
 
 // restoreSubcontainer restores a subcontainer.
-// It returns whether this started the kernel.
-func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l *Loader, cid string, stdioFDs, goferFDs, goferFilestoreFDs []*fd.FD, devGoferFD *fd.FD, goferMountConfs []specutils.GoferMountConf) (bool, error) {
+func (r *restorer) restoreSubcontainer(spec *specs.Spec, conf *config.Config, l *Loader, cid string, stdioFDs, goferFDs, goferFilestoreFDs []*fd.FD, devGoferFD *fd.FD, goferMountConfs []specutils.GoferMountConf) error {
 	containerName := r.registerContainer(l, spec, cid)
 	info := &containerInfo{
 		cid:               cid,
@@ -314,17 +313,16 @@ func (r *restorer) registerContainer(l *Loader, spec *specs.Spec, cid string) st
 }
 
 // restoreContainerInfo restores a container.
-// It returns whether this started the kernel.
-func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, error) {
+func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	for _, container := range r.containers {
 		if container.containerName == info.containerName {
-			return false, fmt.Errorf("container %q already restored", info.containerName)
+			return fmt.Errorf("container %q already restored", info.containerName)
 		}
 		if container.cid == info.cid {
-			return false, fmt.Errorf("container CID %q already belongs to container %q", info.cid, container.containerName)
+			return fmt.Errorf("container CID %q already belongs to container %q", info.cid, container.containerName)
 		}
 	}
 
@@ -343,11 +341,10 @@ func (r *restorer) restoreContainerInfo(l *Loader, info *containerInfo) (bool, e
 	if len(r.containers) == r.totalContainers {
 		// Trigger the restore if this is the last container.
 		if err := r.restore(l); err != nil {
-			return false, err
+			return err
 		}
-		return true, nil
 	}
-	return false, nil
+	return nil
 }
 
 type restoreMounts struct {
@@ -413,6 +410,8 @@ func (r *restorer) restore(l *Loader) error {
 	}
 
 	if l.root.conf.Network == config.NetworkHost {
+		ports := hostinet.ReadPortRange()
+		l.hostinetPortRange = &ports
 		devFile, err := os.Open("/proc/net/dev")
 		if err != nil {
 			log.Warningf("Failed to open /proc/net/dev during restore: %v", err)
@@ -426,6 +425,7 @@ func (r *restorer) restore(l *Loader) error {
 			l.hostinetNetSNMPFile = snmpFile
 		}
 		defer func() {
+			l.hostinetPortRange = nil
 			if l.hostinetNetDevFile != nil {
 				l.hostinetNetDevFile.Close()
 				l.hostinetNetDevFile = nil
@@ -537,7 +537,7 @@ func (r *restorer) restore(l *Loader) error {
 	}
 
 	// Load the state.
-	clocks := time.NewCalibratedClocks(shouldEnableClockMonotonicRaw(l.root.spec, l.root.conf))
+	clocks := newClocks(l.root.spec, l.root.conf)
 	r.timer.Reached("loading kernel")
 	if r.extractRootFsMode {
 		if err := l.k.ExtractRootfsUpperLayer(ctx, r.stateFile, r.asyncMFLoader, nil, clocks, r.rootFsOutputTar); err != nil {
@@ -641,11 +641,6 @@ func (r *restorer) restore(l *Loader) error {
 	}
 
 	l.k.RestoreContainerMapping(l.containerIDs)
-	for cid, spec := range specsByCID {
-		if spec != nil && spec.Process != nil {
-			l.k.SetContainerEnv(cid, spec.Process.Env)
-		}
-	}
 	l.k.SetSaver(l)
 	l.createNvproxyDeviceFilesAfterRestore(ctx)
 
@@ -889,9 +884,6 @@ func (l *Loader) saveWithOpts(saveOpts *state.SaveOpts, execOpts *controlapi.Sav
 	if l.noRootContainer.enabled {
 		saveOpts.Metadata[noRootContainerKey] = "true"
 	}
-
-	// Save the sandbox's CPU features.
-	saveOpts.Metadata[sentryapi.CPUFeaturesKey] = strings.Join(l.k.FeatureSet().FeatureNames(), ",")
 
 	// Save container specs.
 	specsStr, err := specutils.ConvertSpecsToString(l.GetContainerSpecs())

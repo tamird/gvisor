@@ -1,6 +1,99 @@
 """Wrappers for website documentation."""
 
+load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:defs.bzl", "short_path")
+
+# Keep the public website build's default stripping policy beside runtime tests.
+website_artifact, _website_transition = with_cfg(native.filegroup).set("strip", "sometimes").build()
+
+# The existing images/jekyll tool environment, published from source-hash tag
+# 0366317e456d913b. Build and check scripts remain declared source inputs.
+_JEKYLL_IMAGE = "docker://us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/jekyll_x86_64@sha256:97528c5497adaa2a507596d74cf89103aff46d44939ba4e3a93fd8aadec2f76e"
+
+def _website_files_impl(ctx):
+    output = ctx.actions.declare_file(ctx.label.name + ".tgz")
+    build = shell.quote(ctx.file._build.path)
+    checks = shell.quote(ctx.file._checks.path)
+    if ctx.attr.remote:
+        build_command = "/usr/jekyll/bin/entrypoint bash %s \"$T/input\" \"$T/output/_site\"" % build
+        check_command = "/usr/jekyll/bin/entrypoint ruby %s \"$T/output/_site\"" % checks
+    else:
+        # Use the declared scripts even if the installed image embeds older ones.
+        build_command = """docker run --rm -i --user "$(id -u):$(id -g)" \\
+    -v "$T/input:/input" -v "$T/output/_site:/output" \\
+    -v "$(readlink -m %s):/build.sh:ro" \\
+    gvisor.dev/images/jekyll bash /build.sh /input /output""" % build
+        check_command = """docker run --rm -i --user "$(id -u):$(id -g)" \\
+    -v "$T/output/_site:/output" \\
+    -v "$(readlink -m %s):/checks.rb:ro" \\
+    gvisor.dev/images/jekyll ruby /checks.rb /output""" % checks
+
+    command = [
+        "set -euo pipefail",
+        "T=$(mktemp -d)",
+        "trap 'rm -rf \"$T\"' EXIT",
+        "T=$(cd \"$T\" && pwd -P)",
+        "mkdir -p \"$T/input\" \"$T/output/_site\"",
+    ]
+    command.extend([
+        "tar -xf %s -C \"$T/input\"" % shell.quote(archive.path)
+        for archive in ctx.files.archives
+    ])
+    command.extend([
+        "find \"$T/input\" -type f -exec chmod u+rw {} \\;",
+        build_command,
+        "tar -xf %s -C \"$T/output/_site\"" % shell.quote(ctx.file.static.path),
+        check_command,
+        "cp %s \"$T/output/server\"" % shell.quote(ctx.file.server.path),
+        "mkdir -p \"$T/output/etc/ssl\"",
+        "cp %s \"$T/output/etc/ssl/cert.pem\"" % shell.quote(ctx.file.ca_certificate.path),
+        "tar -zcf %s -C \"$T/output\" ." % shell.quote(output.path),
+    ])
+    ctx.actions.run_shell(
+        inputs = ctx.files.archives + [ctx.file.static, ctx.file.server, ctx.file.ca_certificate, ctx.file._build, ctx.file._checks],
+        outputs = [output],
+        command = "\n".join(command),
+        execution_requirements = {} if ctx.attr.remote else {"local": "1", "no-sandbox": "1"},
+        mnemonic = "GvisorWebsiteFiles",
+        progress_message = "Building and checking %s" % ctx.label,
+        toolchain = None,
+    )
+    return [DefaultInfo(files = depset([output]))]
+
+_website_files = rule(
+    implementation = _website_files_impl,
+    attrs = {
+        "archives": attr.label_list(allow_files = True, doc = "Ordered Jekyll input archives."),
+        "static": attr.label(allow_single_file = True, mandatory = True),
+        "server": attr.label(allow_single_file = True, mandatory = True),
+        "ca_certificate": attr.label(allow_single_file = True, mandatory = True),
+        "remote": attr.bool(),
+        "_build": attr.label(default = "//images/jekyll:build.sh", allow_single_file = True),
+        "_checks": attr.label(default = "//images/jekyll:checks.rb", allow_single_file = True),
+    },
+)
+
+def website_files(name, **kwargs):
+    """Builds the website filesystem using installed Docker or remote Jekyll."""
+    _website_files(
+        name = name,
+        remote = select({
+            "//tools/bazeldefs:rbe": True,
+            "//conditions:default": False,
+        }),
+        exec_properties = select({
+            "//tools/bazeldefs:rbe": {
+                "container-image": _JEKYLL_IMAGE,
+                "workload-isolation-type": "oci",
+            },
+            "//conditions:default": {},
+        }),
+        # The published Jekyll tool image is Linux AMD64. This describes the
+        # build tools, independently of the server's target architecture.
+        exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+        **kwargs
+    )
 
 # DocInfo is a provider which simple adds sufficient metadata to the source
 # files (and additional data files) so that a jeyll header can be constructed

@@ -31,6 +31,13 @@ make benchmark-platforms BENCHMARKS_TARGET=path/to/target
 The above command will install runtimes/run benchmarks on systrap and kvm as
 well as run the benchmark on native runc.
 
+The startup presubmit smoke workload also has declared Docker inputs for remote
+execution: `//test/benchmarks/base:startup_test_owned` runs the existing
+`BenchmarkStartupEmpty` with `-test.benchtime=1ns` across public platforms and
+native runc. Its installed `startup_test` target keeps the full benchmark
+interface. See [remote qualification](../rbe/README.md) for worker requirements
+and the partial hosted profile.
+
 Benchmarks are run with root as some benchmarks require root privileges to do
 things like drop caches.
 
@@ -87,8 +94,7 @@ func BenchmarkMyCoolOne(b *testing.B) {
 }
 
 func TestMain(m *testing.M) {
-    harness.Init()
-    os.Exit(m.Run())
+    os.Exit(harness.Run(m.Run))
 }
 ```
 

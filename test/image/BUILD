@@ -1,16 +1,19 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//test/docker:config.bzl", "IMAGE_VARIANTS")
+load("//test/docker:defs.bzl", "docker_test")
+load("//tools:defs.bzl", "go_library")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-go_test(
+docker_test(
     name = "image_test",
     size = "large",
     srcs = [
         "image_test.go",
     ],
+    cohort = "image",
     data = [
         "latin10k.txt",
         "mysql.sql",
@@ -18,8 +21,7 @@ go_test(
         "//:release",
     ],
     embed = [":image"],
-    # Requires docker and runsc to be configured before the test runs.
-    local = True,
+    runtime_variants = IMAGE_VARIANTS,
     tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [

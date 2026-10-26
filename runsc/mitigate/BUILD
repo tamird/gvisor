@@ -21,6 +21,7 @@ go_test(
     name = "mitigate_test",
     size = "small",
     srcs = ["mitigate_test.go"],
+    architectures = ["amd64"],
     embed = [":mitigate"],
     deps = ["@com_github_google_go_cmp//cmp:go_default_library"],
 )

@@ -67,7 +67,7 @@ SECTIONS {
    * linker assertion failures result).
    *
    * If the VDSO does incorrectly include a data section, the linker will
-   * include it in the text segment. check_vdso.py looks for this degenerate
+   * include it in the text segment. vdso_test looks for this degenerate
    * case.
    */
 }

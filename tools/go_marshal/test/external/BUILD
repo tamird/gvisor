@@ -10,5 +10,8 @@ go_library(
     srcs = ["external.go"],
     importpath = "gvisor.dev/gvisor/tools/go_marshal/test/external",
     marshal = True,
-    visibility = ["//tools/go_marshal/test:gomarshal_test"],
+    visibility = [
+        "//tools/codeql:__pkg__",
+        "//tools/go_marshal/test:gomarshal_test",
+    ],
 )

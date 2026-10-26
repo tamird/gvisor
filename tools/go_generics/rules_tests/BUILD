@@ -27,7 +27,6 @@ go_template_instance(
 go_template(
     name = "test_template",
     srcs = [
-        "second.go",
         "template.go",
     ],
     opt_consts = [

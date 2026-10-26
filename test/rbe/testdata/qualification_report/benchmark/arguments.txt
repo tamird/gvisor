@@ -1,0 +1,17 @@
+test
+--test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated
+--define=gvisor_test_clock_source=calibrated
+--config=rbe
+--config=x86_64
+--keep_going
+--test_env=GO_TEST_WRAP_TESTV=1
+--strategy=TestRunner=remote
+--noremote_local_fallback
+--strip=never
+--sandbox_add_mount_pair=/tmp
+--test_output=errors
+//pkg/state/tests/benchmark:slice_diagnostic_empty
+//pkg/state/tests/benchmark:slice_diagnostic_ordinary
+//pkg/state/tests/benchmark:slice_diagnostic_adoption
+//pkg/state/tests/benchmark:slice_diagnostic_control_save
+//pkg/tcpip/transport/udp:slice_diagnostic_udp_save

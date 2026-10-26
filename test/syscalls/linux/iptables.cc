@@ -79,6 +79,35 @@ TEST(IPTablesBasic, CreateSocket) {
   ASSERT_THAT(close(sock), SyscallSucceeds());
 }
 
+TEST(IPTablesBasic, MissingTable) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
+
+  FileDescriptor sock =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_DGRAM, 0));
+
+  struct ipt_getinfo info = {.name = "gvisor-missing"};
+  socklen_t info_size = sizeof(info);
+  EXPECT_THAT(
+      getsockopt(sock.get(), SOL_IP, IPT_SO_GET_INFO, &info, &info_size),
+      SyscallFailsWithErrno(ENOENT));
+
+  info_size = sizeof(info) + 1;
+  EXPECT_THAT(
+      getsockopt(sock.get(), SOL_IP, IPT_SO_GET_INFO, &info, &info_size),
+      SyscallFailsWithErrno(EINVAL));
+
+  struct ipt_get_entries entries = {.name = "gvisor-missing"};
+  socklen_t entries_size = sizeof(entries);
+  EXPECT_THAT(getsockopt(sock.get(), SOL_IP, IPT_SO_GET_ENTRIES, &entries,
+                         &entries_size),
+              SyscallFailsWithErrno(ENOENT));
+
+  entries.size = 1;
+  EXPECT_THAT(getsockopt(sock.get(), SOL_IP, IPT_SO_GET_ENTRIES, &entries,
+                         &entries_size),
+              SyscallFailsWithErrno(EINVAL));
+}
+
 TEST(IPTablesBasic, GetInfoShortBuffer) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
 
@@ -114,11 +143,8 @@ TEST(IPTablesBasic, OriginalDstErrors) {
   // An unconnected socket has no tracked connection to look up.
   struct sockaddr_in addr = {};
   socklen_t addr_len = sizeof(addr);
-  int ret = getsockopt(sock.get(), SOL_IP, SO_ORIGINAL_DST, &addr, &addr_len);
-  // Linux fails with ENOPROTOOPT if nf_conntrack is not loaded.
-  SKIP_IF(ret == -1 && errno == ENOPROTOOPT &&
-          GvisorPlatform() == Platform::kNative);
-  EXPECT_THAT(ret, SyscallFailsWithErrno(ENOENT));
+  EXPECT_THAT(getsockopt(sock.get(), SOL_IP, SO_ORIGINAL_DST, &addr, &addr_len),
+              SyscallFailsWithErrno(ENOENT));
 }
 
 TEST(IPTablesBasic, GetRevision) {
@@ -206,10 +232,6 @@ TEST_F(IPTablesTest, GetInfoNonexistentTable) {
   socklen_t info_size = sizeof(info);
   EXPECT_THAT(getsockopt(s_, SOL_IP, IPT_SO_GET_INFO, &info, &info_size),
               SyscallFailsWithErrno(ENOENT));
-
-  info_size = sizeof(info) + 1;
-  EXPECT_THAT(getsockopt(s_, SOL_IP, IPT_SO_GET_INFO, &info, &info_size),
-              SyscallFailsWithErrno(EINVAL));
 }
 
 TEST_F(IPTablesTest, GetEntriesNonexistentTable) {
@@ -221,11 +243,6 @@ TEST_F(IPTablesTest, GetEntriesNonexistentTable) {
   EXPECT_THAT(
       getsockopt(s_, SOL_IP, IPT_SO_GET_ENTRIES, &entries, &entries_size),
       SyscallFailsWithErrno(ENOENT));
-
-  entries.size = 1;
-  EXPECT_THAT(
-      getsockopt(s_, SOL_IP, IPT_SO_GET_ENTRIES, &entries, &entries_size),
-      SyscallFailsWithErrno(EINVAL));
 }
 
 // This tests the initial state of a machine with empty iptables. We don't

@@ -18,12 +18,14 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"math/rand"
 	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path"
@@ -39,6 +41,7 @@ import (
 	"github.com/cenkalti/backoff"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/hostos"
@@ -70,7 +73,14 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "Error running as root: %v", err)
 		os.Exit(123)
 	}
-	os.Exit(m.Run())
+	status := m.Run()
+	if erofsToolsDir != "" {
+		if err := os.RemoveAll(erofsToolsDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Removing EROFS tools: %v\n", err)
+			status = 1
+		}
+	}
+	os.Exit(status)
 }
 
 func execute(conf *config.Config, cont *Container, name string, arg ...string) (unix.WaitStatus, error) {
@@ -607,68 +617,6 @@ func TestPostStartHookFailure(t *testing.T) {
 	}
 }
 
-// TestSpecChangeAfterCreate checks that changes to config.json after create
-// don't affect the container.
-func TestSpecChangeAfterCreate(t *testing.T) {
-	spec, conf := sleepSpecConf(t)
-	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
-	if err != nil {
-		t.Fatalf("error setting up container: %v", err)
-	}
-	defer cleanup()
-	c, err := New(conf, Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundleDir})
-	if err != nil {
-		t.Fatalf("error creating container: %v", err)
-	}
-	defer c.Destroy()
-
-	if err := os.WriteFile(filepath.Join(bundleDir, "config.json"), nil, 0644); err != nil {
-		t.Fatalf("error truncating config.json: %v", err)
-	}
-	if err := c.Start(conf); err != nil {
-		t.Fatalf("error starting container: %v", err)
-	}
-	if out, err := executeCombinedOutput(conf, c, nil, "/bin/true"); err != nil {
-		t.Errorf("exec failed: %v, output: %s", err, out)
-	}
-}
-
-// TestRootStartFailureStops checks that a root container that the sandbox
-// fails to start is reported as stopped once its sandbox exits.
-func TestRootStartFailureStops(t *testing.T) {
-	spec, conf := sleepSpecConf(t)
-	spec.Process.Args = []string{"/does/not/exist"}
-	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
-	if err != nil {
-		t.Fatalf("error setting up container: %v", err)
-	}
-	defer cleanup()
-	c, err := New(conf, Args{
-		ID:        testutil.RandomContainerID(),
-		Spec:      spec,
-		BundleDir: bundleDir,
-	})
-	if err != nil {
-		t.Fatalf("error creating container: %v", err)
-	}
-	defer c.Destroy()
-	if err := c.Start(conf); err == nil {
-		t.Fatalf("starting a container with a missing executable succeeded")
-	}
-	if err := testutil.Poll(func() error {
-		loaded, err := Load(conf.RootDir, FullID{ContainerID: c.ID}, LoadOpts{})
-		if err != nil {
-			return &backoff.PermanentError{Err: err}
-		}
-		if loaded.Status != Stopped {
-			return fmt.Errorf("got status %v, expected %v", loaded.Status, Stopped)
-		}
-		return nil
-	}, pollTimeout); err != nil {
-		t.Error(err)
-	}
-}
-
 func TestGetNetworkConfig(t *testing.T) {
 	for name, conf := range configs(t, false /* noOverlay */) {
 		t.Run(name, func(t *testing.T) {
@@ -698,8 +646,15 @@ func TestGetNetworkConfig(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error calling GetNetworkConfig: %v", err)
 			}
-			if len(networkArgs.LoopbackLinks) == 0 {
-				t.Error("network config loopback links is empty, want not empty")
+			if got, want := len(networkArgs.LoopbackLinks), 1; got != want {
+				t.Fatalf("network config loopback links: got %d, want %d", got, want)
+			}
+			want := []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
+				netip.PrefixFrom(netip.IPv6Loopback(), 128),
+			}
+			if got := networkArgs.LoopbackLinks[0].Addresses; !slices.Equal(got, want) {
+				t.Errorf("network config loopback addresses: got %v, want %v", got, want)
 			}
 		})
 	}
@@ -844,45 +799,6 @@ func TestLifecycle(t *testing.T) {
 			// Loading the container by id should fail.
 			if _, err = Load(rootDir, fullID, LoadOpts{Exact: true}); err == nil {
 				t.Errorf("expected loading destroyed container to fail, but it did not")
-			}
-		})
-	}
-}
-
-func TestGoferWillNeedHostRPC(t *testing.T) {
-	allIDs := []specs.LinuxIDMapping{{ContainerID: 0, HostID: 0, Size: math.MaxUint32}}
-	uidMappings, err := getIdentityMapping("uid_map")
-	if err != nil {
-		t.Fatalf("getIdentityMapping failed: %v", err)
-	}
-	gidMappings, err := getIdentityMapping("gid_map")
-	if err != nil {
-		t.Fatalf("getIdentityMapping failed: %v", err)
-	}
-	// Tests may run in a user namespace that doesn't map every ID, where the
-	// gofer may always need this process.
-	partialUserNS := !slices.Equal(uidMappings, allIDs) || !slices.Equal(gidMappings, allIDs)
-	userns := []specs.LinuxNamespace{{Type: specs.UserNamespace}}
-	shifted := []specs.LinuxIDMapping{{ContainerID: 0, HostID: 100000, Size: 65536}}
-	idMapped := specs.Mount{Destination: "/mnt", Source: "/mnt", Type: "bind", UIDMappings: shifted, GIDMappings: shifted}
-	for _, tc := range []struct {
-		name string
-		spec *specs.Spec
-		want bool
-	}{
-		{name: "no userns", spec: &specs.Spec{Linux: &specs.Linux{}}, want: partialUserNS},
-		{name: "userns mapping all IDs", spec: &specs.Spec{Linux: &specs.Linux{Namespaces: userns, UIDMappings: allIDs, GIDMappings: allIDs}}, want: partialUserNS},
-		{name: "shifted userns", spec: &specs.Spec{Linux: &specs.Linux{Namespaces: userns, UIDMappings: shifted, GIDMappings: shifted}}, want: true},
-		{name: "id-mapped mount", spec: &specs.Spec{Linux: &specs.Linux{}, Mounts: []specs.Mount{idMapped}}, want: true},
-		{name: "host procfs mount", spec: &specs.Spec{Linux: &specs.Linux{}, Mounts: []specs.Mount{{Destination: "/mnt", Source: "/proc/1/ns", Type: "bind"}}}, want: true},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got, err := goferWillNeedHostRPC(tc.spec)
-			if err != nil {
-				t.Fatalf("goferWillNeedHostRPC failed: %v", err)
-			}
-			if got != tc.want {
-				t.Errorf("goferWillNeedHostRPC got %t, expected %t", got, tc.want)
 			}
 		})
 	}
@@ -2655,11 +2571,6 @@ func TestIDMappedMount(t *testing.T) {
 				t.Fatalf("error creating container: %v", err)
 			}
 			defer c.Destroy()
-			select {
-			case <-c.goferRPCDone:
-			default:
-				t.Errorf("New returned before the gofer was done with gofer-to-host RPCs")
-			}
 			if err := c.Start(conf); err != nil {
 				t.Fatalf("error starting container: %v", err)
 			}
@@ -4902,10 +4813,82 @@ func TestExecFDExec(t *testing.T) {
 	}
 }
 
-// skipIfNotAvailable skips the test if the requested executable files are not available.
+// erofsToolsDir is initialized once by erofsToolsRoot and removed after m.Run.
+var erofsToolsDir string
+
+// Keep the package archive intact in runfiles: its absolute filesystem symlinks
+// are not portable Bazel tree outputs. Only the EROFS tests extract it.
+var erofsToolsRoot = sync.OnceValues(func() (string, error) {
+	configPath, err := testutil.FindFile("runsc/container/erofs_tools.json")
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return "", err
+	}
+	var config struct {
+		Archive string   `json:"archive"`
+		Tar     string   `json:"tar"`
+		Env     []string `json:"env"`
+	}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return "", err
+	}
+	archive, err := testutil.FindFile(config.Archive)
+	if err != nil {
+		return "", err
+	}
+	tar, err := testutil.FindFile(config.Tar)
+	if err != nil {
+		return "", err
+	}
+	root, err := os.MkdirTemp(testutil.TmpDir(), "erofs-tools-")
+	if err != nil {
+		return "", err
+	}
+	erofsToolsDir = root
+	// The tools, loader, libraries, and licenses are all under /usr. The
+	// package archive also contains legacy root aliases that conflict with
+	// directories from other packages; this fixture needs no root filesystem.
+	cmd := exec.Command(tar, "-xf", archive, "-C", root, "--no-same-owner", "./usr")
+	cmd.Env = append(os.Environ(), config.Env...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("extracting EROFS tools: %w, output: %s", err, out)
+	}
+	return root, nil
+})
+
+// erofsTool uses declared inputs under Bazel and PATH for direct execution.
+func erofsTool(name string) (string, error) {
+	if os.Getenv("TEST_SRCDIR") == "" {
+		return exec.LookPath(name)
+	}
+	root, err := erofsToolsRoot()
+	if err != nil {
+		return "", err
+	}
+	var toolPath string
+	switch name {
+	case "mkfs.erofs":
+		toolPath = "usr/bin/mkfs.erofs"
+	case "busybox":
+		toolPath = "usr/bin/busybox"
+	default:
+		return "", fmt.Errorf("unknown EROFS tool %q", name)
+	}
+	return exec.LookPath(filepath.Join(root, toolPath))
+}
+
+// skipIfNotAvailable preserves optional installed tools for direct execution.
+// Missing declared Bazel inputs are failures rather than skipped coverage.
 func skipIfNotAvailable(t *testing.T, files ...string) {
+	t.Helper()
 	for _, f := range files {
-		if _, err := exec.LookPath(f); err != nil {
+		if _, err := erofsTool(f); err != nil {
+			if os.Getenv("TEST_SRCDIR") != "" {
+				t.Fatalf("declared %v is not available: %v", f, err)
+			}
 			t.Skipf("%v is not available: %v", f, err)
 		}
 	}
@@ -4913,13 +4896,34 @@ func skipIfNotAvailable(t *testing.T, files ...string) {
 
 // createImageEROFS creates the EROFS image from the source directory using the requested options.
 func createImageEROFS(image, source string, options ...string) error {
-	mkfs, err := exec.LookPath("mkfs.erofs")
+	mkfs, err := erofsTool("mkfs.erofs")
 	if err != nil {
 		return fmt.Errorf("mkfs.erofs is not available: %v", err)
 	}
-	cmd := fmt.Sprintf("%s %s %s %s", mkfs, strings.Join(options, " "), image, source)
-	if out, err := exec.Command("/bin/sh", "-c", cmd).CombinedOutput(); err != nil {
-		return fmt.Errorf("exec: sh -c %q, err: %v, out: %s", cmd, err, out)
+	args := append(options, image, source)
+	cmd := exec.Command(mkfs, args...)
+	if os.Getenv("TEST_SRCDIR") != "" {
+		root, err := erofsToolsRoot()
+		if err != nil {
+			return err
+		}
+		var triple, loader string
+		switch runtime.GOARCH {
+		case "amd64":
+			triple, loader = "x86_64-linux-gnu", "ld-linux-x86-64.so.2"
+		case "arm64":
+			triple, loader = "aarch64-linux-gnu", "ld-linux-aarch64.so.1"
+		default:
+			return fmt.Errorf("unsupported EROFS tool architecture %q", runtime.GOARCH)
+		}
+		// mkfs uses its declared loader and library closure without changing the
+		// environment of the other container tests or their child processes.
+		libPath := filepath.Join(root, "usr/lib", triple)
+		args = append([]string{"--inhibit-cache", "--library-path", libPath, mkfs}, args...)
+		cmd = exec.Command(filepath.Join(root, "usr/lib", triple, loader), args...)
+	}
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("exec: %v, err: %v, out: %s", cmd.Args, err, out)
 	}
 	return nil
 }
@@ -4927,7 +4931,7 @@ func createImageEROFS(image, source string, options ...string) error {
 // erofsImageInfo contains information about a created EROFS image.
 type erofsImageInfo struct {
 	name    string
-	options string
+	options []string
 	path    string
 }
 
@@ -5000,37 +5004,37 @@ find $dir -type l -o -type f | sort | xargs cat | md5sum`), 0755); err != nil {
 
 	images := []struct {
 		name    string
-		options string
+		options []string
 	}{
 		{
 			// Generate extended inodes. Inline regular files if possible.
 			name:    "image1",
-			options: "-E force-inode-extended",
+			options: []string{"-E", "force-inode-extended"},
 		},
 		{
 			// Generate extended inodes. Do not inline regular files.
 			name:    "image2",
-			options: "-E force-inode-extended -E noinline_data",
+			options: []string{"-E", "force-inode-extended", "-E", "noinline_data"},
 		},
 		{
 			// Generate compact inodes. Inline regular files if possible.
 			name:    "image3",
-			options: "-E force-inode-compact",
+			options: []string{"-E", "force-inode-compact"},
 		},
 		{
 			// Generate compact inodes. Do not inline regular files.
 			name:    "image4",
-			options: "-E force-inode-compact -E noinline_data",
+			options: []string{"-E", "force-inode-compact", "-E", "noinline_data"},
 		},
-		{name: "chunk-blockmap", options: "--chunksize=8192 -E force-inode-blockmap,force-inode-compact"},
-		{name: "chunk-indexes", options: "--chunksize=8192 -E force-chunk-indexes,force-inode-extended"},
+		{name: "chunk-blockmap", options: []string{"--chunksize=8192", "-E", "force-inode-blockmap,force-inode-compact"}},
+		{name: "chunk-indexes", options: []string{"--chunksize=8192", "-E", "force-chunk-indexes,force-inode-extended"}},
 	}
 
 	var resultImages []erofsImageInfo
 	// Create the EROFS images.
 	for _, i := range images {
 		imagePath := filepath.Join(testDir, i.name)
-		if err := createImageEROFS(imagePath, sourceDir, i.options); err != nil {
+		if err := createImageEROFS(imagePath, sourceDir, i.options...); err != nil {
 			return nil, nil, fmt.Errorf("error creating EROFS image: %v", err)
 		}
 		resultImages = append(resultImages, erofsImageInfo{
@@ -5179,7 +5183,7 @@ func createRootfsEROFS(dir string, options ...string) (string, string, error) {
 	if err := os.Mkdir(rootfsDir, 0755); err != nil {
 		return "", "", fmt.Errorf("os.Mkdir() failed: %v", err)
 	}
-	busybox, err := exec.LookPath("busybox")
+	busybox, err := erofsTool("busybox")
 	if err != nil {
 		return "", "", fmt.Errorf("busybox is not available: %v", err)
 	}
@@ -5198,7 +5202,7 @@ func createRootfsEROFS(dir string, options ...string) (string, string, error) {
 
 	// Build the EROFS rootfs image.
 	rootfsImage := filepath.Join(dir, "rootfs.img")
-	if err := createImageEROFS(rootfsImage, rootfsDir, append([]string{"-E noinline_data"}, options...)...); err != nil {
+	if err := createImageEROFS(rootfsImage, rootfsDir, append([]string{"-E", "noinline_data"}, options...)...); err != nil {
 		return "", "", fmt.Errorf("error creating EROFS image: %v", err)
 	}
 

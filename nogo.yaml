@@ -235,6 +235,11 @@ analyzers:
         # External libraries may not have binaries (e.g. stdlib testdata, etc.),
         # so these cases can be safely ignored.
         - "no such file or directory"
+  checkimports:
+    generated:
+      suppress:
+        # protoc-gen-go emits unsafe descriptor access in .pb.go files.
+        - '^package unsafe imported by [^/]+\.pb\.go; must end with _unsafe\.go$'
   checklinkname:
     external: # Enabled.
       suppress:
@@ -256,16 +261,11 @@ analyzers:
         - "symbol \"runtime_pollWaitCanceled\".*"
         - "symbol \"runtime_procPin\".*"
   SA1019: # Use of deprecated identifier.
+    # disable for now due to misattribution from golang.org/issue/44195.
+    generated:
+      exclude: [".*"]
     internal:
-      suppress:
-        # Nogo's Go 1.27 compiler archives require NewReader before Read.
-        # Remove when the export-data producer switches to cmd/export:
-        # https://github.com/golang/tools/blob/ea2f152dc/go/gcexportdata/gcexportdata.go#L25-L34
-        - '^gcexportdata\.NewReader is deprecated:'
-        # OCI prestart hooks remain supported for existing container configurations.
-        - '^(c\.Spec|spec)\.Hooks\.Prestart is deprecated:'
-        # The cgroup v1 controller still honors this setting on older host kernels.
-        - '^spec\.Memory\.Kernel is deprecated:'
+      exclude: [".*"]
   SA2001: # Empty critical section.
     internal:
       exclude:
@@ -285,7 +285,6 @@ analyzers:
   SA4023: # Impossible condition.
     internal:
       exclude:
-        - runsc/boot/loader.go     # Intersect in native_arm64.go always returns error on arm64.
         - runsc/sandbox/network.go # Stubs in no_xdp.go always return error when built without XDP.
   ST1019: # Multiple imports of the same package.
     generated:

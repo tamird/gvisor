@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -194,7 +195,7 @@ func (c *bwrapConfig) mapCWD() (string, error) {
 
 // userNamespace returns the namespace and the user options implied by
 // --unshare-user, --uid and --gid.
-func (c *bwrapConfig) userNamespace() []sandbox.Option {
+func (c *bwrapConfig) userNamespace() ([]sandbox.Option, error) {
 	hostUID := os.Getuid()
 	targetUID := hostUID
 	if c.UID != -1 {
@@ -206,26 +207,30 @@ func (c *bwrapConfig) userNamespace() []sandbox.Option {
 		targetGID = c.GID
 	}
 
-	// When running under sudo (e.g. in CI tests), SUDO_UID/SUDO_GID point to the true non-root workspace owner.
-	// When running without sudo, they gracefully fallback to the current host UID/GID.
-	sudoUID := getEnvInt("SUDO_UID", hostUID)
-	sudoGID := getEnvInt("SUDO_GID", hostGID)
+	// Under sudo, map the invoking user's IDs so its files remain accessible.
+	sudoUID, err := getEnvID("SUDO_UID", uint32(hostUID))
+	if err != nil {
+		return nil, err
+	}
+	sudoGID, err := getEnvID("SUDO_GID", uint32(hostGID))
+	if err != nil {
+		return nil, err
+	}
 
 	uidMappings := []specs.LinuxIDMapping{
-		{ContainerID: uint32(targetUID), HostID: uint32(sudoUID), Size: 1},
+		{ContainerID: uint32(targetUID), HostID: sudoUID, Size: 1},
 	}
 	gidMappings := []specs.LinuxIDMapping{
-		{ContainerID: uint32(targetGID), HostID: uint32(sudoGID), Size: 1},
+		{ContainerID: uint32(targetGID), HostID: sudoGID, Size: 1},
 	}
 
-	// When runsc is executed by root (hostUID == 0), gVisor's Gofer initialization requires Container 0:0
-	// to be mapped to Host 0:0 so the Gofer process can successfully call setuid(0)/setgid(0).
-	// TODO(gvisor.dev/issue/13747): Have the sandbox bindings add the 0:0 mapping for root sandboxes with a user namespace.
+	// Keep root mapped for privileged sandbox helpers when both sides of the
+	// mapping are free. Mapping the same host ID twice is invalid.
 	if hostUID == 0 {
-		if targetUID != 0 {
+		if targetUID != 0 && sudoUID != 0 {
 			uidMappings = append(uidMappings, specs.LinuxIDMapping{ContainerID: 0, HostID: 0, Size: 1})
 		}
-		if targetGID != 0 {
+		if targetGID != 0 && sudoGID != 0 {
 			gidMappings = append(gidMappings, specs.LinuxIDMapping{ContainerID: 0, HostID: 0, Size: 1})
 		}
 	}
@@ -233,7 +238,7 @@ func (c *bwrapConfig) userNamespace() []sandbox.Option {
 	return []sandbox.Option{
 		sandbox.WithUser(uint32(targetUID), uint32(targetGID)),
 		sandbox.WithIDMappings(uidMappings, gidMappings),
-	}
+	}, nil
 }
 
 // sandboxOptions translates the parsed bubblewrap configuration into options
@@ -269,6 +274,7 @@ func (c *bwrapConfig) sandboxOptions() ([]sandbox.Option, error) {
 	}
 	opts = append(opts,
 		sandbox.WithStateDir(c.runscConfig.RootDir),
+		sandbox.WithClockSource(c.runscConfig.ClockSource),
 	)
 	if c.runscConfig.Debug {
 		opts = append(opts, sandbox.WithDebug(c.runscConfig.DebugLog))
@@ -289,8 +295,12 @@ func (c *bwrapConfig) sandboxOptions() ([]sandbox.Option, error) {
 
 	var namespaces []specs.LinuxNamespace
 	if c.UnshareUser {
+		userOpts, err := c.userNamespace()
+		if err != nil {
+			return nil, err
+		}
 		namespaces = append(namespaces, specs.LinuxNamespace{Type: specs.UserNamespace})
-		opts = append(opts, c.userNamespace()...)
+		opts = append(opts, userOpts...)
 	}
 	opts = append(opts, sandbox.WithNamespaces(namespaces...))
 
@@ -353,14 +363,22 @@ func do(ctx context.Context, c *bwrapConfig, waitStatus *unix.WaitStatus) subcom
 	return subcommands.ExitSuccess
 }
 
-// getEnvInt parses an environment variable as an integer, returning fallback if empty or invalid.
-func getEnvInt(key string, fallback int) int {
-	if s := os.Getenv(key); s != "" {
-		if v, err := strconv.Atoi(s); err == nil {
-			return v
-		}
+// getEnvID returns fallback when the variable is unset. Invalid IDs
+// must not silently select a different host user or group.
+func getEnvID(key string, fallback uint32) (uint32, error) {
+	s, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback, nil
 	}
-	return fallback
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s=%q: %w", key, s, err)
+	}
+	// Linux reserves the all-ones ID; it cannot identify a host user or group.
+	if v < 0 || v >= math.MaxUint32 {
+		return 0, fmt.Errorf("%s=%q: %w", key, s, strconv.ErrRange)
+	}
+	return uint32(v), nil
 }
 
 func (c *bwrapConfig) resolveEnv() {

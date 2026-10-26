@@ -52,14 +52,13 @@ func CloneDriverSource(dir string, version nvconf.DriverVersion) (*DriverSourceD
 		return nil, fmt.Errorf("failed to clone %s: %w\n%s", version, err, string(out))
 	}
 	return &DriverSourceDir{
-		ParentDirectory: dir,
-		Version:         version,
+		Directory: path.Join(dir, version.String()),
 	}, nil
 }
 
 // CreateIncludeFiles creates the necessary include files for the given driver version, and returns
 // the config options for the files.
-func CreateIncludeFiles(dir string, driverSource DriverSourceDir, nonUVMIoctls, uvmIoctls []nvproxy.IoctlName, uvmConstants []string) ([]ClangASTConfig, error) {
+func CreateIncludeFiles(dir string, driverSource DriverSourceDir, nonUVMIoctls, uvmIoctls []nvproxy.IoctlName) ([]ClangASTConfig, error) {
 	// Create include file for non-uvm sources
 	nonUVMFile, err := os.CreateTemp(dir, "include_non_uvm_*.cc")
 	if err != nil {
@@ -71,7 +70,7 @@ func CreateIncludeFiles(dir string, driverSource DriverSourceDir, nonUVMIoctls, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get non-uvm include paths: %w", err)
 	}
-	if err := WriteIncludeFile(includeSources, nonUVMFile, nonUVMIoctls, nil /* constants */); err != nil {
+	if err := WriteIncludeFile(includeSources, nonUVMFile, nonUVMIoctls); err != nil {
 		return nil, fmt.Errorf("failed to write include file: %w", err)
 	}
 	configNonUVM := NewParserConfig(
@@ -88,7 +87,7 @@ func CreateIncludeFiles(dir string, driverSource DriverSourceDir, nonUVMIoctls, 
 	defer UVMFile.Close()
 
 	includeSources = driverSource.GetUVMSourcePaths()
-	if err := WriteIncludeFile(includeSources, UVMFile, uvmIoctls, uvmConstants); err != nil {
+	if err := WriteIncludeFile(includeSources, UVMFile, uvmIoctls); err != nil {
 		return nil, fmt.Errorf("failed to write include file: %w", err)
 	}
 	configUVM := NewParserConfig(

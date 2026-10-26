@@ -83,8 +83,8 @@ TEST(KcovTest, Kcov) {
   EXPECT_GT(num_pcs, 0);
   ASSERT_LT(num_pcs, kSize);
   for (uint64_t i = 1; i <= num_pcs; i++) {
-    // Linux PCs depend on the kernel's virtual address layout; gVisor instead
-    // exposes synthetic coverage IDs. Neither has a fixed x86 address range.
+    // Linux PCs depend on the kernel's virtual address layout, while gVisor
+    // reports synthetic coverage IDs. Neither has a fixed x86 address range.
     EXPECT_NE(area[i], 0);
   }
 

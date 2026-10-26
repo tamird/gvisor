@@ -1,8 +1,21 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+go_test(
+    name = "sniffer_test",
+    size = "small",
+    srcs = ["sniffer_test.go"],
+    embed = [":sniffer"],
+    deps = [
+        "//pkg/abi/linux",
+        "//pkg/abi/nvgpu",
+        "//tools/ioctl_sniffer:ioctl_go_proto",
+        "@org_golang_google_protobuf//proto:go_default_library",
+    ],
 )
 
 go_library(

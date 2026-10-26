@@ -41,10 +41,9 @@ var (
 	tpuV4DeviceIDs   = map[uint64]struct{}{tpu.TPUV4DeviceID: {}, tpu.TPUV4liteDeviceID: {}}
 	tpuVFIODeviceIDs = map[uint64]struct{}{
 		tpu.TPUV4DeviceID: {}, tpu.TPUV4liteDeviceID: {}, tpu.TPUV5eDeviceID: {}, tpu.TPUV5pDeviceID: {},
-		tpu.TPUV6eDeviceID: {}, tpu.TPUV7xDeviceID: {}, tpu.TPUV6ePFDeviceID: {}, tpu.TPUV7xPFDeviceID: {},
+		tpu.TPUV6eDeviceID: {}, tpu.TPU7xDeviceID: {}, tpu.TPUV6ePFDeviceID: {}, tpu.TPU7xPFDeviceID: {},
 	}
-	// Matches PCI device addresses in domain:bus:device.function form.
-	pciDeviceRegex = regexp.MustCompile(tpu.PCIDeviceRegexPattern)
+	pciDeviceRegex = regexp.MustCompile(`0000:([[:xdigit:]]{2}|[[:xdigit:]]{4}):[[:xdigit:]]{2}\.[[:xdigit:]]{1,2}`)
 )
 
 // IsPCIDeviceDirTPU returns if the given PCI device sysfs path is a TPU device

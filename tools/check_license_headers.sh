@@ -21,7 +21,26 @@
 
 set -euo pipefail
 
-readonly BASE="${1:-origin/master}"
+if [[ ${1:-} != --manifest ]]; then
+  cd "$(dirname "${BASH_SOURCE[0]}")/.."
+  base=$(git rev-parse --verify --end-of-options "${1:-origin/master}^{commit}")
+  head=$(git rev-parse --verify HEAD)
+  bazel test --test_output=errors \
+    "--repo_env=GVISOR_HEADER_BASE=$base" "--repo_env=GVISOR_HEADER_HEAD=$head" \
+    //tools:license_headers_test
+  exit
+fi
+
+readonly manifest=$2
+exec 3<"$manifest"
+IFS= read -r -d '' base <&3
+IFS= read -r -d '' head <&3
+if [[ -z $base || -z $head ]]; then
+  echo 'error: select a comparison with tools/check_license_headers.sh BASE_REF' >&2
+  exit 1
+fi
+sources="$(dirname "$manifest")/files"
+readonly sources
 
 readonly BODY='Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,29 +81,15 @@ is_checked() {
   return 1
 }
 
-if ! git rev-parse --verify --quiet "${BASE}" >/dev/null; then
-  echo "error: base ref ${BASE} not found; is it fetched?" >&2
-  exit 1
-fi
-
-# Buffered so that a git failure aborts instead of reading as an empty list.
-added="$(mktemp)"
-trap 'rm -f "${added}"' EXIT
-if ! git diff --name-only --diff-filter=A -z "${BASE}...HEAD" >"${added}"; then
-  echo "error: unable to diff against ${BASE}" >&2
-  exit 1
-fi
-
 needle="$(printf '%s' "${BODY}" | tr '\n' '|')"
 failed=0
 checked=0
 
 while IFS= read -r -d '' file; do
   is_checked "${file}" || continue
-  [ -f "${file}" ] || continue
   checked=$((checked + 1))
 
-  header="$(normalize "${file}")"
+  header="$(normalize "$sources/$file.source")"
 
   # Generated files carry whatever their generator emits.
   if grep -qiE 'DO NOT EDIT|@generated' <<<"${header}"; then
@@ -102,7 +107,7 @@ while IFS= read -r -d '' file; do
     echo "${file}: missing Apache 2.0 license header" >&2
   fi
   failed=$((failed + 1))
-done <"${added}"
+done <&3
 
 if [ "${failed}" -ne 0 ]; then
   cat >&2 <<EOF

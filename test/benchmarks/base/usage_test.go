@@ -178,6 +178,5 @@ func reportMemoryUsage(b *testing.B, sumMemoryUsage uint64) {
 
 // TestMain is the main method for this package.
 func TestMain(m *testing.M) {
-	harness.Init()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(m.Run))
 }

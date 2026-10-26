@@ -23,6 +23,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,14 +43,13 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	dockerutil.EnsureSupportedDockerVersion()
 	flag.Parse()
-	os.Exit(m.Run())
+	os.Exit(dockerutil.RunTests(m.Run))
 }
 
 const (
 	// externalUDSRuntimeSuffix names the runtime installed by the
-	// $(RUNTIME)-net-uds target in the Makefile.
+	// shared Docker test runtime configuration.
 	externalUDSRuntimeSuffix = "-net-uds"
 
 	// externalUDSSocketPath must match the --network-proxy-path value baked into
@@ -70,8 +70,8 @@ const (
 type externalUDSProxyEnv struct {
 	container   *dockerutil.Container
 	proxyStack  *stack.Stack
-	containerIP net.IP
-	targetAddr  tcpip.Address
+	containerIP netip.Addr
+	targetAddr  netip.Addr
 }
 
 // setupExternalUDSProxyEnv creates an external SOCK_SEQPACKET unix domain
@@ -209,7 +209,7 @@ func setupExternalUDSProxyEnv(ctx context.Context, t *testing.T) *externalUDSPro
 		container:   d,
 		proxyStack:  proxyStack,
 		containerIP: containerIP,
-		targetAddr:  tcpip.AddrFrom4([4]byte{198, 51, 100, 1}),
+		targetAddr:  netip.AddrFrom4([4]byte{198, 51, 100, 1}),
 	}
 }
 
@@ -318,7 +318,7 @@ func TestExternalUDSProxyOutbound(t *testing.T) {
 		if res.payload != wantReq {
 			t.Errorf("external UDS proxy received %q, want %q", res.payload, wantReq)
 		}
-		if res.remoteAddr == nil || !res.remoteAddr.IP.Equal(env.containerIP) {
+		if res.remoteAddr == nil || res.remoteAddr.AddrPort().Addr().Unmap() != env.containerIP {
 			t.Errorf("external UDS proxy saw source IP %v, want container IP %v", res.remoteAddr, env.containerIP)
 		}
 		if res.localAddr == nil || !res.localAddr.IP.Equal(net.ParseIP(externalUDSTargetIP)) || res.localAddr.Port != externalUDSTargetPort {
@@ -358,12 +358,9 @@ func TestExternalUDSProxyInbound(t *testing.T) {
 
 	waitForContainerListener(ctx, t, env.container, listenPort, serverDone)
 
-	containerIPv4 := env.containerIP.To4()
-	if containerIPv4 == nil {
+	if !env.containerIP.Is4() {
 		t.Fatalf("container IP %v is not an IPv4 address", env.containerIP)
 	}
-	var containerAddrBytes [4]byte
-	copy(containerAddrBytes[:], containerIPv4)
 
 	dialCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
@@ -371,7 +368,7 @@ func TestExternalUDSProxyInbound(t *testing.T) {
 		dialCtx,
 		env.proxyStack,
 		tcpip.FullAddress{NIC: externalUDSProxyNIC, Addr: env.targetAddr},
-		tcpip.FullAddress{NIC: externalUDSProxyNIC, Addr: tcpip.AddrFrom4(containerAddrBytes), Port: listenPort},
+		tcpip.FullAddress{NIC: externalUDSProxyNIC, Addr: env.containerIP, Port: listenPort},
 		ipv4.ProtocolNumber,
 	)
 	if err != nil {
