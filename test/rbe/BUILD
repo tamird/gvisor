@@ -660,6 +660,7 @@ _SOURCE_ARCHIVES = {
         ("//pkg/pinring:pinring_afpacket_privileged_test_arm64", "medium", "^TestAFPacketDeferredRelease$$", "root"),
         ("//runsc/fsgofer:lisafs_hardlink_privileged_test_arm64", "small", "^TestFSGofer$$/^HardLink$$", "root"),
         ("//runsc/fsgofer:lisafs_permissions_nonroot_test_arm64", "small", "^TestXattrWithoutReadPermission$$", "nobody"),
+        ("//sandboxexec/sandbox:sandbox_network_nonroot_test_arm64", "medium", "^TestNonRootNetworkingError$$", "nobody"),
     ]
 ]
 
