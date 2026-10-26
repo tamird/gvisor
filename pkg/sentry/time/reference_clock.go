@@ -54,3 +54,9 @@ func (c *ReferenceClocks) GetTime(id ClockID) (int64, error) {
 func (c *ReferenceClocks) MonotonicRawEnabled() bool {
 	return c.monotonicRawEnabled
 }
+
+// TSCSnapshot implements Clocks.TSCSnapshot. Reference clocks do not calibrate
+// the guest counter against realtime.
+func (*ReferenceClocks) TSCSnapshot() (TSCSnapshot, bool) {
+	return TSCSnapshot{}, false
+}

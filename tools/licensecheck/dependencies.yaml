@@ -11469,10 +11469,10 @@
   sha256: 199ba1136ed51e3e2f97fb9217d2bf4b7e39f4b94ee6a46722a1e73007cf8d51
   license: Apache-2.0
 - dependency: module_proxy/exported_go_modules/cloud.google.com/go/firestore
-  version: cloud.google.com/go/firestore@v1.21.0
-  retrieved: "2026-09-30"
-  commit: 55244fffbb17915c08761157e6342aad88a27e34
-  sha256: d4106343c9a318582e002c5d9a0dc280b0100268a01a3fb327d946d080600b88
+  version: cloud.google.com/go/firestore@v1.22.0
+  retrieved: "2026-10-26"
+  commit: 9d47d1ca53dc1a3183352f67ebeb174b1d194846
+  sha256: 899690c561e928f15581c6372cdefb76afe372d0c98c9418b07fb647bb441829
   license: Apache-2.0
 - dependency: module_proxy/exported_go_modules/cloud.google.com/go/functions
   version: cloud.google.com/go/functions@v1.19.7
@@ -18151,10 +18151,10 @@
     - GPL-2.0
     - MIT
 - dependency: package_metadata
-  version: https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.7/supply-chain-v0.0.7.tar.gz
-  retrieved: "2026-10-18"
-  commit: 0025d6abf888945fd2e14d62b92ada5c6d958fbf
-  sha256: 8f27dc7393e3f3bdc793bdc4ba36d67a63c22cc9d38cc65d3204654974ea4563
+  version: https://github.com/bazel-contrib/supply-chain/releases/download/v0.0.10/supply-chain-v0.0.10.tar.gz
+  retrieved: "2026-10-26"
+  commit: 6edc3491a8a7596cef456ed1538d87343084d146
+  sha256: bfd9bc7a9932516f997d50a2770287b277bca107db285350d0485f14a1bc2203
   license: Apache-2.0
 - dependency: pigz
   version: https://zlib.net/pigz/pigz-2.8.tar.gz
