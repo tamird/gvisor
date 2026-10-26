@@ -839,3 +839,31 @@ func TestSysNetIPv4FileModes(t *testing.T) {
 		}
 	}
 }
+
+func TestSyntheticLiveTaskMountpoints(t *testing.T) {
+	s := setup(t)
+	defer s.Destroy()
+
+	k := kernel.KernelFromContext(s.Ctx)
+	tg := k.NewThreadGroup(k.RootPIDNamespace(), kernel.NewSignalHandlers(), linux.SIGCHLD, k.GlobalInit().Limits())
+	task, err := testutil.CreateTask(s.Ctx, "mountpoint", tg, s.MntNs, s.Root, s.Root)
+	if err != nil {
+		t.Fatalf("CreateTask: %v", err)
+	}
+	pid := k.RootPIDNamespace().IDOfTask(task)
+	for _, parent := range []string{"/proc", fmt.Sprintf("/proc/%d", pid), fmt.Sprintf("/proc/%d/task/%d", pid, pid)} {
+		t.Run(parent, func(t *testing.T) {
+			name := parent + "/synthetic-mountpoint"
+			pop := s.PathOpAtRoot(name)
+			if err := s.VFS.MkdirAt(s.Ctx, s.Creds, pop, &vfs.MkdirOptions{Mode: 0755, ForSyntheticMountpoint: true}); err != nil {
+				t.Errorf("synthetic MkdirAt(%q): %v", name, err)
+				return
+			}
+			d, err := s.VFS.GetDentryAt(s.Ctx, s.Creds, pop, &vfs.GetDentryOptions{})
+			if err != nil {
+				t.Fatalf("GetDentryAt(%q) after mkdir: %v", name, err)
+			}
+			d.DecRef(s.Ctx)
+		})
+	}
+}
