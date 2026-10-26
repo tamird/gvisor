@@ -288,7 +288,7 @@ def native_results(directory: Path, phase: str, owner: str, runs: int) -> tuple[
     return manifest, native
 
 
-def observations(evidence: Path, phase: str, runs: int) -> dict:
+def observations(evidence: Path, phase: str, runs: int, *, case_root=ROOT, reduce_samples=measure) -> dict:
     owner = OWNER
     directory = evidence / ("invocation-" + phase)
     verdict = json.loads((directory / "verdict.json").read_text())
@@ -329,10 +329,10 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
         if row["name"] == "test.xml":
             cases = ET.fromstring(body).findall(".//testcase")
             names = [case.attrib["name"] for case in cases]
-            if (len(names) != len(set(names)) or ROOT not in names or any(list(case) for case in cases)
+            if (len(names) != len(set(names)) or case_root not in names or any(list(case) for case in cases)
                     or run in xml_runs):
                 raise ValueError(f"{phase}: unexpected XML cases {names}")
-            xml_runs[run] = set(names) - {ROOT}
+            xml_runs[run] = set(names) - {case_root}
         elif row["name"] == "test.log":
             parts = {}
             expected = {}
@@ -352,7 +352,7 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
                     raise ValueError(f"{phase}: native trace chunk identity differs")
                 values.append(value)
             cases = {value["Case"]: value for value in values}
-            if len(cases) != len(values) or run in samples or any(not name.startswith(ROOT + "/") for name in cases):
+            if len(cases) != len(values) or run in samples or any(not name.startswith(case_root + "/") for name in cases):
                 raise ValueError(f"{phase}: invalid virtual transfer identities")
             samples[run] = cases
         else:
@@ -364,12 +364,16 @@ def observations(evidence: Path, phase: str, runs: int) -> dict:
     for run, sample in samples.items():
         if xml_runs[run] != set(sample) or sample != baseline:
             raise ValueError(f"{phase}: case identity or complete virtual observations differ in run {run}")
-    return {"attempts": runs, "measurements": measure(baseline), "reports": references,
+    return {"attempts": runs, "measurements": reduce_samples(baseline), "reports": references,
             "complete_observation_sha256": digest(baseline)}
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
+    if config.get("experiment") == "single-loss-frontier":
+        from frontier_workload import run_frontier
+        run_frontier(invoke, evidence, config)
+        return
     child, parent, stock = (config[k] for k in ("source", "prerequisite", "stock"))
     if (config["targets"] != [OWNER] or config["expected_sources"] != [child, parent, stock]
             or subprocess.check_output(["git", "rev-parse", child + "^", child + "^^"], text=True).splitlines() != [parent, stock]):

@@ -591,6 +591,8 @@ func NewProtocolCUBIC(s *stack.Stack) stack.TransportProtocol {
 type RTODiagnostic struct {
 	GuardACK   bool
 	GuardTimer bool
+	// Timestamps retains normal timestamp negotiation for the single-loss measurement.
+	Timestamps bool
 	Observe    func(RTOEvent)
 }
 
@@ -604,6 +606,7 @@ type RTOEvent struct {
 	NewSACK                         bool
 	SACK                            []header.SACKBlock
 	Cwnd, Threshold, Flight, Sacked int
+	PeerWindow                      uint32 `json:",omitempty"`
 	Lost                            int
 	Copy                            *RTOLossCopy `json:",omitempty"`
 }
@@ -654,6 +657,9 @@ func (s *sender) observeRTOCopy(kind string, seg *segment, lost int, copy *RTOLo
 		SACKEnabled: s.ep.SACKPermitted, Timestamps: s.ep.SendTSOk,
 		Cwnd: s.SndCwnd, Threshold: s.Ssthresh, Flight: s.Outstanding, Sacked: s.SackedOut, Lost: lost,
 		Copy: copy,
+	}
+	if d.Timestamps {
+		row.PeerWindow = uint32(s.SndWnd)
 	}
 	if seg != nil {
 		row.ACK = uint32(seg.ackNumber)

@@ -69,6 +69,12 @@ type lossSchedule struct {
 	First, Last int
 }
 
+const frontierByte = 128 << 10
+
+func (l lossSchedule) frontier() bool {
+	return l.Name == "frontier_control" || l.Name == "frontier_loss"
+}
+
 type wire struct {
 	At, Due                       int64
 	From, Offer                   int
@@ -78,11 +84,20 @@ type wire struct {
 	Hash                          string
 	TS, Permitted, Dropped, Retry bool
 	SACK                          []header.SACKBlock
+	QueueDrop, Injected           bool `json:",omitempty"`
+	Occupancy                     int  `json:",omitempty"`
+	IPBytes                       int  `json:",omitempty"`
 }
 
 type event struct {
-	Wire   *wire         `json:",omitempty"`
-	Sender *tcp.RTOEvent `json:",omitempty"`
+	Wire    *wire            `json:",omitempty"`
+	Sender  *tcp.RTOEvent    `json:",omitempty"`
+	Ingress *frontierIngress `json:",omitempty"`
+}
+
+type frontierIngress struct {
+	At     int64
+	Packet wire
 }
 
 type trial struct {
@@ -95,6 +110,11 @@ type trial struct {
 	BodyHash                                         string
 	EOF, FinACK                                      bool
 	Drops, Offers                                    int
+	QueueDrops                                       [2]int  `json:",omitempty"`
+	MaxOccupancy                                     [2]int  `json:",omitempty"`
+	WirePackets                                      int     `json:",omitempty"`
+	WireHash                                         string  `json:",omitempty"`
+	EchoNS                                           []int64 `json:",omitempty"`
 	Retransmissions, RTOs, SACKRecoveries            uint64
 	Events                                           []event
 }
@@ -127,8 +147,17 @@ func TestVirtualTCPNoTimestampBurst(t *testing.T) {
 
 func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timerGuard bool) trial {
 	t.Helper()
+	frontier := loss.frontier()
+	demand, buffer := dataBytes, int64(1<<20)
+	rates := [2]int64{rate, rate}
+	latency := delay
+	if frontier {
+		demand, buffer = 4<<20, 8<<20
+		rates = [2]int64{1250000, 12500000}
+		latency = 50 * time.Millisecond
+	}
 	row := trial{Case: t.Name(), Algorithm: algorithm, KernelOS: runtime.GOOS, KernelArch: runtime.GOARCH, Go: runtime.Version(),
-		Schedule: loss, Offered: dataBytes, GuardACK: ackGuard, GuardTimer: timerGuard}
+		Schedule: loss, Offered: demand, GuardACK: ackGuard, GuardTimer: timerGuard}
 	clock := &completedClock{ManualClock: faketime.NewManualClock()}
 	now := func() time.Duration { return clock.NowMonotonic().Sub(tcpip.MonotonicTime{}) }
 	// As in the existing virtual transfer driver, clock advancement and both
@@ -136,14 +165,38 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 	var mu sync.Mutex
 	var watching bool
 	var recoveryPoint uint32
+	var base uint32
+	var haveBase, windowDone bool
+	wireHash := sha256.New()
 	record := func(w *wire) {
 		mu.Lock()
+		defer mu.Unlock()
+		if frontier {
+			b, err := json.Marshal(w)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wireHash.Write(b)
+			wireHash.Write([]byte{'\n'})
+			row.WirePackets++
+			if windowDone && !w.Dropped {
+				return
+			}
+		}
 		row.Events = append(row.Events, event{Wire: w})
-		mu.Unlock()
 	}
-	probe := tcp.RTODiagnostic{GuardACK: ackGuard, GuardTimer: timerGuard, Observe: func(r tcp.RTOEvent) {
+	probe := tcp.RTODiagnostic{GuardACK: ackGuard, GuardTimer: timerGuard, Timestamps: frontier, Observe: func(r tcp.RTOEvent) {
 		mu.Lock()
 		defer mu.Unlock()
+		if frontier {
+			if !windowDone || strings.HasSuffix(r.Kind, "_cc") || r.Kind == "rto_interrupt" || r.Kind == "enter_recovery" {
+				row.Events = append(row.Events, event{Sender: &r})
+			}
+			if haveBase && r.Kind == "ack_end" && int32(r.UNA-base) >= frontierByte+(192<<10) {
+				windowDone = true
+			}
+			return
+		}
 		if r.Kind == "rto_enter" {
 			watching, recoveryPoint = true, r.Last
 		}
@@ -211,7 +264,8 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 		s.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
 	}
 	var seq, high uint32
-	var first bool
+	var first, sawTarget bool
+	bulk := !frontier
 	var syn [2]int
 	capture := func(side int, pkt *stack.PacketBuffer) {
 		defer pkt.DecRef()
@@ -234,14 +288,17 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 			}
 			syn[side]++
 		}
-		if w.TS {
-			t.Fatalf("side %d emitted a timestamp: %+v", side, w)
+		if w.TS != frontier {
+			t.Fatalf("side %d timestamp=%v, want %v: %+v", side, w.TS, frontier, w)
 		}
-		if side == 0 && w.Bytes != 0 {
+		if side == 0 && w.Bytes != 0 && bulk {
 			row.Offers++
 			w.Offer = row.Offers
 			if !first {
 				seq, first, row.FirstData = w.Seq, true, int64(now())
+				mu.Lock()
+				base, haveBase = seq, true
+				mu.Unlock()
 			}
 			offset := w.Seq - seq
 			w.Retry = offset < high
@@ -254,8 +311,36 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 				row.Drops++
 			}
 		}
-		tx[side] = max(tx[side], now()) + time.Duration((int64(pkt.Size())*int64(time.Second)+rate-1)/rate)
-		at := tx[side] + delay
+		if frontier {
+			w.IPBytes = pkt.Size()
+			// Count every packet awaiting delivery, including propagation, as
+			// netem does with its packet limit. Reject overflow before service.
+			for _, p := range pending {
+				if p.from == side {
+					w.Occupancy++
+				}
+			}
+			row.MaxOccupancy[side] = max(row.MaxOccupancy[side], w.Occupancy)
+			if w.Occupancy >= 100 {
+				w.QueueDrop, w.Dropped = true, true
+				row.QueueDrops[side]++
+				row.Drops++
+				record(&w)
+				return
+			}
+			// Injection below TCP costs the actual forward service and delay.
+			// A retry can never trigger a second artificial loss.
+			if bulk && side == 0 && w.Bytes != 0 && !sawTarget && uint32(frontierByte)-(w.Seq-seq) < uint32(w.Bytes) {
+				sawTarget = true
+				if loss.Name == "frontier_loss" {
+					w.Injected, w.Dropped = true, true
+					row.Drops++
+				}
+			}
+		}
+		wireRate := rates[side]
+		tx[side] = max(tx[side], now()) + time.Duration((int64(pkt.Size())*int64(time.Second)+wireRate-1)/wireRate)
+		at := tx[side] + latency
 		w.Due = int64(at)
 		record(&w)
 		pending = append(pending, delivery{at, side, stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: pkt.ToBuffer()}), w})
@@ -312,6 +397,13 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 			p := pending[idx]
 			pending = append(pending[:idx], pending[idx+1:]...)
 			if !p.row.Dropped {
+				if frontier {
+					mu.Lock()
+					if !windowDone {
+						row.Events = append(row.Events, event{Ingress: &frontierIngress{int64(now()), p.row}})
+					}
+					mu.Unlock()
+				}
 				links[1-p.from].InjectInbound(ipv4.ProtocolNumber, p.packet)
 				if p.from == 1 && first && p.row.Flags.Contains(header.TCPFlagAck) {
 					row.Acknowledged = max(row.Acknowledged, min(high, p.row.ACK-seq))
@@ -331,12 +423,12 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 		return ep
 	}
 	client, listener := endpoint(0), endpoint(1)
-	client.SocketOptions().SetSendBufferSize(1<<20, true)
-	listener.SocketOptions().SetReceiveBufferSize(1<<20, true)
-	if got := client.SocketOptions().GetSendBufferSize(); got != 1<<20 {
+	client.SocketOptions().SetSendBufferSize(buffer, true)
+	listener.SocketOptions().SetReceiveBufferSize(buffer, true)
+	if got := client.SocketOptions().GetSendBufferSize(); got != buffer {
 		t.Fatalf("send buffer=%d", got)
 	}
-	if got := listener.SocketOptions().GetReceiveBufferSize(); got != 1<<20 {
+	if got := listener.SocketOptions().GetReceiveBufferSize(); got != buffer {
 		t.Fatalf("receive buffer=%d", got)
 	}
 	serverAddr := tcpip.FullAddress{Addr: addr[1], Port: 8080}
@@ -373,7 +465,38 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 		t.Fatalf("sender CC=%s, want %s: %v", actual, algorithm, err)
 	}
 	row.Algorithm = string(actual)
-	data := make([]byte, dataBytes)
+	if frontier {
+		client.SocketOptions().SetDelayOption(false)
+		peer.SocketOptions().SetDelayOption(false)
+		exchange := func(sender, receiver tcpip.Endpoint) {
+			t.Helper()
+			if n, err := sender.Write(bytes.NewReader([]byte{'p'}), tcpip.WriteOptions{}); err != nil || n != 1 {
+				t.Fatalf("echo write=%d,%v", n, err)
+			}
+			limit := now() + time.Second
+			var b bytes.Buffer
+			for now() < limit {
+				step(limit)
+				_, err := receiver.Read(&b, tcpip.ReadOptions{})
+				if _, wait := err.(*tcpip.ErrWouldBlock); wait {
+					continue
+				}
+				if err != nil || b.String() != "p" {
+					t.Fatalf("echo read=%q,%v", b.String(), err)
+				}
+				return
+			}
+			t.Fatal("echo timeout")
+		}
+		for range 7 {
+			start := now()
+			exchange(client, peer)
+			exchange(peer, client)
+			row.EchoNS = append(row.EchoNS, int64(now()-start))
+		}
+		bulk = true
+	}
+	data := make([]byte, demand)
 	for i := range data {
 		data[i] = byte(i*17 + i/251)
 	}
@@ -423,7 +546,10 @@ func runTrial(t *testing.T, algorithm string, loss lossSchedule, ackGuard, timer
 	row.BodyHash = fmt.Sprintf("%x", sha256.Sum256(received.Bytes()))
 	stats := stacks[0].Stats().TCP
 	row.Retransmissions, row.RTOs, row.SACKRecoveries = stats.Retransmits.Value(), stats.Timeouts.Value(), stats.SACKRecovery.Value()
-	if row.FinACK && row.Acknowledged != dataBytes {
+	if frontier {
+		row.WireHash = fmt.Sprintf("%x", wireHash.Sum(nil))
+	}
+	if row.FinACK && row.Acknowledged != uint32(demand) {
 		t.Fatal("FIN ACK without all bytes")
 	}
 	for side, s := range stacks {
@@ -453,5 +579,21 @@ func TestVirtualTCPRTOFlight(t *testing.T) {
 		t.Run(schedule.Name, func(t *testing.T) {
 			runTrial(t, "reno", schedule, false, false)
 		})
+	}
+}
+
+// TestVirtualTCPSingleLossFrontier shares the real sender, receiver and
+// deterministic clock with the existing loss diagnostics. Every arm uses the
+// same finite queue; only receipt of the named original segment changes.
+func TestVirtualTCPSingleLossFrontier(t *testing.T) {
+	if runtime.GOMAXPROCS(0) != 1 {
+		t.Fatal("one TCP processor per stack is required")
+	}
+	for _, name := range []string{"frontier_control", "frontier_loss"} {
+		for _, cc := range []string{"cubic", "reno"} {
+			t.Run(cc+"_"+name, func(t *testing.T) {
+				runTrial(t, cc, lossSchedule{Name: name}, false, false)
+			})
+		}
 	}
 }
