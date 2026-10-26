@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+    "updatedAt": "2026-10-26T22:23:56.114433+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -9930,32 +9930,37 @@
       "id": "branch:state-primitive-array-storage",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "state-primitive-array-storage",
-      "head": "3b13f133c033512ce901163cfe33eebd80a49965",
-      "title": "Capture primitive arrays without per-element boxing",
+      "ref": "review/state-primitive-arrays",
+      "head": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+      "title": "Capture primitive state arrays in typed storage",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
-      "status": "Preserved investigation history",
-      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
-      "summary": "This abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
+      "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
+      "summary": "The contributor approved the primitive-array stage 689706c88 after independent source review. Open it after the wire loader #16380 lands, carrying the same approved implementation onto that landed base. The benchmark fixture is not an implementation prerequisite despite its presence in this retained fork ancestry. Its exact pkg/state tree passed nine selected remote owners, 10,928 positive XML records, no skips, failures or missing records.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
       "followup": {
-        "disposition": "Superseded by the current destination-driven redesign",
-        "owner": "root",
-        "sourceHead": "3b13f133c033512ce901163cfe33eebd80a49965",
-        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Retain the source and findings as history; follow the single destination-driven redesign for active work.",
+        "owner": "work_map_current",
+        "sourceHead": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "disposition": "Approved for automatic opening after prerequisites",
+        "nextAction": "Open the approved primitive-array PR when #16380 lands, reparenting away incidental benchmark ancestry; no further contributor decision is required.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
-          "https://app.buildbuddy.io/invocation/463669e5-4701-4d87-b24e-ec1d8813428a",
-          "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
-          "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5",
-          "https://github.com/tamird/gvisor/commit/48643e138c5244eb957a84a6a5c60b46124c1955",
-          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
-          "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
-        ],
-        "observedAt": "2026-10-21T18:16:40.279706+00:00"
+          "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
+          "https://app.buildbuddy.io/invocation/8da1f7ff-38b9-42fc-9863-673bb171a228"
+        ]
       },
-      "inactive": true
+      "inactive": false,
+      "evidence": [
+        {
+          "label": "Approved split source",
+          "url": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b"
+        },
+        {
+          "label": "Exact stage normal qualification",
+          "url": "https://app.buildbuddy.io/invocation/8da1f7ff-38b9-42fc-9863-673bb171a228"
+        }
+      ]
     },
     {
       "id": "pr:15643",
@@ -10299,33 +10304,37 @@
       "id": "branch:review/state-reference-arrays",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/state-reference-arrays",
-      "head": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-      "title": "Capture pointer arrays as stable state references",
+      "ref": "review/state-reference-arrays-split",
+      "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+      "title": "Capture homogeneous state reference arrays",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-      "status": "Preserved investigation history",
-      "updatedAt": "2026-10-21T18:16:40.279706+00:00",
-      "summary": "This abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
+      "summary": "The contributor approved the reference-array stage 7b4e8579e after independent source review. It follows typed primitive arrays and will open after that prerequisite lands. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
-        "disposition": "Superseded by the current destination-driven redesign",
-        "owner": "root",
-        "sourceHead": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Retain the source and findings as history; follow the single destination-driven redesign for active work.",
+        "owner": "work_map_current",
+        "sourceHead": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "disposition": "Approved for automatic opening after prerequisites",
+        "nextAction": "Open the approved reference-array PR after the primitive-array prerequisite lands; no further contributor decision is required.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-          "https://app.buildbuddy.io/invocation/5b1e64cd-0b69-414c-9f46-85f618ed6d95",
-          "https://app.buildbuddy.io/invocation/ff0d8ec2-b87d-4494-a52c-08eef59288c7",
-          "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
-          "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5",
-          "https://github.com/tamird/gvisor/commit/48643e138c5244eb957a84a6a5c60b46124c1955",
-          "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
-          "https://github.com/tamird/gvisor/commit/4d282eb89a5a943ff96c5608dd2f1517a9958952"
-        ],
-        "observedAt": "2026-10-21T18:16:40.279706+00:00"
+          "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
+          "https://app.buildbuddy.io/invocation/b1695ab9-c0b9-45ef-b6fe-39a1dd339fc1"
+        ]
       },
-      "inactive": true
+      "inactive": false,
+      "evidence": [
+        {
+          "label": "Approved split source",
+          "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776"
+        },
+        {
+          "label": "Exact stage normal qualification",
+          "url": "https://app.buildbuddy.io/invocation/b1695ab9-c0b9-45ef-b6fe-39a1dd339fc1"
+        }
+      ]
     },
     {
       "id": "pr:15650",
@@ -18037,26 +18046,24 @@
       "repo": "google/gvisor",
       "number": 16057,
       "ref": "review/proc-creation-locking",
-      "head": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
+      "head": "b039155d0869ebda7eb3973a6f8b79fab4f6d001",
       "title": "Preserve procfs lookup errors during creation",
       "url": "https://github.com/google/gvisor/pull/16057",
       "group": "runtime",
       "status": "open",
-      "summary": "The reviewed fork amendment b039155d0 is ready for contributor review against public 859fb9e04. It extends procfs lookup/error coverage to hard-link destinations, missing and overlong rename names, NOREPLACE and same-inode behavior, ordinary proc-root to PID-directory destinations, and read-only creation. Four real proc syscall cases pass in each of native Linux, DirectFS and shared modes: twelve passes, no failures or skips.\n\nA reverse PID-source rename remains a separate open follow-up: /proc/self/status to /proc/version returns EPERM natively and EACCES in both systrap modes. This amendment does not claim to fix or qualify that direction.\n\nEarlier source-specific record:\n\nThe requested post-#16046 rebase is published at a400475087d7 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at eca97a613b. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at eca97a613b16d5c61fec9064e2cad005578c2407 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118634037736 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16057 at a75577a78618fe57dc07c30d98cf2c9776573fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe refined procfs creation proposal a28c preserves Linux lookup errors for mkdir, symlink, mknod and O_CREAT, including missing overlong names, while retaining internal synthetic mountpoints. Compared with c29 it restores the original caller-held directory lock for ordinary creation and releases it only for procfs revalidation. Exact integration e5d6 passed12 configured owners/154 positive records: nine proc/kernfs/analyzer/lint owners plus actual native, directfs and shared ProcTest.Create cases. Both components passed independent evidence review. Root requested contributor review once for a28c, explicitly superseding the pending c29 question; no upstream PR has been opened. No measured performance, standalone-binary equivalence or full Node runtime result is claimed.",
+      "summary": "The contributor-approved amendment is published at b039155d0. All eight Lucas discussions have submitted replies and are resolved; maintainer review and current checks remain separate. Four real proc syscall cases passed in each of native Linux, DirectFS and shared modes: twelve positives, no failures or skips. The reverse /proc/self/status to /proc/version EPERM/EACCES difference remains separate agent work, not a claim of this amendment.\n\nEarlier source-specific record:\n\nThe requested post-#16046 rebase is published at a400475087d7 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at eca97a613b. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at eca97a613b16d5c61fec9064e2cad005578c2407 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118634037736 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16057 at a75577a78618fe57dc07c30d98cf2c9776573fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe refined procfs creation proposal a28c preserves Linux lookup errors for mkdir, symlink, mknod and O_CREAT, including missing overlong names, while retaining internal synthetic mountpoints. Compared with c29 it restores the original caller-held directory lock for ordinary creation and releases it only for procfs revalidation. Exact integration e5d6 passed12 configured owners/154 positive records: nine proc/kernfs/analyzer/lint owners plus actual native, directfs and shared ProcTest.Create cases. Both components passed independent evidence review. Root requested contributor review once for a28c, explicitly superseding the pending c29 question; no upstream PR has been opened. No measured performance, standalone-binary equivalence or full Node runtime result is claimed.",
       "followup": {
         "owner": "pinring_source_scope",
-        "sourceHead": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
-        "observedAt": "2026-10-26T22:13:52.843363+00:00",
-        "disposition": "Reviewed amendment ready for contributor review",
-        "nextAction": "Review b039155d0 against the current public head. Keep the independently observed reverse PID-source error difference as separate agent work.",
+        "sourceHead": "b039155d0869ebda7eb3973a6f8b79fab4f6d001",
+        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "disposition": "Approved amendment published and addressed threads resolved",
+        "nextAction": "Follow current upstream review and checks. Keep the reverse PID-source error difference with its independent owner.",
         "evidence": [
-          "https://github.com/google/gvisor/actions/runs/39424653924/job/118634037736",
-          "https://github.com/google/gvisor/pull/16031",
-          "https://github.com/google/gvisor/pull/16048",
-          "https://github.com/tamird/gvisor/commit/a400475087d78a7359464817c6e45fc4c22bba73"
+          "https://github.com/google/gvisor/pull/16057",
+          "https://github.com/google/gvisor/pull/16057#pullrequestreview-5659883950"
         ]
       },
-      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -18089,6 +18096,10 @@
         {
           "label": "Retained child qualification",
           "url": "https://app.buildbuddy.io/invocation/4e216e66-ac92-4b08-9cf1-8e88d351d138"
+        },
+        {
+          "label": "Published amendment and eight thread answers",
+          "url": "https://github.com/google/gvisor/pull/16057#pullrequestreview-5659883950"
         }
       ],
       "ciRecovery": {
@@ -18110,16 +18121,6 @@
             "jobURL": "https://github.com/google/gvisor/actions/runs/39424653924/job/118634037736"
           }
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "b039155d0869ebda7eb3973a6f8b79fab4f6d001",
-        "baseHead": "859fb9e0471ea2d8cb172adb6e3c52ee6d11485e",
-        "url": "https://github.com/tamird/gvisor/commit/b039155d0869ebda7eb3973a6f8b79fab4f6d001",
-        "title": "Extend procfs creation and rename error coverage",
-        "summary": "Address the reviewed procfs lookup and error cases while retaining the separate reverse PID-source follow-up.",
-        "body": "Four real syscall cases passed in native Linux, DirectFS and shared modes, twelve positives with no failures or skips. The reverse /proc/self/status to /proc/version EPERM/EACCES difference remains open and is not a verified claim of this amendment."
       }
     },
     {
@@ -20327,9 +20328,9 @@
       "title": "Split state array storage into reviewable changes",
       "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
-      "summary": "The four-part split has passed independent source review and is ready for one contributor decision on the linked fork proposal. Wire loading, benchmark fixtures, primitive arrays and reference arrays remain separately inspectable. The benchmark fixture is independently published at d8c5f75da on the common baseline: its exact patch and complete pkg/state tree match the already-qualified baseline. It does not require the wire-loader change. The implementation dependency is wire loader, then primitive arrays, then reference arrays; incidental fixture ancestry does not make it a production prerequisite. Public #16380 remains unchanged.\n\nThe existing container checkpoint/resume target passes six records; the DirectFS pipe-save target passes 151 records with four existing named-pipe skips; the actual Docker checkpoint and resume methods both pass. Two completed invocations required later authenticated collection after a local DNS interruption; their original INCOMPLETE receipts remain preserved and no tests reran. This is selected AMD64 checkpoint coverage, not a full Docker/save suite or ARM runtime result.\n\nA fresh twenty-leaf encoding/decoding comparison measured 1,024 fewer allocations for slice and adopted-array cases. The unchanged gob controls varied substantially across the separate workers, so this comparison supplies allocation evidence without a clean timing claim.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
+      "status": "Delivered split; remaining stages tracked separately",
+      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
+      "summary": "The contributor approved the four-stage split. The wire loader is published in #16380 and the independent benchmark in #16453. Primitive and reference arrays remain separately linked approved work, gated by the preceding production stage. This historical proposal has no outstanding contributor action.\n\nSuperseded proposal record:\n\nThe four-part split has passed independent source review and is ready for one contributor decision on the linked fork proposal. Wire loading, benchmark fixtures, primitive arrays and reference arrays remain separately inspectable. The benchmark fixture is independently published at d8c5f75da on the common baseline: its exact patch and complete pkg/state tree match the already-qualified baseline. It does not require the wire-loader change. The implementation dependency is wire loader, then primitive arrays, then reference arrays; incidental fixture ancestry does not make it a production prerequisite. Public #16380 remains unchanged.\n\nThe existing container checkpoint/resume target passes six records; the DirectFS pipe-save target passes 151 records with four existing named-pipe skips; the actual Docker checkpoint and resume methods both pass. Two completed invocations required later authenticated collection after a local DNS interruption; their original INCOMPLETE receipts remain preserved and no tests reran. This is selected AMD64 checkpoint coverage, not a full Docker/save suite or ARM runtime result.\n\nA fresh twenty-leaf encoding/decoding comparison measured 1,024 fewer allocations for slice and adopted-array cases. The unchanged gob controls varied substantially across the separate workers, so this comparison supplies allocation evidence without a clean timing claim.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
           "label": "Original approved change",
@@ -20343,16 +20344,13 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
-        "disposition": "Independently reviewed split ready for contributor decision",
-        "nextAction": "Review the single linked split proposal. The benchmark fixture can be submitted independently; preserve the actual loader/primitive/reference dependencies when delivering the implementation stages.",
+        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "disposition": "Contributor approval consumed; two PRs published",
+        "nextAction": "Use the published wire and benchmark PRs and the separately tracked primitive/reference stages.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16380",
-          "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
-          "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615",
-          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5643702405",
-          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5657639744"
-        ],
-        "observedAt": "2026-10-26T22:13:52.843363+00:00"
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
+          "https://github.com/google/gvisor/pull/16453"
+        ]
       },
       "refinement": {
         "before": {
@@ -20429,15 +20427,7 @@
           "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...7b4e8579e089e89a237fdd22cd0f5e83658d3776"
         }
       ],
-      "inactive": false,
-      "contributorReview": {
-        "status": "pending",
-        "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
-        "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
-        "title": "Review the state-array split",
-        "summary": "Review wire loading, independent benchmark fixtures, primitive arrays and reference arrays separately, with one decision for the proposed split.",
-        "body": "The standalone benchmark fixture d8c5f75da needs no loader change. The implementation stages depend on wire loading, then primitive arrays, then reference arrays. Each selected stage and the final normal/race checks pass; actual container checkpoint/resume, DirectFS pipe-save and Docker checkpoint methods also pass with the recorded existing skips. Fresh benchmarks establish allocation savings, not a clean latency improvement."
-      }
+      "inactive": true
     },
     {
       "id": "branch:state-destination-kind",
@@ -23924,13 +23914,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/state-wire-storage-current",
-      "head": "f7204694d85924f979109ff60ea28f34abf14714",
-      "title": "Retain typed homogeneous state arrays",
+      "head": "3c6804639b39ceeb6dd55b49d25a905794cbece1",
+      "title": "Centralize state wire payload loading",
       "url": "https://github.com/google/gvisor/pull/16380",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
-      "summary": "The four-part split has passed independent source review and is ready for one contributor decision on the linked fork proposal. Wire loading, benchmark fixtures, primitive arrays and reference arrays remain separately inspectable. The benchmark fixture is independently published at d8c5f75da on the common baseline: its exact patch and complete pkg/state tree match the already-qualified baseline. It does not require the wire-loader change. The implementation dependency is wire loader, then primitive arrays, then reference arrays; incidental fixture ancestry does not make it a production prerequisite. Public #16380 remains unchanged.\n\nThe existing container checkpoint/resume target passes six records; the DirectFS pipe-save target passes 151 records with four existing named-pipe skips; the actual Docker checkpoint and resume methods both pass. Two completed invocations required later authenticated collection after a local DNS interruption; their original INCOMPLETE receipts remain preserved and no tests reran. This is selected AMD64 checkpoint coverage, not a full Docker/save suite or ARM runtime result.\n\nA fresh twenty-leaf encoding/decoding comparison measured 1,024 fewer allocations for slice and adopted-array cases. The unchanged gob controls varied substantially across the separate workers, so this comparison supplies allocation evidence without a clean timing claim.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
+      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
+      "summary": "The approved split is published: #16380 now contains only wire payload loading at 3c6804639. Independent benchmark fixtures are open as #16453 at d8c5f75da. All eleven Lucas discussions received substantive replies in one submitted review and are resolved. The primitive-array stage is approved for opening after this wire loader lands; reference arrays are approved for opening after primitives. The benchmark PR is independent, not a production prerequisite. No contributor decision remains for this split.\n\nThe exact wire-stage pkg/state tree passed nine selected remote owners, 10,719 positive XML records and no skips, failures or missing records. This is the loader stage; the separate final-series allocation, race and checkpoint results below retain their own source scope.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
           "label": "Original approved change",
@@ -23943,17 +23933,14 @@
       ],
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "f7204694d85924f979109ff60ea28f34abf14714",
-        "disposition": "Independently reviewed split ready for contributor decision",
-        "nextAction": "Review the single linked split proposal. The benchmark fixture can be submitted independently; preserve the actual loader/primitive/reference dependencies when delivering the implementation stages.",
+        "sourceHead": "3c6804639b39ceeb6dd55b49d25a905794cbece1",
+        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "disposition": "Approved wire stage published; review and CI remain upstream",
+        "nextAction": "Follow current provider review and checks. Deliver the already-approved primitive and reference stages after their actual prerequisites land; do not ask the contributor again.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16380",
-          "https://app.buildbuddy.io/invocation/4d89a1e4-70f3-4b72-8200-7ae4f784b44c",
-          "https://app.buildbuddy.io/invocation/cd06eacd-5359-40e5-84e1-40b0594b8615",
-          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5643702405",
-          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5657639744"
-        ],
-        "observedAt": "2026-10-26T22:13:52.843363+00:00"
+          "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910"
+        ]
       },
       "evidence": [
         {
@@ -24019,6 +24006,18 @@
         {
           "label": "Complete reviewed four-commit series",
           "url": "https://github.com/tamird/gvisor/compare/7bffefa9185aa55ba377e8a5534210a7f0cbf266...7b4e8579e089e89a237fdd22cd0f5e83658d3776"
+        },
+        {
+          "label": "Wire-stage normal suites and analyzers",
+          "url": "https://app.buildbuddy.io/invocation/d12a4242-459c-4666-8e5c-e5e71a9c55cb"
+        },
+        {
+          "label": "Published independent benchmark fixtures",
+          "url": "https://github.com/google/gvisor/pull/16453"
+        },
+        {
+          "label": "Split and all eleven inline answers",
+          "url": "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910"
         }
       ],
       "number": 16380
@@ -25405,6 +25404,44 @@
         "after": {
           "head": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b"
         }
+      }
+    },
+    {
+      "id": "pr:16453",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16453,
+      "ref": "review/state-array-benchmarks-standalone",
+      "head": "d8c5f75da340974a15607c762f9dd2053e3a0f2b",
+      "title": "Benchmark late state-array parent discovery",
+      "url": "https://github.com/google/gvisor/pull/16453",
+      "group": "runtime",
+      "status": "open",
+      "summary": "The approved independent benchmark fixture is published at d8c5f75da directly on the common public baseline. It checks late parent discovery, one save per child and restored parent/child aliasing, alongside existing pointer, map and slice workloads. Its exact patch matches the reviewed fixture and its complete pkg/state tree matches the qualified benchmark baseline. It does not depend on the wire loader or typed-array production changes. No contributor decision remains.",
+      "evidence": [
+        {
+          "label": "Standalone approved source",
+          "url": "https://github.com/tamird/gvisor/commit/d8c5f75da340974a15607c762f9dd2053e3a0f2b"
+        },
+        {
+          "label": "Matching package-tree normal qualification",
+          "url": "https://app.buildbuddy.io/invocation/17816f6f-63f9-445d-9d2b-4a894af00824"
+        },
+        {
+          "label": "Exact matching standalone package-tree benchmark baseline",
+          "url": "https://app.buildbuddy.io/invocation/536239b6-b9e8-4d32-96f3-8920a774508d"
+        }
+      ],
+      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "d8c5f75da340974a15607c762f9dd2053e3a0f2b",
+        "observedAt": "2026-10-26T22:23:56.114433+00:00",
+        "disposition": "Approved independent benchmark PR published",
+        "nextAction": "Follow current upstream review and checks independently of the production stages.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16453"
+        ]
       }
     }
   ],
@@ -28099,16 +28136,15 @@
       "from": "branch:state-wire-storage",
       "to": "pr:16380",
       "type": "includes",
-      "reason": "The independently reviewed four-part replacement awaits one contributor decision; the public source PR remains unchanged.",
-      "evidence": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
-      "role": "proposed_update"
+      "reason": "The approved split delivered its wire-only stage in this PR; the remaining stages have their own records.",
+      "evidence": "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910"
     },
     {
-      "from": "pr:16380",
+      "from": "branch:review/state-reference-arrays",
       "to": "branch:state-destination-kind",
       "type": "depends_on",
-      "reason": "The independently approved destination-kind correction waits for the delivered array-storage prerequisite.",
-      "evidence": "https://github.com/google/gvisor/pull/16380"
+      "reason": "Preserve the existing approval condition: the complete homogeneous-array prerequisite must land before the destination-kind follow-up; narrowing #16380 to only the loader does not clear this gate.",
+      "evidence": "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910"
     },
     {
       "from": "branch:review/tcp-rack-min-rtt-compact",
@@ -28253,6 +28289,20 @@
       "type": "depends_on",
       "reason": "The separate musl product builds on the GNU replacement now published as #15153. Its own tests and contributor decision remain independent.",
       "evidence": "https://github.com/google/gvisor/pull/15153"
+    },
+    {
+      "from": "pr:16380",
+      "to": "branch:state-primitive-array-storage",
+      "type": "depends_on",
+      "reason": "The approved primitive-array implementation requires the wire payload loader.",
+      "evidence": "https://github.com/google/gvisor/pull/16380"
+    },
+    {
+      "from": "branch:state-primitive-array-storage",
+      "to": "branch:review/state-reference-arrays",
+      "type": "depends_on",
+      "reason": "The approved reference-array implementation follows typed primitive arrays.",
+      "evidence": "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b"
     }
   ],
   "investigations": [
