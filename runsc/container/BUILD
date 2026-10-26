@@ -168,6 +168,7 @@ arm64_tcg_test(
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",
     },
+    guest_user = "nobody",
     image = "//test/rbe/tcg:rc_guest",
     memory_mib = 6144,
     payload = ":container_test_arm64",
