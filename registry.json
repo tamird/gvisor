@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T17:52:47.718726+00:00",
+    "updatedAt": "2026-10-26T17:59:15.185212+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1692,54 +1692,51 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "plugin-toolchain-build",
-      "title": "Build plugins with the selected C toolchain",
+      "title": "Declare the TLDK plugin build inputs",
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
+      "summary": "The contributor-approved GNU replacement is published on #15153 at a3bcae16a. Its source tree and parent match tested 7d549676b; only the commit explanation changed to clarify that building the static archive avoids the shared-library dependency on libnuma-dev. Both ordinary GNU static consumers passed, and the 203-record license audit remains separately bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; the existing two maintainer requests remain active. The musl child d86b92bcd is separate agent work with its own tests pending.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-26T17:51:26.091300+00:00",
+      "updatedAt": "2026-10-26T17:59:15.185212+00:00",
       "followup": {
-        "disposition": "Qualified GNU replacement awaits contributor decision",
+        "disposition": "Approved GNU amendment published; contributor decision complete",
         "owner": "root",
-        "nextAction": "Ask once for the recorded GNU-only amendment decision; publish only after contributor approval, preserving the independent musl follow-up.",
-        "sourceHead": "a3818d1793b919df1feeeb1c028cc40158754a7e",
+        "nextAction": "Follow current-head public checks and the existing maintainer review requests through the ordinary intake. Keep the musl follow-up separate; no repeated contributor request.",
+        "sourceHead": "a3bcae16addb51562d351e2f45b2cf083fa82a15",
         "reviewedAt": "2026-10-16T08:57:33Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15153",
-          "https://github.com/tamird/gvisor/commit/2e46e8773c00fc18281a742b610013832861fe2d",
-          "https://github.com/google/gvisor/pull/15153#discussion_r4273607204",
-          "https://github.com/google/gvisor/pull/15153#discussion_r4273607214",
-          "https://github.com/google/gvisor/pull/15153#discussion_r4273607224",
-          "https://github.com/google/gvisor/pull/15153#pullrequestreview-5545359598",
-          "https://github.com/tamird/gvisor/commit/1160d751fdddfbca4b41f80db3fe28299316996f",
-          "https://github.com/tamird/gvisor/commit/6779464a0fa68c547ad8cc1f6c741c107e0f7eed",
-          "https://github.com/tamird/gvisor/commit/007e776dd0bd266a8af950058f34cefaf9bbc10c",
-          "https://github.com/tamird/gvisor/commit/596535e6b16e321e4864432daa25f43f518b94ac",
-          "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
+          "https://github.com/tamird/gvisor/commit/a3bcae16addb51562d351e2f45b2cf083fa82a15",
+          "https://app.buildbuddy.io/invocation/b3eaa3ec-3f47-4d1d-b778-1ab7c76958bc",
+          "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a"
         ],
-        "observedAt": "2026-10-26T17:51:26.091300+00:00",
-        "providerHead": "a3818d1793b919df1feeeb1c028cc40158754a7e"
+        "observedAt": "2026-10-26T17:59:15.185212+00:00",
+        "providerHead": "a3bcae16addb51562d351e2f45b2cf083fa82a15"
       },
-      "head": "a3818d1793b919df1feeeb1c028cc40158754a7e",
+      "head": "a3bcae16addb51562d351e2f45b2cf083fa82a15",
       "refinement": {
         "before": {
-          "head": "c80d6b6aba23932cfb6fb201fc5ff0ece40bd6c2"
+          "head": "a3818d1793b919df1feeeb1c028cc40158754a7e"
         },
         "after": {
-          "head": "6779464a0fa68c547ad8cc1f6c741c107e0f7eed"
+          "head": "a3bcae16addb51562d351e2f45b2cf083fa82a15"
         }
       },
       "evidence": [
+        {
+          "label": "Published approved GNU amendment",
+          "url": "https://github.com/tamird/gvisor/commit/a3bcae16addb51562d351e2f45b2cf083fa82a15"
+        },
         {
           "label": "Exact proposed GNU replacement: both static consumers built",
           "url": "https://app.buildbuddy.io/invocation/b3eaa3ec-3f47-4d1d-b778-1ab7c76958bc"
         },
         {
-          "label": "Current unpublished GNU-only amendment",
+          "label": "Tested GNU replacement before message-only clarification",
           "url": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0"
         },
         {
@@ -1758,17 +1755,7 @@
           "label": "Published and independently verified conflict resolution",
           "url": "https://github.com/tamird/gvisor/commit/154d10c44a781c9bc7cdce0f6729a490386caf06"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "a3818d1793b919df1feeeb1c028cc40158754a7e",
-        "head": "7d549676be357bd0829fa863a174091953e34be0",
-        "url": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0",
-        "title": "Review the GNU-only replacement for #15153",
-        "summary": "Replace the open plugin-build proposal with the smaller GNU-only change. Both static consumers and the 203-record license audit passed; this does not include the separate musl follow-up or claim runtime traffic.",
-        "body": "The plugin\u2019s local-only genrule downloads TLDK and DPDK on the build worker. Bazel cannot execute that action remotely or share its result through the remote cache. Fetch the same revisions as verified inputs, including TLDK\u2019s DPDK patch series, and build the static archive with the C toolchain used to link the Linux AMD64 plugin.\n\nBuild the archive consumed by runsc and the sentry without building TLDK\u2019s shared library. Only that library needs libnuma-dev."
-      }
+      ]
     },
     {
       "id": "pr:16236",
@@ -24671,23 +24658,27 @@
       "ref": "qualification/plugin-gnu-source",
       "head": "7d549676be357bd0829fa863a174091953e34be0",
       "title": "Simplify the GNU plugin build inputs",
-      "url": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0",
+      "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
-      "status": "Qualified amendment; contributor decision on #15153",
-      "updatedAt": "2026-10-26T17:51:26.091300+00:00",
-      "summary": "GNU-only amendment 7d549676b is ready for contributor review on the existing #15153 decision. The ordinary GNU build passed both static consumers on this exact source. Native completion was 17:48:02.537 UTC and the bundled verdict followed at 17:48:04.255 UTC (+1.718 seconds). The 203-record license audit is separately linked and remains tied to its identical license inputs. No GNU runtime traffic is claimed. Public #15153 remains a3818d179 until approval and publication.\n\nPreserved prior validation record:\n\nGNU-only amendment candidate 7d549676b is published on qualification/plugin-gnu-source; public PR #15153 remains at a3818d179. The candidate removes the inadequate forced parallelism setting, with exact-source GNU build validation still in progress. It remains agent work, not ready for a contributor decision, and makes no GNU runtime traffic claim.\n\nThe 203-record license Fetch/Verify audit passed on preceding product 807910cbb. Its only difference from the current candidate is the removed resource_size line; license inputs are identical. The earlier build attempt did not qualify the source because the builder\u2019s ENTRYPOINT prevented the intended command. The LLVM/musl follow-up remains separate.\n\nPreserved preliminary source record:\n\nPreliminary GNU-only refinement of open #15153. DPDK patches shrink from 380 to 31 lines and total patches from 616 to 132 lines. The published source PR remains a3818d179; this fork has not amended it. Original GNU builds must pass before the refinement is ready for contributor review. Keep the later LLVM unwind experiment separate.",
+      "status": "Delivered on PR #15153",
+      "updatedAt": "2026-10-26T17:59:15.185212+00:00",
+      "summary": "Delivered through open PR #15153 at a3bcae16a after contributor approval. This fork record retains tested source 7d549676b; the published commit has exactly the same source tree and parent, with clarified libnuma-dev wording. No contributor action remains on this historical proposal. Current checks and maintainer review belong to #15153.\n\nPreserved source-specific qualification:\n\nGNU-only amendment 7d549676b is ready for contributor review on the existing #15153 decision. The ordinary GNU build passed both static consumers on this exact source. Native completion was 17:48:02.537 UTC and the bundled verdict followed at 17:48:04.255 UTC (+1.718 seconds). The 203-record license audit is separately linked and remains tied to its identical license inputs. No GNU runtime traffic is claimed. Public #15153 remains a3818d179 until approval and publication.\n\nPreserved prior validation record:\n\nGNU-only amendment candidate 7d549676b is published on qualification/plugin-gnu-source; public PR #15153 remains at a3818d179. The candidate removes the inadequate forced parallelism setting, with exact-source GNU build validation still in progress. It remains agent work, not ready for a contributor decision, and makes no GNU runtime traffic claim.\n\nThe 203-record license Fetch/Verify audit passed on preceding product 807910cbb. Its only difference from the current candidate is the removed resource_size line; license inputs are identical. The earlier build attempt did not qualify the source because the builder\u2019s ENTRYPOINT prevented the intended command. The LLVM/musl follow-up remains separate.\n\nPreserved preliminary source record:\n\nPreliminary GNU-only refinement of open #15153. DPDK patches shrink from 380 to 31 lines and total patches from 616 to 132 lines. The published source PR remains a3818d179; this fork has not amended it. Original GNU builds must pass before the refinement is ready for contributor review. Keep the later LLVM unwind experiment separate.",
       "followup": {
         "owner": "root",
         "sourceHead": "7d549676be357bd0829fa863a174091953e34be0",
-        "observedAt": "2026-10-26T17:51:26.091300+00:00",
-        "disposition": "Qualified; single contributor decision on PR #15153",
-        "nextAction": "Await the single contributor decision recorded on #15153 before publishing this GNU-only replacement. Keep the musl child separate.",
+        "observedAt": "2026-10-26T17:59:15.185212+00:00",
+        "disposition": "Delivered; no contributor action remains",
+        "nextAction": "Use the live #15153 record for current checks and maintainer review; retain this tested fork as historical evidence.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0",
-          "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a"
+          "https://github.com/google/gvisor/pull/15153",
+          "https://github.com/tamird/gvisor/commit/a3bcae16addb51562d351e2f45b2cf083fa82a15"
         ]
       },
       "evidence": [
+        {
+          "label": "Approved amendment published as #15153",
+          "url": "https://github.com/google/gvisor/pull/15153"
+        },
         {
           "label": "Exact-source ordinary GNU build: both static consumers pass",
           "url": "https://app.buildbuddy.io/invocation/b3eaa3ec-3f47-4d1d-b778-1ab7c76958bc"
@@ -24720,7 +24711,8 @@
         "after": {
           "head": "7d549676be357bd0829fa863a174091953e34be0"
         }
-      }
+      },
+      "inactive": true
     },
     {
       "id": "branch:plugin-toolchain-unwind",
@@ -27616,18 +27608,18 @@
       "evidence": "https://github.com/tamird/hermetic-llvm/compare/3dd710dd9cb57adc0a8baf4220f5bc1e38ebd9bc...72f8e4c2234b6ec6bf0afafff03cbd5a35a48250"
     },
     {
-      "from": "pr:15153",
-      "to": "branch:plugin-gnu-source",
+      "from": "branch:plugin-gnu-source",
+      "to": "pr:15153",
       "type": "includes",
-      "reason": "This candidate refines the existing open plugin-build proposal; it has not replaced the public head.",
-      "evidence": "https://github.com/tamird/gvisor/commit/7d549676be357bd0829fa863a174091953e34be0"
+      "reason": "The approved GNU candidate is published on #15153 with an identical source tree and a clarified commit explanation. No separate contributor decision remains.",
+      "evidence": "https://github.com/google/gvisor/pull/15153"
     },
     {
-      "from": "branch:plugin-gnu-source",
+      "from": "pr:15153",
       "to": "branch:plugin-toolchain-unwind",
       "type": "depends_on",
-      "reason": "The separate musl product is a direct child of the GNU-only plugin replacement. Its tests and contributor decision remain independent.",
-      "evidence": "https://github.com/tamird/gvisor/compare/7d549676be357bd0829fa863a174091953e34be0...d86b92bcd85ce9f2faaf71f0f4336ee60f806540"
+      "reason": "The separate musl product builds on the GNU replacement now published as #15153. Its own tests and contributor decision remain independent.",
+      "evidence": "https://github.com/google/gvisor/pull/15153"
     }
   ],
   "investigations": [
