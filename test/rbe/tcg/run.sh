@@ -206,7 +206,8 @@ host_phase scratch_ready
       '  [[ "$siblings" == 0-1 ]] || { echo "Guest CPUs are not SMT siblings" >&2; exit 1; }' \
       'done'
   fi
-  printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
+  payload_executable="/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
+  printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "$payload_executable"
   if [[ $guest_user == nobody ]]; then
     # Let the unprivileged harness create XML and output directories at the
     # scratch root. Its sticky bit protects the root-owned payload directory.
@@ -217,9 +218,9 @@ host_phase scratch_ready
   fi
   printf '/bin/bash /input/test-setup.sh'
   if [[ -n $guest_run_under ]]; then
-    # Both executables and their runfiles are in the declared payload image.
-    # Absolute paths remain valid after the harness enters payload runfiles.
-    printf ' %q' "/work/payload/$guest_run_under" "/work/payload/$payload"
+    # The payload builder verifies the executable inside its runfiles tree.
+    # Use that same file when the harness enters runfiles through run_under.
+    printf ' %q' "/work/payload/$guest_run_under" "$payload_executable"
   else
     printf ' %q' "$payload"
   fi
