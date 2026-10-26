@@ -38,6 +38,7 @@ py_test(
         "qualify.sh",
         "//:github_workflows",
         "//test/benchmarks:lifecycle.json",
+        "//test/benchmarks:unit.json",
     ] + glob(["testdata/qualification_report/**"]),
     imports = ["."],
     main = "qualification_report_test.py",

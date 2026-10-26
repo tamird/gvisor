@@ -20,5 +20,6 @@ go_library(
 go_test(
     name = "wire_test",
     srcs = ["wire_test.go"],
+    benchmark_smoke = True,
     embed = [":wire"],
 )

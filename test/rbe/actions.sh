@@ -201,7 +201,8 @@ fi
 # changing arguments for ordinary tests in the same invocation.
 qualification_declared_benchmarks=$qualification_artifacts/declared-benchmarks.json
 cp test/benchmarks/lifecycle.json "$qualification_declared_benchmarks"
-sha256sum "$qualification_declared_benchmarks" > "$qualification_artifacts/declared-benchmarks.sha256"
+cp test/benchmarks/unit.json "$qualification_artifacts/unit-benchmarks.json"
+sha256sum "$qualification_declared_benchmarks" "$qualification_artifacts/unit-benchmarks.json" > "$qualification_artifacts/declared-benchmarks.sha256"
 export qualification_benchmark_manifest qualification_benchmark_arguments qualification_retain_outputs qualification_declared_benchmarks
 if [[ -v QUALIFICATION_REQUIRED_CASES && -v QUALIFICATION_GO_REQUIRED_CASES ]]; then
   printf 'Select either XML required cases or Go required cases, not both.\n' >&2
@@ -638,7 +639,8 @@ PREPARATION
     command_kind=benchmark
     verdict_options+=(--expected-benchmarks "$qualification_benchmark_manifest")
   elif [[ $command_kind == test ]]; then
-    verdict_options+=(--declared-benchmarks "$qualification_declared_benchmarks" "${case_options[@]}")
+    verdict_options+=(--declared-benchmarks "$qualification_declared_benchmarks"
+      --declared-benchmarks "$qualification_artifacts/unit-benchmarks.json" "${case_options[@]}")
   fi
   python3 - "$directory" "$QUALIFICATION_COMMIT" "$command_kind" "$arguments_file" <<'CONTEXT' || capture_status=$?
 import json

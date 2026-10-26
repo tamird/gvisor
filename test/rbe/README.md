@@ -761,7 +761,10 @@ The lifecycle Go benchmarks retain their declared 30 iterations and platform
 arguments within mixed continuous suites. Their configured contract tag binds
 the expected leaves in `test/benchmarks/lifecycle.json`; the reporter requires
 every measurement, its metrics and package completion, while retaining empty
-test XML separately. Other owners still require executed named test cases.
+test XML separately. The four unit targets listed in `test/benchmarks/unit.json`
+exercise each declared benchmark once on each CPU in the ordinary unit run.
+Their Bazel arguments leave named tests enabled. Missing measurements, failing
+tests and targets whose named tests all skip still make qualification fail.
 
 The local ARM64 `docker` lane runs the unchanged `//test/docker:owned_tests`
 suite using the same Docker sandbox described below. The existing `rbe-arm64`

@@ -448,26 +448,31 @@ def capture(events: Path, output: Path, output_root: Path, report_dir: Path, ret
     return result
 
 
-def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, object]:
+def xml_cases(path: Path, required: frozenset[str] = frozenset(), *,
+              go_benchmarks: bool = False) -> dict[str, object]:
     """Count actual entries, retaining skips/notrun separately from passes."""
     root = ET.parse(path).getroot()
     if root.tag not in ("testsuites", "testsuite"):
         raise ValueError(f"Unexpected XML root: {root.tag}")
     counts: Counter[str] = Counter()
+    benchmarks: Counter[str] = Counter()
     failures, skips = [], []
     matched = set()
     for case in root.iter("testcase"):
         name = "/".join(filter(None, (case.get("classname"), case.get("name"))))
         if case.find("failure") is not None or case.find("error") is not None:
-            counts["failed"] += 1
+            outcome = "failed"
             failures.append(name)
         elif case.find("skipped") is not None or case.get("status") == "notrun" or case.get("result") == "suppressed":
-            counts["skipped"] += 1
+            outcome = "skipped"
             skips.append({"name": name, "status": case.get("status"), "reason": "".join(case.find("skipped").itertext()) if case.find("skipped") is not None else case.get("result", "notrun")})
         else:
-            counts["passed"] += 1
+            outcome = "passed"
             if name in required:
                 matched.add(name)
+        counts[outcome] += 1
+        if go_benchmarks and case.get("name", "").startswith("Benchmark"):
+            benchmarks[outcome] += 1
     # Suite failures can exist without a corresponding named testcase.
     suite_errors = sum(number(suite.get(key, 0)) for suite in root.iter("testsuite") for key in ("failures", "errors"))
     if suite_errors and not counts["failed"]:
@@ -476,7 +481,8 @@ def xml_cases(path: Path, required: frozenset[str] = frozenset()) -> dict[str, o
     if declared is not None and number(declared) != sum(counts.values()):
         raise ValueError(f"XML declares {declared} tests but contains {sum(counts.values())}")
     return {"passed": counts["passed"], "failed": counts["failed"], "skipped": counts["skipped"],
-            "failures": failures, "skips": skips, **({"required_passed": sorted(matched)} if required else {})}
+            "failures": failures, "skips": skips, **({"required_passed": sorted(matched)} if required else {}),
+            **({"benchmark_cases": dict(benchmarks)} if go_benchmarks else {})}
 
 
 def runtime_outputs(attempt: Attempt, reports: dict[tuple[Attempt, str], Path],
@@ -2081,7 +2087,7 @@ def marshal_test_contract(log: Path) -> dict[str, object]:
 
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
             expected_analysis: tuple[Path, ...] = (), expected_benchmarks: Path | None = None,
-            declared_benchmarks: Path | None = None, case_manifest: Path | None = None) -> dict[str, object]:
+            declared_benchmarks: tuple[Path, ...] = (), case_manifest: Path | None = None) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
     started = time.monotonic()
     errors: list[str] = []
@@ -2113,15 +2119,24 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             errors.append(f"Benchmark manifest: {error}")
     declared_expected: dict[str, list[Benchmark]] = {}
     declared_evidence: dict[str, object] = {}
-    if declared_benchmarks is not None:
+    if declared_benchmarks:
         try:
             if info["command_kind"] != "test":
                 raise ValueError("Declared benchmark expectations require a mixed test invocation")
-            value = read_json(declared_benchmarks)
-            if set(value) != {"owners"}:
-                raise ValueError("Declared benchmark manifest requires exactly owners")
-            declared_expected = benchmark_expectations(value["owners"])
-            declared_evidence = {"path": str(declared_benchmarks), **file_record(declared_benchmarks)}
+            records = []
+            for path in declared_benchmarks:
+                value = read_json(path)
+                if set(value) == {"owners"}:
+                    owners = benchmark_expectations(value["owners"])
+                else:
+                    # Only the measurements apply here. The standalone
+                    # benchmark arguments would suppress ordinary tests.
+                    _, owners = benchmark_manifest(path)
+                if declared_expected.keys() & owners.keys():
+                    raise ValueError("Duplicate owners in declared benchmark manifests")
+                declared_expected.update(owners)
+                records.append({"path": str(path), **file_record(path)})
+            declared_evidence["manifests"] = records
         except (OSError, ValueError) as error:
             errors.append(f"Declared benchmark manifest: {error}")
     retained, reports, report_errors = retained_reports(manifest)
@@ -2225,8 +2240,16 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             exact_nodejs_tests.update(Owner(label, target.configuration) for label, target in targets.items()
                                       if "nodejs-exact-results" in target.tags)
             if info["command_kind"] == "test":
-                declared_benchmark_tests.update(Owner(label, target.configuration) for label, target in targets.items()
-                                                if "go-benchmark-contract" in target.tags)
+                for label, target in targets.items():
+                    if "go-benchmark-contract" not in target.tags:
+                        continue
+                    declared_benchmark_tests.add(Owner(label, target.configuration))
+                    # The explicit AMD64 frontend and the unsuffixed AMD64
+                    # owner exercise the same declaration. ARM64 owns a
+                    # separate entry in the unit benchmark inventory.
+                    base = label.removesuffix("_amd64")
+                    if base != label and "rbe-has-amd64-variant" in target.tags and base in declared_expected:
+                        declared_expected.setdefault(label, declared_expected[base])
             expected_aspects.update(Aspect(Owner(label, target.configuration), name)
                                     for label, target in targets.items() for name in target.aspects)
         except (OSError, ValueError) as error:
@@ -2279,7 +2302,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     selected_declared = set(declared_expected) & {owner.label for owner in expected}
     if selected_declared != {owner.label for owner in declared_benchmark_tests}:
         errors.append("Declared benchmark expectations differ from tagged configured owners")
-    if declared_benchmarks is not None:
+    if declared_benchmarks:
         declared_evidence["owners"] = {label: [asdict(leaf) for leaf in declared_expected[label]]
                                       for label in sorted(selected_declared)}
     if not finished:
@@ -2363,7 +2386,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                 if not log.stat().st_size:
                     raise ValueError(f"Empty original test log: {attempt}")
                 required = named_cases.get(attempt.owner.label, frozenset())
-                counts = xml_cases(xml, required)
+                declared_benchmark = attempt.owner in declared_benchmark_tests
+                counts = xml_cases(xml, required, go_benchmarks=declared_benchmark)
                 if required:
                     # Shards divide a suite; another run or configuration
                     # cannot supply a case missing from this one.
@@ -2373,9 +2397,14 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                         for name in required.intersection(sequence(names)):
                             observed.setdefault(name, set()).add(outcome)
                 observation["xml"] = counts
-                cases.update({key: number(counts[key]) for key in ("passed", "failed", "skipped")})
-                owner_cases[attempt.owner] += sum(number(counts[key]) for key in ("passed", "failed", "skipped"))
-                owner_executed[attempt.owner] += number(counts["passed"]) + number(counts["failed"])
+                # A verbose Go runner can emit XML for benchmarks as well as
+                # tests. Only ordinary test cases can establish test coverage.
+                benchmark_counts = mapping(counts.get("benchmark_cases", {}))
+                named_counts = {key: number(counts[key]) - number(benchmark_counts.get(key, 0))
+                                for key in ("passed", "failed", "skipped")}
+                cases.update(named_counts)
+                owner_cases[attempt.owner] += sum(named_counts.values())
+                owner_executed[attempt.owner] += named_counts["passed"] + named_counts["failed"]
                 skips.extend({**asdict(attempt), **mapping(item)} for item in sequence(counts["skips"]))
                 if counts["failed"]:
                     failure = {**asdict(attempt), "reason": "XML test failures", "cases": counts["failures"]}
@@ -2396,7 +2425,6 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                     observation["marshal_test_contract"] = contract
                     if (not contract["runtime_types"] or not contract["constraints_match"]) and owner_cases[attempt.owner]:
                         errors.append(f"Generated ABI test declares no applicable runtime tests but has named cases: {attempt}")
-                declared_benchmark = attempt.owner in declared_benchmark_tests
                 if benchmark_mode or declared_benchmark:
                     rows = benchmark_rows(log, pgo=pgo_expected is not None)
                     observation["benchmarks"] = rows
@@ -2435,7 +2463,7 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                         for case in benchmark_cases:
                             if not case.get("name", "").startswith("Benchmark"):
                                 errors.append(f"PGO invocation contains a named test: {attempt}: {case.get('name')}")
-                    elif counts["passed"] or counts["skipped"]:
+                    elif benchmark_mode and (counts["passed"] or counts["skipped"]):
                         errors.append(f"Benchmark-only invocation contains named tests: {attempt}")
             except (OSError, ValueError, KeyError, ET.ParseError, zipfile.BadZipFile) as error:
                 errors.append(f"{attempt}: {error}")
@@ -2475,8 +2503,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
                            and summaries.get(owner, {}).get("overallStatus") == "PASSED")
             if non_runtime:
                 non_runtime_owners.append({**asdict(owner), **contracts[0]})
-            if (not benchmark_mode and owner not in declared_benchmark_tests
-                    and not non_runtime and owner_executed[owner] == 0):
+            if (not benchmark_mode and not non_runtime and owner_executed[owner] == 0
+                    and (owner not in declared_benchmark_tests or owner_cases[owner])):
                 errors.append(f"Test owner has no executed named cases; zero-case/all-skipped success is not coverage: {owner}")
     elif results or summaries:
         errors.append("Build/analysis invocation unexpectedly contains test execution")
@@ -3377,7 +3405,7 @@ def main() -> int:
     check.add_argument("--expected-targets", type=Path)
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
     check.add_argument("--expected-benchmarks", type=Path)
-    check.add_argument("--declared-benchmarks", type=Path)
+    check.add_argument("--declared-benchmarks", action="append", type=Path, default=[])
     check.add_argument("--required-cases", type=Path)
     images = commands.add_parser("source-images", help="Audit declared source/archive/load obligations in one authenticated invocation")
     for name in ("execution-log", "decoder", "verdict", "manifest", "expectations", "output"):
@@ -3483,7 +3511,7 @@ def main() -> int:
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
                          args.expected_targets, tuple(args.expected_analysis), args.expected_benchmarks,
-                         args.declared_benchmarks, args.required_cases)
+                         tuple(args.declared_benchmarks), args.required_cases)
         write_json(args.output, result)
         return 0 if result["status"] == "PASS" else number(result["native_exit"]) or 1
     if args.command == "command-verdict":
