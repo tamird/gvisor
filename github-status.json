@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-26T19:53:07.530981+00:00",
-  "registryDate": "2026-10-26T20:02:54.305667+00:00",
+  "registryDate": "2026-10-26T20:21:18.267130+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -186353,7 +186353,7 @@
       "number": 16345,
       "head": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
       "sourceNumber": 16345,
-      "owner": null,
+      "owner": "root",
       "kind": "inline",
       "id": "PRRC_kwDOB9IlXs8AAAABBScogw",
       "url": "https://github.com/google/gvisor/pull/16345#discussion_r4381419651",
@@ -187322,7 +187322,7 @@
       "number": 16345,
       "head": "d668992e704cf42e8915f8f7f3e347be9f4f07cc",
       "sourceNumber": 16345,
-      "owner": null,
+      "owner": "root",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTi_wg",
       "url": "https://github.com/google/gvisor/pull/16345#pullrequestreview-5657640898",
@@ -190612,6 +190612,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-26T19:52:54.446702+00:00"
+      },
+      "contributor-review": {
+        "scope": "710b3f2e976929d4455fe5bc3c6587740a4879f3",
+        "since": "2026-10-26T20:21:18.267130+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-26T20:21:18.267130+00:00"
       }
     },
     "pr:16338": {
@@ -190682,6 +190689,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-26T19:52:54.446702+00:00"
+      },
+      "contributor-review": {
+        "scope": "641a5c300750a72805d4cacbcd71c92f91f5d46f",
+        "since": "2026-10-26T20:21:18.267130+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-26T20:21:18.267130+00:00"
       }
     },
     "pr:16374": {
