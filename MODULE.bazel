@@ -46,6 +46,14 @@ single_version_override(
 )
 
 ### LLVM
+archive_override(
+    module_name = "llvm",
+    integrity = "sha256-gfPM8lbcI98AsC3Wy73KO6/SY/l0LKzrwJEyXA/VYiE=",
+    strip_prefix = "hermetic-llvm-852d1c3da581dd8568455c1556a19a33ebcd46a4",
+    type = "tar.gz",
+    urls = ["https://codeload.github.com/tamird/hermetic-llvm/tar.gz/852d1c3da581dd8568455c1556a19a33ebcd46a4"],
+)
+
 llvm_source = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm_source, "llvm-project")
 
