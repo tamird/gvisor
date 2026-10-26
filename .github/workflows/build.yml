@@ -2,6 +2,10 @@ name: Native ARM64 image consumers
 
 "on":
   workflow_dispatch:
+    inputs:
+      archive_run:
+        description: Reuse the verified image artifact from a prior run in this fork
+        type: string
 
 permissions:
   contents: read
@@ -17,7 +21,7 @@ env:
 
 jobs:
   image:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers' && inputs.archive_run == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -68,6 +72,10 @@ jobs:
 
   runtime:
     needs: image
+    if: ${{ !cancelled() && github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/native-arm64-image-consumers' && (needs.image.result == 'success' || (needs.image.result == 'skipped' && inputs.archive_run != '')) }}
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 65
     steps:
@@ -76,7 +84,15 @@ jobs:
           ref: ${{ env.PRODUCT }}
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: inputs.archive_run == ''
         with:
+          name: qualified-arm64-image
+          path: ${{ runner.temp }}/transfer
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: inputs.archive_run != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.archive_run }}
           name: qualified-arm64-image
           path: ${{ runner.temp }}/transfer
       - name: Load the verified ARM image and build the selected gVisor runtime
@@ -91,6 +107,9 @@ jobs:
           docker load --input "$RUNNER_TEMP/transfer/image.tar"
           docker tag "$IMAGE" "$IMAGE_TAG"
           test "$(docker image inspect --format '{{.Architecture}} {{.Id}}' "$IMAGE_TAG")" = "arm64 $IMAGE"
+          # The release graph uses both GNU target toolchains, as in images/default/Dockerfile.
+          sudo apt-get -q update
+          sudo apt-get -qy install --no-install-recommends crossbuild-essential-amd64 libnuma-dev
           # Use the release rule's installed runsc and every sidecar. The daemon
           # must not fetch a sidecar from a different release.
           export USE_BAZEL_VERSION
@@ -103,6 +122,10 @@ jobs:
           runtime_dir="$RUNNER_TEMP/gvisor-runtime"
           mkdir -m 755 "$runtime_dir"
           cp -RL bazel-bin/release/. "$runtime_dir"
+          for executable in "$runtime_dir"/{runsc,gvisor-bin/*}; do
+            readelf -h "$executable" | grep -E 'Machine: +AArch64$'
+            sha256sum "$executable"
+          done
           sudo "$runtime_dir/runsc" install --runtime=qualification-images \
             --download-sidecars=NEVER --require-sidecars=ALWAYS -- --platform=systrap
           sudo systemctl reload docker
