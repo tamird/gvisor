@@ -691,3 +691,16 @@ _SOURCE_ARCHIVES = {
         ("trace_unit", "//test/trace:trace_test_arm64", "medium", "nobody"),
     ]
 ]
+
+# The full Python owner runs as root; this one method explicitly requires nobody.
+arm64_tcg_test(
+    name = "sandboxexec_python_nonroot_arm64_tcg_test",
+    size = "medium",
+    args = ["-v", "SandboxTest.test_non_root_networking_error"],
+    guest_user = "nobody",
+    image = "//test/rbe/tcg:rc_guest",
+    payload = "//sandboxexec/sandbox/python:sandbox_py_test_arm64",
+    preserve_runfiles_symlinks = True,
+    run_under = ":worker_identity",
+    tags = [],
+)
