@@ -21,10 +21,10 @@ import (
 	"gvisor.dev/gvisor/pkg/gohacks"
 )
 
-// Load parses one complete object into independently owned storage before
-// returning it. It does not restore destinations or run callbacks while parsing.
-// Returned subtrees remain valid after further reads, including failed reads.
-// Callers must treat parsed objects as read-only unless making a writer copy.
+// Load loads a new object. The returned object does not alias the reader's
+// buffers.
+//
+// N.B. This function will panic on error.
 //
 // +checkescape:hard
 func Load(r *Reader) Object {
@@ -141,7 +141,7 @@ func loadComplex128(r *Reader) Complex128 {
 func loadArray(r *Reader, count Uint, tag Uint) Array {
 	switch tag {
 	case typeBool:
-		return &BoolArray{Contents: loadArrayValues(r, count, func(r *Reader) bool { return bool(loadBool(r)) })} // Escapes: owned homogeneous array header.
+		return &BoolArray{Contents: loadArrayValues(r, count, loadBoolValue)} // Escapes: owned homogeneous array header.
 	case typeInt:
 		return &IntArray[Int]{Contents: loadArrayValues(r, count, loadInt)} // Escapes: owned homogeneous array header.
 	case typeUint:
@@ -149,19 +149,24 @@ func loadArray(r *Reader, count Uint, tag Uint) Array {
 	case typeFloat32:
 		return &Float32Array[Float32]{Contents: loadArrayValues(r, count, loadFloat32)} // Escapes: owned homogeneous array header.
 	case typeFloat64:
-		return &Float64Array{Contents: loadArrayValues(r, count, func(r *Reader) float64 { return float64(loadFloat64(r)) })} // Escapes: owned homogeneous array header.
+		return &Float64Array{Contents: loadArrayValues(r, count, loadFloat64Value)} // Escapes: owned homogeneous array header.
 	case typeComplex64:
 		return &Complex64Array{Contents: loadArrayValues(r, count, loadComplex64)} // Escapes: owned homogeneous array header.
 	case typeComplex128:
 		return &Complex128Array{Contents: loadArrayValues(r, count, loadComplex128)} // Escapes: owned homogeneous array header.
 	case typeString:
-		return &StringArray{Contents: loadArrayValues(r, count, func(r *Reader) string { return string(loadString(r)) })} // Escapes: owned homogeneous array header.
-	case typeRef:
-		return &RefArray{Contents: loadArrayValues(r, count, loadReference)} // Escapes: owned homogeneous array header.
+		return &StringArray{Contents: loadArrayValues(r, count, loadStringValue)} // Escapes: owned homogeneous array header.
 	default:
-		return &ObjectArray{Contents: loadArrayValues(r, count, func(r *Reader) Object { return loadPayload(r, tag) })} // Escapes: owned homogeneous array header.
+		values := loadArrayValues(r, count, func(r *Reader) Object { return loadPayload(r, tag) }) // Escapes: owned composite elements.
+		return &ObjectArray{Contents: values}                                                      // Escapes: owned homogeneous array header.
 	}
 }
+
+func loadBoolValue(r *Reader) bool { return bool(loadBool(r)) }
+
+func loadFloat64Value(r *Reader) float64 { return float64(loadFloat64(r)) }
+
+func loadStringValue(r *Reader) string { return string(loadString(r)) }
 
 func loadArrayValues[T any](r *Reader, count Uint, load func(*Reader) T) []T {
 	values := make([]T, count) // Escapes: owned typed elements; make checks the full-width size.

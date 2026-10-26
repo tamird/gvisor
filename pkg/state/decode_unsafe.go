@@ -55,19 +55,12 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
 	}
 	if length == 0 {
-		// Preserve legacy empty Array operations on other Len-capable types.
+		// Index(0) below requires a non-empty target.
 		return
 	}
 	switch values := encoded.(type) {
 	case *wire.ObjectArray:
 		for i, value := range values.Contents {
-			ds.decodeObject(ods, target.Index(i), value)
-			ds.waitObject(ods, value, nil)
-		}
-		return
-	case *wire.RefArray:
-		for i := range values.Contents {
-			value := &values.Contents[i]
 			ds.decodeObject(ods, target.Index(i), value)
 			ds.waitObject(ods, value, nil)
 		}
@@ -165,8 +158,6 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 		return
 	case *wire.StringArray:
 		if kind == reflect.String {
-			// Typed string assignment retains Go's GC write barriers. No raw
-			// byte copy or pointer-sized store is used for pointerful data.
 			copy(unsafe.Slice((*string)(pointer), length), values.Contents)
 			return
 		}
@@ -174,8 +165,7 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, target reflect.Value,
 	Failf("array %T cannot restore %s", encoded, target.Type())
 }
 
-// Narrowing stores precede validation, matching reflect.SetInt/SetUint and
-// the existing scalar decoder's partial-write behavior on a malformed value.
+// Store before checking, matching decodeObject's scalar path on malformed input.
 func restoreIntArray[T ~int | ~int8 | ~int16 | ~int32 | ~int64](target []T, values []wire.Int) {
 	for i, value := range values {
 		target[i] = T(value)

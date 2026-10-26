@@ -98,9 +98,7 @@ type arraySliceLoadState struct {
 	receivers   []*arraySliceLoadWord
 }
 
-// A handwritten saver can supply an Array to a slice field. Use the public
-// producer so the fixture cannot invent invalid wire constructors or
-// heterogeneous array framing.
+// arraySliceLoad saves a slice field as an array value via SaveValue.
 // +stateify type
 type arraySliceLoad struct {
 	ignored uint64 `state:"nosave"`
