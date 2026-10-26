@@ -23,7 +23,6 @@ import (
 
 func TestDumpStack(t *testing.T) {
 	frame := regexp.MustCompile(`^([0-9]+): \[0x[0-9a-f]+(?: <[^>]+>)?\]$`)
-	// Exercise both initialization and reuse of the unwinder state.
 	for range 2 {
 		output, err := dumpStack()
 		if err != nil {

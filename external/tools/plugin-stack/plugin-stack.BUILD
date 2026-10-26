@@ -79,8 +79,5 @@ make(
     }),
     targets = ["install-plugin"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":bsd_queue",
-        "@libbacktrace//:backtrace",
-    ],
+    deps = [":bsd_queue"],
 )
