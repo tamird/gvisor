@@ -47,7 +47,12 @@ jobs:
                 chmod +x /tmp/bazel
                 PATH=/tmp:$PATH
               fi
-              bazel build --config=aarch64 -c opt --lockfile_mode=error "$ARCHIVE_TARGET"
+              test -z "$(git ls-files -- MODULE.bazel.lock)"
+              flags=(--config=aarch64 -c opt --host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo)
+              bazel cquery "${flags[@]}" --lockfile_mode=update "$ARCHIVE_TARGET"
+              sha256sum MODULE.bazel.lock >/tmp/qualification-lock.sha256
+              bazel build "${flags[@]}" --lockfile_mode=error "$ARCHIVE_TARGET"
+              sha256sum -c /tmp/qualification-lock.sha256
               printf "%s  %s\n" "$ARCHIVE" "$ARCHIVE_PATH" | sha256sum -c -
               cp -L "$ARCHIVE_PATH" /transfer/image.tar
             '
@@ -90,6 +95,9 @@ jobs:
           # must not fetch a sidecar from a different release.
           export USE_BAZEL_VERSION
           USE_BAZEL_VERSION=$(cat .bazelversion)
+          test -z "$(git ls-files -- MODULE.bazel.lock)"
+          bazelisk cquery --config=aarch64 -c opt --lockfile_mode=update "set(//:release $TEST_TARGET)"
+          sha256sum MODULE.bazel.lock >"$RUNNER_TEMP/qualification-lock.sha256"
           bazelisk build --config=aarch64 -c opt --lockfile_mode=error \
             --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed //:release
           runtime_dir="$RUNNER_TEMP/gvisor-runtime"
@@ -103,6 +111,14 @@ jobs:
             sleep 1
           done
           docker info --format '{{json .Runtimes}}' | jq -e --arg binary "$runtime_dir/runsc" '.["qualification-images"].path == $binary'
+          # The original fsstress suite checks exit and output. Also observe the
+          # files: a worker that sees PID 1 as its parent can silently do no work.
+          directory="$RUNNER_TEMP/fsstress-files"
+          mkdir -m 777 "$directory"
+          docker run --rm --runtime=qualification-images --mount="type=bind,src=$directory,dst=/test" \
+            "$IMAGE" -d /test -n 4 -p 2 -s 1 -z -f creat=1 -c -X -v
+          diff -u <(printf '%s 0\n' p{0,1}/f{0,1,2,3}) \
+            <(cd "$directory" && find . -type f -printf '%P %s\n' | LC_ALL=C sort)
       - name: Execute the consumer and reconcile its named results
         shell: bash
         run: |
@@ -146,4 +162,5 @@ jobs:
           }, sort_keys=True))
           raise SystemExit(0 if passed else 1)
           PY
+          sha256sum -c "$RUNNER_TEMP/qualification-lock.sha256"
           test -z "$(git status --porcelain --untracked-files=no)"
