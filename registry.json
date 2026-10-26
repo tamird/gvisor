@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T00:14:30.877536+00:00",
+    "updatedAt": "2026-10-26T00:27:08.108511+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -19435,12 +19435,16 @@
       "ref": "review/fsstress-official-image-current",
       "head": "97c071a74524f2d2fc10f6f4768f1214381b7133",
       "title": "Build the filesystem stress-test image with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133",
+      "url": "https://github.com/google/gvisor/pull/16401",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
-      "summary": "The actual fsstress revision is 97c071a745 on current base fb7341a1ad, published at review/fsstress-official-image-current. It builds pinned LTP fsstress and adds the executable, notice and launch script to the existing official @test_busybox image. The shell parent remains because fsstress workers exit early when their parent has PID 1. This returns to the approved official-image approach; the fsstress approval is retained, and no new contributor decision is pending. Root owns current-base delivery and will advise upstream publication.\n\nThe existing BusyBox pull is pinned for both target architectures and already mirror-first. No local BusyBox producer, parked PIDFD or new #16379 dependency is needed. The basic foundation landed through #16307 after #16097 closed; the independent generic source archive in #16374 is not required by fsstress's native Make and archive outputs. No #16374 landing gate remains.\n\nEarlier official-image evidence is retained at d5246ab2 (images and filesystem consumers) and fe7b2570 (two-worker entrypoint execution). Those runs qualify their recorded source identities; they are not a new execution of 97c071a745. The local-utility f4134e3b evidence below remains historical and does not justify shipping that withdrawn implementation.\n\nCompare the current official-image source with the former local composition:\ngit range-diff --creation-factor=999 6012e1652777e4bd4c3997f55466a324c6491a08^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nCompare with the prior approved resource-layout source:\ngit range-diff --creation-factor=999 6bc049050ab0fcce55ffc823e36bfdf55deb2e1d^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nHistorical dispositions and source-specific evidence:\n\nThe fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
+      "status": "Published as #16401",
+      "updatedAt": "2026-10-26T00:26:52.688267+00:00",
+      "summary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence; the pending current-source GNU image comparison is a separate qualification note. No new execution is claimed here. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.\n\nPreserved proposal and exact-source evidence:\n\nThe actual fsstress revision is 97c071a745 on current base fb7341a1ad, published at review/fsstress-official-image-current. It builds pinned LTP fsstress and adds the executable, notice and launch script to the existing official @test_busybox image. The shell parent remains because fsstress workers exit early when their parent has PID 1. This returns to the approved official-image approach; the fsstress approval is retained, and no new contributor decision is pending. Root owns current-base delivery and will advise upstream publication.\n\nThe existing BusyBox pull is pinned for both target architectures and already mirror-first. No local BusyBox producer, parked PIDFD or new #16379 dependency is needed. The basic foundation landed through #16307 after #16097 closed; the independent generic source archive in #16374 is not required by fsstress's native Make and archive outputs. No #16374 landing gate remains.\n\nEarlier official-image evidence is retained at d5246ab2 (images and filesystem consumers) and fe7b2570 (two-worker entrypoint execution). Those runs qualify their recorded source identities; they are not a new execution of 97c071a745. The local-utility f4134e3b evidence below remains historical and does not justify shipping that withdrawn implementation.\n\nCompare the current official-image source with the former local composition:\ngit range-diff --creation-factor=999 6012e1652777e4bd4c3997f55466a324c6491a08^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nCompare with the prior approved resource-layout source:\ngit range-diff --creation-factor=999 6bc049050ab0fcce55ffc823e36bfdf55deb2e1d^! 97c071a74524f2d2fc10f6f4768f1214381b7133^!\n\nHistorical dispositions and source-specific evidence:\n\nThe fsstress contributor approval is retained, but the local BusyBox proposal d450a87dd3 has been withdrawn. Earlier approved source 8e45c79086 already used the currently pinned official @test_busybox image. Agent work will return to that official-image approach and validate a revised source on the current base. The retained 6012e16527 fork head is the previous local-utility composition, not an upstream-ready replacement. No new fsstress approval is required to abandon the local utility.\n\nThe official @test_busybox pull on current upstream/master is already mirror-first and pinned for both target architectures. Reusing it adds no new pull and does not require #16379, which centralizes the registry definition. The missing basic-context exports in #16374 remain a landing gate. The foundation itself landed through #16307 after #16097 closed. Neither withdrawn d450 nor parked PIDFD is an active gate. Final source and any additional implementation prerequisites must be checked during the revision before delivery.\n\nHistorical local-utility composition and measured qualification:\n\nExact 6012e16527 is the approved fsstress proposal reparented directly onto standalone BusyBox d450a87dd3. It preserves the source-built LTP workload, shell parent, per-worker cleanup, image name and Make entry points. The existing fsstress contributor approval is retained; there is no new fsstress decision.\n\nThe independently reviewed split is qualified in f4134e3b. Both AMD64 and ARM64 images and Make contexts built. On AMD64 systrap, the three existing filesystem consumers passed, and the unchanged entrypoint ran two workers that each created four files; cleanup and cached restore passed. The canonical license-policy test passed. Both BusyBox compilations were fresh remote actions. The LTP links were cache hits joined to earlier uncached source-matched producers, so this is not a fresh LTP-link measurement. Verification completed 10.270535 seconds after the final native phase. No ARM runtime, throughput, whole-catalog regeneration or PIDFD qualification is claimed.\n\nThe basic-image foundation landed through import #16307 after source PR #16097 closed. Its missing basic-context exports remain a separate #16374 landing gate. Delivery also waits for the new standalone utility decision and its GNU/native-image/compiler ancestry; the mirror PR #16379 and parked PIDFD are not gates for this scratch pair.\n\nPreserved earlier source-specific record:\n\nThe source-built scratch refinement is published at 5ccbde as an independent child of utilities e12. Existing root/fsstress qualification and supplemental action proof apply with exact shared BusyBox union identities. Both-CPU archives, AMD64 filesystem consumers, entrypoint and cleanup are qualified; no ARM runtime is claimed. Preserve the earlier 6bc contributor grant and its explicit condition that #16097 actually lands. The shared utilities decision remains separate; no new child review question is pending. Catalog composition preserves the existing 251 records plus the approved LTP record; this is not a fresh whole-graph audit.\n\nPreserved earlier source-specific record:\n\nRequested resource relocation and equivalent base refresh are complete at 6bc049050a. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nBuild pinned LTP fsstress and its BusyBox image from declared Bazel inputs. Preserve basic/fsstress, Make and the shell parent; include the GPLv2 notice with a scoped exception. Standalone GNU dual-architecture builds, LLVM musl dual-architecture image/archive checks, three native filesystem cases and Make identity roundtrip passed. A separate unchanged ENTRYPOINT run produced eight files across two workers. Canonical current-source Fetch/Verify preserve all 196 foundation catalog blocks and add only LTP. The source remains qualified for conditional delivery. No ARM execution or performance claim.",
       "links": [
+        {
+          "label": "Published approved fsstress PR at exact 97c071a745",
+          "url": "https://github.com/google/gvisor/pull/16401"
+        },
         {
           "label": "Current fsstress product on the official BusyBox image",
           "url": "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133"
@@ -19499,13 +19503,14 @@
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "work_map_current",
         "sourceHead": "97c071a74524f2d2fc10f6f4768f1214381b7133",
-        "observedAt": "2026-10-26T00:14:10.948933+00:00",
+        "observedAt": "2026-10-26T00:26:52.688267+00:00",
         "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
-        "disposition": "Approved official-image direction restored at actual 97c071a745; delivery remains agent-owned",
-        "nextAction": "Complete current-base delivery review of 97c071a745 on fb7341a1ad and advise upstream publication. Preserve the existing fsstress approval and earlier exact-source official-image evidence. No local BusyBox/PIDFD, #16374 generic-archive or #16379 mirror landing gate applies to this existing-pull implementation.",
+        "disposition": "Approved official-image fsstress source delivered as #16401",
+        "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. Keep the separate current-source GNU image comparison and earlier source-specific evidence distinct. Resolver publication is sequenced after this PR lands; no new contributor decision or public notification.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16401",
           "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133",
           "https://github.com/tamird/gvisor/commit/fb7341a1ad7d3b1195f482e30f580390a43d09c0",
           "https://app.buildbuddy.io/invocation/d5246ab2-9bc0-43d6-95eb-b832bc3cecca",
@@ -19582,15 +19587,27 @@
       "id": "branch:rules-img-symlink-resolv",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "rules-img-symlink-resolv",
-      "head": "06a1ac32a39a557612731961754132d5b07d2d76",
+      "ref": "review/resolver-official-image-current",
+      "head": "deeab667e259802ce059b9964378a471ebe85018",
       "title": "Build the resolver fixture on the official BusyBox image",
-      "url": "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76",
+      "url": "https://github.com/tamird/gvisor/commit/deeab667e259802ce059b9964378a471ebe85018",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-26T00:14:10.948933+00:00",
-      "summary": "The retained approved resolver source is 06a1ac32a3 at rules-img-symlink-resolv. It uses the pinned official @test_busybox base and adds only the declared relative /etc/resolv.conf symlink to ../tmp/resolv.conf. The later local-BusyBox descendant e6ee9af099 is superseded and will not be shipped. The existing resolver approval remains; root owns current-base integration and upstream delivery review, with no new contributor decision.\n\nThe basic-image foundation landed through #16307, satisfying the old #16097 condition. There is no need for the scratch-leaf or local-BusyBox source stack. Earlier e4b77e91 validation covers the two architecture archives/contexts, AMD64 Make identity and existing containerd mount-over-symlink cases on the recorded official-image source. No new runtime result or ARM runtime is claimed.\n\nHistorical local-utility refinement and original official-image evidence:\n\nThe final resolver commit e6ee preserves the relative /etc/resolv.conf symlink and per-image cat/readlink/sleep links using the shared source-built BusyBox. Its complete child patch is unchanged from the reviewed split. Both-CPU archives and existing AMD64 containerd grouping cases are qualified in the separate root result; exact common config and BusyBox identities bind that result to the final union tree. The prior conditional child grant remains; there is no duplicate contributor question or ARM runtime claim.\n\nPreserved earlier source-specific record:\n\nThe requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
+      "status": "Contributor approved; waiting for #16401",
+      "updatedAt": "2026-10-26T00:26:52.688267+00:00",
+      "summary": "The approved official-image resolver is rebased and published to review/resolver-official-image-current at deeab667e2 on fb7341a1ad. The exact range-diff from 06a1ac32a3 is equal: the same pinned official BusyBox base and one relative /etc/resolv.conf symlink remain. Its prior contributor approval is retained; no new decision or runtime result is claimed.\n\nPublish after #16401 lands through its import. The two proposals currently conflict in images/basic/BUILD and tools/images.mk, so this order keeps one live rebasing surface. This is coordinated edit sequencing, not a base-image, compiler or local-utility dependency. Root owns the subsequent rebase/publication. Original e4b77e91 archive, Make and containerd evidence keeps its exact source and AMD64-runtime scope.\n\nCopyable patch comparison:\ngit range-diff --creation-factor=999 06a1ac32a39a557612731961754132d5b07d2d76^! deeab667e259802ce059b9964378a471ebe85018^!\n\nPreserved source-specific official-image record:\n\nThe retained approved resolver source is 06a1ac32a3 at rules-img-symlink-resolv. It uses the pinned official @test_busybox base and adds only the declared relative /etc/resolv.conf symlink to ../tmp/resolv.conf. The later local-BusyBox descendant e6ee9af099 is superseded and will not be shipped. The existing resolver approval remains; root owns current-base integration and upstream delivery review, with no new contributor decision.\n\nThe basic-image foundation landed through #16307, satisfying the old #16097 condition. There is no need for the scratch-leaf or local-BusyBox source stack. Earlier e4b77e91 validation covers the two architecture archives/contexts, AMD64 Make identity and existing containerd mount-over-symlink cases on the recorded official-image source. No new runtime result or ARM runtime is claimed.\n\nHistorical local-utility refinement and original official-image evidence:\n\nThe final resolver commit e6ee preserves the relative /etc/resolv.conf symlink and per-image cat/readlink/sleep links using the shared source-built BusyBox. Its complete child patch is unchanged from the reviewed split. Both-CPU archives and existing AMD64 containerd grouping cases are qualified in the separate root result; exact common config and BusyBox identities bind that result to the final union tree. The prior conditional child grant remains; there is no duplicate contributor question or ARM runtime claim.\n\nPreserved earlier source-specific record:\n\nThe requested scratch refinement builds BusyBox cat, readlink and sleep, preserves the relative resolver symlink and Make image name, and adds explicit BusyBox/musl notices. Complete source and existing containerd consumer review found that ordinary image targets also need native musl platform selection; the shared two-BUILD correction is independently accepted and being integrated. Resolver both-CPU archives and TestMountOverSymlinks grouping cases remain unexecuted for this refinement. Root owns shared source integration and resolver qualification remains queued while WorkMap handles the Rust refinement; Node shares the exact BusyBox input checks with other scratch leaf images. The prior 06a source approval and results remain preserved below.\n\nContributor approved this exact source for opening after #16097 actually lands. Preserve the conditional grant through an equivalent rebase; do not ask again.\n\nReplace the opaque resolver tar/Docker build with the declared relative /etc/resolv.conf \u2192 ../tmp/resolv.conf symlink and the existing BusyBox base. Both architecture archives and contexts, AMD64 Make rebuild/reload identity, and both existing containerd TestMountOverSymlinks grouping cases passed. No ARM runtime claim. Opening waits for basic-image #16097.",
       "links": [
+        {
+          "label": "Exact equal-patch official resolver rebase",
+          "url": "https://github.com/tamird/gvisor/commit/deeab667e259802ce059b9964378a471ebe85018"
+        },
+        {
+          "label": "Complete resolver change on fb7341a1ad",
+          "url": "https://github.com/tamird/gvisor/compare/fb7341a1ad7d3b1195f482e30f580390a43d09c0...deeab667e259802ce059b9964378a471ebe85018"
+        },
+        {
+          "label": "Publication order: fsstress PR must land first",
+          "url": "https://github.com/google/gvisor/pull/16401"
+        },
         {
           "label": "Approved official BusyBox resolver source; one relative symlink",
           "url": "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76"
@@ -19610,11 +19627,14 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "06a1ac32a39a557612731961754132d5b07d2d76",
-        "observedAt": "2026-10-26T00:14:10.948933+00:00",
-        "disposition": "Approved official-image resolver restored; current-base integration is agent work",
-        "nextAction": "Use approved 06a1ac32a3 as the resolver product and assess its current-base delivery. Preserve the original official-image qualification and approval; do not ship superseded e6ee local-BusyBox source or wait on the withdrawn utility stack.",
+        "sourceHead": "deeab667e259802ce059b9964378a471ebe85018",
+        "observedAt": "2026-10-26T00:26:52.688267+00:00",
+        "disposition": "Approved equal-patch resolver rebase; publication sequenced after #16401",
+        "nextAction": "Wait for #16401/import landing, then reconcile the shared images/basic/BUILD and tools/images.mk edits and publish the retained-approved resolver. This is edit-order coordination only; no new contributor decision, compiler/base-image gate or runtime replay is inferred.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/deeab667e259802ce059b9964378a471ebe85018",
+          "https://github.com/google/gvisor/pull/16401",
+          "https://app.buildbuddy.io/invocation/e4b77e91-e309-48bf-87df-af9845b2a24a",
           "https://github.com/tamird/gvisor/commit/06a1ac32a39a557612731961754132d5b07d2d76",
           "https://app.buildbuddy.io/invocation/e4b77e91-e309-48bf-87df-af9845b2a24a",
           "https://github.com/google/gvisor/pull/16307",
@@ -19623,10 +19643,10 @@
       },
       "refinement": {
         "before": {
-          "head": "e6ee9af099852412bc0fb557552820fbb8e5045a"
+          "head": "06a1ac32a39a557612731961754132d5b07d2d76"
         },
         "after": {
-          "head": "06a1ac32a39a557612731961754132d5b07d2d76"
+          "head": "deeab667e259802ce059b9964378a471ebe85018"
         }
       }
     },
@@ -23663,6 +23683,60 @@
           "url": "https://app.buildbuddy.io/invocation/f4134e3b-0247-4138-bf79-3acfe08fa66d"
         }
       ]
+    },
+    {
+      "id": "pr:16401",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16401,
+      "ref": "review/fsstress-official-image-current",
+      "head": "97c071a74524f2d2fc10f6f4768f1214381b7133",
+      "title": "Build the filesystem stress test on the official BusyBox image",
+      "url": "https://github.com/google/gvisor/pull/16401",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-10-26T00:26:52.688267+00:00",
+      "summary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence; the pending current-source GNU image comparison is a separate qualification note. No new execution is claimed here. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.",
+      "followup": {
+        "owner": "work_map_current",
+        "sourceHead": "97c071a74524f2d2fc10f6f4768f1214381b7133",
+        "observedAt": "2026-10-26T00:26:52.688267+00:00",
+        "reviewedAt": "2026-10-22T10:14:21.290429+00:00",
+        "disposition": "Approved official-image fsstress source delivered as #16401",
+        "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. Keep the separate current-source GNU image comparison and earlier source-specific evidence distinct. Resolver publication is sequenced after this PR lands; no new contributor decision or public notification.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16401",
+          "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133",
+          "https://github.com/tamird/gvisor/commit/fb7341a1ad7d3b1195f482e30f580390a43d09c0",
+          "https://app.buildbuddy.io/invocation/d5246ab2-9bc0-43d6-95eb-b832bc3cecca",
+          "https://app.buildbuddy.io/invocation/fe7b2570-6a93-4ebe-a1b8-0a348df57c34",
+          "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/tamird/gvisor/commit/6bc049050ab0fcce55ffc823e36bfdf55deb2e1d",
+          "https://github.com/tamird/gvisor/commit/5ccbde621b4be2951005dd83e9f54d17d73e9949",
+          "https://github.com/tamird/gvisor/commit/6012e1652777e4bd4c3997f55466a324c6491a08",
+          "https://github.com/tamird/gvisor/commit/d450a87dd3b88c328f8dd163bb0f593861f63805",
+          "https://app.buildbuddy.io/invocation/f4134e3b-0247-4138-bf79-3acfe08fa66d",
+          "https://github.com/google/gvisor/pull/16307",
+          "https://github.com/google/gvisor/pull/16374",
+          "https://github.com/tamird/gvisor/commit/8e45c79086ef50a61ed70379f89a5b684ea75db9",
+          "https://github.com/google/gvisor/pull/16379"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Exact delivered fsstress source",
+          "url": "https://github.com/tamird/gvisor/commit/97c071a74524f2d2fc10f6f4768f1214381b7133"
+        },
+        {
+          "label": "Earlier official-image and filesystem-consumer qualification; source-specific",
+          "url": "https://app.buildbuddy.io/invocation/d5246ab2-9bc0-43d6-95eb-b832bc3cecca"
+        },
+        {
+          "label": "Earlier official-image two-worker entrypoint proof; source-specific",
+          "url": "https://app.buildbuddy.io/invocation/fe7b2570-6a93-4ebe-a1b8-0a348df57c34"
+        }
+      ]
     }
   ],
   "edges": [
@@ -26414,6 +26488,20 @@
       "type": "includes",
       "reason": "Historical ancestry of the withdrawn local BusyBox proposal. The declared target-CPU musl/compiler closure requires the reviewed supplier 8306976dbf exposing @llvm; ordinary upstream defaults do not provide this contract.",
       "evidence": "https://github.com/tamird/gvisor/commit/8306976dbfd8b5c18c7386a9cd788d33cb99a8b1"
+    },
+    {
+      "from": "branch:rules-img-fsstress",
+      "to": "pr:16401",
+      "type": "includes",
+      "reason": "The contributor-approved official-image fsstress proposal is delivered in this public PR at the exact recorded source.",
+      "evidence": "https://github.com/google/gvisor/pull/16401"
+    },
+    {
+      "from": "pr:16401",
+      "to": "branch:rules-img-symlink-resolv",
+      "type": "depends_on",
+      "reason": "Publication-order gate: both proposals edit images/basic/BUILD and tools/images.mk and currently conflict there. Sequence the approved resolver after the fsstress import lands to keep one live rebasing surface; not a compiler or base-image dependency.",
+      "evidence": "https://github.com/google/gvisor/pull/16401"
     }
   ],
   "investigations": [
