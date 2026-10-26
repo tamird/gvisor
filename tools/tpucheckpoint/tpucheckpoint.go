@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -124,12 +125,9 @@ func main() {
 			if i >= len(args) {
 				fatal("--timeout requires a value")
 			}
-			secs, err := strconv.ParseInt(args[i], 10, 32)
-			if err != nil {
-				fatal("invalid timeout: %v", err)
-			}
-			if secs <= 0 {
-				fatal("invalid timeout: %s", args[i])
+			secs, err := strconv.ParseUint(args[i], 10, 31)
+			if err != nil || secs == 0 {
+				fatal("invalid timeout %q: must be an integer in [1, %d]", args[i], math.MaxInt32)
 			}
 			timeoutSec = int32(secs)
 		default:

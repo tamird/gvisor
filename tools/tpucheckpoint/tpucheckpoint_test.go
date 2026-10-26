@@ -34,14 +34,15 @@ func TestTimeout(t *testing.T) {
 		want string
 	}{
 		{"default", nil, "--pid is required"},
+		{"minimum", []string{"--timeout", "1"}, "--pid is required"},
 		{"maximum", []string{"--timeout", "2147483647"}, "--pid is required"},
-		{"positive_sign", []string{"-t", "+2147483647"}, "--pid is required"},
-		{"overflow", []string{"--timeout", "2147483648"}, `invalid timeout: strconv.ParseInt: parsing "2147483648": value out of range`},
-		{"wrap_to_zero", []string{"-t", "4294967296"}, `invalid timeout: strconv.ParseInt: parsing "4294967296": value out of range`},
-		{"duration_overflow", []string{"-t", "9223372036854775807"}, `invalid timeout: strconv.ParseInt: parsing "9223372036854775807": value out of range`},
-		{"invalid_syntax", []string{"-t", "abc"}, `invalid timeout: strconv.ParseInt: parsing "abc": invalid syntax`},
-		{"zero", []string{"-t", "0"}, "invalid timeout: 0"},
-		{"negative", []string{"-t", "-1"}, "invalid timeout: -1"},
+		{"positive_sign", []string{"-t", "+2147483647"}, `invalid timeout "+2147483647": must be an integer in [1, 2147483647]`},
+		{"overflow", []string{"--timeout", "2147483648"}, `invalid timeout "2147483648": must be an integer in [1, 2147483647]`},
+		{"wrap_to_zero", []string{"-t", "4294967296"}, `invalid timeout "4294967296": must be an integer in [1, 2147483647]`},
+		{"duration_overflow", []string{"-t", "9223372036854775807"}, `invalid timeout "9223372036854775807": must be an integer in [1, 2147483647]`},
+		{"invalid_syntax", []string{"-t", "abc"}, `invalid timeout "abc": must be an integer in [1, 2147483647]`},
+		{"zero", []string{"-t", "0"}, `invalid timeout "0": must be an integer in [1, 2147483647]`},
+		{"negative", []string{"-t", "-1"}, `invalid timeout "-1": must be an integer in [1, 2147483647]`},
 		{"missing", []string{"--timeout"}, "--timeout requires a value"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

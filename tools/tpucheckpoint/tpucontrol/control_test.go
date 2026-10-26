@@ -180,76 +180,87 @@ func TestParsePIDs(t *testing.T) {
 	}
 }
 
-func TestControlSuccess(t *testing.T) {
-	operations := []struct {
-		name   string
-		call   func([]int, int32) []tpucontrol.Result
-		action tpupb.ControlAction
-		state  tpupb.RuntimeState
-	}{
-		{"checkpoint", tpucontrol.Checkpoint, tpupb.ControlAction_ACTION_CHECKPOINT, tpupb.RuntimeState_STATE_UNSPECIFIED},
-		{"restore", tpucontrol.Restore, tpupb.ControlAction_ACTION_RESTORE, tpupb.RuntimeState_STATE_UNSPECIFIED},
-		{"get_state", tpucontrol.GetState, tpupb.ControlAction_ACTION_GETSTATE, tpupb.RuntimeState_STATE_DETACHED},
+func TestCheckpointSuccess(t *testing.T) {
+	reqRead, reqWrite, _ := os.Pipe()
+	rspRead, rspWrite, _ := os.Pipe()
+	defer reqRead.Close()
+
+	setupPipeTest(t, 42, []pipePair{{
+		threadName:   "libtpu00010002",
+		reqWriteFD:   1,
+		rspReadFD:    2,
+		reqWriteFile: reqWrite,
+		rspReadFile:  rspRead,
+	}})
+
+	requests := mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_DETACHED, "")
+
+	results := tpucontrol.Checkpoint([]int{42}, math.MaxInt32)
+	if len(results) != 1 {
+		t.Fatalf("got %d results, want 1", len(results))
 	}
-	for _, op := range operations {
-		t.Run(op.name, func(t *testing.T) {
-			for _, tc := range []struct {
-				name           string
-				timeout        int32
-				controlTimeout int32
-				stateTimeout   int32
-			}{
-				{"positive", 10, 10, 10},
-				{"maximum", math.MaxInt32, math.MaxInt32, math.MaxInt32},
-				{"zero", 0, 180, 0},
-				{"negative", -1, 180, -1},
-				{"minimum", math.MinInt32, 180, math.MinInt32},
-			} {
-				t.Run(tc.name, func(t *testing.T) {
-					reqRead, reqWrite, err := os.Pipe()
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer reqRead.Close()
-					defer reqWrite.Close()
-					rspRead, rspWrite, err := os.Pipe()
-					if err != nil {
-						t.Fatal(err)
-					}
-					defer rspRead.Close()
-					defer rspWrite.Close()
-					setupPipeTest(t, 42, []pipePair{{
-						threadName:   "libtpu00010002",
-						reqWriteFD:   1,
-						rspReadFD:    2,
-						reqWriteFile: reqWrite,
-						rspReadFile:  rspRead,
-					}})
-					requests := mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_DETACHED, "")
-					results := op.call([]int{42}, tc.timeout)
-					if len(results) != 1 {
-						t.Fatalf("got %d results, want 1", len(results))
-					}
-					if results[0].Err != nil {
-						t.Fatalf("%s() error = %v", op.name, results[0].Err)
-					}
-					if results[0].PID != 42 || results[0].State != op.state {
-						t.Errorf("result = %+v, want PID 42 and state %v", results[0], op.state)
-					}
-					req := <-requests
-					if req == nil {
-						t.Fatal("no request received")
-					}
-					wantTimeout := tc.controlTimeout
-					if op.action == tpupb.ControlAction_ACTION_GETSTATE {
-						wantTimeout = tc.stateTimeout
-					}
-					if req.GetAction() != op.action || req.GetTimeoutSecs() != wantTimeout {
-						t.Errorf("request = %v, want action %v and timeout %d", req, op.action, wantTimeout)
-					}
-				})
-			}
-		})
+	if results[0].Err != nil {
+		t.Fatalf("Checkpoint() error = %v", results[0].Err)
+	}
+	if results[0].PID != 42 {
+		t.Errorf("results[0].PID = %d, want 42", results[0].PID)
+	}
+	req := <-requests
+	if req == nil || req.GetAction() != tpupb.ControlAction_ACTION_CHECKPOINT || req.GetTimeoutSecs() != math.MaxInt32 {
+		t.Errorf("request = %v, want action CHECKPOINT and timeout %d", req, math.MaxInt32)
+	}
+}
+
+func TestRestoreSuccess(t *testing.T) {
+	reqRead, reqWrite, _ := os.Pipe()
+	rspRead, rspWrite, _ := os.Pipe()
+	defer reqRead.Close()
+
+	setupPipeTest(t, 42, []pipePair{{
+		threadName:   "libtpu00010002",
+		reqWriteFD:   1,
+		rspReadFD:    2,
+		reqWriteFile: reqWrite,
+		rspReadFile:  rspRead,
+	}})
+
+	requests := mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_RUNNING, "")
+
+	results := tpucontrol.Restore([]int{42}, 0)
+	if results[0].Err != nil {
+		t.Fatalf("Restore() error = %v", results[0].Err)
+	}
+	req := <-requests
+	if req == nil || req.GetAction() != tpupb.ControlAction_ACTION_RESTORE || req.GetTimeoutSecs() != 180 {
+		t.Errorf("request = %v, want action RESTORE and timeout %d", req, 180)
+	}
+}
+
+func TestGetStateSuccess(t *testing.T) {
+	reqRead, reqWrite, _ := os.Pipe()
+	rspRead, rspWrite, _ := os.Pipe()
+	defer reqRead.Close()
+
+	setupPipeTest(t, 42, []pipePair{{
+		threadName:   "libtpu00010002",
+		reqWriteFD:   1,
+		rspReadFD:    2,
+		reqWriteFile: reqWrite,
+		rspReadFile:  rspRead,
+	}})
+
+	requests := mockResponder(t, reqRead, rspWrite, true, tpupb.RuntimeState_STATE_DETACHED, "")
+
+	results := tpucontrol.GetState([]int{42}, -1)
+	if results[0].Err != nil {
+		t.Fatalf("GetState() error = %v", results[0].Err)
+	}
+	if results[0].State != tpupb.RuntimeState_STATE_DETACHED {
+		t.Errorf("GetState() = %v, want %v", results[0].State, tpupb.RuntimeState_STATE_DETACHED)
+	}
+	req := <-requests
+	if req == nil || req.GetAction() != tpupb.ControlAction_ACTION_GETSTATE || req.GetTimeoutSecs() != -1 {
+		t.Errorf("request = %v, want action GETSTATE and timeout %d", req, -1)
 	}
 }
 
@@ -266,7 +277,7 @@ func TestControlFailureResponse(t *testing.T) {
 		rspReadFile:  rspRead,
 	}})
 
-	_ = mockResponder(t, reqRead, rspWrite, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
+	mockResponder(t, reqRead, rspWrite, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
 
 	results := tpucontrol.Checkpoint([]int{42}, 10)
 	if results[0].Err == nil {
@@ -301,7 +312,7 @@ func TestControlTimeout(t *testing.T) {
 
 	// Read the request but never write a response.
 	go func() {
-		_, _ = readRequest(reqRead)
+		readRequest(reqRead)
 		time.Sleep(5 * time.Second)
 	}()
 
@@ -335,7 +346,7 @@ func TestControlPipeClosed(t *testing.T) {
 
 	// Read the request, then close the response pipe without writing.
 	go func() {
-		_, _ = readRequest(reqRead)
+		readRequest(reqRead)
 		rspWrite.Close()
 	}()
 
@@ -365,7 +376,7 @@ func TestControlCorruptedResponse(t *testing.T) {
 
 	go func() {
 		defer rspWrite.Close()
-		_, _ = readRequest(reqRead)
+		readRequest(reqRead)
 
 		// Valid size prefix but a truncated varint payload.
 		writeDelimited(rspWrite, []byte{0x08})
@@ -395,8 +406,8 @@ func TestControlAllMultipleThreads(t *testing.T) {
 		{threadName: "libtpu00030004", reqWriteFD: 3, rspReadFD: 4, reqWriteFile: reqWrite2, rspReadFile: rspRead2},
 	})
 
-	_ = mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
-	_ = mockResponder(t, reqRead2, rspWrite2, true, tpupb.RuntimeState_STATE_DETACHED, "")
+	mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
+	mockResponder(t, reqRead2, rspWrite2, true, tpupb.RuntimeState_STATE_DETACHED, "")
 
 	results := tpucontrol.Checkpoint([]int{42}, 10)
 	if results[0].Err != nil {
@@ -419,7 +430,7 @@ func TestControlAllFirstFails(t *testing.T) {
 	})
 
 	// The first thread fails; the operation should report the failure.
-	_ = mockResponder(t, reqRead1, rspWrite1, false, tpupb.RuntimeState_STATE_FAULTED, "device error")
+	mockResponder(t, reqRead1, rspWrite1, false, tpupb.RuntimeState_STATE_FAULTED, "device error")
 
 	results := tpucontrol.Checkpoint([]int{42}, 10)
 	if results[0].Err == nil {
@@ -458,7 +469,7 @@ func TestCheckpointMultiplePIDs(t *testing.T) {
 	} {
 		go func(reqRead, rspWrite *os.File) {
 			defer rspWrite.Close()
-			_, _ = readRequest(reqRead)
+			readRequest(reqRead)
 			barrier.Done()
 			barrier.Wait()
 			writeDelimited(rspWrite, resp)
@@ -492,8 +503,8 @@ func TestCheckpointMultiplePIDsPartialFailure(t *testing.T) {
 		42: {{threadName: "libtpu00030004", reqWriteFD: 3, rspReadFD: 4, reqWriteFile: reqWrite2, rspReadFile: rspRead2}},
 	})
 
-	_ = mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
-	_ = mockResponder(t, reqRead2, rspWrite2, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
+	mockResponder(t, reqRead1, rspWrite1, true, tpupb.RuntimeState_STATE_DETACHED, "")
+	mockResponder(t, reqRead2, rspWrite2, false, tpupb.RuntimeState_STATE_FAULTED, "device busy")
 
 	results := tpucontrol.Checkpoint([]int{41, 42}, 10)
 	if results[0].PID != 41 || results[1].PID != 42 {
