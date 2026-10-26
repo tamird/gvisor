@@ -305,16 +305,13 @@ func (s *Slice) save(w *Writer) {
 	s.Ref.save(w)
 }
 
-// ObjectArray owns homogeneous composite or no-op values. Load uses typed
-// arrays for scalar and reference tags, without an Object cell per element.
-// Writers may also construct this form directly; the wire grammar is identical.
-type ObjectArray struct {
-	arrayKind
+// Array is a homogeneous array value.
+type Array struct {
 	Contents []Object
 }
 
 // save implements Object.save.
-func (a *ObjectArray) save(w *Writer) {
+func (a *Array) save(w *Writer) {
 	l := Uint(len(a.Contents))
 	l.save(w)
 	if l == 0 {
@@ -327,9 +324,6 @@ func (a *ObjectArray) save(w *Writer) {
 		a.Contents[i].save(w)
 	}
 }
-
-func (a *ObjectArray) Len() int             { return len(a.Contents) }
-func (a *ObjectArray) Element(i int) Object { return a.Contents[i] }
 
 // Map is a map value.
 type Map struct {
@@ -612,7 +606,7 @@ func Save(w *Writer, obj Object) {
 	case *Slice:
 		typeSlice.save(w)
 		x.save(w)
-	case Array:
+	case *Array:
 		typeArray.save(w)
 		x.save(w)
 	case *Map:
