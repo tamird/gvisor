@@ -225,6 +225,7 @@ go_test(
         "//pkg/sentry/state/stateio",
         "//pkg/sentry/usage",
         "//pkg/state",
+        "//pkg/state/wire",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
