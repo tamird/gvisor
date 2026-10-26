@@ -246,7 +246,7 @@ _runtime_payload_image = rule(
 def _tcg_test_impl(ctx):
     _guest_executables(ctx)
     image = ctx.attr.image[TcgImageInfo]
-    architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
+    architecture = {"arm64_tcg": "arm64", "amd64_tcg": "amd64", "amd64_kvm": "amd64"}[ctx.attr.machine]
     if image.architecture != architecture:
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     if ctx.attr.arm64_el2 and architecture != "arm64":
@@ -277,7 +277,7 @@ def _tcg_test_impl(ctx):
             " ".join([shell.quote(key) for key in inherited_environment]),
         ),
     )
-    payload_input = ctx.file.payload_image if ctx.attr.machine == "arm64_tcg" else ctx.executable.payload_builder
+    payload_input = ctx.file.payload_image or ctx.executable.payload_builder
     inputs = [payload_input, ctx.file.host_tools, image.kernel, image.rootfs, configuration, ctx.executable._launcher, ctx.file._test_setup]
     if ctx.file.emulator != None:
         inputs.append(ctx.file.emulator)
@@ -325,7 +325,7 @@ _tcg_test = rule(
         "payload_builder": attr.label(executable = True, cfg = "target"),
         "host_tools": attr.label(default = Label(":host_tools"), allow_single_file = True, cfg = "exec"),
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
-        "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
+        "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_tcg", "amd64_kvm"]),
         "arm64_el2": attr.bool(default = False),
         "smt": attr.bool(default = False),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
@@ -366,19 +366,7 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
         run_under = run_under,
         payload_image = ":" + name + "_payload_image",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
-        tags = tags + ["manual"],
-        **kwargs
-    )
-
-def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
-    """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
-
-    _guest_test(
-        name = name,
-        payload = payload,
-        image = image,
-        emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
-        tags = tags + ["no-local"],
+        tags = tags + ["manual", "no-local"],
         exec_properties = {
             # Compute units prevent predicted task sizes from overriding CPUs.
             # EstimatedMemory below still controls the memory allocation.
@@ -395,6 +383,29 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
             "test.termination-grace-period": "30s",
             "test.workload-isolation-type": "oci",
         },
+        **kwargs
+    )
+
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
+    """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
+    _guest_test(
+        name = name,
+        payload = payload,
+        image = image,
+        emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
+        tags = tags,
+        **kwargs
+    )
+
+def amd64_tcg_test(name, payload, tags, image, **kwargs):
+    """Wraps an AMD64 payload for unprivileged software emulation."""
+    _guest_test(
+        name = name,
+        payload = payload,
+        image = image,
+        machine = "amd64_tcg",
+        host_tools = Label(":kvm_host_tools"),
+        tags = tags,
         **kwargs
     )
 

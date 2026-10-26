@@ -67,6 +67,11 @@ case "$machine" in
     machine_options=(-machine pc-i440fx-6.2 -cpu host -accel kvm)
     console=ttyS0
     ;;
+  amd64_tcg)
+    emulator=qemu-system-x86_64
+    machine_options=(-machine pc-i440fx-6.2 -cpu max -accel "tcg,thread=multi")
+    console=ttyS0
+    ;;
   *) printf 'Unsupported guest machine: %s\n' "$machine" >&2; exit 1 ;;
 esac
 scratch="$(mktemp -d "${TEST_TMPDIR}/tcg.XXXXXX")"
@@ -131,7 +136,7 @@ trap 'host_phase signal_TERM 143; exit 143' TERM
 trap 'host_phase signal_INT 130; exit 130' INT
 mkdir -p "$scratch/input" "$result"
 host_phase host_tools_ready
-if [[ "$machine" == amd64_kvm ]]; then
+if [[ "$machine" == amd64_* ]]; then
   # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
   # Select the declared BIOS instead of the host's /usr/share/seabios.
   # https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/q/qemu/qemu_6.2+dfsg-2ubuntu6.31.debian.tar.xz
@@ -155,7 +160,7 @@ if (( image_bytes > guest_scratch_gib * 1024 * 1024 * 1024 )); then
 fi
 printf 'Payload filesystem template: %s bytes; scratch capacity: %s GiB\n' "$image_bytes" "$guest_scratch_gib"
 # Copy the remote template sparsely; guest writes cannot modify declared inputs.
-if [[ "$machine" == arm64_tcg ]]; then
+if [[ "$machine" != amd64_kvm ]]; then
   host_tool bin/cp --reflink=auto --sparse=always "$payload_image" "$scratch/scratch.ext4"
 fi
 # Materialized Bazel outputs may have write permission removed.
