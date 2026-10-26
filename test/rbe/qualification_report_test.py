@@ -29,6 +29,7 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import tarfile
@@ -895,6 +896,10 @@ class QualificationReportTest(unittest.TestCase):
             ("query", 0, None, "PASS"),
             ("cquery", 0, None, "PASS"),
             ("cquery", 23, None, "FAIL"),
+            ("aquery", 0, None, "PASS"),
+            ("aquery", 23, None, "FAIL"),
+            ("aquery", 0, "arguments", "INCOMPLETE"),
+            ("", 0, None, "INCOMPLETE"),
             ("cquery", 0, "source-after", "INCOMPLETE"),
             ("info", 0, None, "PASS"),
             ("info", 23, None, "FAIL"),
@@ -2951,6 +2956,73 @@ signal.pause()
         (self.evidence / "invocation-missing").mkdir()
         self.assertEqual(report.bundle(self.evidence, 0, 0, output)["status"], "INCOMPLETE")
 
+    def test_explicit_source_set_preserves_retained_failure(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        expected = producer["sources"]
+        rows = producer["invocations"]
+        value = report.summarize_verdicts(rows, producer["runner_exit"], producer["capture_exit"], [],
+                                          expected_sources=expected)
+        self.assertEqual((value["status"], value["native_exit"], value["errors"]), ("FAIL", 3, []))
+        for key in ("sources", "native_exits", "case_counts", "failures", "executed"):
+            self.assertEqual(value[key], producer[key], key)
+        for declared in (expected[:-1], [*expected, "0" * 40]):
+            with self.subTest(declared=declared):
+                rejected = report.summarize_verdicts(rows, 0, 0, [], expected_sources=declared)
+                self.assertEqual(rejected["status"], "FAIL")
+                self.assertTrue(any("Invocation sources differ" in item for item in rejected["errors"]))
+        passing = [row for row in rows if row["path"] in (
+            "invocation-parent-death-nogo/verdict.json", "invocation-exit-status-nogo/verdict.json")]
+        declared = [row["verdict"]["source"] for row in passing]
+        self.assertEqual(len(passing), 2)
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [], expected_sources=declared)["status"], "PASS")
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [], expected_sources=declared[:1])["status"], "INCOMPLETE")
+        self.assertEqual(report.summarize_verdicts(passing, 0, 0, [])["status"], "INCOMPLETE")
+        empty = report.summarize_verdicts([], 0, 0, [], expected_sources=expected)
+        self.assertEqual((empty["status"], empty["native_exit"]), ("INCOMPLETE", None))
+
+    def test_explicit_source_set_receipt_requires_exact_sources(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        artifact = self.root / "multi-source.tar.gz"
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        digest = report.file_record(artifact)["sha256"]
+        source = producer["sources"][0]
+        with self.assertRaisesRegex(ValueError, "Producer sources"):
+            report.receipt(artifact, digest, source)
+        result = report.receipt(artifact, digest, source, expected_sources=producer["sources"])
+        self.assertEqual((result["status"], result["native_exit"]), ("FAIL", 3))
+        self.assertEqual(result["errors"], producer["errors"])
+        self.assertEqual(result["expected_sources"], producer["sources"])
+        with self.assertRaisesRegex(ValueError, "Producer sources"):
+            report.receipt(artifact, digest, source, expected_sources=producer["sources"][:-1])
+        with self.assertRaisesRegex(ValueError, "Submitted source"):
+            report.receipt(artifact, digest, "0" * 40, expected_sources=producer["sources"])
+        output = self.root / "multi-source-receipt.json"
+        command = subprocess.run([sys.executable, report.__file__, "receipt", "--artifact", str(artifact),
+                                  "--sha256", digest, "--expected-source", source, "--output", str(output),
+                                  *[arg for commit in producer["sources"] for arg in ("--invocation-source", commit)]],
+                                 capture_output=True, text=True, check=False)
+        self.assertEqual(command.returncode, 1, command.stderr)
+        self.assertEqual(report.read_json(output)["status"], "FAIL")
+        producer["invocations"][0]["verdict"]["source"] = "0" * 40
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        with self.assertRaisesRegex(ValueError, "Producer invocation"):
+            report.receipt(artifact, report.file_record(artifact)["sha256"], source,
+                           expected_sources=producer["sources"])
+
+
+    def test_explicit_source_set_rejects_invalid_contracts(self) -> None:
+        for sources in ([], [""], ["a" * 39], ["a" * 40, "a" * 40]):
+            with self.subTest(sources=sources), self.assertRaisesRegex(ValueError, "unique full commit"):
+                report.summarize_verdicts([], 0, 0, [], expected_sources=sources)
+
     def test_empty_bundle_never_passes(self) -> None:
         value = report.bundle(self.evidence, 19, 0, self.root / "bundle.tar.gz")
         self.assertEqual(value["status"], "INCOMPLETE")
@@ -3596,6 +3668,9 @@ signal.pause()
                             "all_skipped_owners", "native_exits", "verdict_available_at"):
                     self.assertEqual(value[key], producer[key], key)
                 self.assertEqual(value["invocations"][0]["errors"], producer["invocations"][0]["verdict"]["errors"])
+                explicit = report.receipt(artifact, digest, producer["sources"][0], expected_sources=producer["sources"])
+                self.assertEqual(explicit["status"], status)
+                self.assertEqual(explicit["case_counts"], producer["case_counts"])
                 self.assertEqual(value["expected_owner_count"], len(producer["expected"]))
                 self.assertEqual(value["executed_attempt_count"], len(producer["executed"]))
                 phase = producer["invocations"][0]["verdict"]
@@ -3980,6 +4055,72 @@ signal.pause()
     def metadata_response(self, metadata: dict[str, object]) -> mock.MagicMock:
         return self.native_response(json.dumps({"invocation": [metadata]}).encode())
 
+    def test_native_collection_separates_hosted_and_executed_sources(self) -> None:
+        producer = report.read_json(FIXTURES / "five-source-fail.json")
+        artifact = self.root / "private-source.tar.gz"
+        raw = json.dumps(producer).encode()
+        with tarfile.open(artifact, "w:gz") as archive:
+            member = tarfile.TarInfo("verdict.json")
+            member.size = len(raw)
+            archive.addfile(member, io.BytesIO(raw))
+        metadata = self.native_metadata(artifact, producer)
+        metadata["commitSha"] = "9" * 40
+        key = self.root / "api-key"
+        key.write_text("test-secret")
+        with mock.patch.object(report, "HTTPSConnection") as connection:
+            connection.return_value.getresponse.side_effect = [
+                self.metadata_response(metadata), self.native_response(artifact.read_bytes())]
+            value = report.native_receipt(
+                metadata["id"]["invocationId"], key, self.root / "download.tar.gz",
+                self.root / "native-receipt.json", producer["sources"][0], None, 30,
+                expected_sources=producer["sources"], hosted_source="9" * 40)
+        self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
+                         ("FAIL", "FAIL", "COMPLETE"))
+        self.assertEqual(value["submitted_source"], metadata["commitSha"])
+        self.assertEqual(value["expected_source"], producer["sources"][0])
+        self.assertEqual(value["native_invocation"]["commitSha"], metadata["commitSha"])
+        self.assertEqual(value["expected_sources"], producer["sources"])
+        self.assertEqual(value["native_exit"], producer["native_exit"])
+        self.assertNotIn("test-secret", json.dumps(value))
+
+    def test_native_collection_rejects_private_source_identity_mismatches(self) -> None:
+        for defect, message in (
+            ("wrong-hosted", "invocation source differs"),
+            ("missing-executed", "Producer sources"),
+            ("swapped-executed", "Producer invocation"),
+            ("invalid-hosted", "full hosted checkout commit SHA"),
+        ):
+            with self.subTest(defect=defect):
+                producer = report.read_json(FIXTURES / "five-source-fail.json")
+                expected = producer["sources"][:]
+                hosted_source = "9" * 40
+                if defect == "missing-executed":
+                    expected.pop()
+                elif defect == "swapped-executed":
+                    producer["invocations"][0]["verdict"]["source"] = "8" * 40
+                elif defect == "invalid-hosted":
+                    hosted_source = "invalid"
+                artifact = self.root / (defect + ".tar.gz")
+                raw = json.dumps(producer).encode()
+                with tarfile.open(artifact, "w:gz") as archive:
+                    member = tarfile.TarInfo("verdict.json")
+                    member.size = len(raw)
+                    archive.addfile(member, io.BytesIO(raw))
+                metadata = self.native_metadata(artifact, producer)
+                metadata["commitSha"] = "7" * 40 if defect == "wrong-hosted" else "9" * 40
+                key = self.root / "api-key"
+                key.write_text("test-secret")
+                with mock.patch.object(report, "HTTPSConnection") as connection:
+                    connection.return_value.getresponse.side_effect = [
+                        self.metadata_response(metadata), self.native_response(artifact.read_bytes())]
+                    value = report.native_receipt(
+                        metadata["id"]["invocationId"], key, self.root / (defect + "-download.tar.gz"),
+                        self.root / (defect + "-receipt.json"), expected[0], None, 30,
+                        expected_sources=expected, hosted_source=hosted_source)
+                self.assertEqual(value["collection_status"], "ERROR")
+                self.assertIn(message, value["collection_error"])
+                self.assertNotIn("test-secret", json.dumps(value))
+
     def test_native_collection_preserves_retained_outcomes(self) -> None:
         for name, status in (("pass", "PASS"), ("fail", "FAIL"), ("incomplete", "FAIL"),
                              ("zero", "INCOMPLETE"), ("all-skipped", "INCOMPLETE")):
@@ -3998,12 +4139,15 @@ signal.pause()
                     value = self.native_collect(metadata, [self.metadata_response(pending),
                                                            TimeoutError("timed out"),
                                                            OSError(errno.EADDRNOTAVAIL, "no local address"),
+                                                           socket.gaierror(socket.EAI_NONAME, "name unavailable"),
+                                                           socket.gaierror(socket.EAI_AGAIN, "temporary resolution failure"),
                                                            ConnectionResetError("connection reset"),
                                                            RemoteDisconnected("connection closed"),
                                                            self.metadata_response(metadata),
                                                            self.native_response(artifact.read_bytes())])
                 self.assertEqual([retry["error"] for retry in value["observation_retries"]],
-                                 ["TimeoutError", "EADDRNOTAVAIL", "ConnectionResetError", "RemoteDisconnected"])
+                                 ["TimeoutError", "EADDRNOTAVAIL", "EAI_NONAME", "EAI_AGAIN",
+                                  "ConnectionResetError", "RemoteDisconnected"])
                 self.assertEqual((value["status"], value["producer_status"], value["collection_status"]),
                                  (status, status, "COMPLETE"))
                 for field in ("case_counts", "failures", "missing", "skips", "zero_case_owners",
@@ -4119,22 +4263,37 @@ signal.pause()
         artifact, producer = self.artifact(self.fixture(), native=True)
         metadata = self.native_metadata(artifact, producer)
         pending = {**metadata, "invocationStatus": "PARTIAL_INVOCATION_STATUS", "artifacts": []}
-        for timeout in (False, True):
-            with self.subTest(timeout=timeout):
+        for error in (None, TimeoutError("timed out"),
+                      socket.gaierror(socket.EAI_NONAME, "name unavailable"),
+                      socket.gaierror(socket.EAI_AGAIN, "temporary resolution failure")):
+            with self.subTest(error=error):
                 clock = [0]
 
                 def expire(_: float) -> None:
                     clock[0] = 31
 
-                responses = [TimeoutError("timed out")] if timeout else [self.metadata_response(pending)]
+                responses = [error] if error is not None else [self.metadata_response(pending)]
                 with mock.patch.object(report.time, "monotonic", side_effect=lambda: clock[0]), \
                      mock.patch.object(report.time, "sleep", side_effect=expire):
                     value = self.native_collect(metadata, responses)
                 self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
                 self.assertIn("deadline", value["collection_error"])
-                if not timeout:
+                if error is None:
                     self.assertEqual(value["native_invocation"]["invocationStatus"], "PARTIAL_INVOCATION_STATUS")
                 self.assertNotIn("consumer_verified_at", value)
+
+    def test_native_collection_does_not_retry_other_socket_errors(self) -> None:
+        artifact, producer = self.artifact(self.fixture(), native=True)
+        metadata = self.native_metadata(artifact, producer)
+        for error in (socket.gaierror(socket.EAI_FAIL, "permanent resolver failure"),
+                      PermissionError(errno.EACCES, "connection denied")):
+            with self.subTest(error=error), mock.patch.object(report.time, "sleep") as sleep:
+                value = self.native_collect(metadata, [error])
+                self.assertEqual((value["status"], value["collection_status"]), ("INCOMPLETE", "ERROR"))
+                self.assertEqual(value["observation_retries"], [])
+                self.assertEqual(value["collection_error"], str(error))
+                self.assertNotIn("consumer_verified_at", value)
+                sleep.assert_not_called()
 
     def test_native_collection_deadline_covers_verification(self) -> None:
         original_open = Path.open
@@ -4164,8 +4323,10 @@ signal.pause()
                     return original_open(path, mode, *args, **kwargs)
 
                 def verify(path: Path, sha256: str, source: str, targets: list[str] | None = None,
-                           *, deadline: float | None = None) -> dict[str, object]:
-                    value = original_receipt(path, sha256, source, targets, deadline=deadline)
+                           *, deadline: float | None = None,
+                           expected_sources: list[str] | None = None) -> dict[str, object]:
+                    value = original_receipt(path, sha256, source, targets, deadline=deadline,
+                                             expected_sources=expected_sources)
                     if phase == "verified":
                         clock[0] = 31
                     return value
