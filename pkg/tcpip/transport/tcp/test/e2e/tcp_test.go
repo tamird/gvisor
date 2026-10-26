@@ -48,9 +48,28 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+func getTCPInfo(t *testing.T, c *context.Context) tcpip.TCPInfoOption {
+	t.Helper()
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+	}
+	return info
+}
+
+// Pause drains queued TCP work while virtual time is held still.
+func sendAckAndWait(c *context.Context, seq seqnum.Value, receivedBytes int) {
+	c.SendAck(seq, receivedBytes)
+	c.Stack().Pause()
+	c.Stack().Resume()
+}
+
 func TestRepeatedRetransmissionTimeoutThreshold(t *testing.T) {
 	const mss = 32
-	for _, cc := range []string{"reno", "cubic"} {
+	for _, cc := range []struct {
+		name           string
+		firstThreshold uint32
+	}{{"reno", 5}, {"cubic", 7}} {
 		for _, tc := range []struct {
 			name  string
 			acked int
@@ -59,7 +78,7 @@ func TestRepeatedRetransmissionTimeoutThreshold(t *testing.T) {
 			{"partial_ack", mss / 2},
 			{"next_segment", mss},
 		} {
-			t.Run(cc+"/"+tc.name, func(t *testing.T) {
+			t.Run(cc.name+"/"+tc.name, func(t *testing.T) {
 				clock := faketime.NewManualClock()
 				c := context.NewWithOpts(t, context.Options{
 					EnableV4: true,
@@ -67,9 +86,9 @@ func TestRepeatedRetransmissionTimeoutThreshold(t *testing.T) {
 					Clock:    clock,
 				})
 				defer c.Cleanup()
-				algorithm := tcpip.CongestionControlOption(cc)
+				algorithm := tcpip.CongestionControlOption(cc.name)
 				if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &algorithm); err != nil {
-					t.Fatalf("SetTransportProtocolOption(%s): %s", cc, err)
+					t.Fatalf("SetTransportProtocolOption(%s): %s", cc.name, err)
 				}
 				c.CreateConnected(789, 30000, -1)
 
@@ -83,55 +102,48 @@ func TestRepeatedRetransmissionTimeoutThreshold(t *testing.T) {
 				for off := 0; off < len(data); off += mss {
 					c.ReceiveAndCheckPacket(data, off, mss)
 				}
-				info := func() tcpip.TCPInfoOption {
-					t.Helper()
-					var i tcpip.TCPInfoOption
-					if err := c.EP.GetSockOpt(&i); err != nil {
-						t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
-					}
-					return i
+				if got, want := getTCPInfo(t, c).SndCwnd, uint32(tcp.InitialCwnd); got != want {
+					t.Fatalf("initial cwnd = %d, want %d", got, want)
 				}
 				expire := func(off, length int) uint32 {
 					t.Helper()
 					before := c.Stack().Stats().TCP.Timeouts.Value()
-					old := info()
+					old := getTCPInfo(t, c)
 					clock.Advance(old.RTO)
 					c.ReceiveAndCheckPacket(data, off, length)
-					if got := c.Stack().Stats().TCP.Timeouts.Value(); got != before+1 {
-						t.Fatalf("timeouts = %d, want %d", got, before+1)
+					if got, want := c.Stack().Stats().TCP.Timeouts.Value(), before+1; got != want {
+						t.Fatalf("timeouts = %d, want %d", got, want)
 					}
-					i := info()
-					if i.SndCwnd != 1 {
-						t.Fatalf("cwnd after timeout = %d, want 1", i.SndCwnd)
+					i := getTCPInfo(t, c)
+					if got, want := i.SndCwnd, uint32(1); got != want {
+						t.Fatalf("cwnd after timeout = %d, want %d", got, want)
 					}
-					if i.RTO != 2*old.RTO {
-						t.Fatalf("backoff on timeout = %v, want %v", i.RTO, 2*old.RTO)
+					if got, want := i.RTO, 2*old.RTO; got != want {
+						t.Fatalf("backoff on timeout = %v, want %v", got, want)
 					}
-					t.Logf("timeout %d retransmitted [%d,%d): cwnd %d->%d, threshold %d->%d, RTO %v->%v", before+1, off, off+length, old.SndCwnd, i.SndCwnd, old.SndSsthresh, i.SndSsthresh, old.RTO, i.RTO)
 					return i.SndSsthresh
 				}
-				first := expire(0, mss)
-				if first <= 2 {
-					t.Fatalf("first timeout threshold = %d, want above the two-segment minimum", first)
+				if got, want := expire(0, mss), cc.firstThreshold; got != want {
+					t.Fatalf("threshold after first timeout = %d, want %d", got, want)
 				}
 				if tc.acked != 0 {
-					c.SendAck(790, tc.acked)
-					c.Stack().Pause()
-					c.Stack().Resume()
+					sendAckAndWait(c, 790, tc.acked)
 					// Discard transmissions driven by the advancing ACK. The
 					// next observation must come from the timer itself.
 					for pkt := c.GetPacketNonBlocking(); pkt != nil; pkt = c.GetPacketNonBlocking() {
 						pkt.Release()
 					}
 				}
+				// An ACK within the timer's first retransmission leaves a suffix
+				// of the same segment. Covering it completely exposes a new loss.
+				want := cc.firstThreshold
+				length := mss - tc.acked
 				if tc.acked == mss {
-					// A different segment is being retransmitted by the timer for
-					// the first time, after the previous loss collapsed the window.
-					if got := expire(mss, mss); got != 2 {
-						t.Errorf("threshold after first timeout of next segment = %d, want 2", got)
-					}
-				} else if got := expire(tc.acked, mss-tc.acked); got != first {
-					t.Errorf("threshold after repeated timeout of bytes [%d,%d) = %d, want %d", tc.acked, mss, got, first)
+					want = 2
+					length = mss
+				}
+				if got := expire(tc.acked, length); got != want {
+					t.Errorf("threshold on timeout of bytes [%d,%d) = %d, want %d", tc.acked, tc.acked+length, got, want)
 				}
 			})
 		}
@@ -164,20 +176,6 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	defer c.Cleanup()
 	e2e.EnableCUBIC(t, c)
 	c.CreateConnected(789, 30000, -1)
-	// Pause drains queued TCP work before returning. With virtual time held
-	// still, the next step observes all effects of the ACK without sleeping.
-	ackAndWait := func(receivedBytes int) {
-		c.SendAck(790, receivedBytes)
-		c.Stack().Pause()
-		c.Stack().Resume()
-	}
-	tcpInfo := func() tcpip.TCPInfoOption {
-		var info tcpip.TCPInfoOption
-		if err := c.EP.GetSockOpt(&info); err != nil {
-			t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
-		}
-		return info
-	}
 	// Keep data queued throughout warmup and every post-loss window, so an
 	// application-limited sender cannot explain a window that stops growing.
 	queuedData := make([]byte, 256<<10)
@@ -198,9 +196,9 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 			receivedBytes += segmentBytes
 		}
 		clock.Advance(rtt)
-		ackAndWait(receivedBytes)
+		sendAckAndWait(c, 790, receivedBytes)
 	}
-	beforeLoss := int(tcpInfo().SndCwnd)
+	beforeLoss := int(getTCPInfo(t, c).SndCwnd)
 	firstLostByte := receivedBytes
 	for range beforeLoss {
 		c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
@@ -210,8 +208,8 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	if recovery == "retransmission_timeout" {
 		// These packets were sent at the current virtual time. Withhold
 		// their ACKs until the actual retransmission timer expires.
-		clock.Advance(tcpInfo().RTO)
-		if got, want := tcpInfo().SndCwnd, uint32(1); got != want {
+		clock.Advance(getTCPInfo(t, c).RTO)
+		if got, want := getTCPInfo(t, c).SndCwnd, uint32(1); got != want {
 			t.Fatalf("cwnd after retransmission timeout = %d, want %d", got, want)
 		}
 		// After RTO the cubic epoch starts with K=0, so its initial
@@ -222,19 +220,19 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 		// Retain later packets at the peer, but report the gap left by
 		// the first packet to trigger fast retransmission.
 		for range 3 {
-			ackAndWait(firstLostByte)
+			sendAckAndWait(c, 790, firstLostByte)
 		}
 	}
 	c.ReceiveAndCheckPacket(queuedData, firstLostByte, segmentBytes)
-	ackAndWait(receivedBytes)
-	afterLoss := int(tcpInfo().SndCwnd)
+	sendAckAndWait(c, 790, receivedBytes)
+	afterLoss := int(getTCPInfo(t, c).SndCwnd)
 	if got, want := afterLoss, beforeLoss; got >= want {
 		t.Fatalf("loss did not reduce cwnd: before=%d after=%d", want, got)
 	}
 	// ACK a full window over one RTT, changing only ACK grouping. We check
 	// eventual growth, not an implementation-specific CUBIC window formula.
 	for range recoveryWindows {
-		window := int(tcpInfo().SndCwnd)
+		window := int(getTCPInfo(t, c).SndCwnd)
 		ackedBytes := receivedBytes
 		for range window {
 			c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
@@ -244,11 +242,11 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 			n := min(segmentsPerACK, remaining)
 			clock.Advance(rtt * time.Duration(n) / time.Duration(window))
 			ackedBytes += n * segmentBytes
-			ackAndWait(ackedBytes)
+			sendAckAndWait(c, 790, ackedBytes)
 			remaining -= n
 		}
 	}
-	if got, want := int(tcpInfo().SndCwnd), afterLoss; got <= want {
+	if got, want := int(getTCPInfo(t, c).SndCwnd), afterLoss; got <= want {
 		t.Fatalf("cwnd did not recover after %d windows of ACKs: before=%d after=%d", recoveryWindows, want, got)
 	}
 }
