@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-26T01:23:13.473602+00:00",
+    "updatedAt": "2026-10-26T01:44:49.538537+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4553,17 +4553,17 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "pgalloc-restore-sync",
-      "title": "Synchronize memory-file save and restore",
+      "title": "Synchronize memory-file restore with usage scans",
       "url": "https://github.com/google/gvisor/pull/15322",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-26T00:43:09.596621+00:00",
-      "summary": "GitHub now reports source head ca01d635bdbffe1de8724e453ccb27285d6967c7 as CONFLICTING. The previous resolved-conflict disposition applies to an older source. Root owns the current source reconciliation, including the interaction with #16187; no new human review request accompanied this observation.\n\nPrevious source-specific record:\n\nThe requested post-#16046 rebase is published at 1f9c427d908d on master 077ee528716d, which contains 82aa7f55a. The reviewed integration preserves the upstream atomic flags, locks the new test read and removes obsolete restore-map exclusion chains. Remote validation passed all four selected owners: 58 positive cases, no failures or skips, both analyzer architectures and formatting. Earlier transport-delayed collection remains recorded.\n\nPreserved earlier source record:\n\nThe upstream conflict is resolved in published head b0c562f07b on bf97a3bfc2. The independent rebase review confirms that the only adaptation preserves upstream\u2019s sentryapi.StartArgs type and the existing lock-exclusion annotations; production and test changes retain their earlier behavior. GitHub reports the new head mergeable. Current-head public checks are newly running, and the existing fvoznika/nybidari requests remain. There were no prior approvals to renew. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery context:\n\nThe 19:08 UTC event sweep confirms the upstream conflict at unchanged head 34f0facf9e. The agent owns the rebase; the earlier conflict resolution below is historical.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in published head 34f0facf9e on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe live PR has green visible checks, no reported approval and no import; it is awaiting maintainer review. The older local proposal 1644e8205f63bc3c0886221e22b0bfe61f949e17 added reconciliation for releaseWasteChunkLocked and reclaim tests that upstream later removed. Those symbols are absent from freshly fetched master 254aeb360ee148130c24b62f0655bc832a647fe0. Its old contributor-review metadata is retired; the ref and evidence are preserved. No new amendment is a live PR prerequisite.\n\nEarlier observations (superseded proposal status):\n\nThe 02:56 UTC snapshot reports unchanged live head 7a0b5bb as MERGEABLE again. The separate exact 1644 amendment still awaits the contributor decision; this status change is not approval or publication of that candidate.\n\nPrior reconciliation and evidence:\n\nCurrent upstream reclaim changes conflict with live head 7a0. Separate candidate pgalloc-restore-sync-reclaim-review@1644e8205 preserves the newer reclaim behavior and existing save/restore contracts, adds the reclaim helper mutex annotation and uses real locks in the two new upstream fixtures. Nine of eleven prior files remain byte-identical; independent source peer 6123c16a7bac passes.\n\nCombined validation of 1644 with current allocation-request source 069085391 passes at composition dd891d7ba on compiler base 247d/current master e1bc. Parent af70d136 passes in 226.48 seconds: normal AMD64 allocator reports 59 XML entries, 57 leaves and five roots without skips; four Nogo owners pass both CPU analyses. Five actual uncached remote actions retain 60/300-second limits, and source is restored cleanly. Independent saved peer acfe2c41bb39 closes the evidence. The composition adds real locking around the interacting AllocateAndCommit fixture setup and post-failure inspection; allocator/DecRef/ReaderFunc calls remain unlocked. This combined result is distinct from a standalone replay; no 64K or ARM runtime is claimed. The exact 1644 contributor amendment question is now pending. Live PR head 7a0 remains unchanged until approval.\n\nEarlier delivered consolidation: the contributor-approved change was published on the live PR at 7a0b5bb44e53d46b30df93d813b08c1a5bf143a6, with matching local/fork/tracking refs and the exact reviewed description. It folds the three remaining atomic-field annotations and fixture ownership contracts from draft #14348 into this change while preserving the newer PagesFileOffset, save/restore and watchdog behavior. Complete combined-source peer 144cdefb4f72 passes.\n\nParent 297da469 passes in 389.868 seconds on the fresh-master compiler composition 7ebe3911f. The existing normal AMD64 allocator suite passes 50 XML entries / 49 leaves without skips, including LoadFromWithUpdateUsage. Four owning Nogo targets pass both CPU analyses. Outcome 42ce2a511cda and independent saved peer c6577aa23e10 bind five actual uncached remote actions, original 60/300-second timeouts, all eleven standalone source blobs and the complete patch. No 64K or ARM runtime result is claimed. At the earlier delivery, publication was verified OPEN/MERGEABLE and all visible new-head checks passed in the 03:52 snapshot. Superseded draft #14348 is closed and its exact named local/remote branches are retired; its recovery head remains preserved. Original failure and earlier source heads remain preserved.",
+      "updatedAt": "2026-10-26T01:44:49.538537+00:00",
+      "summary": "The reviewed save/restore reconciliation is published on PR #15322 at exact a7f35b400, with the title \u201cSynchronize memory-file restore with usage scans\u201d. GitHub confirms matching upstream and fork heads and MERGEABLE status. The existing fvoznika and nybidari review requests remain; no contributor decision or source-conflict action is pending. The change preserves the landed #16187 merge before save iteration and the existing restore regression. Current check and review signals come from the provider snapshot.\n\nPublic-source validation is complete across three retained runs. The exact allocator and its owning analyzer passed 56 of 56 records, including all five required restore and saved-content records. The separate kernel and boot analyzer runs each passed for AMD64 and ARM64. Together these cover four owners and 58 positive records. The earlier parent run failed and remains recorded; these successful constituent results do not turn that original parent into a pass.\n\nA separate private integration at e1d252ded passed mixed AMD64/ARM64 validation with 147 positive records and all 32 required cases. That evidence belongs to its private source composition and is distinct from the exact public-source qualification above.\n\nEarlier conflict and source-specific evidence:\n\nGitHub now reports source head ca01d635bdbffe1de8724e453ccb27285d6967c7 as CONFLICTING. The previous resolved-conflict disposition applies to an older source. Root owns the current source reconciliation, including the interaction with #16187; no new human review request accompanied this observation.\n\nPrevious source-specific record:\n\nThe requested post-#16046 rebase is published at 1f9c427d908d on master 077ee528716d, which contains 82aa7f55a. The reviewed integration preserves the upstream atomic flags, locks the new test read and removes obsolete restore-map exclusion chains. Remote validation passed all four selected owners: 58 positive cases, no failures or skips, both analyzer architectures and formatting. Earlier transport-delayed collection remains recorded.\n\nPreserved earlier source record:\n\nThe upstream conflict is resolved in published head b0c562f07b on bf97a3bfc2. The independent rebase review confirms that the only adaptation preserves upstream\u2019s sentryapi.StartArgs type and the existing lock-exclusion annotations; production and test changes retain their earlier behavior. GitHub reports the new head mergeable. Current-head public checks are newly running, and the existing fvoznika/nybidari requests remain. There were no prior approvals to renew. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery context:\n\nThe 19:08 UTC event sweep confirms the upstream conflict at unchanged head 34f0facf9e. The agent owns the rebase; the earlier conflict resolution below is historical.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in published head 34f0facf9e on fd123c19d. Independent source review confirms that the production and test patch is unchanged; the BUILD resolution preserves upstream dependencies and the embed attribute. All eight applicable current-head checks pass, with four conditional skips. Existing reviewer requests are preserved, and no prior maintainer approval was present. Earlier runtime qualification remains tied to its recorded source.\n\nEarlier delivery and review context:\n\nThe live PR has green visible checks, no reported approval and no import; it is awaiting maintainer review. The older local proposal 1644e8205f63bc3c0886221e22b0bfe61f949e17 added reconciliation for releaseWasteChunkLocked and reclaim tests that upstream later removed. Those symbols are absent from freshly fetched master 254aeb360ee148130c24b62f0655bc832a647fe0. Its old contributor-review metadata is retired; the ref and evidence are preserved. No new amendment is a live PR prerequisite.\n\nEarlier observations (superseded proposal status):\n\nThe 02:56 UTC snapshot reports unchanged live head 7a0b5bb as MERGEABLE again. The separate exact 1644 amendment still awaits the contributor decision; this status change is not approval or publication of that candidate.\n\nPrior reconciliation and evidence:\n\nCurrent upstream reclaim changes conflict with live head 7a0. Separate candidate pgalloc-restore-sync-reclaim-review@1644e8205 preserves the newer reclaim behavior and existing save/restore contracts, adds the reclaim helper mutex annotation and uses real locks in the two new upstream fixtures. Nine of eleven prior files remain byte-identical; independent source peer 6123c16a7bac passes.\n\nCombined validation of 1644 with current allocation-request source 069085391 passes at composition dd891d7ba on compiler base 247d/current master e1bc. Parent af70d136 passes in 226.48 seconds: normal AMD64 allocator reports 59 XML entries, 57 leaves and five roots without skips; four Nogo owners pass both CPU analyses. Five actual uncached remote actions retain 60/300-second limits, and source is restored cleanly. Independent saved peer acfe2c41bb39 closes the evidence. The composition adds real locking around the interacting AllocateAndCommit fixture setup and post-failure inspection; allocator/DecRef/ReaderFunc calls remain unlocked. This combined result is distinct from a standalone replay; no 64K or ARM runtime is claimed. The exact 1644 contributor amendment question is now pending. Live PR head 7a0 remains unchanged until approval.\n\nEarlier delivered consolidation: the contributor-approved change was published on the live PR at 7a0b5bb44e53d46b30df93d813b08c1a5bf143a6, with matching local/fork/tracking refs and the exact reviewed description. It folds the three remaining atomic-field annotations and fixture ownership contracts from draft #14348 into this change while preserving the newer PagesFileOffset, save/restore and watchdog behavior. Complete combined-source peer 144cdefb4f72 passes.\n\nParent 297da469 passes in 389.868 seconds on the fresh-master compiler composition 7ebe3911f. The existing normal AMD64 allocator suite passes 50 XML entries / 49 leaves without skips, including LoadFromWithUpdateUsage. Four owning Nogo targets pass both CPU analyses. Outcome 42ce2a511cda and independent saved peer c6577aa23e10 bind five actual uncached remote actions, original 60/300-second timeouts, all eleven standalone source blobs and the complete patch. No 64K or ARM runtime result is claimed. At the earlier delivery, publication was verified OPEN/MERGEABLE and all visible new-head checks passed in the 03:52 snapshot. Superseded draft #14348 is closed and its exact named local/remote branches are retired; its recovery head remains preserved. Original failure and earlier source heads remain preserved.",
       "number": 15322,
       "followup": {
-        "disposition": "Current source conflicts; root owns reconciliation",
-        "owner": "root",
-        "nextAction": "Root owns reconciliation of current ca01d635 against master, including the interaction with #16187. GitHub reports CONFLICTING on this exact source; this is agent source work, not a new maintainer changes-requested event. Preserve previous validation as historical and do not mutate the old Copybara import.",
+        "disposition": "Reviewed reconciliation published; source conflict resolved",
+        "owner": "work_map_current",
+        "nextAction": "Follow current-head public checks, matching imports and maintainer review through the existing intake. Both reviewer requests remain. No new contributor decision, rebase or notification is pending; preserve original failed runs and the distinct public/private validation sources.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15322",
           "https://github.com/tamird/gvisor/commit/7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
@@ -4572,23 +4572,48 @@
           "https://app.buildbuddy.io/invocation/af70d136-107c-47c8-9ecd-f89178749ab0",
           "https://github.com/tamird/gvisor/commit/34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8",
           "https://github.com/tamird/gvisor/commit/b0c562f07ba202abb6dd087274d4a2012c4055ad",
-          "https://github.com/tamird/gvisor/commit/1f9c427d908d8c78a0b69530e8ce315cab885948"
+          "https://github.com/tamird/gvisor/commit/1f9c427d908d8c78a0b69530e8ce315cab885948",
+          "https://github.com/tamird/gvisor/commit/a7f35b400764316010694138e85fe238993ce3d2",
+          "https://app.buildbuddy.io/invocation/1a657cd8-e361-4e52-8316-7292d51c8e98",
+          "https://app.buildbuddy.io/invocation/8fde74ac-d386-4c0e-b9a8-d4b327fd04b8",
+          "https://app.buildbuddy.io/invocation/8c669d84-e98d-4ce3-b4d1-a95f51a3ae0f",
+          "https://app.buildbuddy.io/invocation/3945be01-d3ca-4a5c-b5f7-6a6b94fd35f3"
         ],
         "reviewedAt": "2026-10-08T16:06:25.906644+00:00",
-        "sourceHead": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
+        "sourceHead": "a7f35b400764316010694138e85fe238993ce3d2",
         "reviewDecision": null,
-        "observedAt": "2026-10-26T00:43:09.596621+00:00"
+        "observedAt": "2026-10-26T01:44:05.170521+00:00"
       },
-      "head": "ca01d635bdbffe1de8724e453ccb27285d6967c7",
+      "head": "a7f35b400764316010694138e85fe238993ce3d2",
       "refinement": {
         "before": {
-          "head": "34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8"
+          "head": "ca01d635bdbffe1de8724e453ccb27285d6967c7"
         },
         "after": {
-          "head": "b0c562f07ba202abb6dd087274d4a2012c4055ad"
+          "head": "a7f35b400764316010694138e85fe238993ce3d2"
         }
       },
       "evidence": [
+        {
+          "label": "Published exact save/restore reconciliation",
+          "url": "https://github.com/tamird/gvisor/commit/a7f35b400764316010694138e85fe238993ce3d2"
+        },
+        {
+          "label": "Exact public allocator and Nogo: 56/56, all five required records",
+          "url": "https://app.buildbuddy.io/invocation/1a657cd8-e361-4e52-8316-7292d51c8e98"
+        },
+        {
+          "label": "Public kernel analyzer: AMD64 and ARM64 PASS",
+          "url": "https://app.buildbuddy.io/invocation/8fde74ac-d386-4c0e-b9a8-d4b327fd04b8"
+        },
+        {
+          "label": "Public boot analyzer: AMD64 and ARM64 PASS",
+          "url": "https://app.buildbuddy.io/invocation/8c669d84-e98d-4ce3-b4d1-a95f51a3ae0f"
+        },
+        {
+          "label": "Separate private e1d252ded mixed-architecture validation: 147 records, all 32 required",
+          "url": "https://app.buildbuddy.io/invocation/3945be01-d3ca-4a5c-b5f7-6a6b94fd35f3"
+        },
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/1f9c427d908d8c78a0b69530e8ce315cab885948"
