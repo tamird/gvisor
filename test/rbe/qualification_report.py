@@ -1941,7 +1941,7 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
     if kind not in ("test", "benchmark", "build", "analysis", "command") or kind != "command" and (kind == "analysis") != analysis:
         errors.append("Command kind does not match original analysis/execution arguments")
     command = next((arg for arg in arguments if not arg.startswith("-")), None)
-    allowed_commands = ("run", "query") if kind == "command" else ("test", "build")
+    allowed_commands = ("run", "query", "aquery") if kind == "command" else ("test", "build")
     if command not in allowed_commands or kind in ("test", "build") and command != kind:
         errors.append("Missing or inconsistent original Bazel command")
     if kind == "benchmark" and command != "test":
