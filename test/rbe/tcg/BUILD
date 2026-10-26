@@ -109,6 +109,15 @@ tcg_image(
     tags = ["manual"],
 )
 
+# The sandbox hostname test invokes the command by name inside its UTS
+# namespace. The guest already ships the native BusyBox hostname applet.
+pkg_tar(
+    name = "rc_hostname",
+    testonly = True,
+    symlinks = {"bin/hostname": "busybox"},
+    tags = ["manual"],
+)
+
 # Reuse the declared userspace and its transitive dependencies without carrying
 # the separate 64K kernel into the RC guest.
 flatten(
@@ -121,6 +130,7 @@ flatten(
         "@tcg_arm64_guest//base-passwd/arm64",
         "@tcg_arm64_guest//bash/arm64",
         "@tcg_arm64_guest//busybox-static/arm64",
+        ":rc_hostname",
         "@tcg_arm64_guest//coreutils/arm64",
         "@tcg_arm64_guest//debianutils/arm64",
         "@tcg_arm64_guest//file/arm64",
