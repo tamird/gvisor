@@ -37,17 +37,21 @@ jobs:
           cat > "$RUNNER_TEMP/verified-pinring" <<'GATE'
           #!/bin/bash
           set -euo pipefail
+          printf 'pinring test uid: %s\n' "$EUID"
+          test "$EUID" = 0
+          printf 'pinring XML: %s; GO_TEST_WRAP=%s\n' "${XML_OUTPUT_FILE:?}" "${GO_TEST_WRAP-unset}"
           expected=5e076a06708ed3d5f30da6f6fe8fbdbf9ec3c14f58e586753fe1fe62e9a364ec
           actual=$(sha256sum -- "$1" | cut -d' ' -f1)
           printf 'pinring ELF: expected %s, observed %s\n' "$expected" "$actual"
           test "$actual" = "$expected"
-          exec sudo -n --preserve-env=XML_OUTPUT_FILE,TEST_SRCDIR,TEST_TMPDIR,TEST_WORKSPACE,GO_TEST_RUN_FROM_BAZEL,GO_TEST_WRAP_TESTV -- "$@"
+          exec "$@"
           GATE
           chmod 755 "$RUNNER_TEMP/verified-pinring"
 
           export USE_BAZEL_VERSION
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           printf '%s\n' //pkg/pinring:pinring_test > "$RUNNER_TEMP/pinring.targets"
+          bazel_status=0
           bazelisk test --lockfile_mode=error --config=x86_64 --config=unit \
             --define=rbe=true --define=gvisor_test_clock_source=calibrated \
             --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64 \
@@ -56,10 +60,21 @@ jobs:
             --strategy=GoStdlibList=sandboxed \
             --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
             --test_env=GO_TEST_RUN_FROM_BAZEL=1 --test_env=GO_TEST_WRAP_TESTV=1 \
-            --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_output=errors \
-            "--run_under=$RUNNER_TEMP/verified-pinring" \
+            --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_output=all \
+            "--run_under=//test/rbe:local_root $RUNNER_TEMP/verified-pinring" \
             '--test_arg=-test.run=^TestKVMVMDeferredRelease$' \
-            "--target_pattern_file=$RUNNER_TEMP/pinring.targets"
+            "--target_pattern_file=$RUNNER_TEMP/pinring.targets" || bazel_status=$?
+
+          if (( bazel_status != 0 )); then
+            reports=bazel-testlogs/pkg/pinring/pinring_test
+            if [[ -r $reports/test.log ]]; then
+              grep -E 'pinring (test uid|ELF|XML):|TestKVMVMDeferredRelease|p50: plain=|generating testreport' "$reports/test.log" || :
+            fi
+            if [[ -e $reports/test.xml ]]; then
+              stat -c 'test.xml: %s bytes, owner %u:%g, mode %a' "$reports/test.xml" || :
+            fi
+            exit "$bazel_status"
+          fi
 
           python3 - <<'PY'
           import json
@@ -77,8 +92,11 @@ jobs:
           identities = [line for line in log.splitlines() if line.startswith("pinring ELF: expected")]
           if len(timings) != 1 or len(identities) != 1:
               raise SystemExit("Missing executable identity or real KVM teardown measurements")
+          if log.splitlines().count("pinring test uid: 0") != 1:
+              raise SystemExit("Missing UID 0 at the test exec boundary")
           print(json.dumps({"source": "87d2a5dcdd113aff1dad7018ffd5d11a2a4abd66",
                             "identity": identities[0], "case": cases[0].get("name"),
+                            "testUid": 0, "bazelExit": 0,
                             "passed": 1, "failed": 0, "skipped": 0, "missing": 0,
                             "teardown": timings[0]}))
           PY
